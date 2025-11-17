@@ -1,0 +1,27 @@
+# PostgreSQL
+[postgres]
+DB = "baseapi_db"
+HOST = "localhost"
+PORT = 5432
+DRIVER = "psycopg"
+
+# Uvicorn
+[uvicorn]
+HOST = "0.0.0.0"
+PORT = 9999
+
+# SQLAlchemy
+[sqla]
+ECHO = false
+ECHO_POOL = false
+POOL_SIZE = 50
+MAX_OVERFLOW = 10
+
+# Logs
+[logs]
+# Level can be set to "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+LEVEL = "DEBUG"
+
+# Stripe (non-secret defaults)
+[stripe]
+STRIPE_API_KEY = "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"

@@ -1,0 +1,9 @@
+"""
+Payment status value object.
+"""
+
+from app.domain.value_objects.base import ValueObject
+
+
+class PaymentStatus(ValueObject[str]):
+    """Payment status value object."""

@@ -1,0 +1,103 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: "app_redis_${APP_ENV}"
+    ports:
+      - "6379:6379"
+
+  baseapi_db:
+    container_name: "app_db_pg_${APP_ENV}"
+    image: postgres:16-alpine
+    shm_size: 128mb
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  web_app:
+    build:
+      context: ../..
+      dockerfile: config/${APP_ENV}/Dockerfile
+    image: web_app:latest
+    environment:
+      APP_ENV: ${APP_ENV}
+      UVICORN_HOST: ${UVICORN_HOST}
+      UVICORN_PORT: ${UVICORN_PORT}
+      POSTGRES_HOST: baseapi_db
+      CELERY_APP_NAME: ${CELERY_APP_NAME}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    ports:
+      - "${UVICORN_PORT}:${UVICORN_PORT}"
+    depends_on:
+      redis:
+        condition: service_started
+      baseapi_db:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Running alembic migrations...' &&
+      alembic upgrade head &&
+      echo 'Starting Uvicorn...' &&
+      uvicorn app.run:make_app --host ${UVICORN_HOST} --port ${UVICORN_PORT} --loop uvloop
+      "
+
+  celery_worker:
+    image: web_app:latest
+    depends_on:
+      redis:
+        condition: service_started
+      baseapi_db:
+        condition: service_healthy
+      web_app:
+        condition: service_started
+    environment:
+      APP_ENV: ${APP_ENV}
+      CELERY_APP_NAME: ${CELERY_APP_NAME}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    command: >
+      sh -c "
+      celery -A app.infrastructure.celery.app.celery_app worker --loglevel=INFO
+      "
+
+  celery_beat:
+    image: web_app:latest
+    depends_on:
+      redis:
+        condition: service_started
+      web_app:
+        condition: service_started
+    environment:
+      APP_ENV: ${APP_ENV}
+      CELERY_APP_NAME: ${CELERY_APP_NAME}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    command: >
+      sh -c "
+      celery -A app.infrastructure.celery.app.celery_app beat --loglevel=INFO
+      "
+
+  flower:
+    image: mher/flower:1.2.0
+    depends_on:
+      redis:
+        condition: service_started
+    environment:
+      - FLOWER_PORT=5555
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+    ports:
+      - "5555:5555"
+
+volumes:
+  pgdata:

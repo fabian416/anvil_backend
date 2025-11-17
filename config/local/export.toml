@@ -1,0 +1,26 @@
+# Don't rename `export` or `fields`
+[export]
+fields = [
+    # PostgreSQL from secrets
+    "postgres.USER",
+    "postgres.PASSWORD",
+    # PostgreSQL from config
+    "postgres.DB",
+    "postgres.PORT",
+    # Uvicorn from config
+    "uvicorn.HOST",
+    "uvicorn.PORT",
+    # Celery from secrets
+    "celery.APP_NAME",
+    "celery.BROKER_URL",
+    "celery.RESULT_BACKEND",
+    # Env overrides consumed by docker-compose
+    "celery.APP_NAME",
+    "celery.BROKER_URL",
+    "celery.RESULT_BACKEND",
+    # Mailgun from secrets
+    "mailgun.DOMAIN",
+    "mailgun.API_KEY",
+    # Stripe from secrets
+    "stripe.STRIPE_API_KEY"
+]
