@@ -28,6 +28,9 @@ from app.domain.value_objects.subscription import Subscription
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt
 from app.domain.value_objects.last_login import LastLogin
+from app.domain.value_objects.privy_user_id import PrivyUserId
+from app.domain.value_objects.wallet_address import WalletAddress
+from app.domain.value_objects.auth_provider import AuthProvider
 
 
 class UserService:
@@ -53,6 +56,9 @@ class UserService:
         country_id: Optional[CountryId] = None,
         city_id: Optional[CityId] = None,
         subscription: Optional[Subscription] = None,
+        privy_user_id: Optional[PrivyUserId] = None,
+        primary_wallet_address: Optional[WalletAddress] = None,
+        auth_provider: Optional[AuthProvider] = None,
     ) -> User:
         """
         :raises RoleAssignmentNotPermittedError:
@@ -87,6 +93,9 @@ class UserService:
             country_id=country_id,
             city_id=city_id,
             subscription=subscription,
+            privy_user_id=privy_user_id,
+            primary_wallet_address=primary_wallet_address,
+            auth_provider=auth_provider if auth_provider else AuthProvider("email"),
         )
 
     def is_password_valid(self, user: User, raw_password: RawPassword) -> bool:

@@ -33,7 +33,7 @@ def map_users_table() -> None:
         is_blocked = mapped_column(Boolean, default=False)
         is_verified = mapped_column(Boolean, default=False)
         retry_count = mapped_column(Integer, default=0)
-        password = mapped_column(String(255), nullable=False)
+        password = mapped_column(String(255), nullable=True)  # Nullable for Privy-only users
         
         # Timestamps
         created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
@@ -53,6 +53,11 @@ def map_users_table() -> None:
         
         # Subscription
         subscription = mapped_column(String(50), nullable=True)
+        
+        # Privy authentication fields
+        privy_user_id = mapped_column(String(255), unique=True, index=True, nullable=True)
+        primary_wallet_address = mapped_column(String(255), index=True, nullable=True)
+        auth_provider = mapped_column(String(50), default="email", nullable=True)
     
     # Note: We intentionally do not map the domain `User` entity here.
     # The purpose of this module during init_db is to define table metadata

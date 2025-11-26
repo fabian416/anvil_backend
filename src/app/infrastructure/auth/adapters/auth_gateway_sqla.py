@@ -13,6 +13,7 @@ from app.domain.entities.user import User
 from app.domain.enums.user_role import UserRole
 from app.domain.ports.auth_gateway import AuthGateway
 from app.domain.value_objects.address import Address
+from app.domain.value_objects.auth_provider import AuthProvider
 from app.domain.value_objects.city_id import CityId
 from app.domain.value_objects.country_id import CountryId
 from app.domain.value_objects.created_at import CreatedAt
@@ -23,6 +24,7 @@ from app.domain.value_objects.last_login import LastLogin
 from app.domain.value_objects.last_name import LastName
 from app.domain.value_objects.phone_number import PhoneNumber
 from app.domain.value_objects.postal_code import PostalCode
+from app.domain.value_objects.privy_user_id import PrivyUserId
 from app.domain.value_objects.profile_picture import ProfilePicture
 from app.domain.value_objects.retry_count import RetryCount
 from app.domain.value_objects.subscription import Subscription
@@ -30,6 +32,7 @@ from app.domain.value_objects.updated_at import UpdatedAt
 from app.domain.value_objects.user_id import UserId
 from app.domain.value_objects.user_password_hash import UserPasswordHash
 from app.domain.value_objects.user_status import UserActive, UserBlocked, UserVerified
+from app.domain.value_objects.wallet_address import WalletAddress
 from app.infrastructure.adapters.constants import DB_QUERY_FAILED
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.auth.handlers.jwt_handler import JwtHandler
@@ -120,6 +123,12 @@ class AuthGatewaySqla(AuthGateway):
         """Convert a database row to a User entity."""
         if not row:
             return None
+        
+        # Handle password - can be None for Privy-only users
+        password_value = b""
+        if row.get("password"):
+            password_value = str(row["password"]).encode("utf-8")
+        
         return User(
             id_=UserId(int(row["id"])),
             email=Email(str(row["email"])),
@@ -130,7 +139,7 @@ class AuthGatewaySqla(AuthGateway):
             is_blocked=UserBlocked(bool(row["is_blocked"])),
             is_verified=UserVerified(bool(row["is_verified"])),
             retry_count=RetryCount(int(row["retry_count"] or 0)),
-            password=UserPasswordHash(str(row["password"]).encode("utf-8")),
+            password=UserPasswordHash(password_value),
             created_at=CreatedAt(row["created_at"]),
             updated_at=UpdatedAt(row["updated_at"]),
             last_login=LastLogin(row["last_login"]) if row.get("last_login") else None,
@@ -142,4 +151,7 @@ class AuthGatewaySqla(AuthGateway):
             country_id=CountryId(int(row["country_id"])) if row.get("country_id") is not None else None,
             city_id=CityId(int(row["city_id"])) if row.get("city_id") is not None else None,
             subscription=Subscription(row["subscription"]) if row.get("subscription") else None,
+            privy_user_id=PrivyUserId(row["privy_user_id"]) if row.get("privy_user_id") else None,
+            primary_wallet_address=WalletAddress(row["primary_wallet_address"]) if row.get("primary_wallet_address") else None,
+            auth_provider=AuthProvider(row["auth_provider"]) if row.get("auth_provider") else None,
         )

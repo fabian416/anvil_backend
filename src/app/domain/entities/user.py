@@ -27,6 +27,9 @@ from app.domain.value_objects.city_id import CityId
 from app.domain.value_objects.subscription import Subscription
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt
+from app.domain.value_objects.privy_user_id import PrivyUserId
+from app.domain.value_objects.wallet_address import WalletAddress
+from app.domain.value_objects.auth_provider import AuthProvider
 
 
 @dataclass(eq=False, kw_only=True)
@@ -57,3 +60,7 @@ class User(Entity[UserId]):
     country_id: Optional[CountryId]
     city_id: Optional[CityId]
     subscription: Optional[Subscription]
+    # Privy authentication fields
+    privy_user_id: Optional[PrivyUserId]
+    primary_wallet_address: Optional[WalletAddress]
+    auth_provider: Optional[AuthProvider]

@@ -34,6 +34,7 @@ from app.infrastructure.persistence_sqla.mappings.session import map_sessions_ta
 from app.infrastructure.persistence_sqla.mappings.subscription import map_subscriptions_table
 from app.infrastructure.persistence_sqla.mappings.subscription_user import map_subscription_users_table
 from app.infrastructure.persistence_sqla.mappings.user import map_users_table
+from app.infrastructure.persistence_sqla.mappings.user_event import map_user_events_table
 
 
 def map_tables() -> None:
@@ -48,3 +49,4 @@ def map_tables() -> None:
     map_sessions_table()
     map_subscriptions_table()
     map_subscription_users_table()
+    map_user_events_table()

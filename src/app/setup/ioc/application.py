@@ -7,6 +7,7 @@ from app.application.commands.user.grant_admin import GrantAdminInteractor
 from app.application.commands.user.revoke_admin import RevokeAdminInteractor
 from app.application.commands.auth.upgrade_to_admin import UpgradeToAdminInteractor
 from app.application.commands.auth.change_role import ChangeRoleInteractor
+from app.application.commands.auth.privy_login import PrivyLogin
 from app.application.common.ports.access_revoker import AccessRevoker
 from app.application.common.ports.flusher import Flusher
 from app.application.common.ports.identity_provider import IdentityProvider
@@ -22,6 +23,7 @@ from app.application.atlas.queries import (
     SearchCitiesQueryService,
     ListStatesByCountryQueryService,
 )
+from app.application.metrics.ports import UserMetricsRepository
 from app.infrastructure.adapters.main_flusher_sqla import SqlaMainFlusher
 from app.infrastructure.adapters.main_transaction_manager_sqla import (
     SqlaMainTransactionManager,
@@ -30,6 +32,7 @@ from app.infrastructure.adapters.user_data_mapper_sqla import (
     SqlaUserDataMapper,
 )
 from app.infrastructure.adapters.user_reader_sqla import SqlaUserReader
+from app.infrastructure.adapters.user_metrics_repository_sqla import UserMetricsRepositorySqla
 from app.infrastructure.auth.adapters.access_revoker import (
     AuthSessionAccessRevoker,
 )
@@ -93,6 +96,12 @@ class ApplicationProvider(Provider):
         source=SqlaUserReader,
         provides=UserQueryGateway,
     )
+    
+    # Metrics
+    metrics_repository = provide(
+        source=UserMetricsRepositorySqla,
+        provides=UserMetricsRepository,
+    )
 
     # Commands
     commands = provide_all(
@@ -103,6 +112,7 @@ class ApplicationProvider(Provider):
         RevokeAdminInteractor,
         UpgradeToAdminInteractor,
         ChangeRoleInteractor,
+        PrivyLogin,
     )
 
     # Queries

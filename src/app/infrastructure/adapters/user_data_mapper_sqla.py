@@ -21,6 +21,9 @@ from app.domain.value_objects.postal_code import PostalCode
 from app.domain.value_objects.country_id import CountryId
 from app.domain.value_objects.city_id import CityId
 from app.domain.value_objects.subscription import Subscription
+from app.domain.value_objects.privy_user_id import PrivyUserId
+from app.domain.value_objects.wallet_address import WalletAddress
+from app.domain.value_objects.auth_provider import AuthProvider
 from app.domain.enums.user_role import UserRole
 from app.infrastructure.adapters.constants import DB_QUERY_FAILED, DB_CONSTRAINT_VIOLATION
 from app.infrastructure.adapters.types import MainAsyncSession
@@ -42,6 +45,11 @@ class SqlaUserDataMapper(UserCommandGateway):
             # Insert explicitly into users table and set generated id on domain entity
             map_users_table()
             UsersTable = mapping_registry.metadata.tables["users"]  # type: ignore
+            # Handle password - it can be None for Privy-only users
+            password_value = None
+            if user.password and user.password.value:
+                password_value = user.password.value.decode("utf-8", errors="ignore")
+            
             values = {
                 "email": user.email.value,
                 "first_name": user.first_name.value,
@@ -51,8 +59,7 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "is_blocked": user.is_blocked.value,
                 "is_verified": user.is_verified.value,
                 "retry_count": user.retry_count.value,
-                # store password hash as bytes/blob or decoded string depending on schema
-                "password": user.password.value.decode("utf-8", errors="ignore"),
+                "password": password_value,
                 "profile_picture": user.profile_picture.value if user.profile_picture else None,
                 "phone_number": user.phone_number.value if user.phone_number else None,
                 "language": user.language.value,
@@ -61,6 +68,10 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "country_id": user.country_id.value if user.country_id else None,
                 "city_id": user.city_id.value if user.city_id else None,
                 "subscription": user.subscription.value if user.subscription else None,
+                # Privy fields
+                "privy_user_id": user.privy_user_id.value if user.privy_user_id else None,
+                "primary_wallet_address": user.primary_wallet_address.value if user.primary_wallet_address else None,
+                "auth_provider": user.auth_provider.value if user.auth_provider else "email",
             }
             insert_stmt = UsersTable.insert().values(**values).returning(UsersTable.c.id)
             result = await self._session.execute(insert_stmt)
@@ -135,6 +146,12 @@ class SqlaUserDataMapper(UserCommandGateway):
     def _row_to_user(row: dict | None) -> User | None:
         if not row:
             return None
+        
+        # Handle password - it can be None for Privy-only users
+        password_value = b""
+        if row.get("password"):
+            password_value = str(row["password"]).encode("utf-8")
+        
         # row is a Mapping with keys matching users table columns
         return User(
             id_=UserId(int(row["id"])),
@@ -146,7 +163,7 @@ class SqlaUserDataMapper(UserCommandGateway):
             is_blocked=UserBlocked(bool(row["is_blocked"])),
             is_verified=UserVerified(bool(row["is_verified"])),
             retry_count=RetryCount(int(row["retry_count"] or 0)),
-            password=UserPasswordHash(str(row["password"]).encode("utf-8")),
+            password=UserPasswordHash(password_value),
             created_at=CreatedAt(row["created_at"]),
             updated_at=UpdatedAt(row["updated_at"]),
             last_login=LastLogin(row["last_login"]) if row.get("last_login") else None,
@@ -158,4 +175,8 @@ class SqlaUserDataMapper(UserCommandGateway):
             country_id=CountryId(int(row["country_id"])) if row.get("country_id") is not None else None,
             city_id=CityId(int(row["city_id"])) if row.get("city_id") is not None else None,
             subscription=Subscription(row["subscription"]) if row.get("subscription") else None,
+            # Privy fields
+            privy_user_id=PrivyUserId(row["privy_user_id"]) if row.get("privy_user_id") else None,
+            primary_wallet_address=WalletAddress(row["primary_wallet_address"]) if row.get("primary_wallet_address") else None,
+            auth_provider=AuthProvider(row["auth_provider"]) if row.get("auth_provider") else None,
         )
