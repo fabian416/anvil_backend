@@ -35,6 +35,7 @@ from app.infrastructure.subscription.handlers.init_subscriptions import InitSubs
 from app.infrastructure.subscription.handlers.get_subscriptions import GetSubscriptionsHandler
 from app.infrastructure.subscription.handlers.customer_subscription import CreateSubscriptionHandler
 from app.infrastructure.auth.handlers.account_me import GetMeHandler, UpdateMeHandler
+from app.domain.ports.auth_gateway import AuthGateway
 from app.infrastructure.auth.adapters.auth_gateway_sqla import AuthGatewaySqla
 from app.infrastructure.auth.handlers.jwt_handler import JwtHandler
 from app.infrastructure.auth.session.id_generator_str import (

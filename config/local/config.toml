@@ -1,6 +1,6 @@
 # PostgreSQL
 [postgres]
-DB = "baseapi_db"
+DB = "anvil_db"
 HOST = "localhost"
 PORT = 5432
 DRIVER = "psycopg"
