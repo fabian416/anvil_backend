@@ -23,7 +23,8 @@ class AuthService:
     """
     
     def __init__(self):
-        self._super_admin_email = os.getenv("USER_ADMIN")
+        # Support both formats: ADMIN_USER_ADMIN (from TOML export) or USER_ADMIN (legacy)
+        self._super_admin_email = os.getenv("ADMIN_USER_ADMIN") or os.getenv("USER_ADMIN")
     
     def validate_authorization_header(self, authorization: Optional[str]) -> str:
         """

@@ -51,7 +51,8 @@ class AuthGatewaySqla(AuthGateway):
         map_users_table()
         self._session = session
         self._jwt_handler = jwt_handler
-        self._super_admin_email = os.getenv("USER_ADMIN")
+        # Support both formats: ADMIN_USER_ADMIN (from TOML export) or USER_ADMIN (legacy)
+        self._super_admin_email = os.getenv("ADMIN_USER_ADMIN") or os.getenv("USER_ADMIN")
 
     async def validate_token(self, access_token: str) -> Optional[AuthContext]:
         """
@@ -87,7 +88,7 @@ class AuthGatewaySqla(AuthGateway):
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def update_user_role(self, user_id: str, new_role: UserRole) -> Optional[User]:
+    async def update_user_role(self, user_id: int, new_role: UserRole) -> Optional[User]:
         """
         Update a user's role.
         """

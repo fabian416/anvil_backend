@@ -25,3 +25,14 @@ LEVEL = "DEBUG"
 # Stripe (non-secret defaults)
 [stripe]
 STRIPE_API_KEY = "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"
+
+
+
+
+
+# Admin Configuration
+[admin]
+USER_ADMIN = "admin@anvil.com"
+ALLOWED_ADMIN_EMAILS = [
+  "admin@anvil.com",
+]

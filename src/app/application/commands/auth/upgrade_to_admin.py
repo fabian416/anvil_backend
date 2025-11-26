@@ -65,7 +65,7 @@ class UpgradeToAdminInteractor:
 
         # Update user role to admin
         updated_user = await self._auth_gateway.update_user_role(
-            current_user.id, UserRole.ADMIN
+            current_user.id_.value, UserRole.ADMIN
         )
 
         if not updated_user:

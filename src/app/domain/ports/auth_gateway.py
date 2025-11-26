@@ -43,7 +43,7 @@ class AuthGateway(ABC):
         pass
     
     @abstractmethod
-    async def update_user_role(self, user_id: str, new_role: UserRole) -> Optional[User]:
+    async def update_user_role(self, user_id: int, new_role: UserRole) -> Optional[User]:
         """
         Update a user's role.
         
