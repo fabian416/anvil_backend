@@ -1,0 +1,170 @@
+---
+description: Hexagonal Architecture patterns and dependency rules
+globs: src/app/**/*.py
+alwaysApply: true
+---
+
+## Hexagonal Architecture (Clean Architecture) Rules
+
+### Layer Structure
+
+**Domain Layer** (`src/app/domain/`):
+- Contains entities, value objects, domain services, and ports (interfaces)
+- **NO dependencies** on outer layers
+- Defines abstractions (ports) for external systems
+- Pure business logic, framework-agnostic
+
+**Application Layer** (`src/app/application/`):
+- Implements use cases via interactors
+- **Depends ONLY on Domain layer**
+- Uses ports (interfaces) to access external systems
+- Orchestrates domain logic and external calls
+
+**Infrastructure Layer** (`src/app/infrastructure/`):
+- Implements adapters for domain/application ports
+- **Depends on Domain layer** (implements its ports)
+- Contains all external system integrations (database, APIs, messaging)
+
+**Presentation Layer** (`src/app/presentation/http/`):
+- HTTP controllers and request/response models
+- **Depends on Application and Domain layers**
+- Thin layer: validates input, delegates to application interactors
+
+### Dependency Rule
+
+**✅ CORRECT**: Dependencies point inward
+```
+Presentation → Application → Domain
+Infrastructure → Domain
+```
+
+**❌ WRONG**: Outer layers must not depend on inner layers
+```python
+# DON'T: Domain importing from Infrastructure
+from app.infrastructure.adapters import SomeAdapter  # ❌
+
+# DON'T: Application importing from Presentation
+from app.presentation.http.schemas import SomeSchema  # ❌
+```
+
+### Creating New Features
+
+**1. Start with Domain Layer**:
+```python
+# src/app/domain/entities/conversation.py
+class Conversation(BaseEntity):
+    """Domain entity - pure business logic"""
+    def __init__(self, id: UUID, user_id: UUID):
+        self.id = id
+        self.user_id = user_id
+        # Business logic here, no infrastructure concerns
+```
+
+**2. Define Ports (Interfaces)**:
+```python
+# src/app/domain/ports/conversation_repository.py
+class ConversationRepository(Protocol):
+    """Port - interface defined in domain"""
+    async def save(self, conversation: Conversation) -> None: ...
+    async def get_by_id(self, id: UUID) -> Conversation | None: ...
+```
+
+**3. Create Application Interactor**:
+```python
+# src/app/application/commands/create_conversation.py
+class CreateConversation:
+    """Interactor - orchestrates domain logic"""
+    def __init__(self, repository: ConversationRepository):  # Uses port
+        self._repository = repository
+    
+    async def execute(self, user_id: UUID) -> Conversation:
+        conversation = Conversation.create(user_id)  # Domain logic
+        await self._repository.save(conversation)  # Uses port
+        return conversation
+```
+
+**4. Implement Adapter**:
+```python
+# src/app/infrastructure/adapters/conversation_repository_sqla.py
+class ConversationRepositorySqla(ConversationRepository):
+    """Adapter - implements port"""
+    async def save(self, conversation: Conversation) -> None:
+        # SQLAlchemy implementation
+        pass
+```
+
+**5. Create Controller**:
+```python
+# src/app/presentation/http/controllers/chat/create_conversation.py
+@router.post("/conversations")
+async def create_conversation(
+    interactor: CreateConversation = Depends(),  # Injected via Dishka
+) -> ConversationResponse:
+    """Controller - thin wrapper"""
+    conversation = await interactor.execute(user_id)
+    return ConversationResponse.from_domain(conversation)
+```
+
+### CQRS Pattern
+
+**Commands** (writes):
+- Use `CommandGateway` interfaces
+- Work with entities and value objects
+- Located in `src/app/application/commands/`
+
+**Queries** (reads):
+- Use `QueryGateway` interfaces
+- Work with query models (optimized for reads)
+- Located in `src/app/application/queries/`
+
+**Example**:
+```python
+# Command (write)
+class CreateConversation:
+    def __init__(self, gateway: ConversationCommandGateway): ...
+    async def execute(self, ...) -> Conversation:  # Returns entity
+        pass
+
+# Query (read)
+class GetConversation:
+    def __init__(self, gateway: ConversationQueryGateway): ...
+    async def execute(self, id: UUID) -> ConversationQueryModel:  # Returns query model
+        pass
+```
+
+### Dependency Injection (Dishka)
+
+**Register dependencies** in `src/app/setup/ioc/`:
+- `domain.py`: Domain layer providers
+- `application.py`: Application layer providers
+- `infrastructure.py`: Infrastructure adapters
+- `presentation.py`: Presentation layer providers
+
+**Example**:
+```python
+# src/app/setup/ioc/infrastructure.py
+from dishka import Provider, provide
+from app.infrastructure.adapters.conversation_repository_sqla import ConversationRepositorySqla
+from app.domain.ports.conversation_repository import ConversationRepository
+
+class InfrastructureProvider(Provider):
+    @provide
+    def get_conversation_repository(
+        self, adapter: ConversationRepositorySqla
+    ) -> ConversationRepository:
+        return adapter  # Returns adapter as port implementation
+```
+
+### Key Principles
+
+1. **Dependency Inversion**: Inner layers define interfaces, outer layers implement them
+2. **Framework Independence**: Domain and Application layers don't know about FastAPI
+3. **Testability**: Easy to test domain logic without infrastructure
+4. **Single Responsibility**: Each layer has one clear purpose
+5. **Port-Adapter Pattern**: All external dependencies accessed through ports
+
+### References
+
+- Architecture overview: [README.md](mdc:README.md#architecture-principles)
+- Steering documents: [docs/steering/](mdc:docs/steering/)
+- Structure guidelines: [docs/steering/structure.md](mdc:docs/steering/structure.md)

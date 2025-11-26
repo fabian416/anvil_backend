@@ -1,0 +1,194 @@
+---
+description: DeFi Multi-Agents Chat feature guidelines and patterns
+globs: src/app/domain/**/chat/**/*.py, src/app/application/**/chat/**/*.py, src/app/infrastructure/**/chat/**/*.py, src/app/presentation/http/controllers/chat/**/*.py
+alwaysApply: true
+---
+
+## DeFi Multi-Agents Chat Feature
+
+### Overview
+
+The DeFi Multi-Agents Chat enables users to interact with specialized AI agents for decentralized finance operations, analysis, and decision-making through a unified conversational interface.
+
+**Steering Documents**:
+- Product vision: [docs/steering/product.md](mdc:docs/steering/product.md)
+- Technical stack: [docs/steering/tech.md](mdc:docs/steering/tech.md)
+- Structure guidelines: [docs/steering/structure.md](mdc:docs/steering/structure.md)
+
+### Architecture
+
+**Domain Layer** (`src/app/domain/`):
+- Entities: `Conversation`, `Message`, `Agent`, `AgentSession`
+- Value Objects: `AgentType`, `MessageRole`, `ConversationContext`
+- Ports: `AgentGateway`, `ConversationRepository`, `DefiDataProvider`
+- Domain Service: `AgentOrchestrator` (coordinates agents)
+
+**Application Layer** (`src/app/application/`):
+- Commands: `CreateConversation`, `SendMessage`, `RouteToAgent`, `UpdateAgentState`
+- Queries: `GetConversation`, `ListConversations`, `GetAgentCapabilities`, `SearchConversations`
+- Gateways: `ConversationCommandGateway`, `ConversationQueryGateway`
+
+**Infrastructure Layer** (`src/app/infrastructure/`):
+- Adapters: `ConversationRepositorySqla`, `AgentGatewayOpenAI`, `DefiDataProvider1inch`, `DefiDataProviderDefiLlama`
+- Database mappings: `Conversation`, `Message`, `AgentSession` tables
+- Background tasks: `ProcessAgentResponse`, `UpdateDefiDataCache`
+
+**Presentation Layer** (`src/app/presentation/http/controllers/chat/`):
+- Routes: `/api/v1/chat/conversations`, `/api/v1/chat/messages`, `/api/v1/chat/agents`
+- Schemas: Request/response models for chat operations
+
+### Key Patterns
+
+**1. Agent Architecture**:
+- Agents are pluggable and can be added/removed without core changes
+- Each agent has defined capabilities and input/output contracts
+- Agent state maintained per conversation session
+
+**2. Conversation Management**:
+- Conversations isolated by user
+- Message history stored chronologically with timestamps
+- Context maintained across messages in a conversation
+
+**3. DeFi Data Integration**:
+- DeFi data providers abstracted behind ports
+- Caching layer for frequently accessed data
+- Background tasks for data refresh and agent processing
+
+### Implementation Guidelines
+
+**Creating a New Agent**:
+
+1. **Define Agent Type** (Domain):
+```python
+# src/app/domain/value_objects/agent_type.py
+class AgentType(Enum):
+    TRADING = "trading"
+    YIELD_FARMING = "yield_farming"
+    RISK_ANALYSIS = "risk_analysis"
+    RESEARCH = "research"
+    PORTFOLIO = "portfolio"
+```
+
+2. **Create Agent Gateway Port** (Domain):
+```python
+# src/app/domain/ports/agent_gateway.py
+class AgentGateway(Protocol):
+    async def process_message(
+        self,
+        agent_type: AgentType,
+        message: str,
+        context: ConversationContext,
+    ) -> str: ...
+```
+
+3. **Implement Agent Adapter** (Infrastructure):
+```python
+# src/app/infrastructure/adapters/agent_gateway_openai.py
+class AgentGatewayOpenAI(AgentGateway):
+    async def process_message(...) -> str:
+        # OpenAI API integration
+        pass
+```
+
+4. **Create Routing Interactor** (Application):
+```python
+# src/app/application/commands/route_to_agent.py
+class RouteToAgent:
+    def __init__(self, agent_gateway: AgentGateway, ...):
+        self._agent_gateway = agent_gateway
+    
+    async def execute(self, agent_type: AgentType, message: str, ...) -> str:
+        return await self._agent_gateway.process_message(agent_type, message, context)
+```
+
+**Creating Conversation Endpoints**:
+
+```python
+# src/app/presentation/http/controllers/chat/send_message.py
+@router.post("/conversations/{conversation_id}/messages")
+async def send_message(
+    conversation_id: UUID,
+    request: SendMessageRequest,
+    interactor: SendMessage = Depends(),
+) -> MessageResponse:
+    """Send message to conversation, route to appropriate agent"""
+    message = await interactor.execute(conversation_id, request.content)
+    return MessageResponse.from_domain(message)
+```
+
+### Data Models
+
+**Conversation Entity**:
+- `id: UUID`
+- `user_id: UUID`
+- `created_at: datetime`
+- `updated_at: datetime`
+- `title: str | None` (optional, auto-generated or user-set)
+
+**Message Entity**:
+- `id: UUID`
+- `conversation_id: UUID`
+- `role: MessageRole` (USER, AGENT, SYSTEM)
+- `content: str`
+- `agent_type: AgentType | None` (if from agent)
+- `created_at: datetime`
+
+**Agent Session**:
+- `id: UUID`
+- `conversation_id: UUID`
+- `agent_type: AgentType`
+- `state: dict` (JSONB for flexible agent state)
+- `updated_at: datetime`
+
+### External Integrations
+
+**DeFi Data Providers**:
+- 1inch DEX aggregator for price and liquidity data
+- DeFiLlama for protocol analytics and yield data
+- The Graph for on-chain data queries
+- CoinGecko/CoinMarketCap for market data
+
+**AI/LLM Services**:
+- OpenAI GPT-4/GPT-3.5 for agent reasoning
+- Vector databases for agent knowledge retrieval (future)
+
+**Blockchain RPC**:
+- Infura, Alchemy, QuickNode for multi-chain data
+- Web3.py for blockchain interactions
+
+### Background Tasks
+
+**Agent Processing**:
+- Long-running agent responses processed via Celery
+- Streaming responses (future) for better UX
+
+**Data Caching**:
+- DeFi data cached in Redis
+- Background tasks refresh cache periodically
+- Cache invalidation on user requests
+
+### Security Considerations
+
+- User conversations isolated by user_id
+- Input validation and sanitization
+- Rate limiting on agent requests
+- Secure handling of wallet connections (read-only preferred)
+- No storage of private keys or sensitive wallet data
+
+### Testing
+
+**Unit Tests**:
+- Domain entities and value objects
+- Application interactors (with mocked dependencies)
+- Infrastructure adapters (with test fixtures)
+
+**Integration Tests**:
+- End-to-end conversation flows
+- Agent routing and response handling
+- DeFi data provider integrations
+
+### References
+
+- Product steering: [docs/steering/product.md](mdc:docs/steering/product.md)
+- Technical steering: [docs/steering/tech.md](mdc:docs/steering/tech.md)
+- Structure steering: [docs/steering/structure.md](mdc:docs/steering/structure.md)

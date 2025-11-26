@@ -1,24 +1,125 @@
 ---
-globs: routes/payments/**/*.py,services/payments/**/*.py,integrations/payments/stripe/**/*.py
-description: Stripe-only payments integration, endpoints, and configuration
+description: Stripe subscription integration patterns and endpoints
+globs: src/app/infrastructure/subscription/**/*.py, src/app/presentation/http/controllers/subscription/**/*.py, src/app/presentation/http/controllers/payment/**/*.py
+alwaysApply: true
 ---
 
-## Payments – Stripe Only
+## Stripe Subscription Integration
 
-- **Primary endpoints**:
-  - `/payments/purchase` in [routes/payments.py](mdc:routes/payments.py)
-  - Stripe-specific routes in [routes/payments/stripe.py](mdc:routes/payments/stripe.py) (e.g., `/stripe/obtain-plan`, `/stripe/webhook`, confirmations and seat/client ops)
+### Subscription Endpoints
 
-- **Client/Adapter**:
-  - Stripe client: [integrations/payments/stripe/client.py](mdc:integrations/payments/stripe/client.py)
-  - Adapter: [services/payments/stripe_adapter.py](mdc:services/payments/stripe_adapter.py)
+**Subscription Management** (`/api/v1/subscription`):
+- `GET /` - Get all available subscriptions (authenticated)
+- `POST /` - Create customer subscription (authenticated)
+- `POST /cancel` - Cancel subscription (authenticated)
+- `POST /success` - Handle subscription success callback (authenticated)
+- `POST /init` - Initialize subscriptions (admin only)
 
-- **Environment**:
-  - `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET`, `FRONTEND_URL`
+**Payment Endpoints** (`/api/v1/payment`):
+- `GET /` - Get payment information (authenticated)
+- `POST /` - Process payment (authenticated)
 
-- **Docs**:
-  - Overview: [docs/PAYMENT_SYSTEM_STRIPE_ONLY.md](mdc:docs/PAYMENT_SYSTEM_STRIPE_ONLY.md)
-  - Endpoint details: [routes/payments/stripe.md](mdc:routes/payments/stripe.md)
+### Subscription Handlers
 
-- **Permissions**: protect purchase/upgrade/seat endpoints using the permissions decorators (see Permissions rule).
+**Handlers** (`src/app/infrastructure/subscription/handlers/`):
+- `GetSubscriptionsHandler` - Retrieve available subscription plans
+- `CreateSubscriptionHandler` - Create new customer subscription
+- `CancelSubscriptionHandler` - Cancel existing subscription
+- `SubscriptionSuccessHandler` - Handle subscription success webhook
+- `InitSubscriptionsHandler` - Initialize subscription plans (admin)
 
+### Stripe Configuration
+
+**Environment Variables** (from TOML config):
+- `STRIPE_SECRET_KEY` - Stripe secret key
+- `STRIPE_PUBLIC_KEY` - Stripe public key (for frontend)
+- `STRIPE_WEBHOOK_SECRET` - Webhook signing secret
+
+**Configuration**: [src/app/setup/config/stripe.py](mdc:src/app/setup/config/stripe.py)
+
+### Implementation Pattern
+
+**Handler Pattern**:
+```python
+from dataclasses import dataclass
+from dishka import FromDishka
+from dishka.integrations.fastapi import inject
+
+@dataclass
+class CreateSubscriptionRequest:
+    """Request model for subscription creation"""
+    plan_id: str
+    # ... other fields
+
+class CreateSubscriptionHandler:
+    """Handler for creating subscriptions"""
+    def __init__(self, stripe_client: StripeClient, ...):
+        self._stripe_client = stripe_client
+    
+    async def execute(self, request: CreateSubscriptionRequest) -> dict:
+        # Business logic here
+        pass
+
+@router.post("/")
+@inject
+async def create_subscription(
+    request: CreateSubscriptionRequest,
+    handler: FromDishka[CreateSubscriptionHandler],
+):
+    """Endpoint delegates to handler"""
+    result = await handler.execute(request)
+    return result
+```
+
+### Error Handling
+
+**Use `fastapi-error-map`** for error handling:
+```python
+from fastapi_error_map import ErrorAwareRouter, rule
+from app.infrastructure.exceptions.gateway import DataMapperError
+
+router = ErrorAwareRouter(...)
+
+@router.post(
+    "/",
+    error_map={
+        DataMapperError: rule(
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            translator=ServiceUnavailableTranslator(),
+            on_error=log_error,
+        ),
+    },
+)
+async def endpoint(...):
+    pass
+```
+
+### Authentication
+
+**All subscription endpoints require authentication**:
+```python
+from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
+
+@router.get(
+    "/",
+    dependencies=[Security(bearer_scheme)],
+)
+async def endpoint(...):
+    pass
+```
+
+### Subscription Models
+
+**Database Models**:
+- `Subscription` - Subscription plan definitions
+- `SubscriptionUser` - User subscription relationships
+- `Payment` - Payment records
+
+**Mappings**: [src/app/infrastructure/persistence_sqla/mappings/subscription.py](mdc:src/app/infrastructure/persistence_sqla/mappings/subscription.py)
+
+### References
+
+- Subscription router: [src/app/presentation/http/controllers/subscription/router.py](mdc:src/app/presentation/http/controllers/subscription/router.py)
+- Subscription handlers: [src/app/infrastructure/subscription/handlers/](mdc:src/app/infrastructure/subscription/handlers/)
+- Payment router: [src/app/presentation/http/controllers/payment/router.py](mdc:src/app/presentation/http/controllers/payment/router.py)
+- Stripe config: [src/app/setup/config/stripe.py](mdc:src/app/setup/config/stripe.py)

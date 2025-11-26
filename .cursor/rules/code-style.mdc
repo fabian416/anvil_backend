@@ -1,0 +1,200 @@
+---
+description: Code style, naming conventions, and formatting rules
+globs: src/**/*.py, tests/**/*.py
+alwaysApply: true
+---
+
+## Code Style and Naming Conventions
+
+### File Naming
+
+- **Python files**: `snake_case.py`
+- **Test files**: `test_*.py` or `*_test.py`
+- **Module directories**: `snake_case/`
+
+### Code Naming
+
+**Classes/Types**: `PascalCase`
+```python
+class Conversation(BaseEntity):
+    pass
+
+class MessageRole(Enum):
+    pass
+```
+
+**Functions/Methods**: `snake_case`
+```python
+def create_conversation(user_id: UUID) -> Conversation:
+    pass
+
+async def send_message(content: str) -> Message:
+    pass
+```
+
+**Constants**: `UPPER_SNAKE_CASE`
+```python
+MAX_MESSAGE_LENGTH = 10000
+DEFAULT_AGENT_TIMEOUT = 30
+```
+
+**Variables**: `snake_case`
+```python
+conversation_id = UUID(...)
+user_message = "Hello"
+agent_response = await process_message(...)
+```
+
+**Private/Internal**: Prefix with single underscore `_`
+```python
+def _internal_method(self) -> None:
+    pass
+
+_cache_key = "conversation:123"
+```
+
+### Domain-Specific Naming
+
+**Entities**: Singular noun, PascalCase
+- `Conversation`, `Message`, `Agent`, `User`
+
+**Value Objects**: Descriptive noun phrase, PascalCase
+- `AgentType`, `MessageRole`, `ConversationContext`
+
+**Repositories**: `{Entity}Repository`
+- `ConversationRepository`, `MessageRepository`
+
+**Gateways**: `{Purpose}Gateway`
+- `AgentGateway`, `DefiDataGateway`, `ConversationQueryGateway`
+
+**Interactors**: Verb phrase describing action
+- `CreateConversation`, `SendMessage`, `RouteToAgent`
+
+**Controllers**: Verb phrase or noun describing endpoint
+- `create_conversation`, `send_message`, `get_conversation`
+
+### Import Organization
+
+**Import Order**:
+1. Standard library imports
+2. Third-party library imports
+3. Application imports (from `app.`)
+4. Relative imports (within same module)
+
+**Example**:
+```python
+# Standard library
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
+
+# Third-party
+from sqlalchemy import select
+from pydantic import BaseModel
+
+# Application (absolute imports)
+from app.domain.entities.conversation import Conversation
+from app.domain.value_objects.message_role import MessageRole
+from app.application.common.ports.conversation_query_gateway import ConversationQueryGateway
+
+# Relative imports (within same package)
+from .base import BaseEntity
+```
+
+### Code Formatting
+
+**Tool**: `ruff` (replaces black, isort, flake8)
+```bash
+make code.format  # Format code
+make code.lint    # Check formatting and lint
+```
+
+**Line Length**: 88 characters (ruff default)
+
+**Type Hints**: Required for all function signatures
+```python
+def process_message(
+    conversation_id: UUID,
+    content: str,
+    role: MessageRole,
+) -> Message:
+    pass
+```
+
+### Docstrings
+
+**Format**: Google-style docstrings
+```python
+def create_conversation(user_id: UUID) -> Conversation:
+    """
+    Create a new conversation for a user.
+    
+    Args:
+        user_id: The user identifier
+        
+    Returns:
+        Created conversation entity
+        
+    Raises:
+        UserNotFoundError: If user doesn't exist
+    """
+    pass
+```
+
+**Required For**:
+- All public classes, methods, and functions
+- Complex business logic (inline comments)
+- Module-level docstrings for major modules
+
+### Code Organization
+
+**File Structure**:
+```python
+"""
+Module docstring.
+"""
+# 1. Imports
+# 2. Constants
+# 3. Type/interface definitions
+# 4. Class attributes
+# 5. __init__ and properties
+# 6. Public methods
+# 7. Private methods
+# 8. Class methods and static methods
+```
+
+**Function Structure**:
+```python
+def function_name(param: Type) -> ReturnType:
+    """
+    Function docstring.
+    """
+    # 1. Input validation
+    # 2. Core logic
+    # 3. Error handling
+    # 4. Return result
+```
+
+### Code Size Guidelines
+
+- **File size**: Maximum 500 lines (prefer 200-300)
+- **Function size**: Maximum 50 lines (prefer 10-20)
+- **Nesting depth**: Maximum 3 levels (prefer 2)
+- **Cyclomatic complexity**: Keep below 10 per function
+
+### Type Checking
+
+**Tool**: `mypy` with strict mode
+```bash
+make code.lint  # Runs mypy
+```
+
+**Type Hints**: Required for all function signatures
+- Use `Optional[T]` for nullable types
+- Use `Union[T, U]` for multiple types (or `T | U` in Python 3.10+)
+- Use `Protocol` for structural typing (ports)
+
+### References
+
+- Structure steering: [docs/steering/structure.md](mdc:docs/steering/structure.md)
+- pyproject.toml: [pyproject.toml](mdc:pyproject.toml) (ruff, mypy config)

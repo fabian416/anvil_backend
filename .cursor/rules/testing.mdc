@@ -1,20 +1,199 @@
 ---
-globs: tests/**/*.py,routes/test/**/*.py,testing/**/*.py
-description: How to run tests and where to find them
+description: Testing patterns and guidelines
+globs: tests/**/*.py, src/**/*test*.py
+alwaysApply: true
 ---
 
-## Testing Guide
+## Testing Guidelines
 
-- **Locations**:
-  - Core tests: [tests/](mdc:tests/README.md)
-  - Route tests: [routes/test/](mdc:routes/test/README.md)
-  - Extended scenarios/integration: [testing/](mdc:testing/README.md)
+### Testing Framework
 
-- **Run** (activate the `faststrat` conda env first):
-  - Windows (Anaconda Prompt): `conda activate faststrat` then `python -m pytest tests/ routes/test/ -v`
-  - Test deps: [tests/requirements-test.txt](mdc:tests/requirements-test.txt)
+- **Framework**: `pytest` with `pytest-asyncio` for async tests
+- **Coverage**: `coverage` for test coverage reporting
+- **Test Location**: `tests/` directory mirroring `src/` structure
 
-- **Notes**:
-  - Route tests create isolated `FastAPI` apps and mock external services; you don’t need the main server running.
-  - See additional instructions: [tests/test_content_generation_endpoint/INSTRUCCIONES.md](mdc:tests/test_content_generation_endpoint/INSTRUCCIONES.md)
+### Test Organization
 
+**Directory Structure**:
+```
+tests/
+├── unit/              # Unit tests (isolated components)
+├── integration/       # Integration tests (multiple components)
+└── fixtures/          # Test data and fixtures
+```
+
+**Naming**: `test_*.py` or `*_test.py`
+
+### Testing Layers
+
+**Domain Layer Tests**:
+- Test entities and value objects in isolation
+- Test domain services with mocked dependencies
+- No infrastructure dependencies
+
+**Application Layer Tests**:
+- Test interactors with mocked ports
+- Verify business logic correctness
+- Test error handling and edge cases
+
+**Infrastructure Layer Tests**:
+- Test adapters with test database/fixtures
+- Integration tests for external systems (mocked where possible)
+
+**Presentation Layer Tests**:
+- Test HTTP controllers with test client
+- Verify request/response models
+- Integration tests for full request flow
+
+### Test Patterns
+
+**Unit Test Example**:
+```python
+import pytest
+from app.domain.entities.conversation import Conversation
+from app.domain.value_objects.message_role import MessageRole
+
+def test_create_conversation():
+    """Test conversation entity creation"""
+    conversation = Conversation.create(user_id=UUID("..."))
+    assert conversation.user_id == UUID("...")
+    assert conversation.created_at is not None
+```
+
+**Interactor Test Example**:
+```python
+import pytest
+from unittest.mock import AsyncMock
+from app.application.commands.create_conversation import CreateConversation
+from app.domain.ports.conversation_repository import ConversationRepository
+
+@pytest.mark.asyncio
+async def test_create_conversation_interactor():
+    """Test conversation creation interactor"""
+    # Mock repository
+    mock_repository = AsyncMock(spec=ConversationRepository)
+    
+    # Create interactor with mocked dependency
+    interactor = CreateConversation(repository=mock_repository)
+    
+    # Execute
+    result = await interactor.execute(user_id=UUID("..."))
+    
+    # Assertions
+    assert result.user_id == UUID("...")
+    mock_repository.save.assert_called_once()
+```
+
+**Integration Test Example**:
+```python
+import pytest
+from fastapi.testclient import TestClient
+from app.run import make_app
+
+def test_create_conversation_endpoint():
+    """Test conversation creation endpoint"""
+    app = make_app()
+    client = TestClient(app)
+    
+    response = client.post(
+        "/api/v1/chat/conversations",
+        json={"user_id": "..."},
+        headers={"Authorization": "Bearer ..."},
+    )
+    
+    assert response.status_code == 201
+    assert "id" in response.json()
+```
+
+### Test Fixtures
+
+**Database Fixtures**:
+```python
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+@pytest.fixture
+def db_session():
+    """Create test database session"""
+    engine = create_engine("sqlite:///:memory:")
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    yield session
+    session.close()
+```
+
+**Mock Fixtures**:
+```python
+@pytest.fixture
+def mock_agent_gateway():
+    """Mock agent gateway for testing"""
+    gateway = AsyncMock(spec=AgentGateway)
+    gateway.process_message.return_value = "Mock response"
+    return gateway
+```
+
+### Running Tests
+
+```bash
+make code.test       # Run all tests
+pytest -v            # Verbose output
+pytest tests/path/   # Run specific test directory
+pytest tests/test_file.py::test_function  # Run specific test
+pytest -k "conversation"  # Run tests matching pattern
+```
+
+### Coverage
+
+```bash
+make code.cov        # Generate coverage report
+make code.cov.html   # Generate HTML coverage report
+```
+
+**Coverage Targets**:
+- Domain layer: 90%+ coverage
+- Application layer: 80%+ coverage
+- Infrastructure layer: 70%+ coverage
+- Presentation layer: 70%+ coverage
+
+### Test Best Practices
+
+**✅ DO**:
+- Test business logic in isolation
+- Use mocks for external dependencies
+- Test both success and failure scenarios
+- Keep tests fast and independent
+- Use descriptive test names
+
+**❌ DON'T**:
+- Test framework code
+- Test implementation details
+- Create tests that depend on each other
+- Use real external APIs in unit tests
+- Skip error cases
+
+### Async Testing
+
+**Use `pytest-asyncio`**:
+```python
+import pytest
+
+@pytest.mark.asyncio
+async def test_async_function():
+    result = await async_function()
+    assert result is not None
+```
+
+**Async Fixtures**:
+```python
+@pytest.fixture
+async def async_fixture():
+    async_resource = await setup_async_resource()
+    yield async_resource
+    await cleanup_async_resource(async_resource)
+```
+
+### References
+
+- Testing framework: [pyproject.toml](mdc:pyproject.toml) (pytest config)
+- Test examples: [tests/](mdc:tests/)

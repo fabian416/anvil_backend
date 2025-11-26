@@ -1,42 +1,57 @@
 ---
 alwaysApply: true
-description: Project structure, app entry, routers, and how to add endpoints
+description: Project structure, hexagonal architecture, and how to add new features
 ---
 
-## FastStrat Backend – Project Structure Guide
+## Anvil Backend – Project Structure Guide
 
-- **Main entry**: [main.py](mdc:main.py)
-  - Creates the FastAPI `app` and registers routers.
-  - Included routers:
-    - [routes/users.py](mdc:routes/users.py) (`users_router`)
-    - [routes/plans.py](mdc:routes/plans.py) (`plans_router`)
-    - [routes/admin_users.py](mdc:routes/admin_users.py) (`admin_router`)
-    - [routes/agencies.py](mdc:routes/agencies.py) (`agencies_router`)
-    - [routes/payments.py](mdc:routes/payments.py) (`payments_router`)
-    - [routes/dashboard.py](mdc:routes/dashboard.py) (`dashboard_router`)
-    - [routes/crm/zoho/zoho.py](mdc:routes/crm/zoho/zoho.py)
-    - [routes/test_plan_update.py](mdc:routes/test_plan_update.py)
+- **Main entry**: [app/run.py](mdc:src/app/run.py)
+  - Creates the FastAPI application via `make_app()` factory
+  - Uses Dishka for dependency injection (framework-agnostic)
+  - Registers routers from presentation layer
 
-- **Payments (Stripe)**:
-  - Additional Stripe endpoints under [routes/payments/stripe.py](mdc:routes/payments/stripe.py) (prefix `/stripe`).
+- **Architecture**: Hexagonal Architecture (Clean Architecture) with strict layer separation
+  - **Domain Layer** (`src/app/domain/`): Entities, value objects, domain services, ports (interfaces)
+  - **Application Layer** (`src/app/application/`): Use cases via interactors (CQRS pattern)
+    - `commands/`: Write operations and business-critical reads
+    - `queries/`: Optimized read operations
+  - **Infrastructure Layer** (`src/app/infrastructure/`): Adapters implementing domain ports
+  - **Presentation Layer** (`src/app/presentation/http/`): HTTP controllers and routers
 
-- **Notable built-in endpoints** (in [main.py](mdc:main.py)):
-  - `GET /init`, `GET /question`, `GET /answer`, `GET /research`
-  - Content/Image: `/content_generation`, `/imagen_generate`, `/imagen_simple`, `/content_with_image`
-  - PDFs/Reports: `GET /download-research-pdf/{session_id}/{task_name}`, `GET /list-research-pdfs/{session_id}`
+- **Key directories**:
+  - Domain entities: [src/app/domain/entities/](mdc:src/app/domain/entities/)
+  - Domain value objects: [src/app/domain/value_objects/](mdc:src/app/domain/value_objects/)
+  - Application commands: [src/app/application/commands/](mdc:src/app/application/commands/)
+  - Application queries: [src/app/application/queries/](mdc:src/app/application/queries/)
+  - Infrastructure adapters: [src/app/infrastructure/adapters/](mdc:src/app/infrastructure/adapters/)
+  - HTTP controllers: [src/app/presentation/http/controllers/](mdc:src/app/presentation/http/controllers/)
+  - Database mappings: [src/app/infrastructure/persistence_sqla/mappings/](mdc:src/app/infrastructure/persistence_sqla/mappings/)
+  - Dependency injection: [src/app/setup/ioc/](mdc:src/app/setup/ioc/)
+
+- **DeFi Multi-Agents Chat Feature**:
+  - Steering documents: [docs/steering/](mdc:docs/steering/)
+  - Product vision: [docs/steering/product.md](mdc:docs/steering/product.md)
+  - Technical stack: [docs/steering/tech.md](mdc:docs/steering/tech.md)
+  - Structure guidelines: [docs/steering/structure.md](mdc:docs/steering/structure.md)
 
 - **Run locally**:
-  - `uvicorn main:app --reload --port 8000`
-  - Container entry uses Uvicorn; see [Dockerfile](mdc:Dockerfile)
+  - `make start` (uses uvicorn with reload)
+  - Or: `uvicorn app.run:make_app --factory --port 8000 --reload`
+  - Database: `make up.db` (Docker Compose)
+  - Migrations: `alembic upgrade head`
 
-- **Add a new endpoint**:
-  - Create an `APIRouter` in `routes/<module>.py` and include it from [main.py](mdc:main.py).
-  - Use consistent `tags` and `prefix`.
-  - Protect routes with permissions (see Permissions rule).
+- **Add a new feature** (following hexagonal architecture):
+  1. **Domain Layer**: Define entities, value objects, and ports (interfaces)
+  2. **Application Layer**: Create interactors (commands/queries) that use domain ports
+  3. **Infrastructure Layer**: Implement adapters for ports (database, external APIs)
+  4. **Presentation Layer**: Create HTTP controllers that call application interactors
+  5. **Dependency Injection**: Register all dependencies in `src/app/setup/ioc/`
 
-- **Key layers and locations**:
-  - Services/business logic: [services/](mdc:services/__init__.py)
-  - Data models/enums/config: [database/](mdc:database/README.md)
-  - Integrations: [integrations/](mdc:integrations/zapier/README.md)
-  - API routes: [routes/](mdc:routes/docs/README.md)
+- **CQRS Pattern**:
+  - Use `CommandGateway` for writes (entities, value objects)
+  - Use `QueryGateway` for reads (query models optimized for presentation)
+  - Separate models for commands vs queries
 
+- **Configuration**: TOML-based in `config/{env}/` directories
+  - Generate .env files: `make dotenv`
+  - Environment variable: `APP_ENV=local` (or `dev`, `prod`)

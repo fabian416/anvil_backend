@@ -1,0 +1,194 @@
+---
+description: Celery background tasks and async processing patterns
+globs: src/app/infrastructure/celery/**/*.py, src/app/application/**/tasks.py
+alwaysApply: true
+---
+
+## Celery Background Tasks
+
+### Celery Setup
+
+**Celery App**: [src/app/infrastructure/celery/app.py](mdc:src/app/infrastructure/celery/app.py)
+- Uses Redis as message broker
+- Configured with Dishka dependency injection
+
+**Running Celery**:
+```bash
+make celery.worker    # Start Celery worker
+make celery.beat      # Start Celery scheduler
+make celery.flower    # Start Flower monitoring UI (port 5555)
+```
+
+### Task Pattern
+
+**Task Definition**:
+```python
+from app.infrastructure.celery.app import celery_app
+from app.setup.ioc.provider_registry import get_providers
+import asyncio
+
+async def _run_task(coro_factory):
+    """Helper to run async tasks with DI container"""
+    settings = load_settings()
+    container = create_async_ioc_container(
+        providers=(
+            ApplicationProvider(),
+            infrastructure_provider(),
+            PresentationProvider(),
+            SettingsProvider(),
+        ),
+        settings=settings,
+    )
+    try:
+        async with container() as request_container:
+            await coro_factory(request_container)
+    finally:
+        await container.close()
+
+@celery_app.task(name="task_name")
+def celery_task():
+    """Celery task wrapper"""
+    async def runner(container):
+        # Get dependencies from container
+        service = await container.get(SomeService)
+        
+        # Create task instance
+        task = SomeTask(service)
+        
+        # Execute
+        await task.run()
+    
+    asyncio.run(_run_task(runner))
+```
+
+### Scheduled Tasks
+
+**Beat Schedule** (in `tasks.py`):
+```python
+from celery.schedules import crontab
+
+celery_app.conf.beat_schedule = {
+    "task-name": {
+        "task": "task_name",
+        "schedule": crontab(hour=0, minute=0),  # Daily at midnight
+    },
+}
+```
+
+**Schedule Examples**:
+- `crontab(hour=0, minute=0)` - Daily at midnight
+- `crontab(minute=0)` - Every hour
+- `crontab(minute="*/15")` - Every 15 minutes
+
+### Task Implementation Pattern
+
+**Application Layer Task**:
+```python
+# src/app/application/maintenance/tasks.py
+class CleanupExpiredSessionsTask:
+    """Task for cleaning up expired sessions"""
+    
+    def __init__(self, repository: AuthSessionRepository):
+        self._repository = repository
+    
+    async def run(self) -> None:
+        """Execute the task"""
+        # Business logic here
+        await self._repository.delete_expired()
+```
+
+**Celery Task Wrapper**:
+```python
+# src/app/infrastructure/celery/tasks.py
+@celery_app.task(name="cleanup_expired_sessions")
+def cleanup_expired_sessions():
+    async def runner(container):
+        from app.application.maintenance.ports import AuthSessionRepository
+        
+        repo = await container.get(AuthSessionRepository)
+        task = CleanupExpiredSessionsTask(repo)
+        await task.run()
+    
+    asyncio.run(_run_task(runner))
+```
+
+### Dependency Injection in Tasks
+
+**Use Dishka container** to resolve dependencies:
+```python
+async def runner(container):
+    # Get dependencies from container
+    service = await container.get(SomeService)
+    repository = await container.get(SomeRepository)
+    
+    # Create task with dependencies
+    task = SomeTask(service, repository)
+    await task.run()
+```
+
+### Current Tasks
+
+**Maintenance Tasks**:
+- `cleanup_expired_sessions` - Clean up expired user sessions (daily)
+- `cleanup_expired_password_resets` - Clean up expired password reset tokens (hourly)
+
+**Task Location**: [src/app/infrastructure/celery/tasks.py](mdc:src/app/infrastructure/celery/tasks.py)
+
+### Adding New Tasks
+
+**1. Create Application Task**:
+```python
+# src/app/application/{feature}/tasks.py
+class MyTask:
+    def __init__(self, dependency: SomeDependency):
+        self._dependency = dependency
+    
+    async def run(self) -> None:
+        # Task logic
+        pass
+```
+
+**2. Create Celery Task**:
+```python
+# src/app/infrastructure/celery/tasks.py
+@celery_app.task(name="my_task")
+def my_task():
+    async def runner(container):
+        dependency = await container.get(SomeDependency)
+        task = MyTask(dependency)
+        await task.run()
+    
+    asyncio.run(_run_task(runner))
+```
+
+**3. Schedule Task** (if needed):
+```python
+celery_app.conf.beat_schedule = {
+    "my-task": {
+        "task": "my_task",
+        "schedule": crontab(hour=0, minute=0),
+    },
+}
+```
+
+### Best Practices
+
+**✅ DO**:
+- Keep business logic in application layer tasks
+- Use dependency injection for all dependencies
+- Handle errors gracefully in tasks
+- Log task execution and errors
+- Make tasks idempotent where possible
+
+**❌ DON'T**:
+- Put business logic directly in Celery task wrappers
+- Hardcode dependencies
+- Ignore errors silently
+- Create long-running tasks without progress tracking
+
+### References
+
+- Celery app: [src/app/infrastructure/celery/app.py](mdc:src/app/infrastructure/celery/app.py)
+- Celery tasks: [src/app/infrastructure/celery/tasks.py](mdc:src/app/infrastructure/celery/tasks.py)
+- Maintenance tasks: [src/app/application/maintenance/tasks.py](mdc:src/app/application/maintenance/tasks.py)
+- Makefile: [Makefile](mdc:Makefile) (celery commands)

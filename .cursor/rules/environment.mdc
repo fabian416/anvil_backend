@@ -1,14 +1,123 @@
 ---
 alwaysApply: true
-description: Environment usage for all commands and executions
+description: Environment setup, development commands, and configuration
 ---
 
-## Environment Usage
+## Environment Setup
 
-- **Always use the `faststrat` conda environment** for commands, servers, and tests.
-  - Windows (Anaconda Prompt): `conda activate faststrat`
-- Install dependencies if needed: `python -m pip install -r requirements.txt`
-- Some features require env vars (examples):
-  - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET`
-  - Google: `GOOGLE_APPLICATION_CREDENTIALS`
+- **Python Version**: Python 3.12.* (strictly enforced in pyproject.toml)
+- **Package Manager**: `uv` for fast package management
+- **Virtual Environment**: `.venv` directory (created via `uv`)
 
+### Setup Commands
+
+**Initial Setup**:
+```bash
+export APP_ENV=local  # or dev/prod
+make dotenv           # Generate .env files from TOML config
+make venv             # Create virtual environment (if needed)
+uv pip install -e '.[dev,test]'  # Install dependencies
+pre-commit install    # Install pre-commit hooks
+```
+
+**Database Setup**:
+```bash
+make up.db            # Start PostgreSQL in Docker
+make create-db        # Create database
+alembic upgrade head  # Apply migrations
+```
+
+**Development Server**:
+```bash
+make start            # Start FastAPI server with reload
+# Or manually:
+uvicorn app.run:make_app --factory --port 8000 --reload
+```
+
+**Background Tasks** (Celery):
+```bash
+make celery.worker    # Start Celery worker
+make celery.beat      # Start Celery scheduler
+make celery.flower    # Start Flower monitoring UI (port 5555)
+```
+
+### Configuration System
+
+- **TOML-based configuration** in `config/{env}/` directories
+- **Single source of truth**: TOML files generate .env files for Docker
+- **Environment-specific**: `config/local/`, `config/dev/`, `config/prod/`
+- **Secrets**: `.secrets.toml` files (not tracked in git)
+
+**Configuration Files**:
+- `config.toml`: Main application settings
+- `export.toml`: Fields to export to .env
+- `.secrets.toml`: Sensitive data (optional, merged with config.toml)
+
+**Generate .env**:
+```bash
+make dotenv  # Creates .env.{APP_ENV} in config/{APP_ENV}/
+```
+
+### Environment Variables
+
+**Required**:
+- `APP_ENV`: Environment name (`local`, `dev`, `prod`)
+
+**Database** (from TOML config):
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PORT`
+
+**Redis** (from TOML config):
+- `REDIS_URL` or `REDIS_HOST`, `REDIS_PORT`
+
+**Other** (from TOML config):
+- Stripe keys, Mailgun keys, JWT secrets, etc.
+
+### Docker Compose
+
+**Start services**:
+```bash
+make up              # Start all services (app + database + redis)
+make up.db           # Start only database
+make down            # Stop services
+make logs.db         # View database logs
+```
+
+**Docker Compose files**: Located in `config/{env}/docker-compose.yaml`
+
+### Code Quality
+
+```bash
+make code.format     # Format with ruff
+make code.lint       # Lint with ruff, slotscheck, mypy
+make code.test       # Run pytest
+make code.check      # Run both lint and test
+```
+
+### Testing
+
+```bash
+make code.test       # Run all tests
+pytest -v            # Verbose test output
+pytest tests/path/to/test.py  # Run specific test file
+```
+
+### Database Migrations
+
+```bash
+# Create new migration
+alembic revision --autogenerate -m "description"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback
+alembic downgrade -1
+```
+
+**Migration config**: `src/app/infrastructure/persistence_sqla/alembic.ini`
+
+### References
+
+- Configuration system: [README.md](mdc:README.md#configuration)
+- Makefile: [Makefile](mdc:Makefile)
+- Technical steering: [docs/steering/tech.md](mdc:docs/steering/tech.md)
