@@ -31,12 +31,12 @@ class UserResponse(BaseModel):
             UserResponse instance
         """
         return cls(
-            id=user.id,
+            id=str(user.id_.value),
             email=user.email.value,
             first_name=user.first_name.value,
             last_name=user.last_name.value,
             role=user.role.value,
-            is_active=user.is_active,
-            created_at=user.created_at.isoformat(),
-            updated_at=user.updated_at.isoformat(),
+            is_active=user.is_active.value,
+            created_at=user.created_at.value.isoformat(),
+            updated_at=user.updated_at.value.isoformat(),
         )

@@ -22,5 +22,7 @@ fields = [
     "mailgun.DOMAIN",
     "mailgun.API_KEY",
     # Stripe from secrets
-    "stripe.STRIPE_API_KEY"
+    "stripe.STRIPE_API_KEY",
+    # Admin configuration
+    "admin.USER_ADMIN",
 ]

@@ -8,6 +8,7 @@ from typing import Annotated
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Security, status
+from fastapi.security import HTTPAuthorizationCredentials
 from fastapi_error_map import ErrorAwareRouter, rule
 
 from app.application.commands.auth.upgrade_to_admin import (
@@ -51,13 +52,14 @@ def create_upgrade_to_admin_router() -> APIRouter:
         },
         default_on_error=log_info,
         status_code=status.HTTP_200_OK,
-        dependencies=[Security(bearer_scheme)],
     )
     @inject
     async def upgrade_to_admin(
-        authorization: Annotated[str, Security(bearer_scheme)],
+        credentials: Annotated[HTTPAuthorizationCredentials, Security(bearer_scheme)],
         interactor: FromDishka[UpgradeToAdminInteractor],
     ) -> UserResponse:
+        # Extract "Bearer <token>" format from credentials
+        authorization = f"{credentials.scheme} {credentials.credentials}"
         request_data = UpgradeToAdminRequest(authorization=authorization)
         updated_user = await interactor.execute(request_data)
         return UserResponse.from_domain(updated_user)

@@ -1,8 +1,6 @@
 import logging
-from collections.abc import Sequence
-from datetime import datetime
 
-from sqlalchemy import ColumnElement, Result, Row, Select, select
+from sqlalchemy import Select, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.application.common.ports.user_query_gateway import UserQueryGateway
@@ -13,13 +11,21 @@ from app.domain.enums.user_role import UserRole
 from app.infrastructure.adapters.constants import DB_QUERY_FAILED
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.exceptions.gateway import ReaderError
-from app.domain.entities.user import User
+from app.infrastructure.persistence_sqla.mappings.user import map_users_table
+from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 log = logging.getLogger(__name__)
+
+# Valid sorting fields (column names in the users table)
+VALID_SORTING_FIELDS = {
+    "id", "email", "first_name", "last_name", "role", 
+    "is_active", "is_blocked", "is_verified", "created_at", "updated_at"
+}
 
 
 class SqlaUserReader(UserQueryGateway):
     def __init__(self, session: MainAsyncSession):
+        map_users_table()
         self._session = session
 
     async def read_all(
@@ -29,56 +35,60 @@ class SqlaUserReader(UserQueryGateway):
         """
         :raises ReaderError:
         """
-        # Get the sorting field attribute from User entity
-        sorting_field_attr = getattr(User, user_read_all_params.sorting.sorting_field, None)
-        if sorting_field_attr is None:
+        sorting_field = user_read_all_params.sorting.sorting_field
+        
+        # Validate sorting field
+        if sorting_field not in VALID_SORTING_FIELDS:
             log.error(
-                "Invalid sorting field: '%s'.",
-                user_read_all_params.sorting.sorting_field,
+                "Invalid sorting field: '%s'. Valid fields: %s",
+                sorting_field,
+                VALID_SORTING_FIELDS,
             )
             return None
 
-        order_by = (
-            sorting_field_attr.asc()
-            if user_read_all_params.sorting.sorting_order == SortingOrder.ASC
-            else sorting_field_attr.desc()
-        )
-
-        select_stmt: Select[tuple[User]] = (
-            select(User)
-            .order_by(order_by)
-            .limit(user_read_all_params.pagination.limit)
-            .offset(user_read_all_params.pagination.offset)
-        )
-
         try:
-            result: Result[tuple[User]] = await self._session.execute(select_stmt)
-            users: Sequence[Row[tuple[User]]] = result.all()
+            users_table = mapping_registry.metadata.tables["users"]
+            sorting_column = users_table.c[sorting_field]
+            
+            order_by = (
+                sorting_column.asc()
+                if user_read_all_params.sorting.sorting_order == SortingOrder.ASC
+                else sorting_column.desc()
+            )
+
+            select_stmt: Select = (
+                select(users_table)
+                .order_by(order_by)
+                .limit(user_read_all_params.pagination.limit)
+                .offset(user_read_all_params.pagination.offset)
+            )
+
+            rows = (await self._session.execute(select_stmt)).mappings().all()
 
             return [
                 UserQueryModel(
-                    id=user[0].id.value,
-                    email=user[0].email.value,
-                    first_name=user[0].first_name.value,
-                    last_name=user[0].last_name.value,
-                    role=user[0].role,
-                    is_active=user[0].is_active.value,
-                    is_blocked=user[0].is_blocked.value,
-                    is_verified=user[0].is_verified.value,
-                    retry_count=user[0].retry_count.value,
-                    created_at=user[0].created_at.value,
-                    updated_at=user[0].updated_at.value,
-                    last_login=user[0].last_login.value if user[0].last_login else None,
-                    profile_picture=user[0].profile_picture.value if user[0].profile_picture else None,
-                    phone_number=user[0].phone_number.value if user[0].phone_number else None,
-                    language=user[0].language.value,
-                    address=user[0].address.value if user[0].address else None,
-                    postal_code=user[0].postal_code.value if user[0].postal_code else None,
-                    country_id=user[0].country_id.value if user[0].country_id else None,
-                    city_id=user[0].city_id.value if user[0].city_id else None,
-                    subscription=user[0].subscription.value if user[0].subscription else None,
+                    id=row["id"],
+                    email=row["email"],
+                    first_name=row["first_name"],
+                    last_name=row["last_name"],
+                    role=UserRole(row["role"]),
+                    is_active=row["is_active"],
+                    is_blocked=row["is_blocked"],
+                    is_verified=row["is_verified"],
+                    retry_count=row["retry_count"] or 0,
+                    created_at=row["created_at"],
+                    updated_at=row["updated_at"],
+                    last_login=row["last_login"],
+                    profile_picture=row["profile_picture"],
+                    phone_number=row["phone_number"],
+                    language=row["language"] or "en",
+                    address=row["address"],
+                    postal_code=row["postal_code"],
+                    country_id=row["country_id"],
+                    city_id=row["city_id"],
+                    subscription=row["subscription"],
                 )
-                for user in users
+                for row in rows
             ]
 
         except SQLAlchemyError as error:
