@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "giga": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "https://mcp.gigamind.dev/mcp"
+      ]
+    },
+    "spec-workflow": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pimzino/spec-workflow-mcp@latest",
+        "/home/ubuntu/anvil_backend"
+      ]
+    }
+  }
+}
