@@ -1,0 +1,20 @@
+---
+globs: tests/**/*.py,routes/test/**/*.py,testing/**/*.py
+description: How to run tests and where to find them
+---
+
+## Testing Guide
+
+- **Locations**:
+  - Core tests: [tests/](mdc:tests/README.md)
+  - Route tests: [routes/test/](mdc:routes/test/README.md)
+  - Extended scenarios/integration: [testing/](mdc:testing/README.md)
+
+- **Run** (activate the `faststrat` conda env first):
+  - Windows (Anaconda Prompt): `conda activate faststrat` then `python -m pytest tests/ routes/test/ -v`
+  - Test deps: [tests/requirements-test.txt](mdc:tests/requirements-test.txt)
+
+- **Notes**:
+  - Route tests create isolated `FastAPI` apps and mock external services; you don’t need the main server running.
+  - See additional instructions: [tests/test_content_generation_endpoint/INSTRUCCIONES.md](mdc:tests/test_content_generation_endpoint/INSTRUCCIONES.md)
+

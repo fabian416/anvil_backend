@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+description: Expectations for code output from the assistant
+---
+
+## Assistant Output Expectations
+
+- When asked to output code, provide the **complete and accurate code**, with all necessary imports and no placeholders.
+- Prefer applying **edits directly to files** over dumping large code blocks in chat. If code must be shown, ensure it’s runnable as-is.
+- Avoid hallucinations: reference existing modules and patterns from the codebase.
+

@@ -1,0 +1,315 @@
+---
+description: Async Workflows Architecture - Post-Enqueue Tasks & Service Layer Patterns
+globs: src/routes/ai_brand_os/**/*.py, src/tasks/**/*.py, src/services/ai_brand_os/**/*.py
+alwaysApply: true
+---
+
+# Async Workflows Architecture Patterns
+
+## Post-Enqueueing Task Scheduling
+
+### Two Valid Patterns
+
+**Pattern 1: Endpoint Scheduling** (Questions Workflow)
+```python
+@router.post("/question/async/")
+async def get_question_async(request: QuestionTaskRequest):
+    # 1. Enqueue main task
+    task = simple_question_task.delay(...)
+    
+    # 2. Schedule validation (5s delay)
+    celery_app.send_task(
+        "validation.fix_and_retry",
+        args=[chat_id, question_index, True, 10],
+        countdown=5
+    )
+    
+    # 3. Schedule telemetry (60s delay with validation)
+    if plan_id and checklist_status in ['PENDING', 'IN_PROGRESS']:
+        celery_app.send_task(
+            "research.recompute_plan_telemetry",
+            args=[chat_id, plan_id],
+            countdown=60
+        )
+    
+    # 4. Return immediately
+    return JSONResponse({"task_id": task.id}, status_code=202)
+```
+
+**Pattern 2: Worker Scheduling** (Research Workflow)
+```python
+@router.post("/research/async/")
+async def start_async_research(request: ResearchAsyncRequest):
+    # 1. Enqueue only - no post-tasks
+    task = celery_app.send_task("research.process_question", ...)
+    
+    # 2. Return immediately
+    return JSONResponse({"task_id": task.id}, status_code=202)
+
+# Worker schedules after completion
+@celery_app.task(name="research.process_question")
+def process_research_question(...):
+    # Execute research
+    result = asyncio.run(research_service.execute_research_question(...))
+    
+    # Schedule validation AFTER research completes
+    if should_validate_research():
+        celery_app.send_task("validation.fix_and_retry", ..., countdown=5)
+    
+    return result
+```
+
+### When to Use Each Pattern
+
+| Use Endpoint Scheduling When | Use Worker Scheduling When |
+|------------------------------|---------------------------|
+| Simple, linear flow | Complex prerequisite logic |
+| Always need post-tasks | Conditional post-tasks |
+| No execution dependencies | Sequential execution (Q54-58) |
+| Fast task completion | Long-running operations |
+
+**Examples**:
+- ✅ Endpoint: Question suggestions (always validate, always recompute telemetry)
+- ✅ Worker: Research tasks (conditional validation, prerequisite-dependent telemetry)
+
+### Post-Enqueue Task Types
+
+**1. Validation Task** (`validation.fix_and_retry`)
+- **Purpose**: Audit task status vs validation results
+- **Delay**: 5 seconds (wait for main task)
+- **Actions**: Fix status mismatches, trigger retries if needed
+- **Scheduled**: Both patterns (endpoint or worker)
+
+**2. Telemetry Recompute** (`research.recompute_plan_telemetry`)
+- **Purpose**: Aggregate plan-level metrics
+- **Delay**: 60 seconds (wait for task + validation)
+- **Actions**: Update cost, tokens, validation stats
+- **Scheduled**: Questions endpoint, Research via retry manager only
+
+---
+
+## Service Layer Architecture Pattern
+
+### Always Use Service Layer for Business Logic
+
+**❌ ANTI-PATTERN: Business Logic in Endpoints**
+```python
+# DON'T DO THIS
+@router.get("/research/")
+async def get_research_response_refactored(...):
+    # 500+ lines of business logic
+    # - Permission checks
+    # - Duplicate detection
+    # - Research execution
+    # - Result storage
+    # - Checklist updates
+    
+    # ❌ Problems:
+    # - Tightly coupled to HTTP
+    # - Can't reuse in workers
+    # - Hard to test
+    # - Logic duplication
+    
+    return JSONResponse(...)
+```
+
+**✅ CORRECT PATTERN: Service Layer**
+```python
+# Service class with business logic
+class ResearchService:
+    """Reusable business logic for research operations"""
+    
+    def __init__(self):
+        self.execution_manager = ResearchExecutionManager()
+        self.user_service = UserService()
+        self.firebase_manager = FirebaseUserManager()
+        self._checklist_mgr = ResearchChecklistManager()
+    
+    async def execute_research_question(
+        self,
+        session_id: str,
+        chat_id: str,
+        question_index: int,
+        language: str,
+        chat_model: str,
+        is_auto_execution: bool = False,
+        celery_task_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Core business logic - reusable everywhere.
+        
+        Can be called from:
+        - FastAPI endpoints (sync/async)
+        - Celery workers
+        - Admin tools
+        - Test suites
+        - CLI scripts
+        """
+        # Check duplicates
+        # Validate prerequisites
+        # Execute research
+        # Store results
+        # Update checklist
+        return result
+
+
+# Endpoint - THIN WRAPPER
+@router.post("/research/async/")
+async def start_async_research(request: ResearchAsyncRequest):
+    """Endpoint handler - delegates to service"""
+    # Just enqueue the worker
+    task = celery_app.send_task("research.process_question", ...)
+    return JSONResponse({"task_id": task.id}, status_code=202)
+
+
+# Celery worker - THIN WRAPPER
+@celery_app.task(name="research.process_question")
+def process_research_question(...):
+    """Worker - delegates to service"""
+    service = ResearchService()
+    result = asyncio.run(service.execute_research_question(...))
+    return result
+```
+
+### Benefits of Service Layer
+
+| Aspect | Without Service Layer | With Service Layer |
+|--------|----------------------|-------------------|
+| **Reusability** | Endpoints only | Endpoints, workers, tools, tests |
+| **Testing** | Requires HTTP context | Direct unit tests |
+| **Dependencies** | FastAPI required | Pure business logic |
+| **Maintainability** | Hard to refactor | Easy to refactor |
+| **Code Duplication** | High (sync/async endpoints) | None (single source) |
+
+### Service Layer File Structure
+
+```
+src/
+├── routes/
+│   └── ai_brand_os/
+│       ├── research_async.py        # ✅ Thin wrapper endpoint
+│       └── questions_async.py       # ✅ Thin wrapper endpoint
+│
+├── services/
+│   └── ai_brand_os/
+│       ├── research/
+│       │   ├── research_service.py          # ✅ Business logic HERE
+│       │   ├── checklist_manager.py         # ✅ Supporting service
+│       │   ├── execution_manager.py         # ✅ Supporting service
+│       │   └── validation_fix_service.py    # ✅ Supporting service
+│       │
+│       └── questions/
+│           └── question_service.py          # ✅ Business logic HERE
+│
+└── tasks/
+    ├── research_tasks_exact.py      # ✅ Thin wrapper worker
+    └── question_tasks_clean.py      # ✅ Business logic (legacy pattern)
+```
+
+### Creating New Async Workflows
+
+**✅ DO: Follow Service Layer Pattern**
+```python
+# Step 1: Create service class
+# File: src/services/my_feature/my_service.py
+class MyFeatureService:
+    async def process_feature(self, ...):
+        # ALL business logic here
+        pass
+
+# Step 2: Create thin endpoint
+# File: src/routes/my_feature_async.py
+@router.post("/my-feature/async/")
+async def start_async_feature(request: FeatureRequest):
+    # Enqueue task
+    task = celery_app.send_task("my_feature.process", ...)
+    
+    # Schedule post-enqueue tasks (if needed)
+    if simple_flow:
+        # Pattern 1: Schedule in endpoint
+        celery_app.send_task("validation.fix_and_retry", ..., countdown=5)
+    
+    return JSONResponse({"task_id": task.id}, status_code=202)
+
+# Step 3: Create thin worker
+# File: src/tasks/my_feature_tasks.py
+@celery_app.task(name="my_feature.process")
+def process_feature_task(...):
+    service = MyFeatureService()
+    result = asyncio.run(service.process_feature(...))
+    
+    if complex_flow:
+        # Pattern 2: Schedule in worker
+        celery_app.send_task("validation.fix_and_retry", ..., countdown=5)
+    
+    return result
+```
+
+---
+
+## Testing Service Layer
+
+**✅ Direct Service Testing (Preferred)**
+```python
+import pytest
+from src.services.ai_brand_os.research.research_service import ResearchService
+
+@pytest.mark.asyncio
+async def test_research_service():
+    # No HTTP context needed!
+    service = ResearchService()
+    
+    result = await service.execute_research_question(
+        session_id="test",
+        chat_id="test",
+        question_index=9,
+        language="English",
+        chat_model="gemini-flash"
+    )
+    
+    assert result["status"] == "success"
+    assert "research" in result
+```
+
+**❌ HTTP Testing (Only for Integration Tests)**
+```python
+from fastapi.testclient import TestClient
+
+def test_endpoint_integration():
+    # Use only for integration tests
+    client = TestClient(app)
+    response = client.post("/research/async/", json={...})
+    assert response.status_code == 202
+```
+
+---
+
+## Key Takeaways
+
+1. **Post-Enqueue Scheduling**: Two valid patterns - choose based on complexity
+   - Endpoint scheduling: Simple, always-on flows
+   - Worker scheduling: Complex, conditional flows
+
+2. **Service Layer**: ALWAYS separate business logic from HTTP layer
+   - Service class: Business logic
+   - Endpoint: Thin wrapper (enqueue + return)
+   - Worker: Thin wrapper (call service)
+
+3. **Testing**: Test service layer directly, not through HTTP
+
+4. **Reusability**: Service layer enables reuse across endpoints, workers, tools, tests
+
+---
+
+## Related Documentation
+
+- [POST_ENQUEUE_TASKS_AND_ARCHITECTURE_SPEC.md](mdc:docs/architecture/async/POST_ENQUEUE_TASKS_AND_ARCHITECTURE_SPEC.md) - Complete architectural specification
+- [ASYNC_WORKFLOWS_VALIDATION_REPORT.md](mdc:docs/architecture/async/ASYNC_WORKFLOWS_VALIDATION_REPORT.md) - Validation report
+- [src/services/ai_brand_os/research/research_service.py](mdc:src/services/ai_brand_os/research/research_service.py) - Production example
+- [src/routes/ai_brand_os/questions_async.py](mdc:src/routes/ai_brand_os/questions_async.py) - Endpoint scheduling example
+- [src/tasks/research_tasks_exact.py](mdc:src/tasks/research_tasks_exact.py) - Worker scheduling example
+
+---
+
+**Last Updated**: 2025-11-16  
+**Status**: ✅ Production Pattern - Follow for all new async workflows

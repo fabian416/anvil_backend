@@ -1,0 +1,24 @@
+---
+globs: routes/payments/**/*.py,services/payments/**/*.py,integrations/payments/stripe/**/*.py
+description: Stripe-only payments integration, endpoints, and configuration
+---
+
+## Payments – Stripe Only
+
+- **Primary endpoints**:
+  - `/payments/purchase` in [routes/payments.py](mdc:routes/payments.py)
+  - Stripe-specific routes in [routes/payments/stripe.py](mdc:routes/payments/stripe.py) (e.g., `/stripe/obtain-plan`, `/stripe/webhook`, confirmations and seat/client ops)
+
+- **Client/Adapter**:
+  - Stripe client: [integrations/payments/stripe/client.py](mdc:integrations/payments/stripe/client.py)
+  - Adapter: [services/payments/stripe_adapter.py](mdc:services/payments/stripe_adapter.py)
+
+- **Environment**:
+  - `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET`, `FRONTEND_URL`
+
+- **Docs**:
+  - Overview: [docs/PAYMENT_SYSTEM_STRIPE_ONLY.md](mdc:docs/PAYMENT_SYSTEM_STRIPE_ONLY.md)
+  - Endpoint details: [routes/payments/stripe.md](mdc:routes/payments/stripe.md)
+
+- **Permissions**: protect purchase/upgrade/seat endpoints using the permissions decorators (see Permissions rule).
+

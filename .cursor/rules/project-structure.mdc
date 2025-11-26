@@ -1,0 +1,42 @@
+---
+alwaysApply: true
+description: Project structure, app entry, routers, and how to add endpoints
+---
+
+## FastStrat Backend – Project Structure Guide
+
+- **Main entry**: [main.py](mdc:main.py)
+  - Creates the FastAPI `app` and registers routers.
+  - Included routers:
+    - [routes/users.py](mdc:routes/users.py) (`users_router`)
+    - [routes/plans.py](mdc:routes/plans.py) (`plans_router`)
+    - [routes/admin_users.py](mdc:routes/admin_users.py) (`admin_router`)
+    - [routes/agencies.py](mdc:routes/agencies.py) (`agencies_router`)
+    - [routes/payments.py](mdc:routes/payments.py) (`payments_router`)
+    - [routes/dashboard.py](mdc:routes/dashboard.py) (`dashboard_router`)
+    - [routes/crm/zoho/zoho.py](mdc:routes/crm/zoho/zoho.py)
+    - [routes/test_plan_update.py](mdc:routes/test_plan_update.py)
+
+- **Payments (Stripe)**:
+  - Additional Stripe endpoints under [routes/payments/stripe.py](mdc:routes/payments/stripe.py) (prefix `/stripe`).
+
+- **Notable built-in endpoints** (in [main.py](mdc:main.py)):
+  - `GET /init`, `GET /question`, `GET /answer`, `GET /research`
+  - Content/Image: `/content_generation`, `/imagen_generate`, `/imagen_simple`, `/content_with_image`
+  - PDFs/Reports: `GET /download-research-pdf/{session_id}/{task_name}`, `GET /list-research-pdfs/{session_id}`
+
+- **Run locally**:
+  - `uvicorn main:app --reload --port 8000`
+  - Container entry uses Uvicorn; see [Dockerfile](mdc:Dockerfile)
+
+- **Add a new endpoint**:
+  - Create an `APIRouter` in `routes/<module>.py` and include it from [main.py](mdc:main.py).
+  - Use consistent `tags` and `prefix`.
+  - Protect routes with permissions (see Permissions rule).
+
+- **Key layers and locations**:
+  - Services/business logic: [services/](mdc:services/__init__.py)
+  - Data models/enums/config: [database/](mdc:database/README.md)
+  - Integrations: [integrations/](mdc:integrations/zapier/README.md)
+  - API routes: [routes/](mdc:routes/docs/README.md)
+

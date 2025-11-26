@@ -1,0 +1,174 @@
+---
+description: Async Architecture Quick Reference Card
+globs: src/routes/**/*.py, src/tasks/**/*.py, src/services/**/*.py
+alwaysApply: true
+---
+
+# Async Architecture Quick Reference
+
+## Decision Tree: Post-Enqueue Task Scheduling
+
+```
+Need to schedule validation/telemetry tasks after main task?
+│
+├─ Is flow simple and linear?
+│  └─ YES → Schedule in ENDPOINT ✅
+│     Example: questions_async.py
+│     
+└─ Is flow complex with prerequisites?
+   └─ YES → Schedule in WORKER ✅
+      Example: research_tasks_exact.py
+```
+
+## Code Templates
+
+### Template 1: Endpoint Scheduling (Simple Flows)
+
+```python
+@router.post("/feature/async/")
+async def start_async_feature(request: FeatureRequest):
+    # 1. Enqueue main task
+    task = celery_app.send_task("feature.process", ...)
+    
+    # 2. Schedule validation (fire-and-forget)
+    try:
+        celery_app.send_task(
+            "validation.fix_and_retry",
+            args=[chat_id, index, True, 10],
+            countdown=5
+        )
+    except Exception as e:
+        logger.warning(f"Validation scheduling failed: {e}")
+    
+    # 3. Return immediately
+    return JSONResponse({"task_id": task.id}, status_code=202)
+```
+
+### Template 2: Worker Scheduling (Complex Flows)
+
+```python
+@router.post("/feature/async/")
+async def start_async_feature(request: FeatureRequest):
+    # Just enqueue - worker handles post-tasks
+    task = celery_app.send_task("feature.process", ...)
+    return JSONResponse({"task_id": task.id}, status_code=202)
+
+@celery_app.task(name="feature.process")
+def process_feature(...):
+    # Execute main logic
+    result = execute_logic(...)
+    
+    # Schedule validation AFTER completion
+    if should_validate():
+        celery_app.send_task("validation.fix_and_retry", ..., countdown=5)
+    
+    return result
+```
+
+### Template 3: Service Layer (Always Use)
+
+```python
+# Service (business logic)
+class FeatureService:
+    async def execute_feature(self, ...):
+        # ALL business logic here
+        pass
+
+# Endpoint (thin wrapper)
+@router.post("/feature/async/")
+async def feature_endpoint(request: FeatureRequest):
+    task = celery_app.send_task("feature.process", ...)
+    return JSONResponse({"task_id": task.id}, status_code=202)
+
+# Worker (thin wrapper)
+@celery_app.task(name="feature.process")
+def feature_worker(...):
+    service = FeatureService()
+    return asyncio.run(service.execute_feature(...))
+```
+
+## Common Patterns
+
+### Pattern: Telemetry Scheduling with Validation
+
+```python
+# ALWAYS verify plan exists before scheduling telemetry
+from src.database.firestore.firebase_manager import FirebaseUserManager
+
+firebase = FirebaseUserManager()
+
+# 1. Get form
+form_ref = firebase.db.collection('forms').document(chat_id)
+form_doc = form_ref.get()
+
+if form_doc.exists:
+    form_data = form_doc.to_dict()
+    plan_id = form_data.get('plan_id')
+    
+    if plan_id:
+        # 2. Verify plan exists
+        plan_ref = firebase.db.collection('plans').document(plan_id)
+        plan_doc = plan_ref.get()
+        
+        if plan_doc.exists:
+            # 3. Check checklist status
+            checklist_ref = firebase.db.collection('research_checklists').document(chat_id)
+            checklist_doc = checklist_ref.get()
+            
+            if checklist_doc.exists:
+                checklist_status = checklist_doc.to_dict().get('status')
+                
+                if checklist_status in ['PENDING', 'IN_PROGRESS']:
+                    # ✅ Safe to schedule
+                    celery_app.send_task(
+                        "research.recompute_plan_telemetry",
+                        args=[chat_id, plan_id],
+                        countdown=60
+                    )
+```
+
+### Pattern: Fire-and-Forget with Error Handling
+
+```python
+# Post-enqueue tasks should NEVER block the main response
+try:
+    celery_app.send_task(
+        "validation.fix_and_retry",
+        args=[chat_id, question_index, True, 10],
+        countdown=5
+    )
+    logger.info(f"Scheduled validation for {chat_id}")
+except Exception as e:
+    # Log but don't fail the request
+    logger.warning(f"Failed to schedule validation: {e}")
+```
+
+## Cheat Sheet
+
+| Question | Answer |
+|----------|--------|
+| Where does business logic go? | Service layer (`src/services/`) |
+| Where does HTTP handling go? | Endpoint (`src/routes/`) |
+| Where does Celery task setup go? | Worker (`src/tasks/`) |
+| When to schedule in endpoint? | Simple, always-on flows |
+| When to schedule in worker? | Complex, conditional flows |
+| How to test business logic? | Test service directly (no HTTP) |
+| Validation task delay? | 5 seconds |
+| Telemetry task delay? | 60 seconds |
+| Should post-tasks block response? | ❌ NO - fire and forget |
+
+## Real Examples in Codebase
+
+| Pattern | Example File | Lines |
+|---------|-------------|-------|
+| Endpoint scheduling | `src/routes/ai_brand_os/questions_async.py` | 99-177 |
+| Worker scheduling | `src/tasks/research_tasks_exact.py` | 711-737 |
+| Service layer | `src/services/ai_brand_os/research/research_service.py` | 191-1907 |
+| Validation task | `src/tasks/validation_tasks.py` | 18-191 |
+| Telemetry task | `src/tasks/research_tasks_exact.py` | 1673-1758 |
+
+---
+
+**Quick Links**:
+- Full Spec: [async-architecture.mdc](mdc:.cursor/rules/async-architecture.mdc)
+- Detailed Docs: [POST_ENQUEUE_TASKS_AND_ARCHITECTURE_SPEC.md](mdc:docs/architecture/async/POST_ENQUEUE_TASKS_AND_ARCHITECTURE_SPEC.md)

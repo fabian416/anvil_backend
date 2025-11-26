@@ -1,0 +1,28 @@
+---
+globs: routes/**/*.py
+description: How to protect endpoints with the FastStrat permissions system
+---
+
+## Permissions for Endpoints
+
+- **Use decorators** from [services/permissions](mdc:services/permissions/__init__.py):
+
+```python
+from services.permissions import require_permission, require_plan_access
+
+@router.post("/generate-content")
+@require_permission(action="generate_content", error_message="Permiso requerido")
+async def generate_content(request: Request, plan_id: str):
+    ...
+
+@router.post("/{plan_id}/use")
+@require_plan_access()
+async def use_plan_resources(plan_id: str, request: Request):
+    ...
+```
+
+- **Additional validators**: see [services/permissions/decorators/user_validators.py](mdc:services/permissions/decorators/user_validators.py).
+- **Permission matrix and manager**: [services/permissions/models/permission_matrix.py](mdc:services/permissions/models/permission_matrix.py), [services/permissions/managers/permission_manager.py](mdc:services/permissions/managers/permission_manager.py)
+- **Optional middleware**: [services/permissions/middleware/permission_middleware.py](mdc:services/permissions/middleware/permission_middleware.py) for global checks.
+- **Docs**: [README](mdc:services/permissions/docs/README.md), [Integration Guide](mdc:services/permissions/docs/integration_guide.md), [Current Permissions](mdc:services/permissions/docs/current_permissions.md)
+

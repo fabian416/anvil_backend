@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+description: Environment usage for all commands and executions
+---
+
+## Environment Usage
+
+- **Always use the `faststrat` conda environment** for commands, servers, and tests.
+  - Windows (Anaconda Prompt): `conda activate faststrat`
+- Install dependencies if needed: `python -m pip install -r requirements.txt`
+- Some features require env vars (examples):
+  - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET`
+  - Google: `GOOGLE_APPLICATION_CREDENTIALS`
+
