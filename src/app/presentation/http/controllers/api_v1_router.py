@@ -8,6 +8,9 @@ from app.presentation.http.controllers.subscription.router import create_subscri
 from app.presentation.http.controllers.notification.router import create_notification_router
 from app.presentation.http.controllers.payment.router import create_payment_router
 from app.presentation.http.controllers.auth.router import create_auth_router
+from app.presentation.http.controllers.chat.router import create_chat_router
+from app.presentation.http.controllers.admin.stats.router import create_admin_stats_router
+from app.presentation.http.controllers.admin.agent.router import create_admin_agent_router
 
 
 def create_api_v1_router() -> APIRouter:
@@ -24,6 +27,9 @@ def create_api_v1_router() -> APIRouter:
         create_notification_router(),
         create_payment_router(),
         create_auth_router(),
+        create_chat_router(),
+        create_admin_stats_router(),
+        create_admin_agent_router(),
     )
 
     for sub_router in sub_routers:
