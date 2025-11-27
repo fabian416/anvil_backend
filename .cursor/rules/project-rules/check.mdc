@@ -1,0 +1,61 @@
+# Check
+
+Perform comprehensive code quality and security checks.
+
+## Primary Task:
+Run `make code.check` (or `make code.lint` and `make code.test` separately) and resolve any resulting errors.
+
+## Important:
+- DO NOT commit any code during this process
+- DO NOT change version numbers
+- Focus only on fixing issues identified by checks
+
+## Common Checks Include:
+1. **Linting**: Code style and syntax errors (ruff)
+2. **Type Checking**: Python type errors (mypy)
+3. **Unit Tests**: Failing test cases (pytest)
+4. **Security Scan**: Vulnerability detection
+5. **Code Formatting**: Style consistency (ruff format)
+6. **Build Verification**: Compilation errors
+7. **Slots Validation**: `__slots__` usage (slotscheck)
+
+## Process:
+1. Run the check command: `make code.check`
+2. Analyze output for errors and warnings
+3. Fix issues in priority order:
+   - Build-breaking errors first
+   - Test failures
+   - Linting errors
+   - Type checking errors
+   - Warnings
+4. Re-run checks after each fix
+5. Continue until all checks pass
+
+## For This Project (Python/FastAPI):
+- **Formatting**: `make code.format` or `ruff format`
+- **Linting**: `make code.lint` or `ruff check`
+- **Type Checking**: `mypy` (runs as part of `make code.lint`)
+- **Testing**: `make code.test` or `pytest`
+- **All Checks**: `make code.check` (runs lint + test)
+
+## For Different Project Types:
+- **JavaScript/TypeScript**: `npm run check` or `yarn check`
+- **Python (General)**: `ruff format`, `ruff check`, `mypy`
+- **Rust**: `cargo check`, `cargo clippy`
+- **Go**: `go vet`, `golint`
+- **Swift**: `swift-format`, `swiftlint`
+
+## Project-Specific Commands:
+```bash
+# Format code
+make code.format
+
+# Lint (ruff + mypy + slotscheck)
+make code.lint
+
+# Run tests
+make code.test
+
+# Run all checks
+make code.check
+```

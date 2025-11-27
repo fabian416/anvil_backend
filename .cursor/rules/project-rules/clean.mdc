@@ -1,0 +1,48 @@
+# Clean
+
+Fix all code formatting and quality issues in the entire codebase.
+
+## Python Projects (This Project):
+Fix all `ruff` formatting, linting, and `mypy` type checking issues
+
+### Steps:
+1. **Format with Ruff**: `ruff format .` or `make code.format`
+2. **Fix linting issues with Ruff**: `ruff check --fix .` or `make code.lint`
+3. **Resolve mypy type errors**: `mypy .` (runs as part of `make code.lint`)
+4. **Check slots**: `slotscheck src` (runs as part of `make code.lint`)
+
+### Using Makefile (Recommended):
+```bash
+make code.format  # Format code with ruff
+make code.lint    # Run ruff check, slotscheck, and mypy
+make code.check   # Run both lint and test
+```
+
+## JavaScript/TypeScript Projects:
+Fix all ESLint, Prettier, and TypeScript issues
+
+### Steps:
+1. **Format with Prettier**: `npx prettier --write .`
+2. **Fix ESLint issues**: `npx eslint . --fix`
+3. **Check TypeScript**: `npx tsc --noEmit`
+
+## General Process:
+1. Run automated formatters first
+2. Fix remaining linting issues manually
+3. Resolve type checking errors
+4. Verify all tools pass with no errors
+5. Review changes before committing
+
+## Common Issues:
+- Import order conflicts between tools
+- Line length violations (88 chars for this project)
+- Unused imports/variables
+- Type annotation requirements
+- Missing return types
+- Inconsistent quotes/semicolons
+
+## Project-Specific Notes:
+- This project uses **ruff** instead of black/isort/flake8
+- Line length: 88 characters (ruff default)
+- Type checking: mypy with strict mode
+- Code quality: slotscheck for `__slots__` validation

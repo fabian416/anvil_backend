@@ -35,6 +35,9 @@ from app.infrastructure.persistence_sqla.mappings.subscription import map_subscr
 from app.infrastructure.persistence_sqla.mappings.subscription_user import map_subscription_users_table
 from app.infrastructure.persistence_sqla.mappings.user import map_users_table
 from app.infrastructure.persistence_sqla.mappings.user_event import map_user_events_table
+from app.infrastructure.persistence_sqla.mappings.conversation import map_conversation_table
+from app.infrastructure.persistence_sqla.mappings.message import map_message_table
+from app.infrastructure.persistence_sqla.mappings.agent_session import map_agent_session_table
 
 
 def map_tables() -> None:
@@ -49,4 +52,9 @@ def map_tables() -> None:
     map_sessions_table()
     map_subscriptions_table()
     map_subscription_users_table()
+
     map_user_events_table()
+    # DeFi Chat mappings
+    map_conversation_table()
+    map_message_table()
+    map_agent_session_table()
