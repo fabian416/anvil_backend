@@ -34,13 +34,13 @@ from app.infrastructure.persistence_sqla.mappings.session import map_sessions_ta
 from app.infrastructure.persistence_sqla.mappings.subscription import map_subscriptions_table
 from app.infrastructure.persistence_sqla.mappings.subscription_user import map_subscription_users_table
 from app.infrastructure.persistence_sqla.mappings.user import map_users_table
-from app.infrastructure.persistence_sqla.mappings.user_event import map_user_events_table
 from app.infrastructure.persistence_sqla.mappings.conversation import map_conversation_table
 from app.infrastructure.persistence_sqla.mappings.message import map_message_table
 from app.infrastructure.persistence_sqla.mappings.agent_session import map_agent_session_table
 from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
 from app.infrastructure.persistence_sqla.mappings.transaction import map_transaction_table
 from app.infrastructure.persistence_sqla.mappings.defi_operations import map_defi_operations_tables
+from app.infrastructure.persistence_sqla.mappings.ai_telemetry import map_ai_telemetry_tables
 
 
 def map_tables() -> None:
@@ -55,8 +55,6 @@ def map_tables() -> None:
     map_sessions_table()
     map_subscriptions_table()
     map_subscription_users_table()
-
-    map_user_events_table()
     # DeFi Chat mappings
     map_conversation_table()
     map_message_table()
@@ -66,3 +64,5 @@ def map_tables() -> None:
     map_transaction_table()
     # DeFi Operations
     map_defi_operations_tables()
+    # AI Telemetry
+    map_ai_telemetry_tables()
