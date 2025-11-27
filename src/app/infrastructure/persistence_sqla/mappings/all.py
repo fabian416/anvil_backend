@@ -41,6 +41,7 @@ from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_table
 from app.infrastructure.persistence_sqla.mappings.transaction import map_transaction_table
 from app.infrastructure.persistence_sqla.mappings.defi_operations import map_defi_operations_tables
 from app.infrastructure.persistence_sqla.mappings.ai_telemetry import map_ai_telemetry_tables
+from app.infrastructure.persistence_sqla.mappings.system_config import map_system_config_tables
 
 
 def map_tables() -> None:
@@ -66,3 +67,5 @@ def map_tables() -> None:
     map_defi_operations_tables()
     # AI Telemetry
     map_ai_telemetry_tables()
+    # System Config
+    map_system_config_tables()
