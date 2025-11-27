@@ -8,12 +8,18 @@ from typing import Annotated, Any, Optional
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import Query, Security, status
+from fastapi_error_map import rule
 from pydantic import BaseModel, Field
 
 from app.application.common.services.current_user import CurrentUserService
 from app.application.metrics.ports import UserMetricsRepository, UserEventFilter
+from app.domain.exceptions.auth import InsufficientPermissionsError
+from app.infrastructure.auth.exceptions import AuthenticationError
+from app.infrastructure.exceptions.gateway import DataMapperError
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.presentation.http.controllers.metrics.router import router
+from app.presentation.http.errors.callbacks import log_error, log_info
+from app.presentation.http.errors.translators import ServiceUnavailableTranslator
 
 
 class UserMetricsSummaryResponse(BaseModel):
@@ -42,6 +48,15 @@ class EventListResponse(BaseModel):
     summary="Get My Metrics Summary",
     description="Get a summary of your activity metrics.",
     dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        DataMapperError: rule(
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            translator=ServiceUnavailableTranslator(),
+            on_error=log_error,
+        ),
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_my_metrics(
@@ -84,6 +99,15 @@ async def get_my_metrics(
     summary="Get My Events",
     description="Get a list of your tracked events with optional filters.",
     dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        DataMapperError: rule(
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            translator=ServiceUnavailableTranslator(),
+            on_error=log_error,
+        ),
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_my_events(
@@ -122,6 +146,16 @@ async def get_my_events(
     summary="Get Platform Metrics Summary (Admin)",
     description="Get platform-wide metrics summary. Requires admin role.",
     dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+        DataMapperError: rule(
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            translator=ServiceUnavailableTranslator(),
+            on_error=log_error,
+        ),
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_platform_metrics(
@@ -134,7 +168,7 @@ async def get_platform_metrics(
     
     # Check admin role
     if current_user.role.value != "admin":
-        return {"error": "Admin access required"}
+        raise InsufficientPermissionsError("Admin access required")
     
     from_date = datetime.utcnow() - timedelta(days=days)
     

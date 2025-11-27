@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from dishka import Provider
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
@@ -7,6 +10,27 @@ from app.setup.app_factory import configure_app, create_app, create_async_ioc_co
 from app.setup.config.logs import configure_logging
 from app.setup.config.settings import AppSettings, load_settings
 from app.setup.ioc.provider_registry import get_providers
+
+
+def _load_env_file() -> None:
+    """Load environment variables from .env.{APP_ENV} file if it exists."""
+    app_env = os.getenv("APP_ENV", "local")
+    # Find project root (where config/ directory is)
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        env_file = parent / "config" / app_env / f".env.{app_env}"
+        if env_file.exists():
+            with open(env_file) as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        key, _, value = line.partition("=")
+                        os.environ.setdefault(key.strip(), value.strip())
+            break
+
+
+# Load env file on module import
+_load_env_file()
 
 
 def make_app(

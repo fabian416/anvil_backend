@@ -90,6 +90,21 @@ class LogInHandler:
         if user is None:
             raise UserNotFoundByEmailError(email)
 
+        # Check if user has a valid password hash (Privy users don't have passwords)
+        # A valid bcrypt hash starts with "$2" and has length >= 50
+        has_valid_password = (
+            user.password
+            and user.password.value
+            and len(user.password.value) >= 50
+            and user.password.value.decode("utf-8", errors="ignore").startswith("$2")
+        )
+        if not has_valid_password:
+            # User was created via Privy (wallet/social login) - no password
+            raise AuthenticationError(
+                "This account was created via wallet or social login. "
+                "Please use the same method to sign in."
+            )
+
         if not self._user_service.is_password_valid(user, password):
             self._user_service.increment_login_retry_count(user)
             await self._transaction_manager.commit()

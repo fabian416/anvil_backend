@@ -148,15 +148,16 @@ class InfrastructureProvider(Provider):
         source=AtlasSqlaCityReader,
         provides=AtlasCityReader,
     )
+    # These repositories depend on MainAsyncSession, so they must be REQUEST-scoped
     auth_session_repo = provide(
         source=SqlaAuthSessionRepository,
         provides=AuthSessionRepository,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
     password_reset_repo = provide(
         source=SqlaPasswordResetRepository,
         provides=PasswordResetRepository,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
     # Common Password Reset Port (create/read/mark used)
     common_password_reset_repo = provide(
@@ -231,6 +232,7 @@ def infrastructure_provider() -> InfrastructureProvider:
     provider = InfrastructureProvider()
 
     # SQLA Persistence
+    # Engine and session factory are APP-scoped (shared across requests)
     provider.provide(
         source=get_async_engine,
         scope=Scope.APP,
@@ -239,12 +241,14 @@ def infrastructure_provider() -> InfrastructureProvider:
         source=get_async_session_factory,
         scope=Scope.APP,
     )
+    # Sessions MUST be REQUEST-scoped to avoid concurrent operation errors
+    # Each request gets its own session instance from the shared factory
     provider.provide(
         source=get_main_async_session,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
     provider.provide(
         source=get_auth_async_session,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
     return provider

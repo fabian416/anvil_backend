@@ -50,15 +50,13 @@ This guide explains how the frontend should integrate with Privy and the Anvil b
 ### 1. Install Privy SDK
 
 ```bash
-npm install @privy-io/react-auth
-# or
-yarn add @privy-io/react-auth
+Ya esta listo ✅
 ```
 
 ### 2. Configure Privy Provider
 
 ```tsx
-// App.tsx or _app.tsx
+// 
 import { PrivyProvider } from '@privy-io/react-auth';
 
 function App({ children }) {

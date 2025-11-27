@@ -91,11 +91,15 @@ class SqlaUserDataMapper(UserCommandGateway):
         try:
             map_users_table()
             UsersTable = mapping_registry.metadata.tables["users"]  # type: ignore
+            
             update_values = {
                 "first_name": user.first_name.value,
                 "last_name": user.last_name.value,
-                "password": user.password.value.decode("utf-8", errors="ignore"),
+                "role": user.role.value,
+                "is_active": user.is_active.value,
+                "is_blocked": user.is_blocked.value,
                 "is_verified": user.is_verified.value,
+                "retry_count": user.retry_count.value,
                 "profile_picture": user.profile_picture.value if user.profile_picture else None,
                 "phone_number": user.phone_number.value if user.phone_number else None,
                 "language": user.language.value,
@@ -105,7 +109,19 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "city_id": user.city_id.value if user.city_id else None,
                 "last_login": user.last_login.value if user.last_login else None,
                 "updated_at": user.updated_at.value,
+                # Privy fields
+                "privy_user_id": user.privy_user_id.value if user.privy_user_id else None,
+                "primary_wallet_address": user.primary_wallet_address.value if user.primary_wallet_address else None,
+                "auth_provider": user.auth_provider.value if user.auth_provider else None,
             }
+            
+            # Only update password if it's a valid bcrypt hash (starts with $2)
+            # This prevents overwriting valid passwords with empty ones from Privy users
+            if user.password and user.password.value:
+                password_str = user.password.value.decode("utf-8", errors="ignore")
+                if password_str.startswith("$2"):  # Valid bcrypt hash
+                    update_values["password"] = password_str
+            
             await self._session.execute(
                 UsersTable.update().where(UsersTable.c.id == user.id_.value).values(**update_values)
             )
@@ -135,6 +151,50 @@ class SqlaUserDataMapper(UserCommandGateway):
         try:
             UsersTable = mapping_registry.metadata.tables["users"]  # type: ignore
             select_stmt: Select = select(UsersTable).where(UsersTable.c.email == email.value)
+            if for_update:
+                select_stmt = select_stmt.with_for_update()
+            row = (await self._session.execute(select_stmt)).mappings().first()
+            return self._row_to_user(row) if row else None
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def read_by_privy_user_id(
+        self,
+        privy_user_id: PrivyUserId,
+        for_update: bool = False,
+    ) -> User | None:
+        """
+        Find user by Privy user ID.
+        
+        :raises DataMapperError:
+        """
+        try:
+            UsersTable = mapping_registry.metadata.tables["users"]  # type: ignore
+            select_stmt: Select = select(UsersTable).where(
+                UsersTable.c.privy_user_id == privy_user_id.value
+            )
+            if for_update:
+                select_stmt = select_stmt.with_for_update()
+            row = (await self._session.execute(select_stmt)).mappings().first()
+            return self._row_to_user(row) if row else None
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def read_by_wallet_address(
+        self,
+        wallet_address: WalletAddress,
+        for_update: bool = False,
+    ) -> User | None:
+        """
+        Find user by primary wallet address.
+        
+        :raises DataMapperError:
+        """
+        try:
+            UsersTable = mapping_registry.metadata.tables["users"]  # type: ignore
+            select_stmt: Select = select(UsersTable).where(
+                UsersTable.c.primary_wallet_address == wallet_address.value
+            )
             if for_update:
                 select_stmt = select_stmt.with_for_update()
             row = (await self._session.execute(select_stmt)).mappings().first()

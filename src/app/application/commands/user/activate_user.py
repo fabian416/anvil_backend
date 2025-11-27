@@ -89,6 +89,7 @@ class ActivateUserInteractor:
         )
 
         self._user_service.toggle_user_activation(user, is_active=True)
+        await self._user_command_gateway.update(user)
         await self._transaction_manager.commit()
 
         log.info(

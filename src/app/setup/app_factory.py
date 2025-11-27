@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from dishka import AsyncContainer, Provider, make_async_container
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -80,6 +81,22 @@ def configure_app(
 ) -> None:
     app.include_router(root_router)
     app.add_middleware(ASGIAuthMiddleware)
+
+    # CORS middleware for frontend (Vite dev server on 5173)
+    origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     # https://github.com/encode/starlette/discussions/2451
 
     # Good place to register global exception handlers

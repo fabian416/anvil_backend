@@ -7,13 +7,19 @@ from typing import Annotated, Any, Optional
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import Security, status, Request
+from fastapi_error_map import rule
 from pydantic import BaseModel, Field
 
 from app.application.common.services.current_user import CurrentUserService
 from app.application.metrics.ports import UserMetricsRepository
 from app.domain.entities.user_event import UserEvent, EventTypes, EventCategories
+from app.domain.exceptions.base import DomainFieldError
+from app.infrastructure.auth.exceptions import AuthenticationError
+from app.infrastructure.exceptions.gateway import DataMapperError
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.presentation.http.controllers.metrics.router import router
+from app.presentation.http.errors.callbacks import log_error, log_info
+from app.presentation.http.errors.translators import ServiceUnavailableTranslator
 
 
 class TrackEventRequest(BaseModel):
@@ -84,6 +90,17 @@ class EventTypesResponse(BaseModel):
     Include any event-specific data in the properties object.
     """,
     dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        DomainFieldError: status.HTTP_400_BAD_REQUEST,
+        DataMapperError: rule(
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            translator=ServiceUnavailableTranslator(),
+            on_error=log_error,
+        ),
+        ValueError: status.HTTP_400_BAD_REQUEST,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def track_event(

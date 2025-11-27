@@ -79,6 +79,7 @@ class GrantAdminInteractor:
             raise UserNotFoundByEmailError(email)
 
         self._user_service.toggle_user_admin_role(user, is_admin=True)
+        await self._user_command_gateway.update(user)
         await self._transaction_manager.commit()
 
         log.info("Grant admin: done. Email: '%s'.", user.email.value)
