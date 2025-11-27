@@ -38,6 +38,9 @@ from app.infrastructure.persistence_sqla.mappings.user_event import map_user_eve
 from app.infrastructure.persistence_sqla.mappings.conversation import map_conversation_table
 from app.infrastructure.persistence_sqla.mappings.message import map_message_table
 from app.infrastructure.persistence_sqla.mappings.agent_session import map_agent_session_table
+from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
+from app.infrastructure.persistence_sqla.mappings.transaction import map_transaction_table
+from app.infrastructure.persistence_sqla.mappings.defi_operations import map_defi_operations_tables
 
 
 def map_tables() -> None:
@@ -58,3 +61,8 @@ def map_tables() -> None:
     map_conversation_table()
     map_message_table()
     map_agent_session_table()
+    # Wallet & Transactions
+    map_wallet_tables()
+    map_transaction_table()
+    # DeFi Operations
+    map_defi_operations_tables()
