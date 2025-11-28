@@ -1,0 +1,12 @@
+[submodule "libs/competitive-programmer-handbook-python"]
+	path = libs/competitive-programmer-handbook-python
+	url = git@github.com:abhishekgahlot/competitive-programmer-handbook-python.git
+[submodule "libs/agno"]
+	path = libs/agno
+	url = git@github.com:agno-agi/agno.git
+[submodule "libs/agent-squad"]
+	path = libs/agent-squad
+	url = git@github.com:awslabs/agent-squad.git
+[submodule "libs/python-toon"]
+	path = libs/python-toon
+	url = git@github.com:xaviviro/python-toon.git
