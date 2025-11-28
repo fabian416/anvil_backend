@@ -7,3 +7,6 @@
 [submodule "libs/agent-squad"]
 	path = libs/agent-squad
 	url = git@github.com:awslabs/agent-squad.git
+[submodule "libs/python-patterns"]
+	path = libs/python-patterns
+	url = git@github.com:faif/python-patterns.git
