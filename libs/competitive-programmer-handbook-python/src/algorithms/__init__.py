@@ -1,5 +1,6 @@
 from .graph import Graph, dijkstra, bellman_ford, edmonds_karp
 from .dp import knapsack_01, knapsack_unbounded, Item
+from .geometry import Point, convex_hull, cross_product
 
 __all__ = [
     "Graph",
@@ -8,5 +9,8 @@ __all__ = [
     "edmonds_karp",
     "knapsack_01",
     "knapsack_unbounded",
-    "Item"
+    "Item",
+    "Point",
+    "convex_hull",
+    "cross_product"
 ]

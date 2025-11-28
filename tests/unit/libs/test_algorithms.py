@@ -8,6 +8,7 @@ sys.path.append(lib_path)
 
 from algorithms.graph import Graph, dijkstra, bellman_ford, edmonds_karp
 from algorithms.dp import knapsack_01, Item
+from algorithms.geometry import Point, convex_hull
 
 def test_dijkstra():
     g = Graph[str]()
@@ -67,3 +68,29 @@ def test_knapsack():
     max_val, selected = knapsack_01(items, capacity)
     # Optimal: 20 (100) + 30 (120) = 220
     assert max_val == 220.0
+
+def test_convex_hull():
+    points = [
+        Point(0, 0),
+        Point(1, 1),
+        Point(2, 2), # Interior (collinear)
+        Point(0, 2),
+        Point(2, 0),
+        Point(1, 0.5) # Interior
+    ]
+    
+    hull = convex_hull(points)
+    
+    # Expected hull: (0,0) -> (2,0) -> (2,2) -> (0,2) (order may vary in start point, but must be CCW)
+    
+    assert len(hull) == 4
+    
+    # Check presence
+    hull_set = set(hull)
+    assert Point(0, 0) in hull_set
+    assert Point(2, 0) in hull_set
+    assert Point(0, 2) in hull_set
+    assert Point(2, 2) in hull_set # Actually, (2,2) is extreme point, so it should be in hull.
+    
+    # (1, 0.5) is strictly inside, should not be in hull
+    assert Point(1, 0.5) not in hull_set
