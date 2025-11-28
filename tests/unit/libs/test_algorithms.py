@@ -9,6 +9,7 @@ sys.path.append(lib_path)
 from algorithms.graph import Graph, dijkstra, bellman_ford, edmonds_karp
 from algorithms.dp import knapsack_01, Item
 from algorithms.geometry import Point, convex_hull
+from algorithms.range_queries import SumSegmentTree, MinSegmentTree
 
 def test_dijkstra():
     g = Graph[str]()
@@ -94,3 +95,34 @@ def test_convex_hull():
     
     # (1, 0.5) is strictly inside, should not be in hull
     assert Point(1, 0.5) not in hull_set
+
+def test_segment_tree_sum():
+    data = [1, 2, 3, 4, 5, 6, 7, 8]
+    st = SumSegmentTree(data)
+    
+    # Query range [2, 5) -> sum(3, 4, 5) = 12
+    assert st.query(2, 5) == 12
+    
+    # Update index 2 (value 3) to 10
+    st.update(2, 10)
+    # New data: 1, 2, 10, 4, 5, 6, 7, 8
+    
+    # Query range [2, 5) -> sum(10, 4, 5) = 19
+    assert st.query(2, 5) == 19
+
+def test_segment_tree_min():
+    data = [5.0, 2.0, 9.0, 1.0, 7.0]
+    st = MinSegmentTree(data)
+    
+    # Range [0, 5) -> min is 1.0
+    assert st.query(0, 5) == 1.0
+    
+    # Range [0, 3) -> min(5, 2, 9) -> 2.0
+    assert st.query(0, 3) == 2.0
+    
+    # Update index 3 (value 1.0) to 10.0
+    st.update(3, 10.0)
+    # Data: 5, 2, 9, 10, 7
+    
+    # Range [0, 5) -> min is 2.0
+    assert st.query(0, 5) == 2.0
