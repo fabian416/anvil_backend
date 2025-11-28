@@ -7,6 +7,8 @@ from app.domain.ports.ai.llm_conversation_repository import LLMConversationRepos
 from app.application.common.ports.transaction_manager import TransactionManager
 from app.application.common.ports.agent_task_queue import AgentTaskQueue
 
+from app.domain.value_objects.message_content import MessageContent
+
 class SendMessage:
     def __init__(
         self,
@@ -20,10 +22,10 @@ class SendMessage:
 
     async def execute(self, conversation_id: UUID, content: str) -> Message:
         message = Message(
-            id=MessageId(uuid4()),
+            id_=MessageId(uuid4()),
             conversation_id=ConversationId(conversation_id),
             role=MessageRole.USER,
-            content=content,
+            content=MessageContent(content),
             agent_type=None,
             created_at=None
         )
@@ -33,6 +35,6 @@ class SendMessage:
         #     await self.repo.add_message(message)
         
         # Trigger Async Processing
-        await self.task_queue.enqueue_message_processing(conversation_id, message.id.value)
+        await self.task_queue.enqueue_message_processing(conversation_id, message.id_.value)
         
         return message
