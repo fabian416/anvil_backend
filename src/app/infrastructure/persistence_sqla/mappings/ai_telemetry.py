@@ -79,6 +79,85 @@ def map_ai_telemetry_tables() -> None:
             
             created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
 
+    # --- Agent Model Configs ---
+    if "agent_model_configs" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentModelConfigsTable:
+            __tablename__ = "agent_model_configs"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'provider', 'model_name', name='unique_agent_model'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            model_name = mapped_column(String(100), nullable=False)
+            
+            priority = mapped_column(Integer, default=100, nullable=False)
+            weight = mapped_column(Integer, default=100, nullable=False)
+            is_active = mapped_column(Boolean, default=True, index=True)
+            
+            cost_per_1k_input_override = mapped_column(Numeric(10, 8), nullable=True)
+            cost_per_1k_output_override = mapped_column(Numeric(10, 8), nullable=True)
+            
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- Agent Performance Stats ---
+    if "agent_performance_stats" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentPerformanceStatsTable:
+            __tablename__ = "agent_performance_stats"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'time_window', name='unique_agent_stats_window'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            time_window = mapped_column(String(20), nullable=False, index=True) # "1h", "24h", "all_time"
+            
+            total_requests = mapped_column(Integer, default=0)
+            successful_requests = mapped_column(Integer, default=0)
+            failed_requests = mapped_column(Integer, default=0)
+            canceled_requests = mapped_column(Integer, default=0)
+            
+            avg_latency_ms = mapped_column(Integer, default=0)
+            avg_cost_usd = mapped_column(Numeric(10, 6), default=0)
+            total_cost_usd = mapped_column(Numeric(12, 2), default=0)
+            
+            last_updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- DeepInfra API Metrics ---
+    if "deepinfra_api_metrics" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class DeepInfraApiMetricsTable:
+            __tablename__ = "deepinfra_api_metrics"
+            __table_args__ = (
+                UniqueConstraint('model_id', 'time_window_start', name='unique_deepinfra_metric'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            model_id = mapped_column(BigInteger, ForeignKey("models.id", ondelete="CASCADE"), nullable=True, index=True)
+            
+            requests_count = mapped_column(Integer, default=0)
+            tokens_consumed = mapped_column(BigInteger, default=0)
+            cost_usd = mapped_column(Numeric(10, 6), default=0)
+            
+            avg_latency_ms = mapped_column(Integer, nullable=True)
+            p95_latency_ms = mapped_column(Integer, nullable=True)
+            
+            error_count = mapped_column(Integer, default=0)
+            success_rate = mapped_column(Numeric(5, 2), nullable=True)
+            
+            time_window_start = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+            time_window_end = mapped_column(DateTime(timezone=True), nullable=False)
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+
     # --- Agent Executions ---
     if "agent_executions" not in mapping_registry.metadata.tables:
         @mapping_registry.mapped
@@ -108,6 +187,85 @@ def map_ai_telemetry_tables() -> None:
             completed_at = mapped_column(DateTime(timezone=True), nullable=True)
             created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
 
+    # --- Agent Model Configs ---
+    if "agent_model_configs" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentModelConfigsTable:
+            __tablename__ = "agent_model_configs"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'provider', 'model_name', name='unique_agent_model'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            model_name = mapped_column(String(100), nullable=False)
+            
+            priority = mapped_column(Integer, default=100, nullable=False)
+            weight = mapped_column(Integer, default=100, nullable=False)
+            is_active = mapped_column(Boolean, default=True, index=True)
+            
+            cost_per_1k_input_override = mapped_column(Numeric(10, 8), nullable=True)
+            cost_per_1k_output_override = mapped_column(Numeric(10, 8), nullable=True)
+            
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- Agent Performance Stats ---
+    if "agent_performance_stats" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentPerformanceStatsTable:
+            __tablename__ = "agent_performance_stats"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'time_window', name='unique_agent_stats_window'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            time_window = mapped_column(String(20), nullable=False, index=True) # "1h", "24h", "all_time"
+            
+            total_requests = mapped_column(Integer, default=0)
+            successful_requests = mapped_column(Integer, default=0)
+            failed_requests = mapped_column(Integer, default=0)
+            canceled_requests = mapped_column(Integer, default=0)
+            
+            avg_latency_ms = mapped_column(Integer, default=0)
+            avg_cost_usd = mapped_column(Numeric(10, 6), default=0)
+            total_cost_usd = mapped_column(Numeric(12, 2), default=0)
+            
+            last_updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- DeepInfra API Metrics ---
+    if "deepinfra_api_metrics" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class DeepInfraApiMetricsTable:
+            __tablename__ = "deepinfra_api_metrics"
+            __table_args__ = (
+                UniqueConstraint('model_id', 'time_window_start', name='unique_deepinfra_metric'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            model_id = mapped_column(BigInteger, ForeignKey("models.id", ondelete="CASCADE"), nullable=True, index=True)
+            
+            requests_count = mapped_column(Integer, default=0)
+            tokens_consumed = mapped_column(BigInteger, default=0)
+            cost_usd = mapped_column(Numeric(10, 6), default=0)
+            
+            avg_latency_ms = mapped_column(Integer, nullable=True)
+            p95_latency_ms = mapped_column(Integer, nullable=True)
+            
+            error_count = mapped_column(Integer, default=0)
+            success_rate = mapped_column(Numeric(5, 2), nullable=True)
+            
+            time_window_start = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+            time_window_end = mapped_column(DateTime(timezone=True), nullable=False)
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+
     # --- Agent Tasks ---
     if "agent_tasks" not in mapping_registry.metadata.tables:
         @mapping_registry.mapped
@@ -133,6 +291,85 @@ def map_ai_telemetry_tables() -> None:
             completed_at = mapped_column(DateTime(timezone=True), nullable=True)
             created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
 
+    # --- Agent Model Configs ---
+    if "agent_model_configs" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentModelConfigsTable:
+            __tablename__ = "agent_model_configs"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'provider', 'model_name', name='unique_agent_model'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            model_name = mapped_column(String(100), nullable=False)
+            
+            priority = mapped_column(Integer, default=100, nullable=False)
+            weight = mapped_column(Integer, default=100, nullable=False)
+            is_active = mapped_column(Boolean, default=True, index=True)
+            
+            cost_per_1k_input_override = mapped_column(Numeric(10, 8), nullable=True)
+            cost_per_1k_output_override = mapped_column(Numeric(10, 8), nullable=True)
+            
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- Agent Performance Stats ---
+    if "agent_performance_stats" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentPerformanceStatsTable:
+            __tablename__ = "agent_performance_stats"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'time_window', name='unique_agent_stats_window'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            time_window = mapped_column(String(20), nullable=False, index=True) # "1h", "24h", "all_time"
+            
+            total_requests = mapped_column(Integer, default=0)
+            successful_requests = mapped_column(Integer, default=0)
+            failed_requests = mapped_column(Integer, default=0)
+            canceled_requests = mapped_column(Integer, default=0)
+            
+            avg_latency_ms = mapped_column(Integer, default=0)
+            avg_cost_usd = mapped_column(Numeric(10, 6), default=0)
+            total_cost_usd = mapped_column(Numeric(12, 2), default=0)
+            
+            last_updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- DeepInfra API Metrics ---
+    if "deepinfra_api_metrics" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class DeepInfraApiMetricsTable:
+            __tablename__ = "deepinfra_api_metrics"
+            __table_args__ = (
+                UniqueConstraint('model_id', 'time_window_start', name='unique_deepinfra_metric'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            model_id = mapped_column(BigInteger, ForeignKey("models.id", ondelete="CASCADE"), nullable=True, index=True)
+            
+            requests_count = mapped_column(Integer, default=0)
+            tokens_consumed = mapped_column(BigInteger, default=0)
+            cost_usd = mapped_column(Numeric(10, 6), default=0)
+            
+            avg_latency_ms = mapped_column(Integer, nullable=True)
+            p95_latency_ms = mapped_column(Integer, nullable=True)
+            
+            error_count = mapped_column(Integer, default=0)
+            success_rate = mapped_column(Numeric(5, 2), nullable=True)
+            
+            time_window_start = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+            time_window_end = mapped_column(DateTime(timezone=True), nullable=False)
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+
     # --- Agent Tools Usage ---
     if "agent_tools_usage" not in mapping_registry.metadata.tables:
         @mapping_registry.mapped
@@ -153,6 +390,85 @@ def map_ai_telemetry_tables() -> None:
             error_message = mapped_column(Text, nullable=True)
             
             created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
+
+    # --- Agent Model Configs ---
+    if "agent_model_configs" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentModelConfigsTable:
+            __tablename__ = "agent_model_configs"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'provider', 'model_name', name='unique_agent_model'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            model_name = mapped_column(String(100), nullable=False)
+            
+            priority = mapped_column(Integer, default=100, nullable=False)
+            weight = mapped_column(Integer, default=100, nullable=False)
+            is_active = mapped_column(Boolean, default=True, index=True)
+            
+            cost_per_1k_input_override = mapped_column(Numeric(10, 8), nullable=True)
+            cost_per_1k_output_override = mapped_column(Numeric(10, 8), nullable=True)
+            
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- Agent Performance Stats ---
+    if "agent_performance_stats" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentPerformanceStatsTable:
+            __tablename__ = "agent_performance_stats"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'time_window', name='unique_agent_stats_window'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            time_window = mapped_column(String(20), nullable=False, index=True) # "1h", "24h", "all_time"
+            
+            total_requests = mapped_column(Integer, default=0)
+            successful_requests = mapped_column(Integer, default=0)
+            failed_requests = mapped_column(Integer, default=0)
+            canceled_requests = mapped_column(Integer, default=0)
+            
+            avg_latency_ms = mapped_column(Integer, default=0)
+            avg_cost_usd = mapped_column(Numeric(10, 6), default=0)
+            total_cost_usd = mapped_column(Numeric(12, 2), default=0)
+            
+            last_updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- DeepInfra API Metrics ---
+    if "deepinfra_api_metrics" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class DeepInfraApiMetricsTable:
+            __tablename__ = "deepinfra_api_metrics"
+            __table_args__ = (
+                UniqueConstraint('model_id', 'time_window_start', name='unique_deepinfra_metric'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            model_id = mapped_column(BigInteger, ForeignKey("models.id", ondelete="CASCADE"), nullable=True, index=True)
+            
+            requests_count = mapped_column(Integer, default=0)
+            tokens_consumed = mapped_column(BigInteger, default=0)
+            cost_usd = mapped_column(Numeric(10, 6), default=0)
+            
+            avg_latency_ms = mapped_column(Integer, nullable=True)
+            p95_latency_ms = mapped_column(Integer, nullable=True)
+            
+            error_count = mapped_column(Integer, default=0)
+            success_rate = mapped_column(Numeric(5, 2), nullable=True)
+            
+            time_window_start = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+            time_window_end = mapped_column(DateTime(timezone=True), nullable=False)
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
 
     # --- LLM Rate Limit Events ---
     if "llm_rate_limit_events" not in mapping_registry.metadata.tables:
@@ -176,6 +492,85 @@ def map_ai_telemetry_tables() -> None:
             
             created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
 
+    # --- Agent Model Configs ---
+    if "agent_model_configs" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentModelConfigsTable:
+            __tablename__ = "agent_model_configs"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'provider', 'model_name', name='unique_agent_model'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            model_name = mapped_column(String(100), nullable=False)
+            
+            priority = mapped_column(Integer, default=100, nullable=False)
+            weight = mapped_column(Integer, default=100, nullable=False)
+            is_active = mapped_column(Boolean, default=True, index=True)
+            
+            cost_per_1k_input_override = mapped_column(Numeric(10, 8), nullable=True)
+            cost_per_1k_output_override = mapped_column(Numeric(10, 8), nullable=True)
+            
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- Agent Performance Stats ---
+    if "agent_performance_stats" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentPerformanceStatsTable:
+            __tablename__ = "agent_performance_stats"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'time_window', name='unique_agent_stats_window'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            time_window = mapped_column(String(20), nullable=False, index=True) # "1h", "24h", "all_time"
+            
+            total_requests = mapped_column(Integer, default=0)
+            successful_requests = mapped_column(Integer, default=0)
+            failed_requests = mapped_column(Integer, default=0)
+            canceled_requests = mapped_column(Integer, default=0)
+            
+            avg_latency_ms = mapped_column(Integer, default=0)
+            avg_cost_usd = mapped_column(Numeric(10, 6), default=0)
+            total_cost_usd = mapped_column(Numeric(12, 2), default=0)
+            
+            last_updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- DeepInfra API Metrics ---
+    if "deepinfra_api_metrics" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class DeepInfraApiMetricsTable:
+            __tablename__ = "deepinfra_api_metrics"
+            __table_args__ = (
+                UniqueConstraint('model_id', 'time_window_start', name='unique_deepinfra_metric'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            model_id = mapped_column(BigInteger, ForeignKey("models.id", ondelete="CASCADE"), nullable=True, index=True)
+            
+            requests_count = mapped_column(Integer, default=0)
+            tokens_consumed = mapped_column(BigInteger, default=0)
+            cost_usd = mapped_column(Numeric(10, 6), default=0)
+            
+            avg_latency_ms = mapped_column(Integer, nullable=True)
+            p95_latency_ms = mapped_column(Integer, nullable=True)
+            
+            error_count = mapped_column(Integer, default=0)
+            success_rate = mapped_column(Numeric(5, 2), nullable=True)
+            
+            time_window_start = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+            time_window_end = mapped_column(DateTime(timezone=True), nullable=False)
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+
     # --- LLM Cost Alerts ---
     if "llm_cost_alerts" not in mapping_registry.metadata.tables:
         @mapping_registry.mapped
@@ -198,6 +593,85 @@ def map_ai_telemetry_tables() -> None:
             alert_sent_at = mapped_column(DateTime(timezone=True), nullable=True)
             
             created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
+
+    # --- Agent Model Configs ---
+    if "agent_model_configs" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentModelConfigsTable:
+            __tablename__ = "agent_model_configs"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'provider', 'model_name', name='unique_agent_model'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            model_name = mapped_column(String(100), nullable=False)
+            
+            priority = mapped_column(Integer, default=100, nullable=False)
+            weight = mapped_column(Integer, default=100, nullable=False)
+            is_active = mapped_column(Boolean, default=True, index=True)
+            
+            cost_per_1k_input_override = mapped_column(Numeric(10, 8), nullable=True)
+            cost_per_1k_output_override = mapped_column(Numeric(10, 8), nullable=True)
+            
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- Agent Performance Stats ---
+    if "agent_performance_stats" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentPerformanceStatsTable:
+            __tablename__ = "agent_performance_stats"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'time_window', name='unique_agent_stats_window'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            time_window = mapped_column(String(20), nullable=False, index=True) # "1h", "24h", "all_time"
+            
+            total_requests = mapped_column(Integer, default=0)
+            successful_requests = mapped_column(Integer, default=0)
+            failed_requests = mapped_column(Integer, default=0)
+            canceled_requests = mapped_column(Integer, default=0)
+            
+            avg_latency_ms = mapped_column(Integer, default=0)
+            avg_cost_usd = mapped_column(Numeric(10, 6), default=0)
+            total_cost_usd = mapped_column(Numeric(12, 2), default=0)
+            
+            last_updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- DeepInfra API Metrics ---
+    if "deepinfra_api_metrics" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class DeepInfraApiMetricsTable:
+            __tablename__ = "deepinfra_api_metrics"
+            __table_args__ = (
+                UniqueConstraint('model_id', 'time_window_start', name='unique_deepinfra_metric'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            model_id = mapped_column(BigInteger, ForeignKey("models.id", ondelete="CASCADE"), nullable=True, index=True)
+            
+            requests_count = mapped_column(Integer, default=0)
+            tokens_consumed = mapped_column(BigInteger, default=0)
+            cost_usd = mapped_column(Numeric(10, 6), default=0)
+            
+            avg_latency_ms = mapped_column(Integer, nullable=True)
+            p95_latency_ms = mapped_column(Integer, nullable=True)
+            
+            error_count = mapped_column(Integer, default=0)
+            success_rate = mapped_column(Numeric(5, 2), nullable=True)
+            
+            time_window_start = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+            time_window_end = mapped_column(DateTime(timezone=True), nullable=False)
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
 
     # --- Vertex API Metrics ---
     if "vertex_api_metrics" not in mapping_registry.metadata.tables:
@@ -281,3 +755,82 @@ def map_ai_telemetry_tables() -> None:
             feedback_text = mapped_column(Text, nullable=True)
             
             created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
+
+    # --- Agent Model Configs ---
+    if "agent_model_configs" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentModelConfigsTable:
+            __tablename__ = "agent_model_configs"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'provider', 'model_name', name='unique_agent_model'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            model_name = mapped_column(String(100), nullable=False)
+            
+            priority = mapped_column(Integer, default=100, nullable=False)
+            weight = mapped_column(Integer, default=100, nullable=False)
+            is_active = mapped_column(Boolean, default=True, index=True)
+            
+            cost_per_1k_input_override = mapped_column(Numeric(10, 8), nullable=True)
+            cost_per_1k_output_override = mapped_column(Numeric(10, 8), nullable=True)
+            
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- Agent Performance Stats ---
+    if "agent_performance_stats" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class AgentPerformanceStatsTable:
+            __tablename__ = "agent_performance_stats"
+            __table_args__ = (
+                UniqueConstraint('agent_type', 'time_window', name='unique_agent_stats_window'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            agent_type = mapped_column(String(50), nullable=False, index=True)
+            time_window = mapped_column(String(20), nullable=False, index=True) # "1h", "24h", "all_time"
+            
+            total_requests = mapped_column(Integer, default=0)
+            successful_requests = mapped_column(Integer, default=0)
+            failed_requests = mapped_column(Integer, default=0)
+            canceled_requests = mapped_column(Integer, default=0)
+            
+            avg_latency_ms = mapped_column(Integer, default=0)
+            avg_cost_usd = mapped_column(Numeric(10, 6), default=0)
+            total_cost_usd = mapped_column(Numeric(12, 2), default=0)
+            
+            last_updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+            updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
+
+    # --- DeepInfra API Metrics ---
+    if "deepinfra_api_metrics" not in mapping_registry.metadata.tables:
+        @mapping_registry.mapped
+        class DeepInfraApiMetricsTable:
+            __tablename__ = "deepinfra_api_metrics"
+            __table_args__ = (
+                UniqueConstraint('model_id', 'time_window_start', name='unique_deepinfra_metric'),
+                {"extend_existing": True}
+            )
+            
+            id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+            model_id = mapped_column(BigInteger, ForeignKey("models.id", ondelete="CASCADE"), nullable=True, index=True)
+            
+            requests_count = mapped_column(Integer, default=0)
+            tokens_consumed = mapped_column(BigInteger, default=0)
+            cost_usd = mapped_column(Numeric(10, 6), default=0)
+            
+            avg_latency_ms = mapped_column(Integer, nullable=True)
+            p95_latency_ms = mapped_column(Integer, nullable=True)
+            
+            error_count = mapped_column(Integer, default=0)
+            success_rate = mapped_column(Numeric(5, 2), nullable=True)
+            
+            time_window_start = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+            time_window_end = mapped_column(DateTime(timezone=True), nullable=False)
+            created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))

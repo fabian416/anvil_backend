@@ -59,6 +59,41 @@ def cleanup_expired_password_resets():
     asyncio.run(_run_task(runner))
 
 
+@celery_app.task(name="process_agent_response")
+def process_agent_response(conversation_id: str, message_id: str):
+    """
+    Background task to process a user message and generate an AI response.
+    """
+    async def runner(container):
+        from app.domain.ports.ai.agent_gateway import AgentGateway
+        from uuid import UUID
+        
+        # Get Gateway
+        gateway = await container.get(AgentGateway)
+        
+        # Execute (Mock User ID for now, would be passed in task payload in real impl)
+        await gateway.process_message(
+            user_id=UUID("00000000-0000-0000-0000-000000000000"),
+            session_id=str(conversation_id),
+            message="Task processing..." # In real task, fetch message content from DB
+        )
+
+    asyncio.run(_run_task(runner))
+
+
+@celery_app.task(name="update_agent_stats")
+def update_agent_stats():
+    """
+    Periodic task to aggregate agent performance stats.
+    """
+    async def runner(container):
+        # Logic to query logs and update agent_performance_stats table
+        print("Updating agent stats...")
+        pass
+
+    asyncio.run(_run_task(runner))
+
+
 celery_app.conf.beat_schedule = {
     "cleanup-expired-sessions": {
         "task": "cleanup_expired_sessions",
@@ -68,6 +103,8 @@ celery_app.conf.beat_schedule = {
         "task": "cleanup_expired_password_resets",
         "schedule": crontab(minute=0),
     },
+    "update-agent-stats": {
+        "task": "update_agent_stats",
+        "schedule": crontab(minute="*/5"), # Every 5 minutes
+    }
 }
-
-

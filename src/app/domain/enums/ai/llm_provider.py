@@ -1,6 +1,9 @@
 from enum import Enum
 
 class LLMProvider(Enum):
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
     VERTEX = "vertex"
     BEDROCK = "bedrock"
-    OPENAI = "openai" # Added for flexibility given previous codebase refs
+    DEEPINFRA = "deepinfra"
+    OTHER = "other"
