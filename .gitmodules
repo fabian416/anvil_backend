@@ -10,3 +10,9 @@
 [submodule "libs/python-patterns"]
 	path = libs/python-patterns
 	url = git@github.com:faif/python-patterns.git
+[submodule "libs/recommenders"]
+	path = libs/recommenders
+	url = git@github.com:recommenders-team/recommenders.git
+[submodule "libs/graphrag"]
+	path = libs/graphrag
+	url = git@github.com:microsoft/graphrag.git
