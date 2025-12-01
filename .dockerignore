@@ -1,31 +1,72 @@
-# Venv
-.venv/
-
 # Git
-.git/
+.git
 .gitignore
 .gitattributes
 
-# Python Cache
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
 .mypy_cache/
 .ruff_cache/
+*.egg-info/
+dist/
+build/
 
-# IDE Specific
-.idea/
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
 
-# Test artifacts
+# Testing
+coverage.xml
 .coverage
 htmlcov/
+.tox/
 
-# Documentation and non-essential files
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets
+.secrets.toml
+.env
+.env.*
+
+# Documentation
 docs/
-scripts/
-LICENSE
-logo.jpg
+*.md
+!README.md
 
-# Local environment
-.env*
+# Tests
+tests/
+pytest.ini
+
+# CI/CD
+.github/
+
+# Development
+.pre-commit-config.yaml
+Makefile
+docker-compose.yaml
+config/local/
+config/dev/
+
+# Temporary
+tmp/
+temp/
+*.tmp
