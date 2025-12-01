@@ -100,6 +100,18 @@ from app.infrastructure.adapters.notification_repository_sqla import (
     SqlaNotificationRepository,
 )
 
+# AI / Agent Infrastructure
+from app.domain.ports.ai.agent_gateway import AgentGateway
+from app.domain.ports.ai.llm_gateway import LLMGateway
+from app.domain.ports.ai.llm_conversation_repository import LLMConversationRepository
+from app.infrastructure.adapters.ai.agent_gateway_impl import AgentGatewayImpl
+from app.infrastructure.adapters.ai.llm_gateway_impl import LLMGatewayImpl
+from app.infrastructure.adapters.ai.squad_storage import AnvilSquadStorage
+from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import (
+    SqlaLLMConversationRepository,
+)
+from app.setup.config.agent_squad import AgentSquadConfig, load_agent_squad_config
+
 
 class InfrastructureProvider(Provider):
     scope = Scope.REQUEST
@@ -190,6 +202,32 @@ class InfrastructureProvider(Provider):
         source=AuthGatewaySqla,
         provides=AuthGateway,
     )
+    
+    # AI Infrastructure
+    llm_conversation_repo = provide(
+        source=SqlaLLMConversationRepository,
+        provides=LLMConversationRepository,
+        scope=Scope.REQUEST,
+    )
+    llm_gateway = provide(
+        source=LLMGatewayImpl,
+        provides=LLMGateway,
+        scope=Scope.REQUEST,
+    )
+    squad_storage = provide(
+        source=AnvilSquadStorage,
+        scope=Scope.REQUEST,
+    )
+    agent_gateway = provide(
+        source=AgentGatewayImpl,
+        provides=AgentGateway,
+        scope=Scope.REQUEST,
+    )
+    
+    @provide(scope=Scope.APP)
+    def get_agent_squad_config(self) -> AgentSquadConfig:
+        """Provide Agent Squad configuration"""
+        return load_agent_squad_config()
 
     # Infrastructure Handlers
     infra_handlers = provide_all(
