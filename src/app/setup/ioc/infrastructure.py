@@ -103,12 +103,12 @@ from app.infrastructure.adapters.notification_repository_sqla import (
 # AI / Agent Infrastructure
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
-from app.domain.ports.ai.llm_conversation_repository import LLMConversationRepository
+from app.domain.ports.conversation_repository import ConversationRepository
 from app.infrastructure.adapters.ai.agent_gateway_impl import AgentGatewayImpl
 from app.infrastructure.adapters.ai.llm_gateway_impl import LLMGatewayImpl
 from app.infrastructure.adapters.ai.squad_storage import AnvilSquadStorage
-from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import (
-    SqlaLLMConversationRepository,
+from app.infrastructure.adapters.conversation_repository_sqla import (
+    SqlaConversationRepository,
 )
 from app.setup.config.agent_squad import AgentSquadConfig, load_agent_squad_config
 
@@ -204,9 +204,9 @@ class InfrastructureProvider(Provider):
     )
     
     # AI Infrastructure
-    llm_conversation_repo = provide(
-        source=SqlaLLMConversationRepository,
-        provides=LLMConversationRepository,
+    conversation_repo = provide(
+        source=SqlaConversationRepository,
+        provides=ConversationRepository,
         scope=Scope.REQUEST,
     )
     llm_gateway = provide(

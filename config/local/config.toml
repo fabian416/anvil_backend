@@ -38,3 +38,16 @@ ALLOWED_ADMIN_EMAILS = [
   "admin@anvil.com",
   "yordansolis2@gmail.com",
 ]
+# Agent Squad Configuration
+[agent_squad]
+default_model = "gpt-4-turbo"
+fallback_model = "gpt-3.5-turbo"
+intent_threshold = 0.75
+session_timeout = 3600
+max_context_messages = 20
+enable_intent_classification = true
+enable_context_memory = true
+enable_multi_agent_routing = true
+debug_mode = false
+log_intent_classification = true
+log_agent_selection = true

@@ -6,7 +6,7 @@ from typing import Any, List, Dict, Optional
 from uuid import UUID
 from datetime import datetime
 
-from app.domain.ports.ai.llm_conversation_repository import LLMConversationRepository
+from app.domain.ports.conversation_repository import ConversationRepository
 from app.domain.entities.message import Message
 from app.domain.value_objects.message_id import MessageId
 from app.domain.value_objects.conversation_id import ConversationId
@@ -23,14 +23,14 @@ class AnvilSquadStorage:
     using our existing conversation repository infrastructure.
     """
     
-    def __init__(self, repo: LLMConversationRepository):
+    def __init__(self, repo: ConversationRepository):
         """
         Initialize storage adapter.
         
         Args:
             repo: Our domain conversation repository
         """
-        self.repo = repo
+        self._repo = repo
     
     async def save_message(
         self, 
@@ -85,7 +85,7 @@ class AnvilSquadStorage:
         )
         
         # Save to repository
-        await self.repo.add_message(message)
+        await self._repo.add_message(message)
         
         return str(message.id_.value)
     
@@ -110,7 +110,7 @@ class AnvilSquadStorage:
             raise ValueError(f"Invalid session_id format: {session_id}")
         
         # Get messages from repository
-        messages = await self.repo.get_messages(
+        messages = await self._repo.get_messages(
             conversation_id=conversation_id,
             limit=limit
         )
