@@ -91,20 +91,71 @@ class PortfolioAgent(BaseDeFiAgent):
         """
         Get tools for PortfolioAgent.
         
-        In Phase 1, we return empty list.
-        In Phase 2, we'll add:
-        - get_wallet_balances tool
-        - get_position_summary tool
-        - calculate_portfolio_value tool
-        - get_token_prices tool
+        Phase 2 implementation with wallet, DeFiLlama, and CoinGecko integration.
         """
-        # TODO: Add tools in Phase 2 (Week 4-6)
-        # - get_wallet_balances
-        # - get_open_positions
-        # - get_token_prices
-        # - calculate_portfolio_metrics
-        # - get_transaction_history
-        return []
+        # Import tools here to avoid circular imports
+        from app.infrastructure.defi.tools.portfolio_tools import (
+            get_wallet_balance_tool,
+            get_protocol_info_tool,
+            get_top_protocols_tool,
+            get_token_price_tool,
+            get_market_overview_tool,
+            get_yield_opportunities_tool,
+        )
+        
+        # Tool metadata for Phase 2
+        tools = [
+            {
+                "name": "get_wallet_balance",
+                "description": "Get wallet balances for an address across tokens",
+                "parameters": {
+                    "address": "Wallet address (0x...)",
+                    "network": "Network name (ethereum, polygon, arbitrum, optimism)",
+                },
+                "function": get_wallet_balance_tool,
+            },
+            {
+                "name": "get_protocol_info",
+                "description": "Get information about a DeFi protocol",
+                "parameters": {
+                    "protocol": "Protocol name (e.g., 'aave', 'uniswap')",
+                },
+                "function": get_protocol_info_tool,
+            },
+            {
+                "name": "get_top_protocols",
+                "description": "Get top DeFi protocols by TVL",
+                "parameters": {
+                    "limit": "Number of protocols to return (default 10)",
+                },
+                "function": get_top_protocols_tool,
+            },
+            {
+                "name": "get_token_price",
+                "description": "Get current token price and 24h change",
+                "parameters": {
+                    "token": "Token symbol (BTC, ETH, etc.)",
+                },
+                "function": get_token_price_tool,
+            },
+            {
+                "name": "get_market_overview",
+                "description": "Get crypto market overview with major tokens",
+                "parameters": {},
+                "function": get_market_overview_tool,
+            },
+            {
+                "name": "get_yield_opportunities",
+                "description": "Get top yield farming opportunities",
+                "parameters": {
+                    "protocol": "Filter by protocol (optional)",
+                    "chain": "Filter by chain (optional)",
+                },
+                "function": get_yield_opportunities_tool,
+            },
+        ]
+        
+        return tools
     
     async def run(
         self,
