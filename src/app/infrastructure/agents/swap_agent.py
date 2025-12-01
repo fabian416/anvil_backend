@@ -79,6 +79,11 @@ class SwapAgent(BaseDeFiAgent):
             explain_swap_tool,
             get_token_info_tool,
         )
+        from app.infrastructure.defi.tools.advanced_swap_tools import (
+            compare_dex_routes_tool,
+            estimate_price_impact_tool,
+            suggest_optimal_swap_time_tool,
+        )
         
         # In Phase 2, these will be actual callable tools
         # For now, we define tool metadata
@@ -109,6 +114,35 @@ class SwapAgent(BaseDeFiAgent):
                     "token": "Token symbol",
                 },
                 "function": get_token_info_tool,
+            },
+            {
+                "name": "compare_dex_routes",
+                "description": "Compare different DEX routes for best price",
+                "parameters": {
+                    "src_token": "Source token symbol",
+                    "dst_token": "Destination token symbol",
+                    "amount": "Amount to swap",
+                },
+                "function": compare_dex_routes_tool,
+            },
+            {
+                "name": "estimate_price_impact",
+                "description": "Estimate price impact for a swap",
+                "parameters": {
+                    "src_token": "Source token symbol",
+                    "dst_token": "Destination token symbol",
+                    "amount": "Amount to swap",
+                },
+                "function": estimate_price_impact_tool,
+            },
+            {
+                "name": "suggest_optimal_swap_time",
+                "description": "Suggest optimal time for swap",
+                "parameters": {
+                    "src_token": "Source token symbol",
+                    "dst_token": "Destination token symbol",
+                },
+                "function": suggest_optimal_swap_time_tool,
             },
         ]
         

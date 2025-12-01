@@ -98,6 +98,11 @@ class TradingAgent(BaseDeFiAgent):
             explain_perp_trading_tool,
             calculate_pnl_tool,
         )
+        from app.infrastructure.defi.tools.position_management_tools import (
+            calculate_stop_loss_tool,
+            calculate_take_profit_tool,
+            analyze_position_health_tool,
+        )
         
         # Tool metadata for Phase 2
         tools = [
@@ -130,6 +135,40 @@ class TradingAgent(BaseDeFiAgent):
                     "is_long": "True for long, False for short",
                 },
                 "function": calculate_pnl_tool,
+            },
+            {
+                "name": "calculate_stop_loss",
+                "description": "Calculate optimal stop loss for a position",
+                "parameters": {
+                    "entry_price": "Entry price",
+                    "position_size": "Position size in USD",
+                    "is_long": "True for long, False for short",
+                    "risk_percentage": "Risk as % of position (default 2%)",
+                },
+                "function": calculate_stop_loss_tool,
+            },
+            {
+                "name": "calculate_take_profit",
+                "description": "Calculate take profit levels",
+                "parameters": {
+                    "entry_price": "Entry price",
+                    "position_size": "Position size in USD",
+                    "is_long": "True for long, False for short",
+                    "reward_ratio": "Reward/risk ratio (default 2:1)",
+                },
+                "function": calculate_take_profit_tool,
+            },
+            {
+                "name": "analyze_position_health",
+                "description": "Analyze position health and risk",
+                "parameters": {
+                    "entry_price": "Entry price",
+                    "current_price": "Current market price",
+                    "liquidation_price": "Liquidation price",
+                    "position_size": "Position size in USD",
+                    "is_long": "True for long, False for short",
+                },
+                "function": analyze_position_health_tool,
             },
         ]
         
