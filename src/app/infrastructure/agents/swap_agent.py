@@ -71,18 +71,48 @@ class SwapAgent(BaseDeFiAgent):
         """
         Get tools for SwapAgent.
         
-        In Phase 1, we return empty list.
-        In Phase 2, we'll add:
-        - get_swap_quote tool (1inch API)
-        - execute_swap tool
-        - check_token_info tool
+        Phase 2 implementation with real 1inch integration.
         """
-        # TODO: Add tools in Phase 2 (Week 4-6)
-        # - get_1inch_quote
-        # - get_0x_quote  
-        # - execute_swap
-        # - verify_token_address
-        return []
+        # Import tools here to avoid circular imports
+        from app.infrastructure.defi.tools.swap_tools import (
+            get_swap_quote_tool,
+            explain_swap_tool,
+            get_token_info_tool,
+        )
+        
+        # In Phase 2, these will be actual callable tools
+        # For now, we define tool metadata
+        tools = [
+            {
+                "name": "get_swap_quote",
+                "description": "Get a swap quote from 1inch DEX aggregator",
+                "parameters": {
+                    "src_token": "Source token symbol (USDC, ETH, etc.)",
+                    "dst_token": "Destination token symbol",
+                    "amount": "Amount to swap in human-readable format",
+                },
+                "function": get_swap_quote_tool,
+            },
+            {
+                "name": "explain_swap",
+                "description": "Explain how a token swap works",
+                "parameters": {
+                    "src_token": "Source token symbol",
+                    "dst_token": "Destination token symbol",
+                },
+                "function": explain_swap_tool,
+            },
+            {
+                "name": "get_token_info",
+                "description": "Get information about a token",
+                "parameters": {
+                    "token": "Token symbol",
+                },
+                "function": get_token_info_tool,
+            },
+        ]
+        
+        return tools
     
     async def run(
         self,

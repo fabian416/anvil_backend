@@ -90,21 +90,50 @@ class TradingAgent(BaseDeFiAgent):
         """
         Get tools for TradingAgent.
         
-        In Phase 1, we return empty list.
-        In Phase 2, we'll add:
-        - open_position tool (Hyperliquid API)
-        - close_position tool
-        - get_position_info tool
-        - calculate_liquidation_price tool
-        - get_funding_rate tool
+        Phase 2 implementation with real Hyperliquid integration.
         """
-        # TODO: Add tools in Phase 2 (Week 4-6)
-        # - open_hyperliquid_position
-        # - close_hyperliquid_position
-        # - get_position_status
-        # - calculate_liquidation_price
-        # - get_funding_rates
-        return []
+        # Import tools here to avoid circular imports
+        from app.infrastructure.defi.tools.trading_tools import (
+            get_position_info_tool,
+            explain_perp_trading_tool,
+            calculate_pnl_tool,
+        )
+        
+        # Tool metadata for Phase 2
+        tools = [
+            {
+                "name": "get_position_info",
+                "description": "Get information about opening a perpetual position",
+                "parameters": {
+                    "symbol": "Trading pair (BTC, ETH, etc.)",
+                    "leverage": "Leverage multiplier (1-100)",
+                    "collateral": "Collateral amount in USD",
+                    "is_long": "True for long, False for short",
+                },
+                "function": get_position_info_tool,
+            },
+            {
+                "name": "explain_perp_trading",
+                "description": "Explain how perpetual futures trading works",
+                "parameters": {
+                    "symbol": "Trading pair symbol",
+                },
+                "function": explain_perp_trading_tool,
+            },
+            {
+                "name": "calculate_pnl",
+                "description": "Calculate profit/loss for a position",
+                "parameters": {
+                    "entry_price": "Entry price",
+                    "current_price": "Current market price",
+                    "position_size": "Position size in USD",
+                    "is_long": "True for long, False for short",
+                },
+                "function": calculate_pnl_tool,
+            },
+        ]
+        
+        return tools
     
     async def run(
         self,
