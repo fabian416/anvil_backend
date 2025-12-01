@@ -146,15 +146,15 @@ class DeFiIntentClassifier:
             Dictionary mapping intents to descriptions
         """
         return {
-            "trade_swap": "User wants to swap/exchange tokens on a DEX",
-            "trade_perp_open": "User wants to open a leveraged perpetual futures position",
-            "trade_perp_close": "User wants to close an existing perpetual position",
-            "lend_supply": "User wants to supply/lend tokens to earn interest",
+            "trade_swap": "User wants to swap or exchange tokens on a DEX",
+            "trade_perp_open": "User wants to open and trade a leveraged perpetual futures position",
+            "trade_perp_close": "User wants to close and exit an existing perpetual position",
+            "lend_supply": "User wants to supply or lend tokens to earn interest",
             "lend_borrow": "User wants to borrow tokens against collateral",
             "earn_stake": "User wants to stake tokens for yield/rewards",
             "portfolio_view": "User wants to view their portfolio/balances",
-            "market_info": "User wants market data (prices, rates, TVL)",
-            "risk_analysis": "User wants risk assessment of their positions",
+            "market_info": "User wants to get market data (prices, rates, TVL)",
+            "risk_analysis": "User wants to analyze risk assessment of their positions",
             "save_schedule": "User wants to set up recurring buy/save schedule",
             "general_question": "User has a general question about DeFi concepts",
         }
