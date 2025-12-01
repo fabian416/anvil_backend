@@ -4,6 +4,7 @@ Send message command.
 
 from uuid import UUID
 from typing import Optional
+import asyncio
 
 from app.domain.entities.message import Message
 from app.domain.entities.conversation import Conversation
@@ -91,4 +92,36 @@ class SendMessage:
         conversation.touch()
         await self._repository.add_conversation(conversation)  # Update
         
+        # Broadcast agent message via WebSocket (fire and forget)
+        asyncio.create_task(self._broadcast_message(conversation_id, agent_message))
+        
         return user_message, agent_message
+    
+    async def _broadcast_message(self, conversation_id: UUID, message: Message) -> None:
+        """
+        Broadcast message to WebSocket connections.
+        
+        Args:
+            conversation_id: Conversation identifier
+            message: Message to broadcast
+        """
+        try:
+            from app.presentation.http.websocket.chat_websocket import manager
+            
+            await manager.broadcast_to_conversation(
+                conversation_id=conversation_id,
+                message={
+                    "type": "message",
+                    "message": {
+                        "id": str(message.id),
+                        "role": message.role.value,
+                        "content": message.content,
+                        "agent_type": message.agent_type,
+                        "created_at": message.created_at.isoformat(),
+                    }
+                }
+            )
+        except Exception as e:
+            # Don't fail the request if WebSocket broadcast fails
+            import logging
+            logging.error(f"Failed to broadcast message via WebSocket: {e}")
