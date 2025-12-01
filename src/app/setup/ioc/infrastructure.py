@@ -111,6 +111,7 @@ from app.infrastructure.adapters.conversation_repository_sqla import (
     SqlaConversationRepository,
 )
 from app.setup.config.agent_squad import AgentSquadConfig, load_agent_squad_config
+from app.infrastructure.agents.agent_factory import AgentFactory, create_agent_factory
 
 
 class InfrastructureProvider(Provider):
@@ -218,16 +219,43 @@ class InfrastructureProvider(Provider):
         source=AnvilSquadStorage,
         scope=Scope.REQUEST,
     )
-    agent_gateway = provide(
-        source=AgentGatewayImpl,
-        provides=AgentGateway,
-        scope=Scope.REQUEST,
-    )
+    @provide(scope=Scope.REQUEST)
+    def get_agent_gateway(
+        self,
+        storage: AnvilSquadStorage,
+        llm_gateway: LLMGateway,
+        config: AgentSquadConfig,
+        factory: AgentFactory,
+    ) -> AgentGateway:
+        """
+        Provide Agent Gateway with registered specialized agents.
+        
+        Automatically registers all agents from factory with gateway.
+        """
+        gateway = AgentGatewayImpl(storage, llm_gateway, config)
+        
+        # Register all specialized agents
+        factory.register_with_gateway(gateway)
+        
+        return gateway
     
     @provide(scope=Scope.APP)
     def get_agent_squad_config(self) -> AgentSquadConfig:
         """Provide Agent Squad configuration"""
         return load_agent_squad_config()
+    
+    @provide(scope=Scope.APP)
+    def get_agent_factory(self, config: AgentSquadConfig) -> AgentFactory:
+        """
+        Provide Agent Factory with all specialized agents.
+        
+        Creates and initializes:
+        - SwapAgent (trade_swap)
+        - TradingAgent (trade_perp_open, trade_perp_close)
+        - PortfolioAgent (portfolio_view)
+        """
+        factory = create_agent_factory(model=config.default_model)
+        return factory
 
     # Infrastructure Handlers
     infra_handlers = provide_all(
