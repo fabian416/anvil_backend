@@ -1,5 +1,12 @@
 from dishka import Provider, Scope, provide, provide_all
 
+# Chat interactors
+from app.application.chat.commands.create_conversation import CreateConversation
+from app.application.chat.commands.send_message import SendMessage
+from app.application.chat.queries.get_conversation import GetConversation
+from app.application.chat.queries.list_conversations import ListConversations
+from app.application.chat.queries.get_messages import GetMessages
+
 from app.application.commands.user.activate_user import ActivateUserInteractor
 from app.application.commands.user.change_password import ChangePasswordInteractor
 from app.application.commands.user.deactivate_user import DeactivateUserInteractor
@@ -51,6 +58,20 @@ from app.setup.config.security import PasswordSettings
 
 class ApplicationProvider(Provider):
     scope = Scope.REQUEST
+
+    # Chat interactors
+    chat_command_interactors = provide_all(
+        CreateConversation,
+        SendMessage,
+        scope=Scope.REQUEST,
+    )
+    
+    chat_query_interactors = provide_all(
+        GetConversation,
+        ListConversations,
+        GetMessages,
+        scope=Scope.REQUEST,
+    )
 
     # Services
     services = provide_all(

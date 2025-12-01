@@ -1,33 +1,76 @@
 """
-Conversation entity.
+Conversation entity for chat conversations.
 """
 
-from dataclasses import dataclass
-from typing import Optional
-import uuid
-
-from app.domain.entities.base import Entity
-from app.domain.value_objects.conversation_id import ConversationId
-from app.domain.value_objects.user_id import UserId
-from app.domain.value_objects.conversation_title import ConversationTitle
-from app.domain.value_objects.created_at import CreatedAt
-from app.domain.value_objects.updated_at import UpdatedAt
+from datetime import datetime
+from typing import Optional, List
+from uuid import UUID, uuid4
 
 
-@dataclass(eq=False, kw_only=True)
-class Conversation(Entity[ConversationId]):
-    user_id: UserId
-    title: Optional[ConversationTitle]
-    created_at: CreatedAt
-    updated_at: UpdatedAt
-
+class Conversation:
+    """
+    Conversation entity representing a chat conversation.
+    
+    A conversation belongs to a user and contains messages exchanged
+    with DeFi agents.
+    """
+    
+    def __init__(
+        self,
+        id: UUID,
+        user_id: int,
+        title: Optional[str] = None,
+        created_at: Optional[datetime] = None,
+        updated_at: Optional[datetime] = None,
+    ):
+        """
+        Initialize conversation.
+        
+        Args:
+            id: Conversation identifier
+            user_id: User identifier
+            title: Optional conversation title
+            created_at: Creation timestamp
+            updated_at: Last update timestamp
+        """
+        self.id = id
+        self.user_id = user_id
+        self.title = title
+        self.created_at = created_at or datetime.utcnow()
+        self.updated_at = updated_at or datetime.utcnow()
+    
     @classmethod
-    def create(cls, user_id: UserId, title: Optional[ConversationTitle] = None) -> "Conversation":
-        now = CreatedAt.now()
+    def create(
+        cls,
+        user_id: int,
+        title: Optional[str] = None,
+    ) -> "Conversation":
+        """
+        Create a new conversation.
+        
+        Args:
+            user_id: User identifier
+            title: Optional conversation title
+        
+        Returns:
+            New conversation instance
+        """
         return cls(
-            id_=ConversationId(uuid.uuid4()),
+            id=uuid4(),
             user_id=user_id,
             title=title,
-            created_at=now,
-            updated_at=UpdatedAt(now.value),
         )
+    
+    def update_title(self, title: str) -> None:
+        """
+        Update conversation title.
+        
+        Args:
+            title: New title
+        """
+        self.title = title
+        self.updated_at = datetime.utcnow()
+    
+    def touch(self) -> None:
+        """Update the updated_at timestamp."""
+        self.updated_at = datetime.utcnow()
