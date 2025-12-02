@@ -1,6 +1,9 @@
 from enum import Enum
 
-class ModelStatus(Enum):
-    INACTIVE = 0
-    ACTIVE = 1
-    DEPRECATED = 2
+
+class ModelStatus(str, Enum):
+    """Model status for AI telemetry."""
+
+    INACTIVE = "inactive"
+    ACTIVE = "active"
+    DEPRECATED = "deprecated"
