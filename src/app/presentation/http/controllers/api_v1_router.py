@@ -22,6 +22,9 @@ from app.presentation.http.controllers.user.projects_router import router as pro
 # WebSocket router for real-time agent chat
 from app.presentation.http.websocket.chat_websocket import router as agno_chat_ws_router
 
+# GraphRAG routers
+from app.presentation.http.controllers.graph import search_router, analytics_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -48,6 +51,9 @@ def create_api_v1_router() -> APIRouter:
         projects_user_router,
         # Real-time agent chat WebSocket
         agno_chat_ws_router,
+        # GraphRAG routers
+        search_router,
+        analytics_router,
     )
 
     for sub_router in sub_routers:
