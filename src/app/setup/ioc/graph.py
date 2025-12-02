@@ -46,6 +46,8 @@ from app.application.alerts import RiskAlertService, RiskAlertMonitor
 from app.infrastructure.websocket import GraphEventBroadcaster
 from app.application.preferences import UserPreferencesService
 from app.application.dashboard import DashboardAggregationService
+from app.application.search import SearchHistoryService
+from app.application.comparison import ProtocolComparisonService
 
 
 class GraphProvider(Provider):
@@ -353,3 +355,17 @@ class GraphProvider(Provider):
             preferences_service,
             hybrid_retrieval,
         )
+    
+    # Search History (NEW: Track user searches)
+    
+    @provide
+    def provide_search_history_service(self) -> SearchHistoryService:
+        """Provide SearchHistoryService for tracking user searches"""
+        return SearchHistoryService()
+    
+    # Protocol Comparison (NEW: Side-by-side protocol analysis)
+    
+    @provide
+    def provide_protocol_comparison_service(self) -> ProtocolComparisonService:
+        """Provide ProtocolComparisonService for comparing protocols"""
+        return ProtocolComparisonService()
