@@ -1,0 +1,6353 @@
+{
+  "total_files": 110,
+  "files_clean": 0,
+  "files_with_issues": 110,
+  "errors": 79,
+  "warnings": 683,
+  "infos": 144,
+  "quality_score": 0.0,
+  "issues": [
+    {
+      "severity": "WARNING",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Module Overview"
+    },
+    {
+      "severity": "WARNING",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "WEBSOCKET_INTEGRATION_GUIDE.md",
+      "line": 11,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (169 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_REACT_COMPONENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Module Overview"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_REACT_COMPONENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_REACT_COMPONENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_REACT_COMPONENTS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_REACT_COMPONENTS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_REACT_COMPONENTS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_REACT_COMPONENTS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "GRAPHRAG_REACT_COMPONENTS.md",
+      "line": 83,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (136 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Module Overview"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_BACKEND_ALIGNMENT_SUMMARY.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Module Overview"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_ML.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "API_REFERENCE_ML.md",
+      "line": 12,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (129 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "DOCUMENTATION_UPDATE_PLAN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "DOCUMENTATION_UPDATE_PLAN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "DOCUMENTATION_UPDATE_PLAN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "DOCUMENTATION_UPDATE_PLAN.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "DOCUMENTATION_UPDATE_PLAN.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "DOCUMENTATION_UPDATE_PLAN.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "DOCUMENTATION_UPDATE_PLAN.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "DOCUMENTATION_UPDATE_PLAN.md",
+      "line": 12,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (176 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Module Overview"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "GRAPHRAG_INTEGRATION_GUIDE.md",
+      "line": 11,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (122 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Module Overview"
+    },
+    {
+      "severity": "WARNING",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "COMPONENT_LIBRARY_GUIDE.md",
+      "line": 11,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (141 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Module Overview"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "API_REFERENCE_GRAPHRAG.md",
+      "line": 12,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (174 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Module Overview"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_DOCUMENTATION_GAP_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 30,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (125 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 31,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (135 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 32,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (123 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 33,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (127 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 34,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (131 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 35,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (131 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 36,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (135 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 37,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (163 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 43,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (147 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 44,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (153 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 45,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (156 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 46,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (153 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 47,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (158 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 53,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (126 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 54,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (140 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 55,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (151 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 56,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (130 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 57,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (130 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 58,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (146 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 59,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (146 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 60,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (154 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 66,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (130 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 69,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (122 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 70,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (140 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 85,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (151 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 86,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (142 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 87,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (142 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 88,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (160 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 94,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (169 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 95,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (149 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 96,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (144 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 97,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (137 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 98,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (156 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 104,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (136 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 105,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (154 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 106,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (134 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 107,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (141 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 113,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (136 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 114,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (168 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 115,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (136 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 121,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (143 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 122,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (148 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "00_INDEX.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 28,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (193 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 52,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (134 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 68,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (123 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 93,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (145 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 99,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (127 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 107,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (125 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 108,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (145 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "00_INDEX.md",
+      "line": 109,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (124 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_DISTILLATION.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (180 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (186 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_TRANSACTIONS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (179 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_WALLETS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (164 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_GAS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (121 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_CHAINS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (127 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BLOCKCHAIN_PROTOCOLS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (137 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_DISTILLATION_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_DISTILLATION_DASHBOARD.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (245 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CONFIG.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CONFIG.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CONFIG.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CONFIG.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CONFIG.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CONFIG.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CONFIG.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CONFIG.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (246 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_DISTILLATION_TELEMETRY.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (155 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_DISTILLATION_CACHE.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (206 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_STATIC.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_STATIC.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_DISTILLATION_STATIC.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_STATIC.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_STATIC.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_STATIC.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DISTILLATION_STATIC.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_DISTILLATION_STATIC.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (327 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_CACHE_MANAGEMENT.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_CACHE_MANAGEMENT.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_CACHE_MANAGEMENT.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_CACHE_MANAGEMENT.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_CACHE_MANAGEMENT.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_CACHE_MANAGEMENT.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_CACHE_MANAGEMENT.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (174 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DATA_SOURCES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DATA_SOURCES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DATA_SOURCES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DATA_SOURCES.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DATA_SOURCES.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DATA_SOURCES.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_DATA_SOURCES.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_DATA_SOURCES.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (161 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NETWORK_ANALYSIS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NETWORK_ANALYSIS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NETWORK_ANALYSIS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NETWORK_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NETWORK_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NETWORK_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NETWORK_ANALYSIS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_NETWORK_ANALYSIS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (164 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS_RULES.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (272 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_LIST.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_LIST.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_PROJECTS_LIST.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_LIST.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_LIST.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_LIST.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_LIST.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS_LIST.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (279 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_INVITATIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_INVITATIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_PROJECTS_INVITATIONS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_INVITATIONS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_INVITATIONS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_INVITATIONS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_INVITATIONS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS_INVITATIONS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (214 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_KNOWLEDGE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_KNOWLEDGE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_PROJECTS_KNOWLEDGE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_KNOWLEDGE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_KNOWLEDGE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_KNOWLEDGE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_KNOWLEDGE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS_KNOWLEDGE.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (304 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS_TOOLS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (193 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS_USERS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (187 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS_EDITOR.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (211 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_PROJECTS_ANALYTICS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (182 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPHRAG_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPHRAG_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPHRAG_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPHRAG_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPHRAG_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPHRAG_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_GRAPHRAG_DASHBOARD.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (167 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_GRAPH_DATA.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (181 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_SYSTEM_ADMINS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (181 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_SETTINGS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_SETTINGS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_SYSTEM_SETTINGS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_SETTINGS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_SETTINGS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_SETTINGS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_SETTINGS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_SYSTEM_SETTINGS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (204 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_MAINTENANCE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_MAINTENANCE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_MAINTENANCE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_SYSTEM_MAINTENANCE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_MAINTENANCE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_MAINTENANCE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_MAINTENANCE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_MAINTENANCE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_AUDIT.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_AUDIT.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_SYSTEM_AUDIT.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_AUDIT.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_AUDIT.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_AUDIT.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_AUDIT.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_SYSTEM_AUDIT.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (183 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_SYSTEM_HEALTH.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (169 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_LLM_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_LLM_DASHBOARD.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (279 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_BUDGETS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_BUDGETS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_LLM_BUDGETS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_BUDGETS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_BUDGETS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_BUDGETS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_BUDGETS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_LLM_BUDGETS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (251 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_MODELS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_MODELS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_LLM_MODELS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_MODELS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_MODELS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_MODELS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_MODELS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_LLM_MODELS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (266 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_RANKINGS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_RANKINGS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_LLM_RANKINGS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_RANKINGS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_RANKINGS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_RANKINGS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_RANKINGS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_LLM_RANKINGS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (220 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_TELEMETRY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_TELEMETRY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_LLM_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_TELEMETRY.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_LLM_TELEMETRY.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (244 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (225 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_REQUESTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_REQUESTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_LLM_REQUESTS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_REQUESTS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_REQUESTS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_REQUESTS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_REQUESTS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_LLM_REQUESTS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (215 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_PROVIDERS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_PROVIDERS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_LLM_PROVIDERS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_PROVIDERS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_PROVIDERS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_PROVIDERS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_LLM_PROVIDERS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_LLM_PROVIDERS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (255 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_FRAUD.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (167 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SECURITY.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (174 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_SANCTIONS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (155 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_COMPLIANCE_DASHBOARD.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (185 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BILLING_INVOICES.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (151 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BILLING_DASHBOARD.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (139 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BILLING_PAYMENTS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (121 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_BILLING_SUBSCRIPTIONS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (134 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_ANALYTICS_REVENUE.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (132 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_ANALYTICS_PLATFORM.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (193 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_USERS_DETAIL.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (171 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_USERS_LIST.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (155 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_USERS_BANS.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (148 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_USERS_KYC.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (153 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ML_MANAGEMENT.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ML_MANAGEMENT.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ML_MANAGEMENT.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ML_MANAGEMENT.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ML_MANAGEMENT.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ML_MANAGEMENT.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_ML_MANAGEMENT.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (156 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANNOUNCEMENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANNOUNCEMENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANNOUNCEMENTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_ANNOUNCEMENTS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANNOUNCEMENTS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANNOUNCEMENTS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANNOUNCEMENTS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_ANNOUNCEMENTS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_ADMIN_NOTIFICATIONS_TEMPLATES.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (138 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_UTILITIES_ATLAS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_UTILITIES_ATLAS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (173 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_UTILITIES_GENERAL.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_UTILITIES_GENERAL.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_UTILITIES_GENERAL.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_UTILITIES_GENERAL.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_UTILITIES_GENERAL.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SEARCH_HISTORY.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SEARCH_HISTORY.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SEARCH_HISTORY.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_SEARCH_HISTORY.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (265 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_SEARCH_HISTORY.md",
+      "line": 1026,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (139 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_SEARCH_HISTORY.md",
+      "line": 1041,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (130 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_REALTIME_FEED.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_REALTIME_FEED.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_REALTIME_FEED.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_REALTIME_FEED.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_REALTIME_FEED.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_REALTIME_FEED.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_REALTIME_FEED.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (208 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_GRAPHRAG_SEARCH.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_GRAPHRAG_SEARCH.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_GRAPHRAG_SEARCH.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_GRAPHRAG_SEARCH.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_GRAPHRAG_SEARCH.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_GRAPHRAG_SEARCH.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_GRAPHRAG_SEARCH.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (240 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_GRAPH.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_GRAPH.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_GRAPH.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_GRAPH.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_GRAPH.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_GRAPH.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_PROTOCOL_GRAPH.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (252 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_WELCOME.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_WELCOME.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_ONBOARDING_WELCOME.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_WELCOME.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_WELCOME.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_WELCOME.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_WELCOME.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_ONBOARDING_WELCOME.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (180 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_AUTH_LOGIN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_AUTH_LOGIN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_AUTH_LOGIN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_AUTH_LOGIN.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_AUTH_LOGIN.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_AUTH_LOGIN.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_AUTH_LOGIN.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_AUTH_LOGIN.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_ONBOARDING_KYC.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (136 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_TRANSACTIONS_HISTORY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_TRANSACTIONS_HISTORY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_TRANSACTIONS_HISTORY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_TRANSACTIONS_HISTORY.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_TRANSACTIONS_HISTORY.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_TRANSACTIONS_HISTORY.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_TRANSACTIONS_HISTORY.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_TRANSACTIONS_HISTORY.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_DASHBOARD.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (228 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_INSIGHTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_INSIGHTS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_INSIGHTS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_INSIGHTS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_INSIGHTS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_INSIGHTS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_RISK_INSIGHTS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (207 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO_RISK.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO_RISK.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO_RISK.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO_RISK.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO_RISK.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO_RISK.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO_RISK.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_PORTFOLIO_RISK.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (224 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PORTFOLIO.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_PORTFOLIO.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (189 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PAYMENT_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_PAYMENT_SUBSCRIPTION.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (149 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN_V2.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN_V2.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN_V2.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN_V2.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN_V2.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_CHAT_MAIN_V2.md",
+      "line": 22,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (262 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_CHAT_MAIN_V2.md",
+      "line": 42,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (121 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_CHAT_MAIN.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_MAIN.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_CHAT_MAIN.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (212 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_PROJECTS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_PROJECTS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_CHAT_PROJECTS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_CHAT_PROJECTS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (206 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ACCOUNT_AUTH.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ACCOUNT_AUTH.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_ACCOUNT_AUTH.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (209 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_SEND.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_SEND.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_SEND.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_WALLET_SEND.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_SEND.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_SEND.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_SEND.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_SEND.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_WALLET_OVERVIEW.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (134 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_TOKEN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_TOKEN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_TOKEN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_WALLET_TOKEN.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_TOKEN.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_TOKEN.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_TOKEN.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_TOKEN.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_RECEIVE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_RECEIVE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_RECEIVE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_WALLET_RECEIVE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_RECEIVE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_RECEIVE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_RECEIVE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WALLET_RECEIVE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_COMPARISON.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_COMPARISON.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_PROTOCOL_COMPARISON.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_PROTOCOL_COMPARISON.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (337 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_DASHBOARD.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_DASHBOARD.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_HOME_DASHBOARD.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (231 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_MARKETS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_MARKETS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_MARKETS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_MARKETS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_MARKETS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_HOME_MARKETS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_HOME_MARKETS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (174 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_MAIN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_MAIN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_MAIN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_SETTINGS_MAIN.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_MAIN.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_MAIN.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_MAIN.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_MAIN.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_PROFILE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_PROFILE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_PROFILE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_SETTINGS_PROFILE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_PROFILE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_PROFILE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_PROFILE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_PROFILE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_PREFERENCES.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_SETTINGS_PREFERENCES.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (227 chars)"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_SETTINGS_PREFERENCES.md",
+      "line": 993,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (148 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_REFERRALS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_REFERRALS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_REFERRALS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_SETTINGS_REFERRALS.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_REFERRALS.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_REFERRALS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_REFERRALS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_REFERRALS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_SETTINGS_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SETTINGS_SUBSCRIPTION.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SUPPORT_HELP.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SUPPORT_HELP.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SUPPORT_HELP.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_SUPPORT_HELP.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SUPPORT_HELP.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SUPPORT_HELP.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SUPPORT_HELP.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_SUPPORT_HELP.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_MARKETS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_MARKETS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_MARKETS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_MARKETS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_MARKETS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (230 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_DEFI_BRIDGE.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (124 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_STAKE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SUPPLY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SUPPLY.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SUPPLY.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SUPPLY.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SUPPLY.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SUPPLY.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_DEFI_SUPPLY.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (172 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_DEFI_EARN.md",
+      "line": 18,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (148 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_DEFI_BORROW.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (139 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "NO_INTERFACES",
+      "message": "No TypeScript interfaces defined"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_DEFI_SWAP.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (140 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_ALERTS.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_ALERTS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_RISK_ALERTS.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_RISK_ALERTS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (225 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WEBSOCKET_REALTIME.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WEBSOCKET_REALTIME.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_WEBSOCKET_REALTIME.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_WEBSOCKET_REALTIME.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (175 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_NOTIFICATIONS.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "INFO",
+      "file": "FRONTEND_USER_NOTIFICATIONS.md",
+      "line": 19,
+      "rule": "LINE_TOO_LONG",
+      "message": "Line exceeds 120 characters (146 chars)"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ALERTS_PRICE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: API Integration"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ALERTS_PRICE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: React Hooks"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ALERTS_PRICE.md",
+      "line": 0,
+      "rule": "MISSING_SECTION",
+      "message": "Missing required section: Error Handling"
+    },
+    {
+      "severity": "ERROR",
+      "file": "FRONTEND_USER_ALERTS_PRICE.md",
+      "line": 0,
+      "rule": "NO_ENDPOINTS",
+      "message": "No API endpoints found in documentation"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ALERTS_PRICE.md",
+      "line": 0,
+      "rule": "NO_HOOKS",
+      "message": "No React hooks provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ALERTS_PRICE.md",
+      "line": 0,
+      "rule": "NO_REQUEST_EXAMPLE",
+      "message": "No example request provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ALERTS_PRICE.md",
+      "line": 0,
+      "rule": "NO_RESPONSE_EXAMPLE",
+      "message": "No example response provided"
+    },
+    {
+      "severity": "WARNING",
+      "file": "FRONTEND_USER_ALERTS_PRICE.md",
+      "line": 0,
+      "rule": "NO_AUTH_INFO",
+      "message": "Authentication requirements not specified"
+    }
+  ]
+}

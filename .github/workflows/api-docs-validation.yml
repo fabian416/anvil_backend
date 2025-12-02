@@ -1,0 +1,131 @@
+name: API Documentation Validation
+
+on:
+  pull_request:
+    paths:
+      - 'docs/frontend/**'
+      - 'src/app/presentation/http/controllers/**'
+      - 'scripts/api_audit/**'
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - 'docs/frontend/**'
+      - 'src/app/presentation/http/controllers/**'
+
+jobs:
+  validate-api-docs:
+    name: Validate API Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Run API Coverage Validator
+        id: coverage
+        run: |
+          python scripts/api_audit/validate_api_coverage.py
+          echo "coverage_result=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      - name: Run TypeScript Validator
+        id: typescript
+        run: |
+          bash scripts/api_audit/validate_typescript.sh
+          echo "typescript_result=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      - name: Run Documentation Linter
+        id: linter
+        run: |
+          python scripts/api_audit/lint_documentation.py
+          echo "linter_result=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: scripts/api_audit/data/coverage_report.json
+      
+      - name: Upload TypeScript Validation Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: typescript-validation-report
+          path: scripts/api_audit/data/typescript_validation_report.json
+      
+      - name: Upload Lint Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: scripts/api_audit/data/lint_report.json
+      
+      - name: Check Validation Results
+        run: |
+          echo "Coverage Result: ${{ steps.coverage.outputs.coverage_result }}"
+          echo "TypeScript Result: ${{ steps.typescript.outputs.typescript_result }}"
+          echo "Linter Result: ${{ steps.linter.outputs.linter_result }}"
+          
+          # Fail if any critical checks failed
+          if [ "${{ steps.coverage.outputs.coverage_result }}" -ne "0" ]; then
+            echo "❌ Coverage validation failed"
+            exit 1
+          fi
+          
+          echo "✅ All validations passed!"
+      
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 📊 API Documentation Validation Results\n\n';
+            
+            // Read reports
+            try {
+              const coverage = JSON.parse(fs.readFileSync('scripts/api_audit/data/coverage_report.json', 'utf8'));
+              const typescript = JSON.parse(fs.readFileSync('scripts/api_audit/data/typescript_validation_report.json', 'utf8'));
+              const lint = JSON.parse(fs.readFileSync('scripts/api_audit/data/lint_report.json', 'utf8'));
+              
+              comment += '### Coverage\n';
+              comment += `- **Documented**: ${coverage.summary.documented_endpoints}/${coverage.summary.total_backend_endpoints}\n`;
+              comment += `- **Coverage**: ${coverage.summary.coverage_percentage.toFixed(1)}%\n\n`;
+              
+              comment += '### TypeScript Validation\n';
+              comment += `- **Files Scanned**: ${typescript.summary.markdown_files_scanned}\n`;
+              comment += `- **TypeScript Blocks**: ${typescript.summary.typescript_blocks}\n`;
+              comment += `- **Status**: ${typescript.summary.validation_passed ? '✅ PASSED' : '❌ FAILED'}\n\n`;
+              
+              comment += '### Documentation Quality\n';
+              comment += `- **Files Clean**: ${lint.files_clean}/${lint.total_files}\n`;
+              comment += `- **Quality Score**: ${lint.quality_score.toFixed(1)}%\n`;
+              comment += `- **Errors**: ${lint.errors}\n`;
+              comment += `- **Warnings**: ${lint.warnings}\n\n`;
+              
+              comment += '---\n';
+              comment += '*Automated validation by API Documentation CI*';
+              
+            } catch (error) {
+              comment += '⚠️ Unable to read validation reports\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

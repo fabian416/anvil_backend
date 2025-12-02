@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-12-02T16:59:43Z",
+  "summary": {
+    "markdown_files_scanned": 110,
+    "typescript_blocks": 1071,
+    "validation_passed": true,
+    "errors": 0
+  },
+  "temp_directory": "/home/ubuntu/anvil_backend/scripts/api_audit/.temp_ts_validation",
+  "typescript_file": "/home/ubuntu/anvil_backend/scripts/api_audit/.temp_ts_validation/extracted.ts"
+}

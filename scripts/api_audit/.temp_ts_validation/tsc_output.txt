@@ -1,0 +1,2362 @@
+extracted.ts(297,25): error TS1005: '>' expected.
+extracted.ts(297,36): error TS1005: ')' expected.
+extracted.ts(297,52): error TS1109: Expression expected.
+extracted.ts(298,27): error TS1005: '>' expected.
+extracted.ts(298,34): error TS1005: ';' expected.
+extracted.ts(298,53): error TS1161: Unterminated regular expression literal.
+extracted.ts(299,23): error TS1005: ';' expected.
+extracted.ts(299,44): error TS1109: Expression expected.
+extracted.ts(300,6): error TS1110: Type expected.
+extracted.ts(301,3): error TS1128: Declaration or statement expected.
+extracted.ts(387,46): error TS1109: Expression expected.
+extracted.ts(399,10): error TS1109: Expression expected.
+extracted.ts(406,35): error TS1109: Expression expected.
+extracted.ts(437,35): error TS1109: Expression expected.
+extracted.ts(470,35): error TS1109: Expression expected.
+extracted.ts(509,48): error TS1109: Expression expected.
+extracted.ts(605,11): error TS1005: ';' expected.
+extracted.ts(606,12): error TS1005: ';' expected.
+extracted.ts(607,22): error TS1005: ';' expected.
+extracted.ts(608,23): error TS1005: ';' expected.
+extracted.ts(609,20): error TS1005: ';' expected.
+extracted.ts(610,18): error TS1005: ';' expected.
+extracted.ts(611,4): error TS1128: Declaration or statement expected.
+extracted.ts(612,16): error TS1005: ';' expected.
+extracted.ts(613,13): error TS1005: ';' expected.
+extracted.ts(614,14): error TS1005: ';' expected.
+extracted.ts(619,7): error TS1005: ';' expected.
+extracted.ts(620,11): error TS1005: ';' expected.
+extracted.ts(621,12): error TS1005: ';' expected.
+extracted.ts(622,22): error TS1005: ';' expected.
+extracted.ts(623,13): error TS1005: ';' expected.
+extracted.ts(624,14): error TS1005: ';' expected.
+extracted.ts(625,15): error TS1005: ';' expected.
+extracted.ts(626,15): error TS1005: ';' expected.
+extracted.ts(686,22): error TS1005: ';' expected.
+extracted.ts(687,22): error TS1005: ';' expected.
+extracted.ts(688,28): error TS1005: ';' expected.
+extracted.ts(689,26): error TS1005: ';' expected.
+extracted.ts(690,25): error TS1005: ';' expected.
+extracted.ts(691,21): error TS1005: ';' expected.
+extracted.ts(735,18): error TS1005: ';' expected.
+extracted.ts(736,18): error TS1005: ';' expected.
+extracted.ts(737,13): error TS1005: ';' expected.
+extracted.ts(738,14): error TS1005: ';' expected.
+extracted.ts(739,25): error TS1005: ';' expected.
+extracted.ts(740,32): error TS1005: ';' expected.
+extracted.ts(741,34): error TS1005: ';' expected.
+extracted.ts(742,29): error TS1005: ';' expected.
+extracted.ts(764,11): error TS1005: ';' expected.
+extracted.ts(769,22): error TS1005: ';' expected.
+extracted.ts(802,18): error TS1005: ';' expected.
+extracted.ts(803,26): error TS1005: ';' expected.
+extracted.ts(804,24): error TS1005: ';' expected.
+extracted.ts(805,26): error TS1005: ';' expected.
+extracted.ts(806,25): error TS1005: ';' expected.
+extracted.ts(807,21): error TS1005: ';' expected.
+extracted.ts(808,14): error TS1005: ';' expected.
+extracted.ts(809,23): error TS1005: ';' expected.
+extracted.ts(810,20): error TS1005: ';' expected.
+extracted.ts(811,23): error TS1005: ';' expected.
+extracted.ts(812,29): error TS1005: ';' expected.
+extracted.ts(813,6): error TS1128: Declaration or statement expected.
+extracted.ts(814,24): error TS1005: ';' expected.
+extracted.ts(815,20): error TS1005: ';' expected.
+extracted.ts(816,23): error TS1005: ';' expected.
+extracted.ts(817,29): error TS1005: ';' expected.
+extracted.ts(842,11): error TS1005: ';' expected.
+extracted.ts(843,28): error TS1005: ';' expected.
+extracted.ts(844,22): error TS1005: ';' expected.
+extracted.ts(845,25): error TS1005: ';' expected.
+extracted.ts(846,21): error TS1005: ';' expected.
+extracted.ts(847,20): error TS1005: ';' expected.
+extracted.ts(935,7): error TS1005: ';' expected.
+extracted.ts(936,9): error TS1005: ';' expected.
+extracted.ts(937,9): error TS1005: ';' expected.
+extracted.ts(938,16): error TS1005: ';' expected.
+extracted.ts(939,9): error TS1005: ';' expected.
+extracted.ts(940,10): error TS1005: ';' expected.
+extracted.ts(941,11): error TS1005: ';' expected.
+extracted.ts(942,15): error TS1005: ';' expected.
+extracted.ts(943,18): error TS1005: ';' expected.
+extracted.ts(944,22): error TS1005: ';' expected.
+extracted.ts(945,19): error TS1005: ';' expected.
+extracted.ts(946,18): error TS1005: ';' expected.
+extracted.ts(947,16): error TS1005: ';' expected.
+extracted.ts(948,15): error TS1005: ';' expected.
+extracted.ts(949,15): error TS1005: ';' expected.
+extracted.ts(1060,15): error TS1005: ';' expected.
+extracted.ts(1061,14): error TS1005: ';' expected.
+extracted.ts(1062,15): error TS1005: ';' expected.
+extracted.ts(1063,24): error TS1005: ';' expected.
+extracted.ts(1064,15): error TS1005: ';' expected.
+extracted.ts(1065,4): error TS1128: Declaration or statement expected.
+extracted.ts(1066,13): error TS1005: ';' expected.
+extracted.ts(1067,14): error TS1005: ';' expected.
+extracted.ts(2996,3): error TS1005: '>' expected.
+extracted.ts(2996,10): error TS1005: ';' expected.
+extracted.ts(3001,2): error TS1109: Expression expected.
+extracted.ts(3003,11): error TS1005: ';' expected.
+extracted.ts(3005,22): error TS1109: Expression expected.
+extracted.ts(3006,54): error TS1109: Expression expected.
+extracted.ts(3007,15): error TS1109: Expression expected.
+extracted.ts(3008,12): error TS1109: Expression expected.
+extracted.ts(3013,3): error TS1005: '>' expected.
+extracted.ts(3013,7): error TS1005: ';' expected.
+extracted.ts(3014,12): error TS1136: Property assignment expected.
+extracted.ts(3014,15): error TS1005: ';' expected.
+extracted.ts(3014,38): error TS1128: Declaration or statement expected.
+extracted.ts(3016,2): error TS1109: Expression expected.
+extracted.ts(3018,11): error TS1005: ';' expected.
+extracted.ts(3020,8): error TS1109: Expression expected.
+extracted.ts(3021,13): error TS1109: Expression expected.
+extracted.ts(3025,21): error TS1005: '>' expected.
+extracted.ts(3025,27): error TS1005: ';' expected.
+extracted.ts(3025,37): error TS1005: ';' expected.
+extracted.ts(3025,47): error TS1005: ';' expected.
+extracted.ts(3025,58): error TS1109: Expression expected.
+extracted.ts(3027,11): error TS1005: ';' expected.
+extracted.ts(3034,11): error TS1109: Expression expected.
+extracted.ts(4964,3): error TS1005: '>' expected.
+extracted.ts(4964,11): error TS1005: ';' expected.
+extracted.ts(4967,30): error TS1005: ',' expected.
+extracted.ts(4967,45): error TS1128: Declaration or statement expected.
+extracted.ts(4968,1): error TS1161: Unterminated regular expression literal.
+extracted.ts(4987,3): error TS1005: '>' expected.
+extracted.ts(4987,8): error TS1005: ';' expected.
+extracted.ts(4989,9): error TS1136: Property assignment expected.
+extracted.ts(4989,23): error TS1109: Expression expected.
+extracted.ts(4989,24): error TS1109: Expression expected.
+extracted.ts(4990,10): error TS1136: Property assignment expected.
+extracted.ts(4990,33): error TS1005: ';' expected.
+extracted.ts(4990,46): error TS1005: ';' expected.
+extracted.ts(4990,64): error TS1128: Declaration or statement expected.
+extracted.ts(4992,2): error TS1109: Expression expected.
+extracted.ts(4994,11): error TS1005: ';' expected.
+extracted.ts(4998,13): error TS1109: Expression expected.
+extracted.ts(5000,12): error TS1109: Expression expected.
+extracted.ts(5000,24): error TS1109: Expression expected.
+extracted.ts(5005,3): error TS1005: '>' expected.
+extracted.ts(5005,8): error TS1005: ';' expected.
+extracted.ts(5006,18): error TS1005: ':' expected.
+extracted.ts(5007,13): error TS1005: ':' expected.
+extracted.ts(5010,2): error TS1109: Expression expected.
+extracted.ts(5012,11): error TS1005: ';' expected.
+extracted.ts(5013,25): error TS1011: An element access expression should take an argument.
+extracted.ts(5016,11): error TS1109: Expression expected.
+extracted.ts(5017,10): error TS1109: Expression expected.
+extracted.ts(5018,14): error TS1109: Expression expected.
+extracted.ts(5019,15): error TS1109: Expression expected.
+extracted.ts(5020,16): error TS1109: Expression expected.
+extracted.ts(5020,50): error TS1109: Expression expected.
+extracted.ts(5025,3): error TS1005: '>' expected.
+extracted.ts(5025,7): error TS1005: ';' expected.
+extracted.ts(5029,14): error TS1005: ':' expected.
+extracted.ts(5032,2): error TS1109: Expression expected.
+extracted.ts(5034,11): error TS1005: ';' expected.
+extracted.ts(5035,28): error TS1011: An element access expression should take an argument.
+extracted.ts(5037,32): error TS1109: Expression expected.
+extracted.ts(5038,24): error TS1109: Expression expected.
+extracted.ts(5039,11): error TS1109: Expression expected.
+extracted.ts(5044,3): error TS1005: '>' expected.
+extracted.ts(5044,11): error TS1005: ';' expected.
+extracted.ts(5048,2): error TS1109: Expression expected.
+extracted.ts(5050,11): error TS1005: ';' expected.
+extracted.ts(5051,17): error TS1011: An element access expression should take an argument.
+extracted.ts(5052,12): error TS1109: Expression expected.
+extracted.ts(5053,38): error TS1109: Expression expected.
+extracted.ts(5054,38): error TS1109: Expression expected.
+extracted.ts(5055,24): error TS1109: Expression expected.
+extracted.ts(5060,3): error TS1005: '>' expected.
+extracted.ts(5060,9): error TS1005: ';' expected.
+extracted.ts(5061,14): error TS1005: ':' expected.
+extracted.ts(5065,2): error TS1109: Expression expected.
+extracted.ts(5067,11): error TS1005: ';' expected.
+extracted.ts(5071,22): error TS1109: Expression expected.
+extracted.ts(5072,11): error TS1109: Expression expected.
+extracted.ts(5073,12): error TS1109: Expression expected.
+extracted.ts(5074,14): error TS1109: Expression expected.
+extracted.ts(5084,3): error TS1005: '>' expected.
+extracted.ts(5084,10): error TS1005: ';' expected.
+extracted.ts(5085,67): error TS1005: '>' expected.
+extracted.ts(5086,70): error TS1005: '>' expected.
+extracted.ts(5087,61): error TS1005: '>' expected.
+extracted.ts(5089,13): error TS1005: ':' expected.
+extracted.ts(5090,2): error TS1109: Expression expected.
+extracted.ts(5092,1): error TS1109: Expression expected.
+extracted.ts(6976,3): error TS1005: '>' expected.
+extracted.ts(6976,12): error TS1005: ';' expected.
+extracted.ts(6979,31): error TS1005: ',' expected.
+extracted.ts(6983,19): error TS1005: ',' expected.
+extracted.ts(6984,2): error TS1109: Expression expected.
+extracted.ts(6986,11): error TS1005: ';' expected.
+extracted.ts(6989,37): error TS1109: Expression expected.
+extracted.ts(6990,21): error TS1109: Expression expected.
+extracted.ts(6991,28): error TS1109: Expression expected.
+extracted.ts(6992,46): error TS1109: Expression expected.
+extracted.ts(6993,19): error TS1109: Expression expected.
+extracted.ts(6994,21): error TS1109: Expression expected.
+extracted.ts(6995,11): error TS1109: Expression expected.
+extracted.ts(8392,10): error TS1005: '>' expected.
+extracted.ts(8392,19): error TS1005: ')' expected.
+extracted.ts(8394,12): error TS1005: ';' expected.
+extracted.ts(8396,11): error TS1005: '>' expected.
+extracted.ts(8396,15): error TS1005: ';' expected.
+extracted.ts(8398,21): error TS1136: Property assignment expected.
+extracted.ts(8398,25): error TS1005: ';' expected.
+extracted.ts(8398,52): error TS1128: Declaration or statement expected.
+extracted.ts(8399,23): error TS1136: Property assignment expected.
+extracted.ts(8399,27): error TS1005: ';' expected.
+extracted.ts(8399,65): error TS1128: Declaration or statement expected.
+extracted.ts(8402,10): error TS1109: Expression expected.
+extracted.ts(8403,17): error TS1005: '>' expected.
+extracted.ts(8403,26): error TS1005: ';' expected.
+extracted.ts(8403,67): error TS1005: ';' expected.
+extracted.ts(8403,75): error TS1005: ':' expected.
+extracted.ts(8403,78): error TS1109: Expression expected.
+extracted.ts(8404,18): error TS1005: ',' expected.
+extracted.ts(8404,30): error TS1005: '>' expected.
+extracted.ts(8404,39): error TS1005: ';' expected.
+extracted.ts(8404,80): error TS1005: ';' expected.
+extracted.ts(8404,88): error TS1005: ':' expected.
+extracted.ts(8404,91): error TS1109: Expression expected.
+extracted.ts(8404,92): error TS1109: Expression expected.
+extracted.ts(8405,8): error TS1110: Type expected.
+extracted.ts(8409,14): error TS1005: '>' expected.
+extracted.ts(8409,23): error TS1005: ')' expected.
+extracted.ts(8410,24): error TS1005: '>' expected.
+extracted.ts(8410,33): error TS1005: ';' expected.
+extracted.ts(8410,41): error TS1005: ';' expected.
+extracted.ts(8410,49): error TS1005: ':' expected.
+extracted.ts(8410,52): error TS1109: Expression expected.
+extracted.ts(8412,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(8413,7): error TS1128: Declaration or statement expected.
+extracted.ts(8416,12): error TS1005: '>' expected.
+extracted.ts(8416,21): error TS1005: ';' expected.
+extracted.ts(8417,17): error TS1005: ',' expected.
+extracted.ts(8419,13): error TS1005: '>' expected.
+extracted.ts(8419,16): error TS1005: ')' expected.
+extracted.ts(8419,24): error TS1005: ',' expected.
+extracted.ts(8420,13): error TS1005: ',' expected.
+extracted.ts(8423,18): error TS1005: ',' expected.
+extracted.ts(8425,21): error TS1005: '>' expected.
+extracted.ts(8425,30): error TS1005: ',' expected.
+extracted.ts(8426,26): error TS1005: ',' expected.
+extracted.ts(8427,18): error TS1161: Unterminated regular expression literal.
+extracted.ts(8428,23): error TS1005: ',' expected.
+extracted.ts(8428,64): error TS1005: ',' expected.
+extracted.ts(8428,83): error TS1161: Unterminated regular expression literal.
+extracted.ts(8429,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(8430,20): error TS1005: ',' expected.
+extracted.ts(8431,22): error TS1005: '>' expected.
+extracted.ts(8431,31): error TS1005: ',' expected.
+extracted.ts(8432,20): error TS1136: Property assignment expected.
+extracted.ts(8432,51): error TS1005: ',' expected.
+extracted.ts(8433,18): error TS1110: Type expected.
+extracted.ts(8434,22): error TS1005: ';' expected.
+extracted.ts(8434,62): error TS1005: ';' expected.
+extracted.ts(8434,68): error TS1161: Unterminated regular expression literal.
+extracted.ts(8435,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(8436,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(8439,18): error TS1005: '>' expected.
+extracted.ts(8439,27): error TS1005: ';' expected.
+extracted.ts(8441,22): error TS1005: '>' expected.
+extracted.ts(8441,31): error TS1005: ';' expected.
+extracted.ts(8441,60): error TS1161: Unterminated regular expression literal.
+extracted.ts(8442,22): error TS1005: ';' expected.
+extracted.ts(8443,20): error TS1005: ';' expected.
+extracted.ts(8444,18): error TS1161: Unterminated regular expression literal.
+extracted.ts(8445,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(8447,22): error TS1005: '>' expected.
+extracted.ts(8447,31): error TS1005: ';' expected.
+extracted.ts(8447,69): error TS1161: Unterminated regular expression literal.
+extracted.ts(8448,22): error TS1005: ';' expected.
+extracted.ts(8448,63): error TS1005: ',' expected.
+extracted.ts(8448,89): error TS1161: Unterminated regular expression literal.
+extracted.ts(8449,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(8451,22): error TS1005: '>' expected.
+extracted.ts(8451,31): error TS1005: ';' expected.
+extracted.ts(8451,63): error TS1005: ';' expected.
+extracted.ts(8451,74): error TS1161: Unterminated regular expression literal.
+extracted.ts(8452,22): error TS1005: ';' expected.
+extracted.ts(8453,20): error TS1136: Property assignment expected.
+extracted.ts(8453,63): error TS1128: Declaration or statement expected.
+extracted.ts(8453,64): error TS1109: Expression expected.
+extracted.ts(8454,18): error TS1110: Type expected.
+extracted.ts(8455,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(8456,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(8460,20): error TS1005: '>' expected.
+extracted.ts(8460,29): error TS1005: ')' expected.
+extracted.ts(8463,18): error TS1109: Expression expected.
+extracted.ts(8464,22): error TS1005: '>' expected.
+extracted.ts(8464,31): error TS1005: ';' expected.
+extracted.ts(8465,25): error TS1005: '>' expected.
+extracted.ts(8465,34): error TS1005: ';' expected.
+extracted.ts(8466,26): error TS1005: ';' expected.
+extracted.ts(8466,62): error TS1161: Unterminated regular expression literal.
+extracted.ts(8467,20): error TS1161: Unterminated regular expression literal.
+extracted.ts(8468,25): error TS1005: ';' expected.
+extracted.ts(8468,52): error TS1005: ',' expected.
+extracted.ts(8468,83): error TS1161: Unterminated regular expression literal.
+extracted.ts(8469,18): error TS1161: Unterminated regular expression literal.
+extracted.ts(8470,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(8471,13): error TS1128: Declaration or statement expected.
+extracted.ts(8472,12): error TS1110: Type expected.
+extracted.ts(8473,9): error TS1128: Declaration or statement expected.
+extracted.ts(8473,10): error TS1128: Declaration or statement expected.
+extracted.ts(8473,11): error TS1128: Declaration or statement expected.
+extracted.ts(8474,8): error TS1110: Type expected.
+extracted.ts(8475,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(8476,3): error TS1128: Declaration or statement expected.
+extracted.ts(8477,1): error TS1128: Declaration or statement expected.
+extracted.ts(8612,10): error TS1005: '>' expected.
+extracted.ts(8612,19): error TS1005: ')' expected.
+extracted.ts(8613,11): error TS1005: '>' expected.
+extracted.ts(8613,20): error TS1005: ';' expected.
+extracted.ts(8613,59): error TS1005: ';' expected.
+extracted.ts(8613,69): error TS1161: Unterminated regular expression literal.
+extracted.ts(8614,12): error TS1005: ';' expected.
+extracted.ts(8614,25): error TS1005: ';' expected.
+extracted.ts(8614,83): error TS1110: Type expected.
+extracted.ts(8615,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(8616,3): error TS1128: Declaration or statement expected.
+extracted.ts(8617,1): error TS1128: Declaration or statement expected.
+extracted.ts(8673,10): error TS1005: '>' expected.
+extracted.ts(8673,19): error TS1005: ')' expected.
+extracted.ts(8675,12): error TS1005: ';' expected.
+extracted.ts(8676,13): error TS1005: '>' expected.
+extracted.ts(8676,22): error TS1005: ';' expected.
+extracted.ts(8677,17): error TS1005: '>' expected.
+extracted.ts(8677,26): error TS1005: ';' expected.
+extracted.ts(8677,34): error TS1005: ';' expected.
+extracted.ts(8677,42): error TS1005: ':' expected.
+extracted.ts(8677,45): error TS1109: Expression expected.
+extracted.ts(8678,16): error TS1005: ';' expected.
+extracted.ts(8679,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(8680,14): error TS1005: ';' expected.
+extracted.ts(8680,25): error TS1136: Property assignment expected.
+extracted.ts(8682,12): error TS1005: ',' expected.
+extracted.ts(8683,24): error TS1005: ',' expected.
+extracted.ts(8684,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(8685,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(8688,12): error TS1005: '>' expected.
+extracted.ts(8688,21): error TS1005: ';' expected.
+extracted.ts(8689,16): error TS1005: ',' expected.
+extracted.ts(8690,16): error TS1005: '>' expected.
+extracted.ts(8690,25): error TS1005: ')' expected.
+extracted.ts(8690,58): error TS1005: ':' expected.
+extracted.ts(8691,21): error TS1005: ',' expected.
+extracted.ts(8691,25): error TS1005: ':' expected.
+extracted.ts(8691,32): error TS1005: ',' expected.
+extracted.ts(8692,12): error TS1110: Type expected.
+extracted.ts(8693,9): error TS1005: ',' expected.
+extracted.ts(8697,13): error TS1005: '>' expected.
+extracted.ts(8697,16): error TS1005: ')' expected.
+extracted.ts(8698,13): error TS1005: ',' expected.
+extracted.ts(8700,18): error TS1005: '>' expected.
+extracted.ts(8700,27): error TS1005: ',' expected.
+extracted.ts(8701,20): error TS1005: '>' expected.
+extracted.ts(8701,29): error TS1005: ',' expected.
+extracted.ts(8702,23): error TS1005: ',' expected.
+extracted.ts(8703,24): error TS1005: '>' expected.
+extracted.ts(8703,33): error TS1005: ')' expected.
+extracted.ts(8703,60): error TS1005: ':' expected.
+extracted.ts(8703,67): error TS1005: ',' expected.
+extracted.ts(8703,83): error TS1161: Unterminated regular expression literal.
+extracted.ts(8704,17): error TS1005: ',' expected.
+extracted.ts(8705,22): error TS1005: '>' expected.
+extracted.ts(8705,31): error TS1005: ';' expected.
+extracted.ts(8705,62): error TS1005: ',' expected.
+extracted.ts(8705,72): error TS1161: Unterminated regular expression literal.
+extracted.ts(8706,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(8708,32): error TS1005: '>' expected.
+extracted.ts(8708,41): error TS1005: ')' expected.
+extracted.ts(8708,62): error TS1005: ';' expected.
+extracted.ts(8708,70): error TS1005: ':' expected.
+extracted.ts(8708,73): error TS1109: Expression expected.
+extracted.ts(8709,15): error TS1109: Expression expected.
+extracted.ts(8711,29): error TS1005: '>' expected.
+extracted.ts(8711,38): error TS1005: ')' expected.
+extracted.ts(8711,60): error TS1005: ';' expected.
+extracted.ts(8711,68): error TS1005: ':' expected.
+extracted.ts(8711,71): error TS1109: Expression expected.
+extracted.ts(8712,15): error TS1109: Expression expected.
+extracted.ts(8713,14): error TS1110: Type expected.
+extracted.ts(8714,18): error TS1005: ';' expected.
+extracted.ts(8715,20): error TS1005: ':' expected.
+extracted.ts(8716,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(8717,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(8718,9): error TS1128: Declaration or statement expected.
+extracted.ts(8718,10): error TS1128: Declaration or statement expected.
+extracted.ts(8718,11): error TS1128: Declaration or statement expected.
+extracted.ts(8719,8): error TS1110: Type expected.
+extracted.ts(8720,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(8721,3): error TS1128: Declaration or statement expected.
+extracted.ts(8722,1): error TS1128: Declaration or statement expected.
+extracted.ts(8733,10): error TS1005: '>' expected.
+extracted.ts(8733,19): error TS1005: ')' expected.
+extracted.ts(8734,12): error TS1005: '>' expected.
+extracted.ts(8734,21): error TS1005: ';' expected.
+extracted.ts(8736,14): error TS1005: ';' expected.
+extracted.ts(8737,15): error TS1005: '>' expected.
+extracted.ts(8737,24): error TS1005: ';' expected.
+extracted.ts(8737,69): error TS1005: ';' expected.
+extracted.ts(8737,79): error TS1161: Unterminated regular expression literal.
+extracted.ts(8738,14): error TS1005: ';' expected.
+extracted.ts(8739,25): error TS1005: ';' expected.
+extracted.ts(8739,30): error TS1434: Unexpected keyword or identifier.
+extracted.ts(8739,39): error TS1434: Unexpected keyword or identifier.
+extracted.ts(8739,49): error TS1434: Unexpected keyword or identifier.
+extracted.ts(8739,57): error TS1434: Unexpected keyword or identifier.
+extracted.ts(8739,60): error TS1434: Unexpected keyword or identifier.
+extracted.ts(8740,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(8741,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(8744,14): error TS1005: '>' expected.
+extracted.ts(8744,23): error TS1005: ';' expected.
+extracted.ts(8746,16): error TS1005: ';' expected.
+extracted.ts(8747,35): error TS1005: '>' expected.
+extracted.ts(8750,20): error TS1005: '>' expected.
+extracted.ts(8750,29): error TS1005: ')' expected.
+extracted.ts(8751,37): error TS1005: '>' expected.
+extracted.ts(8751,47): error TS1005: ';' expected.
+extracted.ts(8751,67): error TS1161: Unterminated regular expression literal.
+extracted.ts(8752,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(8753,13): error TS1128: Declaration or statement expected.
+extracted.ts(8753,14): error TS1128: Declaration or statement expected.
+extracted.ts(8754,12): error TS1110: Type expected.
+extracted.ts(8757,16): error TS1005: '>' expected.
+extracted.ts(8757,25): error TS1005: ';' expected.
+extracted.ts(8758,30): error TS1005: '>' expected.
+extracted.ts(8759,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(8760,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(8761,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(8762,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(8763,3): error TS1128: Declaration or statement expected.
+extracted.ts(8764,1): error TS1128: Declaration or statement expected.
+extracted.ts(8769,26): error TS1005: '>' expected.
+extracted.ts(8775,18): error TS1005: ';' expected.
+extracted.ts(8776,1): error TS1109: Expression expected.
+extracted.ts(8957,10): error TS1005: '>' expected.
+extracted.ts(8957,19): error TS1005: ')' expected.
+extracted.ts(8958,24): error TS1005: '>' expected.
+extracted.ts(8958,28): error TS1005: ';' expected.
+extracted.ts(8959,17): error TS1005: ',' expected.
+extracted.ts(8961,13): error TS1005: '>' expected.
+extracted.ts(8961,16): error TS1005: ')' expected.
+extracted.ts(8961,23): error TS1005: ',' expected.
+extracted.ts(8962,13): error TS1005: ',' expected.
+extracted.ts(8962,22): error TS1136: Property assignment expected.
+extracted.ts(8962,44): error TS1005: ',' expected.
+extracted.ts(8963,22): error TS1136: Property assignment expected.
+extracted.ts(8963,37): error TS1005: ';' expected.
+extracted.ts(8964,19): error TS1136: Property assignment expected.
+extracted.ts(8964,34): error TS1005: ';' expected.
+extracted.ts(8964,46): error TS1005: ';' expected.
+extracted.ts(8964,51): error TS1128: Declaration or statement expected.
+extracted.ts(8965,25): error TS1136: Property assignment expected.
+extracted.ts(8965,48): error TS1128: Declaration or statement expected.
+extracted.ts(8969,15): error TS1005: '>' expected.
+extracted.ts(8969,20): error TS1005: ';' expected.
+extracted.ts(8972,14): error TS1109: Expression expected.
+extracted.ts(8973,12): error TS1110: Type expected.
+extracted.ts(8974,9): error TS1128: Declaration or statement expected.
+extracted.ts(8974,10): error TS1128: Declaration or statement expected.
+extracted.ts(8974,11): error TS1128: Declaration or statement expected.
+extracted.ts(8975,8): error TS1110: Type expected.
+extracted.ts(8976,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(8977,3): error TS1128: Declaration or statement expected.
+extracted.ts(8978,1): error TS1128: Declaration or statement expected.
+extracted.ts(8983,19): error TS1005: ',' expected.
+extracted.ts(8985,11): error TS1005: '>' expected.
+extracted.ts(8985,18): error TS1005: ')' expected.
+extracted.ts(8985,19): error TS1136: Property assignment expected.
+extracted.ts(8985,35): error TS1005: ';' expected.
+extracted.ts(8986,20): error TS1136: Property assignment expected.
+extracted.ts(8986,35): error TS1005: ';' expected.
+extracted.ts(8987,17): error TS1136: Property assignment expected.
+extracted.ts(8987,32): error TS1005: ';' expected.
+extracted.ts(8987,39): error TS1128: Declaration or statement expected.
+extracted.ts(8988,23): error TS1136: Property assignment expected.
+extracted.ts(8988,50): error TS1005: ';' expected.
+extracted.ts(8988,64): error TS1005: ';' expected.
+extracted.ts(8988,70): error TS1128: Declaration or statement expected.
+extracted.ts(8991,23): error TS1005: ',' expected.
+extracted.ts(8993,15): error TS1005: '>' expected.
+extracted.ts(8993,18): error TS1005: ')' expected.
+extracted.ts(8994,15): error TS1005: ',' expected.
+extracted.ts(8994,27): error TS1136: Property assignment expected.
+extracted.ts(8994,57): error TS1005: ',' expected.
+extracted.ts(8995,24): error TS1136: Property assignment expected.
+extracted.ts(8995,27): error TS1005: ';' expected.
+extracted.ts(8995,50): error TS1128: Declaration or statement expected.
+extracted.ts(8998,20): error TS1005: '>' expected.
+extracted.ts(8998,29): error TS1005: ';' expected.
+extracted.ts(8999,23): error TS1005: '>' expected.
+extracted.ts(8999,32): error TS1005: ';' expected.
+extracted.ts(8999,49): error TS1127: Invalid character.
+extracted.ts(8999,52): error TS1110: Type expected.
+extracted.ts(9000,23): error TS1005: ';' expected.
+extracted.ts(9000,62): error TS1161: Unterminated regular expression literal.
+extracted.ts(9001,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(9002,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(9003,11): error TS1128: Declaration or statement expected.
+extracted.ts(9003,12): error TS1128: Declaration or statement expected.
+extracted.ts(9003,13): error TS1128: Declaration or statement expected.
+extracted.ts(9004,10): error TS1110: Type expected.
+extracted.ts(9005,7): error TS1128: Declaration or statement expected.
+extracted.ts(9005,8): error TS1128: Declaration or statement expected.
+extracted.ts(9006,6): error TS1110: Type expected.
+extracted.ts(9007,3): error TS1128: Declaration or statement expected.
+extracted.ts(9008,1): error TS1128: Declaration or statement expected.
+extracted.ts(9013,15): error TS1005: ',' expected.
+extracted.ts(9015,11): error TS1005: '>' expected.
+extracted.ts(9015,18): error TS1005: ')' expected.
+extracted.ts(9015,20): error TS1136: Property assignment expected.
+extracted.ts(9016,20): error TS1136: Property assignment expected.
+extracted.ts(9016,34): error TS1128: Declaration or statement expected.
+extracted.ts(9017,17): error TS1136: Property assignment expected.
+extracted.ts(9017,31): error TS1128: Declaration or statement expected.
+extracted.ts(9022,13): error TS1005: '>' expected.
+extracted.ts(9022,20): error TS1005: ';' expected.
+extracted.ts(9022,43): error TS1005: ';' expected.
+extracted.ts(9023,22): error TS1136: Property assignment expected.
+extracted.ts(9023,41): error TS1005: ';' expected.
+extracted.ts(9023,46): error TS1128: Declaration or statement expected.
+extracted.ts(9024,19): error TS1136: Property assignment expected.
+extracted.ts(9024,40): error TS1005: ';' expected.
+extracted.ts(9024,45): error TS1128: Declaration or statement expected.
+extracted.ts(9025,25): error TS1136: Property assignment expected.
+extracted.ts(9025,52): error TS1005: ';' expected.
+extracted.ts(9025,66): error TS1005: ';' expected.
+extracted.ts(9025,72): error TS1128: Declaration or statement expected.
+extracted.ts(9026,22): error TS1136: Property assignment expected.
+extracted.ts(9026,26): error TS1005: ';' expected.
+extracted.ts(9026,48): error TS1128: Declaration or statement expected.
+extracted.ts(9029,18): error TS1005: '>' expected.
+extracted.ts(9029,27): error TS1005: ';' expected.
+extracted.ts(9031,17): error TS1005: '>' expected.
+extracted.ts(9031,24): error TS1005: ';' expected.
+extracted.ts(9032,29): error TS1136: Property assignment expected.
+extracted.ts(9032,51): error TS1005: ';' expected.
+extracted.ts(9032,58): error TS1128: Declaration or statement expected.
+extracted.ts(9035,17): error TS1127: Invalid character.
+extracted.ts(9035,18): error TS1127: Invalid character.
+extracted.ts(9036,16): error TS1110: Type expected.
+extracted.ts(9037,19): error TS1005: ';' expected.
+extracted.ts(9037,55): error TS1005: ';' expected.
+extracted.ts(9037,64): error TS1110: Type expected.
+extracted.ts(9038,18): error TS1005: ':' expected.
+extracted.ts(9039,22): error TS1005: ';' expected.
+extracted.ts(9039,27): error TS1434: Unexpected keyword or identifier.
+extracted.ts(9039,51): error TS1005: ';' expected.
+extracted.ts(9040,15): error TS1003: Identifier expected.
+extracted.ts(9040,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(9041,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(9043,18): error TS1005: ';' expected.
+extracted.ts(9045,17): error TS1005: '>' expected.
+extracted.ts(9045,27): error TS1005: ';' expected.
+extracted.ts(9046,27): error TS1136: Property assignment expected.
+extracted.ts(9046,42): error TS1128: Declaration or statement expected.
+extracted.ts(9050,23): error TS1005: ';' expected.
+extracted.ts(9051,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(9053,29): error TS1136: Property assignment expected.
+extracted.ts(9053,44): error TS1128: Declaration or statement expected.
+extracted.ts(9054,27): error TS1136: Property assignment expected.
+extracted.ts(9054,42): error TS1128: Declaration or statement expected.
+extracted.ts(9059,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(9060,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(9061,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(9062,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(9063,7): error TS1128: Declaration or statement expected.
+extracted.ts(9063,8): error TS1128: Declaration or statement expected.
+extracted.ts(9064,6): error TS1110: Type expected.
+extracted.ts(9065,3): error TS1128: Declaration or statement expected.
+extracted.ts(9066,1): error TS1128: Declaration or statement expected.
+extracted.ts(9119,11): error TS1005: '>' expected.
+extracted.ts(9119,16): error TS1005: ')' expected.
+extracted.ts(9119,24): error TS1005: ',' expected.
+extracted.ts(9120,22): error TS1005: '>' expected.
+extracted.ts(9120,27): error TS1005: ';' expected.
+extracted.ts(9120,76): error TS1109: Expression expected.
+extracted.ts(9121,15): error TS1005: '>' expected.
+extracted.ts(9121,20): error TS1005: ';' expected.
+extracted.ts(9121,40): error TS1109: Expression expected.
+extracted.ts(9121,41): error TS1127: Invalid character.
+extracted.ts(9121,43): error TS1127: Invalid character.
+extracted.ts(9121,52): error TS1161: Unterminated regular expression literal.
+extracted.ts(9122,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(9124,26): error TS1005: ';' expected.
+extracted.ts(9125,24): error TS1005: '>' expected.
+extracted.ts(9125,29): error TS1005: ';' expected.
+extracted.ts(9125,60): error TS1109: Expression expected.
+extracted.ts(9126,31): error TS1005: '>' expected.
+extracted.ts(9126,36): error TS1005: ';' expected.
+extracted.ts(9126,45): error TS1161: Unterminated regular expression literal.
+extracted.ts(9127,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(9128,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(9129,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(9130,3): error TS1128: Declaration or statement expected.
+extracted.ts(9146,10): error TS1005: '>' expected.
+extracted.ts(9146,19): error TS1005: ')' expected.
+extracted.ts(9148,12): error TS1005: ';' expected.
+extracted.ts(9150,11): error TS1005: '>' expected.
+extracted.ts(9150,16): error TS1005: ';' expected.
+extracted.ts(9151,25): error TS1005: ',' expected.
+extracted.ts(9152,19): error TS1136: Property assignment expected.
+extracted.ts(9152,20): error TS1005: ';' expected.
+extracted.ts(9153,20): error TS1136: Property assignment expected.
+extracted.ts(9153,23): error TS1005: ';' expected.
+extracted.ts(9153,47): error TS1128: Declaration or statement expected.
+extracted.ts(9154,9): error TS1161: Unterminated regular expression literal.
+extracted.ts(9157,25): error TS1005: ',' expected.
+extracted.ts(9158,32): error TS1005: ',' expected.
+extracted.ts(9158,46): error TS1128: Declaration or statement expected.
+extracted.ts(9159,20): error TS1136: Property assignment expected.
+extracted.ts(9159,23): error TS1005: ';' expected.
+extracted.ts(9159,53): error TS1128: Declaration or statement expected.
+extracted.ts(9160,9): error TS1161: Unterminated regular expression literal.
+extracted.ts(9163,25): error TS1005: ',' expected.
+extracted.ts(9164,32): error TS1005: ',' expected.
+extracted.ts(9164,46): error TS1128: Declaration or statement expected.
+extracted.ts(9165,20): error TS1136: Property assignment expected.
+extracted.ts(9165,23): error TS1005: ';' expected.
+extracted.ts(9165,53): error TS1128: Declaration or statement expected.
+extracted.ts(9166,9): error TS1161: Unterminated regular expression literal.
+extracted.ts(9168,8): error TS1110: Type expected.
+extracted.ts(9172,9): error TS1005: '>' expected.
+extracted.ts(9172,16): error TS1005: ';' expected.
+extracted.ts(9173,18): error TS1136: Property assignment expected.
+extracted.ts(9173,26): error TS1005: ';' expected.
+extracted.ts(9173,82): error TS1128: Declaration or statement expected.
+extracted.ts(9175,8): error TS1109: Expression expected.
+extracted.ts(9180,11): error TS1005: '>' expected.
+extracted.ts(9180,18): error TS1005: ')' expected.
+extracted.ts(9183,17): error TS1005: ';' expected.
+extracted.ts(9184,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(9185,7): error TS1128: Declaration or statement expected.
+extracted.ts(9186,6): error TS1110: Type expected.
+extracted.ts(9187,3): error TS1128: Declaration or statement expected.
+extracted.ts(9188,1): error TS1128: Declaration or statement expected.
+extracted.ts(9204,7): error TS1005: '>' expected.
+extracted.ts(9204,18): error TS1005: ')' expected.
+extracted.ts(9207,6): error TS1109: Expression expected.
+extracted.ts(9208,3): error TS1109: Expression expected.
+extracted.ts(9217,10): error TS1005: '>' expected.
+extracted.ts(9217,19): error TS1005: ')' expected.
+extracted.ts(9218,11): error TS1005: '>' expected.
+extracted.ts(9218,20): error TS1005: ';' expected.
+extracted.ts(9218,51): error TS1005: ';' expected.
+extracted.ts(9218,68): error TS1161: Unterminated regular expression literal.
+extracted.ts(9219,12): error TS1005: ';' expected.
+extracted.ts(9220,24): error TS1005: ',' expected.
+extracted.ts(9222,13): error TS1005: '>' expected.
+extracted.ts(9222,16): error TS1005: ')' expected.
+extracted.ts(9223,13): error TS1005: ',' expected.
+extracted.ts(9225,18): error TS1005: '>' expected.
+extracted.ts(9225,27): error TS1005: ',' expected.
+extracted.ts(9226,21): error TS1005: '>' expected.
+extracted.ts(9226,30): error TS1005: ',' expected.
+extracted.ts(9226,42): error TS1127: Invalid character.
+extracted.ts(9226,45): error TS1110: Type expected.
+extracted.ts(9228,22): error TS1005: '>' expected.
+extracted.ts(9228,31): error TS1005: ',' expected.
+extracted.ts(9228,52): error TS1005: ',' expected.
+extracted.ts(9228,60): error TS1161: Unterminated regular expression literal.
+extracted.ts(9229,22): error TS1005: ',' expected.
+extracted.ts(9230,28): error TS1005: ',' expected.
+extracted.ts(9230,34): error TS1005: ',' expected.
+extracted.ts(9230,42): error TS1005: ',' expected.
+extracted.ts(9231,18): error TS1161: Unterminated regular expression literal.
+extracted.ts(9232,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(9233,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(9234,21): error TS1005: ',' expected.
+extracted.ts(9234,47): error TS1127: Invalid character.
+extracted.ts(9234,49): error TS1110: Type expected.
+extracted.ts(9235,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(9236,10): error TS1005: ',' expected.
+extracted.ts(9237,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(9238,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(9239,3): error TS1128: Declaration or statement expected.
+extracted.ts(9370,3): error TS1005: '>' expected.
+extracted.ts(9370,13): error TS1005: ';' expected.
+extracted.ts(9371,12): error TS1136: Property assignment expected.
+extracted.ts(9371,15): error TS1005: ';' expected.
+extracted.ts(9371,32): error TS1128: Declaration or statement expected.
+extracted.ts(9372,1): error TS1109: Expression expected.
+extracted.ts(9373,3): error TS1127: Invalid character.
+extracted.ts(9374,2): error TS1110: Type expected.
+extracted.ts(9376,6): error TS1005: ';' expected.
+extracted.ts(9376,18): error TS1005: ';' expected.
+extracted.ts(9376,28): error TS1005: ';' expected.
+extracted.ts(9377,11): error TS1005: ',' expected.
+extracted.ts(9379,7): error TS1005: '>' expected.
+extracted.ts(9379,10): error TS1005: ')' expected.
+extracted.ts(9379,17): error TS1005: ',' expected.
+extracted.ts(9380,7): error TS1005: ',' expected.
+extracted.ts(9381,7): error TS1005: ',' expected.
+extracted.ts(9381,17): error TS1005: ',' expected.
+extracted.ts(9381,19): error TS1136: Property assignment expected.
+extracted.ts(9381,130): error TS1005: ',' expected.
+extracted.ts(9383,26): error TS1005: '>' expected.
+extracted.ts(9383,31): error TS1005: ';' expected.
+extracted.ts(9383,40): error TS1161: Unterminated regular expression literal.
+extracted.ts(9384,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(9385,3): error TS1128: Declaration or statement expected.
+extracted.ts(9385,4): error TS1128: Declaration or statement expected.
+extracted.ts(9385,5): error TS1128: Declaration or statement expected.
+extracted.ts(9386,2): error TS1110: Type expected.
+extracted.ts(9404,28): error TS1005: '>' expected.
+extracted.ts(9404,35): error TS1005: ',' expected.
+extracted.ts(9404,51): error TS1109: Expression expected.
+extracted.ts(9405,5): error TS1109: Expression expected.
+extracted.ts(9413,28): error TS1005: '>' expected.
+extracted.ts(9413,35): error TS1005: ',' expected.
+extracted.ts(9413,51): error TS1109: Expression expected.
+extracted.ts(9414,5): error TS1109: Expression expected.
+extracted.ts(9426,31): error TS1005: '>' expected.
+extracted.ts(11277,17): error TS1005: ';' expected.
+extracted.ts(11278,20): error TS1005: ';' expected.
+extracted.ts(11279,14): error TS1005: ';' expected.
+extracted.ts(11284,10): error TS1005: ';' expected.
+extracted.ts(11285,11): error TS1005: ';' expected.
+extracted.ts(11286,14): error TS1005: ';' expected.
+extracted.ts(11287,14): error TS1005: ';' expected.
+extracted.ts(11288,24): error TS1005: ';' expected.
+extracted.ts(11329,11): error TS1005: ';' expected.
+extracted.ts(11330,13): error TS1005: ';' expected.
+extracted.ts(11335,12): error TS1005: ';' expected.
+extracted.ts(11336,12): error TS1005: ';' expected.
+extracted.ts(11337,17): error TS1005: ';' expected.
+extracted.ts(11338,17): error TS1005: ';' expected.
+extracted.ts(11343,10): error TS1005: ';' expected.
+extracted.ts(11344,11): error TS1005: ';' expected.
+extracted.ts(11345,14): error TS1005: ';' expected.
+extracted.ts(11346,14): error TS1005: ';' expected.
+extracted.ts(11390,12): error TS1005: ';' expected.
+extracted.ts(11391,24): error TS1005: ';' expected.
+extracted.ts(11392,14): error TS1005: ';' expected.
+extracted.ts(11393,22): error TS1005: ';' expected.
+extracted.ts(11422,18): error TS1005: ';' expected.
+extracted.ts(11423,10): error TS1005: ';' expected.
+extracted.ts(11488,10): error TS1005: ';' expected.
+extracted.ts(11514,9): error TS1005: ';' expected.
+extracted.ts(11515,13): error TS1005: ';' expected.
+extracted.ts(11516,10): error TS1005: ';' expected.
+extracted.ts(11557,11): error TS1005: ';' expected.
+extracted.ts(11558,13): error TS1005: ';' expected.
+extracted.ts(11559,16): error TS1005: ';' expected.
+extracted.ts(11564,11): error TS1005: ';' expected.
+extracted.ts(11565,12): error TS1005: ';' expected.
+extracted.ts(11566,9): error TS1005: ';' expected.
+extracted.ts(11567,13): error TS1005: ';' expected.
+extracted.ts(11568,15): error TS1005: ';' expected.
+extracted.ts(11569,13): error TS1005: ';' expected.
+extracted.ts(11890,22): error TS1005: ',' expected.
+extracted.ts(11891,14): error TS1005: '>' expected.
+extracted.ts(11891,23): error TS1005: ')' expected.
+extracted.ts(11892,17): error TS1005: '>' expected.
+extracted.ts(11892,22): error TS1005: ';' expected.
+extracted.ts(11892,55): error TS1109: Expression expected.
+extracted.ts(11893,27): error TS1005: ',' expected.
+extracted.ts(11894,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(11895,17): error TS1005: ';' expected.
+extracted.ts(11895,57): error TS1005: ',' expected.
+extracted.ts(11895,64): error TS1161: Unterminated regular expression literal.
+extracted.ts(11896,19): error TS1005: ';' expected.
+extracted.ts(11896,28): error TS1136: Property assignment expected.
+extracted.ts(11896,31): error TS1005: ';' expected.
+extracted.ts(11896,56): error TS1109: Expression expected.
+extracted.ts(11896,64): error TS1161: Unterminated regular expression literal.
+extracted.ts(11897,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(11898,7): error TS1128: Declaration or statement expected.
+extracted.ts(11898,8): error TS1128: Declaration or statement expected.
+extracted.ts(11899,6): error TS1110: Type expected.
+extracted.ts(11900,3): error TS1128: Declaration or statement expected.
+extracted.ts(11901,1): error TS1128: Declaration or statement expected.
+extracted.ts(12704,7): error TS1005: '>' expected.
+extracted.ts(12704,17): error TS1005: ')' expected.
+extracted.ts(12704,19): error TS1136: Property assignment expected.
+extracted.ts(12704,35): error TS1005: ';' expected.
+extracted.ts(12705,17): error TS1136: Property assignment expected.
+extracted.ts(12705,32): error TS1128: Declaration or statement expected.
+extracted.ts(12706,16): error TS1136: Property assignment expected.
+extracted.ts(12706,31): error TS1005: ';' expected.
+extracted.ts(12706,37): error TS1128: Declaration or statement expected.
+extracted.ts(12707,16): error TS1136: Property assignment expected.
+extracted.ts(12707,31): error TS1005: ';' expected.
+extracted.ts(12707,36): error TS1128: Declaration or statement expected.
+extracted.ts(12708,14): error TS1136: Property assignment expected.
+extracted.ts(12708,44): error TS1128: Declaration or statement expected.
+extracted.ts(12710,16): error TS1136: Property assignment expected.
+extracted.ts(12710,19): error TS1005: ';' expected.
+extracted.ts(12710,39): error TS1128: Declaration or statement expected.
+extracted.ts(12711,5): error TS1109: Expression expected.
+extracted.ts(12712,12): error TS1005: '>' expected.
+extracted.ts(12712,21): error TS1005: ';' expected.
+extracted.ts(12712,46): error TS1005: ',' expected.
+extracted.ts(12712,53): error TS1161: Unterminated regular expression literal.
+extracted.ts(12713,11): error TS1005: ';' expected.
+extracted.ts(12713,49): error TS1005: ',' expected.
+extracted.ts(12713,56): error TS1161: Unterminated regular expression literal.
+extracted.ts(12714,10): error TS1005: ';' expected.
+extracted.ts(12714,52): error TS1005: ',' expected.
+extracted.ts(12714,66): error TS1161: Unterminated regular expression literal.
+extracted.ts(12717,21): error TS1136: Property assignment expected.
+extracted.ts(12717,29): error TS1128: Declaration or statement expected.
+extracted.ts(12720,16): error TS1005: ';' expected.
+extracted.ts(12720,24): error TS1127: Invalid character.
+extracted.ts(12721,8): error TS1110: Type expected.
+extracted.ts(12722,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(12723,3): error TS1128: Declaration or statement expected.
+extracted.ts(12724,1): error TS1128: Declaration or statement expected.
+extracted.ts(12731,9): error TS1005: ')' expected.
+extracted.ts(12731,18): error TS1136: Property assignment expected.
+extracted.ts(12733,9): error TS1109: Expression expected.
+extracted.ts(12734,21): error TS1136: Property assignment expected.
+extracted.ts(12734,42): error TS1005: ';' expected.
+extracted.ts(12734,57): error TS1128: Declaration or statement expected.
+extracted.ts(12737,14): error TS1005: '>' expected.
+extracted.ts(12737,23): error TS1005: ';' expected.
+extracted.ts(12738,16): error TS1005: '>' expected.
+extracted.ts(12738,25): error TS1005: ';' expected.
+extracted.ts(12739,19): error TS1005: '>' expected.
+extracted.ts(12739,28): error TS1005: ';' expected.
+extracted.ts(12739,54): error TS1005: ',' expected.
+extracted.ts(12739,61): error TS1161: Unterminated regular expression literal.
+extracted.ts(12740,19): error TS1005: ';' expected.
+extracted.ts(12740,55): error TS1005: ',' expected.
+extracted.ts(12740,62): error TS1161: Unterminated regular expression literal.
+extracted.ts(12741,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(12742,19): error TS1005: ';' expected.
+extracted.ts(12742,56): error TS1161: Unterminated regular expression literal.
+extracted.ts(12743,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(12744,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12747,24): error TS1005: '>' expected.
+extracted.ts(12747,28): error TS1005: ';' expected.
+extracted.ts(12749,11): error TS1005: '>' expected.
+extracted.ts(12749,14): error TS1005: ';' expected.
+extracted.ts(12750,20): error TS1136: Property assignment expected.
+extracted.ts(12750,35): error TS1005: ';' expected.
+extracted.ts(12750,42): error TS1128: Declaration or statement expected.
+extracted.ts(12751,20): error TS1136: Property assignment expected.
+extracted.ts(12751,35): error TS1005: ';' expected.
+extracted.ts(12751,40): error TS1128: Declaration or statement expected.
+extracted.ts(12752,17): error TS1136: Property assignment expected.
+extracted.ts(12752,32): error TS1005: ';' expected.
+extracted.ts(12752,38): error TS1128: Declaration or statement expected.
+extracted.ts(12753,23): error TS1136: Property assignment expected.
+extracted.ts(12753,40): error TS1128: Declaration or statement expected.
+extracted.ts(12754,9): error TS1109: Expression expected.
+extracted.ts(12755,25): error TS1005: '>' expected.
+extracted.ts(12756,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(12757,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12758,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(12759,3): error TS1128: Declaration or statement expected.
+extracted.ts(12760,1): error TS1128: Declaration or statement expected.
+extracted.ts(12765,7): error TS1005: '>' expected.
+extracted.ts(12765,14): error TS1005: ')' expected.
+extracted.ts(12765,16): error TS1136: Property assignment expected.
+extracted.ts(12766,16): error TS1136: Property assignment expected.
+extracted.ts(12766,30): error TS1128: Declaration or statement expected.
+extracted.ts(12770,9): error TS1005: '>' expected.
+extracted.ts(12770,16): error TS1005: ';' expected.
+extracted.ts(12771,21): error TS1136: Property assignment expected.
+extracted.ts(12771,42): error TS1005: ';' expected.
+extracted.ts(12771,58): error TS1005: ';' expected.
+extracted.ts(12771,70): error TS1128: Declaration or statement expected.
+extracted.ts(12774,17): error TS1005: ',' expected.
+extracted.ts(12775,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12777,12): error TS1005: '>' expected.
+extracted.ts(12777,21): error TS1005: ';' expected.
+extracted.ts(12777,46): error TS1005: ';' expected.
+extracted.ts(12777,61): error TS1434: Unexpected keyword or identifier.
+extracted.ts(12777,68): error TS1128: Declaration or statement expected.
+extracted.ts(12777,72): error TS1110: Type expected.
+extracted.ts(12778,12): error TS1005: ';' expected.
+extracted.ts(12779,21): error TS1005: ';' expected.
+extracted.ts(12780,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(12781,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12782,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(12783,3): error TS1128: Declaration or statement expected.
+extracted.ts(12784,1): error TS1128: Declaration or statement expected.
+extracted.ts(12815,20): error TS1005: '>' expected.
+extracted.ts(12815,25): error TS1005: ')' expected.
+extracted.ts(12815,55): error TS1005: ':' expected.
+extracted.ts(12817,9): error TS1005: '>' expected.
+extracted.ts(12817,18): error TS1005: ';' expected.
+extracted.ts(12819,18): error TS1136: Property assignment expected.
+extracted.ts(12819,21): error TS1005: ';' expected.
+extracted.ts(12820,7): error TS1109: Expression expected.
+extracted.ts(12821,15): error TS1005: '>' expected.
+extracted.ts(12821,20): error TS1005: ';' expected.
+extracted.ts(12821,34): error TS1109: Expression expected.
+extracted.ts(12821,43): error TS1005: ',' expected.
+extracted.ts(12821,50): error TS1161: Unterminated regular expression literal.
+extracted.ts(12822,15): error TS1005: ';' expected.
+extracted.ts(12822,28): error TS1005: ',' expected.
+extracted.ts(12822,43): error TS1005: ',' expected.
+extracted.ts(12822,50): error TS1161: Unterminated regular expression literal.
+extracted.ts(12823,15): error TS1005: ';' expected.
+extracted.ts(12823,28): error TS1005: ',' expected.
+extracted.ts(12823,50): error TS1005: ',' expected.
+extracted.ts(12823,64): error TS1161: Unterminated regular expression literal.
+extracted.ts(12824,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12825,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(12826,3): error TS1128: Declaration or statement expected.
+extracted.ts(12827,1): error TS1128: Declaration or statement expected.
+extracted.ts(12850,10): error TS1005: '>' expected.
+extracted.ts(12850,19): error TS1005: ')' expected.
+extracted.ts(12851,19): error TS1005: ',' expected.
+extracted.ts(12853,15): error TS1005: '>' expected.
+extracted.ts(12853,24): error TS1005: ')' expected.
+extracted.ts(12853,49): error TS1005: ':' expected.
+extracted.ts(12853,62): error TS1005: ',' expected.
+extracted.ts(12853,66): error TS1005: ':' expected.
+extracted.ts(12853,70): error TS1161: Unterminated regular expression literal.
+extracted.ts(12854,16): error TS1005: ',' expected.
+extracted.ts(12855,25): error TS1005: ',' expected.
+extracted.ts(12857,17): error TS1005: '>' expected.
+extracted.ts(12857,20): error TS1005: ')' expected.
+extracted.ts(12857,29): error TS1005: ',' expected.
+extracted.ts(12858,17): error TS1005: ',' expected.
+extracted.ts(12859,17): error TS1005: ',' expected.
+extracted.ts(12859,34): error TS1005: ',' expected.
+extracted.ts(12860,17): error TS1005: ',' expected.
+extracted.ts(12861,16): error TS1109: Expression expected.
+extracted.ts(12862,13): error TS1109: Expression expected.
+extracted.ts(12862,14): error TS1005: ',' expected.
+extracted.ts(12863,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(12864,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(12865,7): error TS1005: ',' expected.
+extracted.ts(12868,13): error TS1005: '>' expected.
+extracted.ts(12868,22): error TS1005: ';' expected.
+extracted.ts(12868,52): error TS1005: ';' expected.
+extracted.ts(12868,61): error TS1161: Unterminated regular expression literal.
+extracted.ts(12869,14): error TS1005: ';' expected.
+extracted.ts(12870,17): error TS1005: ',' expected.
+extracted.ts(12872,15): error TS1005: '>' expected.
+extracted.ts(12872,18): error TS1005: ')' expected.
+extracted.ts(12872,27): error TS1005: ',' expected.
+extracted.ts(12873,15): error TS1005: ',' expected.
+extracted.ts(12874,15): error TS1005: ',' expected.
+extracted.ts(12874,32): error TS1005: ',' expected.
+extracted.ts(12875,15): error TS1005: ',' expected.
+extracted.ts(12876,14): error TS1109: Expression expected.
+extracted.ts(12877,11): error TS1109: Expression expected.
+extracted.ts(12877,12): error TS1005: ',' expected.
+extracted.ts(12878,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(12879,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12880,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(12881,3): error TS1128: Declaration or statement expected.
+extracted.ts(12892,7): error TS1005: '>' expected.
+extracted.ts(12892,12): error TS1005: ')' expected.
+extracted.ts(12892,14): error TS1136: Property assignment expected.
+extracted.ts(12895,12): error TS1005: '>' expected.
+extracted.ts(12895,21): error TS1005: ';' expected.
+extracted.ts(12896,15): error TS1005: '>' expected.
+extracted.ts(12896,24): error TS1005: ';' expected.
+extracted.ts(12896,44): error TS1005: ',' expected.
+extracted.ts(12896,51): error TS1161: Unterminated regular expression literal.
+extracted.ts(12897,15): error TS1005: ';' expected.
+extracted.ts(12897,45): error TS1005: ',' expected.
+extracted.ts(12897,52): error TS1161: Unterminated regular expression literal.
+extracted.ts(12898,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12904,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12905,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(12906,3): error TS1128: Declaration or statement expected.
+extracted.ts(12907,1): error TS1128: Declaration or statement expected.
+extracted.ts(12923,7): error TS1005: '>' expected.
+extracted.ts(12923,12): error TS1005: ')' expected.
+extracted.ts(12923,14): error TS1136: Property assignment expected.
+extracted.ts(12925,20): error TS1005: ';' expected.
+extracted.ts(12926,7): error TS1109: Expression expected.
+extracted.ts(12927,18): error TS1136: Property assignment expected.
+extracted.ts(12927,87): error TS1128: Declaration or statement expected.
+extracted.ts(12928,5): error TS1109: Expression expected.
+extracted.ts(12929,21): error TS1005: ',' expected.
+extracted.ts(12929,28): error TS1161: Unterminated regular expression literal.
+extracted.ts(12930,13): error TS1005: ';' expected.
+extracted.ts(12930,20): error TS1136: Property assignment expected.
+extracted.ts(12930,44): error TS1128: Declaration or statement expected.
+extracted.ts(12931,17): error TS1005: ',' expected.
+extracted.ts(12932,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(12933,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(12934,3): error TS1128: Declaration or statement expected.
+extracted.ts(12935,1): error TS1128: Declaration or statement expected.
+extracted.ts(13047,29): error TS1005: '>' expected.
+extracted.ts(13053,9): error TS1005: '>' expected.
+extracted.ts(13053,16): error TS1005: ')' expected.
+extracted.ts(13054,25): error TS1136: Property assignment expected.
+extracted.ts(13054,28): error TS1005: ';' expected.
+extracted.ts(13055,7): error TS1161: Unterminated regular expression literal.
+extracted.ts(13058,22): error TS1005: '>' expected.
+extracted.ts(13058,36): error TS1005: ';' expected.
+extracted.ts(13058,53): error TS1161: Unterminated regular expression literal.
+extracted.ts(13062,9): error TS1005: '>' expected.
+extracted.ts(13062,13): error TS1005: ';' expected.
+extracted.ts(13063,18): error TS1136: Property assignment expected.
+extracted.ts(13063,21): error TS1005: ';' expected.
+extracted.ts(13063,53): error TS1128: Declaration or statement expected.
+extracted.ts(13064,7): error TS1161: Unterminated regular expression literal.
+extracted.ts(13065,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(13066,3): error TS1128: Declaration or statement expected.
+extracted.ts(13067,1): error TS1128: Declaration or statement expected.
+extracted.ts(13071,10): error TS1005: '>' expected.
+extracted.ts(13071,19): error TS1005: ')' expected.
+extracted.ts(13073,9): error TS1005: '>' expected.
+extracted.ts(13073,14): error TS1005: ';' expected.
+extracted.ts(13076,17): error TS1005: ',' expected.
+extracted.ts(13077,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(13078,12): error TS1005: ';' expected.
+extracted.ts(13079,14): error TS1005: '>' expected.
+extracted.ts(13079,23): error TS1005: ';' expected.
+extracted.ts(13080,17): error TS1005: '>' expected.
+extracted.ts(13080,26): error TS1005: ';' expected.
+extracted.ts(13080,46): error TS1005: ';' expected.
+extracted.ts(13080,56): error TS1161: Unterminated regular expression literal.
+extracted.ts(13081,32): error TS1005: ';' expected.
+extracted.ts(13081,50): error TS1005: ';' expected.
+extracted.ts(13081,61): error TS1109: Expression expected.
+extracted.ts(13082,10): error TS1110: Type expected.
+extracted.ts(13083,14): error TS1005: ';' expected.
+extracted.ts(13083,40): error TS1005: ',' expected.
+extracted.ts(13083,50): error TS1161: Unterminated regular expression literal.
+extracted.ts(13084,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(13085,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(13086,3): error TS1128: Declaration or statement expected.
+extracted.ts(13112,3): error TS1005: '>' expected.
+extracted.ts(13112,13): error TS1005: ';' expected.
+extracted.ts(13114,12): error TS1136: Property assignment expected.
+extracted.ts(13114,15): error TS1005: ';' expected.
+extracted.ts(13114,35): error TS1128: Declaration or statement expected.
+extracted.ts(13115,1): error TS1109: Expression expected.
+extracted.ts(13116,9): error TS1005: '>' expected.
+extracted.ts(13116,20): error TS1005: ';' expected.
+extracted.ts(13116,36): error TS1005: ',' expected.
+extracted.ts(13116,43): error TS1161: Unterminated regular expression literal.
+extracted.ts(13117,17): error TS1005: ',' expected.
+extracted.ts(13117,24): error TS1161: Unterminated regular expression literal.
+extracted.ts(13118,2): error TS1161: Unterminated regular expression literal.
+extracted.ts(13129,10): error TS1005: '>' expected.
+extracted.ts(13129,14): error TS1005: ')' expected.
+extracted.ts(13130,16): error TS1005: ',' expected.
+extracted.ts(13132,11): error TS1005: '>' expected.
+extracted.ts(13132,14): error TS1005: ')' expected.
+extracted.ts(13132,23): error TS1005: ',' expected.
+extracted.ts(13133,11): error TS1005: ',' expected.
+extracted.ts(13134,11): error TS1005: ',' expected.
+extracted.ts(13134,22): error TS1005: ':' expected.
+extracted.ts(13135,11): error TS1005: ',' expected.
+extracted.ts(13135,23): error TS1136: Property assignment expected.
+extracted.ts(13135,27): error TS1005: ',' expected.
+extracted.ts(13135,56): error TS1005: ',' expected.
+extracted.ts(13137,24): error TS1005: '>' expected.
+extracted.ts(13137,31): error TS1005: ';' expected.
+extracted.ts(13137,63): error TS1109: Expression expected.
+extracted.ts(13138,10): error TS1110: Type expected.
+extracted.ts(13139,7): error TS1128: Declaration or statement expected.
+extracted.ts(13139,8): error TS1128: Declaration or statement expected.
+extracted.ts(13140,6): error TS1110: Type expected.
+extracted.ts(13141,3): error TS1128: Declaration or statement expected.
+extracted.ts(13142,1): error TS1128: Declaration or statement expected.
+extracted.ts(13166,9): error TS1005: '>' expected.
+extracted.ts(13166,17): error TS1005: ',' expected.
+extracted.ts(13167,9): error TS1005: ',' expected.
+extracted.ts(13167,44): error TS1005: ':' expected.
+extracted.ts(13168,8): error TS1109: Expression expected.
+extracted.ts(13169,5): error TS1109: Expression expected.
+extracted.ts(13178,24): error TS1005: '>' expected.
+extracted.ts(13178,32): error TS1005: ',' expected.
+extracted.ts(13178,48): error TS1005: ',' expected.
+extracted.ts(13178,76): error TS1109: Expression expected.
+extracted.ts(13179,5): error TS1109: Expression expected.
+extracted.ts(13229,10): error TS1005: ';' expected.
+extracted.ts(13230,15): error TS1005: ';' expected.
+extracted.ts(13231,14): error TS1005: ';' expected.
+extracted.ts(13232,13): error TS1005: ';' expected.
+extracted.ts(13233,15): error TS1005: ';' expected.
+extracted.ts(13234,12): error TS1005: ';' expected.
+extracted.ts(13235,13): error TS1005: ';' expected.
+extracted.ts(13240,7): error TS1005: ';' expected.
+extracted.ts(13241,15): error TS1005: ';' expected.
+extracted.ts(13242,12): error TS1005: ';' expected.
+extracted.ts(13243,15): error TS1005: ';' expected.
+extracted.ts(13244,17): error TS1005: ';' expected.
+extracted.ts(13245,18): error TS1005: ';' expected.
+extracted.ts(13246,15): error TS1005: ';' expected.
+extracted.ts(13247,14): error TS1005: ';' expected.
+extracted.ts(13252,10): error TS1005: ';' expected.
+extracted.ts(13253,11): error TS1005: ';' expected.
+extracted.ts(13254,14): error TS1005: ';' expected.
+extracted.ts(13255,14): error TS1005: ';' expected.
+extracted.ts(13256,14): error TS1005: ';' expected.
+extracted.ts(13263,10): error TS1005: ';' expected.
+extracted.ts(13264,11): error TS1005: ';' expected.
+extracted.ts(13265,14): error TS1005: ';' expected.
+extracted.ts(13266,14): error TS1005: ';' expected.
+extracted.ts(13267,14): error TS1005: ';' expected.
+extracted.ts(13268,21): error TS1005: ';' expected.
+extracted.ts(13309,10): error TS1005: ';' expected.
+extracted.ts(13310,13): error TS1005: ';' expected.
+extracted.ts(13315,15): error TS1005: ';' expected.
+extracted.ts(13316,12): error TS1005: ';' expected.
+extracted.ts(13317,15): error TS1005: ';' expected.
+extracted.ts(13318,17): error TS1005: ';' expected.
+extracted.ts(13319,18): error TS1005: ';' expected.
+extracted.ts(13320,15): error TS1005: ';' expected.
+extracted.ts(13325,10): error TS1005: ';' expected.
+extracted.ts(13326,11): error TS1005: ';' expected.
+extracted.ts(13327,14): error TS1005: ';' expected.
+extracted.ts(13328,14): error TS1005: ';' expected.
+extracted.ts(13334,10): error TS1005: ';' expected.
+extracted.ts(13335,11): error TS1005: ';' expected.
+extracted.ts(13336,14): error TS1005: ';' expected.
+extracted.ts(13337,14): error TS1005: ';' expected.
+extracted.ts(13338,14): error TS1005: ';' expected.
+extracted.ts(13379,7): error TS1005: ';' expected.
+extracted.ts(13380,10): error TS1005: ';' expected.
+extracted.ts(13381,15): error TS1005: ';' expected.
+extracted.ts(13382,14): error TS1005: ';' expected.
+extracted.ts(13383,14): error TS1005: ';' expected.
+extracted.ts(13384,13): error TS1005: ';' expected.
+extracted.ts(13385,19): error TS1005: ';' expected.
+extracted.ts(13386,19): error TS1005: ';' expected.
+extracted.ts(13387,15): error TS1005: ';' expected.
+extracted.ts(13388,12): error TS1005: ';' expected.
+extracted.ts(13389,13): error TS1005: ';' expected.
+extracted.ts(13390,15): error TS1005: ';' expected.
+extracted.ts(13391,15): error TS1005: ';' expected.
+extracted.ts(13396,10): error TS1005: ';' expected.
+extracted.ts(13397,11): error TS1005: ';' expected.
+extracted.ts(13398,14): error TS1005: ';' expected.
+extracted.ts(13399,14): error TS1005: ';' expected.
+extracted.ts(13440,15): error TS1005: ';' expected.
+extracted.ts(13441,13): error TS1005: ';' expected.
+extracted.ts(13446,7): error TS1005: ';' expected.
+extracted.ts(13447,10): error TS1005: ';' expected.
+extracted.ts(13448,15): error TS1005: ';' expected.
+extracted.ts(13449,14): error TS1005: ';' expected.
+extracted.ts(13450,13): error TS1005: ';' expected.
+extracted.ts(13451,15): error TS1005: ';' expected.
+extracted.ts(13482,12): error TS1005: ';' expected.
+extracted.ts(13483,12): error TS1005: ';' expected.
+extracted.ts(13519,18): error TS1005: ';' expected.
+extracted.ts(13524,17): error TS1005: ';' expected.
+extracted.ts(13525,15): error TS1005: ';' expected.
+extracted.ts(13526,15): error TS1005: ';' expected.
+extracted.ts(13531,10): error TS1005: ';' expected.
+extracted.ts(13532,11): error TS1005: ';' expected.
+extracted.ts(13533,14): error TS1005: ';' expected.
+extracted.ts(13534,14): error TS1005: ';' expected.
+extracted.ts(13570,21): error TS1005: ';' expected.
+extracted.ts(13571,17): error TS1005: ';' expected.
+extracted.ts(13576,12): error TS1005: ';' expected.
+extracted.ts(13577,12): error TS1005: ';' expected.
+extracted.ts(13582,10): error TS1005: ';' expected.
+extracted.ts(13583,11): error TS1005: ';' expected.
+extracted.ts(13584,14): error TS1005: ';' expected.
+extracted.ts(13585,14): error TS1005: ';' expected.
+extracted.ts(13620,10): error TS1005: ';' expected.
+extracted.ts(13625,12): error TS1005: ';' expected.
+extracted.ts(13626,12): error TS1005: ';' expected.
+extracted.ts(13627,15): error TS1005: ';' expected.
+extracted.ts(13664,10): error TS1005: ';' expected.
+extracted.ts(13665,17): error TS1005: ';' expected.
+extracted.ts(13670,12): error TS1005: ';' expected.
+extracted.ts(13671,12): error TS1005: ';' expected.
+extracted.ts(13676,10): error TS1005: ';' expected.
+extracted.ts(13677,11): error TS1005: ';' expected.
+extracted.ts(13678,14): error TS1005: ';' expected.
+extracted.ts(13679,14): error TS1005: ';' expected.
+extracted.ts(13680,25): error TS1005: ';' expected.
+extracted.ts(13713,12): error TS1005: ';' expected.
+extracted.ts(13714,12): error TS1005: ';' expected.
+extracted.ts(13715,10): error TS1005: ';' expected.
+extracted.ts(13716,15): error TS1005: ';' expected.
+extracted.ts(13747,12): error TS1005: ';' expected.
+extracted.ts(13748,12): error TS1005: ';' expected.
+extracted.ts(13749,19): error TS1005: ';' expected.
+extracted.ts(13754,10): error TS1005: ';' expected.
+extracted.ts(13755,11): error TS1005: ';' expected.
+extracted.ts(13756,14): error TS1005: ';' expected.
+extracted.ts(13757,14): error TS1005: ';' expected.
+extracted.ts(13801,16): error TS1005: ';' expected.
+extracted.ts(13802,19): error TS1005: ';' expected.
+extracted.ts(13807,15): error TS1005: ';' expected.
+extracted.ts(13808,12): error TS1005: ';' expected.
+extracted.ts(13809,17): error TS1005: ';' expected.
+extracted.ts(13810,18): error TS1005: ';' expected.
+extracted.ts(13811,16): error TS1005: ';' expected.
+extracted.ts(13816,15): error TS1005: ';' expected.
+extracted.ts(13817,12): error TS1005: ';' expected.
+extracted.ts(13818,17): error TS1005: ';' expected.
+extracted.ts(13819,18): error TS1005: ';' expected.
+extracted.ts(13820,16): error TS1005: ';' expected.
+extracted.ts(14200,10): error TS1005: '>' expected.
+extracted.ts(14200,19): error TS1005: ')' expected.
+extracted.ts(14201,11): error TS1005: '>' expected.
+extracted.ts(14201,20): error TS1005: ';' expected.
+extracted.ts(14201,63): error TS1005: ';' expected.
+extracted.ts(14201,74): error TS1161: Unterminated regular expression literal.
+extracted.ts(14208,13): error TS1005: '>' expected.
+extracted.ts(14208,16): error TS1005: ')' expected.
+extracted.ts(14208,23): error TS1005: ',' expected.
+extracted.ts(14209,22): error TS1136: Property assignment expected.
+extracted.ts(14209,37): error TS1005: ';' expected.
+extracted.ts(14210,13): error TS1005: ',' expected.
+extracted.ts(14210,22): error TS1136: Property assignment expected.
+extracted.ts(14210,42): error TS1005: ',' expected.
+extracted.ts(14211,25): error TS1136: Property assignment expected.
+extracted.ts(14212,24): error TS1136: Property assignment expected.
+extracted.ts(14214,15): error TS1128: Declaration or statement expected.
+extracted.ts(14215,11): error TS1109: Expression expected.
+extracted.ts(14216,18): error TS1005: '>' expected.
+extracted.ts(14216,27): error TS1005: ';' expected.
+extracted.ts(14217,20): error TS1005: '>' expected.
+extracted.ts(14217,29): error TS1005: ';' expected.
+extracted.ts(14218,23): error TS1005: '>' expected.
+extracted.ts(14218,32): error TS1005: ';' expected.
+extracted.ts(14219,24): error TS1005: ',' expected.
+extracted.ts(14219,27): error TS1128: Declaration or statement expected.
+extracted.ts(14219,28): error TS1128: Declaration or statement expected.
+extracted.ts(14220,18): error TS1110: Type expected.
+extracted.ts(14222,24): error TS1005: '>' expected.
+extracted.ts(14222,33): error TS1005: ';' expected.
+extracted.ts(14222,56): error TS1005: ',' expected.
+extracted.ts(14222,67): error TS1161: Unterminated regular expression literal.
+extracted.ts(14223,24): error TS1005: ';' expected.
+extracted.ts(14224,27): error TS1005: ',' expected.
+extracted.ts(14225,20): error TS1161: Unterminated regular expression literal.
+extracted.ts(14226,18): error TS1161: Unterminated regular expression literal.
+extracted.ts(14227,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(14229,20): error TS1005: ';' expected.
+extracted.ts(14231,19): error TS1005: '>' expected.
+extracted.ts(14231,26): error TS1005: ';' expected.
+extracted.ts(14232,28): error TS1136: Property assignment expected.
+extracted.ts(14232,40): error TS1128: Declaration or statement expected.
+extracted.ts(14233,31): error TS1136: Property assignment expected.
+extracted.ts(14233,61): error TS1005: ';' expected.
+extracted.ts(14233,73): error TS1128: Declaration or statement expected.
+extracted.ts(14236,25): error TS1005: ',' expected.
+extracted.ts(14237,18): error TS1161: Unterminated regular expression literal.
+extracted.ts(14240,21): error TS1005: '>' expected.
+extracted.ts(14240,28): error TS1005: ')' expected.
+extracted.ts(14240,51): error TS1005: ';' expected.
+extracted.ts(14241,30): error TS1136: Property assignment expected.
+extracted.ts(14241,48): error TS1005: ';' expected.
+extracted.ts(14242,33): error TS1136: Property assignment expected.
+extracted.ts(14242,63): error TS1005: ';' expected.
+extracted.ts(14242,75): error TS1128: Declaration or statement expected.
+extracted.ts(14245,21): error TS1127: Invalid character.
+extracted.ts(14246,20): error TS1110: Type expected.
+extracted.ts(14247,17): error TS1128: Declaration or statement expected.
+extracted.ts(14247,18): error TS1128: Declaration or statement expected.
+extracted.ts(14248,16): error TS1110: Type expected.
+extracted.ts(14249,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(14250,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(14251,9): error TS1128: Declaration or statement expected.
+extracted.ts(14252,7): error TS1128: Declaration or statement expected.
+extracted.ts(14252,8): error TS1128: Declaration or statement expected.
+extracted.ts(14252,9): error TS1128: Declaration or statement expected.
+extracted.ts(14253,6): error TS1110: Type expected.
+extracted.ts(14254,3): error TS1128: Declaration or statement expected.
+extracted.ts(14255,1): error TS1128: Declaration or statement expected.
+extracted.ts(14260,7): error TS1005: '>' expected.
+extracted.ts(14260,14): error TS1005: ')' expected.
+extracted.ts(14260,16): error TS1136: Property assignment expected.
+extracted.ts(14260,31): error TS1005: ';' expected.
+extracted.ts(14261,16): error TS1136: Property assignment expected.
+extracted.ts(14261,31): error TS1005: ';' expected.
+extracted.ts(14261,36): error TS1128: Declaration or statement expected.
+extracted.ts(14262,19): error TS1136: Property assignment expected.
+extracted.ts(14262,37): error TS1005: ';' expected.
+extracted.ts(14262,58): error TS1005: ';' expected.
+extracted.ts(14262,65): error TS1128: Declaration or statement expected.
+extracted.ts(14266,9): error TS1005: '>' expected.
+extracted.ts(14266,16): error TS1005: ';' expected.
+extracted.ts(14267,18): error TS1136: Property assignment expected.
+extracted.ts(14267,30): error TS1128: Declaration or statement expected.
+extracted.ts(14268,21): error TS1136: Property assignment expected.
+extracted.ts(14268,37): error TS1005: ';' expected.
+extracted.ts(14268,58): error TS1005: ';' expected.
+extracted.ts(14268,65): error TS1128: Declaration or statement expected.
+extracted.ts(14271,15): error TS1005: '>' expected.
+extracted.ts(14271,24): error TS1005: ';' expected.
+extracted.ts(14271,36): error TS1127: Invalid character.
+extracted.ts(14271,39): error TS1110: Type expected.
+extracted.ts(14273,15): error TS1005: '>' expected.
+extracted.ts(14273,24): error TS1005: ';' expected.
+extracted.ts(14273,48): error TS1005: ';' expected.
+extracted.ts(14273,63): error TS1161: Unterminated regular expression literal.
+extracted.ts(14274,16): error TS1005: ';' expected.
+extracted.ts(14275,23): error TS1005: ';' expected.
+extracted.ts(14275,70): error TS1109: Expression expected.
+extracted.ts(14276,12): error TS1110: Type expected.
+extracted.ts(14277,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(14278,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(14281,18): error TS1136: Property assignment expected.
+extracted.ts(14281,32): error TS1128: Declaration or statement expected.
+extracted.ts(14282,18): error TS1136: Property assignment expected.
+extracted.ts(14282,32): error TS1128: Declaration or statement expected.
+extracted.ts(14283,21): error TS1136: Property assignment expected.
+extracted.ts(14283,35): error TS1128: Declaration or statement expected.
+extracted.ts(14284,7): error TS1109: Expression expected.
+extracted.ts(14285,14): error TS1005: '>' expected.
+extracted.ts(14285,23): error TS1005: ';' expected.
+extracted.ts(14286,26): error TS1005: ',' expected.
+extracted.ts(14287,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(14288,12): error TS1005: ';' expected.
+extracted.ts(14288,58): error TS1005: ',' expected.
+extracted.ts(14288,67): error TS1161: Unterminated regular expression literal.
+extracted.ts(14291,16): error TS1005: '>' expected.
+extracted.ts(14291,25): error TS1005: ')' expected.
+extracted.ts(14292,18): error TS1005: '>' expected.
+extracted.ts(14292,27): error TS1005: ';' expected.
+extracted.ts(14292,61): error TS1005: ';' expected.
+extracted.ts(14292,63): error TS1110: Type expected.
+extracted.ts(14293,18): error TS1005: ';' expected.
+extracted.ts(14294,30): error TS1005: ',' expected.
+extracted.ts(14295,22): error TS1005: '>' expected.
+extracted.ts(14295,25): error TS1005: ')' expected.
+extracted.ts(14295,32): error TS1127: Invalid character.
+extracted.ts(14295,40): error TS1161: Unterminated regular expression literal.
+extracted.ts(14296,16): error TS1005: ',' expected.
+extracted.ts(14297,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(14298,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(14299,9): error TS1128: Declaration or statement expected.
+extracted.ts(14300,8): error TS1110: Type expected.
+extracted.ts(14301,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(14302,3): error TS1128: Declaration or statement expected.
+extracted.ts(14303,1): error TS1128: Declaration or statement expected.
+extracted.ts(14318,28): error TS1005: '>' expected.
+extracted.ts(14322,10): error TS1005: '>' expected.
+extracted.ts(14322,19): error TS1005: ')' expected.
+extracted.ts(14323,15): error TS1005: '>' expected.
+extracted.ts(14323,24): error TS1005: ';' expected.
+extracted.ts(14324,17): error TS1005: '>' expected.
+extracted.ts(14324,24): error TS1005: ';' expected.
+extracted.ts(14324,33): error TS1109: Expression expected.
+extracted.ts(14324,34): error TS1127: Invalid character.
+extracted.ts(14324,36): error TS1110: Type expected.
+extracted.ts(14325,13): error TS1005: ';' expected.
+extracted.ts(14325,55): error TS1005: ';' expected.
+extracted.ts(14325,63): error TS1161: Unterminated regular expression literal.
+extracted.ts(14326,17): error TS1005: ';' expected.
+extracted.ts(14326,26): error TS1136: Property assignment expected.
+extracted.ts(14326,29): error TS1005: ';' expected.
+extracted.ts(14326,61): error TS1109: Expression expected.
+extracted.ts(14327,18): error TS1005: ';' expected.
+extracted.ts(14328,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(14329,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(14332,29): error TS1005: '>' expected.
+extracted.ts(14332,43): error TS1005: ';' expected.
+extracted.ts(14332,72): error TS1161: Unterminated regular expression literal.
+extracted.ts(14335,23): error TS1005: '>' expected.
+extracted.ts(14335,30): error TS1005: ';' expected.
+extracted.ts(14335,64): error TS1161: Unterminated regular expression literal.
+extracted.ts(14340,11): error TS1005: '>' expected.
+extracted.ts(14340,14): error TS1005: ')' expected.
+extracted.ts(14341,11): error TS1005: ',' expected.
+extracted.ts(14341,29): error TS1005: ',' expected.
+extracted.ts(14342,11): error TS1005: ',' expected.
+extracted.ts(14343,10): error TS1109: Expression expected.
+extracted.ts(14344,7): error TS1109: Expression expected.
+extracted.ts(14344,8): error TS1005: ';' expected.
+extracted.ts(14347,22): error TS1005: '>' expected.
+extracted.ts(14347,31): error TS1005: ';' expected.
+extracted.ts(14347,56): error TS1161: Unterminated regular expression literal.
+extracted.ts(14348,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(14349,3): error TS1128: Declaration or statement expected.
+extracted.ts(14350,1): error TS1128: Declaration or statement expected.
+extracted.ts(14395,8): error TS1005: '>' expected.
+extracted.ts(14395,12): error TS1005: ';' expected.
+extracted.ts(14395,21): error TS1005: ';' expected.
+extracted.ts(14395,31): error TS1005: ';' expected.
+extracted.ts(14397,9): error TS1005: '>' expected.
+extracted.ts(14397,13): error TS1005: ';' expected.
+extracted.ts(14398,11): error TS1005: '>' expected.
+extracted.ts(14398,15): error TS1005: ';' expected.
+extracted.ts(14398,38): error TS1161: Unterminated regular expression literal.
+extracted.ts(14400,13): error TS1005: '>' expected.
+extracted.ts(14400,16): error TS1005: ')' expected.
+extracted.ts(14400,19): error TS1005: ',' expected.
+extracted.ts(14400,24): error TS1005: ',' expected.
+extracted.ts(14400,46): error TS1005: ',' expected.
+extracted.ts(14400,53): error TS1161: Unterminated regular expression literal.
+extracted.ts(14401,8): error TS1005: ';' expected.
+extracted.ts(14402,6): error TS1110: Type expected.
+extracted.ts(14403,4): error TS1161: Unterminated regular expression literal.
+extracted.ts(14406,4): error TS1110: Type expected.
+extracted.ts(14407,2): error TS1161: Unterminated regular expression literal.
+extracted.ts(14412,25): error TS1005: '>' expected.
+extracted.ts(14412,42): error TS1005: ',' expected.
+extracted.ts(14412,64): error TS1005: ':' expected.
+extracted.ts(14412,66): error TS1005: ',' expected.
+extracted.ts(14412,78): error TS1005: ',' expected.
+extracted.ts(14412,86): error TS1109: Expression expected.
+extracted.ts(14413,5): error TS1109: Expression expected.
+extracted.ts(14542,28): error TS1005: '>' expected.
+extracted.ts(14542,39): error TS1005: ')' expected.
+extracted.ts(14542,55): error TS1109: Expression expected.
+extracted.ts(14544,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(14545,3): error TS1128: Declaration or statement expected.
+extracted.ts(14638,26): error TS1109: Expression expected.
+extracted.ts(14841,3): error TS1005: '>' expected.
+extracted.ts(14841,10): error TS1005: ';' expected.
+extracted.ts(14841,31): error TS1005: ';' expected.
+extracted.ts(14842,12): error TS1136: Property assignment expected.
+extracted.ts(14842,31): error TS1005: ';' expected.
+extracted.ts(14842,36): error TS1128: Declaration or statement expected.
+extracted.ts(14843,15): error TS1136: Property assignment expected.
+extracted.ts(14843,42): error TS1005: ';' expected.
+extracted.ts(14843,56): error TS1005: ';' expected.
+extracted.ts(14843,62): error TS1128: Declaration or statement expected.
+extracted.ts(14844,1): error TS1109: Expression expected.
+extracted.ts(14845,14): error TS1005: '>' expected.
+extracted.ts(14845,19): error TS1005: ';' expected.
+extracted.ts(14845,26): error TS1161: Unterminated regular expression literal.
+extracted.ts(14846,2): error TS1161: Unterminated regular expression literal.
+extracted.ts(14880,3): error TS1005: '>' expected.
+extracted.ts(14880,10): error TS1005: ';' expected.
+extracted.ts(14886,15): error TS1136: Property assignment expected.
+extracted.ts(14886,32): error TS1128: Declaration or statement expected.
+extracted.ts(14887,1): error TS1109: Expression expected.
+extracted.ts(14888,4): error TS1005: ';' expected.
+extracted.ts(14889,2): error TS1110: Type expected.
+extracted.ts(15048,12): error TS1005: ';' expected.
+extracted.ts(15049,19): error TS1005: ';' expected.
+extracted.ts(15050,21): error TS1005: ';' expected.
+extracted.ts(15051,25): error TS1005: ';' expected.
+extracted.ts(15052,23): error TS1005: ';' expected.
+extracted.ts(15053,23): error TS1005: ';' expected.
+extracted.ts(15054,20): error TS1005: ';' expected.
+extracted.ts(15055,35): error TS1005: ';' expected.
+extracted.ts(15056,26): error TS1005: ';' expected.
+extracted.ts(15057,29): error TS1005: ';' expected.
+extracted.ts(15058,4): error TS1128: Declaration or statement expected.
+extracted.ts(15059,26): error TS1005: ';' expected.
+extracted.ts(15060,26): error TS1005: ';' expected.
+extracted.ts(15061,19): error TS1005: ';' expected.
+extracted.ts(15062,19): error TS1005: ';' expected.
+extracted.ts(15063,4): error TS1128: Declaration or statement expected.
+extracted.ts(15064,21): error TS1005: ';' expected.
+extracted.ts(15065,10): error TS1005: ';' expected.
+extracted.ts(15154,7): error TS1005: '>' expected.
+extracted.ts(15154,14): error TS1005: ')' expected.
+extracted.ts(15154,16): error TS1136: Property assignment expected.
+extracted.ts(15156,16): error TS1005: ';' expected.
+extracted.ts(15157,7): error TS1109: Expression expected.
+extracted.ts(15158,19): error TS1136: Property assignment expected.
+extracted.ts(15158,36): error TS1128: Declaration or statement expected.
+extracted.ts(15161,12): error TS1005: '>' expected.
+extracted.ts(15161,21): error TS1005: ';' expected.
+extracted.ts(15162,15): error TS1005: '>' expected.
+extracted.ts(15162,24): error TS1005: ';' expected.
+extracted.ts(15162,49): error TS1161: Unterminated regular expression literal.
+extracted.ts(15165,13): error TS1005: '>' expected.
+extracted.ts(15165,20): error TS1005: ')' expected.
+extracted.ts(15166,25): error TS1136: Property assignment expected.
+extracted.ts(15166,46): error TS1005: ';' expected.
+extracted.ts(15166,62): error TS1005: ';' expected.
+extracted.ts(15167,11): error TS1109: Expression expected.
+extracted.ts(15168,13): error TS1127: Invalid character.
+extracted.ts(15169,12): error TS1110: Type expected.
+extracted.ts(15170,9): error TS1128: Declaration or statement expected.
+extracted.ts(15170,10): error TS1128: Declaration or statement expected.
+extracted.ts(15171,8): error TS1110: Type expected.
+extracted.ts(15172,12): error TS1005: ';' expected.
+extracted.ts(15172,37): error TS1161: Unterminated regular expression literal.
+extracted.ts(15173,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(15174,3): error TS1128: Declaration or statement expected.
+extracted.ts(15175,1): error TS1128: Declaration or statement expected.
+extracted.ts(15190,10): error TS1005: '>' expected.
+extracted.ts(15190,19): error TS1005: ')' expected.
+extracted.ts(15191,15): error TS1005: ',' expected.
+extracted.ts(15193,11): error TS1005: '>' expected.
+extracted.ts(15193,14): error TS1005: ')' expected.
+extracted.ts(15193,22): error TS1005: ',' expected.
+extracted.ts(15194,11): error TS1005: ',' expected.
+extracted.ts(15194,23): error TS1136: Property assignment expected.
+extracted.ts(15194,38): error TS1005: ',' expected.
+extracted.ts(15195,21): error TS1136: Property assignment expected.
+extracted.ts(15196,20): error TS1136: Property assignment expected.
+extracted.ts(15198,28): error TS1005: ';' expected.
+extracted.ts(15200,11): error TS1109: Expression expected.
+extracted.ts(15200,12): error TS1128: Declaration or statement expected.
+extracted.ts(15201,20): error TS1136: Property assignment expected.
+extracted.ts(15201,23): error TS1005: ';' expected.
+extracted.ts(15201,48): error TS1128: Declaration or statement expected.
+extracted.ts(15204,16): error TS1005: '>' expected.
+extracted.ts(15204,25): error TS1005: ';' expected.
+extracted.ts(15205,18): error TS1005: '>' expected.
+extracted.ts(15205,27): error TS1005: ';' expected.
+extracted.ts(15206,21): error TS1005: '>' expected.
+extracted.ts(15206,30): error TS1005: ';' expected.
+extracted.ts(15206,49): error TS1005: ',' expected.
+extracted.ts(15206,56): error TS1161: Unterminated regular expression literal.
+extracted.ts(15208,22): error TS1005: '>' expected.
+extracted.ts(15208,31): error TS1005: ';' expected.
+extracted.ts(15208,51): error TS1005: ',' expected.
+extracted.ts(15208,59): error TS1161: Unterminated regular expression literal.
+extracted.ts(15209,22): error TS1005: ';' expected.
+extracted.ts(15210,26): error TS1005: ',' expected.
+extracted.ts(15213,18): error TS1110: Type expected.
+extracted.ts(15214,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(15215,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(15218,17): error TS1005: '>' expected.
+extracted.ts(15218,24): error TS1005: ')' expected.
+extracted.ts(15219,26): error TS1136: Property assignment expected.
+extracted.ts(15220,24): error TS1136: Property assignment expected.
+extracted.ts(15220,47): error TS1128: Declaration or statement expected.
+extracted.ts(15221,15): error TS1109: Expression expected.
+extracted.ts(15222,17): error TS1127: Invalid character.
+extracted.ts(15223,16): error TS1110: Type expected.
+extracted.ts(15224,13): error TS1128: Declaration or statement expected.
+extracted.ts(15224,14): error TS1128: Declaration or statement expected.
+extracted.ts(15225,12): error TS1110: Type expected.
+extracted.ts(15226,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(15227,7): error TS1128: Declaration or statement expected.
+extracted.ts(15227,8): error TS1128: Declaration or statement expected.
+extracted.ts(15227,9): error TS1128: Declaration or statement expected.
+extracted.ts(15228,6): error TS1110: Type expected.
+extracted.ts(15229,3): error TS1128: Declaration or statement expected.
+extracted.ts(15230,1): error TS1128: Declaration or statement expected.
+extracted.ts(15243,7): error TS1005: '>' expected.
+extracted.ts(15243,15): error TS1005: ')' expected.
+extracted.ts(15243,17): error TS1136: Property assignment expected.
+extracted.ts(15246,16): error TS1136: Property assignment expected.
+extracted.ts(15248,7): error TS1109: Expression expected.
+extracted.ts(15248,8): error TS1128: Declaration or statement expected.
+extracted.ts(15249,5): error TS1109: Expression expected.
+extracted.ts(15251,9): error TS1005: '>' expected.
+extracted.ts(15251,16): error TS1005: ';' expected.
+extracted.ts(15253,9): error TS1109: Expression expected.
+extracted.ts(15254,21): error TS1136: Property assignment expected.
+extracted.ts(15254,38): error TS1128: Declaration or statement expected.
+extracted.ts(15257,18): error TS1005: ',' expected.
+extracted.ts(15258,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(15259,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(15260,3): error TS1128: Declaration or statement expected.
+extracted.ts(15261,1): error TS1128: Declaration or statement expected.
+extracted.ts(15290,11): error TS1005: '>' expected.
+extracted.ts(15290,16): error TS1005: ')' expected.
+extracted.ts(15290,24): error TS1005: ',' expected.
+extracted.ts(15291,13): error TS1005: '>' expected.
+extracted.ts(15291,18): error TS1005: ';' expected.
+extracted.ts(15291,33): error TS1109: Expression expected.
+extracted.ts(15291,42): error TS1161: Unterminated regular expression literal.
+extracted.ts(15292,18): error TS1005: ';' expected.
+extracted.ts(15293,24): error TS1005: '>' expected.
+extracted.ts(15293,29): error TS1005: ';' expected.
+extracted.ts(15293,62): error TS1109: Expression expected.
+extracted.ts(15294,26): error TS1005: '>' expected.
+extracted.ts(15294,31): error TS1005: ';' expected.
+extracted.ts(15294,64): error TS1161: Unterminated regular expression literal.
+extracted.ts(15295,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(15296,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(15297,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(15298,3): error TS1128: Declaration or statement expected.
+extracted.ts(15351,28): error TS1005: '>' expected.
+extracted.ts(15355,17): error TS1005: '>' expected.
+extracted.ts(15355,22): error TS1005: ')' expected.
+extracted.ts(15355,30): error TS1005: ',' expected.
+extracted.ts(15356,16): error TS1005: ',' expected.
+extracted.ts(15357,28): error TS1005: '>' expected.
+extracted.ts(15357,31): error TS1005: ')' expected.
+extracted.ts(15357,40): error TS1005: ',' expected.
+extracted.ts(15357,48): error TS1005: ',' expected.
+extracted.ts(15357,67): error TS1109: Expression expected.
+extracted.ts(15358,7): error TS1109: Expression expected.
+extracted.ts(15358,8): error TS1005: ',' expected.
+extracted.ts(15359,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(15360,3): error TS1128: Declaration or statement expected.
+extracted.ts(15384,10): error TS1005: '>' expected.
+extracted.ts(15384,19): error TS1005: ')' expected.
+extracted.ts(15385,10): error TS1005: '>' expected.
+extracted.ts(15385,19): error TS1005: ';' expected.
+extracted.ts(15386,16): error TS1005: ';' expected.
+extracted.ts(15386,21): error TS1434: Unexpected keyword or identifier.
+extracted.ts(15386,26): error TS1434: Unexpected keyword or identifier.
+extracted.ts(15386,46): error TS1005: ';' expected.
+extracted.ts(15386,54): error TS1434: Unexpected keyword or identifier.
+extracted.ts(15387,9): error TS1434: Unexpected keyword or identifier.
+extracted.ts(15387,13): error TS1434: Unexpected keyword or identifier.
+extracted.ts(15388,7): error TS1003: Identifier expected.
+extracted.ts(15388,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(15393,8): error TS1109: Expression expected.
+extracted.ts(15394,6): error TS1110: Type expected.
+extracted.ts(15395,3): error TS1128: Declaration or statement expected.
+extracted.ts(15406,10): error TS1005: '>' expected.
+extracted.ts(15406,19): error TS1005: ')' expected.
+extracted.ts(15407,16): error TS1005: ',' expected.
+extracted.ts(15409,11): error TS1005: '>' expected.
+extracted.ts(15409,14): error TS1005: ')' expected.
+extracted.ts(15409,22): error TS1005: ',' expected.
+extracted.ts(15410,11): error TS1005: ',' expected.
+extracted.ts(15411,11): error TS1005: ',' expected.
+extracted.ts(15411,18): error TS1136: Property assignment expected.
+extracted.ts(15411,21): error TS1005: ',' expected.
+extracted.ts(15411,37): error TS1005: ',' expected.
+extracted.ts(15412,21): error TS1136: Property assignment expected.
+extracted.ts(15412,24): error TS1005: ';' expected.
+extracted.ts(15413,9): error TS1161: Unterminated regular expression literal.
+extracted.ts(15414,7): error TS1128: Declaration or statement expected.
+extracted.ts(15414,8): error TS1128: Declaration or statement expected.
+extracted.ts(15414,9): error TS1128: Declaration or statement expected.
+extracted.ts(15418,11): error TS1005: '>' expected.
+extracted.ts(15418,15): error TS1005: ')' expected.
+extracted.ts(15421,10): error TS1109: Expression expected.
+extracted.ts(15422,7): error TS1109: Expression expected.
+extracted.ts(15425,15): error TS1005: '>' expected.
+extracted.ts(15425,17): error TS1005: ')' expected.
+extracted.ts(15426,19): error TS1005: '>' expected.
+extracted.ts(15426,28): error TS1005: ';' expected.
+extracted.ts(15427,22): error TS1005: ';' expected.
+extracted.ts(15427,26): error TS1434: Unexpected keyword or identifier.
+extracted.ts(15428,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(15429,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(15430,7): error TS1128: Declaration or statement expected.
+extracted.ts(15431,6): error TS1110: Type expected.
+extracted.ts(15432,3): error TS1128: Declaration or statement expected.
+extracted.ts(15433,1): error TS1128: Declaration or statement expected.
+extracted.ts(15560,3): error TS1005: '>' expected.
+extracted.ts(15560,13): error TS1005: ';' expected.
+extracted.ts(15562,15): error TS1005: ';' expected.
+extracted.ts(15563,12): error TS1136: Property assignment expected.
+extracted.ts(15563,15): error TS1005: ';' expected.
+extracted.ts(15563,40): error TS1128: Declaration or statement expected.
+extracted.ts(15564,1): error TS1109: Expression expected.
+extracted.ts(15565,10): error TS1005: ',' expected.
+extracted.ts(15566,2): error TS1161: Unterminated regular expression literal.
+extracted.ts(15577,10): error TS1005: '>' expected.
+extracted.ts(15577,14): error TS1005: ')' expected.
+extracted.ts(15578,16): error TS1005: ',' expected.
+extracted.ts(15579,14): error TS1005: '>' expected.
+extracted.ts(15579,17): error TS1005: ')' expected.
+extracted.ts(15579,26): error TS1005: ',' expected.
+extracted.ts(15579,34): error TS1005: ',' expected.
+extracted.ts(15580,19): error TS1005: ',' expected.
+extracted.ts(15582,15): error TS1005: '>' expected.
+extracted.ts(15582,18): error TS1005: ')' expected.
+extracted.ts(15582,24): error TS1005: ',' expected.
+extracted.ts(15583,15): error TS1005: ',' expected.
+extracted.ts(15584,15): error TS1005: ',' expected.
+extracted.ts(15584,26): error TS1005: ':' expected.
+extracted.ts(15585,15): error TS1005: ',' expected.
+extracted.ts(15585,27): error TS1136: Property assignment expected.
+extracted.ts(15585,31): error TS1005: ',' expected.
+extracted.ts(15585,63): error TS1005: ',' expected.
+extracted.ts(15587,20): error TS1005: ',' expected.
+extracted.ts(15588,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(15589,12): error TS1005: ',' expected.
+extracted.ts(15590,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(15591,7): error TS1128: Declaration or statement expected.
+extracted.ts(15591,8): error TS1128: Declaration or statement expected.
+extracted.ts(15592,6): error TS1110: Type expected.
+extracted.ts(15593,3): error TS1128: Declaration or statement expected.
+extracted.ts(15594,1): error TS1128: Declaration or statement expected.
+extracted.ts(15621,53): error TS1005: '>' expected.
+extracted.ts(15621,59): error TS1005: ',' expected.
+extracted.ts(15621,67): error TS1109: Expression expected.
+extracted.ts(15621,68): error TS1109: Expression expected.
+extracted.ts(15630,57): error TS1005: '>' expected.
+extracted.ts(15630,62): error TS1005: ',' expected.
+extracted.ts(15630,74): error TS1005: ',' expected.
+extracted.ts(15630,99): error TS1109: Expression expected.
+extracted.ts(15630,100): error TS1109: Expression expected.
+extracted.ts(15640,51): error TS1005: '>' expected.
+extracted.ts(15640,60): error TS1005: ',' expected.
+extracted.ts(15640,78): error TS1109: Expression expected.
+extracted.ts(15640,79): error TS1109: Expression expected.
+extracted.ts(15964,3): error TS1005: '>' expected.
+extracted.ts(15964,10): error TS1005: ';' expected.
+extracted.ts(15965,12): error TS1136: Property assignment expected.
+extracted.ts(15967,4): error TS1128: Declaration or statement expected.
+extracted.ts(15968,15): error TS1136: Property assignment expected.
+extracted.ts(15970,10): error TS1005: ';' expected.
+extracted.ts(15971,4): error TS1128: Declaration or statement expected.
+extracted.ts(15972,1): error TS1109: Expression expected.
+extracted.ts(15973,16): error TS1005: '>' expected.
+extracted.ts(15974,2): error TS1161: Unterminated regular expression literal.
+extracted.ts(16218,18): error TS1005: ',' expected.
+extracted.ts(16219,21): error TS1005: '>' expected.
+extracted.ts(16219,24): error TS1005: ')' expected.
+extracted.ts(16219,31): error TS1005: ',' expected.
+extracted.ts(16219,36): error TS1005: ',' expected.
+extracted.ts(16219,51): error TS1109: Expression expected.
+extracted.ts(16220,7): error TS1109: Expression expected.
+extracted.ts(16220,8): error TS1005: ',' expected.
+extracted.ts(16221,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(16262,9): error TS1005: '>' expected.
+extracted.ts(16262,16): error TS1005: ')' expected.
+extracted.ts(16262,18): error TS1136: Property assignment expected.
+extracted.ts(16262,33): error TS1005: ';' expected.
+extracted.ts(16262,45): error TS1005: ';' expected.
+extracted.ts(16263,18): error TS1136: Property assignment expected.
+extracted.ts(16263,33): error TS1005: ';' expected.
+extracted.ts(16263,43): error TS1005: ';' expected.
+extracted.ts(16263,48): error TS1128: Declaration or statement expected.
+extracted.ts(16264,15): error TS1136: Property assignment expected.
+extracted.ts(16264,30): error TS1005: ';' expected.
+extracted.ts(16264,37): error TS1128: Declaration or statement expected.
+extracted.ts(16265,21): error TS1136: Property assignment expected.
+extracted.ts(16265,48): error TS1005: ';' expected.
+extracted.ts(16265,62): error TS1005: ';' expected.
+extracted.ts(16265,68): error TS1128: Declaration or statement expected.
+extracted.ts(16266,16): error TS1136: Property assignment expected.
+extracted.ts(16268,9): error TS1109: Expression expected.
+extracted.ts(16268,10): error TS1128: Declaration or statement expected.
+extracted.ts(16271,14): error TS1005: '>' expected.
+extracted.ts(16271,23): error TS1005: ';' expected.
+extracted.ts(16273,13): error TS1005: '>' expected.
+extracted.ts(16273,20): error TS1005: ';' expected.
+extracted.ts(16275,13): error TS1109: Expression expected.
+extracted.ts(16276,25): error TS1136: Property assignment expected.
+extracted.ts(16278,21): error TS1005: ';' expected.
+extracted.ts(16279,26): error TS1005: ';' expected.
+extracted.ts(16280,13): error TS1109: Expression expected.
+extracted.ts(16280,14): error TS1128: Declaration or statement expected.
+extracted.ts(16283,19): error TS1005: ',' expected.
+extracted.ts(16287,12): error TS1110: Type expected.
+extracted.ts(16289,16): error TS1005: ';' expected.
+extracted.ts(16290,18): error TS1005: '>' expected.
+extracted.ts(16290,27): error TS1005: ';' expected.
+extracted.ts(16290,46): error TS1005: ',' expected.
+extracted.ts(16290,62): error TS1161: Unterminated regular expression literal.
+extracted.ts(16291,18): error TS1005: ';' expected.
+extracted.ts(16291,58): error TS1005: ',' expected.
+extracted.ts(16291,68): error TS1161: Unterminated regular expression literal.
+extracted.ts(16293,18): error TS1005: ';' expected.
+extracted.ts(16295,17): error TS1005: '>' expected.
+extracted.ts(16295,25): error TS1005: ';' expected.
+extracted.ts(16296,26): error TS1136: Property assignment expected.
+extracted.ts(16296,29): error TS1005: ';' expected.
+extracted.ts(16296,57): error TS1128: Declaration or statement expected.
+extracted.ts(16299,22): error TS1005: ';' expected.
+extracted.ts(16300,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(16302,27): error TS1136: Property assignment expected.
+extracted.ts(16302,42): error TS1128: Declaration or statement expected.
+extracted.ts(16307,16): error TS1161: Unterminated regular expression literal.
+extracted.ts(16308,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(16309,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(16310,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16311,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(16312,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(16313,3): error TS1128: Declaration or statement expected.
+extracted.ts(16314,1): error TS1128: Declaration or statement expected.
+extracted.ts(16320,9): error TS1005: '>' expected.
+extracted.ts(16320,16): error TS1005: ')' expected.
+extracted.ts(16320,18): error TS1136: Property assignment expected.
+extracted.ts(16321,18): error TS1136: Property assignment expected.
+extracted.ts(16321,32): error TS1128: Declaration or statement expected.
+extracted.ts(16322,15): error TS1136: Property assignment expected.
+extracted.ts(16322,29): error TS1128: Declaration or statement expected.
+extracted.ts(16327,11): error TS1005: '>' expected.
+extracted.ts(16327,18): error TS1005: ';' expected.
+extracted.ts(16327,41): error TS1005: ';' expected.
+extracted.ts(16328,20): error TS1136: Property assignment expected.
+extracted.ts(16328,39): error TS1005: ';' expected.
+extracted.ts(16328,44): error TS1128: Declaration or statement expected.
+extracted.ts(16329,17): error TS1136: Property assignment expected.
+extracted.ts(16329,38): error TS1005: ';' expected.
+extracted.ts(16329,43): error TS1128: Declaration or statement expected.
+extracted.ts(16330,23): error TS1136: Property assignment expected.
+extracted.ts(16330,50): error TS1005: ';' expected.
+extracted.ts(16330,64): error TS1005: ';' expected.
+extracted.ts(16330,70): error TS1128: Declaration or statement expected.
+extracted.ts(16331,20): error TS1136: Property assignment expected.
+extracted.ts(16331,24): error TS1005: ';' expected.
+extracted.ts(16331,46): error TS1128: Declaration or statement expected.
+extracted.ts(16336,22): error TS1136: Property assignment expected.
+extracted.ts(16338,22): error TS1005: ';' expected.
+extracted.ts(16339,13): error TS1109: Expression expected.
+extracted.ts(16339,14): error TS1128: Declaration or statement expected.
+extracted.ts(16340,25): error TS1136: Property assignment expected.
+extracted.ts(16342,21): error TS1005: ';' expected.
+extracted.ts(16343,13): error TS1109: Expression expected.
+extracted.ts(16343,14): error TS1128: Declaration or statement expected.
+extracted.ts(16346,18): error TS1005: '>' expected.
+extracted.ts(16346,27): error TS1005: ';' expected.
+extracted.ts(16346,39): error TS1127: Invalid character.
+extracted.ts(16346,42): error TS1110: Type expected.
+extracted.ts(16348,20): error TS1005: '>' expected.
+extracted.ts(16348,29): error TS1005: ';' expected.
+extracted.ts(16348,59): error TS1005: ';' expected.
+extracted.ts(16348,65): error TS1161: Unterminated regular expression literal.
+extracted.ts(16349,20): error TS1005: ';' expected.
+extracted.ts(16349,51): error TS1005: ',' expected.
+extracted.ts(16349,67): error TS1161: Unterminated regular expression literal.
+extracted.ts(16350,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(16351,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(16353,16): error TS1005: ';' expected.
+extracted.ts(16353,39): error TS1005: ',' expected.
+extracted.ts(16353,49): error TS1161: Unterminated regular expression literal.
+extracted.ts(16355,16): error TS1005: ';' expected.
+extracted.ts(16356,19): error TS1005: ',' expected.
+extracted.ts(16358,17): error TS1005: '>' expected.
+extracted.ts(16358,20): error TS1005: ')' expected.
+extracted.ts(16359,17): error TS1005: ',' expected.
+extracted.ts(16359,26): error TS1136: Property assignment expected.
+extracted.ts(16359,48): error TS1005: ',' expected.
+extracted.ts(16360,26): error TS1136: Property assignment expected.
+extracted.ts(16360,41): error TS1005: ';' expected.
+extracted.ts(16360,46): error TS1128: Declaration or statement expected.
+extracted.ts(16361,29): error TS1136: Property assignment expected.
+extracted.ts(16361,49): error TS1128: Declaration or statement expected.
+extracted.ts(16364,17): error TS1127: Invalid character.
+extracted.ts(16365,16): error TS1110: Type expected.
+extracted.ts(16366,13): error TS1128: Declaration or statement expected.
+extracted.ts(16366,14): error TS1128: Declaration or statement expected.
+extracted.ts(16366,15): error TS1128: Declaration or statement expected.
+extracted.ts(16367,12): error TS1110: Type expected.
+extracted.ts(16370,25): error TS1136: Property assignment expected.
+extracted.ts(16370,40): error TS1128: Declaration or statement expected.
+extracted.ts(16371,23): error TS1136: Property assignment expected.
+extracted.ts(16371,38): error TS1128: Declaration or statement expected.
+extracted.ts(16375,15): error TS1005: ';' expected.
+extracted.ts(16376,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(16377,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16378,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(16379,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(16380,3): error TS1128: Declaration or statement expected.
+extracted.ts(16381,1): error TS1128: Declaration or statement expected.
+extracted.ts(16423,24): error TS1005: '>' expected.
+extracted.ts(16423,38): error TS1005: ')' expected.
+extracted.ts(16424,22): error TS1005: '>' expected.
+extracted.ts(16424,27): error TS1005: ';' expected.
+extracted.ts(16424,58): error TS1109: Expression expected.
+extracted.ts(16425,23): error TS1005: '>' expected.
+extracted.ts(16425,28): error TS1005: ';' expected.
+extracted.ts(16425,37): error TS1161: Unterminated regular expression literal.
+extracted.ts(16426,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(16427,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(16428,3): error TS1128: Declaration or statement expected.
+extracted.ts(16442,10): error TS1005: '>' expected.
+extracted.ts(16442,19): error TS1005: ')' expected.
+extracted.ts(16443,14): error TS1005: ',' expected.
+extracted.ts(16444,14): error TS1005: '>' expected.
+extracted.ts(16444,17): error TS1005: ')' expected.
+extracted.ts(16445,15): error TS1005: '>' expected.
+extracted.ts(16445,24): error TS1005: ',' expected.
+extracted.ts(16446,32): error TS1005: ',' expected.
+extracted.ts(16446,41): error TS1005: ',' expected.
+extracted.ts(16447,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(16448,16): error TS1005: ',' expected.
+extracted.ts(16449,24): error TS1005: ',' expected.
+extracted.ts(16451,17): error TS1005: '>' expected.
+extracted.ts(16451,20): error TS1005: ')' expected.
+extracted.ts(16451,27): error TS1005: ',' expected.
+extracted.ts(16452,17): error TS1005: ',' expected.
+extracted.ts(16453,17): error TS1005: ',' expected.
+extracted.ts(16454,17): error TS1005: ',' expected.
+extracted.ts(16455,17): error TS1005: ',' expected.
+extracted.ts(16456,16): error TS1109: Expression expected.
+extracted.ts(16457,13): error TS1109: Expression expected.
+extracted.ts(16457,14): error TS1005: ',' expected.
+extracted.ts(16458,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(16459,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16460,7): error TS1128: Declaration or statement expected.
+extracted.ts(16460,8): error TS1128: Declaration or statement expected.
+extracted.ts(16464,11): error TS1005: '>' expected.
+extracted.ts(16464,15): error TS1005: ')' expected.
+extracted.ts(16467,10): error TS1109: Expression expected.
+extracted.ts(16468,7): error TS1109: Expression expected.
+extracted.ts(16469,6): error TS1110: Type expected.
+extracted.ts(16470,3): error TS1128: Declaration or statement expected.
+extracted.ts(16471,1): error TS1128: Declaration or statement expected.
+extracted.ts(16492,10): error TS1005: '>' expected.
+extracted.ts(16492,19): error TS1005: ')' expected.
+extracted.ts(16492,21): error TS1136: Property assignment expected.
+extracted.ts(16492,85): error TS1109: Expression expected.
+extracted.ts(16493,12): error TS1005: '>' expected.
+extracted.ts(16493,21): error TS1005: ';' expected.
+extracted.ts(16494,14): error TS1005: '>' expected.
+extracted.ts(16494,23): error TS1005: ';' expected.
+extracted.ts(16495,26): error TS1005: '>' expected.
+extracted.ts(16495,34): error TS1005: ';' expected.
+extracted.ts(16495,52): error TS1161: Unterminated regular expression literal.
+extracted.ts(16496,17): error TS1005: ';' expected.
+extracted.ts(16496,45): error TS1005: ',' expected.
+extracted.ts(16496,61): error TS1161: Unterminated regular expression literal.
+extracted.ts(16497,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16498,15): error TS1005: ';' expected.
+extracted.ts(16499,36): error TS1005: ',' expected.
+extracted.ts(16499,47): error TS1005: ',' expected.
+extracted.ts(16500,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16501,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(16503,10): error TS1005: ';' expected.
+extracted.ts(16503,55): error TS1005: ',' expected.
+extracted.ts(16503,65): error TS1161: Unterminated regular expression literal.
+extracted.ts(16506,14): error TS1005: '>' expected.
+extracted.ts(16506,23): error TS1005: ')' expected.
+extracted.ts(16507,17): error TS1005: '>' expected.
+extracted.ts(16507,26): error TS1005: ';' expected.
+extracted.ts(16507,47): error TS1005: ';' expected.
+extracted.ts(16507,50): error TS1110: Type expected.
+extracted.ts(16508,17): error TS1005: ';' expected.
+extracted.ts(16508,49): error TS1005: ',' expected.
+extracted.ts(16508,81): error TS1161: Unterminated regular expression literal.
+extracted.ts(16510,32): error TS1005: '>' expected.
+extracted.ts(16510,38): error TS1005: ';' expected.
+extracted.ts(16510,59): error TS1161: Unterminated regular expression literal.
+extracted.ts(16511,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16512,7): error TS1128: Declaration or statement expected.
+extracted.ts(16515,14): error TS1005: '>' expected.
+extracted.ts(16515,23): error TS1005: ')' expected.
+extracted.ts(16516,16): error TS1005: '>' expected.
+extracted.ts(16516,25): error TS1005: ';' expected.
+extracted.ts(16516,76): error TS1005: ';' expected.
+extracted.ts(16516,78): error TS1110: Type expected.
+extracted.ts(16517,15): error TS1005: ';' expected.
+extracted.ts(16518,19): error TS1005: ',' expected.
+extracted.ts(16519,19): error TS1005: '>' expected.
+extracted.ts(16519,22): error TS1005: ')' expected.
+extracted.ts(16519,29): error TS1005: ',' expected.
+extracted.ts(16519,55): error TS1127: Invalid character.
+extracted.ts(16519,63): error TS1161: Unterminated regular expression literal.
+extracted.ts(16520,14): error TS1005: ',' expected.
+extracted.ts(16521,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(16522,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16523,7): error TS1128: Declaration or statement expected.
+extracted.ts(16525,12): error TS1005: '>' expected.
+extracted.ts(16525,21): error TS1005: ';' expected.
+extracted.ts(16527,11): error TS1005: '>' expected.
+extracted.ts(16527,18): error TS1005: ';' expected.
+extracted.ts(16530,13): error TS1005: ';' expected.
+extracted.ts(16531,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16533,20): error TS1136: Property assignment expected.
+extracted.ts(16533,23): error TS1005: ';' expected.
+extracted.ts(16533,45): error TS1128: Declaration or statement expected.
+extracted.ts(16537,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(16538,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(16539,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(16540,3): error TS1128: Declaration or statement expected.
+extracted.ts(16541,1): error TS1128: Declaration or statement expected.
+extracted.ts(16659,3): error TS1005: '>' expected.
+extracted.ts(16659,13): error TS1005: ';' expected.
+extracted.ts(16660,12): error TS1136: Property assignment expected.
+extracted.ts(16660,15): error TS1005: ';' expected.
+extracted.ts(16660,48): error TS1128: Declaration or statement expected.
+extracted.ts(16661,1): error TS1109: Expression expected.
+extracted.ts(16663,2): error TS1161: Unterminated regular expression literal.
+extracted.ts(16665,6): error TS1005: ';' expected.
+extracted.ts(16665,19): error TS1005: ';' expected.
+extracted.ts(16665,28): error TS1005: ';' expected.
+extracted.ts(16665,41): error TS1005: ';' expected.
+extracted.ts(16665,52): error TS1005: ';' expected.
+extracted.ts(16666,9): error TS1005: ',' expected.
+extracted.ts(16667,11): error TS1005: '>' expected.
+extracted.ts(16667,20): error TS1005: ')' expected.
+extracted.ts(16667,30): error TS1005: ':' expected.
+extracted.ts(16668,16): error TS1005: ',' expected.
+extracted.ts(16668,21): error TS1005: ',' expected.
+extracted.ts(16668,27): error TS1005: ',' expected.
+extracted.ts(16668,31): error TS1005: ':' expected.
+extracted.ts(16668,37): error TS1005: ',' expected.
+extracted.ts(16668,52): error TS1005: ',' expected.
+extracted.ts(16668,54): error TS1136: Property assignment expected.
+extracted.ts(16669,6): error TS1110: Type expected.
+extracted.ts(16670,3): error TS1128: Declaration or statement expected.
+extracted.ts(16670,4): error TS1128: Declaration or statement expected.
+extracted.ts(16671,2): error TS1110: Type expected.
+extracted.ts(16681,19): error TS1005: '>' expected.
+extracted.ts(16681,25): error TS1005: ',' expected.
+extracted.ts(16681,39): error TS1005: ',' expected.
+extracted.ts(16681,58): error TS1005: ',' expected.
+extracted.ts(16681,65): error TS1005: ',' expected.
+extracted.ts(16681,80): error TS1005: ',' expected.
+extracted.ts(16681,87): error TS1005: ',' expected.
+extracted.ts(16681,106): error TS1005: ',' expected.
+extracted.ts(16681,114): error TS1109: Expression expected.
+extracted.ts(16682,5): error TS1109: Expression expected.
+extracted.ts(16691,18): error TS1005: '>' expected.
+extracted.ts(16691,23): error TS1005: ',' expected.
+extracted.ts(16691,36): error TS1005: ',' expected.
+extracted.ts(16691,68): error TS1005: ',' expected.
+extracted.ts(16691,83): error TS1005: ',' expected.
+extracted.ts(16691,90): error TS1005: ',' expected.
+extracted.ts(16691,109): error TS1005: ',' expected.
+extracted.ts(16691,117): error TS1109: Expression expected.
+extracted.ts(16692,5): error TS1109: Expression expected.
+extracted.ts(16982,9): error TS1005: ';' expected.
+extracted.ts(16983,9): error TS1005: ';' expected.
+extracted.ts(16984,18): error TS1005: ';' expected.
+extracted.ts(16985,20): error TS1005: ';' expected.
+extracted.ts(16986,13): error TS1005: ';' expected.
+extracted.ts(16987,16): error TS1005: ';' expected.
+extracted.ts(16988,16): error TS1005: ';' expected.
+extracted.ts(16989,21): error TS1005: ';' expected.
+extracted.ts(16990,16): error TS1005: ';' expected.
+extracted.ts(17021,9): error TS1005: ';' expected.
+extracted.ts(17022,10): error TS1005: ';' expected.
+extracted.ts(17023,9): error TS1005: ';' expected.
+extracted.ts(17024,15): error TS1005: ';' expected.
+extracted.ts(17025,15): error TS1005: ';' expected.
+extracted.ts(17026,12): error TS1005: ';' expected.
+extracted.ts(17027,14): error TS1005: ';' expected.
+extracted.ts(17028,18): error TS1005: ';' expected.
+extracted.ts(17029,20): error TS1005: ';' expected.
+extracted.ts(17030,21): error TS1005: ';' expected.
+extracted.ts(17031,17): error TS1005: ';' expected.
+extracted.ts(17084,9): error TS1005: ';' expected.
+extracted.ts(17085,17): error TS1005: ';' expected.
+extracted.ts(17086,9): error TS1005: ';' expected.
+extracted.ts(17087,12): error TS1005: ';' expected.
+extracted.ts(17088,11): error TS1005: ';' expected.
+extracted.ts(17089,15): error TS1005: ';' expected.
+extracted.ts(17090,17): error TS1005: ';' expected.
+extracted.ts(17091,18): error TS1005: ';' expected.
+extracted.ts(17092,17): error TS1005: ';' expected.
+extracted.ts(17093,11): error TS1005: ';' expected.
+extracted.ts(17277,10): error TS1005: ';' expected.
+extracted.ts(17315,9): error TS1005: ';' expected.
+extracted.ts(17316,13): error TS1005: ';' expected.
+extracted.ts(17317,10): error TS1005: ';' expected.
+extracted.ts(17318,17): error TS1005: ';' expected.
+extracted.ts(17323,10): error TS1005: ';' expected.
+extracted.ts(17324,11): error TS1005: ';' expected.
+extracted.ts(17325,14): error TS1005: ';' expected.
+extracted.ts(17326,14): error TS1005: ';' expected.
+extracted.ts(17367,12): error TS1005: ';' expected.
+extracted.ts(17368,20): error TS1005: ';' expected.
+extracted.ts(17369,12): error TS1005: ';' expected.
+extracted.ts(17374,10): error TS1005: ';' expected.
+extracted.ts(17375,11): error TS1005: ';' expected.
+extracted.ts(17376,14): error TS1005: ';' expected.
+extracted.ts(17377,14): error TS1005: ';' expected.
+extracted.ts(17378,24): error TS1005: ';' expected.
+extracted.ts(17412,12): error TS1005: ';' expected.
+extracted.ts(17413,10): error TS1005: ';' expected.
+extracted.ts(17448,12): error TS1005: ';' expected.
+extracted.ts(17449,20): error TS1005: ';' expected.
+extracted.ts(17476,17): error TS1005: ';' expected.
+extracted.ts(17565,11): error TS1005: '>' expected.
+extracted.ts(17565,20): error TS1005: ')' expected.
+extracted.ts(17566,20): error TS1005: ',' expected.
+extracted.ts(17567,6): error TS1110: Type expected.
+extracted.ts(17568,3): error TS1128: Declaration or statement expected.
+extracted.ts(17569,1): error TS1128: Declaration or statement expected.
+extracted.ts(17592,10): error TS1005: '>' expected.
+extracted.ts(17592,19): error TS1005: ')' expected.
+extracted.ts(17592,21): error TS1136: Property assignment expected.
+extracted.ts(17592,82): error TS1109: Expression expected.
+extracted.ts(17593,12): error TS1005: '>' expected.
+extracted.ts(17593,21): error TS1005: ';' expected.
+extracted.ts(17594,38): error TS1005: ',' expected.
+extracted.ts(17594,47): error TS1005: ',' expected.
+extracted.ts(17595,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(17597,12): error TS1005: ';' expected.
+extracted.ts(17598,26): error TS1005: ',' expected.
+extracted.ts(17598,34): error TS1161: Unterminated regular expression literal.
+extracted.ts(17599,25): error TS1005: ',' expected.
+extracted.ts(17599,32): error TS1161: Unterminated regular expression literal.
+extracted.ts(17600,15): error TS1005: ';' expected.
+extracted.ts(17601,32): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+extracted.ts(17601,40): error TS1005: ',' expected.
+extracted.ts(17601,65): error TS1005: ';' expected.
+extracted.ts(17601,66): error TS1128: Declaration or statement expected.
+extracted.ts(17602,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(17603,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(17605,12): error TS1005: ';' expected.
+extracted.ts(17606,10): error TS1136: Property assignment expected.
+extracted.ts(17606,11): error TS1005: ';' expected.
+extracted.ts(17607,19): error TS1005: '>' expected.
+extracted.ts(17607,26): error TS1005: ')' expected.
+extracted.ts(17607,58): error TS1109: Expression expected.
+extracted.ts(17609,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(17610,9): error TS1128: Declaration or statement expected.
+extracted.ts(17610,10): error TS1128: Declaration or statement expected.
+extracted.ts(17613,17): error TS1005: '>' expected.
+extracted.ts(17613,19): error TS1005: ')' expected.
+extracted.ts(17613,45): error TS1109: Expression expected.
+extracted.ts(17614,26): error TS1005: ',' expected.
+extracted.ts(17615,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(17616,9): error TS1128: Declaration or statement expected.
+extracted.ts(17618,17): error TS1005: '>' expected.
+extracted.ts(17618,24): error TS1005: ';' expected.
+extracted.ts(17618,58): error TS1109: Expression expected.
+extracted.ts(17620,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(17621,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(17622,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(17623,3): error TS1128: Declaration or statement expected.
+extracted.ts(17624,1): error TS1128: Declaration or statement expected.
+extracted.ts(17780,14): error TS1005: ';' expected.
+extracted.ts(17819,10): error TS1005: ';' expected.
+extracted.ts(17820,10): error TS1005: ';' expected.
+extracted.ts(17821,11): error TS1005: ';' expected.
+extracted.ts(17826,10): error TS1005: ';' expected.
+extracted.ts(17827,11): error TS1005: ';' expected.
+extracted.ts(17828,14): error TS1005: ';' expected.
+extracted.ts(17829,14): error TS1005: ';' expected.
+extracted.ts(17898,11): error TS1005: ';' expected.
+extracted.ts(17939,10): error TS1005: ';' expected.
+extracted.ts(17940,10): error TS1005: ';' expected.
+extracted.ts(17941,11): error TS1005: ';' expected.
+extracted.ts(18005,10): error TS1005: ';' expected.
+extracted.ts(18006,11): error TS1005: ';' expected.
+extracted.ts(18007,14): error TS1005: ';' expected.
+extracted.ts(18008,14): error TS1005: ';' expected.
+extracted.ts(18009,19): error TS1005: ';' expected.
+extracted.ts(18088,7): error TS1005: '>' expected.
+extracted.ts(18088,12): error TS1005: ')' expected.
+extracted.ts(18089,17): error TS1136: Property assignment expected.
+extracted.ts(18089,21): error TS1005: ';' expected.
+extracted.ts(18092,15): error TS1005: '>' expected.
+extracted.ts(18092,20): error TS1005: ';' expected.
+extracted.ts(18092,31): error TS1005: ';' expected.
+extracted.ts(18092,39): error TS1161: Unterminated regular expression literal.
+extracted.ts(18094,17): error TS1005: '>' expected.
+extracted.ts(18094,20): error TS1005: ')' expected.
+extracted.ts(18094,29): error TS1005: ',' expected.
+extracted.ts(18094,34): error TS1005: ',' expected.
+extracted.ts(18094,48): error TS1005: ',' expected.
+extracted.ts(18095,19): error TS1005: ',' expected.
+extracted.ts(18095,27): error TS1005: ',' expected.
+extracted.ts(18095,35): error TS1005: ',' expected.
+extracted.ts(18096,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(18097,8): error TS1005: ';' expected.
+extracted.ts(18098,6): error TS1110: Type expected.
+extracted.ts(18099,3): error TS1128: Declaration or statement expected.
+extracted.ts(18100,1): error TS1128: Declaration or statement expected.
+extracted.ts(18119,10): error TS1005: '>' expected.
+extracted.ts(18119,19): error TS1005: ')' expected.
+extracted.ts(18121,9): error TS1005: '>' expected.
+extracted.ts(18121,13): error TS1005: ';' expected.
+extracted.ts(18123,19): error TS1136: Property assignment expected.
+extracted.ts(18123,23): error TS1005: ';' expected.
+extracted.ts(18125,8): error TS1109: Expression expected.
+extracted.ts(18127,18): error TS1005: ',' expected.
+extracted.ts(18127,33): error TS1005: ';' expected.
+extracted.ts(18127,37): error TS1110: Type expected.
+extracted.ts(18127,42): error TS1128: Declaration or statement expected.
+extracted.ts(18130,16): error TS1005: ',' expected.
+extracted.ts(18132,13): error TS1005: '>' expected.
+extracted.ts(18132,16): error TS1005: ')' expected.
+extracted.ts(18132,22): error TS1005: ',' expected.
+extracted.ts(18133,13): error TS1005: ',' expected.
+extracted.ts(18133,22): error TS1136: Property assignment expected.
+extracted.ts(18133,25): error TS1005: ',' expected.
+extracted.ts(18133,42): error TS1005: ',' expected.
+extracted.ts(18135,18): error TS1005: ',' expected.
+extracted.ts(18135,31): error TS1005: ',' expected.
+extracted.ts(18136,12): error TS1161: Unterminated regular expression literal.
+extracted.ts(18137,9): error TS1128: Declaration or statement expected.
+extracted.ts(18137,10): error TS1128: Declaration or statement expected.
+extracted.ts(18137,11): error TS1128: Declaration or statement expected.
+extracted.ts(18138,8): error TS1110: Type expected.
+extracted.ts(18139,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(18140,3): error TS1128: Declaration or statement expected.
+extracted.ts(18141,1): error TS1128: Declaration or statement expected.
+extracted.ts(18181,11): error TS1005: ';' expected.
+extracted.ts(18182,12): error TS1005: ';' expected.
+extracted.ts(18183,14): error TS1005: ';' expected.
+extracted.ts(18184,13): error TS1005: ';' expected.
+extracted.ts(18185,15): error TS1005: ';' expected.
+extracted.ts(18186,12): error TS1005: ';' expected.
+extracted.ts(18187,13): error TS1005: ';' expected.
+extracted.ts(18229,9): error TS1109: Expression expected.
+extracted.ts(18230,24): error TS1109: Expression expected.
+extracted.ts(18231,17): error TS1109: Expression expected.
+extracted.ts(18258,43): error TS1005: ':' expected.
+extracted.ts(18263,28): error TS1011: An element access expression should take an argument.
+extracted.ts(18350,9): error TS1005: '>' expected.
+extracted.ts(18350,14): error TS1005: ')' expected.
+extracted.ts(18351,19): error TS1136: Property assignment expected.
+extracted.ts(18351,23): error TS1005: ';' expected.
+extracted.ts(18353,8): error TS1109: Expression expected.
+extracted.ts(18354,18): error TS1005: ',' expected.
+extracted.ts(18354,30): error TS1005: '>' expected.
+extracted.ts(18354,32): error TS1128: Declaration or statement expected.
+extracted.ts(18356,23): error TS1005: '>' expected.
+extracted.ts(18356,26): error TS1005: ')' expected.
+extracted.ts(18356,34): error TS1005: ',' expected.
+extracted.ts(18356,48): error TS1005: ',' expected.
+extracted.ts(18356,67): error TS1109: Expression expected.
+extracted.ts(18357,7): error TS1109: Expression expected.
+extracted.ts(18357,8): error TS1005: ';' expected.
+extracted.ts(18358,6): error TS1110: Type expected.
+extracted.ts(18359,3): error TS1128: Declaration or statement expected.
+extracted.ts(18360,1): error TS1128: Declaration or statement expected.
+extracted.ts(18425,7): error TS1005: '>' expected.
+extracted.ts(18425,14): error TS1005: ')' expected.
+extracted.ts(18426,14): error TS1136: Property assignment expected.
+extracted.ts(18426,17): error TS1005: ';' expected.
+extracted.ts(18427,5): error TS1161: Unterminated regular expression literal.
+extracted.ts(18428,3): error TS1128: Declaration or statement expected.
+extracted.ts(18429,1): error TS1128: Declaration or statement expected.
+extracted.ts(18448,10): error TS1005: '>' expected.
+extracted.ts(18448,19): error TS1005: ')' expected.
+extracted.ts(18448,21): error TS1136: Property assignment expected.
+extracted.ts(18448,82): error TS1109: Expression expected.
+extracted.ts(18449,13): error TS1005: '>' expected.
+extracted.ts(18449,22): error TS1005: ';' expected.
+extracted.ts(18449,52): error TS1005: ',' expected.
+extracted.ts(18449,65): error TS1161: Unterminated regular expression literal.
+extracted.ts(18450,27): error TS1005: '>' expected.
+extracted.ts(18450,36): error TS1005: ';' expected.
+extracted.ts(18450,66): error TS1161: Unterminated regular expression literal.
+extracted.ts(18452,15): error TS1005: '>' expected.
+extracted.ts(18452,24): error TS1005: ')' expected.
+extracted.ts(18453,16): error TS1005: ',' expected.
+extracted.ts(18454,10): error TS1110: Type expected.
+extracted.ts(18455,7): error TS1128: Declaration or statement expected.
+extracted.ts(18456,6): error TS1110: Type expected.
+extracted.ts(18457,3): error TS1128: Declaration or statement expected.
+extracted.ts(18458,1): error TS1128: Declaration or statement expected.
+extracted.ts(18478,7): error TS1005: '>' expected.
+extracted.ts(18478,16): error TS1005: ')' expected.
+extracted.ts(18481,12): error TS1005: '>' expected.
+extracted.ts(18481,21): error TS1005: ';' expected.
+extracted.ts(18482,18): error TS1005: ',' expected.
+extracted.ts(18484,13): error TS1005: '>' expected.
+extracted.ts(18484,16): error TS1005: ')' expected.
+extracted.ts(18484,17): error TS1136: Property assignment expected.
+extracted.ts(18485,26): error TS1005: ',' expected.
+extracted.ts(18487,12): error TS1109: Expression expected.
+extracted.ts(18488,9): error TS1109: Expression expected.
+extracted.ts(18489,14): error TS1005: '>' expected.
+extracted.ts(18489,23): error TS1005: ';' expected.
+extracted.ts(18490,15): error TS1005: '>' expected.
+extracted.ts(18490,24): error TS1005: ';' expected.
+extracted.ts(18490,46): error TS1005: ',' expected.
+extracted.ts(18490,62): error TS1161: Unterminated regular expression literal.
+extracted.ts(18491,14): error TS1005: ';' expected.
+extracted.ts(18492,22): error TS1005: ',' expected.
+extracted.ts(18492,33): error TS1127: Invalid character.
+extracted.ts(18493,12): error TS1110: Type expected.
+extracted.ts(18494,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(18497,13): error TS1005: '>' expected.
+extracted.ts(18497,18): error TS1005: ')' expected.
+extracted.ts(18498,28): error TS1005: ',' expected.
+extracted.ts(18499,12): error TS1109: Expression expected.
+extracted.ts(18500,9): error TS1109: Expression expected.
+extracted.ts(18501,8): error TS1110: Type expected.
+extracted.ts(18502,12): error TS1005: ';' expected.
+extracted.ts(18503,15): error TS1005: '>' expected.
+extracted.ts(18503,24): error TS1005: ';' expected.
+extracted.ts(18503,38): error TS1005: ';' expected.
+extracted.ts(18503,40): error TS1434: Unexpected keyword or identifier.
+extracted.ts(18503,79): error TS1110: Type expected.
+extracted.ts(18504,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(18505,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(18506,3): error TS1128: Declaration or statement expected.
+extracted.ts(18507,1): error TS1128: Declaration or statement expected.
+extracted.ts(18527,10): error TS1005: '>' expected.
+extracted.ts(18527,19): error TS1005: ')' expected.
+extracted.ts(18529,9): error TS1005: '>' expected.
+extracted.ts(18529,13): error TS1005: ';' expected.
+extracted.ts(18531,19): error TS1136: Property assignment expected.
+extracted.ts(18531,23): error TS1005: ';' expected.
+extracted.ts(18534,18): error TS1136: Property assignment expected.
+extracted.ts(18534,21): error TS1005: ';' expected.
+extracted.ts(18534,48): error TS1128: Declaration or statement expected.
+extracted.ts(18535,17): error TS1136: Property assignment expected.
+extracted.ts(18535,20): error TS1005: ';' expected.
+extracted.ts(18535,71): error TS1128: Declaration or statement expected.
+extracted.ts(18536,7): error TS1161: Unterminated regular expression literal.
+extracted.ts(18538,14): error TS1005: '>' expected.
+extracted.ts(18538,23): error TS1005: ')' expected.
+extracted.ts(18539,23): error TS1005: ',' expected.
+extracted.ts(18541,15): error TS1005: '>' expected.
+extracted.ts(18541,18): error TS1005: ')' expected.
+extracted.ts(18542,15): error TS1005: ',' expected.
+extracted.ts(18543,15): error TS1005: ',' expected.
+extracted.ts(18543,24): error TS1136: Property assignment expected.
+extracted.ts(18543,27): error TS1005: ',' expected.
+extracted.ts(18543,61): error TS1005: ',' expected.
+extracted.ts(18546,14): error TS1161: Unterminated regular expression literal.
+extracted.ts(18547,11): error TS1128: Declaration or statement expected.
+extracted.ts(18547,12): error TS1128: Declaration or statement expected.
+extracted.ts(18548,10): error TS1110: Type expected.
+extracted.ts(18549,7): error TS1128: Declaration or statement expected.
+extracted.ts(18549,8): error TS1128: Declaration or statement expected.
+extracted.ts(18550,6): error TS1110: Type expected.
+extracted.ts(18551,3): error TS1128: Declaration or statement expected.
+extracted.ts(18552,1): error TS1128: Declaration or statement expected.
+extracted.ts(18559,7): error TS1005: '>' expected.
+extracted.ts(18559,14): error TS1005: ')' expected.
+extracted.ts(18559,16): error TS1136: Property assignment expected.
+extracted.ts(18560,16): error TS1136: Property assignment expected.
+extracted.ts(18560,44): error TS1128: Declaration or statement expected.
+extracted.ts(18561,19): error TS1136: Property assignment expected.
+extracted.ts(18561,36): error TS1128: Declaration or statement expected.
+extracted.ts(18564,10): error TS1005: '>' expected.
+extracted.ts(18564,19): error TS1005: ';' expected.
+extracted.ts(18564,59): error TS1161: Unterminated regular expression literal.
+extracted.ts(18565,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(18566,3): error TS1128: Declaration or statement expected.
+extracted.ts(18567,1): error TS1128: Declaration or statement expected.
+extracted.ts(18571,10): error TS1005: '>' expected.
+extracted.ts(18571,19): error TS1005: ')' expected.
+extracted.ts(18572,12): error TS1005: '>' expected.
+extracted.ts(18572,21): error TS1005: ';' expected.
+extracted.ts(18573,14): error TS1005: '>' expected.
+extracted.ts(18573,23): error TS1005: ';' expected.
+extracted.ts(18573,62): error TS1109: Expression expected.
+extracted.ts(18574,14): error TS1005: '>' expected.
+extracted.ts(18574,23): error TS1005: ';' expected.
+extracted.ts(18575,16): error TS1005: '>' expected.
+extracted.ts(18575,25): error TS1005: ';' expected.
+extracted.ts(18575,59): error TS1109: Expression expected.
+extracted.ts(18576,16): error TS1005: '>' expected.
+extracted.ts(18576,25): error TS1005: ';' expected.
+extracted.ts(18576,59): error TS1109: Expression expected.
+extracted.ts(18577,10): error TS1110: Type expected.
+extracted.ts(18578,8): error TS1161: Unterminated regular expression literal.
+extracted.ts(18579,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(18580,3): error TS1128: Declaration or statement expected.
+extracted.ts(18584,3): error TS1005: '>' expected.
+extracted.ts(18584,8): error TS1005: ';' expected.
+extracted.ts(18586,13): error TS1005: ';' expected.
+extracted.ts(18588,2): error TS1109: Expression expected.
+extracted.ts(18592,10): error TS1005: '>' expected.
+extracted.ts(18592,14): error TS1005: ')' expected.
+extracted.ts(18593,17): error TS1005: ',' expected.
+extracted.ts(18595,11): error TS1005: '>' expected.
+extracted.ts(18595,14): error TS1005: ')' expected.
+extracted.ts(18595,24): error TS1005: ',' expected.
+extracted.ts(18596,11): error TS1005: ',' expected.
+extracted.ts(18597,11): error TS1005: ',' expected.
+extracted.ts(18597,22): error TS1005: ':' expected.
+extracted.ts(18598,11): error TS1005: ',' expected.
+extracted.ts(18598,23): error TS1136: Property assignment expected.
+extracted.ts(18598,27): error TS1005: ',' expected.
+extracted.ts(18599,18): error TS1005: ',' expected.
+extracted.ts(18599,51): error TS1005: ',' expected.
+extracted.ts(18599,53): error TS1005: ',' expected.
+extracted.ts(18602,12): error TS1128: Declaration or statement expected.
+extracted.ts(18603,9): error TS1109: Expression expected.
+extracted.ts(18604,25): error TS1005: '>' expected.
+extracted.ts(18604,33): error TS1005: ';' expected.
+extracted.ts(18604,45): error TS1161: Unterminated regular expression literal.
+extracted.ts(18605,10): error TS1161: Unterminated regular expression literal.
+extracted.ts(18606,7): error TS1128: Declaration or statement expected.
+extracted.ts(18606,8): error TS1128: Declaration or statement expected.
+extracted.ts(18606,9): error TS1128: Declaration or statement expected.
+extracted.ts(18607,6): error TS1110: Type expected.
+extracted.ts(18608,3): error TS1128: Declaration or statement expected.
+extracted.ts(18609,1): error TS1128: Declaration or statement expected.
+extracted.ts(18649,20): error TS1005: '>' expected.
+extracted.ts(18649,25): error TS1005: ')' expected.
+extracted.ts(18649,56): error TS1005: ':' expected.
+extracted.ts(18650,13): error TS1005: '>' expected.
+extracted.ts(18650,18): error TS1005: ';' expected.
+extracted.ts(18650,37): error TS1109: Expression expected.
+extracted.ts(18650,44): error TS1005: ',' expected.
+extracted.ts(18650,57): error TS1161: Unterminated regular expression literal.
+extracted.ts(18651,6): error TS1161: Unterminated regular expression literal.
+extracted.ts(18652,3): error TS1128: Declaration or statement expected.
+extracted.ts(18684,23): error TS1005: '>' expected.
+extracted.ts(18684,28): error TS1005: ',' expected.
+extracted.ts(18684,33): error TS1005: ':' expected.
+extracted.ts(18684,35): error TS1005: ',' expected.
+extracted.ts(18684,49): error TS1109: Expression expected.
+extracted.ts(18684,50): error TS1109: Expression expected.
+extracted.ts(18690,23): error TS1005: '>' expected.
+extracted.ts(18690,28): error TS1005: ',' expected.
+extracted.ts(18690,33): error TS1005: ':' expected.
+extracted.ts(18690,35): error TS1005: ',' expected.
+extracted.ts(18690,47): error TS1005: ',' expected.
+extracted.ts(18690,63): error TS1005: ':' expected.
+extracted.ts(18690,66): error TS1109: Expression expected.
+extracted.ts(18690,67): error TS1109: Expression expected.

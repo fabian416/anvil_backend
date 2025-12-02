@@ -1,0 +1,44 @@
+name: Pre-commit API Docs Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  check-api-docs:
+    name: Check API Documentation Updates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Check for new endpoints
+        run: |
+          # Get changed files
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep "src/app/presentation/http/controllers" || true)
+          
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "🔍 Backend endpoint changes detected"
+            echo "$CHANGED_FILES"
+            
+            # Run coverage validator
+            python scripts/api_audit/validate_api_coverage.py
+            
+            # Check if coverage decreased
+            # TODO: Compare with previous coverage report
+            
+            echo "⚠️  Please ensure all new endpoints are documented!"
+          else
+            echo "✅ No backend endpoint changes detected"
+          fi
