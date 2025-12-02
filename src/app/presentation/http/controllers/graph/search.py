@@ -7,9 +7,11 @@ HTTP endpoints for GraphRAG hybrid search.
 from typing import Annotated
 from fastapi import APIRouter, Depends, Security, status
 from dishka.integrations.fastapi import FromDishka
+import logging
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.application.graph import HybridRetrievalInteractor
+from app.infrastructure.cache.graph_cache import GraphQueryCache
 from .schemas import (
     HybridSearchRequest,
     HybridSearchResponse,
@@ -21,6 +23,8 @@ from .schemas import (
     ProtocolContext,
     RiskInfo,
 )
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/graph/search", tags=["Graph Search"])
