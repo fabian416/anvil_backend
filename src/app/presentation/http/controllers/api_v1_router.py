@@ -29,6 +29,9 @@ from app.presentation.http.websocket.graph_websocket import router as graph_ws_r
 # ML routers
 from app.presentation.http.controllers.ml import prediction_router, network_router
 
+# Portfolio router
+from app.presentation.http.controllers.portfolio.router import create_portfolio_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -63,6 +66,8 @@ def create_api_v1_router() -> APIRouter:
         # ML routers
         prediction_router,
         network_router,
+        # Portfolio router
+        create_portfolio_router(),
     )
 
     for sub_router in sub_routers:

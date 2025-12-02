@@ -41,6 +41,7 @@ from app.application.chat import (
     ChatGraphSearchHandler,
     ChatRiskInsightsHandler,
 )
+from app.application.portfolio import PortfolioRiskAnalysis
 
 
 class GraphProvider(Provider):
@@ -279,5 +280,21 @@ class GraphProvider(Provider):
         return ChatRiskInsightsHandler(
             risk_prediction_service,
             hybrid_retrieval,
+            graph_repo,
+        )
+    
+    # Portfolio Risk Analysis (NEW: Portfolio management)
+    
+    @provide
+    def provide_portfolio_risk_analysis(
+        self,
+        risk_prediction_service: RiskPredictionService,
+        network_service: NetworkAnalysisService,
+        graph_repo: GraphRepository,
+    ) -> PortfolioRiskAnalysis:
+        """Provide PortfolioRiskAnalysis for portfolio risk assessment"""
+        return PortfolioRiskAnalysis(
+            risk_prediction_service,
+            network_service,
             graph_repo,
         )
