@@ -37,6 +37,10 @@ from app.application.ml import (
     CalculateCentralityInteractor,
     SimulateContagionInteractor,
 )
+from app.application.chat import (
+    ChatGraphSearchHandler,
+    ChatRiskInsightsHandler,
+)
 
 
 class GraphProvider(Provider):
@@ -252,3 +256,28 @@ class GraphProvider(Provider):
     ) -> SimulateContagionInteractor:
         """Provide SimulateContagionInteractor"""
         return SimulateContagionInteractor(network_service)
+    
+    # Chat Handlers (NEW: GraphRAG + ML integration for chat)
+    
+    @provide
+    def provide_chat_graph_search_handler(
+        self,
+        hybrid_retrieval: HybridRetrievalInteractor,
+        graph_repo: GraphRepository,
+    ) -> ChatGraphSearchHandler:
+        """Provide ChatGraphSearchHandler for protocol search from chat"""
+        return ChatGraphSearchHandler(hybrid_retrieval, graph_repo)
+    
+    @provide
+    def provide_chat_risk_insights_handler(
+        self,
+        risk_prediction_service: RiskPredictionService,
+        hybrid_retrieval: HybridRetrievalInteractor,
+        graph_repo: GraphRepository,
+    ) -> ChatRiskInsightsHandler:
+        """Provide ChatRiskInsightsHandler for risk analysis from chat"""
+        return ChatRiskInsightsHandler(
+            risk_prediction_service,
+            hybrid_retrieval,
+            graph_repo,
+        )

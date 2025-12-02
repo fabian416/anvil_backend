@@ -17,12 +17,24 @@ from app.presentation.http.schemas.chat import (
     SendMessageResponse,
     ConversationListResponse,
     MessageListResponse,
+    # NEW: GraphRAG and ML schemas
+    ChatProtocolSearchRequest,
+    ChatProtocolSearchResponse,
+    ChatRiskAnalysisRequest,
+    ChatRiskAnalysisResponse,
+    ChatSimilarProtocolsRequest,
+    ChatSimilarProtocolsResponse,
 )
 from app.application.chat.commands.create_conversation import CreateConversation
 from app.application.chat.commands.send_message import SendMessage
 from app.application.chat.queries.get_conversation import GetConversation
 from app.application.chat.queries.list_conversations import ListConversations
 from app.application.chat.queries.get_messages import GetMessages
+# NEW: GraphRAG and ML handlers
+from app.application.chat import (
+    ChatGraphSearchHandler,
+    ChatRiskInsightsHandler,
+)
 
 
 def create_chat_router() -> APIRouter:
@@ -177,6 +189,195 @@ def create_chat_router() -> APIRouter:
         return MessageListResponse(
             messages=messages,
             total=len(messages),
+        )
+    
+    # NEW: GraphRAG protocol search from chat
+    @router.post(
+        "/search-protocols",
+        status_code=status.HTTP_200_OK,
+        response_model=ChatProtocolSearchResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def search_protocols_from_chat(
+        request: ChatProtocolSearchRequest,
+        current_user: FromDishka[CurrentUserService],
+        search_handler: FromDishka[ChatGraphSearchHandler],
+    ) -> ChatProtocolSearchResponse:
+        """
+        Search protocols using GraphRAG hybrid search from chat context.
+        
+        Returns protocol results with risk scores, relevance explanations,
+        and contextual recommendations.
+        """
+        user = await current_user.get_current_user()
+        
+        # Get user preferences (would come from user profile in production)
+        user_preferences = request.user_preferences or {}
+        
+        # Perform search
+        search_context = await search_handler.search_protocols_from_chat(
+            message=request.query,
+            user_preferences=user_preferences,
+            conversation_id=request.conversation_id,
+        )
+        
+        return ChatProtocolSearchResponse(
+            results=[
+                {
+                    "protocol_id": str(r.protocol_id),
+                    "protocol_name": r.protocol_name,
+                    "similarity_score": r.similarity_score,
+                    "risk_score": r.risk_score,
+                    "risk_level": r.risk_level,
+                    "tvl": r.tvl,
+                    "apy": r.apy,
+                    "audit_count": r.audit_count,
+                    "description": r.description,
+                    "category": r.category,
+                    "chain": r.chain,
+                    "why_relevant": r.why_relevant,
+                }
+                for r in search_context.results
+            ],
+            search_context=search_context.search_explanation,
+            recommendations=search_context.recommendations,
+        )
+    
+    # NEW: Get risk analysis for protocol mentioned in chat
+    @router.post(
+        "/analyze-risk",
+        status_code=status.HTTP_200_OK,
+        response_model=ChatRiskAnalysisResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def analyze_protocol_risk_from_chat(
+        request: ChatRiskAnalysisRequest,
+        current_user: FromDishka[CurrentUserService],
+        risk_handler: FromDishka[ChatRiskInsightsHandler],
+    ) -> ChatRiskAnalysisResponse:
+        """
+        Get ML-powered risk analysis for a protocol mentioned in chat.
+        
+        Returns risk scores, contributing factors, recommendations,
+        and safer alternatives if risk is high.
+        """
+        user = await current_user.get_current_user()
+        
+        # Get risk insights
+        insights = await risk_handler.get_protocol_risk_from_chat(
+            protocol_name=request.protocol_name,
+            conversation_id=request.conversation_id,
+            operation_type=request.operation_type,
+            amount_usd=request.amount_usd,
+        )
+        
+        return ChatRiskAnalysisResponse(
+            risk_analysis={
+                "protocol_id": str(insights.risk_analysis.protocol_id),
+                "protocol_name": insights.risk_analysis.protocol_name,
+                "risk_score": insights.risk_analysis.risk_score,
+                "risk_level": insights.risk_analysis.risk_level,
+                "confidence": insights.risk_analysis.confidence,
+                "contributing_factors": [
+                    {
+                        "factor": f.factor,
+                        "impact": f.impact,
+                        "description": f.description,
+                        "is_critical": f.is_critical,
+                    }
+                    for f in insights.risk_analysis.contributing_factors
+                ],
+                "recommendations": insights.risk_analysis.recommendations,
+                "should_warn": insights.risk_analysis.should_warn,
+                "warning_message": insights.risk_analysis.warning_message,
+            },
+            alternatives=[
+                {
+                    "protocol_id": str(a.protocol_id),
+                    "protocol_name": a.protocol_name,
+                    "similarity_score": a.similarity_score,
+                    "risk_score": a.risk_score,
+                    "risk_level": a.risk_level,
+                    "tvl": a.tvl,
+                    "apy": a.apy,
+                    "why_better": a.why_better,
+                }
+                for a in insights.alternatives
+            ],
+            contextual_message=insights.contextual_message,
+        )
+    
+    # NEW: Get similar protocols from chat
+    @router.post(
+        "/similar-protocols",
+        status_code=status.HTTP_200_OK,
+        response_model=ChatSimilarProtocolsResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def get_similar_protocols_from_chat(
+        request: ChatSimilarProtocolsRequest,
+        current_user: FromDishka[CurrentUserService],
+        search_handler: FromDishka[ChatGraphSearchHandler],
+    ) -> ChatSimilarProtocolsResponse:
+        """
+        Find similar protocols using GraphRAG hybrid search.
+        
+        Returns protocols with high semantic and graph similarity,
+        useful for discovering alternatives and related protocols.
+        """
+        user = await current_user.get_current_user()
+        
+        # Search for the base protocol first
+        base_search = await search_handler.search_protocols_from_chat(
+            message=request.protocol_name,
+            conversation_id=request.conversation_id,
+        )
+        
+        if not base_search.results:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Protocol '{request.protocol_name}' not found",
+            )
+        
+        base_protocol = base_search.results[0]
+        
+        # Find similar protocols
+        similar_query = f"protocols similar to {request.protocol_name}"
+        similar_search = await search_handler.search_protocols_from_chat(
+            message=similar_query,
+            conversation_id=request.conversation_id,
+        )
+        
+        # Filter out the base protocol itself
+        similar_protocols = [
+            r for r in similar_search.results 
+            if r.protocol_id != base_protocol.protocol_id
+        ][:request.limit or 5]
+        
+        return ChatSimilarProtocolsResponse(
+            base_protocol={
+                "protocol_id": str(base_protocol.protocol_id),
+                "protocol_name": base_protocol.protocol_name,
+                "risk_score": base_protocol.risk_score,
+                "risk_level": base_protocol.risk_level,
+                "tvl": base_protocol.tvl,
+                "category": base_protocol.category,
+            },
+            similar_protocols=[
+                {
+                    "protocol_id": str(p.protocol_id),
+                    "protocol_name": p.protocol_name,
+                    "similarity_score": p.similarity_score,
+                    "risk_score": p.risk_score,
+                    "risk_level": p.risk_level,
+                    "tvl": p.tvl,
+                    "why_similar": p.why_relevant,
+                }
+                for p in similar_protocols
+            ],
         )
     
     return router
