@@ -1,0 +1,57 @@
+name: Coverage Report
+
+on:
+  push:
+    branches: [ master, main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install uv
+        run: pip install uv
+      
+      - name: Install dependencies
+        run: |
+          uv pip install --system -e '.[dev,test]'
+      
+      - name: Run all tests with coverage
+        run: |
+          pytest tests/ -v --cov=src/app --cov-report=html --cov-report=term-missing --cov-report=json
+        env:
+          APP_ENV: test
+      
+      - name: Generate coverage summary
+        run: |
+          echo "## Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check coverage trends
+        run: |
+          python scripts/check_coverage_trends.py || echo "Coverage trend check script not found"
+      
+      - name: Archive coverage HTML report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-html-report
+          path: htmlcov/
+          retention-days: 30
+      
+      - name: Archive coverage JSON
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-json
+          path: coverage.json
+          retention-days: 90

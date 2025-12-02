@@ -196,3 +196,6 @@ strict-imports = true
 exclude-modules = '''
 ^app\.infrastructure\.persistence_sqla\.alembic
 '''
+
+# Enhanced pytest configuration for TDD coverage
+asyncio_mode = "auto"
