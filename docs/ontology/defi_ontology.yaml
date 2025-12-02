@@ -1,0 +1,864 @@
+# 🧠 DeFi Knowledge Graph Ontology
+#
+# Version: 1.0.0
+# Date: December 2024
+# Purpose: Define the structure of the DeFi knowledge graph
+#
+# This ontology defines:
+# - Entity types (nodes in the graph)
+# - Relationship types (edges between nodes)
+# - Properties for each entity/relationship
+# - Constraints and validation rules
+
+---
+
+# ============================================================================
+# ENTITY TYPES (Nodes)
+# ============================================================================
+
+entities:
+  # --------------------------------------------------------------------------
+  # Core DeFi Entities
+  # --------------------------------------------------------------------------
+  
+  Protocol:
+    description: "A DeFi protocol or application"
+    properties:
+      id:
+        type: uuid
+        required: true
+        indexed: true
+      name:
+        type: string
+        required: true
+        indexed: true
+        description: "Protocol name (e.g., 'Aave', 'Uniswap')"
+      slug:
+        type: string
+        required: true
+        indexed: true
+        description: "URL-friendly identifier"
+      category:
+        type: enum
+        required: true
+        values: [lending, dex, yield, derivatives, insurance, bridge, stablecoin, launchpad, other]
+        description: "Primary category"
+      tvl:
+        type: decimal
+        required: false
+        description: "Total Value Locked in USD"
+      chains:
+        type: array[string]
+        required: false
+        description: "Chains where protocol is deployed"
+      website:
+        type: string
+        required: false
+        description: "Official website URL"
+      twitter:
+        type: string
+        required: false
+        description: "Twitter handle"
+      founded_year:
+        type: integer
+        required: false
+        description: "Year protocol was founded"
+      is_active:
+        type: boolean
+        default: true
+        description: "Whether protocol is currently active"
+      last_updated:
+        type: timestamp
+        required: true
+        description: "Last time data was updated"
+    
+    examples:
+      - name: "Aave"
+        slug: "aave"
+        category: "lending"
+        tvl: 5234567890.50
+        chains: ["ethereum", "polygon", "avalanche"]
+        website: "https://aave.com"
+        twitter: "@aave"
+        founded_year: 2020
+  
+  # --------------------------------------------------------------------------
+  
+  Token:
+    description: "A cryptocurrency token"
+    properties:
+      id:
+        type: uuid
+        required: true
+        indexed: true
+      symbol:
+        type: string
+        required: true
+        indexed: true
+        description: "Token symbol (e.g., 'ETH', 'USDC')"
+      name:
+        type: string
+        required: true
+        description: "Full token name"
+      address:
+        type: string
+        required: true
+        indexed: true
+        description: "Contract address"
+      chain:
+        type: string
+        required: true
+        indexed: true
+        description: "Blockchain where token exists"
+      decimals:
+        type: integer
+        required: true
+        description: "Number of decimal places"
+      price_usd:
+        type: decimal
+        required: false
+        description: "Current price in USD"
+      market_cap:
+        type: decimal
+        required: false
+        description: "Market capitalization in USD"
+      is_stablecoin:
+        type: boolean
+        default: false
+        description: "Whether token is a stablecoin"
+      is_native:
+        type: boolean
+        default: false
+        description: "Whether token is native to chain (e.g., ETH)"
+    
+    examples:
+      - symbol: "USDC"
+        name: "USD Coin"
+        address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+        chain: "ethereum"
+        decimals: 6
+        price_usd: 1.00
+        is_stablecoin: true
+  
+  # --------------------------------------------------------------------------
+  
+  Chain:
+    description: "A blockchain network"
+    properties:
+      id:
+        type: uuid
+        required: true
+        indexed: true
+      name:
+        type: string
+        required: true
+        indexed: true
+        description: "Chain name (e.g., 'Ethereum', 'Polygon')"
+      chain_id:
+        type: integer
+        required: true
+        indexed: true
+        description: "EIP-155 chain ID"
+      native_token:
+        type: string
+        required: true
+        description: "Native token symbol (e.g., 'ETH')"
+      tvl:
+        type: decimal
+        required: false
+        description: "Total Value Locked across all protocols"
+      avg_block_time:
+        type: decimal
+        required: false
+        description: "Average block time in seconds"
+      tx_cost_usd:
+        type: decimal
+        required: false
+        description: "Average transaction cost in USD"
+      is_evm:
+        type: boolean
+        default: true
+        description: "Whether chain is EVM-compatible"
+      is_l2:
+        type: boolean
+        default: false
+        description: "Whether chain is a Layer 2"
+      parent_chain:
+        type: string
+        required: false
+        description: "Parent chain if L2 (e.g., 'Ethereum')"
+    
+    examples:
+      - name: "Ethereum"
+        chain_id: 1
+        native_token: "ETH"
+        tvl: 50000000000.00
+        avg_block_time: 12.0
+        tx_cost_usd: 5.50
+        is_evm: true
+        is_l2: false
+  
+  # --------------------------------------------------------------------------
+  
+  Audit:
+    description: "A security audit of a protocol"
+    properties:
+      id:
+        type: uuid
+        required: true
+        indexed: true
+      auditor:
+        type: string
+        required: true
+        indexed: true
+        description: "Auditing firm name"
+      protocol_id:
+        type: uuid
+        required: true
+        indexed: true
+        description: "Protocol being audited"
+      audit_date:
+        type: date
+        required: true
+        description: "Date audit was completed"
+      report_url:
+        type: string
+        required: false
+        description: "URL to audit report"
+      findings_critical:
+        type: integer
+        default: 0
+        description: "Number of critical findings"
+      findings_high:
+        type: integer
+        default: 0
+        description: "Number of high severity findings"
+      findings_medium:
+        type: integer
+        default: 0
+        description: "Number of medium severity findings"
+      findings_low:
+        type: integer
+        default: 0
+        description: "Number of low severity findings"
+      is_passed:
+        type: boolean
+        required: true
+        description: "Whether audit was passed"
+    
+    examples:
+      - auditor: "Trail of Bits"
+        audit_date: "2024-03-15"
+        report_url: "https://example.com/audit.pdf"
+        findings_critical: 0
+        findings_high: 1
+        findings_medium: 3
+        findings_low: 5
+        is_passed: true
+  
+  # --------------------------------------------------------------------------
+  
+  Risk:
+    description: "A risk associated with a protocol or entity"
+    properties:
+      id:
+        type: uuid
+        required: true
+        indexed: true
+      type:
+        type: enum
+        required: true
+        values: [smart_contract, oracle, admin_key, economic, regulatory, depeg, liquidity, systemic, other]
+        description: "Type of risk"
+      severity:
+        type: enum
+        required: true
+        values: [low, medium, high, critical]
+        description: "Risk severity"
+      description:
+        type: text
+        required: true
+        description: "Detailed description of the risk"
+      mitigation:
+        type: text
+        required: false
+        description: "How the risk is mitigated"
+      probability:
+        type: enum
+        required: false
+        values: [very_low, low, medium, high, very_high]
+        description: "Likelihood of risk occurring"
+      impact:
+        type: enum
+        required: false
+        values: [very_low, low, medium, high, very_high]
+        description: "Impact if risk occurs"
+      identified_date:
+        type: date
+        required: true
+        description: "When risk was identified"
+      is_active:
+        type: boolean
+        default: true
+        description: "Whether risk is still active"
+    
+    examples:
+      - type: "oracle"
+        severity: "high"
+        description: "Single oracle dependency creates manipulation risk"
+        mitigation: "Protocol uses Chainlink with multiple data sources"
+        probability: "low"
+        impact: "very_high"
+        identified_date: "2024-06-01"
+        is_active: true
+  
+  # --------------------------------------------------------------------------
+  
+  Incident:
+    description: "A security incident or exploit"
+    properties:
+      id:
+        type: uuid
+        required: true
+        indexed: true
+      protocol_id:
+        type: uuid
+        required: true
+        indexed: true
+        description: "Protocol affected"
+      incident_type:
+        type: enum
+        required: true
+        values: [exploit, hack, rugpull, bug, depeg, oracle_manipulation, governance_attack, other]
+        description: "Type of incident"
+      incident_date:
+        type: date
+        required: true
+        indexed: true
+        description: "When incident occurred"
+      loss_amount_usd:
+        type: decimal
+        required: false
+        description: "Financial loss in USD"
+      description:
+        type: text
+        required: true
+        description: "Description of what happened"
+      root_cause:
+        type: text
+        required: false
+        description: "Root cause analysis"
+      resolution:
+        type: text
+        required: false
+        description: "How incident was resolved"
+      funds_recovered:
+        type: decimal
+        required: false
+        description: "Amount of funds recovered in USD"
+      is_resolved:
+        type: boolean
+        default: false
+        description: "Whether incident is resolved"
+    
+    examples:
+      - incident_type: "exploit"
+        incident_date: "2024-08-10"
+        loss_amount_usd: 1500000.00
+        description: "Reentrancy attack on lending pool"
+        root_cause: "Missing reentrancy guard in withdraw function"
+        funds_recovered: 1200000.00
+        is_resolved: true
+  
+  # --------------------------------------------------------------------------
+  
+  Developer:
+    description: "A developer or development team"
+    properties:
+      id:
+        type: uuid
+        required: true
+        indexed: true
+      name:
+        type: string
+        required: true
+        indexed: true
+        description: "Developer/team name"
+      is_anonymous:
+        type: boolean
+        default: false
+        description: "Whether developer is anonymous"
+      github:
+        type: string
+        required: false
+        description: "GitHub profile URL"
+      twitter:
+        type: string
+        required: false
+        description: "Twitter handle"
+      reputation_score:
+        type: decimal
+        required: false
+        description: "Reputation score (0.0-10.0)"
+    
+    examples:
+      - name: "Aave Labs"
+        is_anonymous: false
+        github: "https://github.com/aave"
+        twitter: "@AaveAave"
+        reputation_score: 9.5
+
+# ============================================================================
+# RELATIONSHIP TYPES (Edges)
+# ============================================================================
+
+relationships:
+  # --------------------------------------------------------------------------
+  # Protocol Relationships
+  # --------------------------------------------------------------------------
+  
+  DEPLOYED_ON:
+    description: "Protocol is deployed on a chain"
+    from: Protocol
+    to: Chain
+    properties:
+      deployment_date:
+        type: date
+        required: false
+        description: "When protocol was deployed"
+      contract_address:
+        type: string
+        required: false
+        description: "Main contract address"
+      tvl_on_chain:
+        type: decimal
+        required: false
+        description: "TVL on this specific chain"
+    
+    examples:
+      - from: "Aave"
+        to: "Ethereum"
+        deployment_date: "2020-01-09"
+        tvl_on_chain: 3500000000.00
+  
+  # --------------------------------------------------------------------------
+  
+  DEPENDS_ON:
+    description: "Protocol depends on another protocol"
+    from: Protocol
+    to: Protocol
+    properties:
+      dependency_type:
+        type: enum
+        required: true
+        values: [oracle, liquidity, collateral, infrastructure, data, governance, other]
+        description: "Type of dependency"
+      criticality:
+        type: enum
+        required: true
+        values: [low, medium, high, critical]
+        description: "How critical this dependency is"
+      description:
+        type: text
+        required: false
+        description: "Details of the dependency"
+      can_function_without:
+        type: boolean
+        default: false
+        description: "Whether protocol can function without this dependency"
+    
+    examples:
+      - from: "Aave"
+        to: "Chainlink"
+        dependency_type: "oracle"
+        criticality: "critical"
+        description: "Uses Chainlink for price feeds"
+        can_function_without: false
+  
+  # --------------------------------------------------------------------------
+  
+  USES_TOKEN:
+    description: "Protocol uses a token"
+    from: Protocol
+    to: Token
+    properties:
+      role:
+        type: enum
+        required: true
+        values: [collateral, reward, governance, utility, fee, liquidity, other]
+        description: "Role of token in protocol"
+      is_primary:
+        type: boolean
+        default: false
+        description: "Whether this is a primary token"
+      volume_24h_usd:
+        type: decimal
+        required: false
+        description: "24h volume for this token in protocol"
+    
+    examples:
+      - from: "Aave"
+        to: "USDC"
+        role: "collateral"
+        is_primary: true
+        volume_24h_usd: 50000000.00
+  
+  # --------------------------------------------------------------------------
+  
+  AUDITED_BY:
+    description: "Protocol was audited by auditor"
+    from: Protocol
+    to: Audit
+    properties:
+      audit_scope:
+        type: text
+        required: false
+        description: "What was audited"
+      audit_version:
+        type: string
+        required: false
+        description: "Version of code audited"
+    
+    examples:
+      - from: "Aave"
+        to: "Trail of Bits Audit"
+        audit_scope: "Core lending pool contracts"
+        audit_version: "v3.0.0"
+  
+  # --------------------------------------------------------------------------
+  
+  HAS_RISK:
+    description: "Entity has a risk"
+    from: [Protocol, Token, Chain]
+    to: Risk
+    properties:
+      risk_exposure:
+        type: decimal
+        required: false
+        description: "Quantified exposure (0.0-1.0)"
+      last_assessed:
+        type: date
+        required: false
+        description: "When risk was last assessed"
+    
+    examples:
+      - from: "Aave"
+        to: "Oracle Risk"
+        risk_exposure: 0.75
+        last_assessed: "2024-11-15"
+  
+  # --------------------------------------------------------------------------
+  
+  EXPERIENCED_INCIDENT:
+    description: "Protocol experienced an incident"
+    from: Protocol
+    to: Incident
+    properties:
+      impact_severity:
+        type: enum
+        required: true
+        values: [low, medium, high, critical]
+        description: "Severity of impact"
+    
+    examples:
+      - from: "XYZ Protocol"
+        to: "Reentrancy Exploit"
+        impact_severity: "high"
+  
+  # --------------------------------------------------------------------------
+  
+  COMPETES_WITH:
+    description: "Protocol competes with another protocol"
+    from: Protocol
+    to: Protocol
+    properties:
+      market_overlap:
+        type: decimal
+        required: false
+        description: "Market overlap percentage (0.0-1.0)"
+      competition_intensity:
+        type: enum
+        required: false
+        values: [low, medium, high]
+        description: "Intensity of competition"
+    
+    examples:
+      - from: "Aave"
+        to: "Compound"
+        market_overlap: 0.80
+        competition_intensity: "high"
+  
+  # --------------------------------------------------------------------------
+  
+  FORKED_FROM:
+    description: "Protocol was forked from another protocol"
+    from: Protocol
+    to: Protocol
+    properties:
+      fork_date:
+        type: date
+        required: false
+        description: "When fork occurred"
+      divergence_level:
+        type: enum
+        required: false
+        values: [identical, minor, moderate, major]
+        description: "How different fork is from original"
+    
+    examples:
+      - from: "SushiSwap"
+        to: "Uniswap"
+        fork_date: "2020-08-28"
+        divergence_level: "minor"
+  
+  # --------------------------------------------------------------------------
+  
+  DEVELOPED_BY:
+    description: "Protocol developed by developer/team"
+    from: Protocol
+    to: Developer
+    properties:
+      role:
+        type: enum
+        required: false
+        values: [creator, core_contributor, maintainer, auditor]
+        description: "Developer's role"
+      is_active:
+        type: boolean
+        default: true
+        description: "Whether developer is still active"
+    
+    examples:
+      - from: "Aave"
+        to: "Aave Labs"
+        role: "creator"
+        is_active: true
+  
+  # --------------------------------------------------------------------------
+  # Token Relationships
+  # --------------------------------------------------------------------------
+  
+  BRIDGES_TO:
+    description: "Token can be bridged to another chain"
+    from: Token
+    to: Chain
+    properties:
+      bridge_protocol:
+        type: string
+        required: false
+        description: "Bridge protocol used"
+      is_native:
+        type: boolean
+        default: false
+        description: "Whether token is native on target chain"
+    
+    examples:
+      - from: "USDC (Ethereum)"
+        to: "Polygon"
+        bridge_protocol: "Polygon Bridge"
+        is_native: false
+  
+  # --------------------------------------------------------------------------
+  
+  PEGGED_TO:
+    description: "Token is pegged to another asset"
+    from: Token
+    to: Token
+    properties:
+      peg_mechanism:
+        type: enum
+        required: false
+        values: [algorithmic, collateralized, hybrid, fiat_backed]
+        description: "How peg is maintained"
+      peg_stability:
+        type: decimal
+        required: false
+        description: "Historical peg stability (0.0-1.0)"
+    
+    examples:
+      - from: "USDC"
+        to: "USD"
+        peg_mechanism: "fiat_backed"
+        peg_stability: 0.999
+
+# ============================================================================
+# CONSTRAINTS & VALIDATION
+# ============================================================================
+
+constraints:
+  # Uniqueness constraints
+  unique:
+    - entity: Protocol
+      properties: [name]
+    - entity: Protocol
+      properties: [slug]
+    - entity: Token
+      properties: [address, chain]
+    - entity: Chain
+      properties: [name]
+    - entity: Chain
+      properties: [chain_id]
+  
+  # Referential integrity
+  foreign_keys:
+    - relationship: DEPLOYED_ON
+      validates: Protocol exists, Chain exists
+    - relationship: DEPENDS_ON
+      validates: Both Protocol entities exist
+    - relationship: AUDITED_BY
+      validates: Protocol exists, Audit exists
+  
+  # Business rules
+  business_rules:
+    - rule: "A protocol cannot depend on itself"
+      applies_to: DEPENDS_ON
+      validation: "from_id != to_id"
+    
+    - rule: "TVL cannot be negative"
+      applies_to: [Protocol, Chain]
+      validation: "tvl >= 0"
+    
+    - rule: "Risk severity determines required mitigation"
+      applies_to: Risk
+      validation: "severity IN ['high', 'critical'] IMPLIES mitigation IS NOT NULL"
+    
+    - rule: "Audit must have at least one finding or be passed"
+      applies_to: Audit
+      validation: "(findings_critical + findings_high + findings_medium + findings_low) > 0 OR is_passed = true"
+
+# ============================================================================
+# INDEXES
+# ============================================================================
+
+indexes:
+  # Performance optimization indexes
+  - entity: Protocol
+    properties: [name, category, tvl]
+    type: composite
+  
+  - entity: Token
+    properties: [symbol, chain]
+    type: composite
+  
+  - entity: Risk
+    properties: [severity, is_active]
+    type: composite
+  
+  - entity: Incident
+    properties: [incident_date, protocol_id]
+    type: composite
+  
+  # Full-text search indexes
+  - entity: Protocol
+    properties: [name, description]
+    type: full_text
+  
+  - entity: Risk
+    properties: [description, mitigation]
+    type: full_text
+
+# ============================================================================
+# METADATA
+# ============================================================================
+
+metadata:
+  version: "1.0.0"
+  created: "2024-12-02"
+  last_updated: "2024-12-02"
+  authors: ["CTO Office", "Data Engineering Team"]
+  license: "Proprietary - Anvil Backend"
+  
+  statistics:
+    estimated_nodes:
+      Protocol: 500
+      Token: 10000
+      Chain: 50
+      Audit: 1000
+      Risk: 2000
+      Incident: 500
+      Developer: 200
+    
+    estimated_edges:
+      DEPLOYED_ON: 2000
+      DEPENDS_ON: 1500
+      USES_TOKEN: 5000
+      AUDITED_BY: 1000
+      HAS_RISK: 3000
+      EXPERIENCED_INCIDENT: 500
+      COMPETES_WITH: 500
+      FORKED_FROM: 100
+      DEVELOPED_BY: 500
+  
+  data_sources:
+    - name: "DeFiLlama"
+      url: "https://defillama.com/docs/api"
+      coverage: ["Protocol TVL", "Chain data", "Token prices"]
+    
+    - name: "Immunefi"
+      url: "https://immunefi.com/"
+      coverage: ["Security incidents", "Bug bounties"]
+    
+    - name: "Certik"
+      url: "https://www.certik.com/"
+      coverage: ["Audits", "Security scores"]
+    
+    - name: "Chainlink"
+      url: "https://chain.link/"
+      coverage: ["Price feeds", "Oracle data"]
+
+# ============================================================================
+# EXAMPLE QUERIES
+# ============================================================================
+
+example_queries:
+  - name: "Find all protocols deployed on Ethereum"
+    cypher: |
+      MATCH (p:Protocol)-[:DEPLOYED_ON]->(c:Chain {name: 'Ethereum'})
+      RETURN p.name, p.tvl, p.category
+      ORDER BY p.tvl DESC
+      LIMIT 10
+  
+  - name: "Find protocols that depend on Chainlink"
+    cypher: |
+      MATCH (p:Protocol)-[d:DEPENDS_ON]->(cl:Protocol {name: 'Chainlink'})
+      RETURN p.name, d.dependency_type, d.criticality
+      ORDER BY d.criticality DESC
+  
+  - name: "Find all high/critical risks for a protocol"
+    cypher: |
+      MATCH (p:Protocol {name: 'Aave'})-[:HAS_RISK]->(r:Risk)
+      WHERE r.severity IN ['high', 'critical'] AND r.is_active = true
+      RETURN r.type, r.severity, r.description, r.mitigation
+  
+  - name: "Find dependency chain (systemic risk analysis)"
+    cypher: |
+      MATCH path = (p:Protocol {name: 'Aave'})-[:DEPENDS_ON*1..3]->(dep:Protocol)
+      RETURN path, length(path) as depth
+      ORDER BY depth
+  
+  - name: "Find protocols never audited"
+    cypher: |
+      MATCH (p:Protocol)
+      WHERE NOT (p)-[:AUDITED_BY]->(:Audit)
+      RETURN p.name, p.tvl, p.category
+      ORDER BY p.tvl DESC
+  
+  - name: "Find competing protocols in same category"
+    cypher: |
+      MATCH (p1:Protocol {category: 'lending'})-[:COMPETES_WITH]-(p2:Protocol)
+      RETURN p1.name, p2.name, p1.tvl, p2.tvl
+      ORDER BY p1.tvl DESC
+  
+  - name: "Find protocols with most incidents"
+    cypher: |
+      MATCH (p:Protocol)-[:EXPERIENCED_INCIDENT]->(i:Incident)
+      RETURN p.name, count(i) as incident_count, sum(i.loss_amount_usd) as total_loss
+      ORDER BY incident_count DESC
+      LIMIT 10
+  
+  - name: "Find most used tokens across protocols"
+    cypher: |
+      MATCH (p:Protocol)-[:USES_TOKEN]->(t:Token)
+      RETURN t.symbol, count(p) as protocol_count
+      ORDER BY protocol_count DESC
+      LIMIT 20
