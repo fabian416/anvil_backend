@@ -14,6 +14,7 @@ from app.domain.ports.external_data import DefiDataProvider
 from app.domain.ports.embeddings import EmbeddingService
 from app.domain.ports.vector import VectorRepository
 from app.domain.services.graph import GraphService, RiskAnalysisService
+from app.domain.services.ml import RiskPredictionService, NetworkAnalysisService
 from app.infrastructure.persistence_age import GraphRepositoryAge
 from app.infrastructure.external_data.defillama import DeFiLlamaClient
 from app.infrastructure.embeddings import OpenAIEmbeddingService
@@ -25,6 +26,16 @@ from app.application.graph import (
     GraphAnalyticsInteractor,
     GenerateEmbeddingsInteractor,
     HybridRetrievalInteractor,
+)
+from app.application.ml import (
+    PredictRiskInteractor,
+    PredictBatchRiskInteractor,
+    DetectAnomaliesInteractor,
+    ForecastRiskInteractor,
+    CalculatePageRankInteractor,
+    DetectCommunitiesInteractor,
+    CalculateCentralityInteractor,
+    SimulateContagionInteractor,
 )
 
 
@@ -157,3 +168,87 @@ class GraphProvider(Provider):
             graph_service,
             risk_service,
         )
+    
+    # ML Services
+    
+    @provide
+    def provide_risk_prediction_service(
+        self,
+        graph_repo: GraphRepository,
+    ) -> RiskPredictionService:
+        """Provide ML risk prediction service"""
+        return RiskPredictionService(graph_repo)
+    
+    @provide
+    def provide_network_analysis_service(
+        self,
+        graph_repo: GraphRepository,
+    ) -> NetworkAnalysisService:
+        """Provide network analysis service"""
+        return NetworkAnalysisService(graph_repo)
+    
+    # ML Interactors
+    
+    @provide
+    def provide_predict_risk_interactor(
+        self,
+        prediction_service: RiskPredictionService,
+    ) -> PredictRiskInteractor:
+        """Provide PredictRiskInteractor"""
+        return PredictRiskInteractor(prediction_service)
+    
+    @provide
+    def provide_predict_batch_risk_interactor(
+        self,
+        prediction_service: RiskPredictionService,
+    ) -> PredictBatchRiskInteractor:
+        """Provide PredictBatchRiskInteractor"""
+        return PredictBatchRiskInteractor(prediction_service)
+    
+    @provide
+    def provide_detect_anomalies_interactor(
+        self,
+        prediction_service: RiskPredictionService,
+    ) -> DetectAnomaliesInteractor:
+        """Provide DetectAnomaliesInteractor"""
+        return DetectAnomaliesInteractor(prediction_service)
+    
+    @provide
+    def provide_forecast_risk_interactor(
+        self,
+        prediction_service: RiskPredictionService,
+    ) -> ForecastRiskInteractor:
+        """Provide ForecastRiskInteractor"""
+        return ForecastRiskInteractor(prediction_service)
+    
+    @provide
+    def provide_calculate_pagerank_interactor(
+        self,
+        network_service: NetworkAnalysisService,
+    ) -> CalculatePageRankInteractor:
+        """Provide CalculatePageRankInteractor"""
+        return CalculatePageRankInteractor(network_service)
+    
+    @provide
+    def provide_detect_communities_interactor(
+        self,
+        network_service: NetworkAnalysisService,
+    ) -> DetectCommunitiesInteractor:
+        """Provide DetectCommunitiesInteractor"""
+        return DetectCommunitiesInteractor(network_service)
+    
+    @provide
+    def provide_calculate_centrality_interactor(
+        self,
+        network_service: NetworkAnalysisService,
+    ) -> CalculateCentralityInteractor:
+        """Provide CalculateCentralityInteractor"""
+        return CalculateCentralityInteractor(network_service)
+    
+    @provide
+    def provide_simulate_contagion_interactor(
+        self,
+        network_service: NetworkAnalysisService,
+    ) -> SimulateContagionInteractor:
+        """Provide SimulateContagionInteractor"""
+        return SimulateContagionInteractor(network_service)

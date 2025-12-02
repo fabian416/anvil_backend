@@ -26,6 +26,9 @@ from app.presentation.http.websocket.chat_websocket import router as agno_chat_w
 from app.presentation.http.controllers.graph import search_router, analytics_router, monitoring_router
 from app.presentation.http.websocket.graph_websocket import router as graph_ws_router
 
+# ML routers
+from app.presentation.http.controllers.ml import prediction_router, network_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -57,6 +60,9 @@ def create_api_v1_router() -> APIRouter:
         analytics_router,
         monitoring_router,
         graph_ws_router,
+        # ML routers
+        prediction_router,
+        network_router,
     )
 
     for sub_router in sub_routers:
