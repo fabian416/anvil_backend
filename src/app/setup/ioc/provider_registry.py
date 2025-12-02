@@ -9,6 +9,7 @@ from app.setup.ioc.infrastructure import infrastructure_provider
 from app.setup.ioc.presentation import PresentationProvider
 from app.setup.ioc.settings import SettingsProvider
 from app.setup.ioc.agno import AgnoProvider
+from app.setup.ioc.graph import GraphProvider
 
 
 def get_providers() -> Iterable[Provider]:
@@ -20,4 +21,5 @@ def get_providers() -> Iterable[Provider]:
         SettingsProvider(),
         DistillationProvider(),
         AgnoProvider(),
+        GraphProvider(),
     )
