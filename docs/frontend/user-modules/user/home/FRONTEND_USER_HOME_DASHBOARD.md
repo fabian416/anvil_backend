@@ -12,18 +12,22 @@
 ## 📋 Module Overview
 
 ### Title
-**Home Dashboard** - Portfolio Overview & Quick Actions
+**Home Dashboard** - AI-Powered Portfolio Hub
 
 ### Description
-The main landing screen after authentication, providing a comprehensive view of the user's portfolio, quick access to common actions, and AI-powered insights.
+The main landing screen after authentication, providing a comprehensive view of the user's portfolio with GraphRAG-powered protocol insights, ML risk indicators, real-time updates via WebSocket, and personalized AI recommendations.
 
 ### Key Capabilities
-- Total portfolio value display
+- Total portfolio value display with real-time updates
 - Multi-chain asset breakdown
+- **GraphRAG protocol intelligence** (NEW)
+- **ML risk scoring for positions** (NEW)
+- **Real-time WebSocket updates** (NEW)
 - Quick action buttons
 - Recent activity feed
+- **AI-powered insights & recommendations** (ENHANCED)
 - Market highlights
-- AI insights/suggestions
+- Risk alerts and warnings
 
 ---
 
@@ -48,6 +52,31 @@ The main landing screen after authentication, providing a comprehensive view of 
 **As a** user  
 **I want to** receive personalized suggestions  
 **So that** I can optimize my DeFi strategy
+
+### US-USER-HOME-005: Monitor Portfolio Risk
+**As a** user  
+**I want to** see ML-powered risk scores for my positions  
+**So that** I can identify and manage risks proactively
+
+**Acceptance Criteria:**
+- Risk score (0-10) displayed for each position
+- Color-coded risk indicators (🟢🟡🟠🔴)
+- Overall portfolio risk summary
+- Tap to view detailed risk analysis
+
+---
+
+### US-USER-HOME-006: Receive Real-Time Updates
+**As a** user  
+**I want to** see real-time price and risk changes  
+**So that** I stay informed without manual refreshing
+
+**Acceptance Criteria:**
+- WebSocket connection active
+- Live price updates
+- Real-time risk alerts
+- Connection status indicator
+- Smooth animations for updates
 
 ---
 
@@ -117,6 +146,102 @@ The main landing screen after authentication, providing a comprehensive view of 
 │  Home  Wallet  Chat  Markets Profile│
 └─────────────────────────────────────┘
 ```
+
+---
+
+### View 1B: Enhanced Dashboard with GraphRAG/ML/WebSocket (NEW)
+
+```
+┌─────────────────────────────────────┐
+│ 🔔 3  🔴 Live           ⚙️         │
+│                                     │
+│  Good morning, Alice 👋             │
+│                                     │
+│  ┌─────────────────────────────────┐│
+│  │  Total Portfolio   Risk: 3.2🟡 ││
+│  │                                 ││
+│  │  $45,230.42  🔴 LIVE            ││
+│  │  ↑ $1,234.56 (+2.8%) today     ││
+│  │                                 ││
+│  │  ████████████████░░░░ ETH 56%  ││
+│  │  ████████░░░░░░░░░░░░ ARB 28%  ││
+│  │  ████░░░░░░░░░░░░░░░░ POLY 12% ││
+│  │  ██░░░░░░░░░░░░░░░░░░ BASE 4%  ││
+│  │                                 ││
+│  │  [View Risk Analysis →]         ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  ⚠️ Risk Alert (NEW)                │
+│  ┌─────────────────────────────────┐│
+│  │ 🟠 Euler Finance                ││
+│  │    Risk: 5.2 → 7.8 🔴           ││
+│  │    Your exposure: $2,450 (5%)   ││
+│  │    [Review Now] [Dismiss]       ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  Quick Actions                      │
+│  ┌───────┐ ┌───────┐ ┌───────┐     │
+│  │  🔄   │ │  📤   │ │  💰   │     │
+│  │ Swap  │ │ Send  │ │ Earn  │     │
+│  └───────┘ └───────┘ └───────┘     │
+│  ┌───────┐ ┌───────┐ ┌───────┐     │
+│  │  🌉   │ │  📥   │ │  🤖   │     │
+│  │Bridge │ │Receive│ │  AI   │     │
+│  └───────┘ └───────┘ └───────┘     │
+│                                     │
+│  ─────────────────────────────────  │
+│                                     │
+│  💡 AI Insight (GraphRAG-Powered)   │
+│  ┌─────────────────────────────────┐│
+│  │ Based on your risk profile and  ││
+│  │ portfolio, consider diversifying││
+│  │ into Lido Finance (Risk: 2.3🟢).││
+│  │ Similar to your Rocket Pool     ││
+│  │ position but with lower risk.   ││
+│  │              [Explore Lido →]   ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  Your Positions                     │
+│  ┌─────────────────────────────────┐│
+│  │ Aave V3          Risk: 2.1 🟢   ││
+│  │ $8,200 (18%)     TVL: $6.2B     ││
+│  │ Supplied USDC    [Details →]    ││
+│  ├─────────────────────────────────┤│
+│  │ Uniswap V3       Risk: 2.8 🟢   ││
+│  │ $5,400 (12%)     TVL: $3.8B     ││
+│  │ LP: ETH/USDC     [Details →]    ││
+│  ├─────────────────────────────────┤│
+│  │ Lido Finance     Risk: 2.3 🟢   ││
+│  │ $12,000 (27%)    TVL: $28.4B    ││
+│  │ stETH            [Details →]    ││
+│  ├─────────────────────────────────┤│
+│  │ Euler Finance    Risk: 7.8 🔴   ││
+│  │ $2,450 (5%) ⚠️   TVL: $450M     ││
+│  │ Supplied DAI     [Review Risk]  ││
+│  │                                 ││
+│  │         [View All →]            ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  Real-Time Updates (2 min ago)      │
+│  • ETH $2,475 → $2,480 (+0.2%)      │
+│  • Your portfolio +$45.20           │
+│                                     │
+├─────────────────────────────────────┤
+│  🏠     💼     🤖     📊     👤    │
+│  Home  Wallet  Chat  Markets Profile│
+└─────────────────────────────────────┘
+```
+
+**Key Enhancements**:
+- 🔴 **Live indicator** - WebSocket connection active
+- **Portfolio risk score** - ML-powered aggregate (3.2/10)
+- **Risk alerts** - Real-time warnings for high-risk protocols
+- **AI Insights** - GraphRAG-powered recommendations
+- **Position risk scores** - ML predictions per protocol
+- **TVL display** - Protocol size context
+- **Real-time updates** - Live price changes
+
+---
 
 ### View 2: Home Dashboard (Expanded Portfolio)
 
@@ -241,6 +366,123 @@ interface Transaction {
 interface DismissInsightResponse {
   success: true;
 }
+```
+
+---
+
+## 🔌 **NEW: GraphRAG/ML/WebSocket API Integration**
+
+### Get Portfolio Risk Summary (NEW)
+
+```typescript
+// GET /api/v1/portfolio/risk
+interface PortfolioRiskResponse {
+  overall_risk_score: number; // 0-10
+  risk_distribution: {
+    LOW: number;
+    MEDIUM: number;
+    HIGH: number;
+    CRITICAL: number;
+  };
+  protocols_at_risk: Array<{
+    protocol_id: string;
+    protocol_name: string;
+    exposure_usd: number;
+    risk_score: number;
+    risk_level: string;
+  }>;
+  recommendations: string[];
+}
+```
+
+### Get AI-Powered Dashboard Insights (NEW)
+
+```typescript
+// GET /api/v1/insights/dashboard?user_id={id}
+interface DashboardInsightsResponse {
+  insights: Array<{
+    id: string;
+    type: 'optimization' | 'risk_warning' | 'opportunity';
+    title: string;
+    message: string;
+    action_label: string;
+    action_url: string;
+    severity: 'LOW' | 'MEDIUM' | 'HIGH';
+    created_at: string;
+  }>;
+  personalized: boolean; // Based on user preferences
+}
+```
+
+### WebSocket Real-Time Updates (NEW)
+
+```typescript
+import { useWebSocket } from '@/hooks/useWebSocket';
+
+function Dashboard() {
+  const { isConnected, on } = useWebSocket({
+    url: 'ws://api/v1/ws/graph',
+    token: authToken,
+  });
+  
+  useEffect(() => {
+    // Subscribe to user-specific updates
+    const unsubRisk = on('risk:alert', (data) => {
+      showRiskAlert(data);
+      refreshPortfolioRisk();
+    });
+    
+    const unsubPrice = on('price:update', (data) => {
+      updatePriceDisplay(data.token_symbol, data.price_usd);
+      recalculatePortfolioValue();
+    });
+    
+    const unsubPortocol = on('protocol:update', (data) => {
+      if (userProtocols.includes(data.protocol_id)) {
+        showProtocolUpdate(data);
+      }
+    });
+    
+    return () => {
+      unsubRisk();
+      unsubPrice();
+      unsubProtocol();
+    };
+  }, [on]);
+  
+  return (
+    <div>
+      <ConnectionIndicator isConnected={isConnected} />
+      {/* Dashboard content */}
+    </div>
+  );
+}
+```
+
+### GraphRAG Protocol Intelligence (NEW)
+
+```typescript
+// GET /api/v1/graph/search/contextual
+interface ContextualSearchRequest {
+  query: string;
+  user_preferences: {
+    risk_tolerance: 'conservative' | 'moderate' | 'aggressive';
+    preferred_chains: string[];
+    min_tvl?: number;
+  };
+  limit: number;
+}
+
+// Used for AI recommendations
+const getRecommendations = async () => {
+  const prefs = await getUserPreferences();
+  const results = await api.post('/graph/search/contextual', {
+    query: 'safe staking alternatives',
+    user_preferences: prefs,
+    limit: 3,
+  });
+  return results.data;
+};
 ```
 
 ---
