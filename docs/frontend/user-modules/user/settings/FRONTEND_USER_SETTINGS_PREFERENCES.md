@@ -518,9 +518,15 @@ Comprehensive preference management system allowing users to customize their DeF
 
 ```typescript
 // GET /api/v1/users/me/preferences
+// Description: Get all user preferences including risk tolerance, chains, notifications
+// Authentication: Required (Bearer token)
+// Query Parameters: None
+// Path Parameters: None
+
 interface UserPreferencesResponse {
   user_id: string;
   risk_tolerance: 'conservative' | 'moderate' | 'aggressive';
+  preferred_chains: string[];
   preferred_chains: string[];
   preferred_categories: string[];
   excluded_protocols: string[];
@@ -543,6 +549,28 @@ const getPreferences = async (): Promise<UserPreferencesResponse> => {
   const response = await api.get('/api/v1/users/me/preferences');
   return response.data;
 };
+
+// Example Response:
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "risk_tolerance": "moderate",
+  "preferred_chains": ["ethereum", "arbitrum", "optimism"],
+  "preferred_categories": ["lending", "dex", "liquid-staking"],
+  "excluded_protocols": ["risky-protocol-id"],
+  "favorite_protocols": ["aave-v3", "compound-v3", "uniswap-v3"],
+  "search_settings": {
+    "default_similarity_threshold": 0.7,
+    "default_risk_filter": "MEDIUM",
+    "search_history_enabled": true
+  },
+  "notification_settings": {
+    "risk_alerts_enabled": true,
+    "push_enabled": true,
+    "min_severity": "MEDIUM"
+  },
+  "default_currency": "USD",
+  "theme": "dark"
+}
 ```
 
 ### Update Risk Tolerance
