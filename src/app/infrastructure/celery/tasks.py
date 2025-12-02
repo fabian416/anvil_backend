@@ -94,7 +94,22 @@ def update_agent_stats():
     asyncio.run(_run_task(runner))
 
 
+# Import new distillation and projects tasks
+from app.infrastructure.celery.tasks.distillation_tasks import (
+    aggregate_distillation_telemetry,
+    cleanup_expired_cache,
+    cache_llm_response,
+)
+from app.infrastructure.celery.tasks.projects_tasks import (
+    reindex_knowledge_base,
+    evaluate_auto_assignment_rules,
+    aggregate_project_analytics,
+    check_knowledge_base_health,
+)
+
+
 celery_app.conf.beat_schedule = {
+    # Existing maintenance tasks
     "cleanup-expired-sessions": {
         "task": "cleanup_expired_sessions",
         "schedule": crontab(hour=0, minute=0),
@@ -106,5 +121,23 @@ celery_app.conf.beat_schedule = {
     "update-agent-stats": {
         "task": "update_agent_stats",
         "schedule": crontab(minute="*/5"), # Every 5 minutes
-    }
+    },
+    # New distillation tasks
+    "aggregate-distillation-telemetry": {
+        "task": "aggregate_distillation_telemetry",
+        "schedule": crontab(minute=5),  # Run at :05 of every hour
+    },
+    "cleanup-expired-cache": {
+        "task": "cleanup_expired_cache",
+        "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
+    },
+    # New projects tasks
+    "aggregate-project-analytics": {
+        "task": "aggregate_project_analytics",
+        "schedule": crontab(hour=4, minute=0),  # Daily at 4 AM
+    },
+    "check-knowledge-base-health": {
+        "task": "check_knowledge_base_health",
+        "schedule": crontab(hour=5, minute=0, day_of_week=0),  # Weekly Sunday 5 AM
+    },
 }
