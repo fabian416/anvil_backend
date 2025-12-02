@@ -44,6 +44,7 @@ from app.application.chat import (
 from app.application.portfolio import PortfolioRiskAnalysis
 from app.application.alerts import RiskAlertService, RiskAlertMonitor
 from app.infrastructure.websocket import GraphEventBroadcaster
+from app.application.preferences import UserPreferencesService
 
 
 class GraphProvider(Provider):
@@ -328,3 +329,10 @@ class GraphProvider(Provider):
     ) -> RiskAlertMonitor:
         """Provide RiskAlertMonitor for background monitoring"""
         return RiskAlertMonitor(alert_service)
+    
+    # User Preferences (NEW: Personalization)
+    
+    @provide
+    def provide_user_preferences_service(self) -> UserPreferencesService:
+        """Provide UserPreferencesService for user personalization"""
+        return UserPreferencesService()
