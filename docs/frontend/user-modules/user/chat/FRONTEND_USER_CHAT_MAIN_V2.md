@@ -1,12 +1,15 @@
-# FRONTEND_USER_CHAT_MAIN (v2.0 - Enterprise Edition)
+# FRONTEND_USER_CHAT_MAIN (v2.1 - Enterprise Edition with Projects)
 
 ## User AI Chat Module
 
 **User Type:** Authenticated User  
-**Module:** AI Chat (Copilot) with GraphRAG & Real-Time Intelligence  
+**Module:** AI Chat (Copilot) with GraphRAG, Real-Time Intelligence & Specialized Projects  
 **Route:** `/chat`, `/chat/:conversationId`  
 **Platform:** Mobile (React Native) & Web  
-**Version:** 2.0 - GraphRAG Enhanced
+**Version:** 2.1 - GraphRAG Enhanced + Projects Integration
+
+**🆕 NEW IN v2.1**: Project-Based Specialized Assistance (10 pre-configured DeFi projects)  
+**📄 Projects Documentation**: [FRONTEND_USER_CHAT_PROJECTS.md](./FRONTEND_USER_CHAT_PROJECTS.md)
 
 ---
 
@@ -22,6 +25,7 @@ Enterprise-grade AI-powered chat interface with real-time WebSocket streaming, G
 - ✅ Natural language DeFi commands
 - ✅ Transaction previews & confirmations
 - ✅ Multi-turn conversations with context
+- ✅ **NEW: Project-Based Specialized Assistance** (10 pre-configured projects)
 - ✅ **NEW: Real-time WebSocket streaming**
 - ✅ **NEW: GraphRAG protocol search**
 - ✅ **NEW: ML risk predictions**
@@ -33,6 +37,15 @@ Enterprise-grade AI-powered chat interface with real-time WebSocket streaming, G
 - ✅ Voice input support
 
 ### New Enterprise Features
+
+#### **Project-Based Chat** (NEW!)
+- 10 specialized DeFi projects (Savings, Yield Farming, Aave, Trading, Staking, Bridge, Portfolio, Governance, Risk, NFT)
+- Project-specific knowledge bases
+- Customized tool access per project
+- Tailored risk configurations
+- Visual project branding (icon, color, welcome message)
+- Seamless project switching
+- Auto-assignment based on portfolio
 
 #### **GraphRAG Integration**
 - Hybrid semantic + graph search
@@ -95,7 +108,22 @@ Enterprise-grade AI-powered chat interface with real-time WebSocket streaming, G
 
 ---
 
-### US-USER-CHAT-004: Receive Real-Time Updates
+### US-USER-CHAT-004: Use Project-Based Assistance
+**As a** user  
+**I want to** select a specialized project for my chat assistance  
+**So that** I get tailored guidance for specific DeFi use cases (e.g., savings, trading, staking)
+
+**Acceptance Criteria:**
+- Can select from 10 pre-configured projects
+- Project branding visible (icon, color, name)
+- Welcome message displays on project selection
+- AI responses tailored to project focus
+- Can switch projects seamlessly
+- **See full Projects documentation**: [FRONTEND_USER_CHAT_PROJECTS.md](./FRONTEND_USER_CHAT_PROJECTS.md)
+
+---
+
+### US-USER-CHAT-005: Receive Real-Time Updates
 **As a** user  
 **I want to** receive live updates about protocols I'm interacting with  
 **So that** I'm always informed of important changes
@@ -108,7 +136,7 @@ Enterprise-grade AI-powered chat interface with real-time WebSocket streaming, G
 
 ---
 
-### US-USER-CHAT-005: Search Protocols via Chat
+### US-USER-CHAT-006: Search Protocols via Chat
 **As a** user  
 **I want to** search for protocols by asking natural questions  
 **So that** I can discover protocols based on intent, not exact names
@@ -618,6 +646,84 @@ interface ChatSimilarProtocolsResponse {
   };
 }
 ```
+
+---
+
+### **NEW: Projects Management APIs**
+
+```typescript
+// GET /api/v1/projects/ - Get user's assigned projects
+interface UserProjectsResponse {
+  assigned_projects: ProjectSummary[];
+  active_project_id: string | null;
+}
+
+interface ProjectSummary {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  welcome_message: string;
+  is_featured: boolean;
+}
+
+// POST /api/v1/projects/:project_id/activate - Activate a project
+const activateProject = async (projectId: string): Promise<void> => {
+  await api.post(`/api/v1/projects/${projectId}/activate`);
+  // After activation, the AI chat will use this project's context
+};
+
+// Client example - Projects integration
+const useProjects = () => {
+  const { data: projects } = useQuery({
+    queryKey: ['user-projects'],
+    queryFn: async () => {
+      const response = await api.get('/api/v1/projects/');
+      return response.data;
+    },
+  });
+  
+  const activateProject = useMutation({
+    mutationFn: async (projectId: string) => {
+      await api.post(`/api/v1/projects/${projectId}/activate`);
+    },
+    onSuccess: () => {
+      // Refresh chat context
+      queryClient.invalidateQueries(['chat-context']);
+    },
+  });
+  
+  return {
+    projects: projects?.assigned_projects || [],
+    activeProjectId: projects?.active_project_id,
+    activateProject: activateProject.mutate,
+  };
+};
+
+// Integration in Chat: Show active project context
+function ChatHeader() {
+  const { projects, activeProjectId } = useProjects();
+  const activeProject = projects.find(p => p.id === activeProjectId);
+  
+  return (
+    <header>
+      {activeProject && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-gray-50">
+          <span style={{ color: activeProject.color }}>
+            {activeProject.icon}
+          </span>
+          <span className="font-semibold">{activeProject.name}</span>
+          <button onClick={() => showProjectSwitcher()}>Switch</button>
+        </div>
+      )}
+    </header>
+  );
+}
+```
+
+**See complete Projects documentation**: [FRONTEND_USER_CHAT_PROJECTS.md](./FRONTEND_USER_CHAT_PROJECTS.md)
 
 ---
 
