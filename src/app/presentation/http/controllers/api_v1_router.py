@@ -32,6 +32,9 @@ from app.presentation.http.controllers.ml import prediction_router, network_rout
 # Portfolio router
 from app.presentation.http.controllers.portfolio.router import create_portfolio_router
 
+# Alerts router
+from app.presentation.http.controllers.alerts.router import create_alerts_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -68,6 +71,8 @@ def create_api_v1_router() -> APIRouter:
         network_router,
         # Portfolio router
         create_portfolio_router(),
+        # Alerts router
+        create_alerts_router(),
     )
 
     for sub_router in sub_routers:

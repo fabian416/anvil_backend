@@ -195,6 +195,28 @@ def generate_protocol_embeddings():
     asyncio.run(_run_task(runner))
 
 
+@celery_app.task(name="check_user_risk_alerts")
+def check_user_risk_alerts():
+    """
+    Check all users' protocols for risk changes and generate alerts.
+    
+    Runs every 15 minutes to monitor for:
+    - Risk score increases
+    - Anomaly detection
+    - Critical risk levels
+    - Dependency risks
+    """
+    async def runner(container):
+        from app.application.alerts import RiskAlertMonitor
+        
+        monitor = await container.get(RiskAlertMonitor)
+        alert_count = await monitor.check_all_users()
+        
+        print(f"Risk alert check complete: {alert_count} alerts generated")
+    
+    asyncio.run(_run_task(runner))
+
+
 celery_app.conf.beat_schedule = {
     # Existing maintenance tasks
     "cleanup-expired-sessions": {
@@ -243,5 +265,10 @@ celery_app.conf.beat_schedule = {
     "generate-protocol-embeddings": {
         "task": "generate_protocol_embeddings",
         "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
+    },
+    # Risk alert monitoring
+    "check-user-risk-alerts": {
+        "task": "check_user_risk_alerts",
+        "schedule": crontab(minute="*/15"),  # Every 15 minutes
     },
 }

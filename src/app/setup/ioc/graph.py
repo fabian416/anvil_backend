@@ -42,6 +42,8 @@ from app.application.chat import (
     ChatRiskInsightsHandler,
 )
 from app.application.portfolio import PortfolioRiskAnalysis
+from app.application.alerts import RiskAlertService, RiskAlertMonitor
+from app.infrastructure.websocket import GraphEventBroadcaster
 
 
 class GraphProvider(Provider):
@@ -298,3 +300,31 @@ class GraphProvider(Provider):
             network_service,
             graph_repo,
         )
+    
+    # Risk Alert System (NEW: Alert management)
+    
+    @provide
+    def provide_event_broadcaster(
+        self,
+        graph_cache: GraphQueryCache,  # Reuse Redis client
+    ) -> GraphEventBroadcaster:
+        """Provide GraphEventBroadcaster for real-time events"""
+        # Use same Redis client as cache
+        return GraphEventBroadcaster(graph_cache._redis)
+    
+    @provide
+    def provide_risk_alert_service(
+        self,
+        risk_prediction_service: RiskPredictionService,
+        event_broadcaster: GraphEventBroadcaster,
+    ) -> RiskAlertService:
+        """Provide RiskAlertService for alert generation and management"""
+        return RiskAlertService(risk_prediction_service, event_broadcaster)
+    
+    @provide
+    def provide_risk_alert_monitor(
+        self,
+        alert_service: RiskAlertService,
+    ) -> RiskAlertMonitor:
+        """Provide RiskAlertMonitor for background monitoring"""
+        return RiskAlertMonitor(alert_service)
