@@ -19,6 +19,9 @@ from app.presentation.http.controllers.admin.distillation_router import router a
 from app.presentation.http.controllers.admin.projects_router import router as projects_admin_router
 from app.presentation.http.controllers.user.projects_router import router as projects_user_router
 
+# WebSocket router for real-time agent chat
+from app.presentation.http.websocket.chat_websocket import router as agno_chat_ws_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -43,6 +46,8 @@ def create_api_v1_router() -> APIRouter:
         distillation_admin_router,
         projects_admin_router,
         projects_user_router,
+        # Real-time agent chat WebSocket
+        agno_chat_ws_router,
     )
 
     for sub_router in sub_routers:

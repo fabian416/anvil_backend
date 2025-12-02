@@ -8,6 +8,7 @@ from app.setup.ioc.domain import DomainProvider
 from app.setup.ioc.infrastructure import infrastructure_provider
 from app.setup.ioc.presentation import PresentationProvider
 from app.setup.ioc.settings import SettingsProvider
+from app.setup.ioc.agno import AgnoProvider
 
 
 def get_providers() -> Iterable[Provider]:
@@ -18,4 +19,5 @@ def get_providers() -> Iterable[Provider]:
         PresentationProvider(),
         SettingsProvider(),
         DistillationProvider(),
+        AgnoProvider(),
     )
