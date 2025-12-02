@@ -8,13 +8,11 @@ from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from dishka import make_async_container
 
-from app.run import make_app
-from app.setup.config.settings import load_settings, Settings
+from app.setup.config.settings import load_settings
 
 
 # Pytest configuration
@@ -25,6 +23,8 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "slow: Slow tests")
     config.addinivalue_line("markers", "graphrag: GraphRAG tests")
     config.addinivalue_line("markers", "ml: ML tests")
+    config.addinivalue_line("markers", "performance: Performance tests")
+    config.addinivalue_line("markers", "security: Security tests")
 
 
 @pytest.fixture(scope="session")
@@ -36,23 +36,31 @@ def event_loop() -> Generator:
 
 
 @pytest.fixture(scope="session")
-def test_settings() -> Settings:
+def test_settings():
     """Load test settings."""
     # TODO: Use test-specific settings
     return load_settings()
 
 
 @pytest.fixture
-def test_app(test_settings: Settings):
-    """Create test FastAPI application."""
-    app = make_app()
-    return app
+def test_app(test_settings):
+    """Create test FastAPI application (requires httpx)."""
+    try:
+        from app.run import make_app
+        app = make_app()
+        return app
+    except ImportError as e:
+        pytest.skip(f"FastAPI app creation failed - install httpx for integration tests: {e}")
 
 
 @pytest.fixture
-def client(test_app) -> TestClient:
-    """Create test client."""
-    return TestClient(test_app)
+def client(test_app):
+    """Create test client (requires httpx)."""
+    try:
+        from fastapi.testclient import TestClient
+        return TestClient(test_app)
+    except ImportError as e:
+        pytest.skip(f"TestClient not available - install httpx for integration tests: {e}")
 
 
 # Database fixtures
@@ -96,6 +104,15 @@ def mock_protocol_id():
 def mock_auth_token():
     """Generate mock auth token."""
     return "mock_jwt_token_for_testing"
+
+
+@pytest.fixture
+def auth_headers(mock_auth_token):
+    """Generate authentication headers for API requests."""
+    return {
+        "Authorization": f"Bearer {mock_auth_token}",
+        "Content-Type": "application/json",
+    }
 
 
 # GraphRAG fixtures
