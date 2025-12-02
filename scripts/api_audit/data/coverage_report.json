@@ -1,0 +1,198 @@
+{
+  "timestamp": "2025-12-01T12:00:00Z",
+  "summary": {
+    "total_backend_endpoints": 7,
+    "documented_endpoints": 0,
+    "missing_endpoints": 7,
+    "coverage_percentage": 0.0
+  },
+  "by_priority": {
+    "LOW": {
+      "total": 1,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/",
+          "priority": "LOW",
+          "module": "root",
+          "file": "src/app/presentation/http/controllers/root_router.py"
+        }
+      ]
+    },
+    "CRITICAL": {
+      "total": 4,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/markets/overview",
+          "priority": "CRITICAL",
+          "module": "root",
+          "file": "src/app/presentation/http/controllers/markets/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/markets/yields",
+          "priority": "CRITICAL",
+          "module": "root",
+          "file": "src/app/presentation/http/controllers/markets/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/markets/tokens/{token_symbol}",
+          "priority": "CRITICAL",
+          "module": "{token_symbol}",
+          "file": "src/app/presentation/http/controllers/markets/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/markets/tokens/{token_symbol}/history",
+          "priority": "CRITICAL",
+          "module": "{token_symbol}",
+          "file": "src/app/presentation/http/controllers/markets/router.py"
+        }
+      ]
+    },
+    "HIGH": {
+      "total": 2,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/admin/stats/",
+          "priority": "HIGH",
+          "module": "",
+          "file": "src/app/presentation/http/controllers/admin/stats/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/agents/",
+          "priority": "HIGH",
+          "module": "",
+          "file": "src/app/presentation/http/controllers/admin/agent/router.py"
+        }
+      ]
+    }
+  },
+  "by_module": {
+    "root": {
+      "total": 3,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/",
+          "priority": "LOW",
+          "module": "root",
+          "file": "src/app/presentation/http/controllers/root_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/markets/overview",
+          "priority": "CRITICAL",
+          "module": "root",
+          "file": "src/app/presentation/http/controllers/markets/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/markets/yields",
+          "priority": "CRITICAL",
+          "module": "root",
+          "file": "src/app/presentation/http/controllers/markets/router.py"
+        }
+      ]
+    },
+    "{token_symbol}": {
+      "total": 2,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/markets/tokens/{token_symbol}",
+          "priority": "CRITICAL",
+          "module": "{token_symbol}",
+          "file": "src/app/presentation/http/controllers/markets/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/markets/tokens/{token_symbol}/history",
+          "priority": "CRITICAL",
+          "module": "{token_symbol}",
+          "file": "src/app/presentation/http/controllers/markets/router.py"
+        }
+      ]
+    },
+    "": {
+      "total": 2,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/admin/stats/",
+          "priority": "HIGH",
+          "module": "",
+          "file": "src/app/presentation/http/controllers/admin/stats/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/agents/",
+          "priority": "HIGH",
+          "module": "",
+          "file": "src/app/presentation/http/controllers/admin/agent/router.py"
+        }
+      ]
+    }
+  },
+  "undocumented_endpoints": [
+    {
+      "method": "GET",
+      "path": "/",
+      "priority": "LOW",
+      "module": "root",
+      "file": "src/app/presentation/http/controllers/root_router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/markets/overview",
+      "priority": "CRITICAL",
+      "module": "root",
+      "file": "src/app/presentation/http/controllers/markets/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/markets/yields",
+      "priority": "CRITICAL",
+      "module": "root",
+      "file": "src/app/presentation/http/controllers/markets/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/markets/tokens/{token_symbol}",
+      "priority": "CRITICAL",
+      "module": "{token_symbol}",
+      "file": "src/app/presentation/http/controllers/markets/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/markets/tokens/{token_symbol}/history",
+      "priority": "CRITICAL",
+      "module": "{token_symbol}",
+      "file": "src/app/presentation/http/controllers/markets/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/stats/",
+      "priority": "HIGH",
+      "module": "",
+      "file": "src/app/presentation/http/controllers/admin/stats/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/agents/",
+      "priority": "HIGH",
+      "module": "",
+      "file": "src/app/presentation/http/controllers/admin/agent/router.py"
+    }
+  ]
+}
