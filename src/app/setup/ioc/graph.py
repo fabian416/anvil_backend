@@ -6,16 +6,23 @@ Dependency injection configuration for graph-related components.
 
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
+import os
 
 from app.domain.ports.graph import GraphRepository
 from app.domain.ports.external_data import DefiDataProvider
+from app.domain.ports.embeddings import EmbeddingService
+from app.domain.ports.vector import VectorRepository
 from app.domain.services.graph import GraphService, RiskAnalysisService
 from app.infrastructure.persistence_age import GraphRepositoryAge
 from app.infrastructure.external_data.defillama import DeFiLlamaClient
+from app.infrastructure.embeddings import OpenAIEmbeddingService
+from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import VectorRepositorySqla
 from app.application.graph import (
     PopulateGraphInteractor,
     ValidateGraphInteractor,
     GraphAnalyticsInteractor,
+    GenerateEmbeddingsInteractor,
+    HybridRetrievalInteractor,
 )
 
 
@@ -26,11 +33,15 @@ class GraphProvider(Provider):
     Registers:
     - GraphRepository implementation (Apache AGE)
     - DefiDataProvider implementation (DeFiLlama)
+    - EmbeddingService implementation (OpenAI)
+    - VectorRepository implementation (PostgreSQL)
     - GraphService
     - RiskAnalysisService
     - PopulateGraphInteractor
     - ValidateGraphInteractor
     - GraphAnalyticsInteractor
+    - GenerateEmbeddingsInteractor
+    - HybridRetrievalInteractor
     """
     
     scope = Scope.REQUEST
@@ -51,9 +62,23 @@ class GraphProvider(Provider):
         )
     
     @provide
+    def provide_vector_repository(
+        self,
+        session: AsyncSession,
+    ) -> VectorRepository:
+        """Provide VectorRepository implementation"""
+        return VectorRepositorySqla(session=session)
+    
+    @provide
     def provide_defi_data_provider(self) -> DefiDataProvider:
         """Provide DeFi data provider implementation"""
         return DeFiLlamaClient(timeout=30, max_retries=3)
+    
+    @provide
+    def provide_embedding_service(self) -> EmbeddingService:
+        """Provide Embedding service implementation"""
+        openai_key = os.getenv("OPENAI_API_KEY", "")
+        return OpenAIEmbeddingService(api_key=openai_key)
     
     @provide
     def provide_graph_service(
@@ -95,3 +120,31 @@ class GraphProvider(Provider):
     ) -> GraphAnalyticsInteractor:
         """Provide GraphAnalyticsInteractor for analytics"""
         return GraphAnalyticsInteractor(graph_repo)
+    
+    @provide
+    def provide_generate_embeddings_interactor(
+        self,
+        graph_repo: GraphRepository,
+        embedding_service: EmbeddingService,
+        vector_repo: VectorRepository,
+    ) -> GenerateEmbeddingsInteractor:
+        """Provide GenerateEmbeddingsInteractor for embedding generation"""
+        return GenerateEmbeddingsInteractor(graph_repo, embedding_service, vector_repo)
+    
+    @provide
+    def provide_hybrid_retrieval_interactor(
+        self,
+        graph_repo: GraphRepository,
+        embedding_service: EmbeddingService,
+        vector_repo: VectorRepository,
+        graph_service: GraphService,
+        risk_service: RiskAnalysisService,
+    ) -> HybridRetrievalInteractor:
+        """Provide HybridRetrievalInteractor for hybrid retrieval"""
+        return HybridRetrievalInteractor(
+            graph_repo,
+            embedding_service,
+            vector_repo,
+            graph_service,
+            risk_service,
+        )

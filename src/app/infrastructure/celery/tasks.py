@@ -176,6 +176,25 @@ def validate_graph_integrity():
     asyncio.run(_run_task(runner))
 
 
+@celery_app.task(name="generate_protocol_embeddings")
+def generate_protocol_embeddings():
+    """
+    Generate embeddings for protocols.
+    """
+    async def runner(container):
+        from app.application.graph import GenerateEmbeddingsInteractor
+        
+        interactor = await container.get(GenerateEmbeddingsInteractor)
+        stats = await interactor.generate_protocol_embeddings(
+            limit=100,
+            force_regenerate=False,
+        )
+        
+        print(f"Embedding generation complete: {stats}")
+    
+    asyncio.run(_run_task(runner))
+
+
 celery_app.conf.beat_schedule = {
     # Existing maintenance tasks
     "cleanup-expired-sessions": {
@@ -220,5 +239,9 @@ celery_app.conf.beat_schedule = {
     "validate-graph-integrity": {
         "task": "validate_graph_integrity",
         "schedule": crontab(hour=6, minute=0, day_of_week=1),  # Weekly Monday 6 AM
+    },
+    "generate-protocol-embeddings": {
+        "task": "generate_protocol_embeddings",
+        "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
     },
 }
