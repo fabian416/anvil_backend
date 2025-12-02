@@ -3,120 +3,57 @@
 ## User Stake Module
 
 **User Type:** Authenticated User  
-**Module:** Stake  
+**Module:** Staking  
 **Route:** `/earn/stake`  
-**Platform:** Mobile (React Native) & Web
+**Platform:** Mobile (React Native) & Web  
+**Version:** 2.0 (Enhanced with ML Risk + Yield Comparison)
 
 ---
 
 ## 📋 Module Overview
 
 ### Title
-**Stake** - Liquid Staking
+**Stake V2** - Smart Staking with Risk Analysis
 
 ### Description
-Interface for staking ETH via Lido to earn staking rewards while maintaining liquidity with stETH.
+Enhanced staking interface with ML risk scoring, yield comparison across protocols, and validator reliability tracking.
 
-### Key Capabilities
-- ETH staking via Lido
-- stETH balance tracking
-- APY display
-- Reward tracking
-- Unstaking flow
-- Staking rewards history
+### New Capabilities (V2)
+- ✅ **Protocol Risk Scores** - ML analysis per staking protocol
+- ✅ **Yield Comparison** - Side-by-side APY + risk comparison
+- ✅ **Validator Reliability** - Track record and uptime scoring
+- ✅ **Unbonding Risk** - Lock period and market risk analysis
+- ✅ **Real-time APY Updates** - WebSocket streaming
+- ✅ **Historical Slashing Data** - Learn from validator incidents
 
 ---
 
-## 🖼️ Views & Wireframes
+## 🖼️ Enhanced Features
 
-### View 1: Stake Dashboard
-
+### Risk-Adjusted Staking
 ```
-┌─────────────────────────────────────┐
-│  [←]        Stake           [?]    │
-│                                     │
-│  ┌─────────────────────────────────┐│
-│  │  ETH Staking via Lido           ││
-│  │                                 ││
-│  │         ┌───────┐               ││
-│  │         │ stETH │               ││
-│  │         └───────┘               ││
-│  │                                 ││
-│  │  Your Staked ETH                ││
-│  │  2.5 stETH ($6,275)             ││
-│  │                                 ││
-│  │  Current APY     3.8%           ││
-│  │  Rewards Earned  +0.024 ETH     ││
-│  │                  (+$60.24)      ││
-│  │                                 ││
-│  └─────────────────────────────────┘│
-│                                     │
-│  ┌─────────────────────────────────┐│
-│  │                                 ││
-│  │  Amount to Stake                ││
-│  │  ┌───────────────────────────┐  ││
-│  │  │                           │  ││
-│  │  │        1.0                │  ││
-│  │  │                           │  ││
-│  │  │ Available: 2.02 ETH [MAX] │  ││
-│  │  │ ≈ $2,510.00               │  ││
-│  │  └───────────────────────────┘  ││
-│  │                                 ││
-│  │  You will receive               ││
-│  │  ~0.998 stETH                   ││
-│  │                                 ││
-│  └─────────────────────────────────┘│
-│                                     │
-│  ┌─────────────────────────────────┐│
-│  │  APY                      3.8% ││
-│  │  Est. Yearly Rewards     $95   ││
-│  │  Protocol                Lido  ││
-│  └─────────────────────────────────┘│
-│                                     │
-│  ┌─────────────────────────────────┐│
-│  │          Stake ETH              ││
-│  └─────────────────────────────────┘│
-│                                     │
-│  [Unstake stETH →]                  │
-│                                     │
-└─────────────────────────────────────┘
+Protocol Risk Analysis:
+  • Lido Finance:     🟢 2.3/10 (Safest)
+  • Rocket Pool:      🟢 2.8/10 (Very Safe)
+  • Frax:             🟡 3.5/10 (Moderate)
+
+Yield Comparison:
+  • Lido:   3.8% APY  |  $28.4B TVL  |  Risk: 2.3
+  • Rocket: 3.9% APY  |  $2.1B TVL   |  Risk: 2.8
+  • Frax:   4.2% APY  |  $850M TVL   |  Risk: 3.5
+
+Recommendation: Lido (Best safety/yield balance)
+```
+
+### Unbonding Risk Warning
+```
+⚠️ ETH Staking has 7-day unbonding period
+   Market Risk (7d forecast): MEDIUM
+   Recommended: Only stake funds you won't need for 30+ days
 ```
 
 ---
 
-## 🔌 API Endpoints
-
-```typescript
-// GET /api/defi/stake/dashboard
-interface GetStakeDashboardResponse {
-  success: true;
-  data: {
-    staked_position?: {
-      staked_amount: string;
-      staked_usd: number;
-      rewards_earned: string;
-      rewards_earned_usd: number;
-    };
-    current_apy: number;
-    steth_rate: number;
-    available_to_stake: string;
-    available_to_stake_usd: number;
-  };
-}
-
-// POST /api/defi/stake
-interface StakeRequest {
-  amount: string;
-}
-
-// POST /api/defi/stake/unstake
-interface UnstakeRequest {
-  amount: string;
-}
-```
-
----
-
-*Document Version: 1.0*  
-*Last Updated: December 2, 2025*  
-*Module: Stake*
+*Document Version: 2.0*  
+*Last Updated: December 1, 2025*  
+*Module: Stake (Enhanced)*
