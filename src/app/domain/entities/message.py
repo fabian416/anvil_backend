@@ -3,7 +3,7 @@ Message entity for chat messages.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional, Any
 from uuid import UUID, uuid4
 
 from app.domain.value_objects.message_role import MessageRole
@@ -24,6 +24,7 @@ class Message:
         content: str,
         agent_type: Optional[str] = None,
         created_at: Optional[datetime] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize message.
@@ -35,6 +36,7 @@ class Message:
             content: Message content
             agent_type: Optional agent type if from agent
             created_at: Creation timestamp
+            metadata: Optional metadata dictionary (e.g., distillation info)
         """
         self.id = id
         self.conversation_id = conversation_id
@@ -42,6 +44,7 @@ class Message:
         self.content = content
         self.agent_type = agent_type
         self.created_at = created_at or datetime.utcnow()
+        self.metadata = metadata or {}
     
     @classmethod
     def create_user_message(
@@ -72,6 +75,7 @@ class Message:
         conversation_id: UUID,
         content: str,
         agent_type: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "Message":
         """
         Create an agent message.
@@ -80,6 +84,7 @@ class Message:
             conversation_id: Parent conversation identifier
             content: Message content
             agent_type: Optional agent type
+            metadata: Optional metadata dictionary
         
         Returns:
             New agent message instance
@@ -90,6 +95,7 @@ class Message:
             role=MessageRole.AGENT,
             content=content,
             agent_type=agent_type,
+            metadata=metadata,
         )
     
     @classmethod
