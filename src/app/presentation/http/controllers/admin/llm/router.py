@@ -7,6 +7,7 @@ Provides admin endpoints for managing LLM orchestration system.
 from fastapi import APIRouter
 from fastapi_error_map import ErrorAwareRouter
 
+from .dashboard import router as dashboard_router
 from .providers import router as providers_router
 from .models import router as models_router
 from .rankings import router as rankings_router
@@ -21,6 +22,7 @@ router = ErrorAwareRouter(
 )
 
 # Include sub-routers
+router.include_router(dashboard_router, prefix="/dashboard", tags=["Admin - Dashboard"])
 router.include_router(providers_router, prefix="/providers", tags=["Admin - LLM Providers"])
 router.include_router(models_router, prefix="/models", tags=["Admin - LLM Models"])
 router.include_router(rankings_router, prefix="/rankings", tags=["Admin - LLM Rankings"])
