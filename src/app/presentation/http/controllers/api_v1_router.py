@@ -38,6 +38,9 @@ from app.presentation.http.controllers.alerts.router import create_alerts_router
 # Preferences router
 from app.presentation.http.controllers.preferences.router import create_preferences_router
 
+# Dashboard router
+from app.presentation.http.controllers.dashboard.router import create_dashboard_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -78,6 +81,8 @@ def create_api_v1_router() -> APIRouter:
         create_alerts_router(),
         # Preferences router
         create_preferences_router(),
+        # Dashboard router
+        create_dashboard_router(),
     )
 
     for sub_router in sub_routers:

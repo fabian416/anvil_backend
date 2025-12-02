@@ -45,6 +45,7 @@ from app.application.portfolio import PortfolioRiskAnalysis
 from app.application.alerts import RiskAlertService, RiskAlertMonitor
 from app.infrastructure.websocket import GraphEventBroadcaster
 from app.application.preferences import UserPreferencesService
+from app.application.dashboard import DashboardAggregationService
 
 
 class GraphProvider(Provider):
@@ -336,3 +337,19 @@ class GraphProvider(Provider):
     def provide_user_preferences_service(self) -> UserPreferencesService:
         """Provide UserPreferencesService for user personalization"""
         return UserPreferencesService()
+    
+    # Dashboard Aggregation (NEW: Dashboard insights)
+    
+    @provide
+    def provide_dashboard_aggregation_service(
+        self,
+        portfolio_risk: PortfolioRiskAnalysis,
+        preferences_service: UserPreferencesService,
+        hybrid_retrieval: HybridRetrievalInteractor,
+    ) -> DashboardAggregationService:
+        """Provide DashboardAggregationService for home dashboard insights"""
+        return DashboardAggregationService(
+            portfolio_risk,
+            preferences_service,
+            hybrid_retrieval,
+        )
