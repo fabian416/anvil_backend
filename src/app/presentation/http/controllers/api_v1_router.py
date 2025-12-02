@@ -47,6 +47,9 @@ from app.presentation.http.controllers.search.router import create_search_router
 # Comparison router
 from app.presentation.http.controllers.comparison.router import create_comparison_router
 
+# Markets router
+from app.presentation.http.controllers.markets.router import create_markets_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -93,6 +96,8 @@ def create_api_v1_router() -> APIRouter:
         create_search_router(),
         # Comparison router
         create_comparison_router(),
+        # Markets router
+        create_markets_router(),
     )
 
     for sub_router in sub_routers:

@@ -48,6 +48,9 @@ from app.application.preferences import UserPreferencesService
 from app.application.dashboard import DashboardAggregationService
 from app.application.search import SearchHistoryService
 from app.application.comparison import ProtocolComparisonService
+from app.application.markets import AdvancedMarketsService
+from app.application.admin.graph_management_service import GraphManagementService
+from app.application.admin.data_source_sync_service import DataSourceSyncService
 
 
 class GraphProvider(Provider):
@@ -369,3 +372,22 @@ class GraphProvider(Provider):
     def provide_protocol_comparison_service(self) -> ProtocolComparisonService:
         """Provide ProtocolComparisonService for comparing protocols"""
         return ProtocolComparisonService()
+    
+    # Advanced Markets (NEW: Market data aggregation)
+    
+    @provide
+    def provide_advanced_markets_service(self) -> AdvancedMarketsService:
+        """Provide AdvancedMarketsService for market data"""
+        return AdvancedMarketsService()
+    
+    # Admin Services (NEW: Platform administration)
+    
+    @provide
+    def provide_graph_management_service(self) -> GraphManagementService:
+        """Provide GraphManagementService for admin graph operations"""
+        return GraphManagementService()
+    
+    @provide
+    def provide_data_source_sync_service(self) -> DataSourceSyncService:
+        """Provide DataSourceSyncService for data source management"""
+        return DataSourceSyncService()
