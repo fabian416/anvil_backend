@@ -14,6 +14,11 @@ from app.presentation.http.controllers.chat.websocket_router import create_chat_
 from app.presentation.http.controllers.admin.stats.router import create_admin_stats_router
 from app.presentation.http.controllers.admin.agent.router import create_admin_agent_router
 
+# New routers for distillation and projects
+from app.presentation.http.controllers.admin.distillation_router import router as distillation_admin_router
+from app.presentation.http.controllers.admin.projects_router import router as projects_admin_router
+from app.presentation.http.controllers.user.projects_router import router as projects_user_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -34,6 +39,10 @@ def create_api_v1_router() -> APIRouter:
         create_chat_websocket_router(),
         create_admin_stats_router(),
         create_admin_agent_router(),
+        # New distillation and projects routers
+        distillation_admin_router,
+        projects_admin_router,
+        projects_user_router,
     )
 
     for sub_router in sub_routers:
