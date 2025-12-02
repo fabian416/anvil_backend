@@ -108,6 +108,74 @@ from app.infrastructure.celery.tasks.projects_tasks import (
 )
 
 
+@celery_app.task(name="populate_graph_protocols")
+def populate_graph_protocols():
+    """
+    Populate/update protocols in the knowledge graph.
+    """
+    async def runner(container):
+        from app.application.graph import PopulateGraphInteractor
+        from app.domain.ports.graph import GraphRepository
+        from app.domain.ports.external_data import DefiDataProvider
+        
+        graph_repo = await container.get(GraphRepository)
+        data_provider = await container.get(DefiDataProvider)
+        
+        interactor = PopulateGraphInteractor(graph_repo, data_provider)
+        stats = await interactor.populate_protocols(limit=100)
+        
+        print(f"Graph population complete: {stats}")
+    
+    asyncio.run(_run_task(runner))
+
+
+@celery_app.task(name="update_graph_metadata")
+def update_graph_metadata():
+    """
+    Update graph metadata and statistics.
+    """
+    async def runner(container):
+        from app.domain.ports.graph import GraphRepository
+        from sqlalchemy import text
+        
+        graph_repo = await container.get(GraphRepository)
+        
+        # Update graph stats using helper function
+        await graph_repo.execute_cypher(
+            "SELECT update_graph_stats('defi_knowledge_graph')"
+        )
+        
+        print("Graph metadata updated")
+    
+    asyncio.run(_run_task(runner))
+
+
+@celery_app.task(name="validate_graph_integrity")
+def validate_graph_integrity():
+    """
+    Validate graph integrity and identify issues.
+    """
+    async def runner(container):
+        from app.domain.services.graph import GraphService
+        from app.domain.ports.graph import GraphRepository
+        
+        graph_repo = await container.get(GraphRepository)
+        graph_service = GraphService(graph_repo)
+        
+        # Find circular dependencies
+        cycles = await graph_service.find_circular_dependencies()
+        
+        if cycles:
+            print(f"⚠️ Found {len(cycles)} circular dependencies!")
+            for cycle in cycles[:5]:  # Log first 5
+                names = [n.properties.get('name', 'Unknown') for n in cycle]
+                print(f"  Cycle: {' -> '.join(names)}")
+        else:
+            print("✅ No circular dependencies found")
+    
+    asyncio.run(_run_task(runner))
+
+
 celery_app.conf.beat_schedule = {
     # Existing maintenance tasks
     "cleanup-expired-sessions": {
@@ -139,5 +207,18 @@ celery_app.conf.beat_schedule = {
     "check-knowledge-base-health": {
         "task": "check_knowledge_base_health",
         "schedule": crontab(hour=5, minute=0, day_of_week=0),  # Weekly Sunday 5 AM
+    },
+    # Graph maintenance tasks
+    "populate-graph-protocols": {
+        "task": "populate_graph_protocols",
+        "schedule": crontab(hour=2, minute=0),  # Daily at 2 AM
+    },
+    "update-graph-metadata": {
+        "task": "update_graph_metadata",
+        "schedule": crontab(hour="*/6", minute=30),  # Every 6 hours
+    },
+    "validate-graph-integrity": {
+        "task": "validate_graph_integrity",
+        "schedule": crontab(hour=6, minute=0, day_of_week=1),  # Weekly Monday 6 AM
     },
 }
