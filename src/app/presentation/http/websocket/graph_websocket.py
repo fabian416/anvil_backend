@@ -2,6 +2,7 @@
 GraphRAG WebSocket Handler
 
 Real-time updates for graph changes, protocol updates, and risk alerts.
+Enhanced with GraphEventBroadcaster for centralized event management.
 """
 
 from typing import Set
@@ -11,6 +12,8 @@ import json
 import logging
 import asyncio
 import redis.asyncio as aioredis
+
+from app.infrastructure.websocket.event_broadcaster import GraphEventBroadcaster
 
 logger = logging.getLogger(__name__)
 
