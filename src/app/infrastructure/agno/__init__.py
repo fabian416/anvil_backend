@@ -12,8 +12,19 @@ Agents:
     - AgentRouter: Intelligent routing to appropriate agent
 """
 from app.infrastructure.agno.base_agent import DeFiAgentBase, MCPToolDefinition
+from app.infrastructure.agno.trading_agent import TradingAgent
+from app.infrastructure.agno.lending_agent import LendingAgent
+from app.infrastructure.agno.analytics_agent import AnalyticsAgent
+from app.infrastructure.agno.portfolio_agent import PortfolioAgent
+from app.infrastructure.agno.agent_router import AgentRouter, AgentType
 
 __all__ = [
     "DeFiAgentBase",
     "MCPToolDefinition",
+    "TradingAgent",
+    "LendingAgent",
+    "AnalyticsAgent",
+    "PortfolioAgent",
+    "AgentRouter",
+    "AgentType",
 ]
