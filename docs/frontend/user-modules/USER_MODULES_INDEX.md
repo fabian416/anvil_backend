@@ -183,9 +183,77 @@ This index provides a complete reference to all user-facing API modules, organiz
 
 ---
 
-## 🛠️ **UTILITIES**
+## 🛠️ **UTILITIES & SYSTEM**
 
-### **12. Location & Atlas Services**
+### **12. Notifications**
+📄 **[Notifications](./notifications/FRONTEND_NOTIFICATIONS.md)**
+- Paginated notification listing
+- Read/unread status
+- Priority-based display
+- Real-time delivery
+
+**Endpoints:** 1 endpoint  
+**Status:** ✅ Complete  
+**Features:** 2 React hooks (paginated + infinite scroll)
+
+---
+
+### **13. Metrics & Analytics**
+📄 **[Metrics & Analytics](./metrics/FRONTEND_METRICS.md)**
+- Event tracking system
+- User activity analytics
+- Platform-wide metrics
+- Event type management
+- Session tracking
+
+**Endpoints:** 5 endpoints  
+**Status:** ✅ Complete  
+**Features:** 5 React hooks, Analytics utility class
+
+---
+
+### **14. ML Prediction**
+📄 **[ML Prediction](./ml/FRONTEND_ML_PREDICTION.md)**
+- AI-powered risk prediction
+- Batch risk processing
+- Anomaly detection
+- Risk forecasting
+- Confidence scoring
+
+**Endpoints:** 4 endpoints  
+**Status:** ✅ Complete  
+**Features:** 4 React hooks, Risk prediction components
+
+---
+
+### **15. ML Network Analysis**
+📄 **[ML Network Analysis](./ml/FRONTEND_ML_NETWORK.md)**
+- PageRank importance calculation
+- Community detection
+- Centrality metrics
+- Contagion simulation
+- Network propagation
+
+**Endpoints:** 4 endpoints  
+**Status:** ✅ Complete  
+**Features:** 4 React hooks
+
+---
+
+### **16. Chat GraphRAG Enhanced**
+📄 **[Chat GraphRAG](./chat/FRONTEND_CHAT_GRAPHRAG.md)**
+- Contextual protocol search from chat
+- ML-powered risk analysis from chat
+- Similar protocol discovery
+- Safer alternative recommendations
+
+**Endpoints:** 3 endpoints  
+**Status:** ✅ Complete  
+**Features:** 3 React hooks
+
+---
+
+### **17. Location & Atlas Services**
 📄 **[Atlas/Location](./utilities/FRONTEND_UTILITIES_ATLAS.md)**
 - Country search
 - City search
@@ -197,7 +265,7 @@ This index provides a complete reference to all user-facing API modules, organiz
 
 ---
 
-### **13. General Utilities**
+### **18. General Utilities**
 📄 **[General Utilities](./utilities/FRONTEND_UTILITIES_GENERAL.md)**
 - Health check
 - System status
@@ -210,12 +278,14 @@ This index provides a complete reference to all user-facing API modules, organiz
 ## 📈 **COVERAGE SUMMARY**
 
 ```
-Total User Endpoints:     48+ endpoints
+Total User Endpoints:     69 endpoints (was 48)
 Documented:               100% ✅
-React Hooks:              30+ hooks
-React Components:         18+ components
-TypeScript Interfaces:    100+ interfaces
-Status:                   COMPLETE
+NEW MODULES ADDED:        +6 modules (Notifications, Metrics, ML x2, Chat GraphRAG)
+NEW ENDPOINTS:            +21 endpoints
+React Hooks:              40+ hooks
+React Components:         25+ components
+TypeScript Interfaces:    120+ interfaces
+Status:                   COMPLETE ✅
 ```
 
 ---

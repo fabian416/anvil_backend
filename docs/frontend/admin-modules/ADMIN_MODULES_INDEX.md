@@ -253,14 +253,28 @@ Complete LLM management suite:
 
 ---
 
+### **16. Agent Management**
+📄 **[Admin Agents](./agents/FRONTEND_ADMIN_AGENTS.md)**
+- Multi-agent system listing
+- Agent configuration
+- Status monitoring
+- Admin-only access
+
+**Endpoints:** 1 endpoint  
+**Status:** ✅ Complete  
+**Features:** 1 React hook, Admin agents list component
+
+---
+
 ## 📈 **COVERAGE SUMMARY**
 
 ```
-Core Admin Endpoints:     30+ endpoints (new docs)
+Core Admin Endpoints:     31 endpoints (new docs)
 Extended Features:        50+ endpoints (legacy docs)
 Total Coverage:           100% ✅
+NEW MODULES ADDED:        +1 (Agent Management)
 Documentation Quality:    Enterprise-Grade
-Status:                   COMPLETE
+Status:                   COMPLETE ✅
 ```
 
 ---
