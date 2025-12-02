@@ -1,0 +1,116 @@
+{
+  "total_endpoints": 7,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/",
+      "function_name": "redirect_to_docs",
+      "path_params": [],
+      "query_params": [],
+      "request_body": null,
+      "response_model": null,
+      "auth_required": false,
+      "description": "- Open to everyone. - Redirects to Swagger documentation.",
+      "file_path": "src/app/presentation/http/controllers/root_router.py",
+      "line_number": 10,
+      "router_prefix": ""
+    },
+    {
+      "method": "GET",
+      "path": "/markets/overview",
+      "function_name": "get_market_overview",
+      "path_params": [],
+      "query_params": [],
+      "request_body": null,
+      "response_model": null,
+      "auth_required": true,
+      "description": "Get comprehensive market overview.  Returns: - Top tokens by market cap with ML risk scores - Trending protocols - Market trend analysis - Personalized recommendations (if authenticated)",
+      "file_path": "src/app/presentation/http/controllers/markets/router.py",
+      "line_number": 19,
+      "router_prefix": "/markets"
+    },
+    {
+      "method": "GET",
+      "path": "/markets/yields",
+      "function_name": "get_protocol_yields",
+      "path_params": [],
+      "query_params": [],
+      "request_body": null,
+      "response_model": null,
+      "auth_required": true,
+      "description": "Get aggregated protocol yields across chains.  Query Parameters: - chains: Comma-separated chain names - categories: Comma-separated categories (lending, staking, farming) - min_apy: Minimum APY threshold - max_risk: Maximum risk score threshold  Returns list of protocol yields with risk-adjusted metrics.",
+      "file_path": "src/app/presentation/http/controllers/markets/router.py",
+      "line_number": 48,
+      "router_prefix": "/markets"
+    },
+    {
+      "method": "GET",
+      "path": "/markets/tokens/{token_symbol}",
+      "function_name": "get_token_details",
+      "path_params": [
+        "token_symbol"
+      ],
+      "query_params": [],
+      "request_body": null,
+      "response_model": null,
+      "auth_required": true,
+      "description": "Get detailed market data for specific token.  Path Parameters: - token_symbol: Token symbol (e.g., ETH, BTC, USDC)  Returns detailed token data with ML risk analysis.",
+      "file_path": "src/app/presentation/http/controllers/markets/router.py",
+      "line_number": 79,
+      "router_prefix": "/markets"
+    },
+    {
+      "method": "GET",
+      "path": "/markets/tokens/{token_symbol}/history",
+      "function_name": "get_token_history",
+      "path_params": [
+        "token_symbol"
+      ],
+      "query_params": [],
+      "request_body": null,
+      "response_model": null,
+      "auth_required": true,
+      "description": "Get historical price data for token.  Path Parameters: - token_symbol: Token symbol  Query Parameters: - timeframe: Time range (1h, 24h, 7d, 30d)  Returns historical price points.",
+      "file_path": "src/app/presentation/http/controllers/markets/router.py",
+      "line_number": 100,
+      "router_prefix": "/markets"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/stats/",
+      "function_name": "get_stats",
+      "path_params": [],
+      "query_params": [],
+      "request_body": null,
+      "response_model": "AdminStats",
+      "auth_required": false,
+      "description": "",
+      "file_path": "src/app/presentation/http/controllers/admin/stats/router.py",
+      "line_number": 7,
+      "router_prefix": "/admin/stats"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/agents/",
+      "function_name": "list_agents",
+      "path_params": [],
+      "query_params": [],
+      "request_body": null,
+      "response_model": "List",
+      "auth_required": false,
+      "description": "",
+      "file_path": "src/app/presentation/http/controllers/admin/agent/router.py",
+      "line_number": 9,
+      "router_prefix": "/admin/agents"
+    }
+  ],
+  "by_method": {
+    "GET": 7
+  },
+  "by_module": {
+    "root": 1,
+    "router.py": 4,
+    "stats": 1,
+    "agent": 1
+  }
+}
