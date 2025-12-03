@@ -20,6 +20,10 @@ from app.application.hunter.discord_sentiment import (
     DiscordSentimentAnalyzer,
     DiscordConfig,
 )
+from app.application.hunter.news_sentiment import (
+    NewsSentimentAnalyzer,
+    NewsConfig,
+)
 from app.application.hunter.sentiment_aggregator import SentimentAggregator
 from app.domain.value_objects.sentiment import SentimentSource
 
@@ -130,6 +134,7 @@ def create_sentiment_router() -> APIRouter:
             twitter_analyzer = TwitterSentimentAnalyzer(TwitterConfig(enabled=True))
             reddit_analyzer = RedditSentimentAnalyzer(RedditConfig(enabled=True))
             discord_analyzer = DiscordSentimentAnalyzer(DiscordConfig(enabled=True))
+            news_analyzer = NewsSentimentAnalyzer(NewsConfig(enabled=True))
             aggregator = SentimentAggregator()
 
             # Collect sentiment readings
@@ -142,24 +147,26 @@ def create_sentiment_router() -> APIRouter:
                 )
                 readings.append(twitter_reading)
 
-            # Reddit sentiment (NEW - Day 2)
+            # Reddit sentiment
             if not source_list or SentimentSource.REDDIT in source_list:
                 reddit_reading = await reddit_analyzer.analyze_token_sentiment(
                     token_symbol, hours
                 )
                 readings.append(reddit_reading)
 
-            # Discord sentiment (NEW - Day 2)
+            # Discord sentiment
             if not source_list or SentimentSource.DISCORD in source_list:
                 discord_reading = await discord_analyzer.analyze_token_sentiment(
                     token_symbol, hours
                 )
                 readings.append(discord_reading)
 
-            # News sentiment (placeholder for Day 3)
-            # if not source_list or SentimentSource.NEWS in source_list:
-            #     news_reading = await news_analyzer.analyze_token_sentiment(...)
-            #     readings.append(news_reading)
+            # News sentiment (NEW - Day 3)
+            if not source_list or SentimentSource.NEWS in source_list:
+                news_reading = await news_analyzer.analyze_token_sentiment(
+                    token_symbol, hours
+                )
+                readings.append(news_reading)
 
             if not readings:
                 raise HTTPException(
@@ -342,6 +349,47 @@ def create_sentiment_router() -> APIRouter:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Comparison failed: {str(e)}",
+            )
+
+    @router.get(
+        "/news/headlines",
+        response_model=list[dict],
+        summary="Get top crypto news headlines",
+        description="Get top cryptocurrency news headlines with sentiment scores",
+    )
+    async def get_top_headlines(
+        limit: int = Query(10, ge=1, le=50, description="Maximum number of headlines"),
+    ) -> list[dict]:
+        """Get top cryptocurrency news headlines.
+
+        Args:
+            limit: Maximum number of headlines to return
+
+        Returns:
+            List of top headlines with sentiment
+
+        Example:
+            GET /api/v1/hunter/sentiment/news/headlines?limit=5
+
+            Response:
+            [
+                {
+                    "title": "Bitcoin Reaches New All-Time High",
+                    "source": "coindesk.com",
+                    "sentiment": 85.0,
+                    "published": "2025-12-03T10:30:00Z"
+                }
+            ]
+        """
+        try:
+            news_analyzer = NewsSentimentAnalyzer()
+            headlines = await news_analyzer.get_top_headlines(limit)
+            return headlines
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to get headlines: {str(e)}",
             )
 
     return router
