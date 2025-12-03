@@ -20,9 +20,9 @@ def upgrade() -> None:
     # Create Enums if they don't exist (Postgres specific)
     # We use existing Enums or create new ones.
     # WalletProvider and ChainType are used as Enums in mapping but mapped to Enum column in DB.
-    sa.Enum("privy", "external", name="walletprovider").create(op.get_bind())
-    sa.Enum("arbitrum", "base", "hyperliquid", name="chaintype").create(op.get_bind())
-    sa.Enum("inactive", "active", "deleted", name="walletstatus").create(op.get_bind())
+    sa.Enum("privy", "external", name="walletprovider").create(op.get_bind(), checkfirst=True)
+    sa.Enum("arbitrum", "base", "hyperliquid", name="chaintype").create(op.get_bind(), checkfirst=True)
+    sa.Enum("inactive", "active", "deleted", name="walletstatus").create(op.get_bind(), checkfirst=True)
 
     # --- WALLETS ---
     op.create_table(

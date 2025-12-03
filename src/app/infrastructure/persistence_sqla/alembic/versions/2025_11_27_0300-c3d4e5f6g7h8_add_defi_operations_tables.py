@@ -17,12 +17,12 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    # Create Enums
-    sa.Enum("long", "short", name="side").create(op.get_bind())
-    sa.Enum("open", "closed", "liquidated", name="positionstatus").create(op.get_bind())
-    sa.Enum("active", "withdrawn", "emergency_exit", name="earnstatus").create(op.get_bind())
-    sa.Enum("daily", "weekly", "biweekly", "monthly", name="frequency").create(op.get_bind())
-    sa.Enum("active", "paused", "completed", "failed", name="schedulestatus").create(op.get_bind())
+    # Create Enums (checkfirst=True to avoid error if already exists)
+    sa.Enum("long", "short", name="side").create(op.get_bind(), checkfirst=True)
+    sa.Enum("open", "closed", "liquidated", name="positionstatus").create(op.get_bind(), checkfirst=True)
+    sa.Enum("active", "withdrawn", "emergency_exit", name="earnstatus").create(op.get_bind(), checkfirst=True)
+    sa.Enum("daily", "weekly", "biweekly", "monthly", name="frequency").create(op.get_bind(), checkfirst=True)
+    sa.Enum("active", "paused", "completed", "failed", name="schedulestatus").create(op.get_bind(), checkfirst=True)
 
     # --- Hyperliquid Positions ---
     op.create_table(

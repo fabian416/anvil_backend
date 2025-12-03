@@ -6,6 +6,7 @@ from app.setup.config.logs import LoggingSettings
 from app.setup.config.security import SecuritySettings
 from app.setup.config.mailgun import MailgunSettings
 from app.setup.config.stripe import StripeSettings
+from app.setup.config.privy import PrivySettings
 
 
 class AppSettings(BaseModel):
@@ -15,6 +16,7 @@ class AppSettings(BaseModel):
     logs: LoggingSettings
     mailgun: MailgunSettings | None = None
     stripe: StripeSettings | None = None
+    privy: PrivySettings | None = None
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:

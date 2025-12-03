@@ -15,6 +15,7 @@ from app.application.commands.user.revoke_admin import RevokeAdminInteractor
 from app.application.commands.auth.upgrade_to_admin import UpgradeToAdminInteractor
 from app.application.commands.auth.change_role import ChangeRoleInteractor
 from app.application.commands.auth.privy_login import PrivyLogin
+from app.application.commands.wallet.export_wallet import ExportWallet
 from app.application.common.ports.access_revoker import AccessRevoker
 from app.application.common.ports.flusher import Flusher
 from app.application.common.ports.identity_provider import IdentityProvider
@@ -46,6 +47,7 @@ from app.infrastructure.auth.adapters.access_revoker import (
 from app.infrastructure.auth.adapters.identity_provider import (
     AuthSessionIdentityProvider,
 )
+from app.infrastructure.privy.client import PrivyClient
 from app.domain.services.user import UserService
 from app.domain.services.auth import AuthService
 from app.domain.ports.password_hasher import PasswordHasher
@@ -54,6 +56,7 @@ from app.domain.ports.auth_gateway import AuthGateway
 from app.infrastructure.adapters.password_hasher_bcrypt import BcryptPasswordHasher, PasswordPepper
 from app.infrastructure.adapters.user_id_generator_uuid import UuidUserIdGenerator
 from app.setup.config.security import PasswordSettings
+from app.setup.config.privy import PrivySettings
 
 
 class ApplicationProvider(Provider):
@@ -124,6 +127,13 @@ class ApplicationProvider(Provider):
         provides=UserMetricsRepository,
     )
 
+    # Privy Client
+    @staticmethod
+    def _privy_client(settings: PrivySettings) -> PrivyClient:
+        return PrivyClient(settings)
+
+    privy_client = provide(source=_privy_client, scope=Scope.REQUEST)
+
     # Commands
     commands = provide_all(
         ActivateUserInteractor,
@@ -134,6 +144,7 @@ class ApplicationProvider(Provider):
         UpgradeToAdminInteractor,
         ChangeRoleInteractor,
         PrivyLogin,
+        ExportWallet,
     )
 
     # Queries

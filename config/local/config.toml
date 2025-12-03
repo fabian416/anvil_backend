@@ -38,6 +38,7 @@ ALLOWED_ADMIN_EMAILS = [
   "admin@anvil.com",
   "yordansolis2@gmail.com",
 ]
+
 # Agent Squad Configuration
 [agent_squad]
 default_model = "gpt-4-turbo"
@@ -51,3 +52,8 @@ enable_multi_agent_routing = true
 debug_mode = false
 log_intent_classification = true
 log_agent_selection = true
+
+# Privy Configuration
+[privy]
+APP_ID = "cmim36q4q02zwjr0cc9csypp7"
+APP_SECRET = ""  # Set this in .secrets.toml or environment variable

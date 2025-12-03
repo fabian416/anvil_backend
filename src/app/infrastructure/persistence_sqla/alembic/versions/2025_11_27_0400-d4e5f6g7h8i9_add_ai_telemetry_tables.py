@@ -17,16 +17,16 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    # Create Enums
-    sa.Enum("vertex", "bedrock", "openai", name="llmprovider").create(op.get_bind())
-    sa.Enum("success", "failed", "rate_limited", "fallback", name="llmstatus").create(op.get_bind())
-    sa.Enum("pending", "running", "completed", "failed", "canceled", name="agentexecutionstatus").create(op.get_bind())
-    sa.Enum("pending", "running", "completed", "failed", "skipped", name="agenttaskstatus").create(op.get_bind())
-    sa.Enum("success", "failed", "timeout", name="agenttoolstatus").create(op.get_bind())
-    sa.Enum("rate_limit", "quota_exceeded", "throttle", "timeout", name="ratelimiteventtype").create(op.get_bind())
-    sa.Enum("daily_threshold", "weekly_threshold", "monthly_threshold", "user_spike", name="costalerttype").create(op.get_bind())
-    sa.Enum("helpful", "not_helpful", "incorrect", "offensive", "other", name="feedbacktype").create(op.get_bind())
-    sa.Enum("0", "1", "2", name="modelstatus").create(op.get_bind()) # Postgres enum values are strings
+    # Create Enums (checkfirst=True to avoid error if already exists)
+    sa.Enum("vertex", "bedrock", "openai", name="llmprovider").create(op.get_bind(), checkfirst=True)
+    sa.Enum("success", "failed", "rate_limited", "fallback", name="llmstatus").create(op.get_bind(), checkfirst=True)
+    sa.Enum("pending", "running", "completed", "failed", "canceled", name="agentexecutionstatus").create(op.get_bind(), checkfirst=True)
+    sa.Enum("pending", "running", "completed", "failed", "skipped", name="agenttaskstatus").create(op.get_bind(), checkfirst=True)
+    sa.Enum("success", "failed", "timeout", name="agenttoolstatus").create(op.get_bind(), checkfirst=True)
+    sa.Enum("rate_limit", "quota_exceeded", "throttle", "timeout", name="ratelimiteventtype").create(op.get_bind(), checkfirst=True)
+    sa.Enum("daily_threshold", "weekly_threshold", "monthly_threshold", "user_spike", name="costalerttype").create(op.get_bind(), checkfirst=True)
+    sa.Enum("helpful", "not_helpful", "incorrect", "offensive", "other", name="feedbacktype").create(op.get_bind(), checkfirst=True)
+    sa.Enum("inactive", "active", "deprecated", name="modelstatus").create(op.get_bind(), checkfirst=True)
 
     # --- Models ---
     op.create_table(
@@ -40,7 +40,7 @@ def upgrade() -> None:
         sa.Column("cost_per_1k_input_tokens", sa.Numeric(precision=10, scale=8), nullable=False),
         sa.Column("cost_per_1k_output_tokens", sa.Numeric(precision=10, scale=8), nullable=False),
         sa.Column("max_tokens", sa.Integer(), nullable=True),
-        sa.Column("status", sa.Enum("0", "1", "2", name="modelstatus"), nullable=False, server_default='1'),
+        sa.Column("status", sa.Enum("inactive", "active", "deprecated", name="modelstatus"), nullable=False, server_default='active'),
         sa.Column("request_count", sa.BigInteger(), nullable=True, server_default='0'),
         sa.Column("total_cost_usd", sa.Numeric(precision=12, scale=2), nullable=True, server_default='0'),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
