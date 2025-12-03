@@ -11,20 +11,21 @@ Replaces AgentGatewayImpl with Agent Squad library for:
 from typing import Dict, Any, Optional
 from uuid import UUID
 
-# NOTE: Agent Squad will be installed via: pip install agent-squad
-# Or: pip install -e libs/agent-squad/python/
+# NOTE: Agent Squad installed via: uv pip install -e libs/agent-squad/python/
+# Additional dependencies: openai, boto3
 try:
-    from agent_squad import MultiAgentOrchestrator
-    from agent_squad.agents import OpenAIAgent
+    from agent_squad.orchestrator import AgentSquad
+    from agent_squad.agents.openai_agent import OpenAIAgent
     from agent_squad.types import ConversationMessage, ParticipantRole
     AGENT_SQUAD_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     # Fallback during installation - will be resolved
     AGENT_SQUAD_AVAILABLE = False
-    MultiAgentOrchestrator = None
+    AgentSquad = None
     OpenAIAgent = None
     ConversationMessage = None
     ParticipantRole = None
+    print(f"Agent Squad import error: {e}")
 
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.enums.agent_type import AgentType
@@ -68,10 +69,10 @@ class AgentSquadGateway(AgentGateway):
         self.storage = storage
         self.config = config
         
-        # Create orchestrator
-        self.orchestrator = MultiAgentOrchestrator(
+        # Create Agent Squad orchestrator
+        self.orchestrator = AgentSquad(
             storage=storage,
-            config={
+            options={
                 "LOG_AGENT_CHAT": config.log_agent_selection,
                 "LOG_CLASSIFIER_CHAT": config.log_intent_classification,
                 "LOG_CLASSIFIER_RAW_OUTPUT": config.debug_mode,
@@ -88,6 +89,10 @@ class AgentSquadGateway(AgentGateway):
     def _register_agents(self):
         """Register all specialized DeFi agents."""
         
+        # Default model ID for Bedrock Claude
+        default_model = self.config.default_model or "anthropic.claude-3-sonnet-20240229-v1:0"
+        fallback_model = self.config.fallback_model or "anthropic.claude-3-sonnet-20240229-v1:0"
+        
         # 1. Trading Agent (Swaps, Perps)
         trading_agent = OpenAIAgent(
             name="Trading Agent",
@@ -97,7 +102,7 @@ class AgentSquadGateway(AgentGateway):
             - Closing positions
             - Executing market orders
             Always explain risks and ask for confirmation before trades.""",
-            model=self.config.default_model,
+            model=default_model,
         )
         self.orchestrator.add_agent(trading_agent)
         
