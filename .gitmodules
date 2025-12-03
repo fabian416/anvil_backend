@@ -16,3 +16,21 @@
 [submodule "libs/graphrag"]
 	path = libs/graphrag
 	url = git@github.com:microsoft/graphrag.git
+[submodule "libs/defi"]
+	path = libs/defi
+	url = git@github.com:gauss314/defi.git
+[submodule "libs/crypto_tracker"]
+	path = libs/crypto_tracker
+	url = git@github.com:mgenrique/crypto_tracker.git
+[submodule "libs/Hunter"]
+	path = libs/Hunter
+	url = git@github.com:mikegianfelice/Hunter.git
+[submodule "libs/defi-yield-calculator"]
+	path = libs/defi-yield-calculator
+	url = git@github.com:GoogleEnginer/defi-yield-calculator.git
+[submodule "libs/aave-v3-data"]
+	path = libs/aave-v3-data
+	url = git@github.com:th3nolo/aave-v3-data.git
+[submodule "libs/ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT"]
+	path = libs/ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT
+	url = git@github.com:MavenSource/ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT.git
