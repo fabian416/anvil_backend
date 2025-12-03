@@ -30,6 +30,9 @@ class AgentSquadConfig:
     enable_context_memory: bool = True
     enable_multi_agent_routing: bool = True
     
+    # Implementation selection
+    use_agent_squad: bool = False  # True = use Agent Squad library, False = use hand-rolled
+    
     # Debug settings
     debug_mode: bool = False
     log_intent_classification: bool = True
@@ -41,6 +44,7 @@ def load_agent_squad_config(
     fallback_model: Optional[str] = None,
     intent_threshold: Optional[float] = None,
     session_timeout: Optional[int] = None,
+    use_agent_squad: Optional[bool] = None,
     debug_mode: Optional[bool] = None
 ) -> AgentSquadConfig:
     """
@@ -51,6 +55,7 @@ def load_agent_squad_config(
         fallback_model: Override fallback model
         intent_threshold: Override intent threshold
         session_timeout: Override session timeout
+        use_agent_squad: Override implementation (True = Agent Squad, False = hand-rolled)
         debug_mode: Override debug mode
     
     Returns:
@@ -66,6 +71,8 @@ def load_agent_squad_config(
         config.intent_threshold = intent_threshold
     if session_timeout is not None:
         config.session_timeout = session_timeout
+    if use_agent_squad is not None:
+        config.use_agent_squad = use_agent_squad
     if debug_mode is not None:
         config.debug_mode = debug_mode
     

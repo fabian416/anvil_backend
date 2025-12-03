@@ -105,6 +105,7 @@ from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.domain.ports.conversation_repository import ConversationRepository
 from app.infrastructure.adapters.ai.agent_gateway_impl import AgentGatewayImpl
+from app.infrastructure.adapters.ai.agent_squad_gateway import AgentSquadGateway
 from app.infrastructure.adapters.ai.llm_gateway_impl import LLMGatewayImpl
 from app.infrastructure.adapters.ai.squad_storage import AnvilSquadStorage
 from app.infrastructure.adapters.conversation_repository_sqla import (
@@ -230,11 +231,30 @@ class InfrastructureProvider(Provider):
         """
         Provide Agent Gateway with registered specialized agents.
         
-        Automatically registers all agents from factory with gateway.
+        Two implementations available:
+        1. AgentGatewayImpl (hand-rolled orchestrator)
+        2. AgentSquadGateway (Agent Squad library)
+        
+        Set config.use_agent_squad = True to use Agent Squad library.
+        Defaults to hand-rolled implementation for backward compatibility.
         """
+        # Choose implementation based on configuration
+        use_agent_squad = getattr(config, 'use_agent_squad', False)
+        
+        if use_agent_squad:
+            try:
+                # Use Agent Squad library implementation
+                gateway = AgentSquadGateway(storage, config)
+                return gateway
+            except ImportError as e:
+                # Fallback to hand-rolled if Agent Squad not installed
+                print(f"Agent Squad library not available: {e}")
+                print("Falling back to hand-rolled orchestrator")
+        
+        # Default: Use hand-rolled orchestrator
         gateway = AgentGatewayImpl(storage, llm_gateway, config)
         
-        # Register all specialized agents
+        # Register all specialized agents with hand-rolled gateway
         factory.register_with_gateway(gateway)
         
         return gateway
