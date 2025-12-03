@@ -16,6 +16,7 @@ from app.presentation.http.controllers.admin.agent.router import create_admin_ag
 from app.presentation.http.controllers.wallet.router import create_wallet_router
 from app.presentation.http.controllers.graph.visualization import create_graph_visualization_router
 from app.presentation.http.controllers.hunter.sentiment import create_sentiment_router
+from app.presentation.http.controllers.hunter.price_prediction import create_price_prediction_router
 
 # New routers for distillation and projects
 from app.presentation.http.controllers.admin.distillation_router import router as distillation_admin_router
@@ -79,6 +80,8 @@ def create_api_v1_router() -> APIRouter:
         create_graph_visualization_router(),
         # Hunter AI sentiment router
         create_sentiment_router(),
+        # Hunter AI price prediction router
+        create_price_prediction_router(),
         # New distillation and projects routers
         distillation_admin_router,
         projects_admin_router,
