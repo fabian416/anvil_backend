@@ -20,6 +20,7 @@ from app.presentation.http.controllers.hunter.price_prediction import create_pri
 from app.presentation.http.controllers.hunter.risk_analysis import create_risk_analysis_router
 from app.presentation.http.controllers.hunter.trading_signals import create_trading_signals_router
 from app.presentation.http.controllers.hunter.portfolio import create_portfolio_router
+from app.presentation.http.controllers.hunter.patterns import create_patterns_router
 
 # New routers for distillation and projects
 from app.presentation.http.controllers.admin.distillation_router import router as distillation_admin_router
@@ -91,6 +92,8 @@ def create_api_v1_router() -> APIRouter:
         create_trading_signals_router(),
         # Hunter AI portfolio optimizer router
         create_portfolio_router(),
+        # Hunter AI pattern recognition router
+        create_patterns_router(),
         # New distillation and projects routers
         distillation_admin_router,
         projects_admin_router,
