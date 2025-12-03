@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  mcp_oneinch:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_oneinch
+    command: python -m app.infrastructure.mcp.servers.oneinch_mcp
+    ports:
+      - "8081:8081"
+    environment:
+      - ONEINCH_API_KEY=${ONEINCH_API_KEY:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+
+  mcp_defillama:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_defillama
+    command: python -m app.infrastructure.mcp.servers.defillama_mcp
+    ports:
+      - "8082:8082"
+    environment:
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+
+  mcp_thegraph:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_thegraph
+    command: python -m app.infrastructure.mcp.servers.thegraph_mcp
+    ports:
+      - "8083:8083"
+    environment:
+      - THEGRAPH_API_KEY=${THEGRAPH_API_KEY:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+
+  mcp_coingecko:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_coingecko
+    command: python -m app.infrastructure.mcp.servers.coingecko_mcp
+    ports:
+      - "8084:8084"
+    environment:
+      - COINGECKO_API_KEY=${COINGECKO_API_KEY:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+
+networks:
+  anvil_network:
+    driver: bridge
