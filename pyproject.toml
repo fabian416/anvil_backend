@@ -50,6 +50,7 @@ dependencies = [
     # ML/AI for Hunter AI Bot
     "torch>=2.0.0",  # PyTorch for LSTM
     "scikit-learn>=1.3.0",  # ML utilities
+    "scipy>=1.11.0",  # Scientific computing & optimization
     "numpy>=1.24.0",  # Numerical computing
     "pandas>=2.0.0",  # Data manipulation
 ]
