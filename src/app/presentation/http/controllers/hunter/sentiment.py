@@ -12,6 +12,14 @@ from app.application.hunter.twitter_sentiment import (
     TwitterSentimentAnalyzer,
     TwitterConfig,
 )
+from app.application.hunter.reddit_sentiment import (
+    RedditSentimentAnalyzer,
+    RedditConfig,
+)
+from app.application.hunter.discord_sentiment import (
+    DiscordSentimentAnalyzer,
+    DiscordConfig,
+)
 from app.application.hunter.sentiment_aggregator import SentimentAggregator
 from app.domain.value_objects.sentiment import SentimentSource
 
@@ -120,6 +128,8 @@ def create_sentiment_router() -> APIRouter:
 
             # Initialize analyzers
             twitter_analyzer = TwitterSentimentAnalyzer(TwitterConfig(enabled=True))
+            reddit_analyzer = RedditSentimentAnalyzer(RedditConfig(enabled=True))
+            discord_analyzer = DiscordSentimentAnalyzer(DiscordConfig(enabled=True))
             aggregator = SentimentAggregator()
 
             # Collect sentiment readings
@@ -132,15 +142,19 @@ def create_sentiment_router() -> APIRouter:
                 )
                 readings.append(twitter_reading)
 
-            # Reddit sentiment (placeholder for Day 2)
-            # if not source_list or SentimentSource.REDDIT in source_list:
-            #     reddit_reading = await reddit_analyzer.analyze_token_sentiment(...)
-            #     readings.append(reddit_reading)
+            # Reddit sentiment (NEW - Day 2)
+            if not source_list or SentimentSource.REDDIT in source_list:
+                reddit_reading = await reddit_analyzer.analyze_token_sentiment(
+                    token_symbol, hours
+                )
+                readings.append(reddit_reading)
 
-            # Discord sentiment (placeholder for Day 2)
-            # if not source_list or SentimentSource.DISCORD in source_list:
-            #     discord_reading = await discord_analyzer.analyze_token_sentiment(...)
-            #     readings.append(discord_reading)
+            # Discord sentiment (NEW - Day 2)
+            if not source_list or SentimentSource.DISCORD in source_list:
+                discord_reading = await discord_analyzer.analyze_token_sentiment(
+                    token_symbol, hours
+                )
+                readings.append(discord_reading)
 
             # News sentiment (placeholder for Day 3)
             # if not source_list or SentimentSource.NEWS in source_list:
