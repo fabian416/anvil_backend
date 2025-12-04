@@ -10,6 +10,8 @@ Routing Logic:
     - Portfolio queries → PortfolioAgent
     - Multi-domain queries → Orchestrates multiple agents
 
+Feature Flags: agno.agents.{trading,lending,portfolio,analytics}_enabled
+
 Examples:
     - "Swap ETH for USDC" → TradingAgent
     - "Supply USDC to Aave" → LendingAgent
@@ -25,7 +27,7 @@ from app.infrastructure.agno.trading_agent import TradingAgent
 from app.infrastructure.agno.lending_agent import LendingAgent
 from app.infrastructure.agno.analytics_agent import AnalyticsAgent
 from app.infrastructure.agno.portfolio_agent import PortfolioAgent
-from app.setup.config.agno import AgnoConfig
+from app.setup.config.agno import AgnoConfig, AgnoSettings, AgentDisabledError
 
 
 class AgentType(Enum):
@@ -61,6 +63,7 @@ class AgentRouter:
     def __init__(
         self,
         config: AgnoConfig,
+        settings: Optional[AgnoSettings] = None,
         debug_mode: bool = False,
     ):
         """
@@ -68,9 +71,11 @@ class AgentRouter:
         
         Args:
             config: Agno configuration
+            settings: Agno settings with feature flags
             debug_mode: Enable debug logging
         """
         self.config = config
+        self.settings = settings or AgnoSettings()
         self.debug_mode = debug_mode
         
         # Specialized agents (initialized on first use)
@@ -105,35 +110,68 @@ class AgentRouter:
     
     async def initialize(self):
         """
-        Initialize all specialized agents.
+        Initialize all specialized agents (only enabled ones).
         
-        Creates and loads MCP tools for each agent.
+        Creates and loads MCP tools for each enabled agent.
         """
         if self._initialized:
+            return
+        
+        # Check if Agno is globally enabled
+        if not self.settings.enabled:
+            if self.debug_mode:
+                print("[Router] ⚠️ Agno system is disabled")
             return
         
         if self.debug_mode:
             print("[Router] Initializing specialized agents...")
         
-        # Create agents
-        self.agents[AgentType.TRADING] = TradingAgent(
-            self.config,
-            debug_mode=self.debug_mode,
-        )
-        self.agents[AgentType.LENDING] = LendingAgent(
-            self.config,
-            debug_mode=self.debug_mode,
-        )
-        self.agents[AgentType.ANALYTICS] = AnalyticsAgent(
-            self.config,
-            debug_mode=self.debug_mode,
-        )
-        self.agents[AgentType.PORTFOLIO] = PortfolioAgent(
-            self.config,
-            debug_mode=self.debug_mode,
-        )
+        # Create agents (only if enabled)
+        if self.settings.agents.trading_enabled:
+            self.agents[AgentType.TRADING] = TradingAgent(
+                self.config,
+                debug_mode=self.debug_mode,
+            )
+            if self.debug_mode:
+                print("[Router] ✅ Trading agent enabled")
+        else:
+            if self.debug_mode:
+                print("[Router] ⏭️ Trading agent disabled")
         
-        # Load MCP tools for each agent
+        if self.settings.agents.lending_enabled:
+            self.agents[AgentType.LENDING] = LendingAgent(
+                self.config,
+                debug_mode=self.debug_mode,
+            )
+            if self.debug_mode:
+                print("[Router] ✅ Lending agent enabled")
+        else:
+            if self.debug_mode:
+                print("[Router] ⏭️ Lending agent disabled")
+        
+        if self.settings.agents.analytics_enabled:
+            self.agents[AgentType.ANALYTICS] = AnalyticsAgent(
+                self.config,
+                debug_mode=self.debug_mode,
+            )
+            if self.debug_mode:
+                print("[Router] ✅ Analytics agent enabled")
+        else:
+            if self.debug_mode:
+                print("[Router] ⏭️ Analytics agent disabled")
+        
+        if self.settings.agents.portfolio_enabled:
+            self.agents[AgentType.PORTFOLIO] = PortfolioAgent(
+                self.config,
+                debug_mode=self.debug_mode,
+            )
+            if self.debug_mode:
+                print("[Router] ✅ Portfolio agent enabled")
+        else:
+            if self.debug_mode:
+                print("[Router] ⏭️ Portfolio agent disabled")
+        
+        # Load MCP tools for each enabled agent
         for agent_type, agent in self.agents.items():
             if self.debug_mode:
                 print(f"[Router] Loading tools for {agent_type.value}...")
@@ -142,7 +180,9 @@ class AgentRouter:
         self._initialized = True
         
         if self.debug_mode:
-            print(f"[Router] ✅ All {len(self.agents)} agents initialized!")
+            enabled_count = len(self.agents)
+            total_count = 4  # Total possible agents
+            print(f"[Router] ✅ {enabled_count}/{total_count} agents initialized!")
     
     def classify_intent(self, query: str) -> Tuple[AgentType, float]:
         """
@@ -217,9 +257,34 @@ class AgentRouter:
             # For now, default to analytics
             if self.debug_mode:
                 print("[Router] Multi-agent query detected, using Analytics agent")
-            agent = self.agents[AgentType.ANALYTICS]
-        else:
-            agent = self.agents[agent_type]
+            agent_type = AgentType.ANALYTICS  # Fallback to analytics
+        
+        # Check if agent is enabled
+        if agent_type not in self.agents:
+            if self.settings.fallback_to_general:
+                # Fallback to first available agent or analytics
+                if AgentType.ANALYTICS in self.agents:
+                    if self.debug_mode:
+                        print(f"[Router] {agent_type.value} agent disabled, falling back to Analytics")
+                    agent_type = AgentType.ANALYTICS
+                elif self.agents:
+                    # Use first available agent
+                    agent_type = next(iter(self.agents.keys()))
+                    if self.debug_mode:
+                        print(f"[Router] Falling back to {agent_type.value} agent")
+                else:
+                    # No agents enabled
+                    raise AgentDisabledError(
+                        f"All agents are disabled. Enable at least one agent in config."
+                    )
+            else:
+                # No fallback - raise error
+                raise AgentDisabledError(
+                    f"{agent_type.value} agent is disabled. "
+                    f"Enable with agno.agents.{agent_type.value}_enabled=true in config."
+                )
+        
+        agent = self.agents[agent_type]
         
         if self.debug_mode:
             print(f"[Router] Routing to: {agent.name}")

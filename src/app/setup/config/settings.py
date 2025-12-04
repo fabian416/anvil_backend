@@ -9,6 +9,7 @@ from app.setup.config.stripe import StripeSettings
 from app.setup.config.privy import PrivySettings
 from app.setup.config.integrations import IntegrationSettings
 from app.setup.config.mcp import MCPSettings
+from app.setup.config.agno import AgnoSettings
 
 
 class AppSettings(BaseModel):
@@ -21,6 +22,7 @@ class AppSettings(BaseModel):
     privy: PrivySettings | None = None
     integrations: IntegrationSettings = IntegrationSettings()
     mcp: MCPSettings = MCPSettings()
+    agno: AgnoSettings = AgnoSettings()
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:

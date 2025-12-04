@@ -87,3 +87,15 @@ thegraph_enabled = true  # The Graph blockchain indexing (Paid API)
 coingecko_enabled = true  # CoinGecko market data (Free tier)
 aave_enabled = true  # Aave lending protocol integration
 portfolio_enabled = true  # Portfolio tracking & analytics
+
+# Agno Agent Feature Flags
+[agno]
+enabled = true  # Master switch for all Agno agents
+intent_classification_enabled = true  # Auto-route queries to agents
+fallback_to_general = true  # Fallback if agent disabled
+
+[agno.agents]
+trading_enabled = true  # Trade execution & strategy (1inch)
+lending_enabled = true  # Lending/borrowing (Aave)
+portfolio_enabled = true  # Portfolio optimization
+analytics_enabled = true  # Data analysis & insights (DeFiLlama)

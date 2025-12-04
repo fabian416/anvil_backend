@@ -1,39 +1,71 @@
-"""Agno agent runtime configuration."""
-from typing import Optional
-from pydantic import BaseModel
+"""
+Agno Agent configuration settings.
+
+Provides granular enable/disable controls for each Agno agent
+and routing behavior configuration.
+"""
+
+from pydantic import BaseModel, Field
+
+
+class AgnoAgentSettings(BaseModel):
+    """Settings for individual Agno agents."""
+    
+    trading_enabled: bool = Field(
+        default=True,
+        description="Enable Trading agent for trade execution & strategy",
+    )
+    lending_enabled: bool = Field(
+        default=True,
+        description="Enable Lending agent for lending/borrowing recommendations",
+    )
+    portfolio_enabled: bool = Field(
+        default=True,
+        description="Enable Portfolio agent for portfolio optimization",
+    )
+    analytics_enabled: bool = Field(
+        default=True,
+        description="Enable Analytics agent for data analysis & insights",
+    )
+
+
+class AgnoSettings(BaseModel):
+    """Agno agent system configuration settings."""
+    
+    enabled: bool = Field(
+        default=True,
+        description="Master switch for all Agno agents",
+    )
+    intent_classification_enabled: bool = Field(
+        default=True,
+        description="Enable automatic intent classification and agent routing",
+    )
+    fallback_to_general: bool = Field(
+        default=True,
+        description="Fallback to general agent if specific agent is disabled",
+    )
+    agents: AgnoAgentSettings = Field(
+        default_factory=AgnoAgentSettings,
+        description="Individual agent enable/disable flags",
+    )
 
 
 class AgnoConfig(BaseModel):
-    """Configuration for Agno agent runtime."""
+    """Agno configuration (existing model extended with settings)."""
     
-    # Model configuration
-    model_id: str = "gpt-4-turbo"
-    temperature: float = 0.7
-    max_tokens: int = 2000
-    
-    # MCP server URLs
-    mcp_portfolio_url: str = "http://localhost:8081"
-    mcp_1inch_url: str = "http://localhost:8082"
-    mcp_aave_url: str = "http://localhost:8083"
-    mcp_defillama_url: str = "http://localhost:8084"
-    
-    # Debug & monitoring
-    show_tool_calls: bool = False
-    enable_telemetry: bool = True
-    log_agent_execution: bool = True
-    
-    # Performance
-    agent_pool_size: int = 10
-    agent_timeout_seconds: int = 30
-    
-    # Memory management
-    max_context_messages: int = 10
-    enable_memory_compression: bool = True
-    
-    class Config:
-        env_prefix = "AGNO_"
+    default_model: str = "gpt-4-turbo"
+    fallback_model: str = "gpt-3.5-turbo"
+    intent_threshold: float = 0.75
+    session_timeout: int = 3600
+    max_context_messages: int = 20
+    enable_intent_classification: bool = True
+    enable_context_memory: bool = True
+    enable_multi_agent_routing: bool = True
+    debug_mode: bool = False
+    log_intent_classification: bool = True
+    log_agent_selection: bool = True
 
 
-def load_agno_config() -> AgnoConfig:
-    """Load Agno configuration from environment."""
-    return AgnoConfig()
+class AgentDisabledError(Exception):
+    """Raised when attempting to use a disabled agent."""
+    pass
