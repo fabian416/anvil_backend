@@ -268,3 +268,53 @@ class Project:
     def has_tool(self, tool: str) -> bool:
         """Check if tool is enabled."""
         return tool in self.enabled_tools
+    
+    @property
+    def hunter_tools_enabled(self) -> List[str]:
+        """
+        Get enabled Hunter AI tools.
+        
+        Returns:
+            List of Hunter AI tool names enabled for this project
+        """
+        return [
+            tool for tool in self.enabled_tools
+            if tool.startswith("hunter_")
+        ]
+    
+    @property
+    def ultra_tools_enabled(self) -> List[str]:
+        """
+        Get enabled ULTRA Arbitrage tools.
+        
+        Returns:
+            List of ULTRA tool names enabled for this project
+        """
+        return [
+            tool for tool in self.enabled_tools
+            if tool.startswith("ultra_")
+        ]
+    
+    def can_use_hunter_tool(self, tool_name: str) -> bool:
+        """
+        Check if Hunter AI tool is enabled for this project.
+        
+        Args:
+            tool_name: Hunter AI tool name (e.g., "hunter_sentiment_analysis")
+        
+        Returns:
+            True if tool is enabled
+        """
+        return tool_name in self.enabled_tools
+    
+    def can_use_ultra_tool(self, tool_name: str) -> bool:
+        """
+        Check if ULTRA tool is enabled for this project.
+        
+        Args:
+            tool_name: ULTRA tool name (e.g., "ultra_flash_loans")
+        
+        Returns:
+            True if tool is enabled
+        """
+        return tool_name in self.enabled_tools
