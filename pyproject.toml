@@ -53,6 +53,7 @@ dependencies = [
     "scipy>=1.11.0",  # Scientific computing & optimization
     "numpy>=1.24.0",  # Numerical computing
     "pandas>=2.0.0",  # Data manipulation
+    "tenacity>=8.0.0",  # Retry library for enterprise retry system
 ]
 
 [project.optional-dependencies]
