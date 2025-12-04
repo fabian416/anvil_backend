@@ -154,11 +154,12 @@ class ServiceRegistry:
         
         # Record telemetry
         if self.telemetry:
-            await self.telemetry.record_manual_override(
-                service_name,
-                "disabled",
-                user_id,
-                reason,
+            await self.telemetry.record_service_override(
+                service_name=service_name,
+                action="disable",
+                user_id=user_id,
+                reason=reason,
+                duration_minutes=duration_minutes,
             )
     
     async def enable_service(
@@ -193,11 +194,11 @@ class ServiceRegistry:
         
         # Record telemetry
         if self.telemetry:
-            await self.telemetry.record_manual_override(
-                service_name,
-                "enabled",
-                user_id,
-                reason,
+            await self.telemetry.record_service_override(
+                service_name=service_name,
+                action="enable",
+                user_id=user_id,
+                reason=reason,
             )
     
     def get_service_status(self, service_name: str) -> Dict[str, Any]:

@@ -237,13 +237,16 @@ class CircuitBreaker:
         
         # Record telemetry
         if self.telemetry:
-            self.telemetry.record_circuit_breaker_event(
-                service_name,
-                "opened",
-                {
-                    "reason": "failure_threshold_exceeded",
-                    "failure_count": self._get_counter(f"circuit:{service_name}:failures"),
-                },
+            import asyncio
+            failure_count = self._get_counter(f"circuit:{service_name}:failures")
+            asyncio.create_task(
+                self.telemetry.record_circuit_state_change(
+                    service_name=service_name,
+                    from_state="CLOSED",
+                    to_state="OPEN",
+                    reason="failure_threshold_exceeded",
+                    failure_count=failure_count,
+                )
             )
     
     def _transition_to_half_open(self, service_name: str):
@@ -258,10 +261,14 @@ class CircuitBreaker:
         
         # Record telemetry
         if self.telemetry:
-            self.telemetry.record_circuit_breaker_event(
-                service_name,
-                "half_opened",
-                {"reason": "timeout_expired"},
+            import asyncio
+            asyncio.create_task(
+                self.telemetry.record_circuit_state_change(
+                    service_name=service_name,
+                    from_state="OPEN",
+                    to_state="HALF_OPEN",
+                    reason="timeout_expired",
+                )
             )
     
     def _transition_to_closed(self, service_name: str):
@@ -278,10 +285,16 @@ class CircuitBreaker:
         
         # Record telemetry
         if self.telemetry:
-            self.telemetry.record_circuit_breaker_event(
-                service_name,
-                "closed",
-                {"reason": "success_threshold_met"},
+            import asyncio
+            success_count = self._get_counter(f"circuit:{service_name}:half_open_successes")
+            asyncio.create_task(
+                self.telemetry.record_circuit_state_change(
+                    service_name=service_name,
+                    from_state="HALF_OPEN",
+                    to_state="CLOSED",
+                    reason="success_threshold_met",
+                    success_count=success_count,
+                )
             )
     
     def _should_attempt_reset(self, service_name: str) -> bool:
