@@ -24,6 +24,7 @@ from app.presentation.http.controllers.hunter.patterns import create_patterns_ro
 from app.presentation.http.controllers.ultra.flash_loans import create_flash_loans_router
 from app.presentation.http.controllers.ultra.arbitrage import create_arbitrage_router
 from app.presentation.http.controllers.ultra.mev import create_mev_router
+from app.presentation.http.controllers.ultra.auto_executor import create_auto_executor_router
 
 # New routers for distillation and projects
 from app.presentation.http.controllers.admin.distillation_router import router as distillation_admin_router
@@ -103,6 +104,8 @@ def create_api_v1_router() -> APIRouter:
         create_arbitrage_router(),
         # ULTRA MEV protection router
         create_mev_router(),
+        # ULTRA auto-executor router
+        create_auto_executor_router(),
         # New distillation and projects routers
         distillation_admin_router,
         projects_admin_router,
