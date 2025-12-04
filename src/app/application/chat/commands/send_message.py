@@ -3,15 +3,21 @@ Send message command with Hunter AI tool integration.
 """
 
 from uuid import UUID
-from typing import Optional
+from typing import Optional, Dict, Any
 import asyncio
 import re
 
 from app.domain.entities.message import Message
 from app.domain.entities.conversation import Conversation
+from app.domain.entities.project import Project
 from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.ports.project_repository import ProjectRepository
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.application.chat.services.hunter_tool_executor import HunterToolExecutor
+from app.application.projects.services.project_tool_executor import (
+    ProjectToolExecutor,
+    ToolExecutionError,
+)
 from app.domain.value_objects.agent_tools.hunter_tools import (
     HunterToolType,
     get_hunter_tool_by_name,
@@ -39,6 +45,7 @@ class SendMessage:
         self,
         repository: ConversationRepository,
         agent_gateway: AgentGateway,
+        project_repository: Optional[ProjectRepository] = None,
         hunter_executor: Optional[HunterToolExecutor] = None,
     ):
         """
@@ -47,10 +54,12 @@ class SendMessage:
         Args:
             repository: Conversation repository
             agent_gateway: Agent gateway for processing messages
+            project_repository: Project repository (for project-scoped conversations)
             hunter_executor: Hunter AI tool executor (optional)
         """
         self._repository = repository
         self._agent_gateway = agent_gateway
+        self._project_repository = project_repository
         self._hunter_executor = hunter_executor or HunterToolExecutor()
     
     async def execute(
@@ -89,19 +98,29 @@ class SendMessage:
         )
         await self._repository.add_message(user_message)
         
-        # Process with agent gateway
+        # Get project if conversation is project-scoped
+        project = None
+        if conversation.is_project_scoped and self._project_repository:
+            project = await self._project_repository.get(conversation.project_id)
+        
+        # Process with agent gateway (use project system prompt if available)
+        context = {}
+        if project:
+            context["system_prompt"] = project.system_prompt
+        
         agent_response = await self._agent_gateway.process_message(
             user_id=user_id,
             session_id=str(conversation_id),
             message=content,
+            context=context,
         )
         
-        # Detect and execute Hunter AI tools if applicable
-        hunter_results = await self._execute_hunter_tools(content)
+        # Detect and execute tools (project-scoped if applicable)
+        tool_results = await self._execute_tools(content, project)
         
-        # Combine agent response with Hunter AI tool results
-        if hunter_results:
-            final_response = agent_response + "\n\n" + hunter_results
+        # Combine agent response with tool results
+        if tool_results:
+            final_response = agent_response + "\n\n" + tool_results
         else:
             final_response = agent_response
         
@@ -121,12 +140,20 @@ class SendMessage:
         
         return user_message, agent_message
     
-    async def _execute_hunter_tools(self, message: str) -> str:
+    async def _execute_tools(
+        self,
+        message: str,
+        project: Optional[Project] = None,
+    ) -> str:
         """
-        Detect and execute Hunter AI tools based on message content.
+        Detect and execute tools based on message content.
+        
+        If project is provided, uses project-scoped tool executor with
+        risk limit enforcement. Otherwise, uses general Hunter AI executor.
         
         Args:
             message: User message content
+            project: Optional project for scoped execution
         
         Returns:
             Formatted tool results (or empty string if no tools detected)
@@ -144,61 +171,82 @@ class SendMessage:
         if not token:
             return ""  # No token detected, skip Hunter AI
         
+        # Create appropriate tool executor
+        if project:
+            tool_executor = ProjectToolExecutor(project, self._hunter_executor)
+        else:
+            tool_executor = None  # Use direct hunter_executor
+        
         try:
             # Sentiment analysis keywords
             if any(keyword in message_lower for keyword in [
                 "sentiment", "social", "buzz", "feeling", "mood", "twitter",
                 "reddit", "discord", "news", "community"
             ]):
-                result = await self._hunter_executor.execute_tool(
-                    tool_type=HunterToolType.SENTIMENT_ANALYSIS,
-                    parameters={"token_symbol": token}
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "hunter_sentiment_analysis",
+                    HunterToolType.SENTIMENT_ANALYSIS,
+                    {"token_symbol": token}
                 )
-                results.append(result)
+                if result:
+                    results.append(result)
             
             # Price prediction keywords
             if any(keyword in message_lower for keyword in [
                 "predict", "forecast", "future", "price target", "will", "going to",
                 "expect", "prediction", "tomorrow", "next week"
             ]):
-                result = await self._hunter_executor.execute_tool(
-                    tool_type=HunterToolType.PRICE_PREDICTION,
-                    parameters={"token_symbol": token, "horizon_hours": 24}
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "hunter_price_prediction",
+                    HunterToolType.PRICE_PREDICTION,
+                    {"token_symbol": token, "horizon_hours": 24}
                 )
-                results.append(result)
+                if result:
+                    results.append(result)
             
             # Risk analysis keywords
             if any(keyword in message_lower for keyword in [
                 "risk", "safe", "risky", "volatile", "danger", "secure",
                 "volatility", "liquidity", "audit", "contract risk"
             ]):
-                result = await self._hunter_executor.execute_tool(
-                    tool_type=HunterToolType.RISK_ANALYSIS,
-                    parameters={"token_symbol": token}
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "hunter_risk_analysis",
+                    HunterToolType.RISK_ANALYSIS,
+                    {"token_symbol": token}
                 )
-                results.append(result)
+                if result:
+                    results.append(result)
             
             # Trading signal keywords
             if any(keyword in message_lower for keyword in [
                 "buy", "sell", "trade", "signal", "entry", "exit",
                 "should i", "good time", "when to", "recommend"
             ]):
-                result = await self._hunter_executor.execute_tool(
-                    tool_type=HunterToolType.TRADING_SIGNALS,
-                    parameters={"token_symbol": token, "timeframe": "1d"}
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "hunter_trading_signals",
+                    HunterToolType.TRADING_SIGNALS,
+                    {"token_symbol": token, "timeframe": "1d"}
                 )
-                results.append(result)
+                if result:
+                    results.append(result)
             
             # Pattern recognition keywords
             if any(keyword in message_lower for keyword in [
                 "pattern", "chart", "technical", "support", "resistance",
                 "triangle", "head and shoulders", "flag", "doji", "candlestick"
             ]):
-                result = await self._hunter_executor.execute_tool(
-                    tool_type=HunterToolType.PATTERN_RECOGNITION,
-                    parameters={"token_symbol": token, "min_confidence": 0.6}
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "hunter_pattern_recognition",
+                    HunterToolType.PATTERN_RECOGNITION,
+                    {"token_symbol": token, "min_confidence": 0.6}
                 )
-                results.append(result)
+                if result:
+                    results.append(result)
             
             # Comprehensive analysis keywords (execute all tools)
             if any(keyword in message_lower for keyword in [
@@ -206,26 +254,16 @@ class SendMessage:
                 "comprehensive", "report", "breakdown"
             ]):
                 # Execute all tools for comprehensive analysis
-                all_results = await asyncio.gather(
-                    self._hunter_executor.execute_tool(
-                        HunterToolType.SENTIMENT_ANALYSIS,
-                        {"token_symbol": token}
-                    ),
-                    self._hunter_executor.execute_tool(
-                        HunterToolType.PRICE_PREDICTION,
-                        {"token_symbol": token, "horizon_hours": 24}
-                    ),
-                    self._hunter_executor.execute_tool(
-                        HunterToolType.RISK_ANALYSIS,
-                        {"token_symbol": token}
-                    ),
-                    self._hunter_executor.execute_tool(
-                        HunterToolType.TRADING_SIGNALS,
-                        {"token_symbol": token, "timeframe": "1d"}
-                    ),
-                    return_exceptions=True
-                )
-                results.extend([r for r in all_results if isinstance(r, str)])
+                if tool_executor:
+                    # Project-scoped: Execute only enabled tools
+                    comp_results = await self._execute_comprehensive_project(
+                        tool_executor, token
+                    )
+                else:
+                    # General chat: Execute all Hunter tools
+                    comp_results = await self._execute_comprehensive_general(token)
+                
+                results.extend(comp_results)
         
         except Exception as e:
             # Log error but don't fail the message
@@ -237,6 +275,134 @@ class SendMessage:
         if results:
             return "\n\n---\n\n".join(results)
         return ""
+    
+    async def _execute_single_tool(
+        self,
+        tool_executor: Optional[ProjectToolExecutor],
+        tool_name: str,
+        tool_type: HunterToolType,
+        parameters: Dict[str, Any],
+    ) -> Optional[str]:
+        """
+        Execute a single tool (project-scoped or general).
+        
+        Args:
+            tool_executor: Project tool executor (if project-scoped)
+            tool_name: Tool name (e.g., "hunter_sentiment_analysis")
+            tool_type: Tool type enum
+            parameters: Tool parameters
+        
+        Returns:
+            Formatted tool result or None if execution failed
+        """
+        try:
+            if tool_executor:
+                # Project-scoped execution with validation
+                return await tool_executor.execute_tool(tool_name, parameters)
+            else:
+                # General execution (no project limits)
+                return await self._hunter_executor.execute_tool(tool_type, parameters)
+        except ToolExecutionError as e:
+            # Tool not allowed in project
+            return f"⚠️ {str(e)}"
+        except Exception as e:
+            # Other errors - log and skip
+            import logging
+            logging.error(f"Tool execution error: {e}")
+            return None
+    
+    async def _execute_comprehensive_project(
+        self,
+        tool_executor: ProjectToolExecutor,
+        token: str,
+    ) -> list[str]:
+        """
+        Execute comprehensive analysis using project-enabled tools only.
+        
+        Args:
+            tool_executor: Project tool executor
+            token: Token symbol
+        
+        Returns:
+            List of formatted tool results
+        """
+        project = tool_executor.project
+        results = []
+        
+        # Build list of tools to execute (only if enabled in project)
+        tools_to_execute = []
+        
+        if project.can_use_hunter_tool("hunter_sentiment_analysis"):
+            tools_to_execute.append((
+                "hunter_sentiment_analysis",
+                HunterToolType.SENTIMENT_ANALYSIS,
+                {"token_symbol": token}
+            ))
+        
+        if project.can_use_hunter_tool("hunter_price_prediction"):
+            tools_to_execute.append((
+                "hunter_price_prediction",
+                HunterToolType.PRICE_PREDICTION,
+                {"token_symbol": token, "horizon_hours": 24}
+            ))
+        
+        if project.can_use_hunter_tool("hunter_risk_analysis"):
+            tools_to_execute.append((
+                "hunter_risk_analysis",
+                HunterToolType.RISK_ANALYSIS,
+                {"token_symbol": token}
+            ))
+        
+        if project.can_use_hunter_tool("hunter_trading_signals"):
+            tools_to_execute.append((
+                "hunter_trading_signals",
+                HunterToolType.TRADING_SIGNALS,
+                {"token_symbol": token, "timeframe": "1d"}
+            ))
+        
+        # Execute all enabled tools in parallel
+        if tools_to_execute:
+            all_results = await asyncio.gather(
+                *[
+                    self._execute_single_tool(tool_executor, name, ttype, params)
+                    for name, ttype, params in tools_to_execute
+                ],
+                return_exceptions=True
+            )
+            results.extend([r for r in all_results if isinstance(r, str)])
+        
+        return results
+    
+    async def _execute_comprehensive_general(self, token: str) -> list[str]:
+        """
+        Execute comprehensive analysis with all Hunter tools (general chat).
+        
+        Args:
+            token: Token symbol
+        
+        Returns:
+            List of formatted tool results
+        """
+        all_results = await asyncio.gather(
+            self._hunter_executor.execute_tool(
+                HunterToolType.SENTIMENT_ANALYSIS,
+                {"token_symbol": token}
+            ),
+            self._hunter_executor.execute_tool(
+                HunterToolType.PRICE_PREDICTION,
+                {"token_symbol": token, "horizon_hours": 24}
+            ),
+            self._hunter_executor.execute_tool(
+                HunterToolType.RISK_ANALYSIS,
+                {"token_symbol": token}
+            ),
+            self._hunter_executor.execute_tool(
+                HunterToolType.TRADING_SIGNALS,
+                {"token_symbol": token, "timeframe": "1d"}
+            ),
+            return_exceptions=True
+        )
+        return [r for r in all_results if isinstance(r, str)]
     
     async def _broadcast_message(self, conversation_id: UUID, message: Message) -> None:
         """
