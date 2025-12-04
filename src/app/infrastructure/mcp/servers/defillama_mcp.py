@@ -6,24 +6,44 @@ Provides MCP tools for:
 - Historical TVL data
 - Protocol information
 - Chain TVL comparisons
+
+Feature Flag: mcp.servers.defillama_enabled
 """
 
 from typing import Dict, Any, Optional, List
 import httpx
 
 from app.infrastructure.mcp.base_server import MCPServer
+from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 
 class DeFiLlamaMCPServer(MCPServer):
     """MCP Server for DeFiLlama protocol analytics."""
     
-    def __init__(self, base_url: str = "https://api.llama.fi"):
+    def __init__(
+        self,
+        base_url: str = "https://api.llama.fi",
+        settings: Optional[MCPSettings] = None,
+    ):
         """
         Initialize DeFiLlama MCP server.
         
         Args:
             base_url: DeFiLlama API base URL
+            settings: MCP configuration settings
+            
+        Raises:
+            MCPServerDisabledError: If DeFiLlama server is disabled
         """
+        self.settings = settings or MCPSettings()
+        
+        # Check if server is enabled
+        if not self.settings.enabled or not self.settings.servers.defillama_enabled:
+            raise MCPServerDisabledError(
+                "DeFiLlama MCP server is disabled. "
+                "Enable with mcp.servers.defillama_enabled=true in config."
+            )
+        
         super().__init__(
             server_name="defillama",
             description="DeFiLlama protocol analytics and TVL data",

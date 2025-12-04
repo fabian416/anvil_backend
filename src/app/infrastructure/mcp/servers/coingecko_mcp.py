@@ -6,25 +6,46 @@ Provides MCP tools for:
 - Market data
 - Historical prices
 - Token information
+
+Feature Flag: mcp.servers.coingecko_enabled
 """
 
 from typing import Dict, Any, Optional, List
 import httpx
 
 from app.infrastructure.mcp.base_server import MCPServer
+from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 
 class CoinGeckoMCPServer(MCPServer):
     """MCP Server for CoinGecko market data."""
     
-    def __init__(self, api_key: str = "", base_url: str = "https://api.coingecko.com/api/v3"):
+    def __init__(
+        self,
+        api_key: str = "",
+        base_url: str = "https://api.coingecko.com/api/v3",
+        settings: Optional[MCPSettings] = None,
+    ):
         """
         Initialize CoinGecko MCP server.
         
         Args:
             api_key: CoinGecko API key (optional for public API)
             base_url: CoinGecko API base URL
+            settings: MCP configuration settings
+            
+        Raises:
+            MCPServerDisabledError: If CoinGecko server is disabled
         """
+        self.settings = settings or MCPSettings()
+        
+        # Check if server is enabled
+        if not self.settings.enabled or not self.settings.servers.coingecko_enabled:
+            raise MCPServerDisabledError(
+                "CoinGecko MCP server is disabled. "
+                "Enable with mcp.servers.coingecko_enabled=true in config."
+            )
+        
         super().__init__(
             server_name="coingecko",
             description="CoinGecko market data and token prices",

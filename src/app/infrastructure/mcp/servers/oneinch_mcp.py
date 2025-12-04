@@ -5,25 +5,46 @@ Provides MCP tools for:
 - Getting swap quotes
 - Finding best swap routes
 - Checking liquidity sources
+
+Feature Flag: mcp.servers.oneinch_enabled
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import httpx
 
 from app.infrastructure.mcp.base_server import MCPServer
+from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 
 class OneInchMCPServer(MCPServer):
     """MCP Server for 1inch DEX aggregator."""
     
-    def __init__(self, api_key: str = "", base_url: str = "https://api.1inch.dev"):
+    def __init__(
+        self,
+        api_key: str = "",
+        base_url: str = "https://api.1inch.dev",
+        settings: Optional[MCPSettings] = None,
+    ):
         """
         Initialize 1inch MCP server.
         
         Args:
             api_key: 1inch API key (optional for public endpoints)
             base_url: 1inch API base URL
+            settings: MCP configuration settings
+            
+        Raises:
+            MCPServerDisabledError: If 1inch server is disabled
         """
+        self.settings = settings or MCPSettings()
+        
+        # Check if server is enabled
+        if not self.settings.enabled or not self.settings.servers.oneinch_enabled:
+            raise MCPServerDisabledError(
+                "1inch MCP server is disabled. "
+                "Enable with mcp.servers.oneinch_enabled=true in config."
+            )
+        
         super().__init__(
             server_name="1inch",
             description="1inch DEX aggregator for best swap routes and prices",

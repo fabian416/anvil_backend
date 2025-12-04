@@ -8,6 +8,7 @@ from app.setup.config.mailgun import MailgunSettings
 from app.setup.config.stripe import StripeSettings
 from app.setup.config.privy import PrivySettings
 from app.setup.config.integrations import IntegrationSettings
+from app.setup.config.mcp import MCPSettings
 
 
 class AppSettings(BaseModel):
@@ -19,6 +20,7 @@ class AppSettings(BaseModel):
     stripe: StripeSettings | None = None
     privy: PrivySettings | None = None
     integrations: IntegrationSettings = IntegrationSettings()
+    mcp: MCPSettings = MCPSettings()
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:

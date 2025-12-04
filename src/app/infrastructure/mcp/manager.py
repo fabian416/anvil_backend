@@ -11,12 +11,13 @@ Architecture:
     - Request routing to appropriate servers
     - Health monitoring
     - Graceful start/stop
+    - Feature flag support for enable/disable
 
 Usage:
     # Initialize manager
-    manager = MCPServerManager()
+    manager = MCPServerManager(settings)
     
-    # Register servers
+    # Register servers (only enabled ones)
     manager.register_server(OneInchMCPServer())
     manager.register_server(AaveMCPServer())
     
@@ -36,6 +37,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 
 from app.infrastructure.mcp.base import MCPServer, MCPToolDescription, MCPToolRequest, MCPToolResponse
+from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 
 @dataclass
@@ -65,10 +67,16 @@ class MCPServerManager:
         await manager.start_all()
     """
     
-    def __init__(self):
-        """Initialize MCP server manager."""
+    def __init__(self, settings: Optional[MCPSettings] = None):
+        """
+        Initialize MCP server manager.
+        
+        Args:
+            settings: MCP configuration settings with feature flags
+        """
         self.servers: Dict[str, ServerInfo] = {}
         self.tool_to_server_map: Dict[str, str] = {}
+        self.settings = settings or MCPSettings()
         
         # Create unified API
         self.app = FastAPI(
@@ -92,8 +100,24 @@ class MCPServerManager:
             server: MCPServer instance to register
             port: Port number for this server
             auto_start: Whether to start server immediately
+            
+        Raises:
+            MCPServerDisabledError: If server is disabled in settings
         """
         server_name = server.name
+        
+        # Check if MCP is globally disabled
+        if not self.settings.enabled:
+            raise MCPServerDisabledError(
+                f"MCP system is disabled. Enable with mcp.enabled=true in config."
+            )
+        
+        # Check if specific server is enabled
+        if not self._is_server_enabled(server_name):
+            raise MCPServerDisabledError(
+                f"MCP server '{server_name}' is disabled. "
+                f"Enable with mcp.servers.{server_name}_enabled=true in config."
+            )
         
         if server_name in self.servers:
             raise ValueError(f"Server '{server_name}' is already registered")
@@ -116,6 +140,27 @@ class MCPServerManager:
                 self.tool_to_server_map[tool_name] = server_name
         
         print(f"[Manager] Registered server: {server_name} (port {port}, {len(server.tools)} tools)")
+    
+    def _is_server_enabled(self, server_name: str) -> bool:
+        """
+        Check if a server is enabled in settings.
+        
+        Args:
+            server_name: Name of the server to check
+            
+        Returns:
+            True if server is enabled, False otherwise
+        """
+        server_flag_map = {
+            "defillama": self.settings.servers.defillama_enabled,
+            "oneinch": self.settings.servers.oneinch_enabled,
+            "thegraph": self.settings.servers.thegraph_enabled,
+            "coingecko": self.settings.servers.coingecko_enabled,
+            "aave": self.settings.servers.aave_enabled,
+            "portfolio": self.settings.servers.portfolio_enabled,
+        }
+        
+        return server_flag_map.get(server_name, True)  # Default to enabled if unknown
     
     async def start_server(self, server_name: str):
         """

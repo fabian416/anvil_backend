@@ -75,3 +75,15 @@ enabled = true  # Master switch for project integration
 templates_enabled = true  # Enable pre-built project templates
 risk_validation_enabled = true  # Enable risk limit validation
 tool_permissions_enabled = true  # Enable tool permission enforcement
+
+# MCP Server Feature Flags
+[mcp]
+enabled = true  # Master switch for all MCP servers
+
+[mcp.servers]
+defillama_enabled = true  # DeFiLlama TVL & protocol data (Free tier)
+oneinch_enabled = true  # 1inch DEX aggregation (Paid API)
+thegraph_enabled = true  # The Graph blockchain indexing (Paid API)
+coingecko_enabled = true  # CoinGecko market data (Free tier)
+aave_enabled = true  # Aave lending protocol integration
+portfolio_enabled = true  # Portfolio tracking & analytics

@@ -1,8 +1,12 @@
-"""Portfolio MCP server - exposes internal portfolio tools to agents."""
+"""Portfolio MCP server - exposes internal portfolio tools to agents.
+
+Feature Flag: mcp.servers.portfolio_enabled
+"""
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 
 from app.infrastructure.mcp.base import MCPServer
+from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 
 class PortfolioMCPServer(MCPServer):
@@ -18,13 +22,30 @@ class PortfolioMCPServer(MCPServer):
     It wraps our domain/application logic for agent consumption.
     """
     
-    def __init__(self, portfolio_service: Optional[Any] = None):
+    def __init__(
+        self,
+        portfolio_service: Optional[Any] = None,
+        settings: Optional[MCPSettings] = None,
+    ):
         """
         Initialize Portfolio MCP server.
         
         Args:
             portfolio_service: Service for portfolio operations (injected via DI)
+            settings: MCP configuration settings
+            
+        Raises:
+            MCPServerDisabledError: If Portfolio server is disabled
         """
+        self.settings = settings or MCPSettings()
+        
+        # Check if server is enabled
+        if not self.settings.enabled or not self.settings.servers.portfolio_enabled:
+            raise MCPServerDisabledError(
+                "Portfolio MCP server is disabled. "
+                "Enable with mcp.servers.portfolio_enabled=true in config."
+            )
+        
         super().__init__(
             name="portfolio",
             version="1.0.0",

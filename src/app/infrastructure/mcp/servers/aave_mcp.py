@@ -19,11 +19,14 @@ Integration Points:
     - Aave subgraph for historical data
     - Internal wallet service for transactions
     - Price oracles for accurate valuations
+
+Feature Flag: mcp.servers.aave_enabled
 """
 from typing import Dict, Any, List, Optional
 from decimal import Decimal
 
 from app.infrastructure.mcp.base import MCPServer
+from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 
 class AaveMCPServer(MCPServer):
@@ -55,6 +58,7 @@ class AaveMCPServer(MCPServer):
         self,
         wallet_service: Optional[Any] = None,
         subgraph_url: Optional[str] = None,
+        settings: Optional[MCPSettings] = None,
     ):
         """
         Initialize Aave MCP server.
@@ -62,7 +66,20 @@ class AaveMCPServer(MCPServer):
         Args:
             wallet_service: Internal wallet service for transaction execution
             subgraph_url: Aave subgraph URL for historical data queries
+            settings: MCP configuration settings
+            
+        Raises:
+            MCPServerDisabledError: If Aave server is disabled
         """
+        self.settings = settings or MCPSettings()
+        
+        # Check if server is enabled
+        if not self.settings.enabled or not self.settings.servers.aave_enabled:
+            raise MCPServerDisabledError(
+                "Aave MCP server is disabled. "
+                "Enable with mcp.servers.aave_enabled=true in config."
+            )
+        
         super().__init__(
             name="aave",
             version="1.0.0",

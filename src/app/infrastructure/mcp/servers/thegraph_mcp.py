@@ -6,25 +6,46 @@ Provides MCP tools for:
 - Protocol-specific data
 - Historical blockchain data
 - Entity queries
+
+Feature Flag: mcp.servers.thegraph_enabled
 """
 
 from typing import Dict, Any, Optional
 import httpx
 
 from app.infrastructure.mcp.base_server import MCPServer
+from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 
 class TheGraphMCPServer(MCPServer):
     """MCP Server for The Graph protocol data."""
     
-    def __init__(self, api_key: str = "", base_url: str = "https://api.thegraph.com"):
+    def __init__(
+        self,
+        api_key: str = "",
+        base_url: str = "https://api.thegraph.com",
+        settings: Optional[MCPSettings] = None,
+    ):
         """
         Initialize The Graph MCP server.
         
         Args:
             api_key: The Graph API key (optional)
             base_url: The Graph API base URL
+            settings: MCP configuration settings
+            
+        Raises:
+            MCPServerDisabledError: If The Graph server is disabled
         """
+        self.settings = settings or MCPSettings()
+        
+        # Check if server is enabled
+        if not self.settings.enabled or not self.settings.servers.thegraph_enabled:
+            raise MCPServerDisabledError(
+                "The Graph MCP server is disabled. "
+                "Enable with mcp.servers.thegraph_enabled=true in config."
+            )
+        
         super().__init__(
             server_name="thegraph",
             description="The Graph subgraph queries for blockchain data",
