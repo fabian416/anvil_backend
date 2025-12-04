@@ -2,6 +2,24 @@
 
 Complete API documentation for all endpoints including Hunter AI Bot features.
 
+**Version:** 1.1.0  
+**Last Updated:** December 1, 2025
+
+## 🆕 What's New in v1.1.0
+
+### Hunter AI Chat Integration ✅
+All 6 Hunter AI modules now accessible via **chat interface**!
+
+**Natural Language Queries:**
+- "Analyze ETH" → Sentiment + Prediction + Risk + Signals (all tools)
+- "What's BTC sentiment?" → Sentiment analysis
+- "Should I buy UNI?" → Trading signal
+- "How risky is SOL?" → Risk assessment
+
+See [Phase 1 Integration Docs](./PHASE1_HUNTER_CHAT_INTEGRATION.md) for details.
+
+---
+
 ## Table of Contents
 
 1. [General Endpoints](#general-endpoints)
