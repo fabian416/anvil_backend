@@ -10,6 +10,7 @@ from app.setup.config.privy import PrivySettings
 from app.setup.config.integrations import IntegrationSettings
 from app.setup.config.mcp import MCPSettings
 from app.setup.config.agno import AgnoSettings
+from app.setup.config.projects import ProjectSettings
 
 
 class AppSettings(BaseModel):
@@ -23,6 +24,7 @@ class AppSettings(BaseModel):
     integrations: IntegrationSettings = IntegrationSettings()
     mcp: MCPSettings = MCPSettings()
     agno: AgnoSettings = AgnoSettings()
+    projects: ProjectSettings = ProjectSettings()
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:

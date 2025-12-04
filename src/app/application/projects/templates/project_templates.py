@@ -2,12 +2,15 @@
 Predefined project templates for different trading strategies and user levels.
 
 These templates provide ready-to-use project configurations for common use cases.
+
+Feature Flags: projects.templates.{template_name}_enabled
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from uuid import UUID
 
 from app.domain.entities.project import Project
+from app.setup.config.projects import ProjectSettings, TemplateDisabledError
 
 
 # Template 1: DeFi Swing Trader (Intermediate users)
@@ -350,6 +353,7 @@ ALL_PROJECT_TEMPLATES: List[Dict[str, Any]] = [
 def create_project_from_template(
     template: Dict[str, Any],
     created_by: UUID,
+    settings: Optional[ProjectSettings] = None,
 ) -> Project:
     """
     Create a Project entity from a template.
@@ -357,10 +361,40 @@ def create_project_from_template(
     Args:
         template: Project template dictionary
         created_by: User ID of creator (admin)
+        settings: Project settings with feature flags
     
     Returns:
         New Project entity
+        
+    Raises:
+        TemplateDisabledError: If template is disabled in settings
     """
+    settings = settings or ProjectSettings()
+    
+    # Check if projects are globally enabled
+    if not settings.enabled:
+        raise TemplateDisabledError(
+            "Project system is disabled. "
+            "Enable with projects.enabled=true in config."
+        )
+    
+    # Check if templates are enabled
+    if not settings.templates_enabled:
+        raise TemplateDisabledError(
+            "Project templates are disabled. "
+            "Enable with projects.templates_enabled=true in config."
+        )
+    
+    # Check if specific template is enabled
+    template_slug = template["slug"]
+    if not _is_template_enabled(template_slug, settings):
+        template_name = template["name"]
+        flag_name = template_slug.replace("-", "_") + "_enabled"
+        raise TemplateDisabledError(
+            f"Template '{template_name}' is disabled. "
+            f"Enable with projects.templates.{flag_name}=true in config."
+        )
+    
     return Project.create(
         slug=template["slug"],
         name=template["name"],
@@ -376,4 +410,53 @@ def create_project_from_template(
         enabled_chains=template.get("enabled_chains", []),
         enabled_tools=template.get("enabled_tools", []),
         risk_config=template.get("risk_config", {}),
+        max_users=template.get("max_users"),
+        display_order=template.get("display_order", 999),
+        is_featured=template.get("is_featured", False),
     )
+
+
+def _is_template_enabled(template_slug: str, settings: ProjectSettings) -> bool:
+    """
+    Check if a template is enabled in settings.
+    
+    Args:
+        template_slug: Template slug (e.g., 'defi-swing-trader')
+        settings: Project settings
+        
+    Returns:
+        True if template is enabled, False otherwise
+    """
+    template_flag_map = {
+        "defi-swing-trader": settings.templates.defi_swing_trader_enabled,
+        "arbitrage-hunter": settings.templates.arbitrage_hunter_enabled,
+        "ai-portfolio-manager": settings.templates.ai_portfolio_manager_enabled,
+        "conservative-investor": settings.templates.conservative_investor_enabled,
+        "day-trader-pro": settings.templates.day_trader_pro_enabled,
+    }
+    
+    return template_flag_map.get(template_slug, True)  # Default to enabled if unknown
+
+
+def get_available_templates(settings: Optional[ProjectSettings] = None) -> List[Dict[str, Any]]:
+    """
+    Get list of available (enabled) templates.
+    
+    Args:
+        settings: Project settings with feature flags
+        
+    Returns:
+        List of enabled template dictionaries
+    """
+    settings = settings or ProjectSettings()
+    
+    # Check if project system is enabled
+    if not settings.enabled or not settings.templates_enabled:
+        return []
+    
+    # Filter enabled templates
+    return [
+        template
+        for template in ALL_PROJECT_TEMPLATES
+        if _is_template_enabled(template["slug"], settings)
+    ]

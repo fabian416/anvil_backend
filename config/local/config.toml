@@ -99,3 +99,15 @@ trading_enabled = true  # Trade execution & strategy (1inch)
 lending_enabled = true  # Lending/borrowing (Aave)
 portfolio_enabled = true  # Portfolio optimization
 analytics_enabled = true  # Data analysis & insights (DeFiLlama)
+
+# Project Template Feature Flags
+[projects]
+enabled = true  # Master switch for project system
+templates_enabled = true  # Master switch for pre-built templates
+
+[projects.templates]
+defi_swing_trader_enabled = true  # Intermediate swing trading
+arbitrage_hunter_enabled = true  # Expert arbitrage (ULTRA tools)
+ai_portfolio_manager_enabled = true  # Long-term portfolio management
+conservative_investor_enabled = true  # Beginner-friendly, safe mode
+day_trader_pro_enabled = true  # Expert day trading
