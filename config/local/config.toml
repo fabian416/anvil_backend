@@ -78,7 +78,42 @@ tool_permissions_enabled = true  # Enable tool permission enforcement
 
 # MCP Server Feature Flags
 [mcp]
-enabled = true  # Master switch for all MCP servers
+enabled = true
+
+[distillation]
+enabled = true  # Master switch (env: DISTILLATION_ENABLED)
+provider = "vertex_ai"  # vertex_ai | deepinfra
+fallback_provider = "deepinfra"
+temperature = 0.3
+max_tokens = 200
+timeout_seconds = 5.0
+fail_open = true  # Allow requests if distillation fails
+rate_limit_per_user = 100  # Per minute
+rate_limit_global = 10000  # Per minute
+
+[distillation.vertex_ai]
+project_id = "anvil-dev"
+location = "us-central1"
+credentials_path = ""  # Set via VERTEX_AI_CREDENTIALS_PATH
+model = "gemini-1.5-flash"
+
+[distillation.deepinfra]
+api_key = ""  # Set via DEEPINFRA_API_KEY
+model = "meta-llama/Llama-3.2-3B-Instruct"
+base_url = "https://api.deepinfra.com/v1/openai"
+
+[distillation.retry]
+enabled = true
+max_retries = 3
+initial_backoff_seconds = 1.0
+max_backoff_seconds = 5.0
+exponential_base = 2.0
+
+[distillation.telemetry]
+enabled = true
+async_recording = true
+batch_size = 100
+flush_interval_seconds = 60  # Master switch for all MCP servers
 
 [mcp.servers]
 defillama_enabled = true  # DeFiLlama TVL & protocol data (Free tier)
