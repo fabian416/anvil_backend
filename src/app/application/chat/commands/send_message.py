@@ -14,6 +14,7 @@ from app.domain.ports.conversation_repository import ConversationRepository
 from app.domain.ports.project_repository import ProjectRepository
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.application.chat.services.hunter_tool_executor import HunterToolExecutor
+from app.application.chat.services.ultra_tool_executor import ULTRAToolExecutor
 from app.application.projects.services.project_tool_executor import (
     ProjectToolExecutor,
     ToolExecutionError,
@@ -21,6 +22,10 @@ from app.application.projects.services.project_tool_executor import (
 from app.domain.value_objects.agent_tools.hunter_tools import (
     HunterToolType,
     get_hunter_tool_by_name,
+)
+from app.domain.value_objects.agent_tools.ultra_tools import (
+    ULTRAToolType,
+    get_ultra_tool_by_name,
 )
 
 
@@ -47,6 +52,7 @@ class SendMessage:
         agent_gateway: AgentGateway,
         project_repository: Optional[ProjectRepository] = None,
         hunter_executor: Optional[HunterToolExecutor] = None,
+        ultra_executor: Optional[ULTRAToolExecutor] = None,
     ):
         """
         Initialize interactor.
@@ -56,11 +62,13 @@ class SendMessage:
             agent_gateway: Agent gateway for processing messages
             project_repository: Project repository (for project-scoped conversations)
             hunter_executor: Hunter AI tool executor (optional)
+            ultra_executor: ULTRA Arbitrage tool executor (optional)
         """
         self._repository = repository
         self._agent_gateway = agent_gateway
         self._project_repository = project_repository
         self._hunter_executor = hunter_executor or HunterToolExecutor()
+        self._ultra_executor = ultra_executor or ULTRAToolExecutor()
     
     async def execute(
         self,
@@ -173,9 +181,13 @@ class SendMessage:
         
         # Create appropriate tool executor
         if project:
-            tool_executor = ProjectToolExecutor(project, self._hunter_executor)
+            tool_executor = ProjectToolExecutor(
+                project,
+                self._hunter_executor,
+                self._ultra_executor
+            )
         else:
-            tool_executor = None  # Use direct hunter_executor
+            tool_executor = None  # Use direct executors
         
         try:
             # Sentiment analysis keywords
@@ -248,6 +260,68 @@ class SendMessage:
                 if result:
                     results.append(result)
             
+            # Flash loan keywords
+            if any(keyword in message_lower for keyword in [
+                "flash loan", "borrow", "aave", "balancer", "liquidity"
+            ]):
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "ultra_flash_loans",
+                    ULTRAToolType.FLASH_LOANS,
+                    {"token_symbol": token, "amount": 100}  # Default 100 tokens
+                )
+                if result:
+                    results.append(result)
+            
+            # Arbitrage discovery keywords
+            if any(keyword in message_lower for keyword in [
+                "arbitrage", "opportunity", "profit", "dex", "spread"
+            ]):
+                # Extract capital if mentioned
+                import re
+                capital_match = re.search(r'\$?([\d,]+)k?', message)
+                capital = 10000  # Default $10K
+                if capital_match:
+                    capital_str = capital_match.group(1).replace(',', '')
+                    capital = float(capital_str)
+                    if 'k' in message_lower:
+                        capital *= 1000
+                
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "ultra_arbitrage_discovery",
+                    ULTRAToolType.ARBITRAGE_DISCOVERY,
+                    {"token_symbol": token, "capital": capital, "min_profit": 50}
+                )
+                if result:
+                    results.append(result)
+            
+            # MEV protection keywords
+            if any(keyword in message_lower for keyword in [
+                "mev", "front-run", "sandwich", "flashbots", "protect"
+            ]):
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "ultra_mev_protection",
+                    ULTRAToolType.MEV_PROTECTION,
+                    {"protection_level": "high"}
+                )
+                if result:
+                    results.append(result)
+            
+            # Auto-executor status keywords
+            if any(keyword in message_lower for keyword in [
+                "bot status", "auto", "executor", "automated", "running"
+            ]):
+                result = await self._execute_single_tool(
+                    tool_executor,
+                    "ultra_auto_executor",
+                    ULTRAToolType.AUTO_EXECUTOR,
+                    {}
+                )
+                if result:
+                    results.append(result)
+            
             # Comprehensive analysis keywords (execute all tools)
             if any(keyword in message_lower for keyword in [
                 "analyze", "analysis", "complete", "full", "everything",
@@ -280,7 +354,7 @@ class SendMessage:
         self,
         tool_executor: Optional[ProjectToolExecutor],
         tool_name: str,
-        tool_type: HunterToolType,
+        tool_type: HunterToolType | ULTRAToolType,
         parameters: Dict[str, Any],
     ) -> Optional[str]:
         """
@@ -288,8 +362,8 @@ class SendMessage:
         
         Args:
             tool_executor: Project tool executor (if project-scoped)
-            tool_name: Tool name (e.g., "hunter_sentiment_analysis")
-            tool_type: Tool type enum
+            tool_name: Tool name (e.g., "hunter_sentiment_analysis", "ultra_flash_loans")
+            tool_type: Tool type enum (Hunter or ULTRA)
             parameters: Tool parameters
         
         Returns:
@@ -301,7 +375,12 @@ class SendMessage:
                 return await tool_executor.execute_tool(tool_name, parameters)
             else:
                 # General execution (no project limits)
-                return await self._hunter_executor.execute_tool(tool_type, parameters)
+                if isinstance(tool_type, HunterToolType):
+                    return await self._hunter_executor.execute_tool(tool_type, parameters)
+                elif isinstance(tool_type, ULTRAToolType):
+                    return await self._ultra_executor.execute_tool(tool_type, parameters)
+                else:
+                    return None
         except ToolExecutionError as e:
             # Tool not allowed in project
             return f"⚠️ {str(e)}"

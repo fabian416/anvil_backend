@@ -10,7 +10,9 @@ from decimal import Decimal
 
 from app.domain.entities.project import Project
 from app.application.chat.services.hunter_tool_executor import HunterToolExecutor
+from app.application.chat.services.ultra_tool_executor import ULTRAToolExecutor
 from app.domain.value_objects.agent_tools.hunter_tools import HunterToolType
+from app.domain.value_objects.agent_tools.ultra_tools import ULTRAToolType
 
 
 class ToolExecutionError(Exception):
@@ -33,6 +35,7 @@ class ProjectToolExecutor:
         self,
         project: Project,
         hunter_executor: HunterToolExecutor,
+        ultra_executor: ULTRAToolExecutor,
     ):
         """
         Initialize project-scoped tool executor.
@@ -40,9 +43,11 @@ class ProjectToolExecutor:
         Args:
             project: Project entity with configuration
             hunter_executor: Hunter AI tool executor
+            ultra_executor: ULTRA Arbitrage tool executor
         """
         self.project = project
         self.hunter_executor = hunter_executor
+        self.ultra_executor = ultra_executor
     
     async def execute_tool(
         self,
@@ -107,9 +112,20 @@ class ProjectToolExecutor:
         tool_name: str,
         parameters: Dict[str, Any],
     ) -> str:
-        """Execute ULTRA Arbitrage tool (placeholder for Phase 3)."""
-        # Will be implemented in Phase 3
-        return f"⚡ ULTRA tool '{tool_name}' will be available in Phase 3!"
+        """Execute ULTRA Arbitrage tool."""
+        # Map tool name to ULTRAToolType
+        tool_type_map = {
+            "ultra_flash_loans": ULTRAToolType.FLASH_LOANS,
+            "ultra_arbitrage_discovery": ULTRAToolType.ARBITRAGE_DISCOVERY,
+            "ultra_mev_protection": ULTRAToolType.MEV_PROTECTION,
+            "ultra_auto_executor": ULTRAToolType.AUTO_EXECUTOR,
+        }
+        
+        tool_type = tool_type_map.get(tool_name)
+        if not tool_type:
+            raise ToolExecutionError(f"Unknown ULTRA tool: {tool_name}")
+        
+        return await self.ultra_executor.execute_tool(tool_type, parameters)
     
     def _validate_parameters(self, tool_name: str, parameters: Dict[str, Any]) -> None:
         """
