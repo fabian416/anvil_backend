@@ -20,6 +20,7 @@ Key Features:
 from typing import Dict, List, Any, Optional, AsyncIterator
 from dataclasses import dataclass
 import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 # Agno imports (from submodule)
 import sys
@@ -109,6 +110,14 @@ class DeFiAgentBase:
         # MCP tools (loaded async)
         self.mcp_tools: List[MCPToolDefinition] = []
         self.agno_functions: List[Function] = []
+        
+        # Create retry decorator for MCP tool calls
+        self._mcp_retry = retry(
+            stop=stop_after_attempt(config.retry_max_attempts if hasattr(config, 'retry_max_attempts') else 2),
+            wait=wait_exponential(multiplier=1, min=1, max=5),
+            retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+            reraise=True,
+        )
         
         # Create Agno agent (tools loaded separately)
         self.agent = Agent(
@@ -212,12 +221,14 @@ class DeFiAgentBase:
             tool_def: MCP tool definition
         
         Returns:
-            Agno Function that calls the MCP tool
+            Agno Function that calls the MCP tool with retry logic
         """
-        # Create async handler that calls MCP tool
+        # Create async handler that calls MCP tool with retry
         async def mcp_tool_handler(**kwargs) -> Dict[str, Any]:
-            """Handler that calls MCP tool via HTTP."""
-            try:
+            """Handler that calls MCP tool via HTTP with automatic retry."""
+            @self._mcp_retry
+            async def _execute_mcp_call():
+                """Inner function with retry logic."""
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
                         f"{self.mcp_manager_url}/tools/{tool_def.name}",
@@ -225,16 +236,19 @@ class DeFiAgentBase:
                         timeout=30.0,
                     )
                     response.raise_for_status()
-                    result = response.json()
-                    
-                    if result.get("success"):
-                        return result.get("result", {})
-                    else:
-                        return {
-                            "error": result.get("error", "Tool execution failed"),
-                            "server": tool_def.server,
-                            "tool": tool_def.name,
-                        }
+                    return response.json()
+            
+            try:
+                result = await _execute_mcp_call()
+                
+                if result.get("success"):
+                    return result.get("result", {})
+                else:
+                    return {
+                        "error": result.get("error", "Tool execution failed"),
+                        "server": tool_def.server,
+                        "tool": tool_def.name,
+                    }
             
             except Exception as e:
                 return {
