@@ -12,6 +12,7 @@ Feature Flag: mcp.servers.thegraph_enabled
 
 from typing import Dict, Any, Optional
 import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.infrastructure.mcp.base_server import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -63,6 +64,14 @@ class TheGraphMCPServer(MCPServer):
             "aave_v3": "https://api.thegraph.com/subgraphs/name/aave/protocol-v3",
             "curve": "https://api.thegraph.com/subgraphs/name/messari/curve-finance-ethereum",
         }
+        
+        # Create retry decorator for this server
+        self._retry = retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=10),
+            retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+            reraise=True,
+        )
         
         # Register tools
         self._register_tools()

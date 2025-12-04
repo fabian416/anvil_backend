@@ -11,6 +11,7 @@ Feature Flag: mcp.servers.oneinch_enabled
 
 from typing import Dict, Any, Optional
 import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.infrastructure.mcp.base_server import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -58,6 +59,14 @@ class OneInchMCPServer(MCPServer):
                 "Authorization": f"Bearer {api_key}" if api_key else "",
             },
             timeout=30.0,
+        )
+        
+        # Create retry decorator for this server
+        self._retry = retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=10),
+            retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+            reraise=True,
         )
         
         # Register tools

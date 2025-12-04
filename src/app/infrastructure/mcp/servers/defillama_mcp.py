@@ -12,6 +12,7 @@ Feature Flag: mcp.servers.defillama_enabled
 
 from typing import Dict, Any, Optional, List
 import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.infrastructure.mcp.base_server import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -53,6 +54,14 @@ class DeFiLlamaMCPServer(MCPServer):
         self.client = httpx.AsyncClient(
             base_url=base_url,
             timeout=30.0,
+        )
+        
+        # Create retry decorator for this server
+        self._retry = retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=10),
+            retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+            reraise=True,
         )
         
         # Register tools
@@ -144,10 +153,14 @@ class DeFiLlamaMCPServer(MCPServer):
         Returns:
             Protocol TVL data
         """
-        try:
+        @self._retry
+        async def _fetch():
             response = await self.client.get(f"/protocol/{protocol}")
             response.raise_for_status()
-            data = response.json()
+            return response.json()
+        
+        try:
+            data = await _fetch()
             
             return {
                 "protocol": protocol,
@@ -176,10 +189,14 @@ class DeFiLlamaMCPServer(MCPServer):
         Returns:
             List of protocols with basic info
         """
-        try:
+        @self._retry
+        async def _fetch():
             response = await self.client.get("/protocols")
             response.raise_for_status()
-            data = response.json()
+            return response.json()
+        
+        try:
+            data = await _fetch()
             
             # Return top 50 by TVL
             protocols = sorted(data, key=lambda x: x.get("tvl", 0), reverse=True)[:50]
@@ -212,10 +229,14 @@ class DeFiLlamaMCPServer(MCPServer):
         Returns:
             Historical TVL data
         """
-        try:
+        @self._retry
+        async def _fetch():
             response = await self.client.get(f"/protocol/{protocol}")
             response.raise_for_status()
-            data = response.json()
+            return response.json()
+        
+        try:
+            data = await _fetch()
             
             # Get last 30 days
             tvl_history = data.get("tvl", [])[-30:]
@@ -252,10 +273,14 @@ class DeFiLlamaMCPServer(MCPServer):
         Returns:
             Chain TVL data
         """
-        try:
+        @self._retry
+        async def _fetch():
             response = await self.client.get(f"/v2/chains")
             response.raise_for_status()
-            data = response.json()
+            return response.json()
+        
+        try:
+            data = await _fetch()
             
             # Find chain data
             chain_data = next(
@@ -292,10 +317,14 @@ class DeFiLlamaMCPServer(MCPServer):
         Returns:
             List of chains with TVL
         """
-        try:
+        @self._retry
+        async def _fetch():
             response = await self.client.get("/v2/chains")
             response.raise_for_status()
-            data = response.json()
+            return response.json()
+        
+        try:
+            data = await _fetch()
             
             return {
                 "chains": [

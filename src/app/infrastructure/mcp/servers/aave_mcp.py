@@ -24,6 +24,8 @@ Feature Flag: mcp.servers.aave_enabled
 """
 from typing import Dict, Any, List, Optional
 from decimal import Decimal
+import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.infrastructure.mcp.base import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -88,6 +90,14 @@ class AaveMCPServer(MCPServer):
         
         self.wallet_service = wallet_service
         self.subgraph_url = subgraph_url or "https://api.thegraph.com/subgraphs/name/aave/protocol-v3"
+        
+        # Create retry decorator for this server
+        self._retry = retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=10),
+            retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException, Exception)),
+            reraise=True,
+        )
         
         # Supported chains for Aave V3
         self.chains = {

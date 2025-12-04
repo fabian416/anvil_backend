@@ -4,6 +4,8 @@ Feature Flag: mcp.servers.portfolio_enabled
 """
 from typing import Dict, Any, List, Optional
 from uuid import UUID
+import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.infrastructure.mcp.base import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -54,6 +56,14 @@ class PortfolioMCPServer(MCPServer):
         
         # In production, this would be injected via Dishka
         self.portfolio_service = portfolio_service
+        
+        # Create retry decorator for this server
+        self._retry = retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=10),
+            retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException, Exception)),
+            reraise=True,
+        )
         
         # Register tools
         self.setup_tools()
