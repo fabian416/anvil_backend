@@ -34,6 +34,10 @@ class MCPServerSettings(BaseModel):
         default=True,
         description="Enable Portfolio MCP server for tracking",
     )
+    perplexity_enabled: bool = Field(
+        default=True,
+        description="Enable Perplexity MCP server for AI-powered search & research",
+    )
 
 
 class MCPSettings(BaseModel):
