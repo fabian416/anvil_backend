@@ -27,6 +27,7 @@ from app.domain.value_objects.agent_tools.ultra_tools import (
     ULTRAToolType,
     get_ultra_tool_by_name,
 )
+from app.setup.config.integrations import IntegrationSettings
 
 
 class SendMessage:
@@ -53,6 +54,7 @@ class SendMessage:
         project_repository: Optional[ProjectRepository] = None,
         hunter_executor: Optional[HunterToolExecutor] = None,
         ultra_executor: Optional[ULTRAToolExecutor] = None,
+        integration_settings: Optional[IntegrationSettings] = None,
     ):
         """
         Initialize interactor.
@@ -63,12 +65,14 @@ class SendMessage:
             project_repository: Project repository (for project-scoped conversations)
             hunter_executor: Hunter AI tool executor (optional)
             ultra_executor: ULTRA Arbitrage tool executor (optional)
+            integration_settings: Integration feature flags (optional)
         """
         self._repository = repository
         self._agent_gateway = agent_gateway
         self._project_repository = project_repository
         self._hunter_executor = hunter_executor or HunterToolExecutor()
         self._ultra_executor = ultra_executor or ULTRAToolExecutor()
+        self._integration_settings = integration_settings or IntegrationSettings()
     
     async def execute(
         self,
@@ -190,88 +194,92 @@ class SendMessage:
             tool_executor = None  # Use direct executors
         
         try:
-            # Sentiment analysis keywords
-            if any(keyword in message_lower for keyword in [
-                "sentiment", "social", "buzz", "feeling", "mood", "twitter",
-                "reddit", "discord", "news", "community"
-            ]):
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "hunter_sentiment_analysis",
-                    HunterToolType.SENTIMENT_ANALYSIS,
-                    {"token_symbol": token}
-                )
-                if result:
-                    results.append(result)
+            # Hunter AI tools (check if enabled)
+            if self._integration_settings.chat.hunter_tools_enabled:
+                # Sentiment analysis keywords
+                if any(keyword in message_lower for keyword in [
+                    "sentiment", "social", "buzz", "feeling", "mood", "twitter",
+                    "reddit", "discord", "news", "community"
+                ]):
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "hunter_sentiment_analysis",
+                        HunterToolType.SENTIMENT_ANALYSIS,
+                        {"token_symbol": token}
+                    )
+                    if result:
+                        results.append(result)
+                
+                # Price prediction keywords
+                if any(keyword in message_lower for keyword in [
+                    "predict", "forecast", "future", "price target", "will", "going to",
+                    "expect", "prediction", "tomorrow", "next week"
+                ]):
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "hunter_price_prediction",
+                        HunterToolType.PRICE_PREDICTION,
+                        {"token_symbol": token, "horizon_hours": 24}
+                    )
+                    if result:
+                        results.append(result)
+                
+                # Risk analysis keywords
+                if any(keyword in message_lower for keyword in [
+                    "risk", "safe", "risky", "volatile", "danger", "secure",
+                    "volatility", "liquidity", "audit", "contract risk"
+                ]):
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "hunter_risk_analysis",
+                        HunterToolType.RISK_ANALYSIS,
+                        {"token_symbol": token}
+                    )
+                    if result:
+                        results.append(result)
+                
+                # Trading signal keywords
+                if any(keyword in message_lower for keyword in [
+                    "buy", "sell", "trade", "signal", "entry", "exit",
+                    "should i", "good time", "when to", "recommend"
+                ]):
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "hunter_trading_signals",
+                        HunterToolType.TRADING_SIGNALS,
+                        {"token_symbol": token, "timeframe": "1d"}
+                    )
+                    if result:
+                        results.append(result)
+                
+                # Pattern recognition keywords
+                if any(keyword in message_lower for keyword in [
+                    "pattern", "chart", "technical", "support", "resistance",
+                    "triangle", "head and shoulders", "flag", "doji", "candlestick"
+                ]):
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "hunter_pattern_recognition",
+                        HunterToolType.PATTERN_RECOGNITION,
+                        {"token_symbol": token, "min_confidence": 0.6}
+                    )
+                    if result:
+                        results.append(result)
             
-            # Price prediction keywords
-            if any(keyword in message_lower for keyword in [
-                "predict", "forecast", "future", "price target", "will", "going to",
-                "expect", "prediction", "tomorrow", "next week"
-            ]):
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "hunter_price_prediction",
-                    HunterToolType.PRICE_PREDICTION,
-                    {"token_symbol": token, "horizon_hours": 24}
-                )
-                if result:
-                    results.append(result)
-            
-            # Risk analysis keywords
-            if any(keyword in message_lower for keyword in [
-                "risk", "safe", "risky", "volatile", "danger", "secure",
-                "volatility", "liquidity", "audit", "contract risk"
-            ]):
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "hunter_risk_analysis",
-                    HunterToolType.RISK_ANALYSIS,
-                    {"token_symbol": token}
-                )
-                if result:
-                    results.append(result)
-            
-            # Trading signal keywords
-            if any(keyword in message_lower for keyword in [
-                "buy", "sell", "trade", "signal", "entry", "exit",
-                "should i", "good time", "when to", "recommend"
-            ]):
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "hunter_trading_signals",
-                    HunterToolType.TRADING_SIGNALS,
-                    {"token_symbol": token, "timeframe": "1d"}
-                )
-                if result:
-                    results.append(result)
-            
-            # Pattern recognition keywords
-            if any(keyword in message_lower for keyword in [
-                "pattern", "chart", "technical", "support", "resistance",
-                "triangle", "head and shoulders", "flag", "doji", "candlestick"
-            ]):
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "hunter_pattern_recognition",
-                    HunterToolType.PATTERN_RECOGNITION,
-                    {"token_symbol": token, "min_confidence": 0.6}
-                )
-                if result:
-                    results.append(result)
-            
-            # Flash loan keywords
-            if any(keyword in message_lower for keyword in [
-                "flash loan", "borrow", "aave", "balancer", "liquidity"
-            ]):
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "ultra_flash_loans",
-                    ULTRAToolType.FLASH_LOANS,
-                    {"token_symbol": token, "amount": 100}  # Default 100 tokens
-                )
-                if result:
-                    results.append(result)
+            # ULTRA tools (check if enabled)
+            if self._integration_settings.chat.ultra_tools_enabled:
+                # Flash loan keywords
+                if any(keyword in message_lower for keyword in [
+                    "flash loan", "borrow", "aave", "balancer", "liquidity"
+                ]):
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "ultra_flash_loans",
+                        ULTRAToolType.FLASH_LOANS,
+                        {"token_symbol": token, "amount": 100}  # Default 100 tokens
+                    )
+                    if result:
+                        results.append(result)
             
             # Arbitrage discovery keywords
             if any(keyword in message_lower for keyword in [
@@ -323,21 +331,22 @@ class SendMessage:
                     results.append(result)
             
             # Comprehensive analysis keywords (execute all tools)
-            if any(keyword in message_lower for keyword in [
-                "analyze", "analysis", "complete", "full", "everything",
-                "comprehensive", "report", "breakdown"
-            ]):
-                # Execute all tools for comprehensive analysis
-                if tool_executor:
-                    # Project-scoped: Execute only enabled tools
-                    comp_results = await self._execute_comprehensive_project(
-                        tool_executor, token
-                    )
-                else:
-                    # General chat: Execute all Hunter tools
-                    comp_results = await self._execute_comprehensive_general(token)
-                
-                results.extend(comp_results)
+            if self._integration_settings.chat.comprehensive_analysis_enabled:
+                if any(keyword in message_lower for keyword in [
+                    "analyze", "analysis", "complete", "full", "everything",
+                    "comprehensive", "report", "breakdown"
+                ]):
+                    # Execute all tools for comprehensive analysis
+                    if tool_executor:
+                        # Project-scoped: Execute only enabled tools
+                        comp_results = await self._execute_comprehensive_project(
+                            tool_executor, token
+                        )
+                    else:
+                        # General chat: Execute all Hunter tools
+                        comp_results = await self._execute_comprehensive_general(token)
+                    
+                    results.extend(comp_results)
         
         except Exception as e:
             # Log error but don't fail the message

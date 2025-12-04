@@ -57,3 +57,21 @@ log_agent_selection = true
 [privy]
 APP_ID = "cmim36q4q02zwjr0cc9csypp7"
 APP_SECRET = ""  # Set this in .secrets.toml or environment variable
+
+# Integration Feature Flags
+[integrations]
+
+# Chat Integration
+[integrations.chat]
+enabled = true  # Master switch for chat integration
+hunter_tools_enabled = true  # Enable Hunter AI tools (sentiment, prediction, risk, signals, portfolio, patterns)
+ultra_tools_enabled = true  # Enable ULTRA tools (flash loans, arbitrage, MEV, auto-executor)
+comprehensive_analysis_enabled = true  # Enable parallel multi-tool analysis
+max_parallel_tools = 10  # Max tools to execute in parallel
+
+# Project Integration
+[integrations.projects]
+enabled = true  # Master switch for project integration
+templates_enabled = true  # Enable pre-built project templates
+risk_validation_enabled = true  # Enable risk limit validation
+tool_permissions_enabled = true  # Enable tool permission enforcement

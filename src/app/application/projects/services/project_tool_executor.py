@@ -36,6 +36,7 @@ class ProjectToolExecutor:
         project: Project,
         hunter_executor: HunterToolExecutor,
         ultra_executor: ULTRAToolExecutor,
+        integration_settings: IntegrationSettings | None = None,
     ):
         """
         Initialize project-scoped tool executor.
@@ -44,10 +45,12 @@ class ProjectToolExecutor:
             project: Project entity with configuration
             hunter_executor: Hunter AI tool executor
             ultra_executor: ULTRA Arbitrage tool executor
+            integration_settings: Integration feature flags
         """
         self.project = project
         self.hunter_executor = hunter_executor
         self.ultra_executor = ultra_executor
+        self.integration_settings = integration_settings or IntegrationSettings()
     
     async def execute_tool(
         self,
@@ -74,8 +77,9 @@ class ProjectToolExecutor:
                 f"Available tools: {', '.join(self.project.enabled_tools)}"
             )
         
-        # Validate parameters against project risk config
-        self._validate_parameters(tool_name, parameters)
+        # Validate parameters against project risk config (if enabled)
+        if self.integration_settings.projects.risk_validation_enabled:
+            self._validate_parameters(tool_name, parameters)
         
         # Execute tool based on type
         if tool_name.startswith("hunter_"):

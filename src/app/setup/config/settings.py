@@ -7,6 +7,7 @@ from app.setup.config.security import SecuritySettings
 from app.setup.config.mailgun import MailgunSettings
 from app.setup.config.stripe import StripeSettings
 from app.setup.config.privy import PrivySettings
+from app.setup.config.integrations import IntegrationSettings
 
 
 class AppSettings(BaseModel):
@@ -17,6 +18,7 @@ class AppSettings(BaseModel):
     mailgun: MailgunSettings | None = None
     stripe: StripeSettings | None = None
     privy: PrivySettings | None = None
+    integrations: IntegrationSettings = IntegrationSettings()
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:
