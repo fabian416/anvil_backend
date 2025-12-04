@@ -5,7 +5,7 @@ This service executes tools within project scope, enforcing project-specific
 configuration and risk limits.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from decimal import Decimal
 
 from app.domain.entities.project import Project
@@ -13,6 +13,7 @@ from app.application.chat.services.hunter_tool_executor import HunterToolExecuto
 from app.application.chat.services.ultra_tool_executor import ULTRAToolExecutor
 from app.domain.value_objects.agent_tools.hunter_tools import HunterToolType
 from app.domain.value_objects.agent_tools.ultra_tools import ULTRAToolType
+from app.setup.config.integrations import IntegrationSettings
 
 
 class ToolExecutionError(Exception):
@@ -36,7 +37,7 @@ class ProjectToolExecutor:
         project: Project,
         hunter_executor: HunterToolExecutor,
         ultra_executor: ULTRAToolExecutor,
-        integration_settings: IntegrationSettings | None = None,
+        integration_settings: Optional[IntegrationSettings] = None,
     ):
         """
         Initialize project-scoped tool executor.
