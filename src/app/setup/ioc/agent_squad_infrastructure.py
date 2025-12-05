@@ -103,11 +103,49 @@ class AgentSquadInfrastructureProvider(Provider):
         return LLMClientOpenAI(api_key=api_key)
     
     @provide
-    def provide_coingecko_client(self) -> "CoinGeckoClient":
-        """Provide CoinGecko API client."""
+    def provide_coingecko_client(self, settings: AgentSquadSettings) -> "CoinGeckoClient | None":
+        """Provide CoinGecko API client if enabled."""
+        if not settings.external_apis.enable_coingecko:
+            return None
+        
         from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
         api_key = os.getenv("COINGECKO_API_KEY")  # Optional
         return CoinGeckoClient(api_key=api_key)
+    
+    @provide
+    def provide_oneinch_client(self, settings: AgentSquadSettings) -> "OneInchClient | None":
+        """Provide 1inch API client if enabled."""
+        if not settings.external_apis.enable_1inch:
+            return None
+        
+        from app.infrastructure.adapters.external.oneinch_client import OneInchClient
+        api_key = os.getenv("ONEINCH_API_KEY", "")
+        if not api_key:
+            # Log warning but don't fail - can still work with some features
+            return None
+        return OneInchClient(api_key=api_key)
+    
+    @provide
+    def provide_defillama_client(self, settings: AgentSquadSettings) -> "DefiLlamaClient | None":
+        """Provide DeFiLlama API client if enabled."""
+        if not settings.external_apis.enable_defillama:
+            return None
+        
+        from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
+        return DefiLlamaClient()  # No API key required
+    
+    @provide
+    def provide_hyperliquid_client(self, settings: AgentSquadSettings) -> "HyperliquidClient | None":
+        """Provide Hyperliquid API client if enabled."""
+        if not settings.external_apis.enable_hyperliquid:
+            return None
+        
+        from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+        api_key = os.getenv("HYPERLIQUID_API_KEY")
+        api_secret = os.getenv("HYPERLIQUID_API_SECRET")
+        
+        # Can use without keys for market data
+        return HyperliquidClient(api_key=api_key, api_secret=api_secret)
 
     @provide
     def provide_context_storage(self, redis_client: Redis) -> ContextStorageGateway:
@@ -161,9 +199,9 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_hunter_ai_agent(
         self,
         llm_client: LLMClientGateway,
-        coingecko_client: "CoinGeckoClient",
+        coingecko_client: "CoinGeckoClient | None",
     ) -> HunterAIAgentOpenAI:
-        """Provide Hunter AI agent with CoinGecko integration."""
+        """Provide Hunter AI agent with optional CoinGecko integration."""
         return HunterAIAgentOpenAI(
             llm_client=llm_client,
             coingecko_client=coingecko_client,

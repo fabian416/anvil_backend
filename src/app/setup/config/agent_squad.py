@@ -38,6 +38,32 @@ class AgentSquadAgentsConfig(BaseModel):
     dao_governance: AgentConfigModel = Field(default_factory=AgentConfigModel)
 
 
+class ExternalAPIsConfig(BaseModel):
+    """External API feature flags configuration."""
+    # DeFi Data APIs (Week 1)
+    enable_1inch: bool = True
+    enable_defillama: bool = True
+    enable_coingecko: bool = True
+    enable_hyperliquid: bool = True
+    enable_uniswap: bool = True
+    enable_curve: bool = True
+    enable_aave: bool = True
+
+    # Enterprise APIs (Week 2)
+    enable_chainalysis: bool = False  # Requires paid license
+    enable_trm_labs: bool = False     # Requires paid license
+    enable_gnosis_safe: bool = True
+    enable_forta: bool = True
+    enable_twilio: bool = False       # Requires paid account
+
+    # Advanced APIs (Week 3)
+    enable_privy: bool = False        # Requires app ID
+    enable_axelar: bool = True
+    enable_layerzero: bool = True
+    enable_opensea: bool = False      # Requires API key
+    enable_snapshot: bool = True
+
+
 class AgentSquadSettings(BaseModel):
     """Agent Squad configuration from TOML."""
     # Master toggle
@@ -70,6 +96,9 @@ class AgentSquadSettings(BaseModel):
     # Telemetry
     telemetry_enabled: bool = True
     telemetry_sample_rate: float = 1.0
+
+    # External API feature flags
+    external_apis: ExternalAPIsConfig = Field(default_factory=ExternalAPIsConfig)
 
     # Per-agent configuration
     agents: AgentSquadAgentsConfig = Field(default_factory=AgentSquadAgentsConfig)

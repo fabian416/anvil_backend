@@ -46,6 +46,33 @@ ALLOWED_ADMIN_EMAILS = [
 # Master toggle (disable entire Agent Squad system)
 enabled = true
 
+# ========================================
+# External API Feature Flags (Phase 7)
+# ========================================
+[agent_squad.external_apis]
+# DeFi Data APIs (Week 1)
+enable_1inch = true
+enable_defillama = true
+enable_coingecko = true
+enable_hyperliquid = true
+enable_uniswap = true
+enable_curve = true
+enable_aave = true
+
+# Enterprise APIs (Week 2)
+enable_chainalysis = false  # Requires paid license
+enable_trm_labs = false     # Requires paid license
+enable_gnosis_safe = true
+enable_forta = true
+enable_twilio = false       # Requires paid account
+
+# Advanced APIs (Week 3)
+enable_privy = false        # Requires app ID
+enable_axelar = true
+enable_layerzero = true
+enable_opensea = false      # Requires API key
+enable_snapshot = true
+
 # Intent classification
 intent_classification_model = "gpt-4o-mini"  # Fast model for routing
 intent_confidence_threshold = 0.85  # Min confidence (0.0-1.0)
