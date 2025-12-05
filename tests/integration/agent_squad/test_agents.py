@@ -1,0 +1,97 @@
+"""
+Integration tests for individual agents.
+"""
+
+import pytest
+from uuid import uuid4
+
+from app.domain.enums.agent_type import AgentType
+from app.domain.value_objects.conversation_id import ConversationId
+from app.domain.value_objects.message_content import MessageContent
+from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.infrastructure.adapters.agent_squad.agents.chat_agent_openai import ChatAgentOpenAI
+from app.infrastructure.adapters.agent_squad.agents.hunter_ai_agent_openai import HunterAIAgentOpenAI
+
+
+@pytest.mark.asyncio
+class TestAgentExecution:
+    """Test individual agent execution."""
+    
+    async def test_chat_agent_execution(self, mock_llm_client):
+        """Test chat agent execution."""
+        agent = ChatAgentOpenAI(llm_client=mock_llm_client)
+        
+        conversation_id = ConversationId(uuid4())
+        message = MessageContent("Hello! How can you help me?")
+        context = ConversationContext()
+        
+        # Mock LLM response
+        mock_llm_client.chat.return_value = {
+            "content": "I can help you with DeFi, trading, and more!",
+            "tokens_used": 150,
+            "model": "gpt-4o-mini",
+            "finish_reason": "stop",
+        }
+        
+        response = await agent.execute(conversation_id, message, context)
+        
+        assert response.agent_type == AgentType.CHAT
+        assert response.content is not None
+        assert response.tokens_used == 150
+        assert response.latency_ms > 0
+        assert len(response.tools_used) == 0  # Chat doesn't use external tools
+    
+    async def test_hunter_ai_agent_execution(self, mock_llm_client):
+        """Test Hunter AI agent execution."""
+        agent = HunterAIAgentOpenAI(llm_client=mock_llm_client)
+        
+        conversation_id = ConversationId(uuid4())
+        message = MessageContent("What's the market sentiment for Bitcoin?")
+        context = ConversationContext()
+        
+        # Mock LLM response
+        mock_llm_client.chat.return_value = {
+            "content": "Bitcoin sentiment is 75/100 (Bullish). Key drivers: ETF inflows, institutional adoption.",
+            "tokens_used": 300,
+            "model": "gpt-4o",
+            "finish_reason": "stop",
+        }
+        
+        response = await agent.execute(conversation_id, message, context)
+        
+        assert response.agent_type == AgentType.HUNTER_AI
+        assert response.content is not None
+        assert "sentiment" in response.content.lower() or "bullish" in response.content.lower()
+        assert response.tokens_used > 0
+        assert "openai_api" in response.tools_used
+    
+    async def test_agent_availability(self, mock_llm_client):
+        """Test agent availability check."""
+        agent = ChatAgentOpenAI(llm_client=mock_llm_client)
+        
+        is_available = await agent.is_available()
+        
+        assert is_available is True  # Chat agent always available
+    
+    async def test_agent_error_handling(self, mock_llm_client):
+        """Test agent error handling."""
+        agent = ChatAgentOpenAI(llm_client=mock_llm_client)
+        
+        conversation_id = ConversationId(uuid4())
+        message = MessageContent("Test message")
+        context = ConversationContext()
+        
+        # Mock LLM error
+        mock_llm_client.chat.side_effect = Exception("API error")
+        
+        with pytest.raises(Exception) as exc_info:
+            await agent.execute(conversation_id, message, context)
+        
+        assert "API error" in str(exc_info.value)
+
+
+@pytest.fixture
+def mock_llm_client(mocker):
+    """Mock LLM client."""
+    client = mocker.AsyncMock()
+    return client
