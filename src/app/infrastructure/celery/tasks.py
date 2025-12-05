@@ -106,6 +106,11 @@ from app.infrastructure.celery.tasks.projects_tasks import (
     aggregate_project_analytics,
     check_knowledge_base_health,
 )
+# Import LLM ranking tasks
+from app.infrastructure.celery.tasks.llm_ranking import (
+    recalculate_all_rankings,
+    recalculate_agent_rankings,
+)
 
 
 @celery_app.task(name="populate_graph_protocols")
@@ -270,5 +275,10 @@ celery_app.conf.beat_schedule = {
     "check-user-risk-alerts": {
         "task": "check_user_risk_alerts",
         "schedule": crontab(minute="*/15"),  # Every 15 minutes
+    },
+    # LLM Ranking recalculation
+    "recalculate-llm-rankings": {
+        "task": "llm_ranking.recalculate_all_rankings",
+        "schedule": crontab(hour=2, minute=0),  # Daily at 02:00 UTC
     },
 }
