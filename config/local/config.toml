@@ -39,15 +39,154 @@ ALLOWED_ADMIN_EMAILS = [
   "yordansolis2@gmail.com",
 ]
 
-# Agent Squad Configuration
+# ========================================
+# Agent Squad Configuration (18 Agents)
+# ========================================
 [agent_squad]
-default_model = "gpt-4-turbo"
-fallback_model = "gpt-3.5-turbo"
-intent_threshold = 0.75
-session_timeout = 3600
-max_context_messages = 20
-enable_intent_classification = true
-enable_context_memory = true
+# Master toggle (disable entire Agent Squad system)
+enabled = true
+
+# Intent classification
+intent_classification_model = "gpt-4o-mini"  # Fast model for routing
+intent_confidence_threshold = 0.85  # Min confidence (0.0-1.0)
+fallback_agent = "chat"  # Fallback if intent unclear
+
+# Supervisor coordination
+enable_supervisor = true
+supervisor_model = "gpt-4o"
+supervisor_max_agents = 5
+supervisor_timeout_seconds = 120
+
+# Context preservation
+conversation_history_limit = 20  # Messages to keep
+context_window_tokens = 8000  # Max tokens
+
+# Performance
+max_concurrent_agents = 3  # Parallel execution
+routing_timeout_seconds = 5
+execution_timeout_seconds = 60
+
+# Storage
+storage_backend = "postgresql"  # or "redis"
+storage_ttl_seconds = 86400  # 24 hours
+
+# Telemetry
+telemetry_enabled = true
+telemetry_sample_rate = 1.0  # 0.0-1.0
+
+# ========================================
+# Per-Agent Configuration (18 Agents)
+# ========================================
+
+# Core User-Facing Agents (10) - ENABLED
+[agent_squad.agents.chat]
+enabled = true
+model = "gpt-4o-mini"
+temperature = 0.7
+max_tokens = 1000
+
+[agent_squad.agents.hunter_ai]
+enabled = true
+model = "gpt-4o"
+temperature = 0.3
+max_tokens = 1500
+
+[agent_squad.agents.research]
+enabled = true
+model = "gpt-4o"
+temperature = 0.2
+max_tokens = 2000
+
+[agent_squad.agents.execution]
+enabled = true
+model = "gpt-4o"
+temperature = 0.1
+max_tokens = 1000
+
+[agent_squad.agents.risk_analyzer]
+enabled = true
+model = "gpt-4o"
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.portfolio]
+enabled = true
+model = "gpt-4o"
+temperature = 0.3
+max_tokens = 2000
+
+[agent_squad.agents.tax_optimizer]
+enabled = true
+model = "gpt-4o"
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.defi_yield]
+enabled = true
+model = "gpt-4o"
+temperature = 0.3
+max_tokens = 1500
+
+[agent_squad.agents.security_auditor]
+enabled = true
+model = "gpt-4o"
+temperature = 0.1
+max_tokens = 2000
+
+[agent_squad.agents.gas_optimizer]
+enabled = true
+model = "gpt-4o-mini"
+temperature = 0.2
+max_tokens = 1000
+
+# Enterprise Agents (8) - DISABLED (enable per tier)
+[agent_squad.agents.compliance_monitor]
+enabled = false  # Enterprise only
+model = "gpt-4o"
+temperature = 0.1
+max_tokens = 2000
+
+[agent_squad.agents.multisig_coordinator]
+enabled = false  # Enterprise only
+model = "gpt-4o"
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.alert_monitoring]
+enabled = false  # Pro/Enterprise
+model = "gpt-4o"
+temperature = 0.3
+max_tokens = 1000
+
+[agent_squad.agents.crisis_manager]
+enabled = false  # Enterprise only
+model = "gpt-4o"
+temperature = 0.1
+max_tokens = 2000
+
+[agent_squad.agents.bridge_crosschain]
+enabled = false  # Pro tier+
+model = "gpt-4o"
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.lending_borrowing]
+enabled = false  # Pro tier+
+model = "gpt-4o"
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.nft_asset_manager]
+enabled = false  # Pro tier (NFT focused)
+model = "gpt-4o"
+temperature = 0.3
+max_tokens = 1500
+
+[agent_squad.agents.dao_governance]
+enabled = false  # Pro tier (DAO focused)
+model = "gpt-4o"
+temperature = 0.3
+max_tokens = 1500
 enable_multi_agent_routing = true
 debug_mode = false
 log_intent_classification = true
