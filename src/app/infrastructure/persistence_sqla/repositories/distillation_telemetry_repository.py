@@ -1,80 +1,198 @@
-"""SQLAlchemy repository for distillation telemetry."""
-from datetime import datetime
-from typing import Optional
-from uuid import UUID
+"""
+SQLAlchemy implementation of distillation telemetry repository.
 
-from sqlalchemy import insert, select
+Persists telemetry data to PostgreSQL.
+"""
+import logging
+from typing import List, Dict, Any
+from datetime import date
+
+from sqlalchemy import select, and_, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.ports.distillation_repository import DistillationTelemetryRepository
-from app.domain.value_objects.distillation import DistillationTelemetry
-from app.infrastructure.persistence_sqla.mappings.distillation import (
-    distillation_requests,
+from app.domain.services.distillation.telemetry_collector import DistillationTelemetryRecord
+from app.infrastructure.persistence_sqla.mappings.distillation_telemetry import (
+    distillation_telemetry_table,
 )
 
+logger = logging.getLogger(__name__)
 
-class DistillationTelemetryRepositorySqla(DistillationTelemetryRepository):
-    """SQLAlchemy implementation of telemetry repository."""
+
+class DistillationTelemetryRepositorySqla:
+    """
+    SQLAlchemy implementation of distillation telemetry repository.
+    
+    Handles persistence of telemetry data.
+    """
     
     def __init__(self, session: AsyncSession):
+        """
+        Initialize repository.
+        
+        Args:
+            session: SQLAlchemy async session
+        """
         self.session = session
     
-    async def log_request(self, telemetry: DistillationTelemetry) -> None:
-        """Log distillation request."""
-        query = insert(distillation_requests).values(
-            request_id=telemetry.request_id,
-            user_id=telemetry.user_id,
-            original_query=telemetry.original_query,
-            normalized_query=telemetry.normalized_query,
-            intent=telemetry.intent.value,
-            intent_confidence=telemetry.intent_confidence,
-            complexity=telemetry.complexity.value,
-            entities=telemetry.entities.__dict__ if hasattr(telemetry.entities, "__dict__") else telemetry.entities,
-            route_type=telemetry.route_type.value,
-            routing_reason=telemetry.routing_reason,
-            suggested_model_tier=telemetry.suggested_model_tier,
-            suggested_agent=telemetry.suggested_agent,
-            cache_key=telemetry.cache_key,
-            cache_hit=telemetry.cache_hit,
-            cache_level=telemetry.cache_level.value,
-            classification_latency_ms=telemetry.classification_latency_ms,
-            total_latency_ms=telemetry.total_latency_ms,
-            was_processed=telemetry.was_processed,
-            llm_request_id=telemetry.llm_request_id,
-            created_at=telemetry.created_at,
-        )
+    async def save(self, record: DistillationTelemetryRecord) -> None:
+        """
+        Save single telemetry record.
         
-        await self.session.execute(query)
-        await self.session.commit()
+        Args:
+            record: Telemetry record to save
+        """
+        try:
+            stmt = distillation_telemetry_table.insert().values(
+                user_id=record.user_id,
+                conversation_id=record.conversation_id,
+                request_hash=record.request_hash,
+                detected_language=record.detected_language,
+                provider=record.provider,
+                model=record.model,
+                success=record.success,
+                reason=record.reason,
+                confidence=record.confidence,
+                latency_ms=record.latency_ms,
+                tokens_used=record.tokens_used,
+                cost_usd=record.cost_usd,
+                fallback_used=record.fallback_used,
+                error=record.error,
+                timestamp=record.timestamp,
+            )
+            
+            await self.session.execute(stmt)
+            await self.session.commit()
+            
+            logger.debug("Telemetry record saved")
+        
+        except Exception as e:
+            logger.error(f"Failed to save telemetry record: {e}")
+            await self.session.rollback()
+            raise
     
-    async def update_llm_info(
-        self,
-        request_id: str,
-        llm_request_id: Optional[UUID] = None,
-        llm_response_latency_ms: Optional[int] = None,
-        llm_cost_usd: Optional[float] = None,
-    ) -> None:
-        """Update LLM processing info for a request."""
-        from sqlalchemy import update
-        from decimal import Decimal
+    async def save_batch(self, records: List[DistillationTelemetryRecord]) -> None:
+        """
+        Save multiple telemetry records in batch.
         
-        values = {}
-        if llm_request_id:
-            values["llm_request_id"] = llm_request_id
-        if llm_response_latency_ms:
-            values["llm_response_latency_ms"] = llm_response_latency_ms
-            values["total_latency_ms"] = distillation_requests.c.classification_latency_ms + llm_response_latency_ms
-        if llm_cost_usd is not None:
-            values["llm_cost_usd"] = Decimal(str(llm_cost_usd))
-        
-        if not values:
+        Args:
+            records: List of telemetry records
+        """
+        if not records:
             return
         
-        query = (
-            update(distillation_requests)
-            .where(distillation_requests.c.request_id == request_id)
-            .values(**values)
-        )
+        try:
+            values = [
+                {
+                    "user_id": record.user_id,
+                    "conversation_id": record.conversation_id,
+                    "request_hash": record.request_hash,
+                    "detected_language": record.detected_language,
+                    "provider": record.provider,
+                    "model": record.model,
+                    "success": record.success,
+                    "reason": record.reason,
+                    "confidence": record.confidence,
+                    "latency_ms": record.latency_ms,
+                    "tokens_used": record.tokens_used,
+                    "cost_usd": record.cost_usd,
+                    "fallback_used": record.fallback_used,
+                    "error": record.error,
+                    "timestamp": record.timestamp,
+                }
+                for record in records
+            ]
+            
+            stmt = distillation_telemetry_table.insert().values(values)
+            
+            await self.session.execute(stmt)
+            await self.session.commit()
+            
+            logger.info(f"Saved batch of {len(records)} telemetry records")
         
-        await self.session.execute(query)
-        await self.session.commit()
+        except Exception as e:
+            logger.error(f"Failed to save telemetry batch: {e}")
+            await self.session.rollback()
+            raise
+    
+    async def get_daily_metrics(
+        self,
+        start_date: date,
+        end_date: date,
+        provider: str = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get daily aggregated metrics from materialized view.
+        
+        Args:
+            start_date: Start date (inclusive)
+            end_date: End date (inclusive)
+            provider: Optional provider filter
+        
+        Returns:
+            List of daily metrics
+        """
+        try:
+            # Query materialized view
+            query = """
+                SELECT
+                    date,
+                    provider,
+                    total_requests,
+                    successful_requests,
+                    avg_latency_ms,
+                    avg_confidence,
+                    total_tokens,
+                    total_cost_usd,
+                    unique_users
+                FROM distillation_metrics_daily
+                WHERE date >= :start_date AND date <= :end_date
+            """
+            
+            params = {
+                "start_date": start_date,
+                "end_date": end_date,
+            }
+            
+            if provider:
+                query += " AND provider = :provider"
+                params["provider"] = provider
+            
+            query += " ORDER BY date DESC, provider"
+            
+            result = await self.session.execute(text(query), params)
+            
+            rows = result.fetchall()
+            
+            return [
+                {
+                    "date": row.date,
+                    "provider": row.provider,
+                    "total_requests": row.total_requests,
+                    "successful_requests": row.successful_requests,
+                    "avg_latency_ms": float(row.avg_latency_ms),
+                    "avg_confidence": float(row.avg_confidence),
+                    "total_tokens": row.total_tokens,
+                    "total_cost_usd": float(row.total_cost_usd),
+                    "unique_users": row.unique_users,
+                }
+                for row in rows
+            ]
+        
+        except Exception as e:
+            logger.error(f"Failed to get daily metrics: {e}")
+            raise
+    
+    async def refresh_materialized_view(self) -> None:
+        """Refresh the materialized view for daily metrics."""
+        try:
+            await self.session.execute(
+                text("REFRESH MATERIALIZED VIEW CONCURRENTLY distillation_metrics_daily")
+            )
+            await self.session.commit()
+            
+            logger.info("Refreshed distillation metrics materialized view")
+        
+        except Exception as e:
+            logger.error(f"Failed to refresh materialized view: {e}")
+            await self.session.rollback()
+            raise
