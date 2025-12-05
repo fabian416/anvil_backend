@@ -3008,8 +3008,548 @@ Results:
 
 ---
 
-**Status:** ✅ Complete Use Cases Examples (Original + Enhanced Agent Squad + New Integrations)  
+---
+
+## 🏢 **ENTERPRISE AGENT USE CASES** {#enterprise-agents}
+
+### **Use Case 3A: Compliance Monitoring (Compliance Monitor Agent)**
+
+#### **BEFORE (Manual Compliance)**
+
+```
+Enterprise treasury: $5M USDC
+Transaction: "Send $100k to vendor wallet 0xabc...123"
+
+Manual Compliance Process:
+1. Copy wallet address
+2. Check internal whitelist (spreadsheet)
+3. Google wallet address (hope for results)
+4. Check OFAC list manually (download PDF)
+5. Email compliance officer (wait hours)
+6. Officer reviews (manual research)
+7. Approval email received (next day)
+8. Execute transaction
+9. Log transaction (spreadsheet)
+10. Monthly compliance report (manual)
+
+Time: 24-48 hours per transaction
+Cost: $150k/year compliance officer
+Risk: Human error, miss sanctions
+```
+
+**Pain Points:**
+- ❌ 24-48 hour delays
+- ❌ Manual OFAC checks
+- ❌ No real-time screening
+- ❌ Expensive officers ($150k/year)
+- ❌ Human error (miss red flags)
+- ❌ Regulatory fines risk ($100k-10M)
+
+---
+
+#### **AFTER (Compliance Monitor Agent)**
+
+```
+Enterprise treasury: $5M USDC
+Transaction: "Send $100k to vendor wallet 0xabc...123"
+
+Compliance Monitor (Auto-Response - 2 seconds):
+
+🔍 WALLET SCREENING COMPLETE
+
+Destination: 0xabc...123
+Analysis Time: 1.8 seconds
+
+RISK ASSESSMENT:
+┌──────────────────────────────────────────────┐
+│ Check Type        Status      Risk Score    │
+├──────────────────────────────────────────────┤
+│ OFAC Sanctions    ✅ Clear    0/100         │
+│ PEP Check         ✅ Clear    0/100         │
+│ Mixer Exposure    ⚠️ DETECTED  78/100       │
+│ Rug Pull History ✅ None     0/100         │
+│ High Risk Source  ⚠️ YES      82/100       │
+└──────────────────────────────────────────────┘
+
+OVERALL RISK: 🔴 HIGH (78/100)
+Decision: ⛔ TRANSACTION BLOCKED
+
+DETAILED FINDINGS:
+1. Mixer Exposure (HIGH RISK)
+   • Wallet received 45% of funds from Tornado Cash
+   • Last mixer transaction: 3 days ago
+   • Pattern: Potential money laundering (layering)
+
+2. High Risk Sources (HIGH RISK)
+   • 32% funds from gambling sites
+   • 18% from unverified exchanges
+   • 5% from known scam contracts
+
+3. Transaction Patterns (MEDIUM RISK)
+   • Rapid fund movement (avg hold: 2 hours)
+   • Frequent mixer usage
+   • Multiple chain hopping
+
+COMPLIANCE STATUS:
+⚠️ MANUAL REVIEW REQUIRED (AML/KYC Level 2)
+
+AUTO-ACTIONS TAKEN:
+✅ Transaction blocked (0.5 seconds)
+✅ Compliance team notified (email, Slack)
+✅ CFO notified (SMS)
+✅ Risk report generated
+✅ Audit log created (immutable)
+✅ Similar transactions paused (3 pending)
+
+REQUIRED DOCUMENTATION:
+1. Business purpose (invoice, contract)
+2. Beneficial owner identity (KYC)
+3. Source of funds verification
+4. Compliance officer approval
+
+ALTERNATIVE ACTIONS:
+1. Request vendor provide clean wallet
+2. Use escrow service (compliant intermediary)
+3. Wait for vendor KYC completion
+
+REGULATORY CONTEXT:
+• BSA/AML: High-risk counterparty (§326)
+• FinCEN: Reportable if >$10k (Form 8300)
+• OFAC: Not sanctioned ✅
+• EU MiCA: Enhanced due diligence required
+
+Compliance Officer Contact:
+• Name: Jane Smith
+• Email: compliance@company.com
+• Phone: +1 (555) 123-4567
+• Available: 9 AM - 5 PM EST
+
+[PROVIDE DOCUMENTATION] [CONTACT COMPLIANCE] [CANCEL TRANSACTION]
+```
+
+**New Capabilities:**
+- ✅ 2-second screening (vs 24-48 hours)
+- ✅ Real-time OFAC checks (automatic)
+- ✅ Chainalysis integration (full analysis)
+- ✅ Risk scoring (0-100, objective)
+- ✅ Auto-blocking (high-risk wallets)
+- ✅ Immutable audit trail (compliance-ready)
+- ✅ Multi-source screening (TRM Labs, Chainalysis)
+- ✅ Regulatory context (BSA/AML, FinCEN, OFAC)
+
+**Time Savings:**
+- Before: 24-48 hours per transaction
+- After: 2 seconds (99.9% faster)
+- Compliance officer time: 90% reduction
+
+**Cost Savings:**
+- Officer salary: $150k → $50k (monitoring only)
+- Regulatory fines: $0 (prevented, was $100k-10M risk)
+- Total savings: $100k+/year
+
+---
+
+### **Use Case 3B: Multi-Sig Treasury Management (Multi-Sig Coordinator Agent)**
+
+#### **BEFORE (Manual Multi-Sig)**
+
+```
+DAO Treasury: $2.5M USDC
+Transaction: "Transfer $150k for protocol upgrade"
+
+Manual Multi-Sig Process:
+1. Proposer creates Gnosis Safe transaction
+2. Manually shares link (Telegram group)
+3. Signers manually check Telegram (hours/days)
+4. Each signer logs into Gnosis Safe
+5. Each signer reviews transaction
+6. Each signer approves (if they remember)
+7. After 3-of-5 approvals, manually execute
+8. Manually notify team (Telegram again)
+9. Manually log in treasury spreadsheet
+
+Time: 2-7 days (signer availability)
+Coordination: High friction (manual)
+Risk: Forgotten approvals, missed transactions
+```
+
+**Pain Points:**
+- ❌ 2-7 day delays (signer coordination)
+- ❌ Manual notifications (Telegram chaos)
+- ❌ Forgotten approvals (no reminders)
+- ❌ No audit trail (informal)
+- ❌ No policy enforcement (manual checks)
+
+---
+
+#### **AFTER (Multi-Sig Coordinator Agent)**
+
+```
+DAO Treasury: $2.5M USDC
+Transaction: "Transfer $150k for protocol upgrade"
+
+Multi-Sig Coordinator (Automated Workflow):
+
+[Proposal Created - Day 1, 10:00 AM]
+
+📋 MULTI-SIG PROPOSAL #247
+
+Proposed Transaction:
+• From: Treasury Safe (0xdef...456)
+• To: Developer Wallet (0xghi...789)
+• Amount: $150,000 USDC
+• Purpose: Q4 Protocol Upgrade (Smart Contract Development)
+• Budget Code: ENG-2025-Q4-001
+• Proposed by: CTO (0xabc...123)
+• Created: 2025-12-01 10:00 UTC
+
+Policy Check: ✅ PASSED
+• Amount: $150k (within $200k single-tx limit)
+• Budget: $850k remaining in ENG-2025-Q4 ($1M allocated)
+• Recipient: ✅ Whitelisted (Developer Wallet)
+• Purpose: ✅ Matches budget category
+
+Approval Policy: 3-of-5 signers required
+• CEO (alice@company.com)
+• CFO (bob@company.com)
+• CTO (charlie@company.com) ← Proposer
+• COO (diana@company.com)
+• Treasurer (eve@company.com)
+
+AUTO-NOTIFICATIONS SENT (10:00 AM):
+✅ Email to 4 pending signers
+✅ Slack DM to each signer
+✅ SMS to CEO (high-value transaction)
+✅ Calendar holds created (24h reminder)
+
+Current Status: 1-of-5 (CTO approved as proposer)
+
+---
+
+[Day 1, 2:30 PM - CEO Approved]
+
+📱 APPROVAL #1: CEO (Alice)
+• Approved: 2025-12-01 14:30 UTC
+• Comment: "Approved - aligned with roadmap"
+• Method: Mobile app (WalletConnect)
+• IP: 192.168.1.100 (San Francisco, CA)
+
+Current Status: 2-of-5
+
+AUTO-NOTIFICATIONS:
+✅ Slack: "2-of-5 approvals. 1 more needed!"
+✅ Email reminder to 3 pending signers
+
+---
+
+[Day 1, 6:45 PM - CFO Approved]
+
+📱 APPROVAL #2: CFO (Bob)
+• Approved: 2025-12-01 18:45 UTC
+• Comment: "Budget verified, approved"
+• Method: Desktop (Gnosis Safe UI)
+• IP: 10.0.0.50 (New York, NY)
+
+Current Status: 3-of-5 ✅ THRESHOLD MET
+
+AUTO-EXECUTION TRIGGERED:
+⏳ Executing transaction in 1 hour (safety delay)...
+
+AUTO-NOTIFICATIONS:
+✅ All signers: "Threshold met! Executing at 7:45 PM UTC"
+✅ Finance team: "Transaction approved, executing soon"
+✅ Recipient: "Incoming payment: $150k (arrives ~7:50 PM)"
+
+---
+
+[Day 1, 7:45 PM - Auto-Execution]
+
+✅ TRANSACTION EXECUTED
+
+Execution Summary:
+• Transaction Hash: 0xjkl...012
+• Block Number: 18,234,567
+• Gas Used: 185,000 (15 gwei) = $6.94
+• Execution Time: 7:45:23 PM UTC
+• Status: ✅ CONFIRMED
+
+Approvers: CTO, CEO, CFO (3-of-5)
+Time to Execute: 9 hours 45 minutes
+Coordination: Fully automated
+
+POST-EXECUTION ACTIONS:
+✅ All 5 signers notified (email, Slack)
+✅ Finance team notified
+✅ Recipient notified
+✅ Treasury updated ($2.5M → $2.35M)
+✅ Budget updated ($850k → $700k remaining)
+✅ Audit log created (immutable)
+✅ Accounting system updated (QuickBooks sync)
+✅ Monthly report updated
+
+AUDIT TRAIL (Immutable):
+• Proposal: CTO at 10:00 AM
+• Policy check: Passed at 10:00 AM
+• Approval 1: CEO at 2:30 PM (4h 30m)
+• Approval 2: CFO at 6:45 PM (+4h 15m)
+• Threshold: Met at 6:45 PM
+• Execution: Completed at 7:45 PM (+1h safety delay)
+• Total time: 9h 45m
+
+COMPLIANCE REPORT READY:
+✅ All approvals logged with IP/timestamp
+✅ Budget compliance verified
+✅ Segregation of duties maintained
+✅ Audit-ready export available (PDF, CSV)
+```
+
+**New Capabilities:**
+- ✅ Automated notifications (email, Slack, SMS)
+- ✅ Policy enforcement (budget, limits, whitelist)
+- ✅ Auto-execution (when threshold met)
+- ✅ Real-time status tracking
+- ✅ Immutable audit trail
+- ✅ Accounting system integration
+- ✅ Mobile + desktop support
+- ✅ Safety delays (1-hour buffer)
+
+**Time Savings:**
+- Before: 2-7 days (manual coordination)
+- After: 9 hours 45 minutes (automated)
+- Improvement: 80-95% faster
+
+**Efficiency Gains:**
+- Coordination: Manual → Automated
+- Reminders: Manual → Auto (24h, 48h)
+- Execution: Manual → Auto (threshold met)
+- Audit: Manual spreadsheet → Immutable blockchain log
+
+---
+
+### **Use Case 3C: Crisis Management (Crisis Manager Agent)**
+
+#### **BEFORE (Manual Crisis Response)**
+
+```
+Date: March 2023 (USDC Depeg)
+Portfolio: $5M USDC exposure
+Crisis: USDC depegs to $0.87 (13% loss)
+
+Manual Response:
+1. User wakes up, checks portfolio (8 AM)
+2. Sees 13% loss, panics
+3. Opens Twitter, confirms depeg
+4. Tries to sell USDC (exchanges overwhelmed)
+5. Gas spikes to 500 gwei ($250/tx)
+6. Slippage: 5-8% (everyone selling)
+7. Finally sells at $0.85 (15% total loss)
+8. Misses opportunity to hedge (too slow)
+
+Total loss: $750,000 (15% of $5M)
+Response time: 6 hours
+Emotional state: Panic, stress
+```
+
+**Pain Points:**
+- ❌ No real-time monitoring (manual)
+- ❌ Slow response (6 hours)
+- ❌ High slippage (5-8%)
+- ❌ Emotional decisions (panic)
+- ❌ No circuit breakers
+- ❌ No pre-planned response
+
+---
+
+#### **AFTER (Crisis Manager Agent)**
+
+```
+Date: Hypothetical Crisis (Aave Exploit)
+Portfolio: $5M across DeFi protocols
+Crisis: Aave V2 exploit detected
+
+Crisis Manager (Auto-Response - 75 seconds):
+
+[14:32:15 UTC - CRISIS DETECTED]
+
+🚨 EMERGENCY: PROTOCOL EXPLOIT
+
+Crisis Manager activated automatically
+Severity: 🔴 CRITICAL
+Protocol: Aave V2
+Exploit Type: Flash loan attack (oracle manipulation)
+Your Exposure: $2.5M USDC collateral
+
+AUTO-RESPONSE TIMELINE:
+────────────────────────────────────────────────
+
+14:32:15 - Exploit detected (Forta alert)
+   Source: Forta Network
+   Confidence: 98%
+   Attack vector: Price oracle manipulation
+   Estimated TVL at risk: $450M
+
+14:32:16 - Risk assessment complete (1 second)
+   Your positions analyzed:
+   • Aave V2 USDC supply: $2.5M (HIGH RISK)
+   • Aave V2 ETH borrow: $1.5M (MEDIUM RISK)
+   • Compound USDC: $1.5M (SAFE)
+   • Yearn vaults: $500k (SAFE)
+
+14:32:17 - Circuit breaker activated (2 seconds)
+   ✅ All Aave transactions cancelled (3 pending)
+   ✅ Trading paused (Aave positions)
+   ✅ Emergency mode enabled
+
+14:32:18 - Multi-channel alerts sent (3 seconds)
+   ✅ SMS to your phone: "CRITICAL: Aave exploit"
+   ✅ Phone call initiated: "Emergency, press 1"
+   ✅ Email sent: Full crisis report
+   ✅ Slack alert: @channel CRITICAL
+   ✅ Push notification: All devices
+
+14:32:20 - Emergency withdrawal initiated (5 seconds)
+   Transaction 1: Withdraw $2.5M USDC from Aave
+   • Priority: MAXIMUM (500 gwei gas)
+   • MEV protection: Flashbots private relay
+   • Slippage: Not applicable (withdrawal)
+   • Status: ⏳ Pending confirmation
+
+14:32:25 - Collateral protection initiated (10 seconds)
+   Transaction 2: Add collateral to ETH borrow
+   • Action: Add $500k USDC from reserves
+   • Purpose: Protect $1.5M ETH borrow
+   • Health factor: 1.65 → 2.15 (SAFE)
+   • Status: ⏳ Pending confirmation
+
+14:32:35 - Emergency multi-sig fast-track (20 seconds)
+   • 3-of-5 approval required (emergency policy)
+   • Auto-approval: CEO, CTO (emergency mode)
+   • Manual approval: CFO (phone call, approved)
+   • Status: ✅ Threshold met (3-of-5)
+
+14:32:45 - Withdrawal confirmed (30 seconds)
+   Transaction 1 confirmed:
+   ✅ Withdrew: $2,500,000 USDC from Aave V2
+   ✅ Block: 18,234,567
+   ✅ Gas used: 285,000 @ 500 gwei = $356
+   ✅ Status: SUCCESS
+   ✅ Funds safe in wallet: 0xabc...123
+
+14:32:50 - Collateral addition confirmed (35 seconds)
+   Transaction 2 confirmed:
+   ✅ Added: $500,000 USDC collateral
+   ✅ ETH borrow health: 2.15 (SAFE)
+   ✅ Block: 18,234,568
+   ✅ Gas used: 180,000 @ 500 gwei = $225
+   ✅ Status: SUCCESS
+
+14:33:00 - Fund migration initiated (45 seconds)
+   Migrating to safe protocol (Compound V3):
+   • Transfer: $2.5M USDC → Compound V3
+   • Verification: Smart contract audited ✅
+   • Risk score: 32/100 (Low, verified safe)
+   • Status: ⏳ Executing
+
+14:33:15 - Migration complete (60 seconds)
+   ✅ Migrated: $2.5M USDC to Compound V3
+   ✅ Earning: 5.2% APY (resumed yield)
+   ✅ Risk: 32/100 (Low)
+   ✅ Status: SAFE
+
+14:33:30 - Crisis stabilized (75 seconds)
+   ✅ All positions secured
+   ✅ No losses incurred
+   ✅ Yield resumed on safe protocol
+
+[CRISIS RESOLVED - 14:33:30 UTC]
+
+═══════════════════════════════════════════════
+
+📊 CRISIS SUMMARY REPORT
+
+Total Response Time: 75 seconds
+Your Losses: $0 (100% protected) ✅
+Protocol Losses: $12.5M (other users)
+
+POSITIONS SECURED:
+✅ Aave V2 USDC: $2.5M (withdrawn in 30s)
+✅ Aave V2 ETH borrow: Protected (HF: 2.15)
+✅ Funds migrated: Compound V3 (safe)
+✅ Yield resumed: 5.2% APY
+
+COSTS:
+• Gas (emergency): $581 (2 high-priority txs)
+• Slippage: $0 (withdrawals, no trading)
+• Total cost: $581
+
+SAVINGS:
+• Potential loss if manual: $500k-1M (estimated)
+• Actual loss: $0
+• Net savings: $500k-1M
+
+CRISIS ACTIONS TAKEN:
+1. Exploit detected (1s via Forta)
+2. Circuit breaker activated (2s)
+3. Emergency alerts sent (3s, multi-channel)
+4. Emergency withdrawal (30s, $2.5M)
+5. Collateral protection (35s, ETH borrow)
+6. Multi-sig fast-track (CEO, CTO, CFO)
+7. Fund migration (60s, to Compound)
+8. Crisis resolved (75s total)
+
+POST-CRISIS STATUS:
+• Portfolio value: $5M (maintained)
+• All positions: SAFE
+• Yield: Earning 5.2% APY (Compound)
+• Monitoring: Enhanced mode (24 hours)
+
+INCIDENT REPORT:
+✅ Created: incident-2025-12-01-aave.pdf
+✅ Sent to: Email, Slack
+✅ Filed: Compliance folder
+✅ Insurance: Not needed (no losses)
+
+RECOMMENDATIONS:
+1. Maintain enhanced monitoring: 24 hours
+2. Review protocol allocations: Reduce Aave V2 by 50%
+3. Increase emergency reserves: +20% ($1M)
+4. Test circuit breaker: Monthly drill
+5. Update insurance: Nexus Mutual coverage
+
+COMMUNICATION:
+✅ User notified: SMS, phone, email, Slack
+✅ Team notified: All stakeholders
+✅ Incident ticket: #CR-2025-001
+✅ Status page: Updated (public)
+
+[VIEW FULL REPORT] [DOWNLOAD PDF] [ADJUST SETTINGS] [CONTACT SUPPORT]
+```
+
+**New Capabilities:**
+- ✅ 1-second detection (Forta integration)
+- ✅ 3-second circuit breaker (auto-pause)
+- ✅ 30-second emergency withdrawal
+- ✅ 75-second full crisis resolution
+- ✅ Multi-channel alerts (SMS, phone, email, Slack)
+- ✅ Multi-sig fast-track (emergency mode)
+- ✅ Fund migration (auto, to safe protocols)
+- ✅ Zero losses (100% protection)
+
+**Crisis Comparison:**
+- Manual response: 6 hours, $750k loss (15%)
+- Crisis Manager: 75 seconds, $0 loss (0%)
+- **Result: Prevented $750k loss (100% protection)**
+
+**Time Comparison:**
+- Manual: 6 hours (user wakes up, researches, acts)
+- Crisis Manager: 75 seconds (auto-response)
+- Improvement: 99.7% faster (288x faster)
+
+---
+
+**Status:** ✅ Complete Use Cases Examples (Original + Enhanced Agent Squad + Enterprise Agents + New Integrations)  
 **Last Updated:** December 1, 2025  
-**Total Examples:** 18 comprehensive before/after scenarios  
-**Agent Squad Examples:** 5 new specialized agents (Execution, Portfolio, Tax, Security, Gas)  
-**Next:** Implementation - Start with Agno Runtime (Month 1)
+**Total Examples:** 21 comprehensive before/after scenarios  
+**Agent Squad Examples:** 8 total (5 user-facing + 3 enterprise-critical)  
+**Enterprise Agents:** Compliance, Multi-Sig, Crisis Manager (3 critical use cases)  
+**Next:** Implementation - Start with Agno Runtime (Month 1), then Enterprise Agents (Months 2-3)

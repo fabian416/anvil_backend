@@ -48,8 +48,9 @@ intent_classification_model = "gpt-4o-mini"  # Fast model for routing
 intent_confidence_threshold = 0.85           # Min confidence for routing
 fallback_agent = "chat"                      # Default if intent unclear
 
-# Agent types (expanded specialist roster)
+# Agent types (full enterprise roster - 18 specialists)
 available_agents = [
+    # Core User-Facing Agents (10)
     "chat",              # General conversation
     "hunter_ai",         # Market sentiment & predictions
     "research",          # Deep protocol analysis
@@ -59,7 +60,17 @@ available_agents = [
     "tax_optimizer",     # Tax-loss harvesting & reporting
     "defi_yield",        # Yield farming & APY analysis
     "security_auditor",  # Smart contract security analysis
-    "gas_optimizer"      # Gas fee optimization & timing
+    "gas_optimizer",     # Gas fee optimization & timing
+    
+    # Enterprise Agents (8)
+    "compliance_monitor",    # AML/KYC, regulatory compliance
+    "multisig_coordinator",  # Multi-sig treasury management
+    "alert_monitoring",      # Real-time alerts, anomaly detection
+    "bridge_crosschain",     # Layer 2, cross-chain operations
+    "lending_borrowing",     # Leverage, collateral optimization
+    "nft_asset_manager",     # NFT portfolio, valuation
+    "dao_governance",        # Voting, proposals, delegation
+    "crisis_manager"         # Emergency response, circuit breaker
 ]
 
 # Supervisor settings
@@ -909,7 +920,142 @@ Would you like to:
 
 ---
 
-### 2.9 Supervisor-Coordinated Complex Task
+### 2.9 Enterprise Agent: Compliance Monitor
+
+**Purpose**: AML/KYC compliance, regulatory reporting, sanction screening
+
+**Capabilities**:
+- Real-time wallet screening (Chainalysis, TRM Labs)
+- OFAC sanction checks (automatic)
+- Suspicious activity detection (ML-powered)
+- Regulatory reporting (FinCEN, SEC, EU MiCA)
+- Immutable audit trails
+- Risk scoring (0-100) for all counterparties
+
+**Use Case**: See `docs/USE_CASES_EXAMPLES.md` - Use Case 3A
+**Integration**: Chainalysis API, TRM Labs API, OFAC lists
+**Revenue**: Enterprise tier ($2,000+/month)
+
+---
+
+### 2.10 Enterprise Agent: Multi-Sig Coordinator
+
+**Purpose**: Enterprise treasury management, multi-signature approval workflows
+
+**Capabilities**:
+- Gnosis Safe integration (full)
+- Approval policies (2-of-3, 3-of-5, custom)
+- Signer notifications (email, Slack, SMS)
+- Automatic execution (when threshold met)
+- Spending limits per signer
+- Time-locked transactions
+- Emergency pause mechanism
+
+**Use Case**: See `docs/USE_CASES_EXAMPLES.md` - Use Case 3B
+**Integration**: Gnosis Safe SDK, WalletConnect
+**Revenue**: Enterprise tier ($1,000+/month)
+
+---
+
+### 2.11 Enterprise Agent: Alert & Monitoring
+
+**Purpose**: Real-time alerts, anomaly detection, proactive risk management
+
+**Capabilities**:
+- Price alerts (threshold, percentage change)
+- Portfolio alerts (concentration, loss limits)
+- Risk alerts (liquidation warnings, IL tracking)
+- Market alerts (flash crash, exploits)
+- Anomaly detection (ML-powered, unusual activity)
+- Multi-channel notifications (SMS, email, Slack, push)
+
+**Integration**: Chainlink, Forta, OpenZeppelin Defender
+**Revenue**: All paid tiers (Premium: $200+/month)
+
+---
+
+### 2.12 Enterprise Agent: Crisis Manager
+
+**Purpose**: Emergency response, exploit mitigation, circuit breakers
+
+**Capabilities**:
+- Real-time exploit detection (Forta, OpenZeppelin)
+- 3-second response time (auto-withdrawal)
+- Circuit breakers (auto-pause trading)
+- Emergency position closure (market orders)
+- Multi-channel emergency alerts (SMS, phone call)
+- Post-crisis analysis & recovery
+- Insurance claim preparation
+
+**Use Case**: See `docs/USE_CASES_EXAMPLES.md` - Use Case 3C
+**Integration**: Forta, OpenZeppelin Defender, Twilio
+**Revenue**: All tiers (Enterprise SLA: $500+/month)
+
+---
+
+### 2.13 Enterprise Agent: Bridge & Cross-Chain
+
+**Purpose**: Layer 2 bridging, cross-chain swaps, multi-chain portfolio management
+
+**Capabilities**:
+- Cross-chain bridging (Arbitrum, Optimism, Polygon)
+- Bridge comparison (cost, time, security)
+- Multi-chain portfolio (unified view)
+- Layer 2 operations (90% gas savings)
+- Bridge safety scoring
+
+**Integration**: Arbitrum Bridge, Optimism Bridge, Hop Protocol, Across Protocol
+**Revenue**: Pro tier ($100+/month)
+
+---
+
+### 2.14 Enterprise Agent: Lending & Borrowing
+
+**Purpose**: Leverage optimization, collateral management, borrow/supply strategies
+
+**Capabilities**:
+- Lending strategies (optimal supply protocols)
+- Borrowing strategies (leverage calculation)
+- Liquidation management (health factor monitoring)
+- Advanced strategies (delta-neutral, basis trading)
+- Collateral rotation
+
+**Integration**: Aave Protocol, Compound Protocol, Morpho Protocol
+**Revenue**: Pro tier ($200+/month)
+
+---
+
+### 2.15 Enterprise Agent: NFT & Asset Manager
+
+**Purpose**: NFT portfolio management, valuation, trading, rarity analysis
+
+**Capabilities**:
+- Portfolio management (NFT holdings across chains)
+- Valuation (fair market value estimation)
+- Trading strategies (optimal listing prices)
+- NFT DeFi (collateral, fractionalization)
+
+**Integration**: OpenSea API, Blur API, NFTfi Protocol, Fractional.art
+**Revenue**: Pro tier (NFT focused)
+
+---
+
+### 2.16 Enterprise Agent: DAO Governance
+
+**Purpose**: DAO voting, proposal analysis, delegation, governance strategies
+
+**Capabilities**:
+- Vote management (active proposals tracking)
+- Proposal analysis (financial impact assessment)
+- Delegation strategies (optimize voting power)
+- Governance yield (voting rewards, bribes)
+
+**Integration**: Snapshot API, Tally API, Boardroom API, Hidden Hand
+**Revenue**: Pro tier (DAO focused)
+
+---
+
+### 2.17 Supervisor-Coordinated Complex Task
 
 **Scenario**: User requests complex multi-step analysis requiring multiple specialists.
 
