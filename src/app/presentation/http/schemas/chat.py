@@ -196,3 +196,78 @@ class ChatSimilarProtocolsResponse(BaseModel):
     
     base_protocol: BaseProtocolInfo
     similar_protocols: List[SimilarProtocolInfo]
+
+
+# ========================================
+# Agent Squad Schemas
+# ========================================
+
+class AgentSquadMessageRequest(BaseModel):
+    """Request to send message with Agent Squad routing."""
+    
+    content: str = Field(..., min_length=1, max_length=10000, description="User message")
+    force_agent: Optional[str] = Field(None, description="Force specific agent (chat, hunter_ai, etc.)")
+
+
+class AgentSquadMessageResponse(BaseModel):
+    """Response from Agent Squad message."""
+    
+    user_message_id: UUID
+    agent_message_id: UUID
+    agent_type: str  # Which agent handled the message
+    intent_classification: Optional[str]  # Classified intent
+    intent_confidence: Optional[float]  # Intent confidence (0.0-1.0)
+    content: str  # Agent response
+    tools_used: List[str]  # Tools/APIs used
+    latency_ms: int  # Response latency
+    tokens_used: Optional[int]  # LLM tokens consumed
+
+
+class SupervisorWorkflowRequest(BaseModel):
+    """Request for supervisor-coordinated multi-agent workflow."""
+    
+    content: str = Field(..., min_length=1, max_length=10000, description="Complex task description")
+    max_agents: int = Field(5, ge=1, le=10, description="Maximum agents to use")
+    timeout_seconds: int = Field(120, ge=30, le=300, description="Workflow timeout")
+
+
+class WorkflowTaskResponse(BaseModel):
+    """Single task in workflow."""
+    
+    agent_type: str
+    task_description: str
+    status: str  # pending, in_progress, completed, failed
+    result: Optional[str]  # Agent response (if completed)
+
+
+class SupervisorWorkflowResponse(BaseModel):
+    """Response from supervisor workflow."""
+    
+    workflow_id: UUID
+    conversation_id: UUID
+    status: str  # in_progress, completed, failed
+    tasks: List[WorkflowTaskResponse]
+    final_response: Optional[str]  # Aggregated response (if completed)
+    total_latency_ms: int
+    agents_used: List[str]
+
+
+class AgentCapability(BaseModel):
+    """Agent capability information."""
+    
+    agent_type: str
+    name: str
+    description: str
+    model: str
+    temperature: float
+    enabled: bool
+    is_enterprise: bool
+
+
+class ListEnabledAgentsResponse(BaseModel):
+    """Response with list of enabled agents."""
+    
+    agents: List[AgentCapability]
+    total: int
+    core_agents: int  # Number of core agents
+    enterprise_agents: int  # Number of enterprise agents

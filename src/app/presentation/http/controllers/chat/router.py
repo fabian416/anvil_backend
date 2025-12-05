@@ -24,6 +24,12 @@ from app.presentation.http.schemas.chat import (
     ChatRiskAnalysisResponse,
     ChatSimilarProtocolsRequest,
     ChatSimilarProtocolsResponse,
+    # NEW: Agent Squad schemas
+    AgentSquadMessageRequest,
+    AgentSquadMessageResponse,
+    SupervisorWorkflowRequest,
+    SupervisorWorkflowResponse,
+    ListEnabledAgentsResponse,
 )
 from app.application.chat.commands.create_conversation import CreateConversation
 from app.application.chat.commands.send_message import SendMessage
@@ -378,6 +384,107 @@ def create_chat_router() -> APIRouter:
                 }
                 for p in similar_protocols
             ],
+        )
+    
+    # ========================================
+    # Agent Squad Endpoints
+    # ========================================
+    
+    @router.post(
+        "/agent-squad/messages",
+        status_code=status.HTTP_201_CREATED,
+        response_model=AgentSquadMessageResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def send_agent_squad_message(
+        conversation_id: UUID,
+        request: AgentSquadMessageRequest,
+        current_user: FromDishka[CurrentUserService],
+        # TODO: Add Agent Squad interactor
+    ) -> AgentSquadMessageResponse:
+        """
+        Send message with Agent Squad intelligent routing.
+        
+        Features:
+        - Automatic intent classification
+        - Route to best specialist agent (18 agents)
+        - Context preservation across turns
+        - Telemetry tracking
+        
+        Optional: Force specific agent via force_agent parameter
+        """
+        # TODO: Implement SendAgentSquadMessage interactor
+        # For now, return placeholder
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Agent Squad integration in progress (Phase 2)",
+        )
+    
+    @router.post(
+        "/agent-squad/supervisor",
+        status_code=status.HTTP_201_CREATED,
+        response_model=SupervisorWorkflowResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def execute_supervisor_workflow(
+        conversation_id: UUID,
+        request: SupervisorWorkflowRequest,
+        current_user: FromDishka[CurrentUserService],
+        # TODO: Add Supervisor interactor
+    ) -> SupervisorWorkflowResponse:
+        """
+        Execute complex multi-agent workflow.
+        
+        Features:
+        - Supervisor coordinates multiple agents
+        - Break complex task into subtasks
+        - Parallel agent execution
+        - Result aggregation
+        - Dependency management
+        
+        Example: "Create balanced DeFi portfolio"
+        -> Research agent: Find protocols
+        -> Risk agent: Assess risks
+        -> Portfolio agent: Create allocation
+        -> Chat agent: Summarize
+        """
+        # TODO: Implement ExecuteSupervisorWorkflow interactor
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Supervisor workflow in progress (Phase 2)",
+        )
+    
+    @router.get(
+        "/agent-squad/agents",
+        status_code=status.HTTP_200_OK,
+        response_model=ListEnabledAgentsResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def list_enabled_agents(
+        current_user: FromDishka[CurrentUserService],
+        # TODO: Add Agent Squad config service
+    ) -> ListEnabledAgentsResponse:
+        """
+        List all enabled agents for current user.
+        
+        Returns:
+        - All enabled agents (based on subscription tier)
+        - Agent capabilities (model, temperature, etc.)
+        - Core vs enterprise classification
+        
+        Tiers:
+        - Free: 1 agent (chat)
+        - Basic: 3 agents (chat, hunter_ai, research)
+        - Pro: 14 agents (all core + 4 advanced)
+        - Enterprise: 18 agents (all)
+        """
+        # TODO: Implement GetEnabledAgents interactor
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Agent listing in progress (Phase 2)",
         )
     
     return router
