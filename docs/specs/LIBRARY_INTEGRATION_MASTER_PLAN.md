@@ -19,21 +19,19 @@ Based on our **LLM Adaptive Ranking System** (2,732 lines, production-ready) and
 | **Agent Squad** | Multi-agent orchestration | 🔴 P0 | High | Intelligent routing, context preservation |
 | **GraphRAG** | Knowledge graph retrieval | 🟡 P1 | Very High | Deep reasoning, systemic analysis |
 | **Recommenders** | ML recommendations & ranking | 🟡 P1 | Medium | Personalization, 30% cost savings |
-| **ULTRA Bot** | Institutional arbitrage | 🟢 P2 | Very High | Revenue generation, $540k/year |
 
 ### Combined Business Value
 
 **Performance:**
-- **Latency**: 1,500ms → 800ms (-47%)
-- **Success Rate**: 95% → 99% (+4%)
-- **Cost**: $0.015 → $0.007 (-53%)
+- **Latency**: 1,500ms → 900ms (-40%)
+- **Success Rate**: 95% → 98% (+3%)
+- **Cost**: $0.015 → $0.008 (-47%)
 - **Scalability**: 1k → 50k concurrent users
 
 **Financial:**
-- **Development Cost**: $120,000 (800 hours)
+- **Development Cost**: $102,000 (680 hours)
 - **Annual Savings**: $120,000 (LLM costs)
-- **Annual Revenue**: $540,000 (ULTRA arbitrage)
-- **5-Year Value**: **$3.3M**
+- **5-Year Value**: **$498,000** (net savings)
 
 ---
 
@@ -824,40 +822,30 @@ See `LLM_SYSTEM_ENHANCEMENTS_ENTERPRISE.md` Section 1.1
 
 ---
 
-## 📚 Library 5: ULTRA Bot (Arbitrage Revenue)
+## 📊 Implementation Phases Summary
 
-### **Integration Spec: ULTRA-001**
+**Phase 1: Foundation** (Months 1-3)
+- Agno Runtime: 3 weeks, $18k
+- Agent Squad: 4 weeks, $24k
+- Recommenders (LLM Ranking): 4 weeks, $24k
+- **Total**: 11 weeks, $66k
 
-**Status**: 🟢 **Priority 2** - Revenue generation  
-**Complexity**: ⚠️⚠️⚠️ Very High  
-**Timeline**: 8 weeks (320 hours)  
-**Value**: $540k/year revenue
+**Phase 2: Advanced Features** (Months 4-6)
+- GraphRAG: 6 weeks, $36k
+- Recommenders (Yield Farms): 4 weeks, $24k
+- **Total**: 10 weeks, $60k
 
----
-
-### 5.1 Business Model
-
-**Institutional Arbitrage as a Service**:
-- **Target Users**: Ultra-premium tier ($500+/month)
-- **Minimum Capital**: $5,000
-- **Platform Fee**: 20% of profits
-- **Revenue Potential**: $540k/year (10 users × $4,500/month × 12)
-
----
-
-### 5.2 Integration Strategy
-
-See `ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT_spec/README.md` for full details.
+**Overall**: 6 months, 680 hours, $102k investment
 
 ---
 
 ## 🗓️ Unified Implementation Roadmap
 
-### **Phase 1: Foundation** (Months 1-3, 320 hours)
+### **Phase 1: Foundation** (Months 1-3, 280 hours)
 
 **Month 1: Agno Runtime**
 - Week 1-2: Core integration (80h)
-- Week 3-4: MCP tools + Gateway (80h)
+- Week 3: MCP tools (40h)
 - **Deliverable**: Agno runtime operational
 
 **Month 2: Agent Squad**
@@ -872,16 +860,13 @@ See `ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT_spec/README.md` for full details.
 
 ---
 
-### **Phase 2: Advanced Features** (Months 4-6, 320 hours)
+### **Phase 2: Advanced Features** (Months 4-6, 400 hours)
 
-**Month 4: GraphRAG (Part 1)**
+**Month 4-5: GraphRAG**
 - Week 1-2: Schema + extraction (80h)
 - Week 3-4: Storage + basic queries (80h)
-- **Deliverable**: Knowledge graph MVP
-
-**Month 5: GraphRAG (Part 2)**
-- Week 1-2: Advanced queries (80h)
-- Week 3-4: Integration with Research Agent (80h)
+- Week 5-6: Advanced queries (80h)
+- Week 7-8: Integration with Research Agent (80h)
 - **Deliverable**: GraphRAG operational
 
 **Month 6: Recommenders (Yield Farms)**
@@ -891,36 +876,26 @@ See `ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT_spec/README.md` for full details.
 
 ---
 
-### **Phase 3: Revenue Generation** (Months 7-8, 160 hours)
-
-**Month 7-8: ULTRA Bot**
-- Week 1-2: Docker + API integration (80h)
-- Week 3-4: Testing + alpha launch (80h)
-- **Deliverable**: ULTRA bot (3 alpha users)
-
----
-
 ## 📊 Combined Business Impact
 
 ### **Performance (Cumulative)**
 
-| Metric | Current | After Phase 1 | After Phase 2 | After Phase 3 |
-|--------|---------|---------------|---------------|---------------|
-| Latency | 1,500ms | 1,200ms (-20%) | 900ms (-40%) | 800ms (-47%) |
-| Success Rate | 95% | 96% | 98% | 99% |
-| Cost/Request | $0.015 | $0.012 (-20%) | $0.009 (-40%) | $0.007 (-53%) |
-| Concurrent Users | 1,000 | 10,000 | 25,000 | 50,000 |
+| Metric | Current | After Phase 1 | After Phase 2 |
+|--------|---------|---------------|---------------|
+| Latency | 1,500ms | 1,100ms (-27%) | 900ms (-40%) |
+| Success Rate | 95% | 97% (+2%) | 98% (+3%) |
+| Cost/Request | $0.015 | $0.011 (-27%) | $0.008 (-47%) |
+| Concurrent Users | 1,000 | 10,000 | 50,000 |
 
-### **Financial (Cumulative)**
+### **Financial (6 Months)**
 
-| Phase | Investment | Annual Savings | Annual Revenue | Net Value |
-|-------|-----------|----------------|----------------|-----------|
-| Phase 1 | $48,000 | $45,000 | $0 | $-3,000 (Year 1) |
-| Phase 2 | $48,000 | $75,000 | $0 | $+24,000 (Year 1) |
-| Phase 3 | $24,000 | $120,000 | $540,000 | $+636,000 (Year 1) |
-| **Total** | **$120,000** | **$120,000** | **$540,000** | **$+660,000** (Year 1) |
+| Phase | Investment | Annual Savings | Net Value (Year 1) |
+|-------|-----------|----------------|---------------------|
+| Phase 1 (Months 1-3) | $66,000 | $80,000 | $+14,000 |
+| Phase 2 (Months 4-6) | $60,000 | $120,000 | $+60,000 |
+| **Total** | **$102,000** | **$120,000** | **$+18,000** |
 
-**5-Year Value**: **$3.3M**
+**5-Year Value**: **$498,000** (net savings)
 
 ---
 
@@ -929,21 +904,17 @@ See `ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT_spec/README.md` for full details.
 ### **Start Immediately** (Month 1)
 
 1. ✅ **Agno Runtime** - Foundation for everything
-2. ✅ **Quick Wins** - 18 hours, 30% cost savings
 
-### **Q1 2026** (Months 1-3)
+### **Q1 2026** (Months 1-3) - Phase 1
 
-1. ✅ **Agent Squad** - Intelligent routing
-2. ✅ **Recommenders (LLM)** - Predictive ranking
+1. ✅ **Agno Runtime** - 10x scalability
+2. ✅ **Agent Squad** - Intelligent routing
+3. ✅ **Recommenders (LLM)** - Predictive ranking
 
-### **Q2 2026** (Months 4-6)
+### **Q2 2026** (Months 4-6) - Phase 2
 
 1. ✅ **GraphRAG** - Deep reasoning
 2. ✅ **Recommenders (Yield)** - Personalization
-
-### **Q3 2026** (Months 7-8)
-
-1. ✅ **ULTRA Bot** - Revenue generation
 
 ---
 
@@ -954,21 +925,22 @@ docs/
 ├── specs/
 │   ├── LLM_ADAPTIVE_RANKING_SPEC.md           (Existing, 982 lines)
 │   ├── LLM_SYSTEM_ENHANCEMENTS_ENTERPRISE.md  (Existing, 991 lines)
-│   └── LIBRARY_INTEGRATION_MASTER_PLAN.md     (This document)
-│
-├── integration/
-│   ├── AGNO_INTEGRATION_GUIDE.md              (To create)
-│   ├── AGENT_SQUAD_INTEGRATION_GUIDE.md       (To create)
-│   ├── GRAPHRAG_INTEGRATION_GUIDE.md          (To create)
-│   ├── RECOMMENDERS_INTEGRATION_GUIDE.md      (To create)
-│   └── ULTRA_INTEGRATION_GUIDE.md             (Exists, needs update)
+│   ├── LIBRARY_INTEGRATION_MASTER_PLAN.md     (This document, updated)
+│   └── integrations/                          (New)
+│       ├── AGNO_RUNTIME_INTEGRATION_SPEC.md       (1,317 lines) ✅
+│       ├── AGENT_SQUAD_INTEGRATION_SPEC.md        (1,030 lines) ✅
+│       ├── GRAPHRAG_INTEGRATION_SPEC.md           (353 lines) ✅
+│       └── RECOMMENDERS_INTEGRATION_SPEC.md       (390 lines) ✅
 │
 └── LLM_ADAPTIVE_RANKING_IMPLEMENTATION.md     (Existing, 633 lines)
 ```
 
+**Total Documentation**: 6,670 lines across 8 strategic documents
+
 ---
 
-**Document Version**: 1.0  
+**Document Version**: 2.0  
 **Last Updated**: December 1, 2025  
 **Status**: ✅ Ready for Execution  
+**Changes**: Removed ULTRA Bot, created 4 detailed integration specs  
 **Next Steps**: Start with Agno Runtime integration (Month 1)
