@@ -1957,6 +1957,7 @@ documentation and checking TVL on DeFiLlama."
 
 Quality: ⭐⭐⭐ (3/5) - Generic, lacks depth
 Time: 2 seconds (fast but shallow)
+Agents: 1 (chat only)
 ```
 
 **Pain Points:**
@@ -1965,10 +1966,12 @@ Time: 2 seconds (fast but shallow)
 - ❌ No task coordination
 - ❌ Context loss on complex queries
 - ❌ One-size-fits-all approach
+- ❌ No execution capability
+- ❌ Manual transaction flow
 
 ---
 
-#### **AFTER (With Agent Squad)**
+#### **AFTER (With Agent Squad - 10 Specialist Agents)**
 
 ```
 User: "Create a balanced DeFi portfolio and analyze risks"
@@ -2054,19 +2057,628 @@ Quality: ⭐⭐⭐⭐⭐ (5/5) - Specialist-level depth
 Time: 2,800ms (slower but comprehensive)
 ```
 
-**New Capabilities:**
-- ✅ Intelligent intent routing (3 specialists)
+**New Capabilities (10 Specialists):**
+- ✅ Intelligent intent routing (10 specialists)
 - ✅ Parallel agent execution (800ms saved)
 - ✅ Supervisor coordination (complex tasks)
 - ✅ Specialist-level analysis (each domain)
 - ✅ Context preserved across turns
 - ✅ Comprehensive multi-angle responses
 
+**Agent Roster:**
+1. **Chat**: General conversation
+2. **Hunter AI**: Market sentiment & predictions
+3. **Research**: Deep protocol analysis
+4. **Execution**: Transaction execution (Privy)
+5. **Risk Analyzer**: Risk assessment
+6. **Portfolio**: Portfolio optimization
+7. **Tax Optimizer**: Tax-loss harvesting
+8. **DeFi Yield**: Yield farming optimization
+9. **Security Auditor**: Smart contract security
+10. **Gas Optimizer**: Gas fee optimization
+
 **Quality Improvement:**
-- Before: Generic advice (3/5 stars)
-- After: Expert-level analysis (5/5 stars)
+- Before: Generic advice (3/5 stars, 1 agent)
+- After: Expert-level analysis (5/5 stars, 10 agents)
 - Depth: 3x more detailed
 - Accuracy: 40% improvement (specialist knowledge)
+- Execution: Now integrated (Privy wallet)
+
+---
+
+### **Use Case 2B: Transaction Execution (Execution Agent + Privy)**
+
+#### **BEFORE (Manual Wallet Flow)**
+
+```
+User: "Swap 1 ETH for USDC"
+
+Manual Flow:
+1. User opens MetaMask/WalletConnect
+2. User navigates to Uniswap.org
+3. User connects wallet (3 clicks)
+4. User selects tokens (ETH → USDC)
+5. User enters amount (1 ETH)
+6. User clicks "Swap"
+7. User reviews transaction
+8. User approves gas
+9. User confirms in wallet
+10. User waits for confirmation
+11. User returns to Anvil platform
+
+Time: 3-5 minutes
+Steps: 11 manual steps
+Tools: 2 platforms (Anvil + Uniswap)
+Experience: Fragmented
+Context: Lost (left Anvil)
+```
+
+**Pain Points:**
+- ❌ Platform switching (Anvil → Uniswap)
+- ❌ Manual wallet connection
+- ❌ 11 separate steps
+- ❌ Context loss
+- ❌ No AI guidance
+- ❌ Manual gas optimization
+
+---
+
+#### **AFTER (Execution Agent + Privy)**
+
+```
+User: "Swap 1 ETH for USDC"
+
+Agent Squad Flow:
+1. Intent Classification (50ms)
+   → Detected: "transaction_execution"
+   → Route to: execution agent
+
+2. Execution Agent (with Privy integration):
+
+[Pre-flight Checks - 200ms]
+✅ Wallet connected (Privy embedded)
+✅ ETH balance: 5.2 ETH
+✅ Gas: 25 gwei (moderate)
+✅ Slippage: 0.5% (user preference)
+
+[Price Quote - 400ms]
+1inch aggregator:
+• Best route: Uniswap V3 (direct)
+• Expected: 2,437.75 USDC (0.5% slippage)
+• Current rate: 1 ETH = 2,450 USDC
+
+[Transaction Preview - Privy UI]
+"📋 TRANSACTION PREVIEW
+
+Swap Details:
+• From: 1.0 ETH
+• To: ~2,437.75 USDC (min: 2,425.51)
+• Route: Uniswap V3
+• Price Impact: 0.02% (excellent)
+
+Costs:
+• Gas: ~$11.25 (180k gas @ 25 gwei)
+• Slippage tolerance: 0.5%
+
+Total: Receive ~2,437.75 USDC
+Time: ~15 seconds
+
+[Approve] [Cancel]"
+
+[User clicks Approve in Privy UI]
+
+[Execution - 15,000ms]
+✅ Transaction submitted: 0xdef...456
+✅ MEV protection: Flashbots relay
+⏳ Pending confirmation...
+✅ Confirmed in block 18,234,567
+✅ Actual output: 2,438.12 USDC
+
+Response (total 15,650ms):
+"✅ SWAP EXECUTED SUCCESSFULLY
+
+Transaction Details:
+• Swapped: 1 ETH → 2,438.12 USDC
+• Route: Uniswap V3 (direct)
+• Slippage: 0.01% (better than 0.5% max!) 🎯
+• Gas Cost: $11.15 (178,450 gas @ 25 gwei)
+• Net Received: 2,438.12 USDC
+
+Transaction: 0xdef...456
+Block: 18,234,567
+Status: ✅ Confirmed
+Time: 15.6 seconds
+
+Portfolio Updated:
+• ETH: 5.2 → 4.2 (-1.0)
+• USDC: $12,450 → $14,888.12 (+$2,438.12)
+
+Would you like to:
+1. View on Etherscan?
+2. Deploy USDC to yield protocol? (7.5% APY available)
+3. Set up price alert for ETH?"
+
+Time: 16 seconds (vs 3-5 minutes)
+Steps: 2 (message + approve)
+Tools: 1 (Anvil only)
+Experience: Seamless
+Context: Preserved
+```
+
+**New Capabilities:**
+- ✅ One-platform execution (no switching)
+- ✅ Privy embedded wallet (seamless UX)
+- ✅ AI-powered routing (best price via 1inch)
+- ✅ Pre-flight safety checks
+- ✅ MEV protection (Flashbots)
+- ✅ Real-time price quotes
+- ✅ Automatic portfolio updates
+- ✅ Context preserved (stay in chat)
+- ✅ 2 steps vs 11 manual steps
+
+**Time Savings:**
+- Before: 3-5 minutes (manual)
+- After: 16 seconds (automated)
+- Improvement: 92% faster
+
+---
+
+### **Use Case 2C: Portfolio Rebalancing (Portfolio Agent)**
+
+#### **BEFORE (Manual Rebalancing)**
+
+```
+User: "My portfolio is unbalanced, help"
+
+Manual Process:
+1. User manually checks holdings
+2. User calculates current allocation
+3. User researches optimal allocation
+4. User uses Excel/spreadsheet
+5. User calculates MPT manually (or skips)
+6. User determines what to buy/sell
+7. User manually executes each trade
+8. User tracks each transaction
+9. User updates spreadsheet
+
+Time: 2-4 hours
+Tools: Anvil + Excel + Uniswap + CoinGecko
+Quality: Amateur (no MPT optimization)
+Cost: $75+ gas (suboptimal execution)
+```
+
+**Pain Points:**
+- ❌ Manual calculations
+- ❌ No MPT optimization
+- ❌ Multiple tools required
+- ❌ Time-consuming (2-4 hours)
+- ❌ No AI guidance
+- ❌ Suboptimal execution (high gas)
+
+---
+
+#### **AFTER (Portfolio Agent + MPT)**
+
+```
+User: "Optimize my portfolio"
+
+Agent Squad Flow:
+1. Intent Classification (50ms)
+   → Route to: portfolio agent
+
+2. Portfolio Agent (1,800ms total):
+
+[Current Portfolio - via Privy - 200ms]
+• ETH: $12,740 (51%)
+• UNI: $4,225 (17%)
+• AAVE: $3,825 (15%)
+• USDC: $4,250 (17%)
+• Total: $25,040
+
+[Risk Assessment - parallel - 600ms]
+Current risk score: 58/100 (Medium-High)
+• Volatility: 35% (30-day)
+• ETH correlation: 0.78 (high)
+• Max drawdown: -42%
+
+[MPT Optimization - 800ms]
+Efficient frontier analysis:
+• Calculated 10,000 portfolio combinations
+• Found optimal: Risk 42, Return 19%
+• Current: Risk 58, Return 15%
+
+[Rebalancing Plan - 200ms]
+Transactions needed: 6
+Estimated gas: $75 (6 tx @ $12.50 each)
+Execution time: ~2 minutes
+
+Response:
+"📊 PORTFOLIO OPTIMIZATION COMPLETE
+
+CURRENT vs OPTIMAL:
+┌──────────────────────────────────────────────┐
+│ Asset   Current  Optimal  Action   Amount   │
+├──────────────────────────────────────────────┤
+│ ETH     51%      43%      SELL     $2,000   │
+│ UNI     17%      19%      BUY      $500     │
+│ AAVE    15%      16%      BUY      $250     │
+│ USDC    17%      10%      SELL     $1,750   │
+│ MATIC   0%       6%       BUY      $1,500   │
+│ LINK    0%       6%       BUY      $1,500   │
+└──────────────────────────────────────────────┘
+
+EXPECTED IMPROVEMENTS:
+• Risk: 58 → 42 (-28%) ✅
+• Return: 15% → 19% (+27%) ✅
+• Sharpe Ratio: 0.82 → 1.15 (+40%) ✅
+• Diversification: 55 → 78 (+42%) ✅
+
+EXECUTION PLAN (Optimized):
+Batched transactions to save gas:
+1. Sell 0.82 ETH → $2,000 USDC
+2. Batch swap: $1,500 USDC → MATIC
+                $1,500 USDC → LINK
+                $500 USDC → UNI
+                $250 USDC → AAVE
+
+Gas optimization:
+• Standard: $75 (6 separate txs)
+• Batched: $45 (2 batched txs) 💰 Save $30
+• Slippage: ~$35 (0.15% avg)
+• Total cost: $80 (vs $110 standard)
+
+1-Click Execution Available via Privy
+
+Would you like to:
+1. ✅ Execute optimized plan now? (2 min, $80)
+2. See alternative allocations?
+3. Set up auto-rebalancing (monthly)?"
+
+Time: 1.8 seconds + 2 min execution
+Tools: 1 (Anvil only)
+Quality: Professional (MPT-optimized)
+Cost: $80 gas (batched, optimized)
+```
+
+**New Capabilities:**
+- ✅ Automatic MPT optimization
+- ✅ Real-time risk assessment
+- ✅ Efficient frontier analysis
+- ✅ Batched transactions (save $30 gas)
+- ✅ One-click execution (Privy)
+- ✅ Expected improvement metrics
+- ✅ Auto-rebalancing option
+
+**Time Savings:**
+- Before: 2-4 hours (manual)
+- After: 2 minutes (automated)
+- Improvement: 98% faster
+
+**Cost Savings:**
+- Before: $110 (standard execution)
+- After: $80 (batched execution)
+- Improvement: -27% gas cost
+
+---
+
+### **Use Case 2D: Tax Optimization (Tax Optimizer Agent)**
+
+#### **BEFORE (Manual Tax Planning)**
+
+```
+User: "How much will I owe in crypto taxes?"
+
+Manual Process:
+1. Export transaction history manually
+2. Calculate gains/losses in Excel
+3. Categorize short-term vs long-term
+4. Identify wash sales manually
+5. Calculate tax liability manually
+6. Miss tax-loss harvesting opportunities
+7. Pay $500-1,000 to crypto tax accountant
+
+Time: 8-20 hours
+Cost: $500-1,000 (accountant)
+Quality: Depends on accountant
+Optimization: None (reactive, not proactive)
+```
+
+**Pain Points:**
+- ❌ Manual transaction tracking
+- ❌ Complex calculations
+- ❌ Miss optimization opportunities
+- ❌ Expensive accountant fees
+- ❌ Reactive (not proactive)
+- ❌ No real-time guidance
+
+---
+
+#### **AFTER (Tax Optimizer Agent)**
+
+```
+User: "How can I reduce my crypto taxes?"
+
+Agent Squad Flow:
+1. Intent Classification (50ms)
+   → Route to: tax_optimizer agent
+
+2. Tax Optimizer Agent (1,200ms total):
+
+[Transaction Analysis - via Privy - 400ms]
+• 2025 transactions: 145
+• Realized gains: $12,500
+• Unrealized losses: $3,200 (LINK, SOL)
+
+[Tax Calculation - 300ms]
+• Short-term gains: $8,500 (37% bracket)
+• Long-term gains: $4,000 (20% bracket)
+• Current tax liability: $3,945
+
+[Opportunity Detection - 400ms]
+Tax-loss harvesting opportunities:
+• LINK: -$1,800 unrealized loss
+• SOL: -$1,400 unrealized loss
+• Potential savings: $1,184 (37% of losses)
+
+[Strategy Generation - 100ms]
+• Execute harvesting today (capture 2025)
+• Rebuy alternatives (avoid wash sale)
+• Timeline: 31-day wait
+
+Response:
+"💰 TAX OPTIMIZATION ANALYSIS
+
+CURRENT TAX SITUATION (2025):
+• Realized Gains: $12,500
+• Estimated Tax: $3,945
+• Tax Bracket: 37% (short-term)
+• Effective Rate: 31.6%
+
+TAX-LOSS HARVESTING OPPORTUNITIES:
+┌──────────────────────────────────────────────┐
+│ Asset  Entry    Current  Loss    Tax Save   │
+├──────────────────────────────────────────────┤
+│ LINK   $15.20   $11.80   -$1,800  $666     │
+│ SOL    $128.50  $98.20   -$1,400  $518     │
+└──────────────────────────────────────────────┘
+
+RECOMMENDED STRATEGY:
+1. Sell LINK today (-$1,800 loss)
+   • Tax savings: $666
+   • Rebuy: DOT (similar L1, no wash sale)
+   • Wait: 31 days (IRS requirement)
+
+2. Sell SOL today (-$1,400 loss)
+   • Tax savings: $518
+   • Rebuy: AVAX (similar L1, no wash sale)
+   • Wait: 31 days
+
+TOTAL SAVINGS: $1,184
+Reduced tax: $3,945 → $2,761 (-30%) 🎯
+
+EXECUTION TIMELINE:
+• Today: Sell LINK + SOL (capture losses)
+• Jan 31, 2026: Rebuy DOT + AVAX (avoid wash)
+• Maintain similar exposure throughout
+
+ADDITIONAL OPTIMIZATIONS DETECTED:
+1. Long-term vs Short-term:
+   • Hold ETH 25 more days → $680 savings
+   
+2. Charitable Donation:
+   • Donate appreciated AAVE → $350 savings
+   
+3. Future Planning:
+   • Set up alerts for future harvesting
+
+TOTAL POTENTIAL: $1,184 + $680 + $350 = $2,214
+
+Year-End Tax Report Available:
+✅ Form 8949 (auto-generated)
+✅ Schedule D
+✅ All transactions categorized
+✅ Cost basis calculated (FIFO)
+✅ 1-click export to TurboTax
+
+Would you like to:
+1. ✅ Execute tax-loss harvesting now?
+2. Generate full tax report (Form 8949)?
+3. Set up 2026 tax optimization alerts?"
+
+Time: 1.2 seconds (analysis)
+Cost: $0 (vs $500-1,000 accountant)
+Quality: Professional (CPA-level)
+Savings: $1,184+ (immediate)
+```
+
+**New Capabilities:**
+- ✅ Automatic transaction analysis
+- ✅ Real-time tax calculation
+- ✅ Proactive optimization detection
+- ✅ Wash sale prevention
+- ✅ Form 8949 auto-generation
+- ✅ Alternative asset recommendations
+- ✅ Future planning guidance
+
+**Cost Savings:**
+- Accountant: $500-1,000 → $0
+- Tax savings: $1,184+ immediate
+- Time saved: 8-20 hours → 1.2 seconds
+
+---
+
+### **Use Case 2E: Smart Contract Security (Security Auditor Agent)**
+
+#### **BEFORE (Manual Security Check)**
+
+```
+User: "Is this token safe? 0x123...abc"
+
+Manual Process:
+1. Copy contract address
+2. Visit Etherscan
+3. Check if verified (unclear what to look for)
+4. Google "token audit" (may not find)
+5. Check holder concentration (manual calc)
+6. Search Twitter for scam warnings
+7. Check liquidity (unclear metrics)
+8. Make uninformed decision
+9. Often get scammed ($$$)
+
+Time: 30-60 minutes
+Quality: Amateur (miss red flags)
+Risk: HIGH (common to miss rug pulls)
+```
+
+**Pain Points:**
+- ❌ Manual multi-platform research
+- ❌ No systematic analysis
+- ❌ Miss hidden contract risks
+- ❌ No honeypot detection
+- ❌ Common to get scammed
+- ❌ Time-consuming
+
+---
+
+#### **AFTER (Security Auditor Agent)**
+
+```
+User: "Is this token safe to buy? 0x123...abc"
+
+Agent Squad Flow:
+1. Intent Classification (50ms)
+   → Route to: security_auditor agent
+
+2. Security Auditor Agent (2,150ms total):
+
+[Contract Analysis - 800ms]
+• Bytecode analysis
+• Owner permissions check
+• Pausable/mintable detection
+• Proxy pattern analysis
+
+[Code Pattern Analysis - 600ms]
+• Honeypot detection
+• Hidden fee scan
+• Blacklist function check
+• Rug pull pattern matching
+
+[On-Chain Behavior - 400ms]
+• Holder distribution
+• Liquidity analysis
+• Trading activity patterns
+• Wallet behavior analysis
+
+[Historical Analysis - 300ms]
+• Similar contracts search
+• Owner history check
+• Cross-reference scam database
+
+Response:
+"🚨 SECURITY AUDIT REPORT
+
+CONTRACT: 0x123...abc
+Token: XYZ
+
+OVERALL RISK: 🔴 HIGH (78/100)
+Recommendation: ⛔ DO NOT BUY
+
+CRITICAL ISSUES (4):
+1. ⛔ RUG PULL RISK - CONFIRMED
+   • Same owner as previous rug pull (0x456...def)
+   • Previous rug: $1.2M stolen (June 2025)
+   • Same wallet patterns detected
+   • Confidence: 98%
+
+2. ⛔ CENTRALIZED CONTROL
+   • Owner can pause all transfers
+   • Owner can mint unlimited tokens
+   • Owner can blacklist addresses
+   • No timelock protection
+   • No multisig governance
+
+3. ⛔ LIQUIDITY RISK
+   • Total liquidity: $45k (VERY LOW)
+   • Liquidity NOT locked
+   • Can be removed instantly
+   • Exit scam possible
+
+4. ⛔ HIDDEN FEES
+   • 2% transfer tax (undisclosed)
+   • Tax can be increased to 100%
+   • Tax wallet: same as owner
+
+HIGH RISK (3):
+5. ⚠️ HOLDER CONCENTRATION
+   • Top 10 wallets: 65% supply
+   • Whale dump risk: EXTREME
+
+6. ⚠️ LOW ACTIVITY
+   • Avg 50 transactions/day
+   • Daily volume: $12k
+   • Difficult to exit position
+
+7. ⚠️ UNVERIFIED AUDIT
+   • Audit by unknown firm
+   • No recognized auditors
+   • Audit date: 8 months old
+
+HONEYPOT CHECK: ⚠️ SUSPICIOUS
+• Sell restrictions detected
+• May not be able to sell after buying
+
+COMPARISON - SAFE ALTERNATIVES:
+┌────────────────────────────────────────────────┐
+│ Token   Risk   Liquidity  Audit   Decentralized│
+├────────────────────────────────────────────────┤
+│ XYZ     78🔴   $45k      ❌      ❌            │
+│ UNI     35🟢   $2.1B     ✅      ✅            │
+│ AAVE    38🟢   $850M     ✅      ✅            │
+│ LINK    42🟡   $1.2B     ✅      ✅            │
+└────────────────────────────────────────────────┘
+
+⛔ STRONG RECOMMENDATION: DO NOT BUY
+
+This token shows multiple signs of a scam:
+• Confirmed rug pull by same owner
+• Centralized control (can steal funds)
+• Low liquidity (hard to exit)
+• Hidden fees (2% tax)
+• Possible honeypot (can't sell)
+
+SAFER ALTERNATIVES (Same Category):
+1. UNI: Risk 35/100, $2.1B liquidity ✅
+2. AAVE: Risk 38/100, $850M liquidity ✅
+
+REPORTED TO:
+✅ Anvil scam database
+✅ Community alert sent
+✅ Etherscan flagged
+
+Would you like to:
+1. Report additional details to authorities?
+2. See vetted alternatives in same category?
+3. Set up wallet scam protection?"
+
+Time: 2.2 seconds (vs 30-60 minutes)
+Quality: Professional (8-point analysis)
+Risk: PREVENTED (saved from scam)
+```
+
+**New Capabilities:**
+- ✅ Instant comprehensive audit (2 seconds)
+- ✅ Rug pull detection (owner history)
+- ✅ Honeypot detection (can't sell check)
+- ✅ Hidden fee discovery
+- ✅ Holder concentration analysis
+- ✅ Liquidity risk assessment
+- ✅ Safe alternative recommendations
+- ✅ Automatic scam reporting
+
+**Value Add:**
+- Time: 30-60 min → 2 seconds (99% faster)
+- Quality: Amateur → Professional
+- **Protection: Potentially saves thousands (scam prevention)**
 
 ---
 
@@ -2396,7 +3008,8 @@ Results:
 
 ---
 
-**Status:** ✅ Complete Use Cases Examples (Original + New Integrations)  
+**Status:** ✅ Complete Use Cases Examples (Original + Enhanced Agent Squad + New Integrations)  
 **Last Updated:** December 1, 2025  
-**Total Examples:** 14 comprehensive before/after scenarios  
+**Total Examples:** 18 comprehensive before/after scenarios  
+**Agent Squad Examples:** 5 new specialized agents (Execution, Portfolio, Tax, Security, Gas)  
 **Next:** Implementation - Start with Agno Runtime (Month 1)

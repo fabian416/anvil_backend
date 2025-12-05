@@ -16,7 +16,7 @@ Based on our **LLM Adaptive Ranking System** (2,732 lines, production-ready) and
 | Library | Purpose | Priority | Integration Complexity | Business Impact |
 |---------|---------|----------|------------------------|-----------------|
 | **Agno** | High-performance agent runtime | 🔴 P0 | Medium | 10x scalability, µs instantiation |
-| **Agent Squad** | Multi-agent orchestration | 🔴 P0 | High | Intelligent routing, context preservation |
+| **Agent Squad** | Multi-agent orchestration (10 specialists) | 🔴 P0 | High | Intelligent routing, specialist execution |
 | **GraphRAG** | Knowledge graph retrieval | 🟡 P1 | Very High | Deep reasoning, systemic analysis |
 | **Recommenders** | ML recommendations & ranking | 🟡 P1 | Medium | Personalization, 30% cost savings |
 
@@ -431,12 +431,17 @@ class AgentSquadOrchestrator:
     """
     Multi-agent orchestrator using Agent Squad.
     
-    Agents:
-    - Chat Agent: General conversation
-    - Hunter AI: Market analysis, sentiment, predictions
-    - ULTRA: Arbitrage, flash loans, MEV
-    - Research: Deep protocol analysis, risk assessment
-    - Trading: Execute swaps, manage positions
+    10 Specialized Agents:
+    1. Chat: General conversation
+    2. Hunter AI: Market sentiment & predictions
+    3. Research: Deep protocol analysis
+    4. Execution: Transaction execution (Privy wallet integration)
+    5. Risk Analyzer: Risk assessment & scoring
+    6. Portfolio: Portfolio optimization & rebalancing
+    7. Tax Optimizer: Tax-loss harvesting & reporting
+    8. DeFi Yield: Yield farming & APY optimization
+    9. Security Auditor: Smart contract security analysis
+    10. Gas Optimizer: Gas fee optimization & timing
     """
     
     def __init__(
@@ -454,12 +459,17 @@ class AgentSquadOrchestrator:
             storage=self._create_storage_adapter()
         )
         
-        # Add specialized agents
+        # Add 10 specialized agents
         orchestrator.add_agent(self._create_chat_agent())
         orchestrator.add_agent(self._create_hunter_agent())
-        orchestrator.add_agent(self._create_ultra_agent())
         orchestrator.add_agent(self._create_research_agent())
-        orchestrator.add_agent(self._create_trading_agent())
+        orchestrator.add_agent(self._create_execution_agent())
+        orchestrator.add_agent(self._create_risk_analyzer_agent())
+        orchestrator.add_agent(self._create_portfolio_agent())
+        orchestrator.add_agent(self._create_tax_optimizer_agent())
+        orchestrator.add_agent(self._create_defi_yield_agent())
+        orchestrator.add_agent(self._create_security_auditor_agent())
+        orchestrator.add_agent(self._create_gas_optimizer_agent())
         
         return orchestrator
     
