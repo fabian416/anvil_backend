@@ -1,79 +1,75 @@
-"""
-Agent Squad configuration.
-"""
+"""Agent Squad configuration from TOML."""
 
-from dataclasses import dataclass
-from typing import Optional
+from pydantic import BaseModel, Field
 
 
-@dataclass
-class AgentSquadConfig:
-    """Configuration for Agent Squad orchestrator"""
-    
-    # Model configuration
-    default_model: str = "gpt-4-turbo"
-    fallback_model: str = "gpt-3.5-turbo"
-    
+class AgentConfigModel(BaseModel):
+    """Individual agent configuration."""
+    enabled: bool = True
+    model: str = "gpt-4o-mini"
+    temperature: float = 0.7
+    max_tokens: int = 1000
+
+
+class AgentSquadAgentsConfig(BaseModel):
+    """All 18 agent configurations."""
+    # Core user-facing agents
+    chat: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    hunter_ai: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    research: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    execution: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    risk_analyzer: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    portfolio: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    tax_optimizer: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    defi_yield: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    security_auditor: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    gas_optimizer: AgentConfigModel = Field(default_factory=AgentConfigModel)
+
+    # Enterprise agents
+    compliance_monitor: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    multisig_coordinator: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    alert_monitoring: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    crisis_manager: AgentConfigModel = Field(default_factory=AgentConfigModel)
+
+    # Advanced agents
+    bridge_crosschain: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    lending_borrowing: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    nft_asset_manager: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    dao_governance: AgentConfigModel = Field(default_factory=AgentConfigModel)
+
+
+class AgentSquadSettings(BaseModel):
+    """Agent Squad configuration from TOML."""
+    # Master toggle
+    enabled: bool = True
+
     # Intent classification
-    intent_threshold: float = 0.75  # Confidence threshold for intent classification
-    
-    # Session management
-    session_timeout: int = 3600  # 1 hour in seconds
-    max_context_messages: int = 20  # Max messages to keep in context
-    
-    # Performance settings
-    max_retries: int = 3
-    timeout_seconds: int = 30
-    
-    # Feature flags
-    enable_intent_classification: bool = True
-    enable_context_memory: bool = True
-    enable_multi_agent_routing: bool = True
-    
-    # Implementation selection
-    use_agent_squad: bool = False  # True = use Agent Squad library, False = use hand-rolled
-    
-    # Debug settings
-    debug_mode: bool = False
-    log_intent_classification: bool = True
-    log_agent_selection: bool = True
+    intent_classification_model: str = "gpt-4o-mini"
+    intent_confidence_threshold: float = 0.85
+    fallback_agent: str = "chat"
 
+    # Supervisor coordination
+    enable_supervisor: bool = True
+    supervisor_model: str = "gpt-4o"
+    supervisor_max_agents: int = 5
+    supervisor_timeout_seconds: int = 120
 
-def load_agent_squad_config(
-    default_model: Optional[str] = None,
-    fallback_model: Optional[str] = None,
-    intent_threshold: Optional[float] = None,
-    session_timeout: Optional[int] = None,
-    use_agent_squad: Optional[bool] = None,
-    debug_mode: Optional[bool] = None
-) -> AgentSquadConfig:
-    """
-    Load Agent Squad configuration with optional overrides.
-    
-    Args:
-        default_model: Override default model
-        fallback_model: Override fallback model
-        intent_threshold: Override intent threshold
-        session_timeout: Override session timeout
-        use_agent_squad: Override implementation (True = Agent Squad, False = hand-rolled)
-        debug_mode: Override debug mode
-    
-    Returns:
-        AgentSquadConfig instance
-    """
-    config = AgentSquadConfig()
-    
-    if default_model is not None:
-        config.default_model = default_model
-    if fallback_model is not None:
-        config.fallback_model = fallback_model
-    if intent_threshold is not None:
-        config.intent_threshold = intent_threshold
-    if session_timeout is not None:
-        config.session_timeout = session_timeout
-    if use_agent_squad is not None:
-        config.use_agent_squad = use_agent_squad
-    if debug_mode is not None:
-        config.debug_mode = debug_mode
-    
-    return config
+    # Context preservation
+    conversation_history_limit: int = 20
+    context_window_tokens: int = 8000
+
+    # Performance
+    max_concurrent_agents: int = 3
+    routing_timeout_seconds: int = 5
+    execution_timeout_seconds: int = 60
+
+    # Storage
+    storage_backend: str = "postgresql"
+    storage_ttl_seconds: int = 86400  # 24 hours
+
+    # Telemetry
+    telemetry_enabled: bool = True
+    telemetry_sample_rate: float = 1.0
+
+    # Per-agent configuration
+    agents: AgentSquadAgentsConfig = Field(default_factory=AgentSquadAgentsConfig)

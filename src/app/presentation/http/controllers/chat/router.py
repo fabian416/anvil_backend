@@ -10,6 +10,9 @@ from fastapi.exceptions import HTTPException
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.application.common.services.current_user import CurrentUserService
+from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
+from app.application.agent_squad.commands.execute_supervisor_workflow import ExecuteSupervisorWorkflow
+from app.application.agent_squad.queries.get_enabled_agents import GetEnabledAgents
 from app.presentation.http.schemas.chat import (
     CreateConversationRequest,
     ConversationResponse,
@@ -401,7 +404,7 @@ def create_chat_router() -> APIRouter:
         conversation_id: UUID,
         request: AgentSquadMessageRequest,
         current_user: FromDishka[CurrentUserService],
-        # TODO: Add Agent Squad interactor
+        interactor: FromDishka["SendAgentSquadMessage"],
     ) -> AgentSquadMessageResponse:
         """
         Send message with Agent Squad intelligent routing.
@@ -414,12 +417,17 @@ def create_chat_router() -> APIRouter:
         
         Optional: Force specific agent via force_agent parameter
         """
-        # TODO: Implement SendAgentSquadMessage interactor
-        # For now, return placeholder
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Agent Squad integration in progress (Phase 2)",
+        user = await current_user.get_current_user()
+        
+        # Execute command
+        result = await interactor.execute(
+            conversation_id=conversation_id,
+            user_id=user.id,
+            content=request.content,
+            force_agent=request.force_agent,
         )
+        
+        return AgentSquadMessageResponse(**result)
     
     @router.post(
         "/agent-squad/supervisor",
@@ -432,7 +440,7 @@ def create_chat_router() -> APIRouter:
         conversation_id: UUID,
         request: SupervisorWorkflowRequest,
         current_user: FromDishka[CurrentUserService],
-        # TODO: Add Supervisor interactor
+        interactor: FromDishka["ExecuteSupervisorWorkflow"],
     ) -> SupervisorWorkflowResponse:
         """
         Execute complex multi-agent workflow.
@@ -450,11 +458,17 @@ def create_chat_router() -> APIRouter:
         -> Portfolio agent: Create allocation
         -> Chat agent: Summarize
         """
-        # TODO: Implement ExecuteSupervisorWorkflow interactor
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Supervisor workflow in progress (Phase 2)",
+        user = await current_user.get_current_user()
+        
+        # Execute command
+        result = await interactor.execute(
+            conversation_id=conversation_id,
+            user_id=user.id,
+            complex_task=request.complex_task,
+            max_agents=request.max_agents or 5,
         )
+        
+        return SupervisorWorkflowResponse(**result)
     
     @router.get(
         "/agent-squad/agents",
@@ -465,7 +479,8 @@ def create_chat_router() -> APIRouter:
     @inject
     async def list_enabled_agents(
         current_user: FromDishka[CurrentUserService],
-        # TODO: Add Agent Squad config service
+        interactor: FromDishka["GetEnabledAgents"],
+        user_subscription_tier: str | None = None,
     ) -> ListEnabledAgentsResponse:
         """
         List all enabled agents for current user.
@@ -476,15 +491,19 @@ def create_chat_router() -> APIRouter:
         - Core vs enterprise classification
         
         Tiers:
-        - Free: 1 agent (chat)
-        - Basic: 3 agents (chat, hunter_ai, research)
-        - Pro: 14 agents (all core + 4 advanced)
-        - Enterprise: 18 agents (all)
+        - Free: 5 agents (chat, hunter_ai, research, portfolio, gas_optimizer)
+        - Pro: 10 agents (all core user-facing)
+        - Enterprise: 18 agents (all agents including enterprise/advanced)
         """
-        # TODO: Implement GetEnabledAgents interactor
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Agent listing in progress (Phase 2)",
+        # Get user for subscription tier check (if needed)
+        # user = await current_user.get_current_user()
+        # user_subscription_tier = user.subscription_tier  # TODO: Add to user model
+        
+        # Execute query
+        result = await interactor.execute(
+            user_subscription_tier=user_subscription_tier,
         )
+        
+        return ListEnabledAgentsResponse(**result)
     
     return router

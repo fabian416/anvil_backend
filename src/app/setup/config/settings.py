@@ -12,6 +12,7 @@ from app.setup.config.mcp import MCPSettings
 from app.setup.config.agno import AgnoSettings
 from app.setup.config.projects import ProjectSettings
 from app.setup.config.distillation import DistillationSettings
+from app.setup.config.agent_squad import AgentSquadSettings
 
 
 class AppSettings(BaseModel):
@@ -27,6 +28,7 @@ class AppSettings(BaseModel):
     agno: AgnoSettings = AgnoSettings()
     projects: ProjectSettings = ProjectSettings()
     distillation: DistillationSettings | None = None
+    agent_squad: AgentSquadSettings = AgentSquadSettings()
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:

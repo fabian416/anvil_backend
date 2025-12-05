@@ -12,6 +12,9 @@ from app.setup.ioc.settings import SettingsProvider
 from app.setup.ioc.agno import AgnoProvider
 from app.setup.ioc.graph import GraphProvider
 from app.setup.ioc.llm_ranking import LLMRankingProvider
+from app.setup.ioc.agent_squad_domain import AgentSquadDomainProvider
+from app.setup.ioc.agent_squad_infrastructure import AgentSquadInfrastructureProvider
+from app.setup.ioc.agent_squad_application import AgentSquadApplicationProvider
 
 
 def get_providers() -> Iterable[Provider]:
@@ -26,4 +29,7 @@ def get_providers() -> Iterable[Provider]:
         AgnoProvider(),
         GraphProvider(),
         LLMRankingProvider(),  # LLM Adaptive Ranking System
+        AgentSquadDomainProvider(),  # Agent Squad domain services
+        AgentSquadInfrastructureProvider(),  # Agent Squad infrastructure adapters
+        AgentSquadApplicationProvider(),  # Agent Squad application interactors
     )

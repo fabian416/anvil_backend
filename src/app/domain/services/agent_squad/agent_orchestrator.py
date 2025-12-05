@@ -73,6 +73,7 @@ class AgentOrchestrator:
         self,
         intent_classifier: "IntentClassifierPort",
         feature_flags: "FeatureFlagsPort",
+        agent_registry: dict[AgentType, "AgentGateway"] | None = None,
         confidence_threshold: float = 0.85,
         fallback_agent: AgentType = AgentType.CHAT,
     ):
@@ -82,11 +83,13 @@ class AgentOrchestrator:
         Args:
             intent_classifier: Intent classification port
             feature_flags: Feature flags port (agent enable/disable)
+            agent_registry: Registry mapping agent types to implementations
             confidence_threshold: Minimum confidence for routing (default 0.85)
             fallback_agent: Fallback agent for low confidence (default CHAT)
         """
         self._intent_classifier = intent_classifier
         self._feature_flags = feature_flags
+        self._agent_registry = agent_registry or {}
         self._confidence_threshold = confidence_threshold
         self._fallback_agent = fallback_agent
     
@@ -178,6 +181,42 @@ class AgentOrchestrator:
                 available_agents.append(agent_type)
         
         return available_agents[:max_agents]
+    
+    async def execute_agent(
+        self,
+        agent_type: AgentType,
+        message: str,
+        conversation_context: "ConversationContext",
+    ) -> "AgentResponse":
+        """
+        Execute specific agent with message and context.
+        
+        Args:
+            agent_type: Agent to execute
+            message: User message
+            conversation_context: Conversation history
+            
+        Returns:
+            Agent response with content, tools used, metadata
+            
+        Raises:
+            ValueError: If agent not found in registry
+        """
+        from app.domain.value_objects.conversation_id import ConversationId
+        
+        # Get agent from registry
+        agent = self._agent_registry.get(agent_type)
+        if not agent:
+            raise ValueError(f"Agent {agent_type.value} not found in registry")
+        
+        # Execute agent
+        response = await agent.execute(
+            conversation_id=conversation_context.conversation_id,
+            message=message,
+            context=conversation_context,
+        )
+        
+        return response
 
 
 # Ports (interfaces) for dependency injection
