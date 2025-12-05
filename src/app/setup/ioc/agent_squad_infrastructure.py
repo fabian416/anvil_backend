@@ -101,6 +101,13 @@ class AgentSquadInfrastructureProvider(Provider):
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable not set")
         return LLMClientOpenAI(api_key=api_key)
+    
+    @provide
+    def provide_coingecko_client(self) -> "CoinGeckoClient":
+        """Provide CoinGecko API client."""
+        from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+        api_key = os.getenv("COINGECKO_API_KEY")  # Optional
+        return CoinGeckoClient(api_key=api_key)
 
     @provide
     def provide_context_storage(self, redis_client: Redis) -> ContextStorageGateway:
@@ -152,10 +159,15 @@ class AgentSquadInfrastructureProvider(Provider):
 
     @provide
     def provide_hunter_ai_agent(
-        self, llm_client: LLMClientGateway
+        self,
+        llm_client: LLMClientGateway,
+        coingecko_client: "CoinGeckoClient",
     ) -> HunterAIAgentOpenAI:
-        """Provide Hunter AI agent."""
-        return HunterAIAgentOpenAI(llm_client=llm_client)
+        """Provide Hunter AI agent with CoinGecko integration."""
+        return HunterAIAgentOpenAI(
+            llm_client=llm_client,
+            coingecko_client=coingecko_client,
+        )
 
     @provide
     def provide_research_agent(
