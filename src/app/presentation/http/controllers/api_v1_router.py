@@ -28,6 +28,7 @@ from app.presentation.http.controllers.ultra.auto_executor import create_auto_ex
 
 # New routers for distillation and projects
 from app.presentation.http.controllers.admin.distillation_router import router as distillation_admin_router
+from app.presentation.http.controllers.admin.distillation_validation_router import router as distillation_validation_router
 from app.presentation.http.controllers.admin.projects_router import router as projects_admin_router
 from app.presentation.http.controllers.user.projects_router import router as projects_user_router
 
@@ -108,6 +109,7 @@ def create_api_v1_router() -> APIRouter:
         create_auto_executor_router(),
         # New distillation and projects routers
         distillation_admin_router,
+        distillation_validation_router,  # Request validation system
         projects_admin_router,
         projects_user_router,
         # Real-time agent chat WebSocket

@@ -13,6 +13,7 @@ from app.presentation.http.auth.access_token_processor_jwt import (
 from app.presentation.http.auth.cookie_params import CookieParams
 from app.setup.config.settings import AppSettings
 from app.setup.config.privy import PrivySettings
+from app.setup.config.distillation import DistillationSettings
 
 
 class SettingsProvider(Provider):
@@ -62,3 +63,48 @@ class SettingsProvider(Provider):
         if settings.privy is None:
             raise ValueError("Privy settings not configured. Add [privy] section to config.toml")
         return settings.privy
+
+    @provide
+    def provide_distillation_settings(self, settings: AppSettings) -> DistillationSettings:
+        """
+        Provide distillation settings with fail-safe defaults.
+        
+        If distillation section is not in config.toml, returns disabled config.
+        This allows the system to start without distillation configured.
+        """
+        if settings.distillation is None:
+            # Return default disabled settings if not configured
+            from app.setup.config.distillation import (
+                VertexAISettings,
+                DeepInfraSettings,
+                DistillationRetrySettings,
+                DistillationTelemetrySettings,
+            )
+            return DistillationSettings(
+                enabled=False,
+                provider="vertex_ai",
+                fallback_provider="deepinfra",
+                temperature=0.3,
+                max_tokens=150,
+                timeout_seconds=10.0,
+                vertex_ai=VertexAISettings(
+                    project_id="",
+                    location="us-central1",
+                    model="gemini-1.5-flash",
+                ),
+                deepinfra=DeepInfraSettings(
+                    api_key="",
+                    model="meta-llama/Llama-3.2-3B-Instruct",
+                    base_url="https://api.deepinfra.com/v1/openai",
+                ),
+                retry=DistillationRetrySettings(
+                    max_retries=3,
+                    retry_delay=1.0,
+                ),
+                telemetry=DistillationTelemetrySettings(
+                    enabled=False,
+                    batch_size=10,
+                    flush_interval_seconds=60,
+                ),
+            )
+        return settings.distillation

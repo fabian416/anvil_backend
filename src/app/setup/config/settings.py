@@ -11,6 +11,7 @@ from app.setup.config.integrations import IntegrationSettings
 from app.setup.config.mcp import MCPSettings
 from app.setup.config.agno import AgnoSettings
 from app.setup.config.projects import ProjectSettings
+from app.setup.config.distillation import DistillationSettings
 
 
 class AppSettings(BaseModel):
@@ -25,6 +26,7 @@ class AppSettings(BaseModel):
     mcp: MCPSettings = MCPSettings()
     agno: AgnoSettings = AgnoSettings()
     projects: ProjectSettings = ProjectSettings()
+    distillation: DistillationSettings | None = None
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:
