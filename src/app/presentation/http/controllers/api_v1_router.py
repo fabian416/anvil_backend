@@ -32,6 +32,9 @@ from app.presentation.http.controllers.admin.distillation_validation_router impo
 from app.presentation.http.controllers.admin.projects_router import router as projects_admin_router
 from app.presentation.http.controllers.user.projects_router import router as projects_user_router
 
+# LLM Ranking admin router
+from app.presentation.http.controllers.admin.llm.ranking_router import router as llm_ranking_router
+
 # WebSocket router for real-time agent chat
 from app.presentation.http.websocket.chat_websocket import router as agno_chat_ws_router
 
@@ -112,6 +115,8 @@ def create_api_v1_router() -> APIRouter:
         distillation_validation_router,  # Request validation system
         projects_admin_router,
         projects_user_router,
+        # LLM Ranking admin router
+        llm_ranking_router,
         # Real-time agent chat WebSocket
         agno_chat_ws_router,
         # GraphRAG routers

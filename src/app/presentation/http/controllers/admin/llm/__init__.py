@@ -1,1 +1,1 @@
-"""Admin LLM orchestration controllers."""
+"""Admin LLM Management Controllers."""
