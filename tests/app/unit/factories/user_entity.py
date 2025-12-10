@@ -6,9 +6,7 @@ from app.domain.value_objects.email import Email
 from app.domain.value_objects.first_name import FirstName
 from app.domain.value_objects.last_name import LastName
 from app.domain.value_objects.language import Language
-from app.domain.value_objects.user_active import UserActive
-from app.domain.value_objects.user_blocked import UserBlocked
-from app.domain.value_objects.user_verified import UserVerified
+from app.domain.value_objects.user_status import UserActive, UserBlocked, UserVerified
 from app.domain.value_objects.retry_count import RetryCount
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt

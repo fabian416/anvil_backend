@@ -27,8 +27,8 @@ async def test_send_message_flow():
     message = await interactor.execute(conversation_id, content)
     
     # Assert
-    assert message.content.value == content
-    assert message.conversation_id.value == conversation_id
+    assert message.content == content
+    assert message.conversation_id == conversation_id
     
     # Verify async task was enqueued
-    mock_queue.enqueue_message_processing.assert_called_once_with(conversation_id, message.id_.value)
+    mock_queue.enqueue_message_processing.assert_called_once_with(conversation_id, message.id)

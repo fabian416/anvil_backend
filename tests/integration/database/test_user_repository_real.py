@@ -10,8 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.pool import NullPool
 
 from app.domain.entities.user import User
-from app.domain.value_objects.user import Email, FirstName, LastName, UserPasswordHash
-from app.infrastructure.persistence_sqla.base import mapper_registry
+from app.domain.value_objects.email import Email
+from app.domain.value_objects.first_name import FirstName
+from app.domain.value_objects.last_name import LastName
+from app.domain.value_objects.user_password_hash import UserPasswordHash
+from app.infrastructure.persistence_sqla.registry import mapper_registry
 
 
 @pytest.fixture

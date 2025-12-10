@@ -21,11 +21,12 @@ class SendMessage:
         self.task_queue = task_queue
 
     async def execute(self, conversation_id: UUID, content: str) -> Message:
+        message_id = uuid4()
         message = Message(
-            id_=MessageId(uuid4()),
-            conversation_id=ConversationId(conversation_id),
+            id=message_id,
+            conversation_id=conversation_id,
             role=MessageRole.USER,
-            content=MessageContent(content),
+            content=content,
             agent_type=None,
             created_at=None
         )
@@ -35,6 +36,6 @@ class SendMessage:
         #     await self.repo.add_message(message)
         
         # Trigger Async Processing
-        await self.task_queue.enqueue_message_processing(conversation_id, message.id_.value)
+        await self.task_queue.enqueue_message_processing(conversation_id, message_id)
         
         return message

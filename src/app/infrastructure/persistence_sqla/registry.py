@@ -14,3 +14,6 @@ NAMING_CONVENTIONS: Final[Mapping[str, str]] = MappingProxyType({
 })
 
 mapping_registry = registry(metadata=MetaData(naming_convention=NAMING_CONVENTIONS))
+
+# Alias for backwards compatibility
+mapper_registry = mapping_registry

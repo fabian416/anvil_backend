@@ -40,6 +40,27 @@ class MCPServerSettings(BaseModel):
     )
 
 
+class MCPRetrySettings(BaseModel):
+    """Settings for MCP server retry behavior."""
+    
+    max_retries: int = Field(
+        default=3,
+        description="Maximum number of retry attempts",
+    )
+    initial_backoff_seconds: float = Field(
+        default=1.0,
+        description="Initial backoff delay in seconds",
+    )
+    max_backoff_seconds: float = Field(
+        default=30.0,
+        description="Maximum backoff delay in seconds",
+    )
+    backoff_multiplier: float = Field(
+        default=2.0,
+        description="Multiplier for exponential backoff",
+    )
+
+
 class MCPSettings(BaseModel):
     """MCP configuration settings."""
     
@@ -50,6 +71,10 @@ class MCPSettings(BaseModel):
     servers: MCPServerSettings = Field(
         default_factory=MCPServerSettings,
         description="Individual server enable/disable flags",
+    )
+    retry: MCPRetrySettings = Field(
+        default_factory=MCPRetrySettings,
+        description="Retry configuration for MCP servers",
     )
 
 
