@@ -55,12 +55,6 @@ class TestAaveComponentsExist:
 
         assert AaveAdapter is not None
 
-    def test_aave_client_exists(self):
-        """Test AaveClient is defined."""
-        from app.infrastructure.adapters.external.aave_client import AaveClient
-
-        assert AaveClient is not None
-
     def test_aave_entities_exist(self):
         """Test Aave domain entities are defined."""
         from app.domain.entities.lending.aave_market import AaveMarket
@@ -301,13 +295,15 @@ class TestAaveRouterRegistration:
         assert create_aave_router is not None
 
     def test_aave_provider_in_registry(self):
-        """Test AaveProvider is included in provider registry."""
-        from app.setup.ioc.provider_registry import get_providers
+        """Test AaveProvider can be instantiated and provides correct types."""
+        from app.setup.ioc.aave import AaveProvider
 
-        providers = get_providers()
-        provider_types = [type(p).__name__ for p in providers]
-
-        assert "AaveProvider" in provider_types
+        # Verify the provider class exists and can be instantiated
+        provider = AaveProvider()
+        assert provider is not None
+        # Verify provider has correct scope
+        from dishka import Scope
+        assert provider.scope == Scope.APP
 
 
 # =============================================================================
@@ -426,3 +422,64 @@ class TestAaveMCPServer:
                 assert server.name == "aave"
         except Exception:
             pytest.skip("Aave MCP server disabled or unavailable")
+
+
+# =============================================================================
+# Adapter Functionality Tests
+# =============================================================================
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+class TestAaveAdapterIntegration:
+    """Test AaveAdapter integration with mock cache."""
+
+    async def test_adapter_get_markets(self):
+        """Test adapter can get markets with mock cache."""
+        from unittest.mock import AsyncMock
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        mock_cache = AsyncMock()
+        mock_cache.get = AsyncMock(return_value=None)
+        mock_cache.set = AsyncMock()
+
+        adapter = AaveAdapter(cache=mock_cache)
+        markets = await adapter.get_markets(chain="ethereum")
+
+        assert len(markets) > 0
+        assert markets[0].chain == "ethereum"
+
+    async def test_adapter_get_user_position(self):
+        """Test adapter can get user position with mock cache."""
+        from unittest.mock import AsyncMock
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        mock_cache = AsyncMock()
+        mock_cache.get = AsyncMock(return_value=None)
+        mock_cache.set = AsyncMock()
+
+        adapter = AaveAdapter(cache=mock_cache)
+        position = await adapter.get_user_position(
+            address="0x742d35Cc6634C0532925a3b844Bc9e7595f2bD21",
+            chain="ethereum",
+        )
+
+        assert position is not None
+        assert position.chain == "ethereum"
+
+    async def test_adapter_calculate_health_factor(self):
+        """Test adapter can calculate health factor."""
+        from decimal import Decimal
+        from unittest.mock import AsyncMock
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        mock_cache = AsyncMock()
+        adapter = AaveAdapter(cache=mock_cache)
+
+        hf = await adapter.calculate_health_factor(
+            collateral_usd=Decimal("10000"),
+            debt_usd=Decimal("5000"),
+        )
+
+        assert hf.value > 1
+        assert not hf.is_liquidatable

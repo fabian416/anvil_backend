@@ -35,14 +35,6 @@ from app.domain.exceptions.aave import (
 
 
 @pytest.fixture
-def mock_aave_client():
-    """Create a mock AaveClient."""
-    mock = MagicMock()
-    mock._api_key = "test-api-key"
-    return mock
-
-
-@pytest.fixture
 def mock_cache():
     """Create a mock ExternalAPICache."""
     mock = AsyncMock()
@@ -82,24 +74,23 @@ class TestAaveAdapterStructure:
         assert hasattr(AaveAdapter, "get_supply_apy")
         assert hasattr(AaveAdapter, "get_borrow_apy")
 
-    def test_aave_adapter_init(self, mock_aave_client, mock_cache):
+    def test_aave_adapter_init(self, mock_cache):
         """Test AaveAdapter initialization."""
         from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
 
         adapter = AaveAdapter(
-            client=mock_aave_client,
             cache=mock_cache,
+            api_key="test-key",
         )
         assert adapter is not None
-        assert adapter._client is mock_aave_client
         assert adapter._cache is mock_cache
+        assert adapter._api_key == "test-key"
 
-    def test_aave_adapter_cache_ttl_config(self, mock_aave_client, mock_cache):
+    def test_aave_adapter_cache_ttl_config(self, mock_cache):
         """Test AaveAdapter cache TTL configuration."""
         from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
 
         adapter = AaveAdapter(
-            client=mock_aave_client,
             cache=mock_cache,
             market_cache_ttl=600,
             position_cache_ttl=180,
@@ -414,42 +405,42 @@ class TestAaveExceptions:
 class TestAaveValidation:
     """Test Aave adapter validation logic."""
 
-    def test_validate_chain_supported(self, mock_aave_client, mock_cache):
+    def test_validate_chain_supported(self, mock_cache):
         """Test chain validation for supported chains."""
         from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
 
-        adapter = AaveAdapter(client=mock_aave_client, cache=mock_cache)
+        adapter = AaveAdapter(cache=mock_cache)
 
         # Should not raise for supported chains
         supported_chains = ["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"]
         for chain in supported_chains:
             adapter._validate_chain(chain)
 
-    def test_validate_chain_unsupported(self, mock_aave_client, mock_cache):
+    def test_validate_chain_unsupported(self, mock_cache):
         """Test chain validation raises for unsupported chains."""
         from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
 
-        adapter = AaveAdapter(client=mock_aave_client, cache=mock_cache)
+        adapter = AaveAdapter(cache=mock_cache)
 
         with pytest.raises(UnsupportedChainError) as exc_info:
             adapter._validate_chain("solana")
 
         assert exc_info.value.chain == "solana"
 
-    def test_validate_address_valid(self, mock_aave_client, mock_cache):
+    def test_validate_address_valid(self, mock_cache):
         """Test address validation for valid addresses."""
         from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
 
-        adapter = AaveAdapter(client=mock_aave_client, cache=mock_cache)
+        adapter = AaveAdapter(cache=mock_cache)
 
         # Should not raise for valid address
         adapter._validate_address("0x742d35Cc6634C0532925a3b844Bc9e7595f2bD21")
 
-    def test_validate_address_invalid(self, mock_aave_client, mock_cache):
+    def test_validate_address_invalid(self, mock_cache):
         """Test address validation raises for invalid addresses."""
         from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
 
-        adapter = AaveAdapter(client=mock_aave_client, cache=mock_cache)
+        adapter = AaveAdapter(cache=mock_cache)
 
         invalid_addresses = [
             "invalid",
@@ -461,3 +452,124 @@ class TestAaveValidation:
         for addr in invalid_addresses:
             with pytest.raises(InvalidAddressError):
                 adapter._validate_address(addr)
+
+
+# =============================================================================
+# Adapter Functionality Tests
+# =============================================================================
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+class TestAaveAdapterFunctionality:
+    """Test AaveAdapter async functionality."""
+
+    async def test_get_markets(self, mock_cache):
+        """Test get_markets returns fallback data."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+        markets = await adapter.get_markets(chain="ethereum")
+
+        assert len(markets) > 0
+        assert all(m.chain == "ethereum" for m in markets)
+
+    async def test_get_markets_filter_by_asset(self, mock_cache):
+        """Test get_markets filters by asset."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+        markets = await adapter.get_markets(asset="USDC", chain="ethereum")
+
+        assert len(markets) == 1
+        assert markets[0].symbol == "USDC"
+
+    async def test_get_market_details(self, mock_cache):
+        """Test get_market_details returns single market."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+        market = await adapter.get_market_details(asset="WETH", chain="ethereum")
+
+        assert market.symbol == "WETH"
+
+    async def test_get_market_details_not_found(self, mock_cache):
+        """Test get_market_details raises for unknown asset."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+
+        with pytest.raises(MarketNotFoundError) as exc_info:
+            await adapter.get_market_details(asset="UNKNOWN", chain="ethereum")
+
+        assert exc_info.value.asset == "UNKNOWN"
+
+    async def test_get_user_position(self, mock_cache):
+        """Test get_user_position returns fallback position."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+        position = await adapter.get_user_position(
+            address="0x742d35Cc6634C0532925a3b844Bc9e7595f2bD21",
+            chain="ethereum",
+        )
+
+        assert position.user_address == "0x742d35cc6634c0532925a3b844bc9e7595f2bd21"
+        assert position.total_collateral_usd > 0
+
+    async def test_get_health_factor(self, mock_cache):
+        """Test get_health_factor calculates from position."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+        hf = await adapter.get_health_factor(
+            address="0x742d35Cc6634C0532925a3b844Bc9e7595f2bD21",
+            chain="ethereum",
+        )
+
+        assert hf.value > 0
+        assert not hf.is_liquidatable
+
+    async def test_calculate_health_factor(self, mock_cache):
+        """Test calculate_health_factor with given values."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+        from app.domain.value_objects.lending.health_factor import RiskLevel
+
+        adapter = AaveAdapter(cache=mock_cache)
+        hf = await adapter.calculate_health_factor(
+            collateral_usd=Decimal("10000"),
+            debt_usd=Decimal("5000"),
+            liquidation_threshold=Decimal("0.825"),
+        )
+
+        assert hf.value > 1
+        assert hf.risk_level == RiskLevel.MODERATE
+
+    async def test_get_protocol_stats(self, mock_cache):
+        """Test get_protocol_stats returns fallback stats."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+        stats = await adapter.get_protocol_stats(chain="ethereum")
+
+        assert "chain" in stats
+        assert stats["chain"] == "ethereum"
+        assert "total_tvl_usd" in stats
+
+    async def test_get_supply_apy(self, mock_cache):
+        """Test get_supply_apy returns APY for asset."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+        apy = await adapter.get_supply_apy(asset="USDC", chain="ethereum")
+
+        assert apy > 0
+
+    async def test_get_borrow_apy(self, mock_cache):
+        """Test get_borrow_apy returns APY for asset."""
+        from app.infrastructure.adapters.external.aave_adapter import AaveAdapter
+
+        adapter = AaveAdapter(cache=mock_cache)
+        apy = await adapter.get_borrow_apy(asset="USDC", chain="ethereum")
+
+        assert apy > 0
