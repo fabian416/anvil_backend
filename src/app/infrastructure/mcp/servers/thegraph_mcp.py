@@ -74,9 +74,9 @@ class TheGraphMCPServer(MCPServer):
         )
         
         # Register tools
-        self._register_tools()
-    
-    def _register_tools(self):
+        self.setup_tools()
+
+    def setup_tools(self):
         """Register all The Graph tools."""
         
         # Tool 1: Query Uniswap V3

@@ -70,9 +70,9 @@ class OneInchMCPServer(MCPServer):
         )
         
         # Register tools
-        self._register_tools()
-    
-    def _register_tools(self):
+        self.setup_tools()
+
+    def setup_tools(self):
         """Register all 1inch tools."""
         
         # Tool 1: Get swap quote

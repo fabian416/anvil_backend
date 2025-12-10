@@ -71,9 +71,9 @@ class CoinGeckoMCPServer(MCPServer):
         )
         
         # Register tools
-        self._register_tools()
-    
-    def _register_tools(self):
+        self.setup_tools()
+
+    def setup_tools(self):
         """Register all CoinGecko tools."""
         
         # Tool 1: Get token price

@@ -129,8 +129,6 @@ class DeFiAgentBase:
             ),
             instructions=self.instructions,
             markdown=markdown,
-            add_datetime_to_instructions=add_datetime_to_instructions,
-            show_tool_calls=config.show_tool_calls,
             # Tools added via add_tool() after MCP discovery
         )
         

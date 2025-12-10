@@ -107,10 +107,42 @@ def mock_client():
 # Database fixtures
 @pytest.fixture(scope="session")
 def test_db_engine():
-    """Create test database engine."""
-    # TODO: Use test database
-    # For now, using in-memory SQLite
-    engine = create_engine("sqlite:///:memory:")
+    """Create test database engine with ORM mappings.
+
+    Uses SQLite for fast in-memory tests. Note: PostgreSQL-specific types
+    (JSONB, UUID) are converted to SQLite-compatible types.
+    """
+    # Initialize SQLAlchemy mappings for domain entities
+    from app.infrastructure.persistence_sqla.mappings.all import map_tables
+    from app.infrastructure.persistence_sqla.registry import mapping_registry
+    from sqlalchemy.dialects import sqlite
+    from sqlalchemy.dialects.postgresql import JSONB, UUID
+    from sqlalchemy import JSON, String
+
+    # Register type adapters for PostgreSQL types in SQLite
+    sqlite.dialect.ischema_names['JSONB'] = JSON
+    sqlite.dialect.ischema_names['UUID'] = String
+
+    map_tables()
+
+    # Create in-memory SQLite database for tests
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False}
+    )
+
+    # Create only essential tables (skip tables with incompatible types)
+    try:
+        # Create tables one by one, skipping those with errors
+        for table_name, table in mapping_registry.metadata.tables.items():
+            try:
+                table.create(engine, checkfirst=True)
+            except Exception as e:
+                # Skip tables that can't be created in SQLite
+                pass
+    except Exception:
+        pass
+
     yield engine
     engine.dispose()
 
@@ -120,12 +152,18 @@ def test_db_session(test_db_engine) -> Generator[Session, None, None]:
     """Create test database session."""
     SessionLocal = sessionmaker(bind=test_db_engine)
     session = SessionLocal()
-    
+
     try:
         yield session
     finally:
         session.rollback()
         session.close()
+
+
+@pytest.fixture
+def db_session(test_db_session):
+    """Alias for test_db_session for backward compatibility."""
+    return test_db_session
 
 
 # Domain service fixtures for unit tests

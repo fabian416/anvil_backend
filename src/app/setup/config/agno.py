@@ -114,11 +114,31 @@ class AgnoConfig(BaseModel):
         description="Retry configuration for MCP tool calls",
     )
     
-    # Legacy compatibility (deprecated - use retry.max_attempts)
+    # Legacy compatibility properties
     @property
     def retry_max_attempts(self) -> int:
         """Legacy property for backward compatibility."""
         return self.retry.max_attempts
+
+    @property
+    def model_id(self) -> str:
+        """Return the default model ID for agent initialization."""
+        return self.default_model
+
+    @property
+    def temperature(self) -> float:
+        """Return default temperature for model."""
+        return 0.7
+
+    @property
+    def max_tokens(self) -> int:
+        """Return default max tokens for model."""
+        return 4096
+
+    @property
+    def show_tool_calls(self) -> bool:
+        """Return whether to show tool calls in debug mode."""
+        return self.debug_mode
 
 
 class AgentDisabledError(Exception):
