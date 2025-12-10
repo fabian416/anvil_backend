@@ -12,6 +12,7 @@ from app.presentation.http.auth.access_token_processor_jwt import (
 )
 from app.presentation.http.auth.cookie_params import CookieParams
 from app.setup.config.settings import AppSettings
+from app.setup.config.admin import AdminSettings
 from app.setup.config.privy import PrivySettings
 from app.setup.config.distillation import DistillationSettings
 
@@ -57,6 +58,10 @@ class SettingsProvider(Provider):
     @provide
     def provide_cookie_params(self, settings: AppSettings) -> CookieParams:
         return CookieParams(secure=settings.security.cookies.secure)
+
+    @provide
+    def provide_admin_settings(self, settings: AppSettings) -> AdminSettings:
+        return settings.admin
 
     @provide
     def provide_privy_settings(self, settings: AppSettings) -> PrivySettings:

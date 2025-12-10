@@ -14,3 +14,11 @@ class UserQueryGateway(Protocol):
         """
         :raises ReaderError:
         """
+
+    @abstractmethod
+    async def count_all(self) -> int:
+        """
+        Count all users in the system.
+
+        :raises ReaderError:
+        """

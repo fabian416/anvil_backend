@@ -37,6 +37,7 @@ USER_ADMIN = "admin@anvil.com"
 ALLOWED_ADMIN_EMAILS = [
   "admin@anvil.com",
   "yordansolis2@gmail.com",
+  "cmizc8ioj041bl80d0qecu54g@wallet.anvil.io",
 ]
 
 # ========================================

@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.application.common.ports.user_query_gateway import UserQueryGateway
@@ -18,8 +18,9 @@ log = logging.getLogger(__name__)
 
 # Valid sorting fields (column names in the users table)
 VALID_SORTING_FIELDS = {
-    "id", "email", "first_name", "last_name", "role", 
-    "is_active", "is_blocked", "is_verified", "created_at", "updated_at"
+    "id", "email", "first_name", "last_name", "role",
+    "is_active", "is_blocked", "is_verified", "created_at", "updated_at",
+    "auth_provider", "privy_user_id", "primary_wallet_address",
 }
 
 
@@ -36,7 +37,7 @@ class SqlaUserReader(UserQueryGateway):
         :raises ReaderError:
         """
         sorting_field = user_read_all_params.sorting.sorting_field
-        
+
         # Validate sorting field
         if sorting_field not in VALID_SORTING_FIELDS:
             log.error(
@@ -49,7 +50,7 @@ class SqlaUserReader(UserQueryGateway):
         try:
             users_table = mapping_registry.metadata.tables["users"]
             sorting_column = users_table.c[sorting_field]
-            
+
             order_by = (
                 sorting_column.asc()
                 if user_read_all_params.sorting.sorting_order == SortingOrder.ASC
@@ -87,9 +88,27 @@ class SqlaUserReader(UserQueryGateway):
                     country_id=row["country_id"],
                     city_id=row["city_id"],
                     subscription=row["subscription"],
+                    # Privy authentication fields
+                    privy_user_id=row["privy_user_id"],
+                    primary_wallet_address=row["primary_wallet_address"],
+                    auth_provider=row["auth_provider"] or "email",
                 )
                 for row in rows
             ]
 
+        except SQLAlchemyError as error:
+            raise ReaderError(DB_QUERY_FAILED) from error
+
+    async def count_all(self) -> int:
+        """
+        Count all users in the system.
+
+        :raises ReaderError:
+        """
+        try:
+            users_table = mapping_registry.metadata.tables["users"]
+            stmt = select(func.count()).select_from(users_table)
+            result = await self._session.execute(stmt)
+            return result.scalar_one()
         except SQLAlchemyError as error:
             raise ReaderError(DB_QUERY_FAILED) from error

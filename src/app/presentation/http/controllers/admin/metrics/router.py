@@ -85,6 +85,7 @@ def create_admin_metrics_router() -> APIRouter:
                 failed_transactions=result.transactions.failed_transactions,
             ),
             users=UserOverviewMetrics(
+                total_users=result.users.total_users,
                 total_users_with_transactions=result.users.total_users_with_transactions,
                 active_users_today=result.users.active_users_today,
                 active_users_7d=result.users.active_users_7d,

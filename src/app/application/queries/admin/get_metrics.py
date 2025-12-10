@@ -9,6 +9,7 @@ import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from app.application.common.ports.user_query_gateway import UserQueryGateway
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
@@ -49,6 +50,7 @@ class TransactionOverview:
 class UserActivityOverview:
     """User activity overview metrics."""
 
+    total_users: int
     total_users_with_transactions: int
     active_users_today: int
     active_users_7d: int
@@ -90,7 +92,7 @@ class DistributionItem:
 class GetAdminMetricsOverviewHandler:
     """
     Handler to get admin metrics overview.
-    
+
     Aggregates data from both wallet and transaction repositories
     to provide a high-level view of system activity.
     """
@@ -99,9 +101,11 @@ class GetAdminMetricsOverviewHandler:
         self,
         wallet_repository: WalletRepository,
         transaction_repository: TransactionRepository,
+        user_query_gateway: UserQueryGateway,
     ):
         self._wallet_repository = wallet_repository
         self._transaction_repository = transaction_repository
+        self._user_query_gateway = user_query_gateway
 
     async def execute(self) -> MetricsOverview:
         """
@@ -172,7 +176,14 @@ class GetAdminMetricsOverviewHandler:
 
         # Fetch user activity metrics
         try:
-            total_users = await self._transaction_repository.get_unique_user_count()
+            # Total registered users in the system
+            total_users = await self._user_query_gateway.count_all()
+        except Exception as e:
+            logger.error(f"Error fetching total users count: {e}")
+            total_users = 0
+
+        try:
+            users_with_transactions = await self._transaction_repository.get_unique_user_count()
             active_today = await self._transaction_repository.get_unique_user_count(
                 start_date=today_start, end_date=now
             )
@@ -184,13 +195,14 @@ class GetAdminMetricsOverviewHandler:
             )
         except Exception as e:
             logger.error(f"Error fetching user activity metrics: {e}")
-            total_users = 0
+            users_with_transactions = 0
             active_today = 0
             active_7d = 0
             active_30d = 0
 
         user_activity = UserActivityOverview(
-            total_users_with_transactions=total_users,
+            total_users=total_users,
+            total_users_with_transactions=users_with_transactions,
             active_users_today=active_today,
             active_users_7d=active_7d,
             active_users_30d=active_30d,

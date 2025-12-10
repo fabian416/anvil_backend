@@ -55,6 +55,7 @@ class TransactionOverviewMetrics(BaseModel):
 class UserOverviewMetrics(BaseModel):
     """User activity overview metrics."""
 
+    total_users: int = Field(..., description="Total registered users in the system")
     total_users_with_transactions: int = Field(
         ..., description="Users who have made at least one transaction"
     )
@@ -92,6 +93,7 @@ class AdminMetricsOverview(BaseModel):
                     "failed_transactions": 150,
                 },
                 "users": {
+                    "total_users": 1000,
                     "total_users_with_transactions": 500,
                     "active_users_today": 50,
                     "active_users_7d": 200,
