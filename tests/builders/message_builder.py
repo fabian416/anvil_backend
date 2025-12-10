@@ -5,8 +5,35 @@ Provides fluent interface for test data creation.
 """
 
 from uuid import uuid4, UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
+from dataclasses import dataclass
+
+
+@dataclass
+class TestMessage:
+    """Test message data class."""
+    id: UUID
+    conversation_id: UUID
+    role: str
+    content: str
+    created_at: datetime
+    agent_type: Optional[str] = None
+    metadata: Optional[dict] = None
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        result = {
+            "id": str(self.id),
+            "conversation_id": str(self.conversation_id),
+            "role": self.role,
+            "content": self.content,
+            "created_at": self.created_at.isoformat(),
+            "agent_type": self.agent_type,
+        }
+        if self.metadata:
+            result["metadata"] = self.metadata
+        return result
 
 
 class MessageBuilder:
@@ -18,8 +45,9 @@ class MessageBuilder:
         self._conversation_id: UUID = uuid4()
         self._role: str = "user"
         self._content: str = "Test message"
-        self._created_at: datetime = datetime.utcnow()
+        self._created_at: datetime = datetime.now(timezone.utc)
         self._agent_type: Optional[str] = None
+        self._metadata: Optional[dict] = None
     
     def with_id(self, id_: UUID) -> 'MessageBuilder':
         """Set message ID."""
@@ -45,6 +73,30 @@ class MessageBuilder:
         """Set agent type (for agent messages)."""
         self._agent_type = agent_type
         return self
+
+    def with_metadata(self, metadata: dict) -> 'MessageBuilder':
+        """Set message metadata."""
+        self._metadata = metadata
+        return self
+
+    def with_llm_response(
+        self, 
+        content: Optional[str] = None, 
+        model: str = "gpt-4", 
+        tokens: int = 100,
+        include_disclaimer: bool = False,
+    ) -> 'MessageBuilder':
+        """Add LLM response metadata and optionally set content."""
+        if content:
+            self._content = content
+            if include_disclaimer:
+                self._content += "\n\n*This is not financial advice.*"
+        self._metadata = {
+            "model": model,
+            "tokens_used": tokens,
+            "finish_reason": "stop",
+        }
+        return self
     
     def from_user(self) -> 'MessageBuilder':
         """Configure as user message."""
@@ -66,14 +118,29 @@ class MessageBuilder:
     
     def build_dict(self) -> dict:
         """Build as dictionary."""
-        return {
+        result = {
             "id": str(self._id),
             "conversation_id": str(self._conversation_id),
             "role": self._role,
             "content": self._content,
             "created_at": self._created_at.isoformat(),
-            "agent_type": self._agent_type
+            "agent_type": self._agent_type,
         }
+        if self._metadata:
+            result["metadata"] = self._metadata
+        return result
+
+    def build(self) -> TestMessage:
+        """Build as TestMessage dataclass."""
+        return TestMessage(
+            id=self._id,
+            conversation_id=self._conversation_id,
+            role=self._role,
+            content=self._content,
+            created_at=self._created_at,
+            agent_type=self._agent_type,
+            metadata=self._metadata,
+        )
     
     @classmethod
     def a_message(cls) -> 'MessageBuilder':

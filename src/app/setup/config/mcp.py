@@ -43,6 +43,10 @@ class MCPServerSettings(BaseModel):
 class MCPRetrySettings(BaseModel):
     """Settings for MCP server retry behavior."""
     
+    enabled: bool = Field(
+        default=True,
+        description="Enable retry logic for MCP servers",
+    )
     max_retries: int = Field(
         default=3,
         description="Maximum number of retry attempts",

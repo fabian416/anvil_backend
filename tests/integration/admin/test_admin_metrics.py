@@ -52,15 +52,25 @@ class TestGetAdminMetricsOverviewHandler:
         return repo
 
     @pytest.fixture
+    def mock_user_query_gateway(self) -> MagicMock:
+        """Create a mock user query gateway."""
+        gateway = MagicMock()
+        gateway.count_all = AsyncMock(return_value=200)
+        gateway.count_active_since = AsyncMock(return_value=50)
+        return gateway
+
+    @pytest.fixture
     def handler(
         self,
         mock_wallet_repository: MagicMock,
         mock_transaction_repository: MagicMock,
+        mock_user_query_gateway: MagicMock,
     ) -> GetAdminMetricsOverviewHandler:
         """Create handler with mocked repositories."""
         return GetAdminMetricsOverviewHandler(
             wallet_repository=mock_wallet_repository,
             transaction_repository=mock_transaction_repository,
+            user_query_gateway=mock_user_query_gateway,
         )
 
     @pytest.mark.asyncio

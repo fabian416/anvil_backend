@@ -4,7 +4,7 @@ Integration tests for Perplexity MCP Server.
 Tests retry functionality and API integration.
 """
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 
 from app.infrastructure.mcp.servers.perplexity_mcp import PerplexityMCPServer
@@ -58,7 +58,7 @@ class TestPerplexityMCP:
             "usage": {"total_tokens": 50},
         }
         
-        with pytest.mock.patch.object(
+        with patch.object(
             server.client, "post", new_callable=AsyncMock
         ) as mock_post:
             mock_post.return_value = mock_response
@@ -103,7 +103,7 @@ class TestPerplexityMCP:
                 return mock_response_fail
             return mock_response_success
         
-        with pytest.mock.patch.object(
+        with patch.object(
             server.client, "post", side_effect=mock_post
         ):
             result = await server._search("What is Bitcoin?")
@@ -115,7 +115,7 @@ class TestPerplexityMCP:
     @pytest.mark.asyncio
     async def test_search_handles_timeout(self, server):
         """Test search handles timeout error."""
-        with pytest.mock.patch.object(
+        with patch.object(
             server.client, "post", new_callable=AsyncMock
         ) as mock_post:
             mock_post.side_effect = httpx.TimeoutException("Request timeout")
@@ -143,7 +143,7 @@ class TestPerplexityMCP:
             "usage": {"total_tokens": 45},
         }
         
-        with pytest.mock.patch.object(
+        with patch.object(
             server.client, "post", new_callable=AsyncMock
         ) as mock_post:
             mock_post.return_value = mock_response
@@ -168,7 +168,7 @@ class TestPerplexityMCP:
             "usage": {},
         }
         
-        with pytest.mock.patch.object(
+        with patch.object(
             server.client, "post", new_callable=AsyncMock
         ) as mock_post:
             mock_post.return_value = mock_response
@@ -212,5 +212,5 @@ class TestPerplexityMCP:
         )
         
         assert server._retry is not None
-        # Retry decorator should be configured with settings
-        assert hasattr(server._retry, "retry")
+        # Retry decorator should be callable (it's a decorator function)
+        assert callable(server._retry)

@@ -62,6 +62,10 @@ class PerplexityMCPServer(MCPServer):
         )
         
         self._register_tools()
+
+    def setup_tools(self):
+        """Implement abstract method - tools are registered in _register_tools."""
+        pass
     
     def _register_tools(self):
         """Register Perplexity MCP tools."""
