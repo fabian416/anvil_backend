@@ -36,14 +36,15 @@ class TestAgnoMasterSwitch:
         """Test that Agno is enabled by default."""
         settings = AgnoSettings()
         config = AgnoConfig()
-        
+
         router = AgentRouter(config, settings=settings)
         await router.initialize()
-        
-        # All 4 agents should be initialized
-        assert len(router.agents) == 4
+
+        # All 5 agents should be initialized
+        assert len(router.agents) == 5
         assert AgentType.TRADING in router.agents
         assert AgentType.LENDING in router.agents
+        assert AgentType.PERPETUAL in router.agents
         assert AgentType.ANALYTICS in router.agents
         assert AgentType.PORTFOLIO in router.agents
 
@@ -74,7 +75,7 @@ class TestTradingAgentFlags:
         await router.initialize()
         
         assert AgentType.TRADING not in router.agents
-        assert len(router.agents) == 3  # Other 3 agents still enabled
+        assert len(router.agents) == 4  # Other 4 agents still enabled
 
 
 class TestLendingAgentFlags:
@@ -103,7 +104,7 @@ class TestLendingAgentFlags:
         await router.initialize()
         
         assert AgentType.LENDING not in router.agents
-        assert len(router.agents) == 3
+        assert len(router.agents) == 4
 
 
 class TestAnalyticsAgentFlags:
@@ -132,7 +133,7 @@ class TestAnalyticsAgentFlags:
         await router.initialize()
         
         assert AgentType.ANALYTICS not in router.agents
-        assert len(router.agents) == 3
+        assert len(router.agents) == 4
 
 
 class TestPortfolioAgentFlags:
@@ -161,7 +162,36 @@ class TestPortfolioAgentFlags:
         await router.initialize()
         
         assert AgentType.PORTFOLIO not in router.agents
-        assert len(router.agents) == 3
+        assert len(router.agents) == 4
+
+
+class TestPerpetualAgentFlags:
+    """Test Perpetual agent feature flags."""
+
+    @pytest.mark.asyncio
+    async def test_perpetual_agent_enabled_by_default(self):
+        """Test Perpetual agent is enabled by default."""
+        settings = AgnoSettings()
+        config = AgnoConfig()
+
+        router = AgentRouter(config, settings=settings)
+        await router.initialize()
+
+        assert AgentType.PERPETUAL in router.agents
+
+    @pytest.mark.asyncio
+    async def test_perpetual_agent_can_be_disabled(self):
+        """Test Perpetual agent can be disabled."""
+        settings = AgnoSettings(
+            agents=AgnoAgentSettings(perpetual_enabled=False)
+        )
+        config = AgnoConfig()
+
+        router = AgentRouter(config, settings=settings)
+        await router.initialize()
+
+        assert AgentType.PERPETUAL not in router.agents
+        assert len(router.agents) == 4
 
 
 class TestFallbackBehavior:
@@ -222,6 +252,7 @@ class TestFallbackBehavior:
             agents=AgnoAgentSettings(
                 trading_enabled=False,
                 lending_enabled=False,
+                perpetual_enabled=False,
                 analytics_enabled=False,
                 portfolio_enabled=False,
             ),
@@ -252,17 +283,19 @@ class TestSelectiveAgentEnablement:
             agents=AgnoAgentSettings(
                 trading_enabled=False,  # Disable execution
                 lending_enabled=False,  # Disable execution
+                perpetual_enabled=False,  # Disable execution
                 analytics_enabled=True,  # Read-only
                 portfolio_enabled=True,  # Read-only
             )
         )
         config = AgnoConfig()
-        
+
         router = AgentRouter(config, settings=settings)
         await router.initialize()
-        
+
         assert AgentType.TRADING not in router.agents
         assert AgentType.LENDING not in router.agents
+        assert AgentType.PERPETUAL not in router.agents
         assert AgentType.ANALYTICS in router.agents
         assert AgentType.PORTFOLIO in router.agents
         assert len(router.agents) == 2
@@ -274,6 +307,7 @@ class TestSelectiveAgentEnablement:
             agents=AgnoAgentSettings(
                 trading_enabled=False,
                 lending_enabled=False,
+                perpetual_enabled=False,
                 analytics_enabled=True,  # Only market data
                 portfolio_enabled=False,
             )
@@ -299,6 +333,7 @@ class TestConfigurationDefaults:
         assert settings.fallback_to_general is True
         assert settings.agents.trading_enabled is True
         assert settings.agents.lending_enabled is True
+        assert settings.agents.perpetual_enabled is True
         assert settings.agents.analytics_enabled is True
         assert settings.agents.portfolio_enabled is True
     
@@ -341,21 +376,22 @@ class TestIntentClassification:
 
 # Test Summary
 """
-Total Tests: 20+
+Total Tests: 22+
 
 Coverage:
   ✅ Master Agno switch (enabled/disabled)
-  ✅ Individual agent flags (4 agents)
+  ✅ Individual agent flags (5 agents: trading, lending, perpetual, analytics, portfolio)
   ✅ Fallback behavior (enabled/disabled)
   ✅ Selective agent enablement scenarios
   ✅ Configuration defaults
   ✅ Error messages
   ✅ Intent classification with disabled agents
-  
+
 Use Cases Tested:
   ✅ Read-only mode (no execution agents)
   ✅ Analytics-only mode (market data)
-  ✅ Conservative mode (no trading/lending)
+  ✅ Conservative mode (no trading/lending/perpetual)
   ✅ Fallback to analytics
   ✅ Error when no agents available
+  ✅ Perpetual agent enable/disable
 """
