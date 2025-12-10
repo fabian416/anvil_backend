@@ -9,10 +9,10 @@ from datetime import datetime
 from typing import Protocol
 
 from app.domain.entities.transaction import Transaction, TransactionId
+from app.domain.entities.wallet import WalletId
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
-from app.domain.entities.wallet import WalletId
 from app.domain.value_objects.user_id import UserId
 
 
@@ -187,5 +187,149 @@ class TransactionRepository(Protocol):
 
         Returns:
             True if updated, False if not found.
+        """
+        ...
+
+    # ============================================================
+    # Analytics Methods (for Admin Metrics)
+    # ============================================================
+
+    async def count_all(self) -> int:
+        """
+        Count total number of transactions in the system.
+
+        Returns:
+            Total count of all transactions.
+        """
+        ...
+
+    async def count_by_status(self, status: TransactionStatus) -> int:
+        """
+        Count transactions by status.
+
+        Args:
+            status: The transaction status to filter by.
+
+        Returns:
+            Count of transactions with the specified status.
+        """
+        ...
+
+    async def count_by_chain(self, chain: ChainType) -> int:
+        """
+        Count transactions by chain.
+
+        Args:
+            chain: The chain to filter by.
+
+        Returns:
+            Count of transactions on the specified chain.
+        """
+        ...
+
+    async def get_transaction_counts_by_status(self) -> dict[str, int]:
+        """
+        Get transaction counts grouped by status.
+
+        Returns:
+            Dictionary mapping status name to count.
+        """
+        ...
+
+    async def get_transaction_counts_by_chain(self) -> dict[str, int]:
+        """
+        Get transaction counts grouped by chain.
+
+        Returns:
+            Dictionary mapping chain name to count.
+        """
+        ...
+
+    async def get_transaction_counts_by_type(self) -> dict[str, int]:
+        """
+        Get transaction counts grouped by transaction type.
+
+        Returns:
+            Dictionary mapping type name to count.
+        """
+        ...
+
+    async def count_transactions_in_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        *,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> int:
+        """
+        Count transactions within a date range with optional filters.
+
+        Args:
+            start_date: Start of the date range (inclusive).
+            end_date: End of the date range (inclusive).
+            chain: Optional chain filter.
+            status: Optional status filter.
+            tx_type: Optional transaction type filter.
+
+        Returns:
+            Count of transactions matching the criteria.
+        """
+        ...
+
+    async def get_daily_transaction_counts(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        *,
+        chain: ChainType | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> list[tuple[datetime, int]]:
+        """
+        Get daily transaction counts for a date range.
+
+        Args:
+            start_date: Start of the date range.
+            end_date: End of the date range.
+            chain: Optional chain filter.
+            tx_type: Optional transaction type filter.
+
+        Returns:
+            List of (date, count) tuples for each day.
+        """
+        ...
+
+    async def get_unique_user_count(
+        self,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> int:
+        """
+        Count unique users with transactions.
+
+        Args:
+            start_date: Optional start date filter.
+            end_date: Optional end date filter.
+
+        Returns:
+            Count of unique users.
+        """
+        ...
+
+    async def get_active_users_per_day(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> list[tuple[datetime, int]]:
+        """
+        Get count of unique active users per day.
+
+        Args:
+            start_date: Start of the date range.
+            end_date: End of the date range.
+
+        Returns:
+            List of (date, unique_user_count) tuples.
         """
         ...

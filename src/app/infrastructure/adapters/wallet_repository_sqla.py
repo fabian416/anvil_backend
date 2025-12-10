@@ -3,12 +3,13 @@ SQLAlchemy implementation of WalletRepository.
 
 Handles CRUD operations for wallets stored locally in the database.
 Includes support for Privy wallet configuration fields.
+Includes analytics methods for admin metrics.
 """
 
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import Select, and_, delete, select, update
+from sqlalchemy import Select, and_, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -427,4 +428,135 @@ class SqlaWalletRepository(WalletRepository):
             return result.rowcount > 0
         except SQLAlchemyError as error:
             await self._session.rollback()
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    # ============================================================
+    # Analytics Methods (for Admin Metrics)
+    # ============================================================
+
+    async def count_all(self) -> int:
+        """Count total number of wallets in the system."""
+        try:
+            table = self._get_table()
+            stmt = select(func.count()).select_from(table)
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def count_by_provider(self, provider: WalletProvider) -> int:
+        """Count wallets by provider type."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(func.count())
+                .select_from(table)
+                .where(table.c.provider == provider.value)
+            )
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def count_active_wallets(self) -> int:
+        """Count wallets with ACTIVE status."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(func.count())
+                .select_from(table)
+                .where(table.c.status == WalletStatus.ACTIVE.value)
+            )
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_wallet_counts_by_provider(self) -> dict[str, int]:
+        """Get wallet counts grouped by provider."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(table.c.provider, func.count().label("count"))
+                .group_by(table.c.provider)
+            )
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            return {row.provider: row.count for row in rows}
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_wallets_created_in_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> list[Wallet]:
+        """Get wallets created within a date range."""
+        try:
+            table = self._get_table()
+            stmt: Select = (
+                select(table)
+                .where(
+                    and_(
+                        table.c.created_at >= start_date,
+                        table.c.created_at <= end_date,
+                    )
+                )
+                .order_by(table.c.created_at.desc())
+            )
+            rows = (await self._session.execute(stmt)).mappings().all()
+            return [self._row_to_wallet(dict(row)) for row in rows]
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def count_wallets_created_in_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> int:
+        """Count wallets created within a date range."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(func.count())
+                .select_from(table)
+                .where(
+                    and_(
+                        table.c.created_at >= start_date,
+                        table.c.created_at <= end_date,
+                    )
+                )
+            )
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_daily_wallet_counts(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> list[tuple[datetime, int]]:
+        """Get daily wallet creation counts for a date range."""
+        try:
+            table = self._get_table()
+            # Use PostgreSQL date_trunc for daily grouping
+            stmt = (
+                select(
+                    func.date_trunc("day", table.c.created_at).label("date"),
+                    func.count().label("count"),
+                )
+                .where(
+                    and_(
+                        table.c.created_at >= start_date,
+                        table.c.created_at <= end_date,
+                    )
+                )
+                .group_by(func.date_trunc("day", table.c.created_at))
+                .order_by(func.date_trunc("day", table.c.created_at))
+            )
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            return [(row.date, row.count) for row in rows]
+        except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error

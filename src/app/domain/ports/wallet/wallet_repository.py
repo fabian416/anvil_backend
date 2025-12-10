@@ -6,6 +6,7 @@ This allows storing and retrieving wallets from the database,
 independent of any external wallet provider.
 """
 
+from datetime import datetime
 from typing import Protocol
 
 from app.domain.entities.wallet import Wallet, WalletId
@@ -200,5 +201,99 @@ class WalletRepository(Protocol):
 
         Returns:
             True if updated, False if wallet not found in local DB.
+        """
+        ...
+
+    # ============================================================
+    # Analytics Methods (for Admin Metrics)
+    # ============================================================
+
+    async def count_all(self) -> int:
+        """
+        Count total number of wallets in the system.
+
+        Returns:
+            Total count of all wallets.
+        """
+        ...
+
+    async def count_by_provider(self, provider: WalletProvider) -> int:
+        """
+        Count wallets by provider type.
+
+        Args:
+            provider: The wallet provider (PRIVY, EXTERNAL, IMPORTED).
+
+        Returns:
+            Count of wallets with the specified provider.
+        """
+        ...
+
+    async def count_active_wallets(self) -> int:
+        """
+        Count wallets with ACTIVE status.
+
+        Returns:
+            Count of active wallets.
+        """
+        ...
+
+    async def get_wallet_counts_by_provider(self) -> dict[str, int]:
+        """
+        Get wallet counts grouped by provider.
+
+        Returns:
+            Dictionary mapping provider name to count.
+        """
+        ...
+
+    async def get_wallets_created_in_range(
+        self,
+        start_date: "datetime",
+        end_date: "datetime",
+    ) -> list[Wallet]:
+        """
+        Get wallets created within a date range.
+
+        Args:
+            start_date: Start of the date range (inclusive).
+            end_date: End of the date range (inclusive).
+
+        Returns:
+            List of wallets created in the range.
+        """
+        ...
+
+    async def count_wallets_created_in_range(
+        self,
+        start_date: "datetime",
+        end_date: "datetime",
+    ) -> int:
+        """
+        Count wallets created within a date range.
+
+        Args:
+            start_date: Start of the date range (inclusive).
+            end_date: End of the date range (inclusive).
+
+        Returns:
+            Count of wallets created in the range.
+        """
+        ...
+
+    async def get_daily_wallet_counts(
+        self,
+        start_date: "datetime",
+        end_date: "datetime",
+    ) -> list[tuple["datetime", int]]:
+        """
+        Get daily wallet creation counts for a date range.
+
+        Args:
+            start_date: Start of the date range.
+            end_date: End of the date range.
+
+        Returns:
+            List of (date, count) tuples for each day.
         """
         ...

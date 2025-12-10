@@ -7,6 +7,11 @@ Combines data from:
 3. Privy API (all linked wallets for the user)
 
 This provides a unified view of all wallets associated with the user.
+
+Supports three wallet source modes:
+- privy: Prefer Privy API, use DB as cache/analytics store
+- hybrid: Use Privy when available, always persist to DB
+- local: No Privy calls; DB-only mode for offline environments
 """
 
 import logging
@@ -21,6 +26,7 @@ from app.domain.ports.wallet.embedded_wallet_provider import (
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.user_id import UserId
 from app.infrastructure.exceptions.gateway import DataMapperError
+from app.setup.config.privy import PrivySettings, WalletSourceMode
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +89,12 @@ class GetMyWalletsHandler:
     - Local database: primary_wallet_address stored when user logs in
     - Privy API: All wallets linked to the user's Privy account
 
-    If Privy fetch fails, we still return the local data.
+    Supports three wallet source modes (WALLETS_SOURCE_MODE):
+    - privy: Prefer Privy API, use DB as cache/analytics store
+    - hybrid: Use Privy when available, always persist to DB
+    - local: No Privy calls; DB-only mode for offline environments
+
+    If Privy fetch fails (in non-local mode), we still return the local data.
     Deduplicates wallets by address across all sources.
     """
 
@@ -92,17 +103,36 @@ class GetMyWalletsHandler:
         current_user_service: CurrentUserService,
         wallet_provider: EmbeddedWalletProviderPort,
         wallet_repository: WalletRepository,
+        privy_settings: PrivySettings,
     ):
         self._current_user_service = current_user_service
         self._wallet_provider = wallet_provider
         self._wallet_repository = wallet_repository
+        self._privy_settings = privy_settings
+        self._source_mode = privy_settings.wallets_source_mode
+
+    @property
+    def is_offline_mode(self) -> bool:
+        """Check if operating in local/offline mode."""
+        return self._source_mode == WalletSourceMode.LOCAL
+
+    @property
+    def should_call_privy(self) -> bool:
+        """Check if Privy API calls should be made."""
+        return self._source_mode in (WalletSourceMode.PRIVY, WalletSourceMode.HYBRID)
+
+    @property
+    def should_persist_to_db(self) -> bool:
+        """Check if wallet data should be persisted to DB."""
+        return self._source_mode in (WalletSourceMode.HYBRID, WalletSourceMode.LOCAL)
 
     async def execute(self) -> WalletsResponse:
         """
         Get all wallets for the current user.
 
         Returns:
-            WalletsResponse with wallets from local DB (imported) and Privy.
+            WalletsResponse with wallets from local DB and/or Privy 
+            based on WALLETS_SOURCE_MODE.
         """
         # Get current user
         user = await self._current_user_service.get_current_user()
@@ -119,8 +149,8 @@ class GetMyWalletsHandler:
         privy_user_id = user.privy_user_id.value if user.privy_user_id else None
         user_id = UserId(user.id_.value)
 
-        # 1. Try to fetch wallets from Privy first (they take priority)
-        if privy_user_id:
+        # 1. Try to fetch wallets from Privy first (if not in local mode)
+        if privy_user_id and self.should_call_privy:
             try:
                 privy_wallets = await self._wallet_provider.list_user_wallets(
                     privy_user_id
@@ -150,6 +180,21 @@ class GetMyWalletsHandler:
                     )
                     seen_addresses.add(address_lower)
 
+                    # In hybrid mode, persist Privy wallets to local DB
+                    if self.should_persist_to_db:
+                        try:
+                            await self._wallet_repository.upsert(
+                                user_id=user_id,
+                                address=pw.address,
+                                provider=WalletProvider.PRIVY,
+                                privy_wallet_id=pw.wallet_id,
+                                chain_type=pw.chain_type.value,
+                            )
+                        except DataMapperError as e:
+                            logger.warning(
+                                f"Failed to persist Privy wallet to DB: {e}"
+                            )
+
             except WalletProviderError as e:
                 logger.warning(
                     f"Failed to fetch wallets from Privy for user {user.id_.value}: {e}"
@@ -159,6 +204,8 @@ class GetMyWalletsHandler:
             except Exception as e:
                 logger.error(f"Unexpected error fetching wallets from Privy: {e}")
                 message = "Unexpected error fetching wallets from provider"
+        elif self.is_offline_mode:
+            message = "Operating in offline mode - using local database only"
 
         # 2. Fetch imported wallets from local database
         try:
@@ -205,7 +252,50 @@ class GetMyWalletsHandler:
             if not message:
                 message = "Could not fetch imported wallets from database"
 
-        # 3. If we have a primary wallet in local DB but it's not in any list,
+        # 3. In local/hybrid mode, also fetch Privy-type wallets from DB
+        # (for offline capability when Privy is unavailable)
+        if self.is_offline_mode or (self.should_persist_to_db and not privy_connected):
+            try:
+                local_privy_wallets = (
+                    await self._wallet_repository.get_by_user_and_provider(
+                        user_id=user_id,
+                        provider=WalletProvider.PRIVY,
+                    )
+                )
+
+                for lw in local_privy_wallets:
+                    address_lower = lw.address.lower()
+
+                    # Skip if already added
+                    if address_lower in seen_addresses:
+                        continue
+
+                    is_primary = (
+                        primary_address is not None
+                        and address_lower == primary_address.lower()
+                    )
+
+                    wallets.append(
+                        WalletResponse(
+                            wallet_id=lw.privy_wallet_id or f"local_{lw.id_.value}",
+                            address=lw.address,
+                            chain_type=lw.default_chain.value,
+                            wallet_type="embedded",  # Privy wallets are embedded
+                            is_primary=is_primary,
+                            source="local",  # From local DB cache
+                            created_at=lw.created_at.value.isoformat()
+                            if lw.created_at
+                            else None,
+                        )
+                    )
+                    seen_addresses.add(address_lower)
+
+            except DataMapperError as e:
+                logger.error(
+                    f"Database error fetching cached Privy wallets for user {user.id_.value}: {e}"
+                )
+
+        # 4. If we have a primary wallet in local DB but it's not in any list,
         # add it as a local-only wallet
         if primary_address:
             primary_lower = primary_address.lower()

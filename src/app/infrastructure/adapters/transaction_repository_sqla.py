@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Select, and_, delete, func, select, update
+from sqlalchemy import Select, and_, func, select, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.domain.entities.transaction import Transaction, TransactionId
@@ -23,7 +23,9 @@ from app.domain.value_objects.user_id import UserId
 from app.infrastructure.adapters.constants import DB_QUERY_FAILED
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.exceptions.gateway import DataMapperError
-from app.infrastructure.persistence_sqla.mappings.transaction import map_transaction_table
+from app.infrastructure.persistence_sqla.mappings.transaction import (
+    map_transaction_table,
+)
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 
@@ -357,5 +359,219 @@ class SqlaTransactionRepository(TransactionRepository):
             result = await self._session.execute(stmt)
             await self._session.flush()
             return result.rowcount > 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    # ============================================================
+    # Analytics Methods (for Admin Metrics)
+    # ============================================================
+
+    async def count_all(self) -> int:
+        """Count total number of transactions in the system."""
+        try:
+            table = self._get_table()
+            stmt = select(func.count()).select_from(table)
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def count_by_status(self, status: TransactionStatus) -> int:
+        """Count transactions by status."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(func.count())
+                .select_from(table)
+                .where(table.c.status == status.value)
+            )
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def count_by_chain(self, chain: ChainType) -> int:
+        """Count transactions by chain."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(func.count())
+                .select_from(table)
+                .where(table.c.chain == chain.value)
+            )
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_transaction_counts_by_status(self) -> dict[str, int]:
+        """Get transaction counts grouped by status."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(table.c.status, func.count().label("count"))
+                .group_by(table.c.status)
+            )
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            # Convert int enum values to string names
+            return {
+                TransactionStatus(row.status).name: row.count
+                for row in rows
+            }
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_transaction_counts_by_chain(self) -> dict[str, int]:
+        """Get transaction counts grouped by chain."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(table.c.chain, func.count().label("count"))
+                .group_by(table.c.chain)
+            )
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            return {row.chain: row.count for row in rows}
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_transaction_counts_by_type(self) -> dict[str, int]:
+        """Get transaction counts grouped by transaction type."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(table.c.type, func.count().label("count"))
+                .group_by(table.c.type)
+            )
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            # Convert int enum values to string names
+            return {
+                TransactionType(row.type).name: row.count
+                for row in rows
+            }
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def count_transactions_in_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        *,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> int:
+        """Count transactions within a date range with optional filters."""
+        try:
+            table = self._get_table()
+            conditions = [
+                table.c.created_at >= start_date,
+                table.c.created_at <= end_date,
+            ]
+
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
+            if status is not None:
+                conditions.append(table.c.status == status.value)
+            if tx_type is not None:
+                conditions.append(table.c.type == tx_type.value)
+
+            stmt = (
+                select(func.count())
+                .select_from(table)
+                .where(and_(*conditions))
+            )
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_daily_transaction_counts(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        *,
+        chain: ChainType | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> list[tuple[datetime, int]]:
+        """Get daily transaction counts for a date range."""
+        try:
+            table = self._get_table()
+            conditions = [
+                table.c.created_at >= start_date,
+                table.c.created_at <= end_date,
+            ]
+
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
+            if tx_type is not None:
+                conditions.append(table.c.type == tx_type.value)
+
+            stmt = (
+                select(
+                    func.date_trunc("day", table.c.created_at).label("date"),
+                    func.count().label("count"),
+                )
+                .where(and_(*conditions))
+                .group_by(func.date_trunc("day", table.c.created_at))
+                .order_by(func.date_trunc("day", table.c.created_at))
+            )
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            return [(row.date, row.count) for row in rows]
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_unique_user_count(
+        self,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> int:
+        """Count unique users with transactions."""
+        try:
+            table = self._get_table()
+            conditions: list[Any] = []
+
+            if start_date is not None:
+                conditions.append(table.c.created_at >= start_date)
+            if end_date is not None:
+                conditions.append(table.c.created_at <= end_date)
+
+            stmt = select(func.count(func.distinct(table.c.user_id))).select_from(table)
+            if conditions:
+                stmt = stmt.where(and_(*conditions))
+
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_active_users_per_day(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> list[tuple[datetime, int]]:
+        """Get count of unique active users per day."""
+        try:
+            table = self._get_table()
+            stmt = (
+                select(
+                    func.date_trunc("day", table.c.created_at).label("date"),
+                    func.count(func.distinct(table.c.user_id)).label("count"),
+                )
+                .where(
+                    and_(
+                        table.c.created_at >= start_date,
+                        table.c.created_at <= end_date,
+                    )
+                )
+                .group_by(func.date_trunc("day", table.c.created_at))
+                .order_by(func.date_trunc("day", table.c.created_at))
+            )
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            return [(row.date, row.count) for row in rows]
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error

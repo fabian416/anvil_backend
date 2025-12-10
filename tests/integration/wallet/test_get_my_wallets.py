@@ -31,6 +31,7 @@ from app.domain.enums.wallet_status import WalletStatus
 from app.domain.value_objects.user_id import UserId
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt
+from app.setup.config.privy import PrivySettings, WalletSourceMode
 
 
 def make_wallet(
@@ -102,12 +103,20 @@ class TestGetMyWalletsHandler:
         return repo
 
     @pytest.fixture
-    def handler(self, mock_current_user_service, mock_wallet_provider, mock_wallet_repository):
+    def mock_privy_settings(self):
+        """Create mock PrivySettings."""
+        settings = MagicMock(spec=PrivySettings)
+        settings.wallets_source_mode = WalletSourceMode.HYBRID
+        return settings
+
+    @pytest.fixture
+    def handler(self, mock_current_user_service, mock_wallet_provider, mock_wallet_repository, mock_privy_settings):
         """Create handler instance."""
         return GetMyWalletsHandler(
             current_user_service=mock_current_user_service,
             wallet_provider=mock_wallet_provider,
             wallet_repository=mock_wallet_repository,
+            privy_settings=mock_privy_settings,
         )
 
     @pytest.mark.asyncio
@@ -137,7 +146,7 @@ class TestGetMyWalletsHandler:
     @pytest.mark.asyncio
     async def test_get_wallets_from_local_only(
         self, mock_current_user_service, mock_user_no_privy, 
-        mock_wallet_provider, mock_wallet_repository
+        mock_wallet_provider, mock_wallet_repository, mock_privy_settings
     ):
         """Test getting wallets from local database only (no Privy)."""
         # User without Privy
@@ -147,6 +156,7 @@ class TestGetMyWalletsHandler:
             current_user_service=mock_current_user_service,
             wallet_provider=mock_wallet_provider,
             wallet_repository=mock_wallet_repository,
+            privy_settings=mock_privy_settings,
         )
         
         # Setup imported wallet in local DB

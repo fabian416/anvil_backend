@@ -116,6 +116,16 @@ from app.infrastructure.auth.handlers.transaction_log import (
     GetTransactionHistoryHandler,
 )
 
+# Admin Metrics Handlers
+from app.application.queries.admin.get_metrics import (
+    GetAdminMetricsOverviewHandler,
+    GetTransactionTimeSeriesHandler,
+    GetWalletTimeSeriesHandler,
+    GetUserActivityTimeSeriesHandler,
+    GetWalletDistributionHandler,
+    GetTransactionDistributionHandler,
+)
+
 # AI / Agent Infrastructure
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
@@ -388,6 +398,13 @@ class InfrastructureProvider(Provider):
         # Transaction handlers
         LogTransactionHandler,
         GetTransactionHistoryHandler,
+        # Admin metrics handlers
+        GetAdminMetricsOverviewHandler,
+        GetTransactionTimeSeriesHandler,
+        GetWalletTimeSeriesHandler,
+        GetUserActivityTimeSeriesHandler,
+        GetWalletDistributionHandler,
+        GetTransactionDistributionHandler,
     )
 
     # Concrete Objects
