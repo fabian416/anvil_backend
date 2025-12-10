@@ -34,3 +34,6 @@
 [submodule "libs/ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT"]
 	path = libs/ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT
 	url = git@github.com:MavenSource/ULTRA-PRODUCTION-DEFI-ARBITRAGE-BOT.git
+[submodule "libs/sdk"]
+	path = libs/sdk
+	url = git@github.com:lifinance/sdk.git
