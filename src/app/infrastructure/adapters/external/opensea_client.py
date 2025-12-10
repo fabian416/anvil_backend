@@ -40,11 +40,15 @@ class NFTAsset:
     name: Optional[str] = None
     description: Optional[str] = None
     image_url: Optional[str] = None
+    animation_url: Optional[str] = None  # Video/animation URL
     metadata_url: Optional[str] = None
     created_date: Optional[str] = None
     updated_date: Optional[str] = None
     is_disabled: bool = False
     is_nsfw: bool = False
+    rarity_rank: Optional[int] = None  # Rarity ranking in collection
+    last_sale_price: Optional[Decimal] = None  # Last sale price
+    last_sale_currency: str = "ETH"  # Currency of last sale
     traits: List[NFTTrait] = field(default_factory=list)
     owners: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -52,8 +56,9 @@ class NFTAsset:
 @dataclass
 class NFTCollection:
     """NFT collection from API."""
-    collection: str
+    collection: str  # Collection identifier
     name: str
+    slug: str = ""  # Collection slug for URL
     description: Optional[str] = None
     image_url: Optional[str] = None
     banner_image_url: Optional[str] = None
@@ -71,6 +76,8 @@ class NFTCollection:
     telegram_url: Optional[str] = None
     twitter_username: Optional[str] = None
     instagram_username: Optional[str] = None
+    total_supply: int = 0  # Total number of items
+    created_date: Optional[str] = None  # Collection creation date
     contracts: List[Dict[str, str]] = field(default_factory=list)
 
 
@@ -79,7 +86,9 @@ class CollectionStats:
     """Collection statistics from API."""
     total_supply: int
     num_owners: int
+    slug: str = ""  # Collection slug identifier
     floor_price: Optional[Decimal] = None
+    floor_price_usd: Decimal = Decimal("0")  # Floor price in USD
     floor_price_symbol: str = "ETH"
     total_volume: Decimal = Decimal("0")
     one_day_volume: Decimal = Decimal("0")
@@ -95,6 +104,7 @@ class CollectionStats:
     one_day_average_price: Decimal = Decimal("0")
     seven_day_average_price: Decimal = Decimal("0")
     thirty_day_average_price: Decimal = Decimal("0")
+    average_price: Decimal = Decimal("0")  # Overall average price
     market_cap: Decimal = Decimal("0")
 
 
