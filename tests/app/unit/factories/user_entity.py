@@ -42,7 +42,7 @@ def create_user(
     updated_at: UpdatedAt | None = None,
 ) -> User:
     return User(
-        id=user_id or create_user_id(),
+        id_=user_id or create_user_id(),
         email=email or create_email(),
         first_name=first_name or create_first_name(),
         last_name=last_name or create_last_name(),
@@ -63,4 +63,7 @@ def create_user(
         country_id=None,
         city_id=None,
         subscription=None,
+        privy_user_id=None,
+        primary_wallet_address=None,
+        auth_provider=None,
     )

@@ -1,4 +1,5 @@
 import uuid
+import itertools
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -14,6 +15,10 @@ from app.domain.value_objects.user_status import UserActive, UserBlocked, UserVe
 from app.domain.value_objects.retry_count import RetryCount
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt
+
+
+# Auto-incrementing counter for unique user IDs
+_user_id_counter = itertools.count(1)
 
 
 @dataclass(frozen=True, slots=True, repr=False)
@@ -36,7 +41,7 @@ def create_multi_field_vo(value1: int = 1, value2: str = "Alice") -> MultiFieldV
 
 
 def create_user_id(value: int | None = None) -> UserId:
-    return UserId(value if value else 1)
+    return UserId(value if value is not None else next(_user_id_counter))
 
 
 def create_email(value: str = "alice@example.com") -> Email:

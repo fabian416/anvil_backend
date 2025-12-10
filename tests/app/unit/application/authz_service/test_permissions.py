@@ -36,6 +36,8 @@ def test_cannot_manage_another_user() -> None:
 @pytest.mark.parametrize(
     ("subject_role", "target_role"),
     [
+        # ADMIN can manage ALL roles including other ADMINs (per SUBORDINATE_ROLES)
+        (UserRole.ADMIN, UserRole.ADMIN),
         (UserRole.ADMIN, UserRole.MODERATOR),
         (UserRole.ADMIN, UserRole.USER),
         (UserRole.ADMIN, UserRole.GUEST),
@@ -59,7 +61,7 @@ def test_can_manage_subordinate(
 @pytest.mark.parametrize(
     ("subject_role", "target_role"),
     [
-        (UserRole.ADMIN, UserRole.ADMIN),
+        # ADMIN can now manage ADMIN (removed from this list)
         (UserRole.MODERATOR, UserRole.ADMIN),
         (UserRole.MODERATOR, UserRole.MODERATOR),
         (UserRole.USER, UserRole.ADMIN),
@@ -86,6 +88,8 @@ def test_cannot_manage_non_subordinate(
 @pytest.mark.parametrize(
     ("subject_role", "target_role"),
     [
+        # ADMIN can manage ALL roles including other ADMINs (per SUBORDINATE_ROLES)
+        (UserRole.ADMIN, UserRole.ADMIN),
         (UserRole.ADMIN, UserRole.MODERATOR),
         (UserRole.ADMIN, UserRole.USER),
         (UserRole.ADMIN, UserRole.GUEST),
@@ -108,7 +112,7 @@ def test_can_manage_role(
 @pytest.mark.parametrize(
     ("subject_role", "target_role"),
     [
-        (UserRole.ADMIN, UserRole.ADMIN),
+        # ADMIN can now manage ADMIN role (removed from this list)
         (UserRole.MODERATOR, UserRole.ADMIN),
         (UserRole.MODERATOR, UserRole.MODERATOR),
         (UserRole.USER, UserRole.ADMIN),

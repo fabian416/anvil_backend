@@ -124,9 +124,10 @@ plugins = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests", ]
-markers = ["slow", ]
-addopts = "-m 'not slow'"
+markers = ["slow", "integration", "unit", "e2e", "load", "security", "contract", "auth", "subscription"]
+addopts = "-m 'not slow' --ignore=libs"
 asyncio_default_fixture_loop_scope = "function"
+norecursedirs = ["libs/*", "libs"]
 
 [tool.ruff]
 line-length = 88
