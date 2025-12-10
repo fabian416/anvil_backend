@@ -1,1 +1,3 @@
-"""Wallet integration tests."""
+"""
+Wallet integration tests.
+"""

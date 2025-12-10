@@ -67,6 +67,9 @@ from app.presentation.http.controllers.comparison.router import create_compariso
 # Markets router
 from app.presentation.http.controllers.markets.router import create_markets_router
 
+# Transaction router
+from app.presentation.http.controllers.transaction.router import create_transaction_router
+
 
 def create_api_v1_router() -> APIRouter:
     router = APIRouter(
@@ -144,6 +147,8 @@ def create_api_v1_router() -> APIRouter:
         create_comparison_router(),
         # Markets router
         create_markets_router(),
+        # Transaction router (for logging and history)
+        create_transaction_router(),
     )
 
     for sub_router in sub_routers:

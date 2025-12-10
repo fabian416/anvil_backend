@@ -20,6 +20,7 @@ from app.domain.ports.wallet.embedded_wallet_provider import (
 )
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.user_id import UserId
+from app.infrastructure.exceptions.gateway import DataMapperError
 
 logger = logging.getLogger(__name__)
 
@@ -195,9 +196,14 @@ class GetMyWalletsHandler:
                 )
                 seen_addresses.add(address_lower)
 
-        except Exception as e:
-            logger.warning(f"Failed to fetch imported wallets from local DB: {e}")
-            # Continue - we can still return Privy wallets
+        except DataMapperError as e:
+            # Database error - log at error level for production monitoring
+            logger.error(
+                f"Database error fetching imported wallets for user {user.id_.value}: {e}"
+            )
+            # Fallback: continue with Privy wallets only
+            if not message:
+                message = "Could not fetch imported wallets from database"
 
         # 3. If we have a primary wallet in local DB but it's not in any list,
         # add it as a local-only wallet
@@ -313,9 +319,9 @@ class SyncWalletsHandler:
                         f"Persisted imported wallet {address[:10]}... "
                         f"for user {user.id_.value}"
                     )
-                except Exception as e:
+                except DataMapperError as e:
                     logger.error(
-                        f"Failed to persist imported wallet {address[:10]}... "
+                        f"Database error persisting imported wallet {address[:10]}... "
                         f"for user {user.id_.value}: {e}"
                     )
                     # Continue - we can still return the wallet in response

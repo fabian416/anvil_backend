@@ -108,7 +108,13 @@ from app.setup.config.privy import PrivySettings
 from app.domain.ports.wallet.embedded_wallet_provider import EmbeddedWalletProviderPort
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.infrastructure.adapters.wallet_repository_sqla import SqlaWalletRepository
+from app.infrastructure.adapters.transaction_repository_sqla import SqlaTransactionRepository
+from app.domain.ports.transaction.transaction_repository import TransactionRepository
 from app.infrastructure.auth.handlers.wallet_me import GetMyWalletsHandler, SyncWalletsHandler
+from app.infrastructure.auth.handlers.transaction_log import (
+    LogTransactionHandler,
+    GetTransactionHistoryHandler,
+)
 
 # AI / Agent Infrastructure
 from app.domain.ports.ai.agent_gateway import AgentGateway
@@ -222,6 +228,13 @@ class InfrastructureProvider(Provider):
     wallet_repo = provide(
         source=SqlaWalletRepository,
         provides=WalletRepository,
+        scope=Scope.REQUEST,
+    )
+    
+    # Transaction Repository (for transaction history persistence)
+    transaction_repo = provide(
+        source=SqlaTransactionRepository,
+        provides=TransactionRepository,
         scope=Scope.REQUEST,
     )
     
@@ -372,6 +385,9 @@ class InfrastructureProvider(Provider):
         # Wallet handlers
         GetMyWalletsHandler,
         SyncWalletsHandler,
+        # Transaction handlers
+        LogTransactionHandler,
+        GetTransactionHistoryHandler,
     )
 
     # Concrete Objects

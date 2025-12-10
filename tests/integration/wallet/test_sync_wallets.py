@@ -257,3 +257,110 @@ class TestSyncWalletsHandler:
         
         # Verify both wallets were persisted
         assert mock_wallet_repository.upsert.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_sync_handles_database_error_gracefully(
+        self, mock_current_user_service, mock_user
+    ):
+        """Test that database errors during sync don't block the response."""
+        from app.infrastructure.exceptions.gateway import DataMapperError
+        
+        # Create a repository that fails on upsert
+        mock_wallet_repository = MagicMock(spec=WalletRepository)
+        mock_wallet_repository.upsert = AsyncMock(
+            side_effect=DataMapperError("Database query failed")
+        )
+        
+        handler = SyncWalletsHandler(
+            current_user_service=mock_current_user_service,
+            wallet_repository=mock_wallet_repository,
+        )
+        
+        wallet_data = [
+            {
+                "address": "0x1111111111111111111111111111111111111111",
+                "chain_type": "ethereum",
+                "wallet_type": "imported",
+                "privy_wallet_id": None,
+            },
+        ]
+
+        # Should not raise an exception
+        result = await handler.execute(wallet_data)
+
+        # Should still return the wallet in the response
+        assert len(result.wallets) == 1
+        assert result.wallets[0].wallet_type == "imported"
+        
+        # Message should indicate 1 imported but 0 persisted
+        assert "1 imported" in result.message
+        assert "0 persisted" in result.message
+
+    @pytest.mark.asyncio
+    async def test_sync_partial_database_failure(
+        self, mock_current_user_service, mock_user
+    ):
+        """Test that partial database failures don't affect successful persists."""
+        from datetime import datetime
+        from app.infrastructure.exceptions.gateway import DataMapperError
+        
+        call_count = 0
+        
+        async def mock_upsert_partial_fail(user_id, address, provider, privy_wallet_id=None, chain_type=None):
+            nonlocal call_count
+            call_count += 1
+            
+            # Fail on the second call
+            if call_count == 2:
+                raise DataMapperError("Database query failed")
+            
+            now = datetime.utcnow()
+            return Wallet(
+                id_=WalletId(call_count),
+                user_id=user_id,
+                privy_wallet_id=privy_wallet_id or f"imported:{address.lower()}",
+                address=address.lower(),
+                provider=provider,
+                default_chain=ChainType.ETHEREUM,
+                status=WalletStatus.ACTIVE,
+                created_at=CreatedAt(now),
+                updated_at=UpdatedAt(now),
+            )
+        
+        mock_wallet_repository = MagicMock(spec=WalletRepository)
+        mock_wallet_repository.upsert = AsyncMock(side_effect=mock_upsert_partial_fail)
+        
+        handler = SyncWalletsHandler(
+            current_user_service=mock_current_user_service,
+            wallet_repository=mock_wallet_repository,
+        )
+        
+        wallet_data = [
+            {
+                "address": "0x1111111111111111111111111111111111111111",
+                "chain_type": "ethereum",
+                "wallet_type": "imported",
+                "privy_wallet_id": None,
+            },
+            {
+                "address": "0x2222222222222222222222222222222222222222",
+                "chain_type": "ethereum",
+                "wallet_type": "imported",
+                "privy_wallet_id": None,
+            },
+            {
+                "address": "0x3333333333333333333333333333333333333333",
+                "chain_type": "ethereum",
+                "wallet_type": "imported",
+                "privy_wallet_id": None,
+            },
+        ]
+
+        result = await handler.execute(wallet_data)
+
+        # All wallets should be in response
+        assert len(result.wallets) == 3
+        
+        # Message should indicate 3 imported but only 2 persisted (one failed)
+        assert "3 imported" in result.message
+        assert "2 persisted" in result.message

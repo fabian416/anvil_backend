@@ -295,3 +295,66 @@ class TestGetMyWalletsHandler:
         # Imported wallet should be present
         imported = next((w for w in result.wallets if w.wallet_type == "imported"), None)
         assert imported is not None
+
+    @pytest.mark.asyncio
+    async def test_get_wallets_handles_database_error(
+        self, handler, mock_wallet_provider, mock_wallet_repository
+    ):
+        """Test that DataMapperError from database is handled gracefully."""
+        from app.infrastructure.exceptions.gateway import DataMapperError
+        
+        # Privy returns wallets successfully
+        mock_wallet_provider.list_user_wallets = AsyncMock(return_value=[
+            WalletInfo(
+                wallet_id="wallet_privy",
+                address="0x1234567890abcdef1234567890abcdef12345678",
+                chain_type=ProviderChainType.ETHEREUM,
+                wallet_type=WalletType.EMBEDDED,
+                created_at=datetime.utcnow(),
+            ),
+        ])
+        
+        # But database fails
+        mock_wallet_repository.get_by_user_and_provider = AsyncMock(
+            side_effect=DataMapperError("Database query failed")
+        )
+
+        result = await handler.execute()
+
+        # Should still return Privy wallets
+        assert result.privy_connected is True
+        assert result.message is not None  # Error message about DB
+        assert "database" in result.message.lower()
+        assert len(result.wallets) == 1
+        
+        # Privy wallet should be present
+        assert result.wallets[0].source == "privy"
+        assert result.wallets[0].wallet_type == "embedded"
+
+    @pytest.mark.asyncio
+    async def test_get_wallets_handles_both_sources_failing(
+        self, handler, mock_wallet_provider, mock_wallet_repository
+    ):
+        """Test behavior when both Privy and database fail."""
+        from app.domain.ports.wallet.embedded_wallet_provider import WalletProviderError
+        from app.infrastructure.exceptions.gateway import DataMapperError
+        
+        # Both fail
+        mock_wallet_provider.list_user_wallets = AsyncMock(
+            side_effect=WalletProviderError("Privy API error", "privy")
+        )
+        mock_wallet_repository.get_by_user_and_provider = AsyncMock(
+            side_effect=DataMapperError("Database query failed")
+        )
+
+        result = await handler.execute()
+
+        # Should still return a valid response with primary wallet fallback
+        assert result.privy_connected is False
+        assert result.message is not None
+        # The primary wallet should still be included as fallback
+        assert len(result.wallets) >= 1
+        
+        # The primary wallet should be from local source
+        assert result.wallets[0].source == "local"
+        assert result.wallets[0].is_primary is True
