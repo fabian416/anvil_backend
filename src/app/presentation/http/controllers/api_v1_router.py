@@ -13,6 +13,7 @@ from app.presentation.http.controllers.chat.router import create_chat_router
 from app.presentation.http.controllers.chat.websocket_router import create_chat_websocket_router
 from app.presentation.http.controllers.admin.stats.router import create_admin_stats_router
 from app.presentation.http.controllers.admin.agent.router import create_admin_agent_router
+from app.presentation.http.controllers.admin.wallet.router import create_admin_wallet_router
 from app.presentation.http.controllers.wallet.router import create_wallet_router
 from app.presentation.http.controllers.graph.visualization import create_graph_visualization_router
 from app.presentation.http.controllers.hunter.sentiment import create_sentiment_router
@@ -86,7 +87,9 @@ def create_api_v1_router() -> APIRouter:
         create_chat_websocket_router(),
         create_admin_stats_router(),
         create_admin_agent_router(),
-        # Wallet router
+        # Admin wallet router (for admin management of Privy wallets)
+        create_admin_wallet_router(),
+        # Wallet router (for user operations)
         create_wallet_router(),
         # Graph visualization router
         create_graph_visualization_router(),

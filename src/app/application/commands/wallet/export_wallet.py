@@ -41,13 +41,13 @@ class ExportWalletResult:
 class ExportWallet:
     """
     Use case for exporting a wallet's private key.
-    
+
     This command:
     1. Generates an HPKE key pair for secure key transfer
     2. Calls Privy API to export the wallet (encrypted)
     3. Decrypts the private key using HPKE
     4. Returns the decrypted private key
-    
+
     Security Note:
     - The private key is only decrypted server-side
     - It should be transmitted securely to the frontend
@@ -66,14 +66,14 @@ class ExportWallet:
     ) -> ExportWalletResult:
         """
         Export a wallet's private key.
-        
+
         Args:
             wallet_id: The Privy wallet ID to export.
             wallet_address: Optional wallet address for verification.
-            
+
         Returns:
             ExportWalletResult with the decrypted private key.
-            
+
         Raises:
             WalletNotFoundError: If wallet doesn't exist.
             WalletExportError: If export fails.
@@ -107,12 +107,17 @@ class ExportWallet:
             logger.debug("Received encrypted wallet export from Privy")
 
             # Step 4: Decrypt the private key
+            # SECURITY: The decrypted private key is NEVER logged
             private_key = decryptor.decrypt(
                 ciphertext_b64=export_response.ciphertext,
                 encapsulated_key_b64=export_response.encapsulated_key,
             )
 
-            logger.info(f"Successfully exported wallet {wallet_id}")
+            # Log only non-sensitive metadata for audit purposes
+            logger.info(
+                f"Successfully exported wallet {wallet_id} "
+                f"(address: {actual_address[:10]}...)"
+            )
 
             return ExportWalletResult(
                 wallet_id=wallet_id,
@@ -132,4 +137,3 @@ class ExportWallet:
         except Exception as e:
             logger.error(f"Unexpected error during wallet export: {e}")
             raise WalletExportError(f"Wallet export failed: {e}") from e
-

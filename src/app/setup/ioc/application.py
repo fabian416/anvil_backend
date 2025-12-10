@@ -7,6 +7,10 @@ from app.application.chat.queries.get_conversation import GetConversation
 from app.application.chat.queries.list_conversations import ListConversations
 from app.application.chat.queries.get_messages import GetMessages
 
+# Domain ports for SendMessage
+from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.ports.ai.agent_gateway import AgentGateway
+
 from app.application.commands.user.activate_user import ActivateUserInteractor
 from app.application.commands.user.change_password import ChangePasswordInteractor
 from app.application.commands.user.deactivate_user import DeactivateUserInteractor
@@ -16,6 +20,7 @@ from app.application.commands.auth.upgrade_to_admin import UpgradeToAdminInterac
 from app.application.commands.auth.change_role import ChangeRoleInteractor
 from app.application.commands.auth.privy_login import PrivyLogin
 from app.application.commands.wallet.export_wallet import ExportWallet
+from app.application.commands.wallet.update_privy_wallet import UpdatePrivyWallet
 from app.application.common.ports.access_revoker import AccessRevoker
 from app.application.common.ports.flusher import Flusher
 from app.application.common.ports.identity_provider import IdentityProvider
@@ -26,6 +31,7 @@ from app.application.common.ports.user_command_gateway import UserCommandGateway
 from app.application.common.ports.user_query_gateway import UserQueryGateway
 from app.application.common.services.current_user import CurrentUserService
 from app.application.queries.list_users import ListUsersQueryService
+from app.application.queries.wallet.get_privy_wallet_details import GetPrivyWalletDetails
 from app.application.atlas.queries import (
     SearchCountriesQueryService,
     SearchCitiesQueryService,
@@ -65,9 +71,23 @@ class ApplicationProvider(Provider):
     # Chat interactors
     chat_command_interactors = provide_all(
         CreateConversation,
-        SendMessage,
         scope=Scope.REQUEST,
     )
+    
+    @provide(scope=Scope.REQUEST)
+    def provide_send_message(
+        self,
+        repository: ConversationRepository,
+        agent_gateway: AgentGateway,
+    ) -> SendMessage:
+        """
+        Provide SendMessage with only required dependencies.
+        Optional dependencies will use their defaults.
+        """
+        return SendMessage(
+            repository=repository,
+            agent_gateway=agent_gateway,
+        )
     
     chat_query_interactors = provide_all(
         GetConversation,
@@ -145,6 +165,7 @@ class ApplicationProvider(Provider):
         ChangeRoleInteractor,
         PrivyLogin,
         ExportWallet,
+        UpdatePrivyWallet,
     )
 
     # Queries
@@ -153,4 +174,5 @@ class ApplicationProvider(Provider):
         SearchCountriesQueryService,
         SearchCitiesQueryService,
         ListStatesByCountryQueryService,
+        GetPrivyWalletDetails,
     )

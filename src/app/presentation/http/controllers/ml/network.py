@@ -6,7 +6,7 @@ Advanced graph algorithms for DeFi ecosystem analysis.
 
 from typing import Annotated, Optional
 from fastapi import APIRouter, status, Security, Query
-from dishka.integrations.fastapi import FromDishka
+from dishka.integrations.fastapi import FromDishka, inject
 from uuid import UUID
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
@@ -36,11 +36,12 @@ router = APIRouter(prefix="/ml/network", tags=["Network Analysis"])
     summary="Calculate PageRank",
     description="Calculate PageRank importance scores for all protocols",
 )
+@inject
 async def calculate_pagerank(
-    damping_factor: float = Query(0.85, ge=0.0, le=1.0, description="Damping factor"),
-    max_iterations: int = Query(100, ge=10, le=500, description="Max iterations"),
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[CalculatePageRankInteractor],
+    damping_factor: float = Query(0.85, ge=0.0, le=1.0, description="Damping factor"),
+    max_iterations: int = Query(100, ge=10, le=500, description="Max iterations"),
 ) -> PageRankListResponse:
     """Calculate PageRank for protocols"""
     
@@ -72,10 +73,11 @@ async def calculate_pagerank(
     summary="Detect communities",
     description="Detect communities (clusters) in the protocol network",
 )
+@inject
 async def detect_communities(
-    algorithm: str = Query("label_propagation", description="Detection algorithm"),
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[DetectCommunitiesInteractor],
+    algorithm: str = Query("label_propagation", description="Detection algorithm"),
 ) -> CommunityListResponse:
     """Detect protocol communities"""
     
@@ -103,10 +105,11 @@ async def detect_communities(
     summary="Calculate centrality",
     description="Calculate centrality metrics for protocols (degree, betweenness, closeness, eigenvector)",
 )
+@inject
 async def calculate_centrality(
-    protocol_id: Optional[UUID] = Query(None, description="Specific protocol (optional)"),
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[CalculateCentralityInteractor],
+    protocol_id: Optional[UUID] = Query(None, description="Specific protocol (optional)"),
 ) -> CentralityListResponse:
     """Calculate centrality metrics"""
     
@@ -136,12 +139,13 @@ async def calculate_centrality(
     summary="Simulate contagion",
     description="Simulate cascade risk from protocol failure using network propagation",
 )
+@inject
 async def simulate_contagion(
     protocol_id: UUID,
-    propagation_probability: float = Query(0.8, ge=0.0, le=1.0, description="Cascade probability"),
-    max_depth: int = Query(5, ge=1, le=10, description="Max cascade depth"),
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[SimulateContagionInteractor],
+    propagation_probability: float = Query(0.8, ge=0.0, le=1.0, description="Cascade probability"),
+    max_depth: int = Query(5, ge=1, le=10, description="Max cascade depth"),
 ) -> ContagionSimulationResponse:
     """Simulate contagion cascade"""
     

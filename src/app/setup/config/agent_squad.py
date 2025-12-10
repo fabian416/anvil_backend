@@ -102,3 +102,30 @@ class AgentSquadSettings(BaseModel):
 
     # Per-agent configuration
     agents: AgentSquadAgentsConfig = Field(default_factory=AgentSquadAgentsConfig)
+    
+    # Flag to use agent-squad library vs hand-rolled implementation
+    use_agent_squad: bool = False
+    
+    # Default model for agents
+    default_model: str = "gpt-4o-mini"
+
+
+# Alias for backward compatibility
+AgentSquadConfig = AgentSquadSettings
+
+
+def load_agent_squad_config(use_agent_squad: bool = False) -> AgentSquadConfig:
+    """
+    Load Agent Squad configuration.
+    
+    Args:
+        use_agent_squad: Whether to use agent-squad library implementation
+    
+    Returns:
+        AgentSquadConfig instance with default settings
+    """
+    config = AgentSquadSettings()
+    # Override use_agent_squad if specified
+    if use_agent_squad:
+        config = config.model_copy(update={"use_agent_squad": True})
+    return config

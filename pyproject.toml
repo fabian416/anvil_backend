@@ -71,6 +71,13 @@ test = [
     "pytest-mock==3.14.0",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "ruff>=0.12.5",
+]
+
 [tool.coverage.report]
 show_missing = true
 skip_empty = true

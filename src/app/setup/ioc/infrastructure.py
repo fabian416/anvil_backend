@@ -1,3 +1,5 @@
+from typing import Optional
+
 from dishka import Provider, Scope, provide, provide_all
 
 from app.infrastructure.adapters.main_transaction_manager_sqla import (
@@ -100,16 +102,33 @@ from app.infrastructure.adapters.notification_repository_sqla import (
     SqlaNotificationRepository,
 )
 
+# Privy / Wallet Infrastructure
+from app.infrastructure.privy import PrivyClient
+from app.setup.config.privy import PrivySettings
+from app.domain.ports.wallet.embedded_wallet_provider import EmbeddedWalletProviderPort
+from app.domain.ports.wallet.wallet_repository import WalletRepository
+from app.infrastructure.adapters.wallet_repository_sqla import SqlaWalletRepository
+from app.infrastructure.auth.handlers.wallet_me import GetMyWalletsHandler, SyncWalletsHandler
+
 # AI / Agent Infrastructure
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.ports.message_repository import MessageRepository
+from app.domain.ports.project_repository import ProjectRepository
 from app.infrastructure.adapters.ai.agent_gateway_impl import AgentGatewayImpl
+from app.infrastructure.persistence_sqla.repositories.project_repository import (
+    ProjectRepositorySqla,
+)
 from app.infrastructure.adapters.ai.agent_squad_gateway import AgentSquadGateway
 from app.infrastructure.adapters.ai.llm_gateway_impl import LLMGatewayImpl
 from app.infrastructure.adapters.ai.squad_storage import AnvilSquadStorage
+from app.infrastructure.factories.ai.llm_provider_factory import LLMProviderFactory
 from app.infrastructure.adapters.conversation_repository_sqla import (
     SqlaConversationRepository,
+)
+from app.infrastructure.adapters.message_repository_sqla import (
+    SqlaMessageRepository,
 )
 from app.setup.config.agent_squad import AgentSquadConfig, load_agent_squad_config
 from app.infrastructure.agents.agent_factory import AgentFactory, create_agent_factory
@@ -199,6 +218,13 @@ class InfrastructureProvider(Provider):
         provides=EmailVerificationRepository,
     )
     
+    # Wallet Repository (for imported wallets persistence)
+    wallet_repo = provide(
+        source=SqlaWalletRepository,
+        provides=WalletRepository,
+        scope=Scope.REQUEST,
+    )
+    
     # Auth Gateway
     auth_gateway = provide(
         source=AuthGatewaySqla,
@@ -211,6 +237,24 @@ class InfrastructureProvider(Provider):
         provides=ConversationRepository,
         scope=Scope.REQUEST,
     )
+    message_repo = provide(
+        source=SqlaMessageRepository,
+        provides=MessageRepository,
+        scope=Scope.REQUEST,
+    )
+    project_repo = provide(
+        source=ProjectRepositorySqla,
+        provides=ProjectRepository,
+        scope=Scope.REQUEST,
+    )
+    
+    @provide(scope=Scope.REQUEST)
+    def provide_optional_project_repo(
+        self, repo: ProjectRepository
+    ) -> "Optional[ProjectRepository]":
+        """Provide optional project repository (for chat interactor)."""
+        return repo
+    
     llm_gateway = provide(
         source=LLMGatewayImpl,
         provides=LLMGateway,
@@ -220,6 +264,17 @@ class InfrastructureProvider(Provider):
         source=AnvilSquadStorage,
         scope=Scope.REQUEST,
     )
+    
+    @provide(scope=Scope.APP)
+    def get_llm_provider_factory(self) -> LLMProviderFactory:
+        """Provide LLM Provider Factory with API keys from environment."""
+        import os
+        config = {
+            "DEEPINFRA_API_KEY": os.environ.get("DEEPINFRA_API_KEY", ""),
+            "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
+        }
+        return LLMProviderFactory(config)
+    
     @provide(scope=Scope.REQUEST)
     def get_agent_gateway(
         self,
@@ -277,6 +332,27 @@ class InfrastructureProvider(Provider):
         factory = create_agent_factory(model=config.default_model)
         return factory
 
+    # Privy / Wallet Provider
+    @provide(scope=Scope.APP)
+    def get_privy_client(self, settings: PrivySettings) -> PrivyClient:
+        """
+        Provide Privy client for wallet operations.
+        
+        This is APP-scoped because we reuse the HTTP client across requests.
+        The PrivyClient handles connection pooling internally.
+        """
+        return PrivyClient(settings)
+    
+    @provide(scope=Scope.APP)
+    def get_wallet_provider(self, client: PrivyClient) -> EmbeddedWalletProviderPort:
+        """
+        Provide the wallet provider interface.
+        
+        Currently uses Privy, but can be swapped to another provider
+        (Dynamic, Turnkey, etc.) by changing this provider.
+        """
+        return client
+
     # Infrastructure Handlers
     infra_handlers = provide_all(
         SignUpHandler,
@@ -293,6 +369,9 @@ class InfrastructureProvider(Provider):
         CreateSubscriptionHandler,
         GetMeHandler,
         UpdateMeHandler,
+        # Wallet handlers
+        GetMyWalletsHandler,
+        SyncWalletsHandler,
     )
 
     # Concrete Objects

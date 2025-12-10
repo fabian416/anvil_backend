@@ -313,3 +313,134 @@ class DistillationHealthResponse(BaseModel):
                 "telemetry_enabled": True,
             }
         }
+
+
+# ============================================
+# Static Response Schemas (Admin)
+# ============================================
+
+class StaticResponseCreate(BaseModel):
+    """Request to create a static response."""
+    
+    pattern: str = Field(
+        ...,
+        description="Pattern to match (regex or exact)",
+        min_length=1,
+        max_length=1000,
+    )
+    response: str = Field(
+        ...,
+        description="Static response to return",
+        min_length=1,
+        max_length=10000,
+    )
+    is_regex: bool = Field(
+        False,
+        description="Whether pattern is a regex",
+    )
+    priority: int = Field(
+        0,
+        description="Priority for matching (higher = first)",
+        ge=0,
+    )
+    enabled: bool = Field(
+        True,
+        description="Whether this response is enabled",
+    )
+
+
+class StaticResponseUpdate(BaseModel):
+    """Request to update a static response."""
+    
+    pattern: Optional[str] = Field(
+        None,
+        description="Pattern to match",
+        min_length=1,
+        max_length=1000,
+    )
+    response: Optional[str] = Field(
+        None,
+        description="Static response to return",
+        min_length=1,
+        max_length=10000,
+    )
+    is_regex: Optional[bool] = Field(
+        None,
+        description="Whether pattern is a regex",
+    )
+    priority: Optional[int] = Field(
+        None,
+        description="Priority for matching",
+        ge=0,
+    )
+    enabled: Optional[bool] = Field(
+        None,
+        description="Whether this response is enabled",
+    )
+
+
+class StaticResponseResponse(BaseModel):
+    """Static response entity."""
+    
+    id: UUID = Field(..., description="Static response ID")
+    pattern: str = Field(..., description="Match pattern")
+    response: str = Field(..., description="Static response")
+    is_regex: bool = Field(..., description="Whether pattern is regex")
+    priority: int = Field(..., description="Match priority")
+    enabled: bool = Field(..., description="Whether enabled")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: datetime = Field(..., description="Last update timestamp")
+
+
+# Alias for backward compatibility
+DistillationConfigUpdate = DistillationConfigUpdateRequest
+
+
+class CacheInvalidateRequest(BaseModel):
+    """Request to invalidate cache entries."""
+    
+    pattern: Optional[str] = Field(
+        None,
+        description="Pattern to match keys (optional, invalidates all if not provided)",
+    )
+    older_than_hours: Optional[int] = Field(
+        None,
+        description="Invalidate entries older than N hours",
+        ge=1,
+    )
+
+
+class CacheStatsResponse(BaseModel):
+    """Cache statistics response."""
+    
+    total_entries: int = Field(..., description="Total cache entries")
+    hit_rate: float = Field(..., description="Cache hit rate (0-1)")
+    miss_rate: float = Field(..., description="Cache miss rate (0-1)")
+    memory_usage_mb: float = Field(..., description="Memory usage in MB")
+    oldest_entry: Optional[datetime] = Field(None, description="Oldest entry timestamp")
+    newest_entry: Optional[datetime] = Field(None, description="Newest entry timestamp")
+
+
+class DistillationTelemetryResponse(BaseModel):
+    """Telemetry entry response."""
+    
+    id: UUID = Field(..., description="Telemetry ID")
+    request_id: UUID = Field(..., description="Original request ID")
+    provider: str = Field(..., description="Provider used")
+    success: bool = Field(..., description="Whether validation succeeded")
+    latency_ms: float = Field(..., description="Latency in milliseconds")
+    tokens_used: int = Field(..., description="Tokens consumed")
+    confidence: float = Field(..., description="Confidence score")
+    reason: str = Field(..., description="Validation reason")
+    created_at: datetime = Field(..., description="Timestamp")
+
+
+class DistillationSummaryResponse(BaseModel):
+    """Summary of distillation system."""
+    
+    total_requests_today: int = Field(..., description="Requests today")
+    total_requests_week: int = Field(..., description="Requests this week")
+    success_rate_today: float = Field(..., description="Today's success rate")
+    avg_latency_today_ms: float = Field(..., description="Today's avg latency")
+    top_rejection_reasons: dict = Field(..., description="Top rejection reasons")
+    provider_usage: dict = Field(..., description="Provider usage breakdown")

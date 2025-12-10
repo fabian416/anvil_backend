@@ -5,8 +5,9 @@ Dependency injection configuration for graph-related components.
 """
 
 from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncSession
 import os
+
+from app.infrastructure.adapters.types import MainAsyncSession
 import redis.asyncio as aioredis
 
 from app.domain.ports.graph import GraphRepository
@@ -27,6 +28,7 @@ from app.application.graph import (
     GenerateEmbeddingsInteractor,
     HybridRetrievalInteractor,
 )
+from app.application.graph.query_service import GraphQueryService
 from app.application.ml import (
     PredictRiskInteractor,
     PredictBatchRiskInteractor,
@@ -76,7 +78,7 @@ class GraphProvider(Provider):
     @provide
     def provide_graph_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> GraphRepository:
         """
         Provide GraphRepository implementation.
@@ -91,7 +93,7 @@ class GraphProvider(Provider):
     @provide
     def provide_vector_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> VectorRepository:
         """Provide VectorRepository implementation"""
         return VectorRepositorySqla(session=session)
@@ -121,6 +123,14 @@ class GraphProvider(Provider):
     ) -> GraphService:
         """Provide GraphService for graph operations"""
         return GraphService(graph_repo=graph_repo)
+    
+    @provide
+    def provide_graph_query_service(
+        self,
+        graph_repo: GraphRepository,
+    ) -> GraphQueryService:
+        """Provide GraphQueryService for visualization queries"""
+        return GraphQueryService(graph_repo=graph_repo)
     
     @provide
     def provide_risk_analysis_service(

@@ -5,11 +5,11 @@ frontend visualization libraries like D3.js.
 """
 
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Query, Depends, HTTPException, status
+from fastapi import APIRouter, Query, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.application.graph.query_service import GraphQueryService
-from dishka.integrations.fastapi import FromDishka
+from dishka.integrations.fastapi import FromDishka, inject
 
 
 class GraphNode(BaseModel):
@@ -69,7 +69,9 @@ def create_graph_visualization_router() -> APIRouter:
         summary="Get all graph nodes",
         description="Retrieve all nodes in the knowledge graph for visualization",
     )
+    @inject
     async def get_graph_nodes(
+        query_service: FromDishka[GraphQueryService],
         node_type: Optional[str] = Query(
             None, description="Filter by node type (protocol, token, etc.)"
         ),
@@ -77,7 +79,6 @@ def create_graph_visualization_router() -> APIRouter:
             0.0, ge=0.0, le=1.0, description="Minimum importance score"
         ),
         limit: int = Query(100, ge=1, le=1000, description="Maximum nodes to return"),
-        query_service: FromDishka[GraphQueryService] = Depends(),
     ) -> List[GraphNode]:
         """Get all graph nodes for visualization.
 
@@ -178,7 +179,9 @@ def create_graph_visualization_router() -> APIRouter:
         summary="Get all graph edges",
         description="Retrieve all relationships in the knowledge graph",
     )
+    @inject
     async def get_graph_edges(
+        query_service: FromDishka[GraphQueryService],
         edge_type: Optional[str] = Query(
             None, description="Filter by edge type (PROVIDES_LIQUIDITY, etc.)"
         ),
@@ -186,7 +189,6 @@ def create_graph_visualization_router() -> APIRouter:
             0.0, ge=0.0, le=1.0, description="Minimum edge weight"
         ),
         limit: int = Query(500, ge=1, le=5000, description="Maximum edges to return"),
-        query_service: FromDishka[GraphQueryService] = Depends(),
     ) -> List[GraphEdge]:
         """Get all graph edges for visualization.
 
@@ -266,7 +268,9 @@ def create_graph_visualization_router() -> APIRouter:
         summary="Get complete graph",
         description="Retrieve both nodes and edges in a single response",
     )
+    @inject
     async def get_complete_graph(
+        query_service: FromDishka[GraphQueryService],
         node_type: Optional[str] = Query(None, description="Filter by node type"),
         edge_type: Optional[str] = Query(None, description="Filter by edge type"),
         min_importance: float = Query(
@@ -278,7 +282,6 @@ def create_graph_visualization_router() -> APIRouter:
         max_edges: int = Query(
             500, ge=1, le=5000, description="Maximum edges to return"
         ),
-        query_service: FromDishka[GraphQueryService] = Depends(),
     ) -> GraphVisualizationResponse:
         """Get complete graph data (nodes + edges) for visualization.
 
@@ -326,13 +329,14 @@ def create_graph_visualization_router() -> APIRouter:
         summary="Get subgraph around entity",
         description="Retrieve a focused subgraph centered on a specific entity",
     )
+    @inject
     async def get_subgraph(
+        query_service: FromDishka[GraphQueryService],
         entity: str = Query(..., description="Entity ID to focus on"),
         depth: int = Query(2, ge=1, le=3, description="Traversal depth"),
         max_nodes: int = Query(
             50, ge=1, le=200, description="Maximum nodes to include"
         ),
-        query_service: FromDishka[GraphQueryService] = Depends(),
     ) -> SubgraphResponse:
         """Get subgraph focused on specific entity.
 

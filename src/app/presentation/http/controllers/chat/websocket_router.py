@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, WebSocket, Query
 from fastapi.exceptions import WebSocketException
 
-from app.presentation.http.websocket.chat_websocket import websocket_endpoint
+from app.presentation.http.websocket.chat_websocket import chat_websocket as websocket_endpoint
 
 
 def create_chat_websocket_router() -> APIRouter:

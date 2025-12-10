@@ -5,9 +5,9 @@ Registers all dependencies for the adaptive ranking system.
 """
 
 from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.ports.llm_ranking_repository import LLMRankingRepository
+from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.persistence_sqla.repositories.llm.ranking_repository import (
     SqlaLLMRankingRepository,
 )
@@ -50,7 +50,7 @@ class LLMRankingProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     def provide_ranking_repository(
-        self, session: AsyncSession
+        self, session: MainAsyncSession
     ) -> LLMRankingRepository:
         """Provide ranking repository."""
         return SqlaLLMRankingRepository(session)

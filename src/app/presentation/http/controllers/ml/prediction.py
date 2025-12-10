@@ -6,7 +6,7 @@ Risk prediction using machine learning models.
 
 from typing import Annotated
 from fastapi import APIRouter, status, Security, Query
-from dishka.integrations.fastapi import FromDishka
+from dishka.integrations.fastapi import FromDishka, inject
 from uuid import UUID
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
@@ -34,6 +34,7 @@ router = APIRouter(prefix="/ml/prediction", tags=["ML Prediction"])
     summary="Predict protocol risk",
     description="Predict protocol risk using ML models based on graph features, market data, and historical risks",
 )
+@inject
 async def predict_risk(
     protocol_id: UUID,
     authorization: Annotated[str, Security(bearer_scheme)],
@@ -64,6 +65,7 @@ async def predict_risk(
     summary="Batch predict protocol risks",
     description="Predict risk for multiple protocols in a single request",
 )
+@inject
 async def predict_batch_risk(
     request: BatchRiskPredictionRequest,
     authorization: Annotated[str, Security(bearer_scheme)],
@@ -101,11 +103,12 @@ async def predict_batch_risk(
     summary="Detect anomalies",
     description="Detect anomalous risk patterns using statistical methods",
 )
+@inject
 async def detect_anomalies(
     protocol_id: UUID,
-    lookback_days: int = Query(7, ge=1, le=90, description="Days to look back"),
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[DetectAnomaliesInteractor],
+    lookback_days: int = Query(7, ge=1, le=90, description="Days to look back"),
 ) -> AnomalyDetectionResponse:
     """Detect anomalous risk patterns"""
     
@@ -121,11 +124,12 @@ async def detect_anomalies(
     summary="Forecast risk",
     description="Forecast protocol risk trajectory for next N days",
 )
+@inject
 async def forecast_risk(
     protocol_id: UUID,
-    forecast_days: int = Query(7, ge=1, le=30, description="Days to forecast"),
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[ForecastRiskInteractor],
+    forecast_days: int = Query(7, ge=1, le=30, description="Days to forecast"),
 ) -> RiskForecastResponse:
     """Forecast protocol risk"""
     

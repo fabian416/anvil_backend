@@ -5,8 +5,8 @@ HTTP endpoints for GraphRAG hybrid search.
 """
 
 from typing import Annotated
-from fastapi import APIRouter, Depends, Security, status
-from dishka.integrations.fastapi import FromDishka
+from fastapi import APIRouter, Security, status
+from dishka.integrations.fastapi import FromDishka, inject
 import logging
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
@@ -37,6 +37,7 @@ router = APIRouter(prefix="/graph/search", tags=["Graph Search"])
     summary="Hybrid search protocols",
     description="Search protocols using hybrid retrieval (vector + graph)",
 )
+@inject
 async def hybrid_search(
     request: HybridSearchRequest,
     authorization: Annotated[str, Security(bearer_scheme)],
@@ -126,6 +127,7 @@ async def hybrid_search(
     summary="Find similar protocols",
     description="Find protocols similar to a reference protocol",
 )
+@inject
 async def find_similar_protocols(
     request: SimilarProtocolsRequest,
     authorization: Annotated[str, Security(bearer_scheme)],
@@ -197,6 +199,7 @@ async def find_similar_protocols(
     summary="Contextual protocol search",
     description="Search with user preferences and context",
 )
+@inject
 async def contextual_search(
     request: ContextualSearchRequest,
     authorization: Annotated[str, Security(bearer_scheme)],

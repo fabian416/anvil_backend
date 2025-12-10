@@ -2,8 +2,8 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from dishka.integrations.fastapi import FromDishka
+from fastapi import APIRouter, HTTPException, status
+from dishka.integrations.fastapi import FromDishka, inject
 
 from app.presentation.http.schemas.projects import (
     ProjectSummaryResponse,
@@ -23,10 +23,11 @@ router = APIRouter(prefix="/projects", tags=["User - Projects"])
     "/",
     response_model=UserProjectsResponse,
 )
+@inject
 async def get_user_projects(
     # TODO: Get user_id from authenticated user context
-    assignment_repo: FromDishka[UserAssignmentRepositorySqla] = Depends(),
-    project_interactor: FromDishka[ListProjects] = Depends(),
+    assignment_repo: FromDishka[UserAssignmentRepositorySqla],
+    project_interactor: FromDishka[ListProjects],
 ) -> UserProjectsResponse:
     """Get user's assigned projects and active project."""
     # Mock user ID for now
@@ -75,8 +76,9 @@ async def get_user_projects(
     "/available",
     response_model=List[ProjectSummaryResponse],
 )
+@inject
 async def list_available_projects(
-    interactor: FromDishka[ListProjects] = Depends(),
+    interactor: FromDishka[ListProjects],
 ) -> List[ProjectSummaryResponse]:
     """List all publicly available projects."""
     projects = await interactor.execute(
@@ -104,10 +106,11 @@ async def list_available_projects(
     "/{project_id}/select",
     status_code=status.HTTP_204_NO_CONTENT,
 )
+@inject
 async def select_project(
     project_id: UUID,
-    assignment_repo: FromDishka[UserAssignmentRepositorySqla] = Depends(),
-    project_interactor: FromDishka[ListProjects] = Depends(),
+    assignment_repo: FromDishka[UserAssignmentRepositorySqla],
+    project_interactor: FromDishka[ListProjects],
 ):
     """Select (activate) a project for the current user."""
     # Mock user ID for now
@@ -157,10 +160,11 @@ async def select_project(
     "/{project_id}/join",
     status_code=status.HTTP_204_NO_CONTENT,
 )
+@inject
 async def join_project(
     project_id: UUID,
-    assignment_repo: FromDishka[UserAssignmentRepositorySqla] = Depends(),
-    project_interactor: FromDishka[ListProjects] = Depends(),
+    assignment_repo: FromDishka[UserAssignmentRepositorySqla],
+    project_interactor: FromDishka[ListProjects],
 ):
     """Join (self-assign to) a public project."""
     # Mock user ID for now
@@ -228,9 +232,10 @@ async def join_project(
     "/{project_slug}",
     response_model=ProjectSummaryResponse,
 )
+@inject
 async def get_project_by_slug(
     project_slug: str,
-    interactor: FromDishka[ListProjects] = Depends(),
+    interactor: FromDishka[ListProjects],
 ) -> ProjectSummaryResponse:
     """Get project details by slug."""
     projects = await interactor.execute(limit=1000)

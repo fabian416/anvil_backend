@@ -5,8 +5,8 @@ HTTP endpoints for graph statistics and insights.
 """
 
 from typing import Annotated
-from fastapi import APIRouter, Depends, Security, status
-from dishka.integrations.fastapi import FromDishka
+from fastapi import APIRouter, Security, status
+from dishka.integrations.fastapi import FromDishka, inject
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.application.graph import (
@@ -35,6 +35,7 @@ router = APIRouter(prefix="/graph/analytics", tags=["Graph Analytics"])
     summary="Get graph analytics",
     description="Get comprehensive graph statistics and insights",
 )
+@inject
 async def get_graph_analytics(
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[GraphAnalyticsInteractor],
@@ -85,6 +86,7 @@ async def get_graph_analytics(
     summary="Validate graph integrity",
     description="Run validation checks on the knowledge graph",
 )
+@inject
 async def validate_graph(
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[ValidateGraphInteractor],
@@ -122,6 +124,7 @@ async def validate_graph(
     summary="Generate embeddings",
     description="Generate embeddings for protocols (admin only)",
 )
+@inject
 async def generate_embeddings(
     request: EmbeddingGenerationRequest,
     authorization: Annotated[str, Security(bearer_scheme)],

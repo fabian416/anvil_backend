@@ -1,8 +1,22 @@
 """
 SQLAlchemy mapping for Wallet and ChainAddress tables metadata.
+
+Wallet types:
+- PRIVY: Privy embedded wallet (privy_wallet_id required)
+- EXTERNAL: External wallet connected via browser extension
+- IMPORTED: Wallet imported via private key (privy_wallet_id can be null or synthetic)
+
+Privy Configuration Fields (for admin management):
+- policy_ids: JSON array of policy IDs
+- owner_type: Type of owner (user, authorization_key, etc.)
+- owner_id: ID of the owner
+- additional_signers: JSON array of additional signers
+- exported_at: When the wallet was exported
+- imported_at: When the wallet was imported
+- last_privy_sync_at: Last time we synced with Privy API
 """
 
-from sqlalchemy import Integer, String, DateTime, Enum, ForeignKey, Boolean, Numeric, UniqueConstraint
+from sqlalchemy import Integer, String, DateTime, Enum, ForeignKey, Boolean, Numeric, UniqueConstraint, Index, JSON
 from sqlalchemy.orm import mapped_column
 import sqlalchemy as sa
 
@@ -19,7 +33,11 @@ def map_wallet_tables() -> None:
     @mapping_registry.mapped
     class WalletsTable:
         __tablename__ = "wallets"
-        __table_args__ = {"extend_existing": True}
+        __table_args__ = (
+            # Unique constraint for user_id + address to prevent duplicates
+            UniqueConstraint('user_id', 'address', name='unique_user_wallet_address'),
+            {"extend_existing": True},
+        )
         
         # Primary key
         id = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -28,11 +46,22 @@ def map_wallet_tables() -> None:
         user_id = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
         
         # Wallet details
-        privy_wallet_id = mapped_column(String(255), unique=True, nullable=False, index=True)
-        address = mapped_column(String(42), unique=True, nullable=False, index=True)
+        # privy_wallet_id is nullable for imported wallets
+        # For imported wallets, we use a synthetic ID like "imported:<address>"
+        privy_wallet_id = mapped_column(String(255), unique=True, nullable=True, index=True)
+        address = mapped_column(String(42), nullable=False, index=True)
         provider = mapped_column(Enum(WalletProvider, values_callable=lambda x: [e.value for e in x]), default=WalletProvider.PRIVY, nullable=False)
         default_chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x]), default=ChainType.ARBITRUM)
         status = mapped_column(Integer, default=WalletStatus.ACTIVE.value, nullable=False)
+        
+        # Privy configuration fields (for admin management)
+        policy_ids = mapped_column(JSON, nullable=True, default=None)  # Array of policy IDs
+        owner_type = mapped_column(String(50), nullable=True, default=None)  # e.g., "user", "authorization_key"
+        owner_id = mapped_column(String(255), nullable=True, default=None)  # ID of the owner
+        additional_signers = mapped_column(JSON, nullable=True, default=None)  # Array of signer objects
+        exported_at = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+        imported_at = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+        last_privy_sync_at = mapped_column(DateTime(timezone=True), nullable=True, default=None)
         
         # Timestamps
         created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))

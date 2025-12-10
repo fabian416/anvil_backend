@@ -6,7 +6,7 @@ Performance monitoring and metrics for GraphRAG.
 
 from typing import Annotated
 from fastapi import APIRouter, Security, status
-from dishka.integrations.fastapi import FromDishka
+from dishka.integrations.fastapi import FromDishka, inject
 from pydantic import BaseModel
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
@@ -38,6 +38,7 @@ class PerformanceMetrics(BaseModel):
     summary="Get cache statistics",
     description="Get performance metrics for graph query caching",
 )
+@inject
 async def get_cache_stats(
     authorization: Annotated[str, Security(bearer_scheme)],
     cache: FromDishka[GraphQueryCache],
@@ -67,6 +68,7 @@ async def get_cache_stats(
     summary="Clear graph cache",
     description="Clear all cached graph queries (admin only)",
 )
+@inject
 async def clear_cache(
     authorization: Annotated[str, Security(bearer_scheme)],
     cache: FromDishka[GraphQueryCache],

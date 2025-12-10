@@ -6,7 +6,7 @@ blocking requests to failing providers/models.
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 from uuid import UUID

@@ -3,10 +3,10 @@ from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import delete, func, or_, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.project import Project
 from app.domain.ports.project_repository import ProjectRepository
+from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.persistence_sqla.mappings.projects import (
     projects,
     user_project_assignments,
@@ -16,7 +16,7 @@ from app.infrastructure.persistence_sqla.mappings.projects import (
 class ProjectRepositorySqla(ProjectRepository):
     """SQLAlchemy implementation of project repository."""
     
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: MainAsyncSession):
         self.session = session
     
     async def add_project(self, project: Project) -> None:

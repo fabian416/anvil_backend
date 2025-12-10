@@ -2,8 +2,8 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status, HTTPException
-from dishka.integrations.fastapi import FromDishka
+from fastapi import APIRouter, Query, status, HTTPException
+from dishka.integrations.fastapi import FromDishka, inject
 
 from app.presentation.http.schemas.projects import (
     ProjectCreate,
@@ -44,9 +44,10 @@ router = APIRouter(prefix="/admin/projects", tags=["Admin - Projects"])
     response_model=ProjectResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@inject
 async def create_project(
     data: ProjectCreate,
-    interactor: FromDishka[CreateProject] = Depends(),
+    interactor: FromDishka[CreateProject],
 ) -> ProjectResponse:
     """Create a new project."""
     # TODO: Get created_by from authenticated user
@@ -103,13 +104,14 @@ async def create_project(
     "/",
     response_model=List[ProjectResponse],
 )
+@inject
 async def list_projects(
     status: Optional[str] = Query(None),
     visibility: Optional[str] = Query(None),
     is_featured: Optional[bool] = Query(None),
     limit: int = Query(50, le=100),
     offset: int = Query(0),
-    interactor: FromDishka[ListProjects] = Depends(),
+    interactor: FromDishka[ListProjects] = None,
 ) -> List[ProjectResponse]:
     """List projects with filters."""
     projects = await interactor.execute(
@@ -152,9 +154,10 @@ async def list_projects(
     "/{project_id}",
     response_model=ProjectResponse,
 )
+@inject
 async def get_project(
     project_id: UUID,
-    interactor: FromDishka[GetProject] = Depends(),
+    interactor: FromDishka[GetProject],
 ) -> ProjectResponse:
     """Get project by ID."""
     project = await interactor.execute(project_id=project_id)
@@ -191,10 +194,11 @@ async def get_project(
     "/{project_id}",
     response_model=ProjectResponse,
 )
+@inject
 async def update_project(
     project_id: UUID,
     data: ProjectUpdate,
-    interactor: FromDishka[UpdateProject] = Depends(),
+    interactor: FromDishka[UpdateProject],
 ) -> ProjectResponse:
     """Update project."""
     project = await interactor.execute(
@@ -244,9 +248,10 @@ async def update_project(
     "/{project_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
+@inject
 async def delete_project(
     project_id: UUID,
-    interactor: FromDishka[DeleteProject] = Depends(),
+    interactor: FromDishka[DeleteProject],
 ):
     """Delete project."""
     await interactor.execute(project_id=project_id)
@@ -256,9 +261,10 @@ async def delete_project(
     "/{project_id}/activate",
     response_model=ProjectResponse,
 )
+@inject
 async def activate_project(
     project_id: UUID,
-    interactor: FromDishka[ActivateProject] = Depends(),
+    interactor: FromDishka[ActivateProject],
 ) -> ProjectResponse:
     """Activate project."""
     project = await interactor.execute(project_id=project_id)
@@ -295,11 +301,12 @@ async def activate_project(
     response_model=KnowledgeDocumentResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@inject
 async def create_knowledge_document(
     project_id: UUID,
     data: KnowledgeDocumentCreate,
-    doc_repository: FromDishka[KnowledgeDocumentRepositorySqla] = Depends(),
-    processor: FromDishka[DocumentProcessor] = Depends(),
+    doc_repository: FromDishka[KnowledgeDocumentRepositorySqla],
+    processor: FromDishka[DocumentProcessor],
 ) -> KnowledgeDocumentResponse:
     """Create and process a knowledge document."""
     from app.domain.entities.knowledge_base import KnowledgeDocument
@@ -354,9 +361,10 @@ async def create_knowledge_document(
     "/{project_id}/knowledge/documents",
     response_model=List[KnowledgeDocumentResponse],
 )
+@inject
 async def list_knowledge_documents(
     project_id: UUID,
-    doc_repository: FromDishka[KnowledgeDocumentRepositorySqla] = Depends(),
+    doc_repository: FromDishka[KnowledgeDocumentRepositorySqla],
 ) -> List[KnowledgeDocumentResponse]:
     """List knowledge documents for a project."""
     documents = await doc_repository.list_documents(knowledge_base_id=project_id)
@@ -386,10 +394,11 @@ async def list_knowledge_documents(
     response_model=AssignmentRuleResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@inject
 async def create_assignment_rule(
     project_id: UUID,
     data: AssignmentRuleCreate,
-    repository: FromDishka[AssignmentRuleRepositorySqla] = Depends(),
+    repository: FromDishka[AssignmentRuleRepositorySqla],
 ) -> AssignmentRuleResponse:
     """Create assignment rule for a project."""
     from app.domain.entities.assignment_rule import AssignmentRule
@@ -423,9 +432,10 @@ async def create_assignment_rule(
     "/{project_id}/assignment-rules",
     response_model=List[AssignmentRuleResponse],
 )
+@inject
 async def list_assignment_rules(
     project_id: UUID,
-    repository: FromDishka[AssignmentRuleRepositorySqla] = Depends(),
+    repository: FromDishka[AssignmentRuleRepositorySqla],
 ) -> List[AssignmentRuleResponse]:
     """List assignment rules for a project."""
     rules = await repository.get_rules_by_project(project_id)
@@ -451,11 +461,12 @@ async def list_assignment_rules(
     "/{project_id}/assignment-rules/{rule_id}",
     response_model=AssignmentRuleResponse,
 )
+@inject
 async def update_assignment_rule(
     project_id: UUID,
     rule_id: UUID,
     data: AssignmentRuleUpdate,
-    repository: FromDishka[AssignmentRuleRepositorySqla] = Depends(),
+    repository: FromDishka[AssignmentRuleRepositorySqla],
 ) -> AssignmentRuleResponse:
     """Update assignment rule."""
     rule = await repository.get_rule(rule_id)
@@ -497,10 +508,11 @@ async def update_assignment_rule(
     response_model=UserAssignmentResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@inject
 async def assign_user_to_project(
     project_id: UUID,
     data: UserAssignmentCreate,
-    repository: FromDishka[UserAssignmentRepositorySqla] = Depends(),
+    repository: FromDishka[UserAssignmentRepositorySqla],
 ) -> UserAssignmentResponse:
     """Manually assign a user to a project."""
     from app.domain.entities.assignment_rule import UserProjectAssignment
@@ -531,9 +543,10 @@ async def assign_user_to_project(
     "/{project_id}/assignments",
     response_model=List[UserAssignmentResponse],
 )
+@inject
 async def list_project_assignments(
     project_id: UUID,
-    repository: FromDishka[UserAssignmentRepositorySqla] = Depends(),
+    repository: FromDishka[UserAssignmentRepositorySqla],
 ) -> List[UserAssignmentResponse]:
     """List all user assignments for a project."""
     assignments = await repository.get_assignments_by_project(project_id)

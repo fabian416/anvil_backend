@@ -78,7 +78,7 @@ def create_price_prediction_router() -> APIRouter:
         description="Train LSTM price prediction model on historical data for a token",
     )
     async def train_model(
-        token_symbol: str = Field(..., description="Token symbol (e.g., ETH, BTC)"),
+        token_symbol: str,
         days: int = Query(90, ge=30, le=365, description="Days of historical data for training"),
     ) -> dict:
         """Train LSTM model on historical data.
@@ -121,7 +121,7 @@ def create_price_prediction_router() -> APIRouter:
         description="Predict future price for a cryptocurrency token using LSTM",
     )
     async def predict_price(
-        token_symbol: str = Field(..., description="Token symbol (e.g., ETH, BTC)"),
+        token_symbol: str,
         horizon: int = Query(
             24, ge=1, le=168, description="Prediction horizon in hours (24h or 168h/7d)"
         ),
@@ -172,7 +172,7 @@ def create_price_prediction_router() -> APIRouter:
         description="Predict token prices at multiple time horizons (24h and 7d)",
     )
     async def predict_multi_horizon(
-        token_symbol: str = Field(..., description="Token symbol (e.g., ETH, BTC)"),
+        token_symbol: str,
     ) -> MultiHorizonPredictionResponse:
         """Predict token prices at multiple time horizons.
 

@@ -47,6 +47,37 @@ class Message:
         self.metadata = metadata or {}
     
     @classmethod
+    def create(
+        cls,
+        conversation_id: UUID,
+        role: MessageRole,
+        content: str,
+        agent_type: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "Message":
+        """
+        Create a new message with auto-generated ID and timestamp.
+        
+        Args:
+            conversation_id: Parent conversation identifier
+            role: Message role (user/agent/system)
+            content: Message content
+            agent_type: Optional agent type if from agent
+            metadata: Optional metadata dictionary
+        
+        Returns:
+            New message instance
+        """
+        return cls(
+            id=uuid4(),
+            conversation_id=conversation_id,
+            role=role,
+            content=content,
+            agent_type=agent_type,
+            metadata=metadata,
+        )
+    
+    @classmethod
     def create_user_message(
         cls,
         conversation_id: UUID,

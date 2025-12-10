@@ -103,7 +103,7 @@ class AgentSquadInfrastructureProvider(Provider):
         return LLMClientOpenAI(api_key=api_key)
     
     @provide
-    def provide_coingecko_client(self, settings: AgentSquadSettings) -> "CoinGeckoClient | None":
+    def provide_coingecko_client(self, settings: AgentSquadSettings) -> Any:
         """Provide CoinGecko API client if enabled."""
         if not settings.external_apis.enable_coingecko:
             return None
@@ -113,7 +113,7 @@ class AgentSquadInfrastructureProvider(Provider):
         return CoinGeckoClient(api_key=api_key)
     
     @provide
-    def provide_oneinch_client(self, settings: AgentSquadSettings) -> "OneInchClient | None":
+    def provide_oneinch_client(self, settings: AgentSquadSettings) -> Any:
         """Provide 1inch API client if enabled."""
         if not settings.external_apis.enable_1inch:
             return None
@@ -126,7 +126,7 @@ class AgentSquadInfrastructureProvider(Provider):
         return OneInchClient(api_key=api_key)
     
     @provide
-    def provide_defillama_client(self, settings: AgentSquadSettings) -> "DefiLlamaClient | None":
+    def provide_defillama_client(self, settings: AgentSquadSettings) -> Any:
         """Provide DeFiLlama API client if enabled."""
         if not settings.external_apis.enable_defillama:
             return None
@@ -135,7 +135,7 @@ class AgentSquadInfrastructureProvider(Provider):
         return DefiLlamaClient()  # No API key required
     
     @provide
-    def provide_hyperliquid_client(self, settings: AgentSquadSettings) -> "HyperliquidClient | None":
+    def provide_hyperliquid_client(self, settings: AgentSquadSettings) -> Any:
         """Provide Hyperliquid API client if enabled."""
         if not settings.external_apis.enable_hyperliquid:
             return None
@@ -146,6 +146,12 @@ class AgentSquadInfrastructureProvider(Provider):
         
         # Can use without keys for market data
         return HyperliquidClient(api_key=api_key, api_secret=api_secret)
+
+    @provide(scope=Scope.APP)
+    async def provide_redis_client(self) -> Redis:
+        """Provide Redis async client."""
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        return Redis.from_url(redis_url, decode_responses=True)
 
     @provide
     def provide_context_storage(self, redis_client: Redis) -> ContextStorageGateway:
@@ -199,7 +205,7 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_hunter_ai_agent(
         self,
         llm_client: LLMClientGateway,
-        coingecko_client: "CoinGeckoClient | None",
+        coingecko_client: Any,
     ) -> HunterAIAgentOpenAI:
         """Provide Hunter AI agent with optional CoinGecko integration."""
         return HunterAIAgentOpenAI(

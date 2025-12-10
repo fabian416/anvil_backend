@@ -1,6 +1,7 @@
 """Dependency injection providers for distillation system."""
 from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.infrastructure.adapters.types import MainAsyncSession
 
 from app.domain.ports.distillation_repository import (
     CacheRepository,
@@ -53,7 +54,7 @@ class DistillationProvider(Provider):
         """Get entity extractor."""
         return EntityExtractor()
     
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     async def get_router(
         self,
         intent_classifier: IntentClassifier,
@@ -74,7 +75,7 @@ class DistillationProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_cache_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> CacheRepository:
         """Get cache repository."""
         return DistillationCacheRepositorySqla(session)
@@ -82,7 +83,7 @@ class DistillationProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_config_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> DistillationConfigRepository:
         """Get config repository."""
         return DistillationConfigRepositorySqla(session)
@@ -90,7 +91,7 @@ class DistillationProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_static_response_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> StaticResponseRepository:
         """Get static response repository."""
         return DistillationStaticRepositorySqla(session)
@@ -98,7 +99,7 @@ class DistillationProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_telemetry_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> DistillationTelemetryRepository:
         """Get telemetry repository."""
         return DistillationTelemetryRepositorySqla(session)

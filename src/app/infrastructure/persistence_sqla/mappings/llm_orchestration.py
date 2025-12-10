@@ -23,7 +23,9 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB, INET
 from sqlalchemy.sql import func
 from uuid import uuid4
 
-from app.infrastructure.persistence_sqla.base import metadata
+from app.infrastructure.persistence_sqla.registry import mapping_registry
+
+metadata = mapping_registry.metadata
 
 
 # ============================================================================

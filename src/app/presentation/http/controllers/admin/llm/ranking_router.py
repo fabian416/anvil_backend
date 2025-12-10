@@ -9,7 +9,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status, Depends, Security
-from dishka.integrations.fastapi import FromDishka
+from dishka.integrations.fastapi import FromDishka, inject
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.presentation.http.controllers.admin.llm.schemas import (
@@ -64,6 +64,7 @@ router = APIRouter(
         "Returns models sorted by ranking score with position numbers."
     ),
 )
+@inject
 async def get_rankings(
     agent_type: str,
     authorization: str = Security(bearer_scheme),
@@ -121,6 +122,7 @@ async def get_rankings(
         "Useful for dashboard display."
     ),
 )
+@inject
 async def get_all_rankings_overview(
     authorization: str = Security(bearer_scheme),
     interactor: FromDishka[GetAllRankingsOverview] = None,
@@ -165,6 +167,7 @@ async def get_all_rankings_overview(
         "Analyzes last 24h of telemetry and updates scores."
     ),
 )
+@inject
 async def recalculate_rankings(
     agent_type: str,
     authorization: str = Security(bearer_scheme),
@@ -208,6 +211,7 @@ async def recalculate_rankings(
         "Override expires after specified hours or is permanent if not set."
     ),
 )
+@inject
 async def set_ranking_override(
     agent_type: str,
     model_id: UUID,
@@ -258,6 +262,7 @@ async def set_ranking_override(
     summary="Remove Manual Ranking Override",
     description="Remove a manual ranking override and return to calculated scores.",
 )
+@inject
 async def remove_ranking_override(
     agent_type: str,
     model_id: UUID,
@@ -305,6 +310,7 @@ async def remove_ranking_override(
         "with 24h override for initial metric collection."
     ),
 )
+@inject
 async def register_vertex_ai_model(
     request: RegisterVertexAIModelRequest,
     authorization: str = Security(bearer_scheme),
@@ -362,6 +368,7 @@ async def register_vertex_ai_model(
         "with 24h override for initial metric collection."
     ),
 )
+@inject
 async def register_deepinfra_model(
     request: RegisterDeepInfraModelRequest,
     authorization: str = Security(bearer_scheme),

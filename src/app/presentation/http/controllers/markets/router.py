@@ -4,9 +4,9 @@ Markets API router.
 Endpoints for advanced market data, token prices, and protocol yields.
 """
 
-from typing import List, Optional
-from fastapi import APIRouter, Depends, Security
-from dishka.integrations.fastapi import FromDishka
+from typing import Optional
+from fastapi import APIRouter, Security
+from dishka.integrations.fastapi import FromDishka, inject
 
 from app.application.markets.advanced_markets_service import AdvancedMarketsService
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
@@ -17,9 +17,10 @@ def create_markets_router() -> APIRouter:
     router = APIRouter(prefix="/markets", tags=["markets"])
 
     @router.get("/overview")
+    @inject
     async def get_market_overview(
+        markets_service: FromDishka[AdvancedMarketsService],
         authorization: str = Security(bearer_scheme),
-        markets_service: AdvancedMarketsService = FromDishka(),
         chains: Optional[str] = None,
         risk_filter: Optional[str] = None,
     ):
@@ -46,9 +47,10 @@ def create_markets_router() -> APIRouter:
         return overview
 
     @router.get("/yields")
+    @inject
     async def get_protocol_yields(
+        markets_service: FromDishka[AdvancedMarketsService],
         authorization: str = Security(bearer_scheme),
-        markets_service: AdvancedMarketsService = FromDishka(),
         chains: Optional[str] = None,
         categories: Optional[str] = None,
         min_apy: Optional[float] = None,
@@ -77,10 +79,11 @@ def create_markets_router() -> APIRouter:
         return {"yields": yields}
 
     @router.get("/tokens/{token_symbol}")
+    @inject
     async def get_token_details(
         token_symbol: str,
+        markets_service: FromDishka[AdvancedMarketsService],
         authorization: str = Security(bearer_scheme),
-        markets_service: AdvancedMarketsService = FromDishka(),
     ):
         """
         Get detailed market data for specific token.
@@ -98,11 +101,12 @@ def create_markets_router() -> APIRouter:
         return token_data
 
     @router.get("/tokens/{token_symbol}/history")
+    @inject
     async def get_token_history(
         token_symbol: str,
-        timeframe: str = "7d",
+        markets_service: FromDishka[AdvancedMarketsService],
         authorization: str = Security(bearer_scheme),
-        markets_service: AdvancedMarketsService = FromDishka(),
+        timeframe: str = "7d",
     ):
         """
         Get historical price data for token.

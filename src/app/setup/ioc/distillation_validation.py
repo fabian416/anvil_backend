@@ -22,7 +22,7 @@ from app.infrastructure.distillation.response_validator import ResponseValidator
 
 # Infrastructure - Telemetry Repository
 from app.infrastructure.persistence_sqla.repositories.distillation_telemetry_repository import (
-    SqlaDistillationTelemetryRepository,
+    DistillationTelemetryRepositorySqla,
 )
 
 # Application Services
@@ -74,7 +74,7 @@ class DistillationValidationProvider(Provider):
         self,
     ) -> DistillationTelemetryRepository:
         """Provide telemetry repository (REQUEST-scoped for DB session)."""
-        return SqlaDistillationTelemetryRepository()
+        return DistillationTelemetryRepositorySqla()
     
     @provide(scope=Scope.APP)
     def provide_telemetry_collector(

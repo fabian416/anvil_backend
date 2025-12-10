@@ -18,12 +18,12 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
-from app.infrastructure.persistence_sqla.metadata import mapper_registry
+from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 # Distillation telemetry table
 distillation_telemetry_table = Table(
     "distillation_telemetry",
-    mapper_registry.metadata,
+    mapping_registry.metadata,
     Column("id", UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()),
     Column("timestamp", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
     Column("user_id", UUID(as_uuid=True), nullable=False),

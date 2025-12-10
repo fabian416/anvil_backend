@@ -97,7 +97,7 @@ def create_trading_signals_router() -> APIRouter:
         description="Generate AI-powered trading signal combining sentiment, price prediction, and risk analysis",
     )
     async def generate_trading_signal(
-        token_symbol: str = Field(..., description="Token symbol (e.g., ETH, BTC)"),
+        token_symbol: str,
         timeframe: str = Query("1d", description="Timeframe: 1h, 4h, 1d, 1w, 1M"),
     ) -> TradingSignalResponse:
         """Generate trading signal for a token.
@@ -163,7 +163,7 @@ def create_trading_signals_router() -> APIRouter:
         description="Analyze token across multiple timeframes (4h, 1d, 1w) and generate consensus signal",
     )
     async def multi_timeframe_analysis(
-        token_symbol: str = Field(..., description="Token symbol"),
+        token_symbol: str,
     ) -> MultiTimeframeAnalysisResponse:
         """Generate signals across multiple timeframes.
 

@@ -439,7 +439,7 @@ class GraphRepositoryAge(GraphRepository):
         query = text(f"""
             SELECT * FROM cypher('{self.graph_name}', $$
                 MATCH path = shortestPath(
-                    (start {{id: '{str(from_id)'}})-[{rel_filter}*1..{max_depth}]-(end {{id: '{str(to_id)}'}})
+                    (start {{id: '{str(from_id)}' }})-[{rel_filter}*1..{max_depth}]-(end {{id: '{str(to_id)}' }})
                 )
                 RETURN path
                 LIMIT 1

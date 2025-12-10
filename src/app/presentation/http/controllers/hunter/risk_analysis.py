@@ -72,7 +72,7 @@ def create_risk_analysis_router() -> APIRouter:
         description="Analyze token risk across 4 factors: volatility, liquidity, smart contract, and market correlation",
     )
     async def analyze_comprehensive_risk(
-        token_symbol: str = Field(..., description="Token symbol (e.g., ETH, BTC)"),
+        token_symbol: str,
     ) -> CompositeRiskResponse:
         """Perform comprehensive risk analysis.
 
@@ -137,7 +137,7 @@ def create_risk_analysis_router() -> APIRouter:
         description="Analyze token price volatility risk",
     )
     async def analyze_volatility_risk(
-        token_symbol: str = Field(..., description="Token symbol"),
+        token_symbol: str,
         window_days: int = Query(30, ge=7, le=90, description="Analysis window in days"),
     ) -> RiskFactorResponse:
         """Analyze volatility risk only.
@@ -185,7 +185,7 @@ def create_risk_analysis_router() -> APIRouter:
         description="Analyze token liquidity risk based on trading volume",
     )
     async def analyze_liquidity_risk(
-        token_symbol: str = Field(..., description="Token symbol"),
+        token_symbol: str,
     ) -> RiskFactorResponse:
         """Analyze liquidity risk only.
 
@@ -229,7 +229,7 @@ def create_risk_analysis_router() -> APIRouter:
         description="Analyze token smart contract security risk",
     )
     async def analyze_smart_contract_risk(
-        token_symbol: str = Field(..., description="Token symbol"),
+        token_symbol: str,
     ) -> RiskFactorResponse:
         """Analyze smart contract risk only.
 
@@ -274,7 +274,7 @@ def create_risk_analysis_router() -> APIRouter:
         description="Analyze token correlation with market benchmark (BTC)",
     )
     async def analyze_correlation_risk(
-        token_symbol: str = Field(..., description="Token symbol"),
+        token_symbol: str,
     ) -> RiskFactorResponse:
         """Analyze market correlation risk only.
 

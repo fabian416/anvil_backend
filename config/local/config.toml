@@ -221,8 +221,9 @@ log_agent_selection = true
 
 # Privy Configuration
 [privy]
-APP_ID = "cmim36q4q02zwjr0cc9csypp7"
-APP_SECRET = ""  # Set this in .secrets.toml or environment variable
+# IMPORTANTE: Debe coincidir con VITE_PRIVY_APP_ID del frontend
+APP_ID = "cmiz7qucf0027jo0cxrykq7j0"
+APP_SECRET = "privy_app_secret_3RLnafWUFVUsaT37ZPSrF7RA9eNgBqLZBcFm4m7v8fY5V2rS2cjA5A81jAewSjEPbKgR5JSbfvfws5HGJ16yEZRZ  # Set this in .secrets.toml or environment variable
 
 # Integration Feature Flags
 [integrations]

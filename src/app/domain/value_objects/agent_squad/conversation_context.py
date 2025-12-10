@@ -3,6 +3,20 @@ Conversation Context value object.
 """
 
 from dataclasses import dataclass, field
+from typing import Optional, Dict, Any
+
+
+@dataclass(frozen=True)
+class ConversationMessage:
+    """
+    Individual message in a conversation context.
+    
+    Represents a single message with role, content, and metadata.
+    """
+    role: str
+    content: str
+    timestamp: str
+    metadata: Optional[Dict[str, Any]] = None
 
 
 @dataclass(frozen=True)

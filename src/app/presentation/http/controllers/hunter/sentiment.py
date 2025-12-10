@@ -78,7 +78,7 @@ def create_sentiment_router() -> APIRouter:
         description="Analyze cryptocurrency sentiment from multiple sources (Twitter, Reddit, Discord, News)",
     )
     async def analyze_token_sentiment(
-        token_symbol: str = Field(..., description="Token symbol (e.g., ETH, BTC)"),
+        token_symbol: str,
         hours: int = Query(24, ge=1, le=168, description="Hours of historical data"),
         sources: Optional[str] = Query(
             None,

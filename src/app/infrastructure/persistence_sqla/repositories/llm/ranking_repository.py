@@ -12,8 +12,8 @@ from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select, func, and_, or_, desc
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.infrastructure.adapters.types import MainAsyncSession
 from app.domain.ports.llm_ranking_repository import (
     LLMRankingRepository,
     ModelRankingData,
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 class SqlaLLMRankingRepository:
     """SQLAlchemy implementation of LLM ranking repository."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: MainAsyncSession):
         """
         Initialize repository.
 
