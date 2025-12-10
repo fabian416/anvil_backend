@@ -285,7 +285,7 @@ class SqlaTransactionRepository(TransactionRepository):
             stmt = table.insert().values(**data).returning(table.c.id)
             result = await self._session.execute(stmt)
             new_id = result.scalar_one()
-            await self._session.flush()
+            await self._session.commit()
 
             # Return the saved transaction with the new ID
             return Transaction(

@@ -177,9 +177,16 @@ class LogTransactionHandler:
             TransactionType.SEND
         )
 
-        # Parse value (Wei) to Decimal
+        # Parse value (Wei) to ETH as Decimal
+        # The database column has precision (30, 18) which only supports up to 10^12 before decimal
+        # So we convert from Wei to ETH (divide by 10^18)
         try:
-            amount_in = Decimal(input_data.value) if input_data.value else None
+            if input_data.value:
+                wei_value = Decimal(input_data.value)
+                # Convert Wei to ETH: 1 ETH = 10^18 Wei
+                amount_in = wei_value / Decimal("1000000000000000000")
+            else:
+                amount_in = None
         except Exception:
             amount_in = None
 

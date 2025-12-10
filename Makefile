@@ -37,6 +37,37 @@ celery.beat: venv
 celery.flower: venv
 	PYTHONPATH=src ./env/bin/flower --broker=redis://localhost:6379/0 --port=5555
 
+# Transaction Confirmation Worker
+# Confirms pending blockchain transactions and updates DB status
+.PHONY: worker.tx worker.tx-once worker.tx-testnet worker.tx-mainnet
+worker.tx:
+	@echo "Starting Transaction Confirmation Worker (loop mode)..."
+	PYTHONPATH=src ./env/bin/python -m app.cli.confirm_pending_transactions --loop
+
+worker.tx-once:
+	@echo "Processing pending transactions (one-off)..."
+	PYTHONPATH=src ./env/bin/python -m app.cli.confirm_pending_transactions --once
+
+worker.tx-testnet:
+	@echo "Starting Transaction Confirmation Worker (testnet)..."
+	PYTHONPATH=src ./env/bin/python -m app.cli.confirm_pending_transactions --loop --testnet
+
+worker.tx-mainnet:
+	@echo "Starting Transaction Confirmation Worker (mainnet)..."
+	PYTHONPATH=src ./env/bin/python -m app.cli.confirm_pending_transactions --loop --mainnet
+
+# Docker: Transaction Confirmation Worker (standalone)
+up.tx-worker: guard-APP_ENV
+	@echo "Starting Transaction Confirmation Worker (Docker)..."
+	@cd $(CONFIGS_DIG)/$(APP_ENV) && $(DOCKER_COMPOSE) --env-file .env.$(APP_ENV) --profile tx-worker up -d tx_confirmation_worker
+
+down.tx-worker: guard-APP_ENV
+	@echo "Stopping Transaction Confirmation Worker..."
+	@cd $(CONFIGS_DIG)/$(APP_ENV) && $(DOCKER_COMPOSE) --env-file .env.$(APP_ENV) --profile tx-worker down
+
+logs.tx-worker: guard-APP_ENV
+	@cd $(CONFIGS_DIG)/$(APP_ENV) && $(DOCKER_COMPOSE) --env-file .env.$(APP_ENV) --profile tx-worker logs -f tx_confirmation_worker
+
 # MCP Servers
 .PHONY: mcp mcp.oneinch mcp.defillama mcp.thegraph mcp.coingecko mcp.all mcp.stop
 mcp: mcp.all

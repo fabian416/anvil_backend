@@ -14,6 +14,7 @@ from app.setup.config.agno import AgnoSettings
 from app.setup.config.projects import ProjectSettings
 from app.setup.config.distillation import DistillationSettings
 from app.setup.config.agent_squad import AgentSquadSettings
+from app.setup.config.transaction_confirmation import TransactionConfirmationSettings
 
 
 class AppSettings(BaseModel):
@@ -31,6 +32,7 @@ class AppSettings(BaseModel):
     projects: ProjectSettings = ProjectSettings()
     distillation: DistillationSettings | None = None
     agent_squad: AgentSquadSettings = AgentSquadSettings()
+    transaction_confirmation: TransactionConfirmationSettings = TransactionConfirmationSettings()
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:

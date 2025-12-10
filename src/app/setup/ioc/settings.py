@@ -15,6 +15,7 @@ from app.setup.config.settings import AppSettings
 from app.setup.config.admin import AdminSettings
 from app.setup.config.privy import PrivySettings
 from app.setup.config.distillation import DistillationSettings
+from app.setup.config.transaction_confirmation import TransactionConfirmationSettings
 
 
 class SettingsProvider(Provider):
@@ -113,3 +114,14 @@ class SettingsProvider(Provider):
                 ),
             )
         return settings.distillation
+
+    @provide
+    def provide_transaction_confirmation_settings(
+        self, settings: AppSettings
+    ) -> TransactionConfirmationSettings:
+        """
+        Provide transaction confirmation worker settings.
+        
+        Uses defaults from TransactionConfirmationSettings if not configured.
+        """
+        return settings.transaction_confirmation

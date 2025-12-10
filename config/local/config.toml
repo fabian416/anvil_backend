@@ -321,3 +321,21 @@ arbitrage_hunter_enabled = true  # Expert arbitrage (ULTRA tools)
 ai_portfolio_manager_enabled = true  # Long-term portfolio management
 conservative_investor_enabled = true  # Beginner-friendly, safe mode
 day_trader_pro_enabled = true  # Expert day trading
+
+# ========================================
+# Transaction Confirmation Worker
+# ========================================
+[transaction_confirmation]
+# Network mode: true for testnet (Sepolia, Base Sepolia), false for mainnet
+USE_TESTNET = true
+
+# Processing settings
+INTERVAL_SECONDS = 30  # Seconds between batches in loop mode
+BATCH_LIMIT = 50       # Max transactions per batch
+OLDER_THAN_SECONDS = 10  # Only process transactions older than this
+
+# HTTP settings for RPC calls
+HTTP_TIMEOUT = 30
+
+# Enable/disable worker
+ENABLED = true

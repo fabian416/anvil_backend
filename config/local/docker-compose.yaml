@@ -99,5 +99,25 @@ services:
     ports:
       - "5555:5555"
 
+  # Transaction Confirmation Worker (Standalone)
+  # Alternative to Celery Beat - runs as independent process
+  # Use this if you want a dedicated worker without Celery
+  tx_confirmation_worker:
+    image: web_app:latest
+    profiles:
+      - tx-worker  # Only starts with: docker compose --profile tx-worker up
+    depends_on:
+      baseapi_db:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV}
+      POSTGRES_HOST: baseapi_db
+    command: >
+      sh -c "
+      echo 'Starting Transaction Confirmation Worker...' &&
+      python -m app.cli.confirm_pending_transactions --loop --log-level INFO
+      "
+    restart: unless-stopped
+
 volumes:
   pgdata:
