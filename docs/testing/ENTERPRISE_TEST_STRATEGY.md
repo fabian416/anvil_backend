@@ -14,11 +14,15 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    CURRENT TEST STATUS                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Total Tests:        2,755                                      │
-│  Passing:            2,065 (75%)                                │
-│  Failing:            170 (6%)                                   │
-│  Errors:             221 (8%)                                   │
-│  Skipped:            61 (2%)                                    │
+│  Unit/Infrastructure Tests:                                     │
+│    Passing:          1,013 ✅                                   │
+│    Skipped:          42 (intentional)                           │
+│    Failing:          0 ✅                                       │
+│                                                                 │
+│  Integration Tests:                                             │
+│    Status:           Pending DI setup                           │
+│    Errors:           ~200 (GraphMissingFactoryError)            │
+│                                                                 │
 │  Collection Errors:  0 ✅                                       │
 ├─────────────────────────────────────────────────────────────────┤
 │  TARGET:             100% passing (excluding intentional skips) │
