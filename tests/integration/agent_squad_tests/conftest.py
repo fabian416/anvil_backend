@@ -2,8 +2,21 @@
 Pytest fixtures for Agent Squad integration tests.
 """
 
+import asyncio
 import pytest
 from unittest.mock import AsyncMock
+
+
+async def _mock_chat_with_delay(*args, **kwargs):
+    """Mock chat function that simulates realistic latency."""
+    # Simulate realistic API latency (10-50ms)
+    await asyncio.sleep(0.015)  # 15ms
+    return {
+        "content": "Test response",
+        "tokens_used": 100,
+        "model": "gpt-4o-mini",
+        "finish_reason": "stop",
+    }
 
 
 @pytest.fixture
@@ -15,12 +28,8 @@ def mock_llm_client(mocker):
         "confidence": 0.95,
         "reasoning": "Test reasoning",
     }
-    client.chat.return_value = {
-        "content": "Test response",
-        "tokens_used": 100,
-        "model": "gpt-4o-mini",
-        "finish_reason": "stop",
-    }
+    # Use side_effect to simulate async delay
+    client.chat.side_effect = _mock_chat_with_delay
     return client
 
 

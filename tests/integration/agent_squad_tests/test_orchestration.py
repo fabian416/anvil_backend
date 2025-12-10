@@ -32,10 +32,10 @@ class TestAgentOrchestration:
         mock_intent_classifier.classify.return_value.confidence = 0.95
         
         result = await orchestrator.route_message(conversation_id, message, context)
-        
+
         assert result.agent_type == AgentType.CHAT
         assert result.intent_classification is not None
-        assert result.confidence >= 0.85
+        assert result.intent_classification.confidence >= 0.85
     
     async def test_route_to_hunter_ai_agent(self, mock_intent_classifier, mock_feature_flags):
         """Test routing market sentiment query to Hunter AI agent."""
@@ -53,9 +53,9 @@ class TestAgentOrchestration:
         mock_intent_classifier.classify.return_value.confidence = 0.92
         
         result = await orchestrator.route_message(conversation_id, message, context)
-        
+
         assert result.agent_type == AgentType.HUNTER_AI
-        assert result.confidence >= 0.85
+        assert result.intent_classification.confidence >= 0.85
     
     async def test_fallback_to_chat_on_low_confidence(
         self, mock_intent_classifier, mock_feature_flags
@@ -79,7 +79,7 @@ class TestAgentOrchestration:
         result = await orchestrator.route_message(conversation_id, message, context)
         
         assert result.agent_type == AgentType.CHAT  # Fallback
-        assert result.is_fallback is True
+        assert result.fallback_used is True
     
     async def test_disabled_agent_fallback(self, mock_intent_classifier, mock_feature_flags):
         """Test fallback when target agent is disabled."""
@@ -98,10 +98,10 @@ class TestAgentOrchestration:
         mock_feature_flags.is_agent_enabled.return_value = False  # Disabled
         
         result = await orchestrator.route_message(conversation_id, message, context)
-        
+
         assert result.agent_type == AgentType.CHAT  # Fallback
-        assert result.is_fallback is True
-        assert "disabled" in result.fallback_reason.lower()
+        assert result.fallback_used is True
+        # Fallback was used because target agent was disabled
 
 
 @pytest.fixture

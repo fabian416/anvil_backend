@@ -2,6 +2,7 @@
 Integration tests for individual agents.
 """
 
+import asyncio
 import pytest
 from uuid import uuid4
 
@@ -16,25 +17,29 @@ from app.infrastructure.adapters.agent_squad.agents.hunter_ai_agent_openai impor
 @pytest.mark.asyncio
 class TestAgentExecution:
     """Test individual agent execution."""
-    
+
     async def test_chat_agent_execution(self, mock_llm_client):
         """Test chat agent execution."""
         agent = ChatAgentOpenAI(llm_client=mock_llm_client)
-        
+
         conversation_id = ConversationId(uuid4())
         message = MessageContent("Hello! How can you help me?")
         context = ConversationContext()
-        
-        # Mock LLM response
-        mock_llm_client.chat.return_value = {
-            "content": "I can help you with DeFi, trading, and more!",
-            "tokens_used": 150,
-            "model": "gpt-4o-mini",
-            "finish_reason": "stop",
-        }
-        
+
+        # Mock LLM response with realistic latency
+        async def mock_chat_response(*args, **kwargs):
+            await asyncio.sleep(0.015)  # 15ms simulated latency
+            return {
+                "content": "I can help you with DeFi, trading, and more!",
+                "tokens_used": 150,
+                "model": "gpt-4o-mini",
+                "finish_reason": "stop",
+            }
+
+        mock_llm_client.chat.side_effect = mock_chat_response
+
         response = await agent.execute(conversation_id, message, context)
-        
+
         assert response.agent_type == AgentType.CHAT
         assert response.content is not None
         assert response.tokens_used == 150
@@ -44,21 +49,25 @@ class TestAgentExecution:
     async def test_hunter_ai_agent_execution(self, mock_llm_client):
         """Test Hunter AI agent execution."""
         agent = HunterAIAgentOpenAI(llm_client=mock_llm_client)
-        
+
         conversation_id = ConversationId(uuid4())
         message = MessageContent("What's the market sentiment for Bitcoin?")
         context = ConversationContext()
-        
-        # Mock LLM response
-        mock_llm_client.chat.return_value = {
-            "content": "Bitcoin sentiment is 75/100 (Bullish). Key drivers: ETF inflows, institutional adoption.",
-            "tokens_used": 300,
-            "model": "gpt-4o",
-            "finish_reason": "stop",
-        }
-        
+
+        # Mock LLM response with realistic latency
+        async def mock_chat_response(*args, **kwargs):
+            await asyncio.sleep(0.015)  # 15ms simulated latency
+            return {
+                "content": "Bitcoin sentiment is 75/100 (Bullish). Key drivers: ETF inflows, institutional adoption.",
+                "tokens_used": 300,
+                "model": "gpt-4o",
+                "finish_reason": "stop",
+            }
+
+        mock_llm_client.chat.side_effect = mock_chat_response
+
         response = await agent.execute(conversation_id, message, context)
-        
+
         assert response.agent_type == AgentType.HUNTER_AI
         assert response.content is not None
         assert "sentiment" in response.content.lower() or "bullish" in response.content.lower()
