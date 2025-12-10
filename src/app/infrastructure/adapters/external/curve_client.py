@@ -64,9 +64,11 @@ class CurveClient:
         api_key: Optional[str] = None,
         base_url: str = "https://api.curve.fi",
         timeout: float = 30.0,
+        chain: str = "ethereum",  # Chain to query
     ):
         self.api_key = api_key
         self.base_url = base_url
+        self.chain = chain
         self.client = httpx.AsyncClient(timeout=timeout)
     
     async def get_pools(self, chain: str = "ethereum") -> List[CurvePool]:
