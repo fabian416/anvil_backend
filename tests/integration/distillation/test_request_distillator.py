@@ -256,11 +256,11 @@ async def test_validate_with_fallback(
         side_effect=Exception("Primary provider unavailable")
     )
 
-    # Disable fail-open to force fallback attempt
-    distillation_settings.fail_open = False
+    # Create new settings with fail-open disabled to force fallback attempt
+    settings_with_fail_closed = distillation_settings.model_copy(update={"fail_open": False})
 
     distillator = RequestDistillator(
-        settings=distillation_settings,
+        settings=settings_with_fail_closed,
         primary_provider=mock_primary_provider,
         fallback_provider=mock_fallback_provider,
         telemetry_collector=mock_telemetry_collector,
