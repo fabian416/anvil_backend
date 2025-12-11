@@ -138,7 +138,7 @@ How much capital are you working with?""",
 
 # Template 3: Portfolio Manager (Long-term investors)
 PORTFOLIO_MANAGER_TEMPLATE: Dict[str, Any] = {
-    "slug": "portfolio-manager",
+    "slug": "ai-portfolio-manager",
     "name": "AI Portfolio Manager",
     "description": "Modern Portfolio Theory-based portfolio optimization with automated rebalancing.",
     "icon": "💼",
