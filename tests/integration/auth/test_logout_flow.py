@@ -99,12 +99,12 @@ class TestLogoutSessionInvalidation:
 
         helper = AuthHelper()
         # Create mock session
-        helper._sessions["test-session"] = {"user_id": 123}
+        AuthHelper._test_sessions["test-session"] = {"user_id": 123}
 
         # Invalidate
         result = helper.invalidate_session("test-session")
         assert result is True
-        assert "test-session" not in helper._sessions
+        assert "test-session" not in AuthHelper._test_sessions
 
     def test_invalidating_nonexistent_session_returns_false(self):
         """
