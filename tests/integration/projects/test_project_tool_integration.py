@@ -195,7 +195,14 @@ class TestProjectToolExecutor:
         executor = AsyncMock()
         executor.execute_tool.return_value = "Mock Hunter AI response"
         return executor
-    
+
+    @pytest.fixture
+    def mock_ultra_executor(self):
+        """Create mock ULTRA executor."""
+        executor = AsyncMock()
+        executor.execute_tool.return_value = "Phase 3 implementation - Mock ULTRA response"
+        return executor
+
     @pytest.fixture
     def swing_trader_project(self):
         """Create DeFi Swing Trader project."""
@@ -214,10 +221,10 @@ class TestProjectToolExecutor:
     
     @pytest.mark.asyncio
     async def test_execute_enabled_tool(
-        self, swing_trader_project, mock_hunter_executor
+        self, swing_trader_project, mock_hunter_executor, mock_ultra_executor
     ):
         """Test executing a tool enabled in project."""
-        executor = ProjectToolExecutor(swing_trader_project, mock_hunter_executor)
+        executor = ProjectToolExecutor(swing_trader_project, mock_hunter_executor, mock_ultra_executor)
         
         result = await executor.execute_tool(
             tool_name="hunter_sentiment_analysis",
@@ -229,10 +236,10 @@ class TestProjectToolExecutor:
     
     @pytest.mark.asyncio
     async def test_execute_disabled_tool_raises_error(
-        self, conservative_project, mock_hunter_executor
+        self, conservative_project, mock_hunter_executor, mock_ultra_executor
     ):
         """Test executing a tool NOT enabled in project raises error."""
-        executor = ProjectToolExecutor(conservative_project, mock_hunter_executor)
+        executor = ProjectToolExecutor(conservative_project, mock_hunter_executor, mock_ultra_executor)
         
         # Conservative Investor doesn't have trading signals enabled
         with pytest.raises(ToolExecutionError) as exc_info:
@@ -245,7 +252,7 @@ class TestProjectToolExecutor:
         assert "Conservative Investor" in str(exc_info.value)
     
     @pytest.mark.asyncio
-    async def test_portfolio_risk_tolerance_validation(self, mock_hunter_executor):
+    async def test_portfolio_risk_tolerance_validation(self, mock_hunter_executor, mock_ultra_executor):
         """Test portfolio risk tolerance validation."""
         # Use Portfolio Manager template (has portfolio optimization enabled)
         portfolio_project = create_project_from_template(
@@ -253,7 +260,7 @@ class TestProjectToolExecutor:
             created_by=uuid4()
         )
         
-        executor = ProjectToolExecutor(portfolio_project, mock_hunter_executor)
+        executor = ProjectToolExecutor(portfolio_project, mock_hunter_executor, mock_ultra_executor)
         
         # Portfolio Manager has max_risk_tolerance: 0.6
         # This should raise error
@@ -269,7 +276,7 @@ class TestProjectToolExecutor:
         assert "exceeds project limit" in str(exc_info.value)
     
     @pytest.mark.asyncio
-    async def test_ultra_capital_validation(self, mock_hunter_executor):
+    async def test_ultra_capital_validation(self, mock_hunter_executor, mock_ultra_executor):
         """Test ULTRA capital validation."""
         # Use Arbitrage Hunter template (has ULTRA tools enabled)
         arb_project = create_project_from_template(
@@ -280,7 +287,7 @@ class TestProjectToolExecutor:
         # Lower the capital limit for testing
         arb_project.risk_config["max_capital_per_trade"] = 100000
         
-        executor = ProjectToolExecutor(arb_project, mock_hunter_executor)
+        executor = ProjectToolExecutor(arb_project, mock_hunter_executor, mock_ultra_executor)
         
         # This should raise error (exceeds capital limit)
         with pytest.raises(ToolExecutionError) as exc_info:
@@ -293,10 +300,10 @@ class TestProjectToolExecutor:
     
     @pytest.mark.asyncio
     async def test_conservative_project_blocks_trading_signals(
-        self, conservative_project, mock_hunter_executor
+        self, conservative_project, mock_hunter_executor, mock_ultra_executor
     ):
         """Test that Conservative Investor project blocks trading signals."""
-        executor = ProjectToolExecutor(conservative_project, mock_hunter_executor)
+        executor = ProjectToolExecutor(conservative_project, mock_hunter_executor, mock_ultra_executor)
         
         # Conservative doesn't have trading signals
         with pytest.raises(ToolExecutionError):
@@ -307,15 +314,15 @@ class TestProjectToolExecutor:
     
     @pytest.mark.asyncio
     async def test_arbitrage_project_allows_ultra_tools(
-        self, mock_hunter_executor
+        self, mock_hunter_executor, mock_ultra_executor
     ):
         """Test that Arbitrage Hunter project allows ULTRA tools."""
         project = create_project_from_template(
             ARBITRAGE_HUNTER_TEMPLATE,
             created_by=uuid4()
         )
-        
-        executor = ProjectToolExecutor(project, mock_hunter_executor)
+
+        executor = ProjectToolExecutor(project, mock_hunter_executor, mock_ultra_executor)
         
         # ULTRA tools should be allowed (will return placeholder in Phase 2)
         result = await executor.execute_tool(
