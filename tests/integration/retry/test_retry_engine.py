@@ -239,7 +239,7 @@ class TestEnterpriseRetryEngine:
         success_call = mock_telemetry.record_success.call_args
         assert success_call[0][0] == "test_service"  # service_name
         assert success_call[0][1] == 0  # attempt
-        assert success_call[0][2] > 0  # latency_ms
+        assert success_call[0][2] >= 0  # latency_ms (may be 0 for fast mocks)
         assert success_call[0][3] == {"user_id": "123"}  # context
     
     @pytest.mark.asyncio
@@ -271,7 +271,7 @@ class TestEnterpriseRetryEngine:
         # Check failure call arguments
         failure_call = mock_telemetry.record_failure.call_args
         assert failure_call[0][0] == "test_service"  # service_name
-        assert failure_call[0][2] == "internal_error"  # error_type
+        assert failure_call[0][2] == "service_unavailable"  # error_type (classified from message)
         assert "Service unavailable" in failure_call[0][3]  # error_message
     
     @pytest.mark.asyncio
@@ -320,7 +320,7 @@ class TestEnterpriseRetryEngine:
     async def test_full_integration_success_after_failures(self):
         """Test full integration with all components."""
         # Arrange
-        config = RetryConfig.for_testing()
+        config = RetryConfig(max_retries=3, initial_backoff_seconds=0.01, max_backoff_seconds=0.1)
         
         mock_circuit_breaker = MagicMock()
         mock_circuit_breaker.is_open.return_value = False

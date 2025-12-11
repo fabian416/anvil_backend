@@ -4,6 +4,7 @@ Integration tests for CircuitBreaker.
 Tests state machine transitions, Redis integration, and telemetry tracking.
 """
 
+import asyncio
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 from datetime import datetime, timedelta
@@ -220,19 +221,23 @@ class TestCircuitBreaker:
         assert status["config"]["success_threshold"] == 2
         assert status["config"]["timeout_seconds"] == 60
     
-    def test_telemetry_on_state_transitions(self):
+    @pytest.mark.asyncio
+    async def test_telemetry_on_state_transitions(self):
         """Test telemetry is recorded on state transitions."""
         # Arrange
         redis = MockRedis()
         config = CircuitBreakerConfig(failure_threshold=2)
-        mock_telemetry = MagicMock()
-        
+        mock_telemetry = AsyncMock()
+
         cb = CircuitBreaker(redis, config, telemetry=mock_telemetry)
-        
+
         # Act - Transition to OPEN
         cb.record_failure("test_service")
         cb.record_failure("test_service")
-        
+
+        # Give async tasks time to complete
+        await asyncio.sleep(0.1)
+
         # Assert
         mock_telemetry.record_circuit_breaker_event.assert_called_once()
         call_args = mock_telemetry.record_circuit_breaker_event.call_args
