@@ -261,7 +261,7 @@ class TestAgnoAgentRetry:
         assert result["data"] == "after_timeout"
     
     @pytest.mark.asyncio
-    async def test_agno_config_retry_defaults(self):
+    async def test_agno_config_retry_defaults(self, mock_mcp_manager_http):
         """Test AgnoConfig has correct retry defaults."""
         # Arrange & Act
         config = AgnoConfig()
@@ -276,7 +276,7 @@ class TestAgnoAgentRetry:
         assert config.retry.telemetry_enabled is True
     
     @pytest.mark.asyncio
-    async def test_custom_retry_configuration(self):
+    async def test_custom_retry_configuration(self, mock_mcp_manager_http):
         """Test custom retry configuration."""
         # Arrange & Act
         config = AgnoConfig(
@@ -292,7 +292,7 @@ class TestAgnoAgentRetry:
         assert config.retry.initial_backoff_seconds == 0.5
     
     @pytest.mark.asyncio
-    async def test_legacy_retry_max_attempts_property(self):
+    async def test_legacy_retry_max_attempts_property(self, mock_mcp_manager_http):
         """Test legacy retry_max_attempts property."""
         # Arrange & Act
         config = AgnoConfig(

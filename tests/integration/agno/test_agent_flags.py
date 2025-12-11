@@ -20,19 +20,19 @@ class TestAgnoMasterSwitch:
     """Test Agno master enable/disable switch."""
     
     @pytest.mark.asyncio
-    async def test_agno_disabled_globally(self):
+    async def test_agno_disabled_globally(self, mock_mcp_manager_http):
         """Test that Agno system can be disabled globally."""
         settings = AgnoSettings(enabled=False)
         config = AgnoConfig()
-        
+
         router = AgentRouter(config, settings=settings)
         await router.initialize()
-        
+
         # No agents should be initialized
         assert len(router.agents) == 0
     
     @pytest.mark.asyncio
-    async def test_agno_enabled_by_default(self):
+    async def test_agno_enabled_by_default(self, mock_mcp_manager_http):
         """Test that Agno is enabled by default."""
         settings = AgnoSettings()
         config = AgnoConfig()
@@ -53,7 +53,7 @@ class TestTradingAgentFlags:
     """Test Trading agent feature flags."""
     
     @pytest.mark.asyncio
-    async def test_trading_agent_enabled_by_default(self):
+    async def test_trading_agent_enabled_by_default(self, mock_mcp_manager_http):
         """Test Trading agent is enabled by default."""
         settings = AgnoSettings()
         config = AgnoConfig()
@@ -64,7 +64,7 @@ class TestTradingAgentFlags:
         assert AgentType.TRADING in router.agents
     
     @pytest.mark.asyncio
-    async def test_trading_agent_can_be_disabled(self):
+    async def test_trading_agent_can_be_disabled(self, mock_mcp_manager_http):
         """Test Trading agent can be disabled."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(trading_enabled=False)
@@ -82,7 +82,7 @@ class TestLendingAgentFlags:
     """Test Lending agent feature flags."""
     
     @pytest.mark.asyncio
-    async def test_lending_agent_enabled_by_default(self):
+    async def test_lending_agent_enabled_by_default(self, mock_mcp_manager_http):
         """Test Lending agent is enabled by default."""
         settings = AgnoSettings()
         config = AgnoConfig()
@@ -93,7 +93,7 @@ class TestLendingAgentFlags:
         assert AgentType.LENDING in router.agents
     
     @pytest.mark.asyncio
-    async def test_lending_agent_can_be_disabled(self):
+    async def test_lending_agent_can_be_disabled(self, mock_mcp_manager_http):
         """Test Lending agent can be disabled."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(lending_enabled=False)
@@ -111,7 +111,7 @@ class TestAnalyticsAgentFlags:
     """Test Analytics agent feature flags."""
     
     @pytest.mark.asyncio
-    async def test_analytics_agent_enabled_by_default(self):
+    async def test_analytics_agent_enabled_by_default(self, mock_mcp_manager_http):
         """Test Analytics agent is enabled by default."""
         settings = AgnoSettings()
         config = AgnoConfig()
@@ -122,7 +122,7 @@ class TestAnalyticsAgentFlags:
         assert AgentType.ANALYTICS in router.agents
     
     @pytest.mark.asyncio
-    async def test_analytics_agent_can_be_disabled(self):
+    async def test_analytics_agent_can_be_disabled(self, mock_mcp_manager_http):
         """Test Analytics agent can be disabled."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(analytics_enabled=False)
@@ -140,7 +140,7 @@ class TestPortfolioAgentFlags:
     """Test Portfolio agent feature flags."""
     
     @pytest.mark.asyncio
-    async def test_portfolio_agent_enabled_by_default(self):
+    async def test_portfolio_agent_enabled_by_default(self, mock_mcp_manager_http):
         """Test Portfolio agent is enabled by default."""
         settings = AgnoSettings()
         config = AgnoConfig()
@@ -151,7 +151,7 @@ class TestPortfolioAgentFlags:
         assert AgentType.PORTFOLIO in router.agents
     
     @pytest.mark.asyncio
-    async def test_portfolio_agent_can_be_disabled(self):
+    async def test_portfolio_agent_can_be_disabled(self, mock_mcp_manager_http):
         """Test Portfolio agent can be disabled."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(portfolio_enabled=False)
@@ -169,7 +169,7 @@ class TestPerpetualAgentFlags:
     """Test Perpetual agent feature flags."""
 
     @pytest.mark.asyncio
-    async def test_perpetual_agent_enabled_by_default(self):
+    async def test_perpetual_agent_enabled_by_default(self, mock_mcp_manager_http):
         """Test Perpetual agent is enabled by default."""
         settings = AgnoSettings()
         config = AgnoConfig()
@@ -180,7 +180,7 @@ class TestPerpetualAgentFlags:
         assert AgentType.PERPETUAL in router.agents
 
     @pytest.mark.asyncio
-    async def test_perpetual_agent_can_be_disabled(self):
+    async def test_perpetual_agent_can_be_disabled(self, mock_mcp_manager_http):
         """Test Perpetual agent can be disabled."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(perpetual_enabled=False)
@@ -198,7 +198,7 @@ class TestFallbackBehavior:
     """Test fallback behavior when agents are disabled."""
     
     @pytest.mark.asyncio
-    async def test_fallback_to_analytics_enabled(self):
+    async def test_fallback_to_analytics_enabled(self, mock_mcp_manager_http):
         """Test fallback to analytics when requested agent is disabled."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(
@@ -224,7 +224,7 @@ class TestFallbackBehavior:
         assert result is not None
     
     @pytest.mark.asyncio
-    async def test_fallback_disabled_raises_error(self):
+    async def test_fallback_disabled_raises_error(self, mock_mcp_manager_http):
         """Test error when fallback is disabled and agent is not available."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(trading_enabled=False),
@@ -246,7 +246,7 @@ class TestFallbackBehavior:
         assert "trading_enabled=true" in str(exc_info.value)
     
     @pytest.mark.asyncio
-    async def test_no_agents_enabled_raises_error(self):
+    async def test_no_agents_enabled_raises_error(self, mock_mcp_manager_http):
         """Test error when all agents are disabled."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(
@@ -277,7 +277,7 @@ class TestSelectiveAgentEnablement:
     """Test selective enablement scenarios."""
     
     @pytest.mark.asyncio
-    async def test_read_only_mode(self):
+    async def test_read_only_mode(self, mock_mcp_manager_http):
         """Test enabling only read-only agents (analytics, portfolio)."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(
@@ -301,7 +301,7 @@ class TestSelectiveAgentEnablement:
         assert len(router.agents) == 2
     
     @pytest.mark.asyncio
-    async def test_analytics_only_mode(self):
+    async def test_analytics_only_mode(self, mock_mcp_manager_http):
         """Test enabling only analytics agent (market data)."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(
@@ -356,7 +356,7 @@ class TestIntentClassification:
     """Test intent classification with disabled agents."""
     
     @pytest.mark.asyncio
-    async def test_intent_classification_still_works(self):
+    async def test_intent_classification_still_works(self, mock_mcp_manager_http):
         """Test that intent classification works even with disabled agents."""
         settings = AgnoSettings(
             agents=AgnoAgentSettings(trading_enabled=False)

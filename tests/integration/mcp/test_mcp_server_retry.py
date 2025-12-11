@@ -21,7 +21,7 @@ class TestMCPServerRetry:
     """Test retry functionality for MCP servers."""
     
     @pytest.mark.asyncio
-    async def test_defillama_retry_on_http_error(self):
+    async def test_defillama_retry_on_http_error(self, mock_mcp_manager_http):
         """Test DeFiLlama server retries on HTTP error."""
         # Arrange
         server = DeFiLlamaMCPServer()
@@ -58,7 +58,7 @@ class TestMCPServerRetry:
         assert mock_get.call_count == 3  # Retried twice
     
     @pytest.mark.asyncio
-    async def test_oneinch_retry_on_timeout(self):
+    async def test_oneinch_retry_on_timeout(self, mock_mcp_manager_http):
         """Test 1inch server retries on timeout."""
         # Arrange
         server = OneInchMCPServer(api_key="test_key")
@@ -81,7 +81,7 @@ class TestMCPServerRetry:
         assert mock_get.call_count == 2  # Retried once
     
     @pytest.mark.asyncio
-    async def test_thegraph_retry_exhausted(self):
+    async def test_thegraph_retry_exhausted(self, mock_mcp_manager_http):
         """Test The Graph server exhausts retries."""
         # Arrange
         server = TheGraphMCPServer()
@@ -102,7 +102,7 @@ class TestMCPServerRetry:
         assert mock_post.call_count == 3  # 3 attempts (initial + 2 retries)
     
     @pytest.mark.asyncio
-    async def test_coingecko_successful_on_first_attempt(self):
+    async def test_coingecko_successful_on_first_attempt(self, mock_mcp_manager_http):
         """Test CoinGecko server succeeds without retry."""
         # Arrange
         server = CoinGeckoMCPServer()
@@ -125,7 +125,7 @@ class TestMCPServerRetry:
         assert mock_get.call_count == 1  # No retry needed
     
     @pytest.mark.asyncio
-    async def test_aave_retry_configuration(self):
+    async def test_aave_retry_configuration(self, mock_mcp_manager_http):
         """Test Aave server has retry decorator configured."""
         # Arrange
         server = AaveMCPServer()
@@ -135,7 +135,7 @@ class TestMCPServerRetry:
         assert server._retry is not None
     
     @pytest.mark.asyncio
-    async def test_portfolio_retry_configuration(self):
+    async def test_portfolio_retry_configuration(self, mock_mcp_manager_http):
         """Test Portfolio server has retry decorator configured."""
         # Arrange
         server = PortfolioMCPServer()
@@ -145,7 +145,7 @@ class TestMCPServerRetry:
         assert server._retry is not None
     
     @pytest.mark.asyncio
-    async def test_all_servers_have_retry(self):
+    async def test_all_servers_have_retry(self, mock_mcp_manager_http):
         """Test all 6 MCP servers have retry configured."""
         # Arrange
         servers = [
@@ -163,7 +163,7 @@ class TestMCPServerRetry:
             assert server._retry is not None
     
     @pytest.mark.asyncio
-    async def test_retry_backoff_timing(self):
+    async def test_retry_backoff_timing(self, mock_mcp_manager_http):
         """Test exponential backoff timing."""
         # Arrange
         server = DeFiLlamaMCPServer()
@@ -199,7 +199,7 @@ class TestMCPServerRetry:
             assert delay2 >= 2.0  # At least 2 seconds (actual: ~4s with jitter)
     
     @pytest.mark.asyncio
-    async def test_retry_on_network_error(self):
+    async def test_retry_on_network_error(self, mock_mcp_manager_http):
         """Test retry on network connectivity errors."""
         # Arrange
         server = DeFiLlamaMCPServer()
@@ -223,7 +223,7 @@ class TestMCPServerRetry:
         # Network errors might not be retried by tenacity, check actual behavior
     
     @pytest.mark.asyncio
-    async def test_mcp_settings_retry_defaults(self):
+    async def test_mcp_settings_retry_defaults(self, mock_mcp_manager_http):
         """Test MCPSettings has retry configuration."""
         # Arrange
         settings = MCPSettings()
@@ -238,7 +238,7 @@ class TestMCPServerRetry:
         assert settings.retry.telemetry_enabled is True
     
     @pytest.mark.asyncio
-    async def test_custom_retry_configuration(self):
+    async def test_custom_retry_configuration(self, mock_mcp_manager_http):
         """Test custom retry configuration."""
         # Arrange
         settings = MCPSettings(

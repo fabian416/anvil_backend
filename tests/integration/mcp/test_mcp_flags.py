@@ -52,7 +52,7 @@ class TestDeFiLlamaServerFlags:
         
         # Should create without error
         server = DeFiLlamaMCPServer(settings=settings)
-        assert server.name == "defillama"
+        assert server.server_name == "defillama"
     
     def test_defillama_can_be_disabled(self):
         """Test DeFiLlama server can be disabled."""
@@ -75,7 +75,7 @@ class TestOneInchServerFlags:
         settings = MCPSettings()
         
         server = OneInchMCPServer(settings=settings)
-        assert server.name == "1inch"
+        assert server.server_name == "1inch"
     
     def test_oneinch_can_be_disabled(self):
         """Test 1inch server can be disabled."""
@@ -98,7 +98,7 @@ class TestTheGraphServerFlags:
         settings = MCPSettings()
         
         server = TheGraphMCPServer(settings=settings)
-        assert server.name == "thegraph"
+        assert server.server_name == "thegraph"
     
     def test_thegraph_can_be_disabled(self):
         """Test The Graph server can be disabled."""
@@ -121,7 +121,7 @@ class TestCoinGeckoServerFlags:
         settings = MCPSettings()
         
         server = CoinGeckoMCPServer(settings=settings)
-        assert server.name == "coingecko"
+        assert server.server_name == "coingecko"
     
     def test_coingecko_can_be_disabled(self):
         """Test CoinGecko server can be disabled."""
@@ -144,7 +144,7 @@ class TestAaveServerFlags:
         settings = MCPSettings()
         
         server = AaveMCPServer(settings=settings)
-        assert server.name == "aave"
+        assert server.server_name == "aave"
     
     def test_aave_can_be_disabled(self):
         """Test Aave server can be disabled."""
@@ -167,7 +167,7 @@ class TestPortfolioServerFlags:
         settings = MCPSettings()
         
         server = PortfolioMCPServer(settings=settings)
-        assert server.name == "portfolio"
+        assert server.server_name == "portfolio"
     
     def test_portfolio_can_be_disabled(self):
         """Test Portfolio server can be disabled."""

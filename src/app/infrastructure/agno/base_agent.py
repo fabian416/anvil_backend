@@ -256,12 +256,12 @@ class DeFiAgentBase:
                 }
         
         # Create Function with JSON Schema parameters
-        return Function.from_dict({
-            "name": tool_def.qualified_name,
-            "description": tool_def.description,
-            "parameters": tool_def.parameters,
-            "entrypoint": mcp_tool_handler,
-        })
+        return Function(
+            name=tool_def.qualified_name,
+            description=tool_def.description,
+            parameters=tool_def.parameters,
+            entrypoint=mcp_tool_handler,
+        )
     
     async def run(
         self,
