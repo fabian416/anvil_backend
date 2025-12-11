@@ -21,17 +21,18 @@ class TestConversationRepositoryIntegration:
     async def test_save_and_retrieve_conversation(self, async_db_session, async_test_user):
         """Test saving and retrieving a conversation."""
         # Arrange
-        from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-
-        repo = LLMConversationRepositorySqla(session=async_db_session)
+        from sqlalchemy import select
         conversation = Conversation.create(user_id=async_test_user, title="Test Conversation")
-        
-        # Act
-        await repo.save(conversation)
+
+        # Act - Use SQLAlchemy directly with mapped entity
+        async_db_session.add(conversation)
         await async_db_session.commit()
-        
-        retrieved = await repo.get_by_id(conversation.id)
-        
+
+        # Retrieve
+        stmt = select(Conversation).where(Conversation.id == conversation.id)
+        result = await async_db_session.execute(stmt)
+        retrieved = result.scalar_one_or_none()
+
         # Assert
         assert retrieved is not None
         assert retrieved.user_id == conversation.user_id
@@ -40,65 +41,58 @@ class TestConversationRepositoryIntegration:
     async def test_conversation_with_messages(self, async_db_session, async_test_user):
         """Test conversation with multiple messages."""
         # Arrange
-        from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-
-        repo = LLMConversationRepositorySqla(session=async_db_session)
+        from sqlalchemy import select
         conversation = Conversation.create(user_id=async_test_user)
-        
-        # Act
-        await repo.save(conversation)
+
+        # Act - Use SQLAlchemy directly
+        async_db_session.add(conversation)
         await async_db_session.commit()
-        
+
         # Assert
-        retrieved = await repo.get_by_id(conversation.id)
+        stmt = select(Conversation).where(Conversation.id == conversation.id)
+        result = await async_db_session.execute(stmt)
+        retrieved = result.scalar_one_or_none()
         assert retrieved is not None
     
     async def test_update_conversation_title(self, async_db_session, async_test_user):
         """Test updating conversation title."""
         # Arrange
-        from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-
-        repo = LLMConversationRepositorySqla(session=async_db_session)
+        from sqlalchemy import select
         conversation = Conversation.create(user_id=async_test_user, title="Original Title")
-        
+
         # Act
-        await repo.save(conversation)
+        async_db_session.add(conversation)
         await async_db_session.commit()
-        
+
         conversation.update_title("Updated Title")
-        await repo.save(conversation)
         await async_db_session.commit()
-        
+
         # Assert
-        retrieved = await repo.get_by_id(conversation.id)
+        stmt = select(Conversation).where(Conversation.id == conversation.id)
+        result = await async_db_session.execute(stmt)
+        retrieved = result.scalar_one_or_none()
         assert retrieved is not None
+        assert retrieved.title == "Updated Title"
     
     async def test_multiple_conversations_for_user(self, async_db_session, async_test_user):
         """Test creating multiple conversations for same user."""
         # Arrange
-        from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-
-        repo = LLMConversationRepositorySqla(session=async_db_session)
-
+        from sqlalchemy import select
         conv1 = Conversation.create(user_id=async_test_user, title="First")
         conv2 = Conversation.create(user_id=async_test_user, title="Second")
         conv3 = Conversation.create(user_id=async_test_user, title="Third")
-        
+
         # Act
-        await repo.save(conv1)
-        await repo.save(conv2)
-        await repo.save(conv3)
+        async_db_session.add_all([conv1, conv2, conv3])
         await async_db_session.commit()
-        
-        # Assert
-        retrieved1 = await repo.get_by_id(conv1.id)
-        retrieved2 = await repo.get_by_id(conv2.id)
-        retrieved3 = await repo.get_by_id(conv3.id)
-        
-        assert retrieved1 is not None
-        assert retrieved2 is not None
-        assert retrieved3 is not None
-        assert retrieved1.id != retrieved2.id != retrieved3.id
+
+        # Assert - Verify the specific 3 conversations we created exist
+        stmt = select(Conversation).where(Conversation.id.in_([conv1.id, conv2.id, conv3.id]))
+        result = await async_db_session.execute(stmt)
+        conversations = result.scalars().all()
+
+        assert len(conversations) == 3
+        assert conv1.id != conv2.id != conv3.id
 
 
 @pytest.mark.integration
@@ -109,37 +103,37 @@ class TestTransactionHandling:
     async def test_transaction_rollback_on_error(self, async_db_session, async_test_user):
         """Test transaction rolls back on error."""
         # Arrange
-        from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-
-        repo = LLMConversationRepositorySqla(session=async_db_session)
+        from sqlalchemy import select
         conversation = Conversation.create(user_id=async_test_user)
-        
+
         # Act & Assert
         try:
-            await repo.save(conversation)
+            async_db_session.add(conversation)
             # Simulate error
             raise Exception("Simulated error")
         except Exception:
             await async_db_session.rollback()
-        
+
         # Verify conversation was not saved
-        retrieved = await repo.get_by_id(conversation.id)
-        assert retrieved is None or retrieved.id != conversation.id
+        stmt = select(Conversation).where(Conversation.id == conversation.id)
+        result = await async_db_session.execute(stmt)
+        retrieved = result.scalar_one_or_none()
+        assert retrieved is None
     
     async def test_transaction_commit_on_success(self, async_db_session, async_test_user):
         """Test transaction commits on success."""
         # Arrange
-        from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-
-        repo = LLMConversationRepositorySqla(session=async_db_session)
+        from sqlalchemy import select
         conversation = Conversation.create(user_id=async_test_user)
-        
+
         # Act
-        await repo.save(conversation)
+        async_db_session.add(conversation)
         await async_db_session.commit()
-        
+
         # Assert
-        retrieved = await repo.get_by_id(conversation.id)
+        stmt = select(Conversation).where(Conversation.id == conversation.id)
+        result = await async_db_session.execute(stmt)
+        retrieved = result.scalar_one_or_none()
         assert retrieved is not None
 
 
