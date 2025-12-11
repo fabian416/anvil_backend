@@ -167,14 +167,19 @@ async def test_validate_out_of_scope(
 ):
     """Test validation fails for out-of-scope request."""
     # Configure provider to reject request
-    mock_primary_provider.validate = AsyncMock(return_value={
-        "success": False,
-        "message": "I can only help with DeFi topics",
-        "reason": "out_of_scope",
-        "confidence": 0.98,
-        "tokens_used": 120,
-        "cost_usd": 0.000012,
-    })
+    mock_primary_provider.validate = AsyncMock(return_value=DistillationResult(
+        success=False,
+        message="I can only help with DeFi topics",
+        reason="out_of_scope",
+        confidence=0.98,
+        provider="vertex_ai",
+        model="gemini-1.5-flash",
+        detected_language="en",
+        latency_ms=50.0,
+        tokens_used=120,
+        cost_usd=0.000012,
+        fallback_used=False,
+    ))
     
     distillator = RequestDistillator(
         settings=distillation_settings,
@@ -205,14 +210,19 @@ async def test_validate_malicious(
 ):
     """Test validation fails for malicious request."""
     # Configure provider to detect malicious intent
-    mock_primary_provider.validate = AsyncMock(return_value={
-        "success": False,
-        "message": "This request cannot be processed",
-        "reason": "malicious",
-        "confidence": 0.99,
-        "tokens_used": 130,
-        "cost_usd": 0.000013,
-    })
+    mock_primary_provider.validate = AsyncMock(return_value=DistillationResult(
+        success=False,
+        message="This request cannot be processed",
+        reason="malicious",
+        confidence=0.99,
+        provider="vertex_ai",
+        model="gemini-1.5-flash",
+        detected_language="en",
+        latency_ms=50.0,
+        tokens_used=130,
+        cost_usd=0.000013,
+        fallback_used=False,
+    ))
     
     distillator = RequestDistillator(
         settings=distillation_settings,
