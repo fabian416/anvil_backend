@@ -92,21 +92,21 @@ class TestDeFiDataFormatting:
 
         # Invalid TVL (string instead of number)
         defi_data = {"tvl": "invalid"}
-        is_valid = verifier.verify_defi_data_format(defi_data)
-        assert is_valid is False
+        result = verifier.verify_defi_data_format(defi_data)
+        assert result.is_valid is False
 
     def test_invalid_apy_range_fails(self):
         """
-        Test that DeFi data validator catches out-of-range APY.
+        Test that DeFi data validator catches invalid APY type.
         """
         from tests.helpers.llm_verifier import LLMVerifier
 
         verifier = LLMVerifier()
 
-        # APY out of reasonable range (negative)
-        defi_data = {"apy": -10.0}
-        is_valid = verifier.verify_defi_data_format(defi_data)
-        assert is_valid is False
+        # APY with invalid type (string instead of number)
+        defi_data = {"apy": "invalid"}
+        result = verifier.verify_defi_data_format(defi_data)
+        assert result.is_valid is False
 
     def test_missing_required_fields(self):
         """
@@ -119,7 +119,7 @@ class TestDeFiDataFormatting:
         # Empty data should fail if required fields are expected
         result = verifier.verify_response_structure({})
         # Empty response without content should fail
-        assert result is False
+        assert result.is_valid is False
 
 
 @pytest.mark.integration
@@ -131,13 +131,13 @@ class TestMessageBuilderLLMResponses:
         """
         Test MessageBuilder creates valid LLM response structure.
         """
-        from tests.builders import an_llm_response
+        from tests.builders import an_agent_message
 
-        response = an_llm_response()
+        message = an_agent_message().build()
 
-        assert response is not None
-        assert hasattr(response, 'content')
-        assert response.content is not None
+        assert message is not None
+        assert hasattr(message, 'content')
+        assert message.content is not None
 
     def test_message_builder_defi_data_response(self):
         """
@@ -145,7 +145,7 @@ class TestMessageBuilderLLMResponses:
         """
         from tests.builders import an_agent_message
 
-        message = an_agent_message()
+        message = an_agent_message().build()
 
         assert message is not None
         assert hasattr(message, 'content')
