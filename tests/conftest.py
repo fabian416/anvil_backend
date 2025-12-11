@@ -50,9 +50,13 @@ def event_loop() -> Generator:
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def test_settings():
-    """Load test settings."""
+    """Load test settings.
+
+    Note: Using function scope to prevent fixture pollution.
+    Each test gets a fresh settings object that cannot be polluted by other tests.
+    """
     try:
         return load_settings()
     except Exception:
