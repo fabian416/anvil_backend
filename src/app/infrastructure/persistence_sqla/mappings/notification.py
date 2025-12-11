@@ -10,8 +10,11 @@ from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 
 def map_notifications_table() -> None:
-    """Map Notification entity to database table."""
-    
+    """Map Notification entity to database table (idempotent)."""
+    # Idempotency guard: don't remap if already present
+    if "notifications" in mapping_registry.metadata.tables:
+        return
+
     @mapping_registry.mapped
     class NotificationsTable:
         __tablename__ = "notifications"
