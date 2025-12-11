@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/layerzero-integration/tasks.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-09T21:41:34.793Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765316494781_gyudbqxg2",
+      "approvalTitle": "LayerZero Integration - Tasks Document"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-09T22:08:15.405Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765316494781_gyudbqxg2",
+      "approvalTitle": "LayerZero Integration - Tasks Document"
+    }
+  ]
+}

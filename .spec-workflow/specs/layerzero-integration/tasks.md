@@ -1,0 +1,204 @@
+# Tasks Document: LayerZero Integration
+
+## Overview
+Implementation tasks for completing the LayerZero cross-chain message tracking integration following hexagonal architecture patterns.
+
+---
+
+## Task 1: Domain Layer - Port and Models
+
+- [x] 1.1 Create LayerZeroGateway port interface
+  - File: `src/app/domain/ports/layerzero_gateway.py`
+  - Define Protocol interface for LayerZero operations
+  - Purpose: Domain contract for cross-chain tracking
+  - _Leverage: `src/app/domain/ports/` patterns_
+  - _Requirements: R1, R2, R3, R4, R5_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Backend Developer | Task: Create LayerZeroGateway Protocol in src/app/domain/ports/layerzero_gateway.py with methods: track_message, get_message_history, get_chains, estimate_fees, get_oft_transfers. Use typing.Protocol with full type hints. | Restrictions: Interface only, no implementation. | _Leverage: src/app/domain/ports/ patterns | _Requirements: Requirements 1-5 | Success: Protocol compiles correctly. Log implementation and mark complete._
+
+- [x] 1.2 Create LZMessage entity
+  - File: `src/app/domain/entities/cross_chain/lz_message.py`
+  - Define LZMessage dataclass for cross-chain messages
+  - Purpose: Domain model for LayerZero messages
+  - _Leverage: `src/app/domain/entities/` patterns_
+  - _Requirements: R1, R2_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create LZMessage entity in src/app/domain/entities/cross_chain/lz_message.py with fields: src_tx_hash, src_chain_id, dst_chain_id, status (MessageStatus), src_address, dst_address, dst_tx_hash, message_type, created_at, completed_at, nonce. Include to_dict/from_dict. | Restrictions: Use @dataclass. | _Leverage: src/app/domain/entities/ patterns | _Requirements: Requirements 1, 2 | Success: Entity properly typed. Log implementation and mark complete._
+
+- [x] 1.3 Create OFTTransfer entity
+  - File: `src/app/domain/entities/cross_chain/oft_transfer.py`
+  - Define OFTTransfer dataclass for token transfers
+  - Purpose: Domain model for OFT transfers
+  - _Leverage: `src/app/domain/entities/cross_chain/lz_message.py`_
+  - _Requirements: R4_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create OFTTransfer entity in src/app/domain/entities/cross_chain/oft_transfer.py with fields: tx_hash, src_chain_id, dst_chain_id, token_address, token_symbol, amount, from_address, to_address, status, timestamp. Use Decimal for amount. | Restrictions: Follow entity patterns. | _Leverage: src/app/domain/entities/cross_chain/lz_message.py | _Requirements: Requirement 4 | Success: Entity properly typed. Log implementation and mark complete._
+
+- [x] 1.4 Create value objects (MessageStatus, LZChain, MessageFee)
+  - File: `src/app/domain/value_objects/cross_chain/message_status.py`
+  - File: `src/app/domain/value_objects/cross_chain/lz_chain.py`
+  - File: `src/app/domain/value_objects/cross_chain/message_fee.py`
+  - Define enums and frozen dataclasses
+  - Purpose: Domain value objects
+  - _Leverage: `src/app/domain/value_objects/` patterns_
+  - _Requirements: R1, R3, R5_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create VOs: MessageStatus Enum (INFLIGHT, DELIVERED, FAILED, BLOCKED), LZChain frozen dataclass (endpoint_id, name, network, native_chain_id, is_evm), MessageFee frozen dataclass (source_chain_id, destination_chain_id, native_fee, native_fee_usd, zro_fee). | Restrictions: Use @dataclass(frozen=True) for VOs. | _Leverage: src/app/domain/value_objects/ patterns | _Requirements: Requirements 1, 3, 5 | Success: VOs immutable and typed. Log implementation and mark complete._
+
+---
+
+## Task 2: Domain Layer - Exceptions
+
+- [x] 2.1 Create LayerZero domain exceptions
+  - File: `src/app/domain/exceptions/layerzero.py`
+  - Define LayerZeroError, MessageNotFoundError, InvalidTxHashError, UnsupportedChainError
+  - Purpose: Domain-specific error handling
+  - _Leverage: `src/app/domain/exceptions/base.py`_
+  - _Requirements: R9_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create exceptions in src/app/domain/exceptions/layerzero.py: LayerZeroError(DomainError), MessageNotFoundError, InvalidTxHashError, UnsupportedChainError. Add error_code attributes. | Restrictions: Extend base exceptions. | _Leverage: src/app/domain/exceptions/base.py | _Requirements: Requirement 9 | Success: Exceptions inherit correctly. Log implementation and mark complete._
+
+---
+
+## Task 3: Infrastructure Layer - Adapter
+
+- [x] 3.1 Create LayerZeroAdapter implementing LayerZeroGateway
+  - File: `src/app/infrastructure/adapters/external/layerzero_adapter.py`
+  - Implement LayerZeroGateway using existing LayerZeroClient
+  - Add caching with variable TTL (10s inflight, 24h delivered)
+  - Transform client models to domain models
+  - Purpose: Bridge domain port to infrastructure client
+  - _Leverage: `src/app/infrastructure/adapters/external/layerzero_client.py`, `src/app/infrastructure/cache/external_api_cache.py`_
+  - _Requirements: R1, R2, R3, R4, R5, R9_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Backend Developer | Task: Create LayerZeroAdapter in src/app/infrastructure/adapters/external/layerzero_adapter.py implementing LayerZeroGateway. Inject LayerZeroClient and cache. Cache DELIVERED messages 24h, INFLIGHT 10s, chains 1h. Transform CrossChainMessage to LZMessage. | Restrictions: Do not modify existing client. | _Leverage: src/app/infrastructure/adapters/external/layerzero_client.py | _Requirements: Requirements 1-5, 9 | Success: Adapter implements Protocol, caching varies by status. Log implementation and mark complete._
+
+---
+
+## Task 4: Application Layer - Queries
+
+- [x] 4.1 Create TrackMessage query
+  - File: `src/app/application/queries/layerzero/track_message.py`
+  - Define TrackMessageRequest dataclass
+  - Implement TrackMessage with progress calculation
+  - Purpose: Track cross-chain message status
+  - _Leverage: `src/app/application/queries/` patterns_
+  - _Requirements: R1_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create TrackMessage query in src/app/application/queries/layerzero/track_message.py. Define TrackMessageRequest(tx_hash). Inject LayerZeroGateway. Return MessageTrackingResponse with message, estimated_completion, progress_pct (INFLIGHT=50, DELIVERED=100, FAILED=0). | Restrictions: Raise MessageNotFoundError if not found. | _Leverage: src/app/application/queries/ patterns | _Requirements: Requirement 1 | Success: Returns tracking with progress. Log implementation and mark complete._
+
+- [x] 4.2 Create GetMessageHistory query
+  - File: `src/app/application/queries/layerzero/get_message_history.py`
+  - Define GetMessageHistoryRequest dataclass
+  - Implement GetMessageHistory with filtering
+  - Purpose: Get message history for address
+  - _Leverage: `src/app/application/queries/layerzero/track_message.py`_
+  - _Requirements: R2_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create GetMessageHistory query in src/app/application/queries/layerzero/get_message_history.py. Define GetMessageHistoryRequest(address, limit, chain_filter). Return list of LZMessage sorted by timestamp desc. | Restrictions: Follow query patterns. | _Leverage: src/app/application/queries/layerzero/track_message.py | _Requirements: Requirement 2 | Success: Returns filtered history. Log implementation and mark complete._
+
+- [x] 4.3 Create GetChains query
+  - File: `src/app/application/queries/layerzero/get_chains.py`
+  - Define GetChainsRequest dataclass
+  - Implement GetChains
+  - Purpose: Get supported chains
+  - _Leverage: `src/app/application/queries/layerzero/track_message.py`_
+  - _Requirements: R5_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create GetChains query in src/app/application/queries/layerzero/get_chains.py. Define GetChainsRequest(). Inject LayerZeroGateway. Return list of LZChain grouped by ecosystem (EVM, non-EVM). | Restrictions: Follow query patterns. | _Leverage: src/app/application/queries/layerzero/track_message.py | _Requirements: Requirement 5 | Success: Returns chains. Log implementation and mark complete._
+
+- [x] 4.4 Create EstimateFees query
+  - File: `src/app/application/queries/layerzero/estimate_fees.py`
+  - Define EstimateFeesRequest dataclass
+  - Implement EstimateFees
+  - Purpose: Estimate message fees
+  - _Leverage: `src/app/application/queries/layerzero/track_message.py`_
+  - _Requirements: R3_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create EstimateFees query in src/app/application/queries/layerzero/estimate_fees.py. Define EstimateFeesRequest(source_chain, destination_chain, payload_size). Return MessageFee with native_fee and USD equivalent. | Restrictions: Follow query patterns. | _Leverage: src/app/application/queries/layerzero/track_message.py | _Requirements: Requirement 3 | Success: Returns fee estimate. Log implementation and mark complete._
+
+- [x] 4.5 Create GetOFTTransfers query
+  - File: `src/app/application/queries/layerzero/get_oft_transfers.py`
+  - Define GetOFTTransfersRequest dataclass
+  - Implement GetOFTTransfers
+  - Purpose: Get OFT transfer history
+  - _Leverage: `src/app/application/queries/layerzero/track_message.py`_
+  - _Requirements: R4_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create GetOFTTransfers query in src/app/application/queries/layerzero/get_oft_transfers.py. Define GetOFTTransfersRequest(address, limit). Filter for OFT message type. Return list of OFTTransfer. | Restrictions: Follow query patterns. | _Leverage: src/app/application/queries/layerzero/track_message.py | _Requirements: Requirement 4 | Success: Returns OFT transfers. Log implementation and mark complete._
+
+---
+
+## Task 5: Presentation Layer - HTTP Router
+
+- [x] 5.1 Create LayerZero HTTP router
+  - File: `src/app/presentation/http/controllers/defi/layerzero_router.py`
+  - Define all endpoints from design
+  - Use Pydantic models for request/response
+  - Purpose: HTTP API for LayerZero tracking
+  - _Leverage: `src/app/presentation/http/controllers/` patterns_
+  - _Requirements: R1, R2, R3, R4, R5_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: FastAPI Developer | Task: Create layerzero_router.py in src/app/presentation/http/controllers/defi/. Endpoints: GET /message/{tx_hash}, GET /messages/{address}, GET /chains, GET /fees/estimate, GET /oft/{address}. Use FromDishka for DI. | Restrictions: Follow router patterns. | _Leverage: src/app/presentation/http/controllers/ patterns | _Requirements: Requirements 1-5 | Success: All endpoints work. Log implementation and mark complete._
+
+- [x] 5.2 Create response schemas
+  - File: `src/app/presentation/http/controllers/defi/layerzero_schemas.py`
+  - Define Pydantic models for responses
+  - Purpose: API response serialization
+  - _Leverage: Existing schema patterns_
+  - _Requirements: R1-R5_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create layerzero_schemas.py with: MessageTrackingResponse (with progress_pct, estimated_completion), MessageHistoryResponse, ChainsResponse, FeeEstimateResponse, OFTTransfersResponse. Add from_domain() methods. | Restrictions: Use Pydantic v2. | _Leverage: Existing schema patterns | _Requirements: Requirements 1-5 | Success: Schemas serialize correctly. Log implementation and mark complete._
+
+---
+
+## Task 6: Dependency Injection
+
+- [x] 6.1 Create LayerZero DI provider
+  - File: `src/app/setup/ioc/layerzero.py`
+  - Register LayerZeroClient, LayerZeroAdapter, LayerZeroGateway
+  - Purpose: Enable DI for LayerZero components
+  - _Leverage: `src/app/setup/ioc/` patterns_
+  - _Requirements: All_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Create LayerZeroProvider in src/app/setup/ioc/layerzero.py. Register LayerZeroClient (APP scope), LayerZeroAdapter as LayerZeroGateway (APP scope). Inject cache. | Restrictions: Follow provider patterns. | _Leverage: src/app/setup/ioc/ patterns | _Requirements: All | Success: DI resolves. Log implementation and mark complete._
+
+- [x] 6.2 Register router in app factory
+  - File: `src/app/setup/app_factory.py` (modify)
+  - Include layerzero_router in API routes
+  - Purpose: Enable LayerZero endpoints
+  - _Leverage: `src/app/setup/app_factory.py`_
+  - _Requirements: All_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Python Developer | Task: Modify app_factory.py to import and include layerzero_router under /api/v1/defi prefix. Add LayerZeroProvider. | Restrictions: Minimal changes. | _Leverage: Existing pattern | _Requirements: All | Success: Endpoints accessible. Log implementation and mark complete._
+
+---
+
+## Task 7: Configuration
+
+- [x] 7.1 Add LayerZero configuration
+  - File: `config/local/config.toml` (modify)
+  - Add [layerzero] section
+  - Purpose: Configurable parameters
+  - _Leverage: `config/local/config.toml`_
+  - _Requirements: R9_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: DevOps | Task: Add [layerzero] section to config.toml with: enabled=true, api_key="", cache_chain_ttl=3600, cache_message_ttl=10, cache_delivered_ttl=86400. Add [layerzero.endpoints] with mainnet URL. | Restrictions: Follow config patterns. | _Leverage: config/local/config.toml | _Requirements: Requirement 9 | Success: Config loads. Log implementation and mark complete._
+
+---
+
+## Task 8: Testing
+
+- [x] 8.1 Create adapter unit tests
+  - File: `tests/unit/infrastructure/adapters/test_layerzero_adapter.py`
+  - Test transformation and variable TTL caching
+  - Purpose: Ensure adapter reliability
+  - _Leverage: `tests/` patterns_
+  - _Requirements: All_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Test Engineer | Task: Create test_layerzero_adapter.py. Mock LayerZeroClient. Test: track_message transforms correctly, DELIVERED cached 24h, INFLIGHT cached 10s, chains cached 1h. | Restrictions: Unit tests only. | _Leverage: Existing test patterns | _Requirements: All | Success: Tests pass. Log implementation and mark complete._
+
+- [x] 8.2 Create integration tests
+  - File: `tests/integration/defi/test_layerzero_integration.py`
+  - Test full flow
+  - Purpose: End-to-end functionality
+  - _Leverage: `tests/integration/` patterns_
+  - _Requirements: All_
+  - _Prompt: Implement the task for spec layerzero-integration, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Test Engineer | Task: Create test_layerzero_integration.py. Test: GET /message/{hash} returns tracking, 404 for unknown, GET /chains returns list. Mock external API. | Restrictions: Mock external deps. | _Leverage: Existing integration patterns | _Requirements: All | Success: Integration tests pass. Log implementation and mark complete._
+
+---
+
+## Summary
+
+| Phase | Tasks | Files Created |
+|-------|-------|---------------|
+| Domain | 1.1-1.4, 2.1 | 7 files |
+| Infrastructure | 3.1 | 1 file |
+| Application | 4.1-4.5 | 5 files |
+| Presentation | 5.1-5.2 | 2 files |
+| DI & Config | 6.1-6.2, 7.1 | 2 files + mods |
+| Testing | 8.1-8.2 | 2 files |
+| **Total** | **14 tasks** | **~19 files** |

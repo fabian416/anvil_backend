@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/curve-integration/requirements.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-09T20:27:58.391Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765312078374_6geooe6pv",
+      "approvalTitle": "Curve Finance Integration - Requirements Document"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-09T21:04:15.420Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765312078374_6geooe6pv",
+      "approvalTitle": "Curve Finance Integration - Requirements Document"
+    }
+  ]
+}

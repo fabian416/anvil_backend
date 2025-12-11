@@ -1,0 +1,394 @@
+"""
+Morpho Gateway Adapter.
+
+Implements the MorphoGateway port using the MorphoClient
+with caching for vault and position data.
+"""
+
+import logging
+import re
+from decimal import Decimal
+
+from app.domain.entities.lending.morpho_market import MorphoMarket
+from app.domain.entities.lending.morpho_position import MorphoPosition
+from app.domain.entities.lending.morpho_vault import MorphoVault
+from app.domain.exceptions.morpho import (
+    InvalidVaultAddressError,
+    MorphoAPIError,
+    VaultNotFoundError,
+)
+from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.value_objects.lending.market_allocation import MarketAllocation
+from app.domain.value_objects.lending.risk_tier import RiskTier
+from app.domain.value_objects.lending.vault_apy import VaultAPY
+from app.infrastructure.adapters.external.morpho_client import (
+    MorphoClient,
+    MorphoMarketData,
+    MorphoPositionData,
+    MorphoVaultData,
+)
+from app.infrastructure.cache.external_api_cache import ExternalAPICache
+
+logger = logging.getLogger(__name__)
+
+# Ethereum address pattern
+ETH_ADDRESS_PATTERN = re.compile(r"^0x[a-fA-F0-9]{40}$")
+
+
+class MorphoAdapter(MorphoGateway):
+    """
+    Morpho implementation of MorphoGateway.
+
+    Uses caching for vault and position data:
+    - Vaults: 10 min cache
+    - APY: 5 min cache
+    - Positions: 10 min cache
+    """
+
+    DEFAULT_VAULT_CACHE_TTL = 600  # 10 minutes
+    DEFAULT_APY_CACHE_TTL = 300  # 5 minutes
+    DEFAULT_POSITION_CACHE_TTL = 600  # 10 minutes
+    DEFAULT_MARKET_CACHE_TTL = 300  # 5 minutes
+
+    # Risk thresholds
+    LLTV_HIGH_THRESHOLD = Decimal("0.85")
+    UTILIZATION_HIGH_THRESHOLD = Decimal("0.90")
+
+    def __init__(
+        self,
+        client: MorphoClient,
+        cache: ExternalAPICache,
+        vault_cache_ttl: int = DEFAULT_VAULT_CACHE_TTL,
+        apy_cache_ttl: int = DEFAULT_APY_CACHE_TTL,
+        position_cache_ttl: int = DEFAULT_POSITION_CACHE_TTL,
+        market_cache_ttl: int = DEFAULT_MARKET_CACHE_TTL,
+    ):
+        """Initialize MorphoAdapter."""
+        self._client = client
+        self._cache = cache
+        self._vault_cache_ttl = vault_cache_ttl
+        self._apy_cache_ttl = apy_cache_ttl
+        self._position_cache_ttl = position_cache_ttl
+        self._market_cache_ttl = market_cache_ttl
+
+    async def get_vaults(
+        self,
+        asset: str | None = None,
+        chain: str = "ethereum",
+    ) -> list[MorphoVault]:
+        """Get MetaMorpho vaults with caching."""
+        cache_key_params = {"chain": chain}
+
+        cached = await self._cache.get("morpho", "vaults", **cache_key_params)
+        if cached:
+            logger.debug("Cache hit for Morpho vaults")
+            vaults = [MorphoVault.from_dict(v) for v in cached]
+        else:
+            try:
+                raw_vaults = await self._client.get_vaults()
+                vaults = [self._transform_vault(v) for v in raw_vaults]
+
+                await self._cache.set(
+                    "morpho",
+                    "vaults",
+                    [v.to_dict() for v in vaults],
+                    ttl=self._vault_cache_ttl,
+                    **cache_key_params,
+                )
+                logger.debug(f"Fetched {len(vaults)} Morpho vaults")
+
+            except Exception as e:
+                logger.error(f"Error fetching Morpho vaults: {e}")
+                raise MorphoAPIError(str(e)) from e
+
+        # Filter by asset if specified
+        if asset:
+            vaults = [
+                v for v in vaults
+                if v.asset.upper() == asset.upper()
+            ]
+
+        return vaults
+
+    async def get_vault_details(
+        self,
+        vault_address: str,
+        chain: str = "ethereum",
+    ) -> MorphoVault:
+        """Get detailed vault information."""
+        if not ETH_ADDRESS_PATTERN.match(vault_address):
+            raise InvalidVaultAddressError(vault_address)
+
+        cache_key_params = {"chain": chain, "address": vault_address.lower()}
+
+        cached = await self._cache.get("morpho", "vault_details", **cache_key_params)
+        if cached:
+            return MorphoVault.from_dict(cached)
+
+        try:
+            raw_vault = await self._client.get_vault(vault_address)
+            if not raw_vault:
+                raise VaultNotFoundError(vault_address, chain)
+
+            vault = self._transform_vault(raw_vault)
+
+            await self._cache.set(
+                "morpho",
+                "vault_details",
+                vault.to_dict(),
+                ttl=self._vault_cache_ttl,
+                **cache_key_params,
+            )
+
+            return vault
+
+        except VaultNotFoundError:
+            raise
+        except Exception as e:
+            logger.error(f"Error fetching vault {vault_address}: {e}")
+            raise MorphoAPIError(str(e)) from e
+
+    async def get_vault_apy(
+        self,
+        vault_address: str,
+        chain: str = "ethereum",
+    ) -> VaultAPY:
+        """Get vault APY with historical data."""
+        if not ETH_ADDRESS_PATTERN.match(vault_address):
+            raise InvalidVaultAddressError(vault_address)
+
+        cache_key_params = {"chain": chain, "address": vault_address.lower()}
+
+        cached = await self._cache.get("morpho", "apy", **cache_key_params)
+        if cached:
+            return VaultAPY.from_dict(cached)
+
+        try:
+            raw_apy = await self._client.get_vault_apy(vault_address)
+            apy = self._transform_apy(vault_address, raw_apy)
+
+            await self._cache.set(
+                "morpho",
+                "apy",
+                apy.to_dict(),
+                ttl=self._apy_cache_ttl,
+                **cache_key_params,
+            )
+
+            return apy
+
+        except Exception as e:
+            logger.error(f"Error fetching APY for {vault_address}: {e}")
+            raise MorphoAPIError(str(e)) from e
+
+    async def get_markets(
+        self,
+        chain: str = "ethereum",
+    ) -> list[MorphoMarket]:
+        """Get Morpho Blue markets."""
+        cache_key_params = {"chain": chain}
+
+        cached = await self._cache.get("morpho", "markets", **cache_key_params)
+        if cached:
+            return [MorphoMarket.from_dict(m) for m in cached]
+
+        try:
+            raw_markets = await self._client.get_markets()
+            markets = [self._transform_market(m) for m in raw_markets]
+
+            await self._cache.set(
+                "morpho",
+                "markets",
+                [m.to_dict() for m in markets],
+                ttl=self._market_cache_ttl,
+                **cache_key_params,
+            )
+
+            return markets
+
+        except Exception as e:
+            logger.error(f"Error fetching Morpho markets: {e}")
+            raise MorphoAPIError(str(e)) from e
+
+    async def get_user_positions(
+        self,
+        address: str,
+        chain: str = "ethereum",
+    ) -> list[MorphoPosition]:
+        """Get user vault positions."""
+        if not ETH_ADDRESS_PATTERN.match(address):
+            raise InvalidVaultAddressError(address, "Invalid wallet address format")
+
+        cache_key_params = {"chain": chain, "address": address.lower()}
+
+        cached = await self._cache.get("morpho", "positions", **cache_key_params)
+        if cached:
+            return [MorphoPosition.from_dict(p) for p in cached]
+
+        try:
+            raw_positions = await self._client.get_user_positions(address)
+            positions = [
+                self._transform_position(p, address)
+                for p in raw_positions
+            ]
+
+            await self._cache.set(
+                "morpho",
+                "positions",
+                [p.to_dict() for p in positions],
+                ttl=self._position_cache_ttl,
+                **cache_key_params,
+            )
+
+            return positions
+
+        except Exception as e:
+            logger.error(f"Error fetching positions for {address}: {e}")
+            raise MorphoAPIError(str(e)) from e
+
+    async def get_user_deposits(
+        self,
+        address: str,
+        chain: str = "ethereum",
+    ) -> list[MorphoPosition]:
+        """Alias for get_user_positions."""
+        return await self.get_user_positions(address, chain)
+
+    # =========================================================================
+    # Risk Calculation
+    # =========================================================================
+
+    def _calculate_risk_tier(
+        self,
+        max_lltv: Decimal,
+        avg_utilization: Decimal,
+    ) -> RiskTier:
+        """Calculate risk tier based on vault allocations."""
+        if max_lltv >= Decimal("0.90") and avg_utilization >= Decimal("0.85"):
+            return RiskTier.VERY_HIGH
+        elif max_lltv >= self.LLTV_HIGH_THRESHOLD or avg_utilization >= self.UTILIZATION_HIGH_THRESHOLD:
+            return RiskTier.HIGH
+        elif max_lltv >= Decimal("0.75") or avg_utilization >= Decimal("0.60"):
+            return RiskTier.MEDIUM
+        return RiskTier.LOW
+
+    # =========================================================================
+    # Transformation Methods
+    # =========================================================================
+
+    def _transform_vault(self, raw: MorphoVaultData) -> MorphoVault:
+        """Transform client vault data to domain entity."""
+        # Parse total assets with decimal handling
+        total_assets = Decimal(raw.total_assets) / Decimal(10 ** raw.asset_decimals)
+        total_shares = Decimal(raw.total_supply) / Decimal(10 ** raw.asset_decimals)
+        
+        # Fee is typically in basis points (1e4)
+        fee = Decimal(raw.performance_fee)
+        if fee > 1:
+            fee = fee / Decimal("10000")  # Convert from basis points
+
+        # Transform allocations
+        allocations = [
+            self._transform_allocation(a)
+            for a in raw.allocations
+        ]
+
+        # Calculate risk tier
+        max_lltv = Decimal("0")
+        for alloc in allocations:
+            if alloc.lltv > max_lltv:
+                max_lltv = alloc.lltv
+
+        risk_tier = self._calculate_risk_tier(max_lltv, Decimal("0.5"))  # Default util
+
+        return MorphoVault(
+            address=raw.id,
+            name=raw.name,
+            symbol=raw.symbol,
+            asset=raw.asset_symbol,
+            asset_address=raw.asset_address,
+            asset_decimals=raw.asset_decimals,
+            total_assets=total_assets,
+            total_shares=total_shares,
+            apy=Decimal("0"),  # Will be enriched later
+            fee_percentage=fee,
+            curator_address=raw.curator,
+            guardian_address=raw.guardian,
+            risk_tier=risk_tier,
+            market_allocations=allocations,
+        )
+
+    def _transform_allocation(self, raw: dict) -> MarketAllocation:
+        """Transform allocation data to domain value object."""
+        market = raw.get("market", {})
+        
+        return MarketAllocation(
+            market_id=market.get("id", ""),
+            collateral_asset=market.get("collateralAsset", {}).get("symbol", ""),
+            loan_asset="",  # Not always available
+            allocation_percentage=Decimal(str(raw.get("assets", "0"))) / Decimal("1e18"),
+            lltv=Decimal(str(market.get("lltv", "0"))) / Decimal("1e18"),
+            supply_apy=Decimal("0"),
+        )
+
+    def _transform_market(self, raw: MorphoMarketData) -> MorphoMarket:
+        """Transform client market data to domain entity."""
+        # Parse amounts
+        total_supply = Decimal(raw.total_supply_assets)
+        total_borrow = Decimal(raw.total_borrow_assets)
+        
+        # Parse APY (typically in percentage already)
+        supply_apy = Decimal(raw.supply_rate)
+        borrow_apy = Decimal(raw.borrow_rate)
+        
+        # Parse LLTV (typically 1e18 scaled)
+        lltv = Decimal(raw.lltv)
+        if lltv > 1:
+            lltv = lltv / Decimal("1e18")
+
+        return MorphoMarket(
+            market_id=raw.id,
+            collateral_asset=raw.collateral_symbol,
+            collateral_address=raw.collateral_address,
+            loan_asset=raw.loan_symbol,
+            loan_address=raw.loan_address,
+            lltv=lltv,
+            oracle=raw.oracle,
+            irm_address=raw.irm,
+            total_supply=total_supply,
+            total_borrow=total_borrow,
+            supply_apy=supply_apy,
+            borrow_apy=borrow_apy,
+        )
+
+    def _transform_position(
+        self,
+        raw: MorphoPositionData,
+        user_address: str,
+    ) -> MorphoPosition:
+        """Transform client position data to domain entity."""
+        shares = Decimal(raw.shares)
+        assets = Decimal(raw.assets)
+
+        return MorphoPosition(
+            user_address=user_address.lower(),
+            vault_address=raw.vault_id,
+            vault_name=raw.vault_name,
+            asset_symbol=raw.asset_symbol,
+            shares=shares,
+            assets=assets,
+            deposited_assets=assets,  # Original deposit (approximation)
+            apy=Decimal("0"),  # Would need vault APY
+        )
+
+    def _transform_apy(self, vault_address: str, raw: dict) -> VaultAPY:
+        """Transform APY data to domain value object."""
+        return VaultAPY(
+            vault_address=vault_address.lower(),
+            base_apy=Decimal(str(raw.get("base_apy", "0"))),
+            supply_apy=Decimal(str(raw.get("supply_apy", "0"))),
+            reward_apy=Decimal(str(raw.get("reward_apy", "0"))),
+            fee_percentage=Decimal(str(raw.get("fee", "0"))),
+            apy_7d_avg=Decimal("0"),  # Would need historical data
+            apy_30d_avg=Decimal("0"),
+        )

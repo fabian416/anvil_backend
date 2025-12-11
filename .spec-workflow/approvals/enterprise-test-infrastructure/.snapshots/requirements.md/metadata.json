@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/enterprise-test-infrastructure/requirements.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-09T16:49:54.483Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765298994475_2rce82m4u",
+      "approvalTitle": "Enterprise Test Infrastructure - Requirements Document"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-09T17:16:53.482Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765298994475_2rce82m4u",
+      "approvalTitle": "Enterprise Test Infrastructure - Requirements Document"
+    }
+  ]
+}

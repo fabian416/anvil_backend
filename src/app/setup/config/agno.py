@@ -10,22 +10,26 @@ from pydantic import BaseModel, Field
 
 class AgnoAgentSettings(BaseModel):
     """Settings for individual Agno agents."""
-    
+
     trading_enabled: bool = Field(
         default=True,
-        description="Enable Trading agent for trade execution & strategy",
+        description="Enable Trading agent for DEX swaps & liquidity (1inch, Curve)",
     )
     lending_enabled: bool = Field(
         default=True,
-        description="Enable Lending agent for lending/borrowing recommendations",
+        description="Enable Lending agent for lending/borrowing (Aave, Morpho)",
+    )
+    perpetual_enabled: bool = Field(
+        default=True,
+        description="Enable Perpetual agent for futures trading (Hyperliquid)",
     )
     portfolio_enabled: bool = Field(
         default=True,
-        description="Enable Portfolio agent for portfolio optimization",
+        description="Enable Portfolio agent for portfolio tracking & optimization",
     )
     analytics_enabled: bool = Field(
         default=True,
-        description="Enable Analytics agent for data analysis & insights",
+        description="Enable Analytics agent for DeFi data analysis (DeFiLlama)",
     )
 
 

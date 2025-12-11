@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/lifi-sdk-integration/requirements.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-09T18:57:50.037Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765306670030_1jl104x7g",
+      "approvalTitle": "LI.FI SDK Integration - Requirements Document"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-09T18:59:04.488Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765306670030_1jl104x7g",
+      "approvalTitle": "LI.FI SDK Integration - Requirements Document"
+    }
+  ]
+}

@@ -105,45 +105,34 @@ def mock_client():
 
 
 # Database fixtures
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def test_db_engine():
     """Create test database engine with ORM mappings.
 
-    Uses SQLite for fast in-memory tests. Note: PostgreSQL-specific types
-    (JSONB, UUID) are converted to SQLite-compatible types.
+    Uses PostgreSQL test database for full compatibility with production types.
+    Autouse=True ensures this runs before any tests that need database.
     """
     # Initialize SQLAlchemy mappings for domain entities
     from app.infrastructure.persistence_sqla.mappings.all import map_tables
     from app.infrastructure.persistence_sqla.registry import mapping_registry
-    from sqlalchemy.dialects import sqlite
-    from sqlalchemy.dialects.postgresql import JSONB, UUID
-    from sqlalchemy import JSON, String
 
-    # Register type adapters for PostgreSQL types in SQLite
-    sqlite.dialect.ischema_names['JSONB'] = JSON
-    sqlite.dialect.ischema_names['UUID'] = String
-
+    # Map all domain entities to database tables
     map_tables()
 
-    # Create in-memory SQLite database for tests
+    # Create PostgreSQL test database engine
     engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False}
+        "postgresql+psycopg://postgres:changethis@localhost:5432/anvil_test",
+        pool_pre_ping=True,
+        echo=False
     )
 
-    # Create only essential tables (skip tables with incompatible types)
-    try:
-        # Create tables one by one, skipping those with errors
-        for table_name, table in mapping_registry.metadata.tables.items():
-            try:
-                table.create(engine, checkfirst=True)
-            except Exception as e:
-                # Skip tables that can't be created in SQLite
-                pass
-    except Exception:
-        pass
+    # Create all tables in PostgreSQL test database
+    mapping_registry.metadata.create_all(engine)
 
     yield engine
+
+    # Clean up: drop all tables after test session
+    mapping_registry.metadata.drop_all(engine)
     engine.dispose()
 
 
@@ -164,6 +153,79 @@ def test_db_session(test_db_engine) -> Generator[Session, None, None]:
 def db_session(test_db_session):
     """Alias for test_db_session for backward compatibility."""
     return test_db_session
+
+
+@pytest_asyncio.fixture
+async def async_db_session(test_db_engine):
+    """Create async test database session for async repositories."""
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
+    # Create async engine using asyncpg driver
+    async_engine = create_async_engine(
+        "postgresql+asyncpg://postgres:changethis@localhost:5432/anvil_test",
+        pool_pre_ping=True,
+        echo=False
+    )
+
+    async_session_maker = async_sessionmaker(
+        async_engine,
+        class_=AsyncSession,
+        expire_on_commit=False
+    )
+
+    async with async_session_maker() as session:
+        yield session
+        await session.rollback()
+
+    await async_engine.dispose()
+
+
+@pytest.fixture
+def test_user(test_db_session):
+    """Create a test user in the database for foreign key relationships (sync version)."""
+    from sqlalchemy import text
+
+    # Insert a test user directly using SQL to avoid entity mapping complexity
+    # Note: UserRole enum uses lowercase values: 'user', 'admin', 'moderator', 'guest'
+    test_db_session.execute(text("""
+        INSERT INTO users (id, email, first_name, last_name, role, is_active, is_blocked, is_verified, retry_count, language)
+        VALUES (123, 'test@example.com', 'Test', 'User', 'user', true, false, true, 0, 'en')
+        ON CONFLICT (id) DO NOTHING
+    """))
+    test_db_session.execute(text("""
+        INSERT INTO users (id, email, first_name, last_name, role, is_active, is_blocked, is_verified, retry_count, language)
+        VALUES (456, 'test2@example.com', 'Test2', 'User2', 'user', true, false, true, 0, 'en')
+        ON CONFLICT (id) DO NOTHING
+    """))
+    test_db_session.commit()
+
+    yield 123  # Return the first user ID
+
+    # Cleanup is handled by session rollback in test_db_session fixture
+
+
+@pytest_asyncio.fixture
+async def async_test_user(async_db_session):
+    """Create a test user in the database for foreign key relationships (async version)."""
+    from sqlalchemy import text
+
+    # Insert a test user directly using SQL to avoid entity mapping complexity
+    # Note: UserRole enum uses lowercase values: 'user', 'admin', 'moderator', 'guest'
+    await async_db_session.execute(text("""
+        INSERT INTO users (id, email, first_name, last_name, role, is_active, is_blocked, is_verified, retry_count, language)
+        VALUES (123, 'test@example.com', 'Test', 'User', 'user', true, false, true, 0, 'en')
+        ON CONFLICT (id) DO NOTHING
+    """))
+    await async_db_session.execute(text("""
+        INSERT INTO users (id, email, first_name, last_name, role, is_active, is_blocked, is_verified, retry_count, language)
+        VALUES (456, 'test2@example.com', 'Test2', 'User2', 'user', true, false, true, 0, 'en')
+        ON CONFLICT (id) DO NOTHING
+    """))
+    await async_db_session.commit()
+
+    yield 123  # Return the first user ID
+
+    # Cleanup is handled by session rollback in async_db_session fixture
 
 
 # Domain service fixtures for unit tests

@@ -18,17 +18,17 @@ from app.domain.value_objects.message_role import MessageRole
 class TestConversationRepositoryIntegration:
     """Integration tests for conversation repository."""
     
-    async def test_save_and_retrieve_conversation(self, db_session):
+    async def test_save_and_retrieve_conversation(self, async_db_session, async_test_user):
         """Test saving and retrieving a conversation."""
         # Arrange
         from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-        
-        repo = LLMConversationRepositorySqla(session=db_session)
-        conversation = Conversation.create(user_id=123, title="Test Conversation")
+
+        repo = LLMConversationRepositorySqla(session=async_db_session)
+        conversation = Conversation.create(user_id=async_test_user, title="Test Conversation")
         
         # Act
         await repo.save(conversation)
-        await db_session.commit()
+        await async_db_session.commit()
         
         retrieved = await repo.get_by_id(conversation.id)
         
@@ -37,59 +37,58 @@ class TestConversationRepositoryIntegration:
         assert retrieved.user_id == conversation.user_id
         assert retrieved.title == conversation.title
     
-    async def test_conversation_with_messages(self, db_session):
+    async def test_conversation_with_messages(self, async_db_session, async_test_user):
         """Test conversation with multiple messages."""
         # Arrange
         from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-        
-        repo = LLMConversationRepositorySqla(session=db_session)
-        conversation = Conversation.create(user_id=456)
+
+        repo = LLMConversationRepositorySqla(session=async_db_session)
+        conversation = Conversation.create(user_id=async_test_user)
         
         # Act
         await repo.save(conversation)
-        await db_session.commit()
+        await async_db_session.commit()
         
         # Assert
         retrieved = await repo.get_by_id(conversation.id)
         assert retrieved is not None
     
-    async def test_update_conversation_title(self, db_session):
+    async def test_update_conversation_title(self, async_db_session, async_test_user):
         """Test updating conversation title."""
         # Arrange
         from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-        
-        repo = LLMConversationRepositorySqla(session=db_session)
-        conversation = Conversation.create(user_id=789, title="Original Title")
+
+        repo = LLMConversationRepositorySqla(session=async_db_session)
+        conversation = Conversation.create(user_id=async_test_user, title="Original Title")
         
         # Act
         await repo.save(conversation)
-        await db_session.commit()
+        await async_db_session.commit()
         
         conversation.update_title("Updated Title")
         await repo.save(conversation)
-        await db_session.commit()
+        await async_db_session.commit()
         
         # Assert
         retrieved = await repo.get_by_id(conversation.id)
         assert retrieved is not None
     
-    async def test_multiple_conversations_for_user(self, db_session):
+    async def test_multiple_conversations_for_user(self, async_db_session, async_test_user):
         """Test creating multiple conversations for same user."""
         # Arrange
         from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-        
-        repo = LLMConversationRepositorySqla(session=db_session)
-        user_id = 999
-        
-        conv1 = Conversation.create(user_id=user_id, title="First")
-        conv2 = Conversation.create(user_id=user_id, title="Second")
-        conv3 = Conversation.create(user_id=user_id, title="Third")
+
+        repo = LLMConversationRepositorySqla(session=async_db_session)
+
+        conv1 = Conversation.create(user_id=async_test_user, title="First")
+        conv2 = Conversation.create(user_id=async_test_user, title="Second")
+        conv3 = Conversation.create(user_id=async_test_user, title="Third")
         
         # Act
         await repo.save(conv1)
         await repo.save(conv2)
         await repo.save(conv3)
-        await db_session.commit()
+        await async_db_session.commit()
         
         # Assert
         retrieved1 = await repo.get_by_id(conv1.id)
@@ -107,13 +106,13 @@ class TestConversationRepositoryIntegration:
 class TestTransactionHandling:
     """Test transaction handling and rollback."""
     
-    async def test_transaction_rollback_on_error(self, db_session):
+    async def test_transaction_rollback_on_error(self, async_db_session, async_test_user):
         """Test transaction rolls back on error."""
         # Arrange
         from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-        
-        repo = LLMConversationRepositorySqla(session=db_session)
-        conversation = Conversation.create(user_id=111)
+
+        repo = LLMConversationRepositorySqla(session=async_db_session)
+        conversation = Conversation.create(user_id=async_test_user)
         
         # Act & Assert
         try:
@@ -121,23 +120,23 @@ class TestTransactionHandling:
             # Simulate error
             raise Exception("Simulated error")
         except Exception:
-            await db_session.rollback()
+            await async_db_session.rollback()
         
         # Verify conversation was not saved
         retrieved = await repo.get_by_id(conversation.id)
         assert retrieved is None or retrieved.id != conversation.id
     
-    async def test_transaction_commit_on_success(self, db_session):
+    async def test_transaction_commit_on_success(self, async_db_session, async_test_user):
         """Test transaction commits on success."""
         # Arrange
         from app.infrastructure.adapters.ai.llm_conversation_repository_sqla import LLMConversationRepositorySqla
-        
-        repo = LLMConversationRepositorySqla(session=db_session)
-        conversation = Conversation.create(user_id=222)
+
+        repo = LLMConversationRepositorySqla(session=async_db_session)
+        conversation = Conversation.create(user_id=async_test_user)
         
         # Act
         await repo.save(conversation)
-        await db_session.commit()
+        await async_db_session.commit()
         
         # Assert
         retrieved = await repo.get_by_id(conversation.id)

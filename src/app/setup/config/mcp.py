@@ -9,34 +9,61 @@ from pydantic import BaseModel, Field
 
 class MCPServerSettings(BaseModel):
     """Settings for individual MCP servers."""
-    
+
+    # Analytics & Data
     defillama_enabled: bool = Field(
         default=True,
         description="Enable DeFiLlama MCP server for TVL & protocol data",
-    )
-    oneinch_enabled: bool = Field(
-        default=True,
-        description="Enable 1inch MCP server for DEX aggregation",
-    )
-    thegraph_enabled: bool = Field(
-        default=True,
-        description="Enable The Graph MCP server for blockchain indexing",
     )
     coingecko_enabled: bool = Field(
         default=True,
         description="Enable CoinGecko MCP server for market data",
     )
-    aave_enabled: bool = Field(
+    thegraph_enabled: bool = Field(
         default=True,
-        description="Enable Aave MCP server for lending protocol",
-    )
-    portfolio_enabled: bool = Field(
-        default=True,
-        description="Enable Portfolio MCP server for tracking",
+        description="Enable The Graph MCP server for blockchain indexing",
     )
     perplexity_enabled: bool = Field(
         default=True,
         description="Enable Perplexity MCP server for AI-powered search & research",
+    )
+
+    # Trading & DEX
+    oneinch_enabled: bool = Field(
+        default=True,
+        description="Enable 1inch MCP server for DEX aggregation",
+    )
+    curve_enabled: bool = Field(
+        default=True,
+        description="Enable Curve Finance MCP server for stable swaps & liquidity pools",
+    )
+
+    # Lending
+    aave_enabled: bool = Field(
+        default=True,
+        description="Enable Aave MCP server for lending protocol",
+    )
+    morpho_enabled: bool = Field(
+        default=True,
+        description="Enable Morpho Protocol MCP server for yield optimization",
+    )
+
+    # Perpetuals
+    hyperliquid_enabled: bool = Field(
+        default=True,
+        description="Enable Hyperliquid MCP server for perpetual futures trading",
+    )
+
+    # Cross-chain
+    layerzero_enabled: bool = Field(
+        default=True,
+        description="Enable LayerZero MCP server for cross-chain messaging",
+    )
+
+    # Portfolio
+    portfolio_enabled: bool = Field(
+        default=True,
+        description="Enable Portfolio MCP server for tracking",
     )
 
 

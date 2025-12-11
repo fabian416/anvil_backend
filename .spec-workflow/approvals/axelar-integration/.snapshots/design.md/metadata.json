@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/axelar-integration/design.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-09T21:11:41.886Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765314701877_c5xjifhnb",
+      "approvalTitle": "Axelar Network Integration - Design Document"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-09T21:34:07.665Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765314701877_c5xjifhnb",
+      "approvalTitle": "Axelar Network Integration - Design Document"
+    }
+  ]
+}

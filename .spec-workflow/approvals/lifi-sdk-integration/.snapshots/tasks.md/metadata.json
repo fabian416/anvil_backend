@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/lifi-sdk-integration/tasks.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-09T19:08:31.654Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765307311645_ja2q9nm4w",
+      "approvalTitle": "LI.FI SDK Integration - Tasks Document (24 Tasks)"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-09T19:09:13.353Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765307311645_ja2q9nm4w",
+      "approvalTitle": "LI.FI SDK Integration - Tasks Document (24 Tasks)"
+    }
+  ]
+}

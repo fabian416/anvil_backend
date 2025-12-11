@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/opensea-integration/tasks.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-09T21:41:35.038Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765316495022_wqmr5c2gc",
+      "approvalTitle": "OpenSea Integration - Tasks Document"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-09T22:08:13.688Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765316495022_wqmr5c2gc",
+      "approvalTitle": "OpenSea Integration - Tasks Document"
+    }
+  ]
+}

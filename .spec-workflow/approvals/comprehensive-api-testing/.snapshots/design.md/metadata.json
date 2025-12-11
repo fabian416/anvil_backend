@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/comprehensive-api-testing/design.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-07T06:48:03.083Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765090083077_mi8q99ef8",
+      "approvalTitle": "Design: Comprehensive API Testing Suite"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-07T06:48:19.161Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765090083077_mi8q99ef8",
+      "approvalTitle": "Design: Comprehensive API Testing Suite"
+    }
+  ]
+}

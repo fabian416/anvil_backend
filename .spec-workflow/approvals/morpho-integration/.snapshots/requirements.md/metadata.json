@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/morpho-integration/requirements.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-09T20:28:03.198Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765312083180_cyvrgmw4d",
+      "approvalTitle": "Morpho Protocol Integration - Requirements Document"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-12-09T21:04:10.844Z",
+      "trigger": "approved",
+      "approvalId": "approval_1765312083180_cyvrgmw4d",
+      "approvalTitle": "Morpho Protocol Integration - Requirements Document"
+    }
+  ]
+}

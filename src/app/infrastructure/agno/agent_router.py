@@ -4,17 +4,20 @@ Routes user queries to the most appropriate specialized agent based on
 intent classification and query analysis.
 
 Routing Logic:
-    - Trading queries → TradingAgent (1inch)
-    - Lending queries → LendingAgent (Aave)
+    - Trading queries → TradingAgent (1inch, Curve)
+    - Lending queries → LendingAgent (Aave, Morpho)
+    - Perpetual queries → PerpetualAgent (Hyperliquid)
     - Analytics queries → AnalyticsAgent (DeFiLlama)
     - Portfolio queries → PortfolioAgent
     - Multi-domain queries → Orchestrates multiple agents
 
-Feature Flags: agno.agents.{trading,lending,portfolio,analytics}_enabled
+Feature Flags: agno.agents.{trading,lending,perpetual,portfolio,analytics}_enabled
 
 Examples:
     - "Swap ETH for USDC" → TradingAgent
     - "Supply USDC to Aave" → LendingAgent
+    - "Long 10x ETH on Hyperliquid" → PerpetualAgent
+    - "What's the funding rate on BTC?" → PerpetualAgent
     - "What's Aave's TVL?" → AnalyticsAgent
     - "Show my portfolio" → PortfolioAgent
     - "Find best yield and show my positions" → AnalyticsAgent + PortfolioAgent
@@ -25,6 +28,7 @@ from enum import Enum
 from app.infrastructure.agno.base_agent import DeFiAgentBase
 from app.infrastructure.agno.trading_agent import TradingAgent
 from app.infrastructure.agno.lending_agent import LendingAgent
+from app.infrastructure.agno.perpetual_agent import PerpetualAgent
 from app.infrastructure.agno.analytics_agent import AnalyticsAgent
 from app.infrastructure.agno.portfolio_agent import PortfolioAgent
 from app.setup.config.agno import AgnoConfig, AgnoSettings, AgentDisabledError
@@ -34,6 +38,7 @@ class AgentType(Enum):
     """Types of specialized agents."""
     TRADING = "trading"
     LENDING = "lending"
+    PERPETUAL = "perpetual"
     ANALYTICS = "analytics"
     PORTFOLIO = "portfolio"
     MULTI = "multi"  # Requires multiple agents
@@ -88,12 +93,20 @@ class AgentRouter:
                 "swap", "trade", "exchange", "buy", "sell",
                 "price", "quote", "route", "dex", "1inch",
                 "liquidity source", "gas cost", "slippage",
+                "curve", "pool", "liquidity provider",
             ],
             AgentType.LENDING: [
                 "lend", "borrow", "supply", "withdraw", "repay",
                 "collateral", "health factor", "liquidation",
                 "aave", "compound", "interest rate", "apy",
-                "loan", "debt", "ltv",
+                "loan", "debt", "ltv", "morpho", "vault",
+            ],
+            AgentType.PERPETUAL: [
+                "perpetual", "perp", "futures", "leverage",
+                "long", "short", "funding rate", "funding",
+                "hyperliquid", "margin", "liquidation price",
+                "position", "orderbook", "10x", "5x", "3x",
+                "mark price", "index price", "pnl",
             ],
             AgentType.ANALYTICS: [
                 "tvl", "protocol", "yield", "apy", "farm",
@@ -170,18 +183,29 @@ class AgentRouter:
         else:
             if self.debug_mode:
                 print("[Router] ⏭️ Portfolio agent disabled")
-        
+
+        if getattr(self.settings.agents, 'perpetual_enabled', False):
+            self.agents[AgentType.PERPETUAL] = PerpetualAgent(
+                self.config,
+                debug_mode=self.debug_mode,
+            )
+            if self.debug_mode:
+                print("[Router] ✅ Perpetual agent enabled")
+        else:
+            if self.debug_mode:
+                print("[Router] ⏭️ Perpetual agent disabled")
+
         # Load MCP tools for each enabled agent
         for agent_type, agent in self.agents.items():
             if self.debug_mode:
                 print(f"[Router] Loading tools for {agent_type.value}...")
             await agent.load_mcp_tools()
-        
+
         self._initialized = True
-        
+
         if self.debug_mode:
             enabled_count = len(self.agents)
-            total_count = 4  # Total possible agents
+            total_count = 5  # Total possible agents (trading, lending, perpetual, analytics, portfolio)
             print(f"[Router] ✅ {enabled_count}/{total_count} agents initialized!")
     
     def classify_intent(self, query: str) -> Tuple[AgentType, float]:
