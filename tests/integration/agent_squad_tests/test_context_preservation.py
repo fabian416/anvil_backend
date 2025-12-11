@@ -54,12 +54,13 @@ class TestContextPreservation:
     async def test_enforce_history_limit(self, mock_storage):
         """Test enforcing conversation history limit."""
         manager = ContextManager(storage=mock_storage, history_limit=5)
-        
+
         conversation_id = ConversationId(uuid4())
-        
-        # Mock: 10 messages in storage (exceeds limit)
-        mock_storage.get_message_count.return_value = 10
-        
+
+        # Mock: After adding message, storage will have 11 messages
+        # (10 existing + 1 new = 11 total, which exceeds limit of 5)
+        mock_storage.get_message_count.return_value = 11
+
         # Add new message (should trigger cleanup)
         await manager.add_message(
             conversation_id=conversation_id,
@@ -67,8 +68,8 @@ class TestContextPreservation:
             role="user",
             content="New message",
         )
-        
-        # Should remove oldest 6 messages (10 + 1 - 5 = 6)
+
+        # Should remove oldest 6 messages (11 - 5 = 6)
         mock_storage.remove_oldest_messages.assert_called_once_with(
             conversation_id, 6
         )

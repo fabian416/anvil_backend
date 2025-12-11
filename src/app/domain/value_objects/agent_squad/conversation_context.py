@@ -3,7 +3,10 @@ Conversation Context value object.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.domain.enums.agent_type import AgentType
 
 
 @dataclass(frozen=True)
@@ -46,7 +49,17 @@ class ConversationContext:
     def message_count(self) -> int:
         """Get total message count."""
         return len(self.conversation_history)
-    
+
+    @property
+    def last_agent_type(self) -> Optional["AgentType"]:
+        """Get the agent type of the last agent message."""
+        from app.domain.enums.agent_type import AgentType
+
+        for message in reversed(self.conversation_history):
+            if message.get("role") == "agent" and message.get("agent_type"):
+                return AgentType(message["agent_type"])
+        return None
+
     def with_new_message(self, message: dict) -> "ConversationContext":
         """Create new context with additional message."""
         return ConversationContext(

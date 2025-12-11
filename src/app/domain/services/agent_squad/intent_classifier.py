@@ -33,6 +33,18 @@ class ConversationContext:
         """Check if conversation has history."""
         return len(self.conversation_history) > 0
 
+    @property
+    def last_agent_type(self) -> AgentType | None:
+        """Get the agent type of the last agent message."""
+        for message in reversed(self.conversation_history):
+            if message.get("role") == "agent" and message.get("agent_type"):
+                # Handle both string and AgentType values
+                agent_type_value = message["agent_type"]
+                if isinstance(agent_type_value, AgentType):
+                    return agent_type_value
+                return AgentType(agent_type_value)
+        return None
+
 
 class IntentClassifier:
     """
