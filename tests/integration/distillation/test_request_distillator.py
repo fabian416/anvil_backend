@@ -18,16 +18,25 @@ from app.domain.ports.distillation_telemetry_repository import DistillationTelem
 def mock_primary_provider():
     """Mock primary distillator provider."""
     provider = AsyncMock()
-    provider.validate = AsyncMock(return_value={
-        "success": True,
-        "message": "Request is valid",
-        "reason": "validation_passed",
-        "confidence": 0.95,
-        "tokens_used": 150,
-        "cost_usd": 0.000015,
+    provider.validate = AsyncMock(return_value=DistillationResult(
+        success=True,
+        message="Request is valid",
+        reason="validation_passed",
+        confidence=0.95,
+        provider="vertex_ai",
+        model="gemini-1.5-flash",
+        detected_language="en",
+        latency_ms=50.0,
+        tokens_used=150,
+        cost_usd=0.000015,
+        fallback_used=False,
+    ))
+    provider.check_health = AsyncMock(return_value={
+        "healthy": True,
+        "latency_ms": 100.0,
     })
-    provider.provider_name = "vertex_ai"
-    provider.model_name = "gemini-1.5-flash"
+    provider.get_provider_name = MagicMock(return_value="vertex_ai")
+    provider.get_model_name = MagicMock(return_value="gemini-1.5-flash")
     return provider
 
 
@@ -35,16 +44,25 @@ def mock_primary_provider():
 def mock_fallback_provider():
     """Mock fallback distillator provider."""
     provider = AsyncMock()
-    provider.validate = AsyncMock(return_value={
-        "success": True,
-        "message": "Request is valid",
-        "reason": "validation_passed",
-        "confidence": 0.92,
-        "tokens_used": 140,
-        "cost_usd": 0.000008,
+    provider.validate = AsyncMock(return_value=DistillationResult(
+        success=True,
+        message="Request is valid",
+        reason="validation_passed",
+        confidence=0.92,
+        provider="deepinfra",
+        model="meta-llama/Llama-3.2-3B-Instruct",
+        detected_language="en",
+        latency_ms=45.0,
+        tokens_used=140,
+        cost_usd=0.000008,
+        fallback_used=False,
+    ))
+    provider.check_health = AsyncMock(return_value={
+        "healthy": True,
+        "latency_ms": 95.0,
     })
-    provider.provider_name = "deepinfra"
-    provider.model_name = "meta-llama/Llama-3.2-3B-Instruct"
+    provider.get_provider_name = MagicMock(return_value="deepinfra")
+    provider.get_model_name = MagicMock(return_value="meta-llama/Llama-3.2-3B-Instruct")
     return provider
 
 
