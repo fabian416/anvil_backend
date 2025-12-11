@@ -282,55 +282,54 @@ class SendMessage:
                     )
                     if result:
                         results.append(result)
-            
-            # Arbitrage discovery keywords
-            if any(keyword in message_lower for keyword in [
-                "arbitrage", "opportunity", "profit", "dex", "spread"
-            ]):
-                # Extract capital if mentioned
-                import re
-                capital_match = re.search(r'\$?([\d,]+)k?', message)
-                capital = 10000  # Default $10K
-                if capital_match:
-                    capital_str = capital_match.group(1).replace(',', '')
-                    capital = float(capital_str)
-                    if 'k' in message_lower:
-                        capital *= 1000
-                
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "ultra_arbitrage_discovery",
-                    ULTRAToolType.ARBITRAGE_DISCOVERY,
-                    {"token_symbol": token, "capital": capital, "min_profit": 50}
-                )
-                if result:
-                    results.append(result)
-            
-            # MEV protection keywords
-            if any(keyword in message_lower for keyword in [
-                "mev", "front-run", "sandwich", "flashbots", "protect"
-            ]):
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "ultra_mev_protection",
-                    ULTRAToolType.MEV_PROTECTION,
-                    {"protection_level": "high"}
-                )
-                if result:
-                    results.append(result)
-            
-            # Auto-executor status keywords
-            if any(keyword in message_lower for keyword in [
-                "bot status", "auto", "executor", "automated", "running"
-            ]):
-                result = await self._execute_single_tool(
-                    tool_executor,
-                    "ultra_auto_executor",
-                    ULTRAToolType.AUTO_EXECUTOR,
-                    {}
-                )
-                if result:
-                    results.append(result)
+
+                # Arbitrage discovery keywords
+                if any(keyword in message_lower for keyword in [
+                    "arbitrage", "opportunity", "profit", "dex", "spread"
+                ]):
+                    # Extract capital if mentioned
+                    capital_match = re.search(r'\$?([\d,]+)k?', message)
+                    capital = 10000  # Default $10K
+                    if capital_match:
+                        capital_str = capital_match.group(1).replace(',', '')
+                        capital = float(capital_str)
+                        if 'k' in message_lower:
+                            capital *= 1000
+
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "ultra_arbitrage_discovery",
+                        ULTRAToolType.ARBITRAGE_DISCOVERY,
+                        {"token_symbol": token, "capital": capital, "min_profit": 50}
+                    )
+                    if result:
+                        results.append(result)
+
+                # MEV protection keywords
+                if any(keyword in message_lower for keyword in [
+                    "mev", "front-run", "sandwich", "flashbots", "protect"
+                ]):
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "ultra_mev_protection",
+                        ULTRAToolType.MEV_PROTECTION,
+                        {"protection_level": "high"}
+                    )
+                    if result:
+                        results.append(result)
+
+                # Auto-executor status keywords
+                if any(keyword in message_lower for keyword in [
+                    "bot status", "auto", "executor", "automated", "running"
+                ]):
+                    result = await self._execute_single_tool(
+                        tool_executor,
+                        "ultra_auto_executor",
+                        ULTRAToolType.AUTO_EXECUTOR,
+                        {}
+                    )
+                    if result:
+                        results.append(result)
             
             # Comprehensive analysis keywords (execute all tools)
             if self._integration_settings.chat.comprehensive_analysis_enabled:
@@ -466,13 +465,17 @@ class SendMessage:
     async def _execute_comprehensive_general(self, token: str) -> list[str]:
         """
         Execute comprehensive analysis with all Hunter tools (general chat).
-        
+
         Args:
             token: Token symbol
-        
+
         Returns:
             List of formatted tool results
         """
+        # Only execute if hunter tools are enabled
+        if not self._integration_settings.chat.hunter_tools_enabled:
+            return []
+
         all_results = await asyncio.gather(
             self._hunter_executor.execute_tool(
                 HunterToolType.SENTIMENT_ANALYSIS,
