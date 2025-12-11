@@ -236,14 +236,16 @@ class TestCircuitBreaker:
         cb.record_failure("test_service")
 
         # Give async tasks time to complete
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.2)
 
-        # Assert
-        mock_telemetry.record_circuit_breaker_event.assert_called_once()
-        call_args = mock_telemetry.record_circuit_breaker_event.call_args
-        assert call_args[0][0] == "test_service"
-        assert call_args[0][1] == "opened"
-        assert call_args[0][2]["reason"] == "failure_threshold_exceeded"
+        # Assert - Use correct method name from code
+        mock_telemetry.record_circuit_state_change.assert_called_once()
+        call_args = mock_telemetry.record_circuit_state_change.call_args
+        assert call_args[1]["service_name"] == "test_service"
+        assert call_args[1]["from_state"] == "CLOSED"
+        assert call_args[1]["to_state"] == "OPEN"
+        assert call_args[1]["reason"] == "failure_threshold_exceeded"
+        assert call_args[1]["failure_count"] == 2
 
 
 class TestCircuitBreakerManager:
