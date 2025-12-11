@@ -108,6 +108,9 @@ class Project:
         enabled_chains: Optional[List[str]] = None,
         enabled_tools: Optional[List[str]] = None,
         risk_config: Optional[Dict[str, Any]] = None,
+        max_users: Optional[int] = None,
+        display_order: int = 0,
+        is_featured: bool = False,
     ) -> "Project":
         """
         Create a new project.
@@ -127,7 +130,10 @@ class Project:
             enabled_chains: Allowed chains
             enabled_tools: Allowed tools
             risk_config: Risk configuration
-        
+            max_users: Maximum users allowed (None = unlimited)
+            display_order: Display order for sorting
+            is_featured: Featured flag
+
         Returns:
             New project instance
         """
@@ -147,9 +153,9 @@ class Project:
             enabled_chains=enabled_chains or [],
             enabled_tools=enabled_tools or [],
             risk_config=risk_config or {},
-            max_users=None,
-            display_order=0,
-            is_featured=False,
+            max_users=max_users,
+            display_order=display_order,
+            is_featured=is_featured,
             created_by=created_by,
         )
     
