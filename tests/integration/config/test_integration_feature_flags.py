@@ -31,18 +31,16 @@ class TestChatIntegrationFlags:
     def mock_repository(self):
         """Create mock conversation repository."""
         repo = AsyncMock()
-        
+
         # Mock conversation
         conversation = AsyncMock()
         conversation.id = uuid4()
         conversation.user_id = 1
         conversation.project_id = None
         conversation.is_project_scoped = False
-        repo.get.return_value = conversation
-        
-        # Mock save
-        repo.save.return_value = None
-        
+        repo.get_conversation.return_value = conversation
+        repo.add_message.return_value = None
+
         return repo
     
     @pytest.fixture

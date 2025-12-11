@@ -128,7 +128,9 @@ class SendMessage:
         )
         
         # Detect and execute tools (project-scoped if applicable)
-        tool_results = await self._execute_tools(content, project)
+        tool_results = ""
+        if self._integration_settings.chat.enabled:
+            tool_results = await self._execute_tools(content, project)
         
         # Combine agent response with tool results
         if tool_results:
