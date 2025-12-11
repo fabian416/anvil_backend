@@ -63,7 +63,7 @@ class TestUserRepositoryReal:
             email=Email("test@example.com"),
             first_name=FirstName("Test"),
             last_name=LastName("User"),
-            password_hash=UserPasswordHash("hashed_password"),
+            password=UserPasswordHash("hashed_password"),
         )
         
         # Act
@@ -83,7 +83,7 @@ class TestUserRepositoryReal:
             email=Email("query@example.com"),
             first_name=FirstName("Query"),
             last_name=LastName("User"),
-            password_hash=UserPasswordHash("hashed_password"),
+            password=UserPasswordHash("hashed_password"),
         )
         async_test_session.add(user)
         await async_test_session.commit()
@@ -107,7 +107,7 @@ class TestUserRepositoryReal:
             email=Email("update@example.com"),
             first_name=FirstName("Update"),
             last_name=LastName("User"),
-            password_hash=UserPasswordHash("hashed_password"),
+            password=UserPasswordHash("hashed_password"),
         )
         async_test_session.add(user)
         await async_test_session.commit()
@@ -128,7 +128,7 @@ class TestUserRepositoryReal:
             email=Email("delete@example.com"),
             first_name=FirstName("Delete"),
             last_name=LastName("User"),
-            password_hash=UserPasswordHash("hashed_password"),
+            password=UserPasswordHash("hashed_password"),
         )
         async_test_session.add(user)
         await async_test_session.commit()
@@ -161,15 +161,15 @@ class TestUserRepositoryConstraints:
             email=Email("unique@example.com"),
             first_name=FirstName("User"),
             last_name=LastName("One"),
-            password_hash=UserPasswordHash("hashed_password"),
+            password=UserPasswordHash("hashed_password"),
         )
-        
+
         user2 = User(
             id_=1002,
             email=Email("unique@example.com"),  # Same email
             first_name=FirstName("User"),
             last_name=LastName("Two"),
-            password_hash=UserPasswordHash("hashed_password"),
+            password=UserPasswordHash("hashed_password"),
         )
         
         # Act & Assert
@@ -197,7 +197,7 @@ class TestUserRepositoryConstraints:
             email=Email("rollback@example.com"),
             first_name=FirstName("Rollback"),
             last_name=LastName("User"),
-            password_hash=UserPasswordHash("hashed_password"),
+            password=UserPasswordHash("hashed_password"),
         )
         
         # Act
