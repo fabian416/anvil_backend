@@ -1,75 +1,122 @@
 from fastapi import APIRouter
 
 from app.presentation.http.controllers.account.router import create_account_router
-from app.presentation.http.controllers.general.router import create_general_router
-from app.presentation.http.controllers.admin.user.router import create_users_router
-from app.presentation.http.controllers.atlas.router import create_atlas_router
-from app.presentation.http.controllers.subscription.router import create_subscription_router
-from app.presentation.http.controllers.notification.router import create_notification_router
-from app.presentation.http.controllers.payment.router import create_payment_router
-from app.presentation.http.controllers.auth.router import create_auth_router
-from app.presentation.http.controllers.metrics.router import router as metrics_router
-from app.presentation.http.controllers.chat.router import create_chat_router
-from app.presentation.http.controllers.chat.websocket_router import create_chat_websocket_router
-from app.presentation.http.controllers.admin.stats.router import create_admin_stats_router
-from app.presentation.http.controllers.admin.agent.router import create_admin_agent_router
-from app.presentation.http.controllers.admin.wallet.router import create_admin_wallet_router
-from app.presentation.http.controllers.admin.metrics.router import create_admin_metrics_router
-from app.presentation.http.controllers.wallet.router import create_wallet_router
-from app.presentation.http.controllers.graph.visualization import create_graph_visualization_router
-from app.presentation.http.controllers.hunter.sentiment import create_sentiment_router
-from app.presentation.http.controllers.hunter.price_prediction import create_price_prediction_router
-from app.presentation.http.controllers.hunter.risk_analysis import create_risk_analysis_router
-from app.presentation.http.controllers.hunter.trading_signals import create_trading_signals_router
-from app.presentation.http.controllers.hunter.portfolio import create_portfolio_router
-from app.presentation.http.controllers.hunter.patterns import create_patterns_router
-from app.presentation.http.controllers.ultra.flash_loans import create_flash_loans_router
-from app.presentation.http.controllers.ultra.arbitrage import create_arbitrage_router
-from app.presentation.http.controllers.ultra.mev import create_mev_router
-from app.presentation.http.controllers.ultra.auto_executor import create_auto_executor_router
+from app.presentation.http.controllers.admin.agent.router import (
+    create_admin_agent_router,
+)
 
 # New routers for distillation and projects
-from app.presentation.http.controllers.admin.distillation_router import router as distillation_admin_router
-from app.presentation.http.controllers.admin.distillation_validation_router import router as distillation_validation_router
-from app.presentation.http.controllers.admin.projects_router import router as projects_admin_router
-from app.presentation.http.controllers.user.projects_router import router as projects_user_router
+from app.presentation.http.controllers.admin.distillation_router import (
+    router as distillation_admin_router,
+)
+from app.presentation.http.controllers.admin.distillation_validation_router import (
+    router as distillation_validation_router,
+)
 
 # LLM Ranking admin router
-from app.presentation.http.controllers.admin.llm.ranking_router import router as llm_ranking_router
-
-# WebSocket router for real-time agent chat
-from app.presentation.http.websocket.chat_websocket import router as agno_chat_ws_router
-
-# GraphRAG routers
-from app.presentation.http.controllers.graph import search_router, analytics_router, monitoring_router
-from app.presentation.http.websocket.graph_websocket import router as graph_ws_router
-
-# ML routers
-from app.presentation.http.controllers.ml import prediction_router, network_router
-
-# Portfolio router
-from app.presentation.http.controllers.portfolio.router import create_portfolio_router
+from app.presentation.http.controllers.admin.llm.ranking_router import (
+    router as llm_ranking_router,
+)
+from app.presentation.http.controllers.admin.metrics.router import (
+    create_admin_metrics_router,
+)
+from app.presentation.http.controllers.admin.projects_router import (
+    router as projects_admin_router,
+)
+from app.presentation.http.controllers.admin.stats.router import (
+    create_admin_stats_router,
+)
+from app.presentation.http.controllers.admin.user.router import create_users_router
+from app.presentation.http.controllers.admin.wallet.router import (
+    create_admin_wallet_router,
+)
 
 # Alerts router
 from app.presentation.http.controllers.alerts.router import create_alerts_router
+from app.presentation.http.controllers.atlas.router import create_atlas_router
+from app.presentation.http.controllers.auth.router import create_auth_router
 
-# Preferences router
-from app.presentation.http.controllers.preferences.router import create_preferences_router
-
-# Dashboard router
-from app.presentation.http.controllers.dashboard.router import create_dashboard_router
-
-# Search router
-from app.presentation.http.controllers.search.router import create_search_router
+# Bitcoin transaction router
+from app.presentation.http.controllers.bitcoin.router import create_bitcoin_router
+from app.presentation.http.controllers.chat.router import create_chat_router
+from app.presentation.http.controllers.chat.websocket_router import (
+    create_chat_websocket_router,
+)
 
 # Comparison router
 from app.presentation.http.controllers.comparison.router import create_comparison_router
 
+# Dashboard router
+from app.presentation.http.controllers.dashboard.router import create_dashboard_router
+from app.presentation.http.controllers.general.router import create_general_router
+
+# GraphRAG routers
+from app.presentation.http.controllers.graph import (
+    analytics_router,
+    monitoring_router,
+    search_router,
+)
+from app.presentation.http.controllers.graph.visualization import (
+    create_graph_visualization_router,
+)
+from app.presentation.http.controllers.hunter.patterns import create_patterns_router
+from app.presentation.http.controllers.hunter.portfolio import create_portfolio_router
+from app.presentation.http.controllers.hunter.price_prediction import (
+    create_price_prediction_router,
+)
+from app.presentation.http.controllers.hunter.risk_analysis import (
+    create_risk_analysis_router,
+)
+from app.presentation.http.controllers.hunter.sentiment import create_sentiment_router
+from app.presentation.http.controllers.hunter.trading_signals import (
+    create_trading_signals_router,
+)
+
 # Markets router
 from app.presentation.http.controllers.markets.router import create_markets_router
+from app.presentation.http.controllers.metrics.router import router as metrics_router
+
+# ML routers
+from app.presentation.http.controllers.ml import network_router, prediction_router
+from app.presentation.http.controllers.notification.router import (
+    create_notification_router,
+)
+from app.presentation.http.controllers.payment.router import create_payment_router
+
+# Portfolio router
+from app.presentation.http.controllers.portfolio.router import create_portfolio_router
+
+# Preferences router
+from app.presentation.http.controllers.preferences.router import (
+    create_preferences_router,
+)
+
+# Search router
+from app.presentation.http.controllers.search.router import create_search_router
+from app.presentation.http.controllers.subscription.router import (
+    create_subscription_router,
+)
 
 # Transaction router
-from app.presentation.http.controllers.transaction.router import create_transaction_router
+from app.presentation.http.controllers.transaction.router import (
+    create_transaction_router,
+)
+from app.presentation.http.controllers.ultra.arbitrage import create_arbitrage_router
+from app.presentation.http.controllers.ultra.auto_executor import (
+    create_auto_executor_router,
+)
+from app.presentation.http.controllers.ultra.flash_loans import (
+    create_flash_loans_router,
+)
+from app.presentation.http.controllers.ultra.mev import create_mev_router
+from app.presentation.http.controllers.user.projects_router import (
+    router as projects_user_router,
+)
+from app.presentation.http.controllers.wallet.router import create_wallet_router
+
+# WebSocket router for real-time agent chat
+from app.presentation.http.websocket.chat_websocket import router as agno_chat_ws_router
+from app.presentation.http.websocket.graph_websocket import router as graph_ws_router
 
 
 def create_api_v1_router() -> APIRouter:
@@ -152,6 +199,8 @@ def create_api_v1_router() -> APIRouter:
         create_markets_router(),
         # Transaction router (for logging and history)
         create_transaction_router(),
+        # Bitcoin transaction router (for BTC-specific operations)
+        create_bitcoin_router(),
     )
 
     for sub_router in sub_routers:

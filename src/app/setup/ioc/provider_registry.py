@@ -16,12 +16,14 @@ from app.setup.ioc.llm_ranking import LLMRankingProvider
 from app.setup.ioc.agent_squad_domain import AgentSquadDomainProvider
 from app.setup.ioc.agent_squad_infrastructure import AgentSquadInfrastructureProvider
 from app.setup.ioc.agent_squad_application import AgentSquadApplicationProvider
-from app.setup.ioc.curve import CurveProvider
-from app.setup.ioc.hyperliquid import HyperliquidProvider
-from app.setup.ioc.morpho import MorphoProvider
-from app.setup.ioc.layerzero import LayerZeroProvider
-from app.setup.ioc.axelar import AxelarProvider
-from app.setup.ioc.opensea import OpenSeaProvider
+
+# TODO: These providers are pending implementation - uncomment when ready
+# from app.setup.ioc.curve import CurveProvider
+# from app.setup.ioc.hyperliquid import HyperliquidProvider
+# from app.setup.ioc.morpho import MorphoProvider
+# from app.setup.ioc.layerzero import LayerZeroProvider
+# from app.setup.ioc.axelar import AxelarProvider
+# from app.setup.ioc.opensea import OpenSeaProvider
 
 
 def get_providers() -> Iterable[Provider]:
@@ -40,10 +42,11 @@ def get_providers() -> Iterable[Provider]:
         AgentSquadInfrastructureProvider(),  # Agent Squad infrastructure adapters
         AgentSquadApplicationProvider(),  # Agent Squad application interactors
         AaveProvider(),  # Aave V3 lending protocol integration
-        CurveProvider(),  # Curve Finance DeFi integration
-        HyperliquidProvider(),  # Hyperliquid perpetual futures integration
-        MorphoProvider(),  # Morpho Protocol lending vaults integration
-        LayerZeroProvider(),  # LayerZero cross-chain messaging integration
-        AxelarProvider(),  # Axelar cross-chain bridging integration
-        OpenSeaProvider(),  # OpenSea NFT marketplace integration
+        # TODO: Uncomment when implementations are ready
+        # CurveProvider(),  # Curve Finance DeFi integration
+        # HyperliquidProvider(),  # Hyperliquid perpetual futures integration
+        # MorphoProvider(),  # Morpho Protocol lending vaults integration
+        # LayerZeroProvider(),  # LayerZero cross-chain messaging integration
+        # AxelarProvider(),  # Axelar cross-chain bridging integration
+        # OpenSeaProvider(),  # OpenSea NFT marketplace integration
     )

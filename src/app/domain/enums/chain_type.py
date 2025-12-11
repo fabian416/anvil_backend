@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ChainType(Enum):
     ARBITRUM = "arbitrum"
     BASE = "base"
@@ -7,3 +8,6 @@ class ChainType(Enum):
     POLYGON = "polygon"
     OPTIMISM = "optimism"
     HYPERLIQUID = "hyperliquid"
+    # Bitcoin networks
+    BITCOIN = "bitcoin"
+    BITCOIN_TESTNET = "bitcoin_testnet"

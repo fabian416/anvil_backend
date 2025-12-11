@@ -3,18 +3,21 @@ Factory for Transaction Confirmation Service.
 
 Provides factory functions to create TransactionConfirmationService instances
 with proper dependency injection, suitable for CLI workers and background tasks.
+
+Supports optional portfolio snapshot creation on transaction confirmation.
 """
 
 from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Awaitable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.transaction.confirmation_service import (
     TransactionConfirmationService,
+    PortfolioSnapshotCallback,
 )
 from app.infrastructure.adapters.transaction_repository_sqla import (
     SqlaTransactionRepository,
@@ -27,6 +30,7 @@ if TYPE_CHECKING:
     from app.domain.ports.transaction.transaction_repository import (
         TransactionRepository,
     )
+    from app.domain.entities.wallet import WalletId
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +40,7 @@ def create_confirmation_service(
     *,
     use_testnet: bool = True,
     http_timeout: int = 30,
+    on_transaction_confirmed: PortfolioSnapshotCallback | None = None,
 ) -> TransactionConfirmationService:
     """
     Create a TransactionConfirmationService with the given session.
@@ -47,6 +52,7 @@ def create_confirmation_service(
         session: SQLAlchemy async session for database operations.
         use_testnet: Whether to use testnet RPC endpoints.
         http_timeout: HTTP timeout for RPC calls in seconds.
+        on_transaction_confirmed: Optional callback to create portfolio snapshot.
 
     Returns:
         Configured TransactionConfirmationService instance.
@@ -56,12 +62,15 @@ def create_confirmation_service(
         transaction_repository=repository,
         use_testnet=use_testnet,
         http_timeout=http_timeout,
+        on_transaction_confirmed=on_transaction_confirmed,
     )
 
 
 def create_confirmation_service_from_settings(
     session: AsyncSession,
     settings: TransactionConfirmationSettings,
+    *,
+    on_transaction_confirmed: PortfolioSnapshotCallback | None = None,
 ) -> TransactionConfirmationService:
     """
     Create a TransactionConfirmationService from settings.
@@ -72,6 +81,7 @@ def create_confirmation_service_from_settings(
     Args:
         session: SQLAlchemy async session for database operations.
         settings: Transaction confirmation settings from config.
+        on_transaction_confirmed: Optional callback to create portfolio snapshot.
 
     Returns:
         Configured TransactionConfirmationService instance.
@@ -80,6 +90,50 @@ def create_confirmation_service_from_settings(
         session=session,
         use_testnet=settings.use_testnet,
         http_timeout=settings.http_timeout,
+        on_transaction_confirmed=on_transaction_confirmed,
+    )
+
+
+def create_confirmation_service_with_portfolio(
+    session: AsyncSession,
+    settings: TransactionConfirmationSettings,
+) -> TransactionConfirmationService:
+    """
+    Create a TransactionConfirmationService with portfolio snapshot support.
+
+    This factory creates the service with a callback that automatically
+    creates portfolio snapshots when transactions are confirmed.
+
+    Args:
+        session: SQLAlchemy async session for database operations.
+        settings: Transaction confirmation settings from config.
+
+    Returns:
+        Configured TransactionConfirmationService with portfolio support.
+    """
+    from app.application.portfolio.portfolio_service import PortfolioService
+    from app.infrastructure.adapters.portfolio_repository_sqla import (
+        SqlaPortfolioRepository,
+    )
+    from app.infrastructure.adapters.wallet_repository_sqla import SqlaWalletRepository
+
+    # Create portfolio service
+    portfolio_repo = SqlaPortfolioRepository(session)
+    wallet_repo = SqlaWalletRepository(session)
+    portfolio_service = PortfolioService(
+        portfolio_repository=portfolio_repo,
+        wallet_repository=wallet_repo,
+        use_testnet=settings.use_testnet,
+    )
+
+    async def snapshot_callback(wallet_id: "WalletId") -> None:
+        """Create portfolio snapshot for the wallet."""
+        await portfolio_service.snapshot_portfolio(wallet_id)
+
+    return create_confirmation_service_from_settings(
+        session=session,
+        settings=settings,
+        on_transaction_confirmed=snapshot_callback,
     )
 
 

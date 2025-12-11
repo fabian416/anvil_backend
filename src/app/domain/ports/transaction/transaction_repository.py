@@ -46,11 +46,34 @@ class TransactionRepository(Protocol):
         """
         Get transaction by blockchain hash.
 
+        Note: This returns the first match. For checking per-user duplicates,
+        use get_by_user_and_tx_hash instead.
+
         Args:
             tx_hash: The blockchain transaction hash (0x...).
 
         Returns:
             Transaction if found, None otherwise.
+        """
+        ...
+
+    async def get_by_user_and_tx_hash(
+        self,
+        user_id: UserId,
+        tx_hash: str,
+    ) -> Transaction | None:
+        """
+        Get transaction by user ID and blockchain hash combination.
+
+        This is used to check for duplicate records per user, since the same
+        on-chain transaction can appear in both sender's and receiver's history.
+
+        Args:
+            user_id: The user's ID.
+            tx_hash: The blockchain transaction hash (0x...).
+
+        Returns:
+            Transaction if found for this user, None otherwise.
         """
         ...
 
@@ -331,5 +354,99 @@ class TransactionRepository(Protocol):
 
         Returns:
             List of (date, unique_user_count) tuples.
+        """
+        ...
+
+    # ============================================================
+    # Volume Analytics Methods
+    # ============================================================
+
+    async def get_total_volume(
+        self,
+        *,
+        chain: ChainType | None = None,
+        tx_type: TransactionType | None = None,
+        status: TransactionStatus | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> tuple[float, float]:
+        """
+        Get total transaction volume (sum of amount_in) with optional filters.
+
+        Args:
+            chain: Optional chain filter.
+            tx_type: Optional transaction type filter.
+            status: Optional status filter.
+            start_date: Optional start date filter.
+            end_date: Optional end date filter.
+
+        Returns:
+            Tuple of (total_volume, total_volume_count) where volume is in ETH.
+        """
+        ...
+
+    async def get_volume_by_user(
+        self,
+        user_id: UserId,
+        *,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> float:
+        """
+        Get total transaction volume for a specific user.
+
+        Args:
+            user_id: The user's ID.
+            chain: Optional chain filter.
+            status: Optional status filter.
+            start_date: Optional start date filter.
+            end_date: Optional end date filter.
+
+        Returns:
+            Total volume in ETH.
+        """
+        ...
+
+    async def get_daily_volume(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        *,
+        chain: ChainType | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> list[tuple[datetime, float]]:
+        """
+        Get daily transaction volume for a date range.
+
+        Args:
+            start_date: Start of the date range.
+            end_date: End of the date range.
+            chain: Optional chain filter.
+            tx_type: Optional transaction type filter.
+
+        Returns:
+            List of (date, volume) tuples for each day.
+        """
+        ...
+
+    async def get_top_senders(
+        self,
+        *,
+        limit: int = 10,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> list[tuple[int, int, float]]:
+        """
+        Get top senders by transaction count and volume.
+
+        Args:
+            limit: Maximum number of results (default 10).
+            start_date: Optional start date filter.
+            end_date: Optional end date filter.
+
+        Returns:
+            List of (user_id, tx_count, total_volume) tuples.
         """
         ...

@@ -2,8 +2,69 @@
 Portfolio-related request/response schemas.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
+
+
+# ============================================================
+# Portfolio Holdings Schemas
+# ============================================================
+
+
+class TokenHoldingResponse(BaseModel):
+    """Token holding in portfolio."""
+
+    token_address: Optional[str] = Field(
+        None, description="Token contract address (null for native)"
+    )
+    symbol: str = Field(..., description="Token symbol (e.g., ETH, USDC)")
+    name: str = Field(..., description="Token name")
+    decimals: int = Field(..., description="Token decimals")
+    amount: float = Field(..., description="Token balance")
+    usd_value: Optional[float] = Field(None, description="USD value of holding")
+    usd_price: Optional[float] = Field(None, description="Price per token in USD")
+    percentage: float = Field(0.0, description="Percentage of total portfolio")
+
+
+class PortfolioResponse(BaseModel):
+    """Portfolio data response for a wallet."""
+
+    wallet_address: str = Field(..., description="Wallet address")
+    chain: str = Field(..., description="Blockchain network")
+    total_usd: float = Field(..., description="Total portfolio value in USD")
+    native_balance: float = Field(..., description="Native token balance")
+    native_usd_value: Optional[float] = Field(
+        None, description="Native token USD value"
+    )
+    native_symbol: str = Field(
+        ..., description="Native token symbol (ETH, MATIC, etc.)"
+    )
+    tokens: List[TokenHoldingResponse] = Field(
+        default_factory=list, description="Token holdings"
+    )
+    captured_at: str = Field(..., description="ISO timestamp of data capture")
+    has_value: bool = Field(..., description="Whether portfolio has USD value")
+
+
+class PortfolioHistoryPoint(BaseModel):
+    """Single point in portfolio history."""
+
+    captured_at: str
+    total_usd: float
+
+
+class PortfolioHistoryResponse(BaseModel):
+    """Portfolio value history for charts."""
+
+    wallet_address: str
+    points: List[PortfolioHistoryPoint]
+    start_date: str
+    end_date: str
+
+
+# ============================================================
+# Risk Analysis Schemas (existing)
+# ============================================================
 
 
 # Response schemas

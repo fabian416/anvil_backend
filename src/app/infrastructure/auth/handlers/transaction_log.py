@@ -5,6 +5,7 @@ When users send transactions via Privy on the frontend, we log them
 in the backend for history, auditing, and display purposes.
 """
 
+import contextlib
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -12,7 +13,6 @@ from decimal import Decimal
 
 from app.application.common.services.current_user import CurrentUserService
 from app.domain.entities.transaction import Transaction, TransactionId
-from app.domain.entities.wallet import WalletId
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 # Chain ID to ChainType mapping
+# Note: Bitcoin doesn't use chain IDs like EVM, but we define pseudo-IDs for consistency
 CHAIN_ID_MAP: dict[int, ChainType] = {
     1: ChainType.ETHEREUM,
     10: ChainType.OPTIMISM,
@@ -33,6 +34,17 @@ CHAIN_ID_MAP: dict[int, ChainType] = {
     42161: ChainType.ARBITRUM,
     11155111: ChainType.ETHEREUM,  # Sepolia testnet -> treat as Ethereum
     84532: ChainType.BASE,  # Base Sepolia
+    # Bitcoin pseudo chain IDs (for API consistency)
+    0: ChainType.BITCOIN,  # Bitcoin mainnet (0 = special for UTXO chains)
+    -1: ChainType.BITCOIN_TESTNET,  # Bitcoin testnet
+}
+
+# Chain name to ChainType mapping (for Bitcoin string-based lookups)
+CHAIN_NAME_MAP: dict[str, ChainType] = {
+    "bitcoin": ChainType.BITCOIN,
+    "btc": ChainType.BITCOIN,
+    "bitcoin_testnet": ChainType.BITCOIN_TESTNET,
+    "btc_testnet": ChainType.BITCOIN_TESTNET,
 }
 
 # Transaction type mapping from frontend strings
@@ -49,17 +61,20 @@ TX_TYPE_MAP: dict[str, TransactionType] = {
 
 class TransactionLogError(Exception):
     """Error during transaction logging."""
+
     pass
 
 
 class WalletNotFoundForTransactionError(TransactionLogError):
     """Wallet not found for the transaction sender."""
+
     pass
 
 
 @dataclass
 class LogTransactionInput:
     """Input data for logging a transaction."""
+
     tx_hash: str
     from_address: str
     to_address: str | None
@@ -73,6 +88,7 @@ class LogTransactionInput:
 @dataclass
 class LogTransactionResult:
     """Result of transaction logging."""
+
     id: int
     tx_hash: str
     status: str
@@ -105,6 +121,11 @@ class LogTransactionHandler:
         """
         Log a transaction to the database.
 
+        This logs the transaction for the sender (current user). Additionally,
+        if the recipient (to_address) is a registered user with a wallet in our
+        system, we create a second transaction record for them so they can see
+        the transaction in their history as well.
+
         Args:
             input_data: Transaction details from the frontend.
 
@@ -124,14 +145,16 @@ class LogTransactionHandler:
             f"for user {user.id_.value}"
         )
 
-        # Check if transaction already exists
-        existing = await self._transaction_repository.get_by_tx_hash(
-            input_data.tx_hash
+        # Check if transaction already exists FOR THIS USER
+        # (same tx_hash can exist for multiple users now)
+        existing = await self._transaction_repository.get_by_user_and_tx_hash(
+            user_id=user_id,
+            tx_hash=input_data.tx_hash,
         )
         if existing:
             logger.info(
-                f"Transaction {input_data.tx_hash[:16]}... already exists, "
-                f"returning existing record"
+                f"Transaction {input_data.tx_hash[:16]}... already exists for user "
+                f"{user.id_.value}, returning existing record"
             )
             return LogTransactionResult(
                 id=existing.id_.value,
@@ -172,10 +195,7 @@ class LogTransactionHandler:
         chain = CHAIN_ID_MAP.get(input_data.chain_id, ChainType.ETHEREUM)
 
         # Map transaction type
-        tx_type = TX_TYPE_MAP.get(
-            input_data.tx_type.lower(),
-            TransactionType.SEND
-        )
+        tx_type = TX_TYPE_MAP.get(input_data.tx_type.lower(), TransactionType.SEND)
 
         # Parse value (Wei) to ETH as Decimal
         # The database column has precision (30, 18) which only supports up to 10^12 before decimal
@@ -190,11 +210,15 @@ class LogTransactionHandler:
         except Exception:
             amount_in = None
 
-        # Create transaction entity
+        # Normalize to_address (lowercase if provided)
+        to_address = input_data.to_address.lower() if input_data.to_address else None
+
+        # Create transaction entity for SENDER
         transaction = Transaction(
             id_=TransactionId(0),  # Will be assigned by DB
             user_id=user_id,
             wallet_id=wallet.id_,
+            to_address=to_address,  # Store recipient address for analytics
             type=tx_type,
             chain=chain,
             asset_in=input_data.asset_symbol or "ETH",
@@ -212,14 +236,29 @@ class LogTransactionHandler:
             block_number=None,
             confirmed_at=None,
             created_at=CreatedAt(datetime.now(UTC)),
+            gas_used=None,  # Will be populated on confirmation
+            gas_price=None,  # Will be populated on confirmation
+            tx_metadata=None,  # Can be populated for contract calls
         )
 
-        # Save to database
+        # Save sender's transaction to database
         try:
             saved_tx = await self._transaction_repository.save(transaction)
             logger.info(
-                f"Transaction logged: id={saved_tx.id_.value}, "
+                f"Transaction logged for sender: id={saved_tx.id_.value}, "
                 f"hash={input_data.tx_hash[:16]}..."
+            )
+
+            # ============================================================
+            # Also log the transaction for the RECEIVER if they're a registered user
+            # ============================================================
+            await self._log_receiver_transaction(
+                input_data=input_data,
+                sender_user_id=user_id,
+                to_address=to_address,
+                chain=chain,
+                tx_type=tx_type,
+                amount_in=amount_in,
             )
 
             return LogTransactionResult(
@@ -237,15 +276,128 @@ class LogTransactionHandler:
             logger.error(f"Failed to save transaction: {e}")
             raise TransactionLogError(f"Failed to log transaction: {e}") from e
 
+    async def _log_receiver_transaction(
+        self,
+        *,
+        input_data: LogTransactionInput,
+        sender_user_id: UserId,
+        to_address: str | None,
+        chain: ChainType,
+        tx_type: TransactionType,
+        amount_in: Decimal | None,
+    ) -> None:
+        """
+        Create a transaction record for the receiver if they're a registered user.
+
+        This allows the same on-chain transaction to appear in both the sender's
+        and receiver's transaction history.
+
+        Args:
+            input_data: Original transaction input data.
+            sender_user_id: The sender's user ID (to avoid creating duplicate).
+            to_address: The recipient address (normalized, lowercase).
+            chain: The blockchain network.
+            tx_type: The transaction type.
+            amount_in: The transaction amount in ETH.
+        """
+        # Skip if no recipient address
+        if not to_address:
+            return
+
+        try:
+            # Look up the receiver's wallet by address
+            receiver_wallet = await self._wallet_repository.get_by_address(to_address)
+
+            if not receiver_wallet:
+                # Receiver is not a registered user in our system, skip
+                logger.debug(
+                    f"Receiver address {to_address[:10]}... not found in system, "
+                    f"skipping receiver transaction log"
+                )
+                return
+
+            # Get the receiver's user ID
+            receiver_user_id = receiver_wallet.user_id
+
+            # Don't create a duplicate if sender and receiver are the same user
+            if receiver_user_id.value == sender_user_id.value:
+                logger.debug(
+                    f"Sender and receiver are the same user ({sender_user_id.value}), "
+                    f"skipping duplicate receiver transaction"
+                )
+                return
+
+            # Check if the receiver already has this transaction logged
+            existing_receiver_tx = (
+                await self._transaction_repository.get_by_user_and_tx_hash(
+                    user_id=receiver_user_id,
+                    tx_hash=input_data.tx_hash,
+                )
+            )
+            if existing_receiver_tx:
+                logger.debug(
+                    f"Transaction {input_data.tx_hash[:16]}... already exists for "
+                    f"receiver user {receiver_user_id.value}, skipping"
+                )
+                return
+
+            # Create transaction entity for RECEIVER
+            # The receiver sees the same transaction but from their perspective
+            receiver_tx = Transaction(
+                id_=TransactionId(0),  # Will be assigned by DB
+                user_id=receiver_user_id,
+                wallet_id=receiver_wallet.id_,  # The receiver's wallet
+                to_address=to_address,  # Keep the to_address for consistency
+                type=tx_type,  # Same transaction type
+                chain=chain,
+                asset_in=input_data.asset_symbol or "ETH",
+                amount_in=amount_in,
+                asset_out=None,
+                amount_out=None,
+                fee=None,
+                fee_usd=None,
+                tx_hash=input_data.tx_hash.lower(),
+                status=TransactionStatus.PENDING,
+                dex_aggregator=None,
+                dex_route=None,
+                slippage=None,
+                error_message=None,
+                block_number=None,
+                confirmed_at=None,
+                created_at=CreatedAt(datetime.now(UTC)),
+                gas_used=None,
+                gas_price=None,
+                tx_metadata={
+                    "receiver_view": True,
+                    "from_address": input_data.from_address.lower(),
+                },
+            )
+
+            # Save receiver's transaction to database
+            saved_receiver_tx = await self._transaction_repository.save(receiver_tx)
+            logger.info(
+                f"Transaction logged for receiver: id={saved_receiver_tx.id_.value}, "
+                f"user={receiver_user_id.value}, hash={input_data.tx_hash[:16]}..."
+            )
+
+        except Exception as e:
+            # Log the error but don't fail the main sender flow
+            # The receiver transaction is a nice-to-have, not critical
+            logger.warning(
+                f"Failed to log receiver transaction for {to_address[:10]}...: {e}"
+            )
+
 
 @dataclass
 class TransactionHistoryItem:
     """Single transaction in history list."""
+
     id: int
     tx_hash: str | None
     type: str
     chain: str
     status: str
+    to_address: str | None  # Recipient address
     asset_in: str | None
     amount_in: str | None
     asset_out: str | None
@@ -255,11 +407,18 @@ class TransactionHistoryItem:
     confirmed_at: str | None
     created_at: str
     explorer_url: str | None
+    # Analytics fields
+    gas_used: int | None
+    gas_price: int | None
+    # Direction fields (for dual transaction display)
+    is_incoming: bool  # True if user is the receiver
+    from_address: str | None  # Sender address (for incoming transactions)
 
 
 @dataclass
 class TransactionHistoryResult:
     """Result of transaction history query."""
+
     user_id: int
     transactions: list[TransactionHistoryItem]
     total: int
@@ -274,6 +433,9 @@ EXPLORER_URLS: dict[ChainType, str] = {
     ChainType.BASE: "https://basescan.org/tx/{tx_hash}",
     ChainType.POLYGON: "https://polygonscan.com/tx/{tx_hash}",
     ChainType.OPTIMISM: "https://optimistic.etherscan.io/tx/{tx_hash}",
+    # Bitcoin explorers
+    ChainType.BITCOIN: "https://mempool.space/tx/{tx_hash}",
+    ChainType.BITCOIN_TESTNET: "https://mempool.space/testnet/tx/{tx_hash}",
 }
 
 
@@ -330,10 +492,8 @@ class GetTransactionHistoryHandler:
         # Parse filters
         chain_filter: ChainType | None = None
         if chain:
-            try:
+            with contextlib.suppress(ValueError):
                 chain_filter = ChainType(chain.lower())
-            except ValueError:
-                pass
 
         status_filter: TransactionStatus | None = None
         if status:
@@ -367,25 +527,42 @@ class GetTransactionHistoryHandler:
         )
 
         # Convert to response items
-        items = [
-            TransactionHistoryItem(
-                id=tx.id_.value,
-                tx_hash=tx.tx_hash,
-                type=tx.type.name.lower(),
-                chain=tx.chain.value,
-                status=tx.status.name.lower(),
-                asset_in=tx.asset_in,
-                amount_in=str(tx.amount_in) if tx.amount_in else None,
-                asset_out=tx.asset_out,
-                amount_out=str(tx.amount_out) if tx.amount_out else None,
-                fee_usd=str(tx.fee_usd) if tx.fee_usd else None,
-                block_number=tx.block_number,
-                confirmed_at=tx.confirmed_at.isoformat() if tx.confirmed_at else None,
-                created_at=tx.created_at.value.isoformat(),
-                explorer_url=get_explorer_url(tx.chain, tx.tx_hash),
+        items = []
+        for tx in transactions:
+            # Determine if this is an incoming transaction (receiver's view)
+            is_incoming = bool(tx.tx_metadata and tx.tx_metadata.get("receiver_view"))
+            # Get the sender's address from metadata (for incoming transactions)
+            from_address = (
+                tx.tx_metadata.get("from_address")
+                if tx.tx_metadata and is_incoming
+                else None
             )
-            for tx in transactions
-        ]
+
+            items.append(
+                TransactionHistoryItem(
+                    id=tx.id_.value,
+                    tx_hash=tx.tx_hash,
+                    type=tx.type.name.lower(),
+                    chain=tx.chain.value,
+                    status=tx.status.name.lower(),
+                    to_address=tx.to_address,
+                    asset_in=tx.asset_in,
+                    amount_in=str(tx.amount_in) if tx.amount_in else None,
+                    asset_out=tx.asset_out,
+                    amount_out=str(tx.amount_out) if tx.amount_out else None,
+                    fee_usd=str(tx.fee_usd) if tx.fee_usd else None,
+                    block_number=tx.block_number,
+                    confirmed_at=(
+                        tx.confirmed_at.isoformat() if tx.confirmed_at else None
+                    ),
+                    created_at=tx.created_at.value.isoformat(),
+                    explorer_url=get_explorer_url(tx.chain, tx.tx_hash),
+                    gas_used=tx.gas_used,
+                    gas_price=tx.gas_price,
+                    is_incoming=is_incoming,
+                    from_address=from_address,
+                )
+            )
 
         return TransactionHistoryResult(
             user_id=user.id_.value,
