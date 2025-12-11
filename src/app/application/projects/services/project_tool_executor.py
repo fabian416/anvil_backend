@@ -60,23 +60,31 @@ class ProjectToolExecutor:
     ) -> str:
         """
         Execute tool if enabled in project and parameters pass validation.
-        
+
         Args:
             tool_name: Tool name (e.g., "hunter_sentiment_analysis")
             parameters: Tool parameters
-        
+
         Returns:
             Formatted tool result
-        
+
         Raises:
             ToolExecutionError: If tool not enabled or validation fails
         """
-        # Check if tool is enabled in project
-        if not self.project.has_tool(tool_name):
+        # Check if project integration is enabled
+        if not self.integration_settings.projects.enabled:
             raise ToolExecutionError(
-                f"Tool '{tool_name}' is not enabled in project '{self.project.name}'. "
-                f"Available tools: {', '.join(self.project.enabled_tools)}"
+                "Project integration is disabled. "
+                "Enable with integrations.projects.enabled=true in config."
             )
+
+        # Check if tool is enabled in project (if tool permissions are enabled)
+        if self.integration_settings.projects.tool_permissions_enabled:
+            if not self.project.has_tool(tool_name):
+                raise ToolExecutionError(
+                    f"Tool '{tool_name}' is not enabled in project '{self.project.name}'. "
+                    f"Available tools: {', '.join(self.project.enabled_tools)}"
+                )
         
         # Validate parameters against project risk config (if enabled)
         if self.integration_settings.projects.risk_validation_enabled:
