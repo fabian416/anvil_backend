@@ -37,3 +37,21 @@
 [submodule "libs/sdk"]
 	path = libs/sdk
 	url = git@github.com:lifinance/sdk.git
+[submodule "libs/www-project-ai-testing-guide"]
+	path = libs/www-project-ai-testing-guide
+	url = git@github.com:OWASP/www-project-ai-testing-guide.git
+[submodule "libs/llm-security-auditor"]
+	path = libs/llm-security-auditor
+	url = git@github.com:dleerdefi/llm-security-auditor.git
+[submodule "libs/LLMExploiter"]
+	path = libs/LLMExploiter
+	url = git@github.com:soufianetahiri/LLMExploiter.git
+[submodule "libs/Nettacker"]
+	path = libs/Nettacker
+	url = git@github.com:OWASP/Nettacker.git
+[submodule "libs/Helios"]
+	path = libs/Helios
+	url = git@github.com:Stuub/Helios.git
+[submodule "libs/2026-PENTEST-AIV1"]
+	path = libs/2026-PENTEST-AIV1
+	url = git@github.com:dcreply4u/2026-PENTEST-AIV1.git
