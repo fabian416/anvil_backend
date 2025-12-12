@@ -1,3555 +1,3094 @@
-# Use Cases: Real-World Examples (Before/After)
+# Anvil Platform: Enterprise-Grade Use Cases & Examples
 
-**Version:** 1.0.0  
-**Date:** December 3, 2025  
-**Purpose:** Concrete examples showing platform capabilities before and after library integration
-
----
-
-## 📖 **TABLE OF CONTENTS**
-
-1. [Chat Examples](#chat-examples)
-2. [Project Workflow Examples](#project-examples)
-3. [User Journey Examples](#user-journeys)
-4. [API Request/Response Examples](#api-examples)
+**Version:** 2.0.0 (Based on Actual Implementation)
+**Date:** December 12, 2025
+**Platform:** Anvil DeFi Intelligence Platform
+**Architecture:** Hexagonal (Clean Architecture) with CQRS, FastAPI, SQLAlchemy, Redis, Celery
 
 ---
 
-## 💬 **CHAT EXAMPLES** {#chat-examples}
+## 📖 TABLE OF CONTENTS
 
-### **Example 1: Token Research Query**
-
-#### **BEFORE (Current Platform)**
-
-```
-User: "Tell me about Uniswap"
-
-Agent Response:
-"Uniswap is a decentralized exchange protocol built on Ethereum. 
-It uses an automated market maker (AMM) model.
-
-Current Stats (from DeFiLlama):
-• TVL: $3.2B
-• 24h Volume: $1.1B
-• Top Pools: ETH/USDC, WBTC/ETH
-
-Would you like to know more about any specific aspect?"
-```
-
-**Capabilities:**
-- ✅ Basic protocol information
-- ✅ Current TVL and volume data (DeFiLlama MCP)
-- ✅ Historical context from knowledge base
-- ❌ No sentiment analysis
-- ❌ No price predictions
-- ❌ No risk assessment
-- ❌ No trading signals
+1. [Executive Overview](#executive-overview)
+2. [Platform Capabilities Matrix](#capabilities-matrix)
+3. [Agent Squad Use Cases](#agent-squad-use-cases)
+4. [Agno DeFi Agents](#agno-agents)
+5. [MCP Server Integrations](#mcp-integrations)
+6. [Hunter AI Use Cases](#hunter-ai-use-cases)
+7. [Portfolio Management](#portfolio-management)
+8. [DeFi Protocol Operations](#defi-operations)
+9. [Cross-Chain Operations](#cross-chain-operations)
+10. [Risk Management & Analysis](#risk-management)
+11. [Projects (Customizable AI Containers)](#projects)
+12. [GraphRAG Protocol Search](#graphrag)
+13. [Real-Time Features](#real-time-features)
+14. [Enterprise Features](#enterprise-features)
+15. [API Reference Examples](#api-examples)
 
 ---
 
-#### **AFTER (With Hunter AI & ULTRA Arbitrage)**
+## 🎯 EXECUTIVE OVERVIEW {#executive-overview}
 
-```
-User: "Tell me about Uniswap"
+Anvil is an enterprise-grade DeFi intelligence platform that combines:
 
-Agent Response:
-"Uniswap (UNI) - Comprehensive Analysis
+- **18 Specialized Agents** (Agent Squad) for domain-specific tasks
+- **5 Operational DeFi Agents** (Agno) for autonomous portfolio management
+- **13 MCP Protocol Servers** for real-time blockchain data
+- **Hunter AI** for sentiment analysis, risk scoring, and price predictions
+- **GraphRAG** for semantic protocol relationship search
+- **Multi-Chain Portfolio Tracking** (Ethereum, Base, Arbitrum, Polygon, Optimism, Bitcoin)
+- **6 DeFi Protocol Integrations** (Aave, Curve, Morpho, Hyperliquid, Axelar, LayerZero)
+- **NFT Portfolio Management** (OpenSea integration)
+- **Real-Time Alerts & WebSocket Streaming**
+- **Projects System** for multi-tenant customizable AI containers
 
-📊 MARKET DATA (Real-time):
-• Current Price: $8.45 USD (+3.2% 24h)
-• TVL: $3.2B | 24h Volume: $1.1B
-• Market Cap: $5.1B | Rank: #24
+### Key Differentiators
 
-💭 SENTIMENT ANALYSIS (Hunter AI):
-• Overall Sentiment: 72/100 (Bullish)
-• Confidence: 85%
-• Sources:
-  - Twitter: 75/100 (8,500 mentions, high engagement)
-  - Reddit: 68/100 (r/UniSwap karma: 12.5k)
-  - Discord: 70/100 (active community)
-  - News: 73/100 (12 positive articles today)
-• Trend: ↑ Increasing (sentiment up 8 points in 24h)
-
-🔮 PRICE PREDICTION (LSTM Model):
-• 24h Forecast: $8.75 (+3.5%)
-• Confidence: 78%
-• Confidence Interval: $8.60 - $8.90 (90% CI)
-• 7-Day Forecast: $9.20 (+8.9%) [Premium Feature]
-• Model Accuracy: 67% (validated on historical data)
-
-⚠️ RISK ASSESSMENT (ML-Based):
-• Risk Score: 35/100 (Low Risk)
-• Risk Level: LOW
-• Factors:
-  - Liquidity: ✅ Excellent ($3.2B TVL)
-  - Volatility: ✅ Low (18% 30-day volatility)
-  - Contract: ✅ Audited by Trail of Bits, OpenZeppelin
-  - Sentiment: ✅ Positive (72/100)
-• Recommendation: Suitable for conservative portfolios
-
-📈 TRADING SIGNALS (AI-Generated):
-• Signal: BUY (MODERATE)
-• Confidence: 76%
-• Reasoning:
-  1. Bullish sentiment (72/100)
-  2. Positive price prediction (+3.5% 24h)
-  3. Low risk score (35/100)
-  4. High confidence (76%)
-• Entry: $8.40 - $8.50
-• Target: $8.90 (24h), $9.20 (7d)
-• Stop Loss: $8.10
-
-💰 ARBITRAGE OPPORTUNITIES (ULTRA):
-Found 2 active opportunities:
-
-1. Multi-Hop Arbitrage:
-   Path: USDC → UNI (Uniswap V3) → UNI (Curve) → USDC (Balancer)
-   Estimated Profit: $185 (after all costs)
-   Flash Loan: $100,000 USDC (Balancer, 0.05% fee)
-   Net ROI: 0.185%
-   Risk Score: 28 (Low)
-   Expires in: 4 minutes
-
-2. DEX Spread:
-   Path: UNI → ETH (Sushiswap) → UNI (Uniswap V2)
-   Estimated Profit: $95 (after costs)
-   Flash Loan: $50,000 UNI (Aave, 0.09% fee)
-   Net ROI: 0.19%
-   Risk Score: 32 (Low)
-   Expires in: 7 minutes
-
-🐋 WHALE ACTIVITY (Last 24h):
-• Large Transfers: 3 (total: 2.5M UNI)
-• Top Holder Movement: +150k UNI accumulated
-• Smart Money Signal: Bullish
-
-📊 ORDER BOOK ANALYSIS:
-• Buy Pressure: 68% (bullish)
-• Bid-Ask Spread: 0.08% (tight)
-• Depth (±2%): $12M (excellent liquidity)
-
-Would you like me to:
-1. Set up sentiment alerts for UNI?
-2. Execute arbitrage opportunity #1?
-3. Show portfolio allocation recommendation?
-4. Generate tax report for UNI trades?"
-```
-
-**New Capabilities:**
-- ✅ Multi-source sentiment analysis (Twitter, Reddit, Discord, News)
-- ✅ LSTM price predictions (24h + 7d)
-- ✅ ML-based risk scoring (0-100)
-- ✅ AI trading signals with reasoning
-- ✅ Real-time arbitrage opportunities
-- ✅ Flash loan execution options
-- ✅ Whale activity tracking
-- ✅ Order book depth analysis
-- ✅ Smart money signals
-- ✅ Portfolio recommendations
-
-**Value Add:** From basic info to actionable intelligence
+1. **AI-First Architecture**: Every feature powered by specialized AI agents with domain expertise
+2. **Real-Time Intelligence**: WebSocket streaming, live alerts, continuous risk monitoring
+3. **Multi-Chain Native**: Unified view across 5+ EVM chains + Bitcoin
+4. **Enterprise-Ready**: Multi-tenant projects, role-based access, compliance monitoring
+5. **Production-Grade**: Hexagonal architecture, CQRS, dependency injection, comprehensive testing
 
 ---
 
-### **Example 2: Portfolio Advice Query**
+## 🚀 PLATFORM CAPABILITIES MATRIX {#capabilities-matrix}
 
-#### **BEFORE (Current Platform)**
-
-```
-User: "Should I buy more ETH or diversify?"
-
-Agent Response:
-"I can provide some general information:
-
-Current Portfolio (if you share your wallet):
-• I can track your holdings across chains
-• View DeFi positions (basic)
-
-General Advice:
-• Diversification reduces risk
-• ETH is a blue-chip asset
-• Consider your risk tolerance
-
-I recommend consulting with a financial advisor for personalized advice."
-```
-
-**Capabilities:**
-- ✅ Basic portfolio tracking
-- ✅ General investment principles
-- ❌ No personalized analysis
-- ❌ No risk assessment
-- ❌ No allocation recommendations
-- ❌ No optimization
+| Category | Free Tier | Pro Tier | Enterprise Tier |
+|----------|-----------|----------|-----------------|
+| **Agent Squad** | 5 agents | 10 agents | 18 agents |
+| **Agno DeFi Agents** | ❌ | Limited | Full Access |
+| **MCP Servers** | 3 servers | 8 servers | 13 servers |
+| **Hunter AI** | Basic sentiment | Full sentiment + Risk | All features + Predictions |
+| **Portfolio Tracking** | 1 wallet | 5 wallets | Unlimited |
+| **Chains Supported** | Ethereum | Ethereum + 2 L2s | All chains (5 EVM + BTC) |
+| **DeFi Protocols** | Read-only | Read + Execute | Full + Advanced |
+| **Risk Analysis** | Basic | Advanced | Cascade Simulation |
+| **Projects** | 1 project | 3 projects | Unlimited |
+| **WebSocket Streaming** | ✅ | ✅ | ✅ |
+| **Alerts** | Email only | Email + Push | Multi-channel + Custom |
+| **GraphRAG Search** | 10 queries/day | 100 queries/day | Unlimited |
+| **Support** | Community | Email | Priority + Dedicated |
 
 ---
 
-#### **AFTER (With Hunter AI Portfolio Optimization)**
+## 🤖 AGENT SQUAD USE CASES {#agent-squad-use-cases}
 
-```
-User: "Should I buy more ETH or diversify?"
+The Agent Squad consists of 18 specialized AI agents, each optimized for specific tasks using tailored LLM models and prompts.
 
-Agent Response:
-"📊 PORTFOLIO ANALYSIS (Hunter AI)
+### Agent Tiers
 
-Current Portfolio (Connected: 0xabc...123):
-• Total Value: $125,450
-• Assets: 8 tokens
-• Allocation:
-  - ETH: $75,000 (60%) ⚠️ High concentration
-  - UNI: $18,000 (14%)
-  - AAVE: $12,500 (10%)
-  - LINK: $10,000 (8%)
-  - Others: $9,950 (8%)
+**Free Tier (5 Agents):**
+1. **Chat Agent** - General conversational AI
+2. **Hunter AI** - Market sentiment & predictions
+3. **Research Assistant** - Protocol/token research
+4. **Portfolio Manager** - Portfolio tracking
+5. **Gas Optimizer** - Transaction cost optimization
 
-⚠️ RISK ASSESSMENT:
-• Portfolio Risk Score: 58/100 (Medium-High)
-• Volatility (30d): 32%
-• Correlation Risk: High (85% correlated to ETH)
-• Diversification Score: 42/100 (Needs improvement)
+**Pro Tier (+5 Agents = 10 Total):**
+6. **Transaction Executor** - Execute swaps, stakes, bridges
+7. **Risk Analyzer** - Portfolio risk assessment
+8. **Tax Optimizer** - Tax-loss harvesting & reporting
+9. **DeFi Yield Optimizer** - Find & optimize yield
+10. **Security Auditor** - Smart contract security
 
-💭 PORTFOLIO SENTIMENT:
-• Aggregate Sentiment: 65/100 (Bullish)
-• Weighted by holdings:
-  - ETH: 68/100 (Bullish, 60% weight)
-  - UNI: 72/100 (Bullish, 14% weight)
-  - AAVE: 58/100 (Neutral, 10% weight)
-  - LINK: 62/100 (Bullish, 8% weight)
-
-🎯 OPTIMIZATION RECOMMENDATION (MPT-Based):
-
-Current vs. Optimal Allocation:
-┌──────────────────────────────────────────────┐
-│ Asset   Current  Optimal  Action   Amount   │
-├──────────────────────────────────────────────┤
-│ ETH     60%      40%      REDUCE   $25,000  │
-│ UNI     14%      18%      INCREASE $5,000   │
-│ AAVE    10%      12%      INCREASE $2,500   │
-│ LINK    8%       10%      INCREASE $2,500   │
-│ MATIC   0%       8%       ADD      $10,000  │
-│ ARB     0%       6%       ADD      $7,500   │
-│ Others  8%       6%       REDUCE   $2,500   │
-└──────────────────────────────────────────────┘
-
-📈 EXPECTED IMPROVEMENTS:
-• Risk Score: 58 → 42 (28% reduction)
-• Expected Return: 18% → 22% annually
-• Sharpe Ratio: 0.85 → 1.15 (+35%)
-• Max Drawdown: -45% → -32%
-• Diversification Score: 42 → 78
-
-📊 EFFICIENT FRONTIER ANALYSIS:
-Current Position: Suboptimal (high risk, moderate return)
-Optimal Position: Lower risk, higher return
-Risk-Adjusted Gain: +40%
-
-💡 SPECIFIC RECOMMENDATIONS:
-
-1. SELL $25,000 ETH (Reduce concentration)
-   • Why: Over-concentrated (60% vs optimal 40%)
-   • Timing: Good - ETH sentiment bullish (68/100)
-   • Tax Impact: -$1,250 (estimated short-term gains)
-
-2. BUY $10,000 MATIC (New position)
-   • Why: Low correlation to ETH (0.35)
-   • Sentiment: 70/100 (Bullish)
-   • Risk Score: 38/100 (Low-Medium)
-   • Expected Return: +25% annually
-
-3. BUY $7,500 ARB (New position)
-   • Why: Layer 2 exposure, low correlation
-   • Sentiment: 73/100 (Bullish)
-   • Risk Score: 42/100 (Medium)
-
-4. INCREASE existing positions:
-   • UNI: +$5,000 (14% → 18%)
-   • AAVE: +$2,500 (10% → 12%)
-   • LINK: +$2,500 (8% → 10%)
-
-🔄 REBALANCING PLAN:
-• Estimated Cost: $150 (gas + slippage)
-• Tax Implications: -$1,250 (consider tax-loss harvesting)
-• Time to Execute: ~30 minutes
-• Auto-rebalance: Available (set thresholds)
-
-📅 NEXT REBALANCE: 30 days (or when allocation drifts >5%)
-
-💰 TAX OPTIMIZATION:
-• Current Tax Liability: $8,500 (estimated)
-• With Tax-Loss Harvesting: $7,250 (-$1,250)
-• Strategy: Sell LINK at loss, rebuy similar asset
-
-Would you like me to:
-1. Execute this rebalancing plan?
-2. Set up automatic rebalancing alerts?
-3. Generate detailed tax report?
-4. Show alternative allocation scenarios?"
-```
-
-**New Capabilities:**
-- ✅ Current portfolio analysis with risk scoring
-- ✅ MPT-based portfolio optimization
-- ✅ Efficient frontier visualization
-- ✅ Specific buy/sell recommendations
-- ✅ Correlation analysis
-- ✅ Tax-loss harvesting suggestions
-- ✅ Rebalancing automation
-- ✅ Expected improvements quantified
-- ✅ Risk-adjusted performance metrics
-- ✅ Sentiment-weighted portfolio analysis
-
-**Value Add:** From generic advice to personalized, data-driven optimization
+**Enterprise Tier (+8 Agents = 18 Total):**
+11. **Compliance Monitor** - AML/KYC & regulatory
+12. **Multi-Sig Coordinator** - Treasury management
+13. **Alert & Monitoring** - Real-time anomaly detection
+14. **Crisis Manager** - Emergency response
+15. **Bridge & Cross-Chain** - Cross-chain operations
+16. **Lending & Borrowing** - Leverage optimization
+17. **NFT & Asset Manager** - NFT portfolio management
+18. **DAO Governance** - Voting & proposal management
 
 ---
 
-### **Example 3: Risk Assessment Query**
+### Use Case 1: Intelligent Query Routing with Agent Squad
 
-#### **BEFORE (Current Platform)**
+**Scenario**: User asks a complex question that requires multiple types of expertise.
 
-```
-User: "Is token XYZ safe to buy?"
+#### API Request
 
-Agent Response:
-"Let me check the available information:
+```bash
+POST /api/v1/chat/agent-squad/messages
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
 
-From DeFiLlama:
-• TVL: $2.5M
-• 24h Volume: $450k
-
-General Safety Considerations:
-• Check if contract is verified
-• Review audit reports if available
-• Check liquidity levels
-• Research the team
-
-I recommend doing thorough research before investing."
-```
-
-**Capabilities:**
-- ✅ Basic TVL/volume data
-- ✅ General safety checklist
-- ❌ No automated risk scoring
-- ❌ No contract analysis
-- ❌ No sentiment analysis
-- ❌ No liquidity warnings
-
----
-
-#### **AFTER (With Hunter AI Risk Assessment)**
-
-```
-User: "Is token XYZ safe to buy?"
-
-Agent Response:
-"⚠️ COMPREHENSIVE RISK ASSESSMENT (Hunter AI)
-
-Token: XYZ (0xdef...789)
-
-🎯 OVERALL RISK SCORE: 68/100 (MEDIUM-HIGH RISK)
-Risk Level: MEDIUM-HIGH ⚠️
-Recommendation: CAUTION - Small position only
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📊 DETAILED RISK BREAKDOWN:
-
-1. LIQUIDITY RISK: 72/100 (HIGH) ⚠️
-   • Total Liquidity: $2.5M (LOW)
-   • Spread: 1.2% (WIDE)
-   • 24h Volume: $450k (LOW relative to market cap)
-   • DEX Distribution:
-     - Uniswap V3: $1.8M (72%)
-     - SushiSwap: $700k (28%)
-   • Slippage Estimate:
-     - $1k trade: 0.5%
-     - $10k trade: 2.8% ⚠️
-     - $50k trade: 12.5% 🚫 (EXTREME)
-   • Warning: Low liquidity - trades >$10k will move market
-
-2. VOLATILITY RISK: 78/100 (HIGH) ⚠️
-   • 7-day Volatility: 58% (EXTREME)
-   • 30-day Volatility: 42% (HIGH)
-   • Max Drawdown (30d): -45%
-   • Average Daily Swing: ±12%
-   • Comparison: ETH volatility = 22% (XYZ is 2.6x more volatile)
-   • Warning: High price instability
-
-3. CONTRACT SECURITY: 45/100 (MEDIUM) ⚠️
-   • Contract Verified: ✅ YES (Etherscan)
-   • Audit Status: ⚠️ PARTIAL
-     - Audited by: Unknown firm (unverified)
-     - Last Audit: 8 months ago
-     - Critical Issues: 0 (claimed, unverified)
-     - High Issues: 2 (claimed, unverified)
-   • Contract Age: 11 months (Relatively new)
-   • Ownership: ⚠️ Centralized (single owner address)
-   • Pausable: ⚠️ YES (owner can pause transfers)
-   • Mint Function: ⚠️ YES (owner can mint new tokens)
-   • Warning: Centralization risks present
-
-4. SENTIMENT RISK: 55/100 (MEDIUM) ⚠️
-   • Overall Sentiment: 48/100 (Neutral-Bearish)
-   • Confidence: 62%
-   • Sources:
-     - Twitter: 42/100 (Bearish, 250 mentions)
-     - Reddit: 50/100 (Neutral, low engagement)
-     - Discord: 52/100 (Neutral, 150 members)
-     - News: 48/100 (Limited coverage, 2 articles)
-   • Red Flags:
-     - Declining social mentions (-35% vs. last month)
-     - Low engagement rate
-     - Limited mainstream coverage
-   • Warning: Weak community sentiment
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🚨 SPECIFIC WARNINGS:
-
-CRITICAL:
-• ⛔ LOW LIQUIDITY - Trades >$10k will cause significant slippage
-• ⛔ CENTRALIZED CONTROL - Owner can pause/mint
-
-HIGH:
-• ⚠️ EXTREME VOLATILITY - Price swings of 12% daily are common
-• ⚠️ UNVERIFIED AUDIT - Audit firm not recognized
-• ⚠️ DECLINING SENTIMENT - Social metrics trending down
-
-MEDIUM:
-• ⚠️ YOUNG PROJECT - Only 11 months old
-• ⚠️ NARROW DISTRIBUTION - Only 2 DEXs
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-💡 RECOMMENDATIONS:
-
-IF YOU PROCEED (High Risk):
-1. Position Size: MAX 2% of portfolio
-   • For $100k portfolio: Invest NO MORE than $2,000
-   • Reason: High risk score (68/100)
-
-2. Entry Strategy: Dollar-Cost Average
-   • Split into 4 purchases over 2 weeks
-   • Reason: High volatility (58% 7-day)
-
-3. Stop Loss: Set at -15%
-   • Reason: Protect against high volatility
-
-4. Exit Plan: Take profits at +25%, +50%
-   • Sell 50% at +25%
-   • Sell remaining 50% at +50%
-   • Reason: Lock in gains in volatile asset
-
-5. Liquidity Monitoring: Check before trades
-   • Don't trade if 24h volume <$400k
-   • Reason: Low liquidity
-
-SAFER ALTERNATIVES (Similar sector):
-• Token A: Risk Score 35/100 (Low-Medium)
-• Token B: Risk Score 42/100 (Medium)
-• Token C: Risk Score 38/100 (Low-Medium)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🔔 ACTIVE MONITORING:
-
-I will alert you if:
-✅ Enabled: Sentiment drops below 40/100
-✅ Enabled: Liquidity drops below $2M
-✅ Enabled: Price drops >20% in 24h
-✅ Enabled: Large wallet movements (>$100k)
-✅ Enabled: Contract ownership changes
-
-Would you like me to:
-1. Set up comprehensive monitoring alerts?
-2. Show safer alternatives in the same sector?
-3. Create a risk-managed entry plan?
-4. Compare with your portfolio risk tolerance?"
-```
-
-**New Capabilities:**
-- ✅ Automated risk scoring (0-100) with 4 risk factors
-- ✅ Smart contract security analysis
-- ✅ Liquidity risk assessment with slippage estimates
-- ✅ Volatility analysis and comparison
-- ✅ Sentiment risk analysis
-- ✅ Specific warnings (critical/high/medium)
-- ✅ Position sizing recommendations
-- ✅ Entry/exit strategies
-- ✅ Alternative suggestions
-- ✅ Active monitoring and alerts
-
-**Value Add:** From generic checklist to comprehensive, automated risk analysis
-
----
-
-## 🏗️ **PROJECT WORKFLOW EXAMPLES** {#project-examples}
-
-### **Project Example 1: Day Trading Strategy**
-
-#### **BEFORE (Current Platform)**
-
-```
-PROJECT: Day Trading ETH/USDC
-User: Trader Alice
-
-DAY 1 (Market Research):
-09:00 - Alice: "What's the ETH price?"
-09:01 - Agent: "ETH is currently $2,450 (DeFiLlama data)"
-09:05 - Alice: "What's the sentiment?"
-09:05 - Agent: "I can provide protocol data, but sentiment analysis 
-                 is not available. Please check Twitter/Reddit manually."
-10:00 - Alice manually checks Twitter, Reddit, Discord
-11:00 - Alice makes trading decision based on manual research
-
-12:00 - Alice: "Execute buy order for 10 ETH"
-12:01 - Agent: "I cannot execute trades. Please use a DEX directly."
-12:30 - Alice manually executes trade on Uniswap
-
-15:00 - Alice: "Set price alert at $2,500"
-15:01 - Agent: "Price alerts are not currently available."
-15:05 - Alice sets up alerts using external service
-
-RESULT:
-• Time Spent: 6 hours (research + manual execution)
-• Tools Used: Platform + Twitter + Reddit + Discord + TradingView + Uniswap
-• Efficiency: LOW
-• Data Quality: Partial (manual aggregation)
-```
-
-**Pain Points:**
-- ❌ No sentiment analysis
-- ❌ No price predictions
-- ❌ No trade execution
-- ❌ No integrated alerts
-- ❌ Manual multi-platform workflow
-
----
-
-#### **AFTER (With Hunter AI & ULTRA Arbitrage)**
-
-```
-PROJECT: Day Trading ETH/USDC
-User: Trader Alice
-
-DAY 1 (AI-Powered Trading):
-09:00 - Alice: "Give me a complete ETH trading analysis"
-09:01 - Agent: "📊 ETH COMPLETE TRADING ANALYSIS
-
-Current Price: $2,450 (+1.2% 24h)
-
-💭 SENTIMENT: 68/100 (Bullish)
-• Twitter: 72/100 (15k mentions, bullish)
-• Reddit: 65/100 (positive r/ethereum sentiment)
-• Discord: 67/100 (active community)
-• News: 70/100 (8 positive articles today)
-• Trend: ↑ Up 6 points (24h)
-
-🔮 PREDICTION: $2,515 (+2.7% in 24h)
-• Confidence: 76%
-• Range: $2,490 - $2,540 (90% CI)
-• Model Accuracy: 68%
-
-📈 TRADING SIGNAL: BUY (STRONG)
-• Confidence: 82%
-• Entry: $2,440 - $2,460
-• Target: $2,515 (24h)
-• Stop Loss: $2,410
-
-📊 TECHNICAL:
-• Support: $2,410
-• Resistance: $2,520
-• RSI: 62 (neutral-bullish)
-• MACD: Bullish crossover detected
-
-🐋 WHALE ACTIVITY: Bullish accumulation
-• 3 large buys in last 6 hours (total: 1,250 ETH)
-
-💰 ARBITRAGE: 2 opportunities available
-• Best: $185 profit (USDC→ETH→USDC, 3 hops)
-
-RECOMMENDATION: Enter long position at current levels"
-
-09:02 - Alice: "Set up complete monitoring and alerts"
-09:02 - Agent: "✅ MONITORING ACTIVE:
-• Sentiment alert: Notify if drops below 60/100
-• Price alert: Notify at $2,410 (stop loss) and $2,515 (target)
-• Whale alert: Notify on transfers >500 ETH
-• Pattern alert: Notify on bearish patterns
-• Arbitrage alert: Notify on opportunities >$150 profit"
-
-09:05 - Alice: "Show me arbitrage opportunities"
-09:05 - Agent: "💰 ARBITRAGE OPPORTUNITIES (Real-time):
-
-#1: Multi-Hop ETH Arbitrage
-Path: USDC → ETH (Uniswap) → WETH (Curve) → USDC (Balancer)
-Profit: $185 (after all costs)
-Flash Loan: $100k USDC (Balancer, 0.05% fee)
-Risk: Low (28/100)
-Execution Time: ~15 seconds
-Auto-execute available"
-
-09:06 - Alice: "Execute arbitrage #1"
-09:06 - Agent: "🔄 EXECUTING ARBITRAGE...
-1. Simulating transaction... ✅ Success (profit: $185)
-2. Requesting flash loan from Balancer... ✅
-3. Executing path... ✅
-4. Submitting via Flashbots (MEV protected)... ✅
-
-✅ ARBITRAGE COMPLETED!
-• Transaction: 0xabc...123
-• Actual Profit: $182 (vs. estimated $185)
-• Execution Time: 14 seconds
-• MEV Protection: Active (Flashbots)
-• Status: Confirmed in block 18,234,567
-
-Your profit: $182 (after all fees)"
-
-12:00 - [ALERT] "🔔 ETH Price: $2,515 (target reached)
-             🔔 New arbitrage: $210 profit available"
-
-12:01 - Alice: "Take profit 50% and execute new arbitrage"
-12:01 - Agent: "✅ PROFIT TAKEN:
-• Sold 5 ETH at $2,515
-• Realized Profit: $325 (+2.7%)
-• Remaining: 5 ETH
-
-✅ ARBITRAGE #2 COMPLETED:
-• Profit: $208
-• Total Day Profit: $182 + $208 + $325 = $715"
-
-15:00 - Alice: "Show me today's performance"
-15:01 - Agent: "📊 DAY TRADING PERFORMANCE
-
-TRADES:
-• ETH Long: +$325 (+2.7%)
-• Arbitrage #1: +$182 (0.18% ROI)
-• Arbitrage #2: +$208 (0.21% ROI)
-
-TOTAL: +$715 (5.7% portfolio return)
-
-ANALYTICS:
-• Win Rate: 100% (3/3 trades)
-• Average Trade: +$238
-• Time in Market: 6 hours
-• AI Signals Used: 3/3 (100% follow rate)
-• All signals: Profitable ✅
-
-COMPARISON:
-• Your Performance: +5.7%
-• Market (ETH): +2.7%
-• Alpha: +3.0% (outperformance)
-
-TAX IMPACT (Estimated):
-• Short-term Gains: $715
-• Tax Liability: $286 (40% bracket)
-• Net After Tax: $429"
-
-RESULT:
-• Time Spent: 30 minutes (AI-assisted)
-• Tools Used: Single platform (all-in-one)
-• Efficiency: HIGH
-• Profit: $715 (+5.7%)
-• AI Signals: 100% accuracy (3/3)
-```
-
-**New Capabilities:**
-- ✅ Complete sentiment analysis (multi-source)
-- ✅ AI price predictions with confidence
-- ✅ Automated trading signals
-- ✅ Flash loan arbitrage execution
-- ✅ MEV protection
-- ✅ Integrated alerts (sentiment, price, whale, pattern)
-- ✅ One-platform workflow
-- ✅ Real-time arbitrage opportunities
-- ✅ Performance analytics
-- ✅ Tax impact estimation
-
-**Value Add:** 
-- Time saved: 5.5 hours (6h → 0.5h)
-- Profit generated: $715 (5.7% daily return)
-- Win rate: 100% (AI-assisted decisions)
-- Efficiency: 12x improvement
-
----
-
-### **Project Example 2: Long-Term Portfolio Management**
-
-#### **BEFORE (Current Platform)**
-
-```
-PROJECT: Manage $100k DeFi Portfolio
-User: Investor Bob
-
-MONTH 1:
-Week 1: Manual research and allocation decisions
-• Spent 20 hours researching tokens
-• Manually calculated risk/return
-• Used spreadsheets for tracking
-• Allocated: 50% ETH, 30% BTC, 20% altcoins
-
-Week 2-4: Manual monitoring
-• Daily price checks
-• Weekly rebalancing calculations
-• Manual tax tracking
-• No automated alerts
-
-MONTH 2:
-• Portfolio drifted from targets (ETH now 58%, should be 50%)
-• Manually recalculated optimal allocation
-• Spent 8 hours on rebalancing research
-• Paid $250 in unnecessary gas fees (suboptimal execution)
-
-MONTH 3:
-• Market downturn
-• No risk alerts
-• Portfolio dropped 35%
-• Missed opportunities to reduce losses
-• No tax-loss harvesting
-
-QUARTERLY REVIEW:
-• Manual P&L calculation
-• Spreadsheet tracking
-• No risk analytics
-• No performance attribution
-• Tax reporting: Manual (hired accountant, $500)
-
-RESULTS (Q1):
-• Time Spent: 60+ hours
-• Performance: -15% (market: -12%)
-• Alpha: -3% (underperformed market)
-• Tax Reporting Cost: $500
-• Stress Level: HIGH
-```
-
-**Pain Points:**
-- ❌ Manual research and analysis
-- ❌ No automated rebalancing
-- ❌ No risk monitoring
-- ❌ No tax optimization
-- ❌ Suboptimal execution
-- ❌ High time commitment
-
----
-
-#### **AFTER (With Hunter AI Portfolio Optimization)**
-
-```
-PROJECT: AI-Managed $100k DeFi Portfolio
-User: Investor Bob
-
-MONTH 1:
-Week 1: AI-powered portfolio setup
-Bob: "Analyze my portfolio and optimize allocation"
-
-Agent: "📊 PORTFOLIO OPTIMIZATION (Hunter AI)
-
-CURRENT ALLOCATION ANALYSIS:
-• Total Value: $100,000
-• Risk Score: 62/100 (Medium-High)
-• Expected Return: 15% annually
-• Sharpe Ratio: 0.75 (Below optimal)
-• Diversification: 48/100 (Poor)
-
-OPTIMAL ALLOCATION (MPT-Based):
-┌────────────────────────────────────────────┐
-│ Asset   Current  Optimal  Change          │
-├────────────────────────────────────────────┤
-│ ETH     50%      35%      -$15,000        │
-│ BTC     30%      30%      No change       │
-│ UNI     8%       12%      +$4,000         │
-│ AAVE    7%       10%      +$3,000         │
-│ LINK    5%       8%       +$3,000         │
-│ MATIC   0%       5%       +$5,000 (New)   │
-└────────────────────────────────────────────┘
-
-IMPROVEMENTS:
-• Risk Score: 62 → 45 (27% reduction)
-• Expected Return: 15% → 20%
-• Sharpe Ratio: 0.75 → 1.05 (+40%)
-• Diversification: 48 → 72 (+50%)
-
-✅ EXECUTED REBALANCING:
-• Transactions: Optimized (batched for gas)
-• Gas Cost: $45 (vs. $250 manual)
-• Slippage: 0.3% (MEV protected)
-• Time: 3 minutes
-
-✅ MONITORING ACTIVATED:
-• Risk alerts (if >50)
-• Rebalancing alerts (drift >5%)
-• Sentiment alerts (any asset <50)
-• Whale activity alerts
-• Portfolio performance (daily digest)"
-
-Week 2-4: Automated monitoring
-[ALERT - Week 2]: "🔔 Portfolio Alert:
-• ETH sentiment dropped to 48/100 (bearish)
-• Recommendation: Reduce ETH exposure from 35% to 30%
-• Estimated risk reduction: 8%
-• Execute rebalancing? [YES/NO]"
-
-Bob: "Yes, execute"
-Agent: "✅ Rebalanced automatically (2 minutes, $12 gas)"
-
-MONTH 2:
-[ALERT - Week 5]: "🔔 Rebalancing Alert:
-• Portfolio drifted >5% from targets
-• ETH: 38% (target: 35%)
-• BTC: 28% (target: 30%)
-• Optimal rebalancing plan ready
-• Estimated cost: $18 gas
-• Execute? [YES/NO]"
-
-Bob: "Yes"
-Agent: "✅ Rebalanced (gas-optimized, MEV protected)"
-
-MONTH 3 (Market Downturn):
-[ALERT - Week 9]: "🚨 RISK ALERT:
-• Market sentiment: 35/100 (bearish)
-• Portfolio risk score increased: 45 → 52
-• Multiple bearish patterns detected
-• Recommendation: Reduce risk exposure
-
-SUGGESTED ACTIONS:
-1. Move 15% to stablecoins (USDC)
-2. Reduce high-volatility assets (LINK: 8% → 5%)
-3. Increase blue-chips (BTC: 30% → 35%)
-
-Expected risk reduction: 52 → 38
-Execute defensive strategy? [YES/NO]"
-
-Bob: "Yes, execute"
-Agent: "✅ DEFENSIVE POSITION ACTIVATED:
-• Moved $15k to USDC
-• Reduced LINK exposure
-• Increased BTC allocation
-• New risk score: 38/100 (Low-Medium)
-• Estimated downside protection: 15-20%"
-
-[Market drops 25% over next 2 weeks]
-
-Agent: "📊 PORTFOLIO PROTECTION REPORT:
-• Market Performance: -25%
-• Your Performance: -12%
-• Protection: 13% (outperformed)
-• Reason: Defensive positioning activated 2 weeks early
-
-🔔 TAX-LOSS HARVESTING OPPORTUNITY:
-• LINK: Sell at $8.20 (entry: $9.50, loss: $400)
-• Rebuy similar asset: DOT (low correlation)
-• Tax Savings: $160 (at 40% rate)
-• Execute? [YES/NO]"
-
-Bob: "Yes"
-Agent: "✅ Tax-loss harvesting executed
-• Tax savings: $160
-• Position maintained (DOT instead of LINK)"
-
-QUARTERLY REVIEW:
-Agent: "📊 Q1 PORTFOLIO PERFORMANCE REPORT
-
-RETURNS:
-• Portfolio: -8% (vs. market: -12%)
-• Alpha: +4% (outperformed market)
-• Best Asset: BTC (+2%)
-• Worst Asset: ETH (-15%)
-
-RISK MANAGEMENT:
-• Average Risk Score: 42/100 (Low-Medium)
-• Max Drawdown: -12% (vs. market -25%)
-• Defensive positioning saved: ~$5,000
-
-TRANSACTIONS:
-• Rebalancing events: 4 (automated)
-• Total gas costs: $95 (vs. $1,000 manual estimate)
-• Tax-loss harvesting: $160 saved
-• Arbitrage profits: $450 (3 opportunities)
-
-EFFICIENCY:
-• Time spent: 2 hours (vs. 60+ hours manual)
-• Cost savings: $905 (gas) + $500 (accountant)
-• Net benefit: $1,405 + 58 hours saved
-
-TAX REPORTING:
-✅ Form 8949 generated automatically
-✅ All transactions categorized
-✅ Cost basis calculated (FIFO)
-✅ Short-term vs. long-term gains
-✅ Tax-loss harvesting tracked
-✅ Export to TurboTax/CPA (1-click)
-
-NEXT QUARTER RECOMMENDATIONS:
-• Continue current allocation (performing well)
-• Consider 5% increase in MATIC (bullish signals)
-• Monitor ETH sentiment (currently 58/100)"
-
-RESULTS (Q1):
-• Time Spent: 2 hours (vs. 60+ hours)
-• Performance: -8% (vs. market: -12%)
-• Alpha: +4% (outperformed market)
-• Downside Protection: Saved ~$5,000
-• Gas Savings: $905
-• Tax Savings: $160
-• Accountant Savings: $500
-• Arbitrage Bonus: $450
-• Total Benefit: ~$7,000 + 58 hours saved
-• Stress Level: LOW
-```
-
-**New Capabilities:**
-- ✅ AI-powered portfolio optimization (MPT-based)
-- ✅ Automated rebalancing with gas optimization
-- ✅ Real-time risk monitoring
-- ✅ Defensive positioning alerts
-- ✅ Tax-loss harvesting automation
-- ✅ Automated tax reporting (Form 8949)
-- ✅ Performance attribution
-- ✅ Sentiment-based adjustments
-- ✅ Arbitrage integration
-- ✅ MEV protection on all trades
-
-**Value Add:**
-- Time saved: 58 hours (60h → 2h)
-- Outperformance: +4% alpha
-- Downside protection: $5,000
-- Cost savings: $1,565 (gas + accountant)
-- Additional profits: $450 (arbitrage)
-- Total benefit: ~$7,000 + 58 hours
-- Stress reduction: Significant (automated monitoring)
-
----
-
-## 👤 **USER JOURNEY EXAMPLES** {#user-journeys}
-
-### **Journey 1: New User Onboarding**
-
-#### **BEFORE**
-
-```
-Day 1 - Sarah (New DeFi User):
-1. Signs up → Email verification
-2. Explores basic dashboard
-3. Sees TVL data, basic charts
-4. Confused about what to do next
-5. Manually researches tokens on Twitter
-6. Makes first investment decision (uncertain)
-
-Week 1:
-• Limited guidance
-• No personalized recommendations
-• Steep learning curve
-• Feels overwhelmed
-
-Result: 30% of new users churn in Week 1
-```
-
-#### **AFTER**
-
-```
-Day 1 - Sarah (New DeFi User):
-1. Signs up → Email verification
-2. AI Onboarding Wizard appears:
-
-Agent: "👋 Welcome Sarah! I'm your AI DeFi assistant.
-
-I see you're new to DeFi. Let me help you get started!
-
-📊 QUICK SETUP:
-• Risk Tolerance: Conservative | Moderate | Aggressive
-• Investment Goal: Short-term | Long-term | Both
-• Budget: $1k | $10k | $50k | $100k+
-
-Let's start with 3 quick questions..."
-
-[After questionnaire]
-
-Agent: "✅ PERSONALIZED PROFILE CREATED:
-• Risk Tolerance: Moderate
-• Investment Horizon: Long-term (6-12 months)
-• Budget: $10,000
-
-📋 RECOMMENDED STARTER PORTFOLIO:
-• 40% ETH (blue-chip, moderate risk)
-• 30% BTC (stable, low risk)
-• 20% USDC (stablecoin, no risk)
-• 10% DeFi Index (diversified)
-
-Risk Score: 35/100 (Low-Medium)
-Expected Return: 15-20% annually
-Suitable for: Moderate risk tolerance ✅
-
-🎓 EDUCATIONAL PATH:
-Day 1-7: DeFi Basics
-Day 8-14: Risk Management
-Day 15-21: Advanced Strategies
-
-Would you like to:
-1. Execute this portfolio? [RECOMMENDED]
-2. Customize allocation?
-3. Learn more first?"
-
-Sarah: "Execute this portfolio"
-
-Agent: "✅ PORTFOLIO CREATED:
-• Total: $10,000
-• Assets: 4 (ETH, BTC, USDC, DeFi Index)
-• Gas Cost: $35 (optimized batch transaction)
-• Monitoring: Active ✅
-• Daily Digest: Enabled ✅
-
-🔔 YOU'RE ALL SET!
-
-Next steps:
-• I'll send you a daily digest
-• I'll alert you to important changes
-• I'll suggest rebalancing when needed
-• I'll help you learn DeFi concepts
-
-Try asking:
-• "How is my portfolio performing?"
-• "What's the sentiment for ETH?"
-• "Show me arbitrage opportunities""
-
-Week 1:
-• Guided learning path
-• Daily educational content
-• Personalized recommendations
-• Automated monitoring
-• Feels confident and supported
-
-Result: 85% of new users stay active after Week 1
-Churn reduced: 30% → 15% (-50%)
-```
-
-**Value Add:**
-- Reduced churn by 50%
-- Faster time-to-value
-- Personalized onboarding
-- Educational guidance
-- Confidence building
-
----
-
-## 🔌 **API REQUEST/RESPONSE EXAMPLES** {#api-examples}
-
-### **Example 1: Get Token Sentiment**
-
-#### **BEFORE (Not Available)**
-
-```http
-GET /api/v1/tokens/0xabc...123
-
-Response: 404 Not Found
 {
-  "error": "Sentiment analysis not available"
+  "conversation_id": "conv_123",
+  "message": "What's the risk of my current DeFi positions and how can I optimize my yield while reducing exposure to smart contract vulnerabilities?",
+  "context": {
+    "wallet_address": "0xabc...123",
+    "include_portfolio": true
+  }
 }
 ```
 
-#### **AFTER (Hunter AI)**
+#### Platform Processing
 
-```http
-GET /api/v1/hunter/sentiment/0xabc...123
+1. **Intent Classification** (50-100ms):
+   - Primary intent: Risk analysis
+   - Secondary intent: Yield optimization
+   - Tertiary intent: Security assessment
 
-Response: 200 OK
+2. **Agent Selection** (20-50ms):
+   - Primary: **Risk Analyzer**
+   - Support: **DeFi Yield Optimizer**
+   - Support: **Security Auditor**
+
+3. **Parallel Execution** (2-5s):
+   - Risk Analyzer fetches portfolio + calculates risk scores
+   - Yield Optimizer searches across protocols (via MCP servers)
+   - Security Auditor checks contract audit status
+
+4. **Response Synthesis** (100-200ms):
+   - Aggregates results from 3 agents
+   - Generates unified recommendation
+   - Streams response via WebSocket
+
+#### API Response
+
+```json
 {
-  "token_address": "0xabc...123",
-  "symbol": "UNI",
-  "sentiment_score": 72.5,
-  "sentiment_label": "bullish",
-  "confidence": 0.85,
-  "trend": "increasing",
-  "sources": {
-    "twitter": {
-      "score": 75.0,
-      "weight": 0.35,
-      "mentions_24h": 8500,
-      "engagement_rate": 0.12,
-      "top_influencers": ["@vitalik", "@uniswap", "@hayden_eth"]
-    },
-    "reddit": {
-      "score": 68.0,
-      "weight": 0.25,
-      "karma_sum": 12500,
-      "top_subreddits": ["r/UniSwap", "r/ethereum", "r/CryptoCurrency"]
-    },
-    "discord": {
-      "score": 70.0,
-      "weight": 0.20,
-      "messages_24h": 450,
-      "active_users": 320
-    },
-    "news": {
-      "score": 73.0,
-      "weight": 0.20,
-      "articles_24h": 12,
-      "positive": 9,
-      "negative": 1,
-      "neutral": 2
+  "message_id": "msg_456",
+  "agents_used": ["risk_analyzer", "defi_yield", "security_auditor"],
+  "processing_time_ms": 3240,
+  "response": {
+    "summary": "Your portfolio has elevated smart contract risk (Score: 68/100) primarily from Curve Finance pools. I've identified 3 lower-risk alternatives with comparable yields.",
+    "sections": [
+      {
+        "agent": "risk_analyzer",
+        "title": "Portfolio Risk Assessment",
+        "content": {
+          "overall_risk_score": 68,
+          "risk_level": "MEDIUM_HIGH",
+          "breakdown": {
+            "smart_contract_risk": {
+              "score": 72,
+              "level": "HIGH",
+              "details": "60% of portfolio in unaudited Curve pools",
+              "positions_at_risk": [
+                {
+                  "protocol": "Curve Finance",
+                  "pool": "stETH/ETH",
+                  "value_usd": 45000,
+                  "risk_score": 75,
+                  "audit_status": "Partially audited",
+                  "last_audit": "2024-03-15"
+                }
+              ]
+            },
+            "liquidity_risk": {
+              "score": 42,
+              "level": "LOW",
+              "details": "All positions in deep liquidity pools"
+            },
+            "correlation_risk": {
+              "score": 65,
+              "level": "MEDIUM",
+              "details": "High correlation between ETH-denominated positions"
+            }
+          },
+          "recommendations": [
+            "Reduce exposure to unaudited Curve pools from 60% to <30%",
+            "Diversify into audited protocols (Aave, Morpho)",
+            "Consider stablecoin positions to reduce correlation risk"
+          ]
+        }
+      },
+      {
+        "agent": "defi_yield",
+        "title": "Safer High-Yield Alternatives",
+        "content": {
+          "alternatives": [
+            {
+              "protocol": "Morpho",
+              "vault": "Steakhouse USDC",
+              "current_apy": 8.2,
+              "risk_score": 28,
+              "audit_status": "Fully audited (4 firms)",
+              "liquidity": "Excellent ($450M TVL)",
+              "recommendation": "Migrate $30K from Curve to reduce smart contract risk",
+              "migration_cost": {
+                "gas_estimate": "$45",
+                "slippage_estimate": "0.02%",
+                "total_cost_usd": 47
+              }
+            },
+            {
+              "protocol": "Aave V3",
+              "market": "USDC (Ethereum)",
+              "current_apy": 7.8,
+              "risk_score": 22,
+              "audit_status": "Fully audited (6 firms)",
+              "liquidity": "Excellent ($1.2B)",
+              "recommendation": "Conservative allocation for $20K"
+            },
+            {
+              "protocol": "Curve Finance",
+              "pool": "3pool (USDC/USDT/DAI)",
+              "current_apy": 6.5,
+              "risk_score": 35,
+              "audit_status": "Fully audited (3 firms)",
+              "liquidity": "Excellent ($800M TVL)",
+              "note": "Lower risk than stETH pool, still Curve exposure"
+            }
+          ],
+          "optimized_allocation": {
+            "target_risk_score": 45,
+            "expected_apy": 7.6,
+            "allocation": {
+              "Morpho USDC": "40%",
+              "Aave V3 USDC": "30%",
+              "Curve 3pool": "20%",
+              "Curve stETH/ETH": "10%"
+            },
+            "vs_current": {
+              "risk_reduction": "-33%",
+              "yield_impact": "-0.8%",
+              "recommended": true
+            }
+          }
+        }
+      },
+      {
+        "agent": "security_auditor",
+        "title": "Security Assessment",
+        "content": {
+          "audit_summary": {
+            "fully_audited": "40%",
+            "partially_audited": "60%",
+            "unaudited": "0%"
+          },
+          "high_priority_concerns": [
+            {
+              "protocol": "Curve Finance",
+              "contract": "stETH/ETH pool",
+              "issue": "No recent audit (>12 months old)",
+              "severity": "MEDIUM",
+              "recommendation": "Monitor closely or reduce exposure",
+              "audit_firms": ["Trail of Bits (2023-03)"],
+              "known_exploits": "None",
+              "tvl_at_risk": "$45,000"
+            }
+          ],
+          "recommendations": [
+            "Prioritize protocols with recent audits (<6 months)",
+            "Diversify across audit firms (don't rely on single auditor)",
+            "Set up smart contract risk alerts for your positions"
+          ],
+          "monitoring": {
+            "suggested_alerts": [
+              "TVL drops >20% in 24h (possible exploit)",
+              "Unusual contract interactions (possible attack)",
+              "New audit reports published",
+              "Critical CVE disclosures"
+            ],
+            "setup_command": "I can set these up for you automatically. Reply 'enable security alerts' to activate."
+          }
+        }
+      }
+    ],
+    "action_items": [
+      {
+        "priority": "HIGH",
+        "action": "Migrate $30K from Curve stETH/ETH to Morpho USDC vault",
+        "rationale": "Reduces smart contract risk by 25 points while maintaining 8.2% APY",
+        "estimated_time": "15 minutes",
+        "estimated_cost": "$47 (gas + slippage)",
+        "commands": [
+          "/agent execute withdraw 30000 from curve stETH/ETH",
+          "/agent execute deposit 30000 to morpho usdc-vault"
+        ]
+      },
+      {
+        "priority": "MEDIUM",
+        "action": "Allocate $20K to Aave V3 USDC",
+        "rationale": "Ultra-low risk (score: 22) with solid 7.8% yield",
+        "estimated_time": "10 minutes",
+        "estimated_cost": "$35"
+      },
+      {
+        "priority": "LOW",
+        "action": "Enable security monitoring alerts",
+        "rationale": "Proactive protection against exploits",
+        "estimated_time": "2 minutes",
+        "estimated_cost": "Free"
+      }
+    ],
+    "next_steps": {
+      "immediate": "I can execute the Morpho migration now if you approve. This will:",
+      "steps": [
+        "1. Withdraw $30K from Curve stETH/ETH pool",
+        "2. Swap to USDC (if needed)",
+        "3. Deposit to Morpho Steakhouse USDC vault",
+        "4. Set up security alerts for all positions"
+      ],
+      "approval_required": true,
+      "approval_command": "/agent approve migration-plan-001"
     }
   },
-  "historical": {
-    "score_7d_ago": 66.0,
-    "score_30d_ago": 62.0,
-    "trend_7d": "+6.5",
-    "trend_30d": "+10.5"
-  },
-  "alerts": {
-    "sentiment_dropping": false,
-    "high_negativity": false,
-    "viral_mention": true
-  },
-  "updated_at": "2025-12-03T03:00:00Z",
-  "next_update_at": "2025-12-03T03:15:00Z"
+  "metadata": {
+    "total_agents_invoked": 3,
+    "mcp_servers_used": [
+      "defillama",
+      "curve",
+      "morpho",
+      "aave"
+    ],
+    "processing_breakdown": {
+      "intent_classification": "85ms",
+      "agent_selection": "42ms",
+      "portfolio_fetch": "520ms",
+      "risk_analysis": "1240ms",
+      "yield_search": "980ms",
+      "security_audit": "740ms",
+      "response_synthesis": "175ms"
+    },
+    "cache_hit": false,
+    "model_used": "gemini-1.5-pro"
+  }
 }
 ```
+
+**Key Features Demonstrated:**
+- ✅ Multi-agent orchestration (3 specialists)
+- ✅ Parallel execution for performance
+- ✅ MCP server integration (4 protocols)
+- ✅ Risk scoring with actionable recommendations
+- ✅ Cost estimation (gas + slippage)
+- ✅ Security audit status tracking
+- ✅ Action items with priority levels
+- ✅ Approval workflow for execution
 
 ---
 
-### **Example 2: Execute Arbitrage**
+### Use Case 2: Supervisor-Coordinated Complex Workflow
 
-#### **BEFORE (Not Available)**
+**Scenario**: User wants comprehensive portfolio optimization across multiple dimensions.
 
-```http
-POST /api/v1/arbitrage/execute
+#### API Request
 
-Response: 404 Not Found
+```bash
+POST /api/v1/chat/agent-squad/supervisor
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
 {
-  "error": "Arbitrage execution not available"
+  "task": "Optimize my entire portfolio for maximum risk-adjusted returns while maintaining tax efficiency and ensuring compliance",
+  "context": {
+    "wallet_address": "0xabc...123",
+    "jurisdiction": "US",
+    "tax_year": 2025,
+    "risk_tolerance": "moderate",
+    "time_horizon": "12_months"
+  },
+  "preferences": {
+    "max_gas_budget": 500,
+    "min_yield_improvement": 1.5,
+    "exclude_protocols": ["leverage_protocols"]
+  }
 }
 ```
 
-#### **AFTER (ULTRA Arbitrage)**
+#### Supervisor Execution Plan
 
-```http
-POST /api/v1/ultra/execute-flash-loan
+The **Supervisor Agent** breaks down the task into subtasks and coordinates 6 agents in parallel:
 
-Request:
+```
+Task Decomposition:
+├─ [1] Risk Analyzer: Assess current risk profile
+├─ [2] Portfolio Manager: Calculate current performance metrics
+├─ [3] DeFi Yield Optimizer: Find better yield opportunities
+├─ [4] Tax Optimizer: Identify tax-loss harvesting opportunities
+├─ [5] Compliance Monitor: Check regulatory constraints
+└─ [6] Gas Optimizer: Estimate and optimize transaction costs
+
+Execution Order:
+Phase 1 (Parallel): Agents 1, 2, 5 (data gathering)
+Phase 2 (Parallel): Agents 3, 4 (optimization)
+Phase 3 (Sequential): Agent 6 (execution planning)
+Phase 4 (Synthesis): Supervisor aggregates results
+```
+
+#### API Response
+
+```json
 {
-  "opportunity_id": "arb_12345",
-  "provider": "balancer",
-  "simulate_first": true
-}
-
-Response: 200 OK
-{
-  "transaction_hash": "0xdef...456",
-  "status": "confirmed",
-  "block_number": 18234567,
-  "flash_loan": {
-    "provider": "balancer",
-    "amount_borrowed": 100000,
-    "currency": "USDC",
-    "fee": 50.0,
-    "fee_bps": 5
-  },
-  "arbitrage_path": [
-    {
-      "step": 1,
-      "dex": "uniswap_v3",
-      "action": "swap",
-      "token_in": "USDC",
-      "token_out": "ETH",
-      "amount_in": 100000,
-      "amount_out": 40.5,
-      "price": 2469.14,
-      "gas_used": 150000
+  "task_id": "task_789",
+  "status": "completed",
+  "execution_time_ms": 6850,
+  "agents_executed": 6,
+  "subtasks_completed": 12,
+  "result": {
+    "executive_summary": {
+      "current_state": {
+        "total_value_usd": 125450,
+        "risk_score": 62,
+        "risk_level": "MEDIUM_HIGH",
+        "current_apy": 8.4,
+        "risk_adjusted_return": 0.135,
+        "tax_efficiency": "LOW (multiple short-term gains)",
+        "compliance_status": "COMPLIANT"
+      },
+      "optimized_state": {
+        "projected_value_usd": 125450,
+        "risk_score": 45,
+        "risk_level": "MEDIUM",
+        "projected_apy": 9.2,
+        "risk_adjusted_return": 0.204,
+        "tax_savings": 1850,
+        "compliance_status": "COMPLIANT"
+      },
+      "improvements": {
+        "risk_reduction": "-27%",
+        "yield_increase": "+0.8%",
+        "risk_adjusted_return_increase": "+51%",
+        "tax_savings_usd": 1850,
+        "total_execution_cost_usd": 385,
+        "net_benefit_first_year": 2465
+      },
+      "recommendation": "STRONGLY RECOMMENDED - Significant improvement in risk-adjusted returns with tax benefits"
     },
-    {
-      "step": 2,
-      "dex": "curve",
-      "action": "swap",
-      "token_in": "ETH",
-      "token_out": "WETH",
-      "amount_in": 40.5,
-      "amount_out": 40.5,
-      "price": 1.0,
-      "gas_used": 120000
+    "detailed_analysis": {
+      "risk_assessment": {
+        "agent": "risk_analyzer",
+        "current_exposures": {
+          "smart_contract_risk": "HIGH (68/100)",
+          "liquidity_risk": "LOW (32/100)",
+          "market_risk": "MEDIUM (58/100)",
+          "concentration_risk": "HIGH (72/100) - 60% in single asset (ETH)"
+        },
+        "recommended_changes": {
+          "reduce_eth_concentration": "60% → 40%",
+          "add_stablecoin_exposure": "8% → 25%",
+          "diversify_protocols": "3 → 6 protocols"
+        }
+      },
+      "yield_optimization": {
+        "agent": "defi_yield",
+        "opportunities_found": 12,
+        "top_recommendations": [
+          {
+            "action": "Migrate USDC from Aave V2 to Morpho USDC vault",
+            "from": {
+              "protocol": "Aave V2",
+              "apy": 5.2,
+              "risk_score": 35
+            },
+            "to": {
+              "protocol": "Morpho",
+              "vault": "Steakhouse USDC",
+              "apy": 8.2,
+              "risk_score": 28
+            },
+            "improvement": {
+              "yield_increase": "+3.0%",
+              "risk_reduction": "-20%",
+              "amount_usd": 25000,
+              "annual_gain_usd": 750
+            }
+          },
+          {
+            "action": "Add Curve 3pool position",
+            "from": null,
+            "to": {
+              "protocol": "Curve",
+              "pool": "3pool",
+              "apy": 6.5,
+              "risk_score": 35
+            },
+            "improvement": {
+              "diversification": "+15%",
+              "amount_usd": 15000,
+              "annual_gain_usd": 975
+            }
+          }
+        ],
+        "total_yield_improvement": "+0.8% APY",
+        "projected_annual_gain": 1850
+      },
+      "tax_optimization": {
+        "agent": "tax_optimizer",
+        "strategy": "Tax-Loss Harvesting + Long-Term Capital Gains",
+        "opportunities": [
+          {
+            "type": "tax_loss_harvesting",
+            "asset": "UNI",
+            "current_value": 8200,
+            "cost_basis": 9500,
+            "unrealized_loss": -1300,
+            "action": "Sell and immediately buy back (wash sale compliant)",
+            "tax_savings": 286,
+            "holding_period": "42 days (short-term)"
+          },
+          {
+            "type": "long_term_conversion",
+            "asset": "ETH",
+            "current_value": 75000,
+            "cost_basis": 52000,
+            "unrealized_gain": 23000,
+            "holding_period": "348 days",
+            "action": "HOLD for 17 more days to qualify for long-term rates",
+            "tax_savings": 4600,
+            "note": "20% long-term vs 37% short-term rate"
+          },
+          {
+            "type": "staking_optimization",
+            "asset": "ETH",
+            "action": "Stake via Lido to defer taxes while earning yield",
+            "amount": 30000,
+            "projected_staking_yield": 4.2,
+            "tax_deferral_benefit": "Defer $1200 in taxes until unstaking"
+          }
+        ],
+        "total_tax_savings": 1850,
+        "irs_compliance": "COMPLIANT - All strategies IRS-approved"
+      },
+      "compliance_check": {
+        "agent": "compliance_monitor",
+        "jurisdiction": "United States",
+        "regulations_checked": [
+          "SEC securities regulations",
+          "FinCEN AML/KYC",
+          "IRS tax reporting (Form 8949, Schedule D)",
+          "State money transmitter licenses"
+        ],
+        "status": "FULLY_COMPLIANT",
+        "findings": [
+          {
+            "regulation": "SEC - Staking as a Service",
+            "status": "COMPLIANT",
+            "note": "Using non-custodial staking (Lido) - not subject to SEC scrutiny"
+          },
+          {
+            "regulation": "FinCEN - AML/KYC",
+            "status": "COMPLIANT",
+            "note": "All transactions below $10K reporting threshold"
+          },
+          {
+            "regulation": "IRS - Form 8949",
+            "status": "ATTENTION_REQUIRED",
+            "note": "15 taxable events this year - ensure accurate cost basis tracking",
+            "action": "I can generate Form 8949 export for your tax preparer"
+          }
+        ],
+        "warnings": [
+          "Ensure you report all DeFi income on Form 1040 Schedule 1",
+          "Staking rewards are taxable as income when received",
+          "Gas fees can be deducted as investment expenses (itemized)"
+        ]
+      },
+      "execution_plan": {
+        "agent": "gas_optimizer",
+        "optimal_execution_time": "2025-12-12T03:30:00Z (3:30 AM UTC)",
+        "rationale": "Lowest gas prices typically occur 2-4 AM UTC",
+        "total_transactions": 8,
+        "estimated_costs": {
+          "current_gas_price": "35 gwei",
+          "optimal_gas_price": "15 gwei (estimated)",
+          "cost_if_executed_now": 615,
+          "cost_if_executed_optimal": 385,
+          "savings": 230
+        },
+        "transaction_sequence": [
+          {
+            "step": 1,
+            "action": "Sell UNI for tax-loss harvesting",
+            "gas_estimate": 45,
+            "priority": "HIGH",
+            "reason": "Realize tax loss before year-end"
+          },
+          {
+            "step": 2,
+            "action": "Buy back UNI (wash sale compliant)",
+            "gas_estimate": 42,
+            "priority": "HIGH",
+            "delay": "31 days to avoid wash sale rule"
+          },
+          {
+            "step": 3,
+            "action": "Withdraw USDC from Aave V2",
+            "gas_estimate": 55,
+            "priority": "MEDIUM"
+          },
+          {
+            "step": 4,
+            "action": "Deposit USDC to Morpho vault",
+            "gas_estimate": 68,
+            "priority": "MEDIUM"
+          },
+          {
+            "step": 5,
+            "action": "Stake ETH via Lido",
+            "gas_estimate": 75,
+            "priority": "LOW",
+            "note": "Optional - provides yield + tax deferral"
+          },
+          {
+            "step": 6,
+            "action": "Add liquidity to Curve 3pool",
+            "gas_estimate": 95,
+            "priority": "LOW"
+          }
+        ],
+        "batching_opportunities": {
+          "batch_1": "Steps 3 + 4 can be combined via multi-call",
+          "savings": 25,
+          "new_cost": 98
+        },
+        "final_cost_estimate": 360
+      }
     },
-    {
-      "step": 3,
-      "dex": "balancer",
-      "action": "swap",
-      "token_in": "WETH",
-      "token_out": "USDC",
-      "amount_in": 40.5,
-      "amount_out": 100250,
-      "price": 2475.31,
-      "gas_used": 180000
+    "recommended_actions": [
+      {
+        "priority": "CRITICAL",
+        "action": "HOLD ETH for 17 more days",
+        "rationale": "Qualifies for long-term capital gains (save $4,600 in taxes)",
+        "deadline": "2025-12-29",
+        "cost": 0,
+        "benefit": 4600,
+        "approval_required": false,
+        "automated": false
+      },
+      {
+        "priority": "HIGH",
+        "action": "Tax-loss harvest UNI (sell at loss)",
+        "rationale": "Realize $1,300 loss to offset gains (save $286 in taxes)",
+        "deadline": "2025-12-31",
+        "cost": 45,
+        "benefit": 286,
+        "approval_required": true,
+        "automated": true,
+        "command": "/agent execute tax-harvest UNI 8200"
+      },
+      {
+        "priority": "HIGH",
+        "action": "Migrate USDC: Aave V2 → Morpho",
+        "rationale": "+3.0% yield, -20% risk, $750/year benefit",
+        "deadline": "2026-01-15",
+        "cost": 98,
+        "benefit": 750,
+        "approval_required": true,
+        "automated": true
+      },
+      {
+        "priority": "MEDIUM",
+        "action": "Add Curve 3pool liquidity ($15K)",
+        "rationale": "Diversification + 6.5% yield",
+        "cost": 95,
+        "benefit": 975,
+        "approval_required": true
+      },
+      {
+        "priority": "LOW",
+        "action": "Stake ETH via Lido ($30K)",
+        "rationale": "4.2% yield + tax deferral",
+        "cost": 75,
+        "benefit": 1260,
+        "approval_required": true
+      }
+    ],
+    "execution_summary": {
+      "total_cost": 360,
+      "total_benefit_year_1": 7871,
+      "net_benefit": 7511,
+      "roi": "2087%",
+      "execution_time": "~45 minutes",
+      "approval_required_count": 4,
+      "approval_command": "/agent approve optimization-plan-789"
     }
-  ],
-  "simulation": {
-    "success": true,
-    "estimated_profit": 175.0,
-    "gas_estimate": 450000
+  },
+  "metadata": {
+    "supervisor_agent": "multi_agent_supervisor",
+    "agents_orchestrated": [
+      "risk_analyzer",
+      "portfolio_manager",
+      "defi_yield",
+      "tax_optimizer",
+      "compliance_monitor",
+      "gas_optimizer"
+    ],
+    "execution_phases": 4,
+    "parallel_executions": 8,
+    "sequential_executions": 4,
+    "mcp_servers_used": [
+      "defillama",
+      "coingecko",
+      "aave",
+      "morpho",
+      "curve",
+      "1inch"
+    ],
+    "total_api_calls": 47,
+    "cache_hits": 12,
+    "cache_hit_rate": "25.5%"
+  }
+}
+```
+
+**Key Features Demonstrated:**
+- ✅ Supervisor-coordinated multi-agent workflow
+- ✅ 6 specialized agents working in parallel
+- ✅ Tax optimization (loss harvesting, long-term gains)
+- ✅ Compliance checking (SEC, FinCEN, IRS)
+- ✅ Gas optimization with timing recommendations
+- ✅ ROI calculation (2087% return on execution costs)
+- ✅ Approval workflow with detailed breakdown
+- ✅ Batching optimization to reduce gas costs
+
+---
+
+## 🔧 AGNO DEFI AGENTS {#agno-agents}
+
+Anvil includes 5 **Agno** operational DeFi agents that autonomously execute trades and manage positions:
+
+1. **TradingAgent** - Autonomous DEX trading with limit orders
+2. **LendingAgent** - Auto-rebalancing across lending protocols
+3. **PerpetualAgent** - Futures trading with risk management
+4. **AnalyticsAgent** - Continuous market monitoring
+5. **PortfolioAgent** - Automated portfolio rebalancing
+
+### Use Case 3: Automated Yield Optimization with LendingAgent
+
+**Scenario**: User wants to automatically move funds to highest-yield lending opportunities.
+
+#### Setup Request
+
+```bash
+POST /api/v1/agno/lending-agent/configure
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "enabled": true,
+  "strategy": {
+    "target_protocols": ["aave", "morpho", "curve"],
+    "target_assets": ["USDC", "USDT", "DAI"],
+    "min_yield_improvement": 1.5,
+    "max_risk_score": 50,
+    "rebalance_frequency": "daily",
+    "max_gas_per_rebalance": 100
+  },
+  "constraints": {
+    "never_withdraw_all": true,
+    "min_position_size": 1000,
+    "max_single_protocol": 0.4,
+    "require_audit": true
+  },
+  "notifications": {
+    "on_rebalance": true,
+    "on_error": true,
+    "on_opportunity": true
+  }
+}
+```
+
+#### Agent Autonomous Execution Log
+
+```json
+{
+  "agent": "lending_agent",
+  "execution_date": "2025-12-12T10:30:00Z",
+  "trigger": "daily_scheduled_check",
+  "analysis": {
+    "current_positions": [
+      {
+        "protocol": "Aave V3",
+        "asset": "USDC",
+        "balance": 25000,
+        "apy": 5.8,
+        "risk_score": 22
+      },
+      {
+        "protocol": "Curve",
+        "pool": "3pool",
+        "asset": "USDC",
+        "balance": 15000,
+        "apy": 6.2,
+        "risk_score": 35
+      }
+    ],
+    "opportunities_found": 3,
+    "selected_opportunity": {
+      "action": "migrate",
+      "from": {
+        "protocol": "Aave V3",
+        "asset": "USDC",
+        "current_apy": 5.8
+      },
+      "to": {
+        "protocol": "Morpho",
+        "vault": "Steakhouse USDC",
+        "projected_apy": 8.4,
+        "risk_score": 28
+      },
+      "amount": 15000,
+      "improvement": {
+        "yield_increase_pct": 2.6,
+        "annual_gain_usd": 390,
+        "risk_change": "+6 points (acceptable)",
+        "meets_criteria": true
+      },
+      "execution_plan": {
+        "gas_estimate": 85,
+        "slippage_estimate": 0.01,
+        "total_cost": 88.50,
+        "payback_period": "82 days",
+        "approved": true
+      }
+    }
   },
   "execution": {
-    "actual_profit": 172.5,
-    "total_gas_used": 455000,
-    "gas_price_gwei": 25,
-    "gas_cost_usd": 45.0,
-    "slippage": 0.003,
-    "execution_time_seconds": 14
+    "status": "completed",
+    "transactions": [
+      {
+        "step": 1,
+        "action": "withdraw",
+        "protocol": "Aave V3",
+        "amount": 15000,
+        "tx_hash": "0xdef456...",
+        "gas_used": 42.3,
+        "status": "confirmed",
+        "timestamp": "2025-12-12T10:32:15Z"
+      },
+      {
+        "step": 2,
+        "action": "deposit",
+        "protocol": "Morpho",
+        "vault": "Steakhouse USDC",
+        "amount": 15000,
+        "tx_hash": "0xabc789...",
+        "gas_used": 46.2,
+        "status": "confirmed",
+        "timestamp": "2025-12-12T10:33:42Z"
+      }
+    ],
+    "total_gas_cost": 88.50,
+    "execution_time": "87 seconds",
+    "success": true
   },
-  "costs_breakdown": {
-    "flash_loan_fee": 50.0,
-    "gas_cost": 45.0,
-    "dex_fees": 7.5,
-    "mev_protection_tip": 25.0,
-    "total_costs": 127.5
+  "post_execution": {
+    "new_portfolio": {
+      "total_value": 40000,
+      "weighted_avg_apy": 7.52,
+      "weighted_avg_risk": 29.25,
+      "protocol_distribution": {
+        "Aave V3": "25%",
+        "Morpho": "37.5%",
+        "Curve 3pool": "37.5%"
+      }
+    },
+    "vs_previous": {
+      "apy_improvement": "+1.12%",
+      "risk_change": "+3 points",
+      "diversification_score": "improved"
+    }
   },
-  "mev_protection": {
-    "enabled": true,
-    "relay": "flashbots",
-    "bundle_id": "0x789...abc",
-    "tip_amount": 25.0,
-    "private_submission": true
-  },
-  "profit_summary": {
-    "gross_profit": 300.0,
-    "total_costs": 127.5,
-    "net_profit": 172.5,
-    "roi_percent": 0.1725
-  },
-  "submitted_at": "2025-12-03T03:00:00Z",
-  "confirmed_at": "2025-12-03T03:00:14Z"
+  "notification_sent": {
+    "channel": "email",
+    "subject": "LendingAgent executed yield optimization",
+    "summary": "Moved $15K from Aave to Morpho. New APY: 7.52% (+1.12%). Gas cost: $88.50. Annual benefit: $390."
+  }
 }
 ```
 
----
-
-## 📋 **SUMMARY**
-
-### **Transformation Overview**
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Sentiment Analysis** | ❌ None | ✅ Multi-source (4 sources) | NEW |
-| **Price Predictions** | ❌ None | ✅ LSTM (24h/7d) | NEW |
-| **Risk Scoring** | ❌ None | ✅ ML-based (0-100) | NEW |
-| **Trading Signals** | ❌ None | ✅ AI-generated | NEW |
-| **Arbitrage** | ❌ None | ✅ Flash loan execution | NEW |
-| **Portfolio Optimization** | ❌ None | ✅ MPT-based | NEW |
-| **Tax Reporting** | ❌ Manual | ✅ Automated (Form 8949) | NEW |
-| **Time to Insight** | 6 hours | 30 seconds | 720x faster |
-| **User Churn** | 30% | 15% | 50% reduction |
-| **Trading Accuracy** | Manual | 76-85% (AI) | Measurable |
-
-### **Key Benefits**
-
-**For Traders:**
-- ✅ AI-powered decision making (sentiment + predictions + signals)
-- ✅ Capital-free arbitrage ($100-$500+ per trade)
-- ✅ MEV protection on all trades
-- ✅ Real-time alerts (sentiment, price, whale, pattern)
-
-**For Investors:**
-- ✅ Automated portfolio optimization
-- ✅ Risk monitoring and defensive positioning
-- ✅ Tax-loss harvesting automation
-- ✅ Time savings: 95% reduction (60h → 2h per quarter)
-
-**For Everyone:**
-- ✅ Comprehensive risk assessment (4 factors, 0-100 score)
-- ✅ Personalized recommendations
-- ✅ Educational guidance
-- ✅ All-in-one platform (no external tools needed)
-
-**Revenue Impact:**
-- Ultra Premium: $199/month (arbitrage + advanced AI)
-- Premium: $49/month (AI analysis + alerts)
-- Total: $216,000/year
+**Key Features:**
+- ✅ Autonomous execution (no user intervention)
+- ✅ Multi-protocol monitoring (Aave, Morpho, Curve)
+- ✅ Risk-aware optimization (max risk score: 50)
+- ✅ Cost-benefit analysis (payback period: 82 days)
+- ✅ Automatic notifications
+- ✅ Safety constraints (never withdraw all, min position size)
 
 ---
 
+### Use Case 4: Perpetual Trading with Risk Management (PerpetualAgent)
+
+**Scenario**: Automated perpetual futures trading on Hyperliquid with stop-loss and take-profit.
+
+#### Configuration
+
+```bash
+POST /api/v1/agno/perpetual-agent/strategy
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "strategy_name": "ETH Long Momentum",
+  "enabled": true,
+  "market": "ETH-PERP",
+  "exchange": "hyperliquid",
+  "parameters": {
+    "direction": "long_bias",
+    "entry_conditions": {
+      "sentiment_threshold": 65,
+      "momentum_signal": "bullish",
+      "funding_rate_max": 0.05
+    },
+    "position_sizing": {
+      "max_position_size_usd": 50000,
+      "leverage": 3,
+      "position_percent_of_portfolio": 0.15
+    },
+    "risk_management": {
+      "stop_loss_pct": 2.5,
+      "take_profit_pct": 8.0,
+      "trailing_stop": true,
+      "trailing_stop_activation": 5.0,
+      "max_drawdown_daily": 5.0
+    },
+    "execution": {
+      "order_type": "limit",
+      "slippage_tolerance": 0.1,
+      "time_in_force": "GTC"
+    }
+  }
+}
+```
+
+#### Agent Execution
+
+```json
+{
+  "agent": "perpetual_agent",
+  "strategy": "ETH Long Momentum",
+  "timestamp": "2025-12-12T14:22:00Z",
+  "event": "position_opened",
+  "market_analysis": {
+    "eth_price": 3850,
+    "sentiment_score": 72,
+    "momentum": "strong_bullish",
+    "funding_rate": 0.032,
+    "hunter_ai_prediction": {
+      "24h_forecast": 3980,
+      "confidence": 78,
+      "signal": "BUY"
+    },
+    "decision": "OPEN_LONG"
+  },
+  "position": {
+    "entry_price": 3850,
+    "size_usd": 45000,
+    "size_eth": 11.688,
+    "leverage": 3,
+    "margin_required": 15000,
+    "liquidation_price": 2567,
+    "stop_loss": 3754,
+    "take_profit": 4158,
+    "trailing_stop_activation": 4043
+  },
+  "risk_metrics": {
+    "position_risk_score": 55,
+    "portfolio_impact": "14.8% of total portfolio",
+    "max_loss_usd": 1125,
+    "max_loss_pct": 2.5,
+    "reward_risk_ratio": 3.2,
+    "liquidation_buffer": "33.3%"
+  },
+  "execution_details": {
+    "order_type": "limit",
+    "limit_price": 3850,
+    "filled_price": 3848,
+    "slippage_actual": -0.05,
+    "tx_hash": "0xhyperliquid123...",
+    "gas_cost": 0,
+    "exchange_fee": 18,
+    "total_cost": 18
+  },
+  "monitoring": {
+    "check_frequency": "every_30_seconds",
+    "alerts_enabled": [
+      "stop_loss_hit",
+      "take_profit_hit",
+      "trailing_stop_activated",
+      "liquidation_warning_10pct"
+    ]
+  }
+}
+```
+
+#### Automatic Position Management (30 minutes later)
+
+```json
+{
+  "agent": "perpetual_agent",
+  "event": "trailing_stop_activated",
+  "timestamp": "2025-12-12T14:52:00Z",
+  "position_update": {
+    "current_price": 4055,
+    "pnl_usd": 2400,
+    "pnl_pct": 5.33,
+    "trailing_stop_activated": true,
+    "new_stop_loss": 3851,
+    "reason": "Price reached +5.33%, activating trailing stop 5% below current price"
+  },
+  "action": "hold_and_monitor"
+}
+```
+
+#### Position Close (2 hours later)
+
+```json
+{
+  "agent": "perpetual_agent",
+  "event": "position_closed",
+  "timestamp": "2025-12-12T16:45:00Z",
+  "trigger": "take_profit_hit",
+  "exit_details": {
+    "exit_price": 4160,
+    "holding_period": "2h 23m",
+    "pnl_gross": 3625,
+    "fees_total": 36,
+    "pnl_net": 3589,
+    "roi": 7.98
+  },
+  "performance": {
+    "vs_prediction": "Exceeded Hunter AI forecast by 4.5%",
+    "risk_adjusted_return": 1.45,
+    "sharpe_ratio": 2.8,
+    "max_drawdown": 0.8
+  },
+  "notification": {
+    "title": "🎯 Take Profit Hit - ETH Long Closed",
+    "message": "Closed ETH-PERP long at $4,160. Profit: $3,589 (+7.98%) in 2h 23m. Strategy: ETH Long Momentum.",
+    "channels": ["push", "email"]
+  }
+}
+```
+
+**Key Features:**
+- ✅ Autonomous entry based on sentiment + momentum
+- ✅ Leverage management (3x with liquidation buffer)
+- ✅ Automatic stop-loss and take-profit
+- ✅ Trailing stop activation at +5%
+- ✅ Real-time risk monitoring (every 30 seconds)
+- ✅ Hunter AI integration for entry signals
+- ✅ Performance tracking (7.98% ROI in 2h 23m)
+
 ---
 
-## 🔄 **CHAT & PROJECT INTEGRATION USE CASES** {#integration-examples}
+## 🔌 MCP SERVER INTEGRATIONS {#mcp-integrations}
 
-### **Integration Example 1: Natural Chat Interface**
+Anvil integrates **13 MCP (Model Context Protocol) servers** for real-time blockchain data:
 
-#### **BEFORE (Standalone Hunter AI APIs)**
+1. **DeFiLlama** - Protocol TVL, yields, volume
+2. **CoinGecko** - Price data, market cap, rankings
+3. **TheGraph** - On-chain data indexing
+4. **1inch** - DEX aggregation and routing
+5. **Perplexity** - AI-powered web search
+6. **Aave** - Lending protocol data
+7. **Curve** - Curve Finance pools and gauges
+8. **Morpho** - Morpho vaults and markets
+9. **Hyperliquid** - Perpetual futures data
+10. **LayerZero** - Cross-chain messaging
+11. **Axelar** - Cross-chain bridging
+12. **Portfolio** - Multi-chain portfolio tracking
+13. **Others** (custom MCP servers)
 
-```
-Developer Implementation:
-1. Build custom UI for each Hunter AI endpoint
-2. Manually integrate sentiment, prediction, risk, signals
-3. Create separate pages for each feature
-4. Write custom state management
-5. Build custom notification system
+### Use Case 5: Multi-Protocol Yield Comparison via MCP Servers
 
-User Experience:
-• Navigate to "Sentiment Analysis" page
-• Enter token symbol
-• Click "Analyze"
-• View results
-• Navigate back
-• Navigate to "Price Prediction" page
-• Enter same token again
-• Click "Predict"
-• View results
-• Navigate back
-• Navigate to "Risk Analysis" page
-• Enter token again...
+**API Request:**
 
-Time to Complete Analysis: 5-10 minutes (multiple page loads)
-Developer Effort: 40+ hours (build all UIs)
-User Friction: HIGH (repetitive inputs, context loss)
+```bash
+GET /api/v1/defi/morpho/compare?protocols=aave,curve,morpho&asset=USDC&chain=ethereum&sort_by=apy
+Authorization: Bearer <jwt_token>
 ```
 
-**Pain Points:**
-- ❌ Fragmented user experience
-- ❌ Repetitive data entry
-- ❌ No conversation context
-- ❌ High development cost
-- ❌ Context switching between pages
+**Behind the Scenes (MCP Server Orchestration):**
+
+```python
+# Parallel MCP server calls
+async def compare_yields():
+    # Call 3 MCP servers simultaneously
+    tasks = [
+        mcp_aave.get_market_data("USDC", "ethereum"),
+        mcp_curve.get_pool_apy("3pool"),
+        mcp_morpho.get_vault_apy("steakhouse-usdc")
+    ]
+    results = await asyncio.gather(*tasks)
+
+    # Cross-reference with DeFiLlama for verification
+    tvl_data = await mcp_defillama.get_protocol_tvls(["aave", "curve", "morpho"])
+
+    return aggregate_and_rank(results, tvl_data)
+```
+
+**API Response:**
+
+```json
+{
+  "comparison": {
+    "asset": "USDC",
+    "chain": "ethereum",
+    "timestamp": "2025-12-12T10:00:00Z",
+    "protocols_compared": 3,
+    "data_sources": {
+      "aave": "mcp_aave + defillama",
+      "curve": "mcp_curve + defillama",
+      "morpho": "mcp_morpho + defillama"
+    },
+    "results": [
+      {
+        "rank": 1,
+        "protocol": "Morpho",
+        "vault_name": "Steakhouse USDC",
+        "apy": 8.4,
+        "tvl": 450000000,
+        "risk_score": 28,
+        "audit_status": "Fully audited (4 firms)",
+        "auditors": ["OpenZeppelin", "Trail of Bits", "ChainSecurity", "Zellic"],
+        "last_audit": "2025-09-15",
+        "yield_breakdown": {
+          "base_rate": 4.2,
+          "morpho_rewards": 2.8,
+          "lido_staking": 1.4
+        },
+        "liquidity": {
+          "total_liquidity": 450000000,
+          "available_liquidity": 280000000,
+          "utilization_rate": 37.8
+        },
+        "historical_apy": {
+          "7d_avg": 8.6,
+          "30d_avg": 8.1,
+          "90d_avg": 7.9,
+          "volatility": 0.4
+        },
+        "recommendation": "BEST_CHOICE",
+        "reasons": [
+          "Highest APY (8.4%)",
+          "Lowest risk score (28)",
+          "Most comprehensive audits (4 firms)",
+          "Excellent liquidity ($280M available)"
+        ],
+        "action": {
+          "endpoint": "/api/v1/defi/morpho/vaults/steakhouse-usdc",
+          "deposit_command": "/agent execute deposit 25000 USDC to morpho steakhouse-usdc"
+        }
+      },
+      {
+        "rank": 2,
+        "protocol": "Curve Finance",
+        "pool_name": "3pool (USDC/USDT/DAI)",
+        "apy": 6.5,
+        "tvl": 800000000,
+        "risk_score": 35,
+        "audit_status": "Fully audited (3 firms)",
+        "auditors": ["Trail of Bits", "Mixbytes", "ChainSecurity"],
+        "last_audit": "2025-06-20",
+        "yield_breakdown": {
+          "trading_fees": 1.8,
+          "crv_rewards": 3.2,
+          "cvx_boost": 1.5
+        },
+        "liquidity": {
+          "total_liquidity": 800000000,
+          "pool_depth": 950000000,
+          "utilization_rate": 84.2
+        },
+        "historical_apy": {
+          "7d_avg": 6.8,
+          "30d_avg": 6.4,
+          "90d_avg": 6.2,
+          "volatility": 0.6
+        },
+        "recommendation": "GOOD_ALTERNATIVE",
+        "reasons": [
+          "Ultra-deep liquidity ($950M)",
+          "Battle-tested protocol (>3 years)",
+          "Stable yields (low volatility)"
+        ],
+        "warnings": [
+          "Slightly higher risk score vs Morpho",
+          "APY 1.9% lower than Morpho"
+        ]
+      },
+      {
+        "rank": 3,
+        "protocol": "Aave V3",
+        "market_name": "USDC",
+        "apy": 5.8,
+        "tvl": 1200000000,
+        "risk_score": 22,
+        "audit_status": "Fully audited (6 firms)",
+        "auditors": ["OpenZeppelin", "Trail of Bits", "SigmaPrime", "Peckshield", "ABDK", "Certora"],
+        "last_audit": "2025-11-01",
+        "yield_breakdown": {
+          "base_supply_rate": 5.8,
+          "aave_rewards": 0,
+          "safety_module_bonus": 0
+        },
+        "liquidity": {
+          "total_liquidity": 1200000000,
+          "available_liquidity": 850000000,
+          "utilization_rate": 29.2
+        },
+        "historical_apy": {
+          "7d_avg": 5.9,
+          "30d_avg": 5.7,
+          "90d_avg": 5.6,
+          "volatility": 0.2
+        },
+        "recommendation": "CONSERVATIVE_CHOICE",
+        "reasons": [
+          "Lowest risk score (22)",
+          "Most audited protocol (6 firms)",
+          "Largest TVL ($1.2B) - institutional grade",
+          "Lowest yield volatility (0.2%)"
+        ],
+        "warnings": [
+          "APY 2.6% lower than Morpho",
+          "No protocol token rewards"
+        ]
+      }
+    ],
+    "summary": {
+      "highest_apy": {
+        "protocol": "Morpho",
+        "apy": 8.4
+      },
+      "lowest_risk": {
+        "protocol": "Aave V3",
+        "risk_score": 22
+      },
+      "best_liquidity": {
+        "protocol": "Aave V3",
+        "liquidity": 850000000
+      },
+      "most_audited": {
+        "protocol": "Aave V3",
+        "auditors_count": 6
+      },
+      "recommended_allocation": {
+        "strategy": "Risk-adjusted diversification",
+        "allocation": {
+          "Morpho": "50% (highest yield)",
+          "Curve 3pool": "30% (deep liquidity)",
+          "Aave V3": "20% (lowest risk)"
+        },
+        "weighted_avg_apy": 7.56,
+        "weighted_avg_risk": 29.4,
+        "rationale": "Maximizes yield (7.56%) while maintaining acceptable risk (29.4)"
+      }
+    },
+    "data_freshness": {
+      "aave_data_age": "45 seconds",
+      "curve_data_age": "32 seconds",
+      "morpho_data_age": "28 seconds",
+      "defillama_data_age": "2 minutes",
+      "all_data_fresh": true
+    }
+  },
+  "mcp_performance": {
+    "total_mcp_calls": 5,
+    "parallel_calls": 3,
+    "sequential_calls": 2,
+    "total_time_ms": 1240,
+    "breakdown": {
+      "mcp_aave": "380ms",
+      "mcp_curve": "420ms",
+      "mcp_morpho": "310ms",
+      "mcp_defillama": "580ms (2 calls)",
+      "aggregation": "130ms"
+    },
+    "cache_hits": 1,
+    "cache_misses": 4
+  }
+}
+```
+
+**Key Features:**
+- ✅ Parallel MCP server queries (3 protocols simultaneously)
+- ✅ Cross-verification with DeFiLlama
+- ✅ Risk scoring and audit status
+- ✅ Historical APY analysis (7d, 30d, 90d)
+- ✅ Liquidity depth analysis
+- ✅ Recommended allocation strategy
+- ✅ Data freshness tracking (all <3 minutes)
+- ✅ Performance metrics (1.24s total query time)
 
 ---
 
-#### **AFTER (Chat-Integrated Hunter AI)**
+## 🎯 HUNTER AI USE CASES {#hunter-ai-use-cases}
 
-```
-Developer Implementation:
-1. Add HunterToolDefinition to chat system (1 hour)
-2. Enable tools in SendMessage handler (30 minutes)
-3. Done! All Hunter AI features accessible via chat
+Hunter AI provides ML-powered market intelligence with 4 core capabilities:
 
-User Experience (Single Conversation):
+1. **Sentiment Analysis** - Multi-source sentiment tracking
+2. **Risk Scoring** - ML-based risk assessment
+3. **Price Predictions** - LSTM-based forecasting
+4. **Trading Signals** - AI-generated trade recommendations
 
-User: "Analyze ETH"
+### Use Case 6: Comprehensive Token Analysis
 
-Bot: [Executes all Hunter AI tools automatically]
-"📊 ETH Complete Analysis:
+**API Request:**
 
-💭 SENTIMENT: 72/100 (Bullish, 85% confidence)
-   Sources: Twitter 75, Reddit 68, Discord 70, News 73
-   Trend: ↑ Rising
+```bash
+POST /api/v1/hunter/analyze
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
 
-🔮 PRICE: $2,060 in 24h (+3.0%, 75% confidence)
-   Current: $2,000
-
-⚠️ RISK: 45/100 (Medium)
-   Volatility: 52, Liquidity: 36, Contract: 42, Correlation: 51
-
-🔔 SIGNAL: BUY (76% confidence)
-   Entry: $2,000, Target: $2,160, Stop: $1,920
-
-What would you like to do next?"
-
-User: "Set alerts"
-
-Bot: "✅ Alerts configured:
-• Sentiment drops below 60
-• Price hits $1,920 (stop) or $2,160 (target)
-• Risk exceeds 55
-
-Anything else?"
-
-Time to Complete Analysis: 10 seconds (instant response)
-Developer Effort: 1.5 hours (tool integration)
-User Friction: LOW (natural conversation)
+{
+  "token_symbol": "UNI",
+  "analysis_depth": "comprehensive",
+  "include": [
+    "sentiment",
+    "risk",
+    "price_prediction",
+    "trading_signals",
+    "whale_activity"
+  ],
+  "timeframe": "24h"
+}
 ```
 
-**New Capabilities:**
-- ✅ Single interface for all features
-- ✅ Conversational flow
-- ✅ Context maintained
-- ✅ Multi-tool execution
-- ✅ Natural follow-ups
-- ✅ 30x faster implementation
-- ✅ 96% time saved (5-10 min → 10 sec)
+**API Response:**
 
-**Value Add:** Seamless UX, developer efficiency, instant insights
+```json
+{
+  "token": "UNI",
+  "timestamp": "2025-12-12T16:00:00Z",
+  "analysis": {
+    "sentiment": {
+      "overall_score": 72,
+      "classification": "BULLISH",
+      "confidence": 85,
+      "trend": "INCREASING",
+      "change_24h": 8,
+      "sources": {
+        "twitter": {
+          "score": 75,
+          "mentions_count": 8500,
+          "positive_ratio": 0.68,
+          "engagement_score": 82,
+          "top_hashtags": ["#Uniswap", "#DeFi", "#UNI"],
+          "influencer_sentiment": "Very bullish",
+          "whale_accounts_sentiment": 78
+        },
+        "reddit": {
+          "score": 68,
+          "subreddit": "r/UniSwap",
+          "total_karma": 12500,
+          "positive_posts_ratio": 0.64,
+          "trending_threads": 3
+        },
+        "discord": {
+          "score": 70,
+          "active_users": 2840,
+          "message_sentiment": "Positive",
+          "admin_activity": "High"
+        },
+        "news": {
+          "score": 73,
+          "articles_count": 12,
+          "positive_count": 9,
+          "neutral_count": 2,
+          "negative_count": 1,
+          "major_headlines": [
+            "Uniswap V4 hooks gaining traction among developers",
+            "UNI token sees increased institutional interest",
+            "Uniswap Labs expands to 3 new chains"
+          ]
+        }
+      },
+      "sentiment_history": {
+        "24h_ago": 64,
+        "7d_ago": 58,
+        "30d_ago": 55,
+        "trend_direction": "strong_bullish"
+      }
+    },
+    "risk_assessment": {
+      "overall_risk_score": 35,
+      "risk_level": "LOW",
+      "confidence": 88,
+      "factors": {
+        "liquidity_risk": {
+          "score": 15,
+          "level": "VERY_LOW",
+          "tvl": 3200000000,
+          "daily_volume": 1100000000,
+          "depth_2pct": 15000000,
+          "assessment": "Excellent liquidity - minimal slippage risk"
+        },
+        "volatility_risk": {
+          "score": 42,
+          "level": "LOW",
+          "volatility_30d": 18.2,
+          "volatility_90d": 22.4,
+          "vs_btc_correlation": 0.68,
+          "beta": 1.15,
+          "assessment": "Below DeFi sector average volatility"
+        },
+        "smart_contract_risk": {
+          "score": 20,
+          "level": "VERY_LOW",
+          "audit_firms": ["Trail of Bits", "OpenZeppelin", "ABDK", "Consensys Diligence"],
+          "last_audit": "2025-10-15",
+          "time_in_market": "4+ years",
+          "tvl_secured": "$3.2B",
+          "known_exploits": 0,
+          "bug_bounty": "$2M+ paid",
+          "assessment": "Battle-tested protocol with comprehensive audits"
+        },
+        "market_correlation_risk": {
+          "score": 48,
+          "level": "LOW",
+          "correlation_eth": 0.72,
+          "correlation_btc": 0.68,
+          "correlation_defi_index": 0.81,
+          "diversification_benefit": "Limited - high DeFi correlation",
+          "assessment": "Moves with broader DeFi market"
+        }
+      },
+      "composite_score_breakdown": {
+        "liquidity_weight": 0.30,
+        "volatility_weight": 0.25,
+        "smart_contract_weight": 0.30,
+        "correlation_weight": 0.15,
+        "weighted_score": 35
+      },
+      "recommendation": "Suitable for conservative to moderate portfolios. Low absolute risk, but correlated with DeFi sector."
+    },
+    "price_prediction": {
+      "model": "LSTM",
+      "model_version": "v2.3.1",
+      "training_data": "3 years historical data",
+      "forecast": {
+        "24h": {
+          "price": 8.75,
+          "change_pct": 3.5,
+          "confidence": 78,
+          "confidence_interval_90pct": {
+            "lower": 8.60,
+            "upper": 8.90
+          }
+        },
+        "7d": {
+          "price": 9.20,
+          "change_pct": 8.9,
+          "confidence": 65,
+          "confidence_interval_90pct": {
+            "lower": 8.85,
+            "upper": 9.55
+          }
+        },
+        "30d": {
+          "price": 9.80,
+          "change_pct": 15.9,
+          "confidence": 52,
+          "confidence_interval_90pct": {
+            "lower": 8.95,
+            "upper": 10.65
+          }
+        }
+      },
+      "model_accuracy": {
+        "historical_24h_accuracy": 67,
+        "historical_7d_accuracy": 58,
+        "historical_30d_accuracy": 42,
+        "mean_absolute_error_24h": 2.8,
+        "note": "Accuracy decreases with longer timeframes"
+      },
+      "prediction_drivers": [
+        "Strong bullish sentiment (+72)",
+        "Increasing whale accumulation",
+        "Positive news cycle",
+        "Technical breakout pattern",
+        "DeFi sector momentum"
+      ]
+    },
+    "trading_signals": {
+      "signal": "BUY",
+      "strength": "MODERATE",
+      "confidence": 76,
+      "reasoning": {
+        "bullish_factors": [
+          "Sentiment score 72/100 (bullish)",
+          "Price prediction +3.5% 24h (positive)",
+          "Risk score 35/100 (low risk)",
+          "Whale accumulation (net +150K UNI)",
+          "Technical: RSI 58 (neutral to bullish)"
+        ],
+        "bearish_factors": [
+          "High correlation with ETH (0.72) - sector risk",
+          "Funding rate trending negative (shorts increasing)"
+        ],
+        "neutral_factors": [
+          "Volume flat vs 7d average"
+        ]
+      },
+      "entry_strategy": {
+        "recommended_entry": "8.40 - 8.50",
+        "current_price": 8.45,
+        "entry_timing": "IMMEDIATE to NEXT_DIP",
+        "order_type": "Limit order at 8.42 (0.35% below current)"
+      },
+      "targets": {
+        "target_1": {
+          "price": 8.90,
+          "timeframe": "24-48h",
+          "probability": 78,
+          "profit_potential": 5.3
+        },
+        "target_2": {
+          "price": 9.20,
+          "timeframe": "5-7d",
+          "probability": 65,
+          "profit_potential": 8.9
+        }
+      },
+      "stop_loss": {
+        "price": 8.10,
+        "distance_pct": -4.1,
+        "rationale": "Below key support at 8.15"
+      },
+      "risk_reward_ratio": 2.1,
+      "position_sizing": {
+        "conservative": "2-3% of portfolio",
+        "moderate": "5-7% of portfolio",
+        "aggressive": "10-15% of portfolio",
+        "recommended": "5% of portfolio (moderate risk tolerance)"
+      }
+    },
+    "whale_activity": {
+      "timeframe": "24h",
+      "large_transfers": [
+        {
+          "type": "transfer",
+          "amount": 1200000,
+          "amount_usd": 10140000,
+          "from": "Binance",
+          "to": "Unknown Wallet (0xabc...)",
+          "timestamp": "2025-12-12T08:30:00Z",
+          "interpretation": "Potential accumulation - moved from exchange to private wallet"
+        },
+        {
+          "type": "transfer",
+          "amount": 850000,
+          "amount_usd": 7182500,
+          "from": "Unknown Wallet (0xdef...)",
+          "to": "Uniswap V3 Pool",
+          "timestamp": "2025-12-12T12:15:00Z",
+          "interpretation": "Added liquidity - bullish signal"
+        }
+      ],
+      "net_exchange_flow": {
+        "inflow": 2400000,
+        "outflow": 3550000,
+        "net": -1150000,
+        "net_usd": -9717500,
+        "interpretation": "NET OUTFLOW - Whales withdrawing from exchanges (bullish)"
+      },
+      "top_100_holders": {
+        "change_24h": 150000,
+        "change_pct": 0.42,
+        "total_supply_pct": 68.5,
+        "trend": "ACCUMULATION"
+      },
+      "smart_money_signal": "BULLISH",
+      "whale_sentiment_score": 78
+    },
+    "technical_analysis": {
+      "indicators": {
+        "rsi_14": 58,
+        "rsi_interpretation": "Neutral to bullish",
+        "macd": {
+          "value": 0.12,
+          "signal": 0.08,
+          "histogram": 0.04,
+          "interpretation": "Bullish crossover"
+        },
+        "moving_averages": {
+          "ma_50": 8.15,
+          "ma_200": 7.85,
+          "price_vs_ma50": "above",
+          "price_vs_ma200": "above",
+          "golden_cross": true,
+          "interpretation": "Strong bullish structure"
+        },
+        "bollinger_bands": {
+          "upper": 9.10,
+          "middle": 8.45,
+          "lower": 7.80,
+          "price_position": "at_middle",
+          "bandwidth": 15.4,
+          "interpretation": "Normal volatility, room to move up"
+        }
+      },
+      "support_resistance": {
+        "resistance_1": 8.90,
+        "resistance_2": 9.20,
+        "resistance_3": 9.50,
+        "support_1": 8.15,
+        "support_2": 7.85,
+        "support_3": 7.50
+      },
+      "chart_patterns": [
+        {
+          "pattern": "Ascending Triangle",
+          "timeframe": "4h",
+          "breakout_target": 9.30,
+          "probability": 68,
+          "status": "forming"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "overall_rating": "BULLISH",
+    "confidence": 76,
+    "recommendation": "BUY on dips to 8.40-8.42",
+    "target_price_24h": 8.90,
+    "stop_loss": 8.10,
+    "position_size": "5% of portfolio",
+    "risk_reward": "2.1:1 (favorable)",
+    "key_insight": "Strong bullish sentiment (72), low risk (35), positive whale activity. Entry at current levels offers good risk/reward for 24-48h trade."
+  },
+  "metadata": {
+    "analysis_time_ms": 2840,
+    "data_sources_used": 12,
+    "ml_models_invoked": 4,
+    "cache_hit_rate": 0.15
+  }
+}
+```
+
+**Key Features:**
+- ✅ Multi-source sentiment (Twitter, Reddit, Discord, News)
+- ✅ ML-based risk scoring (4 factors: liquidity, volatility, smart contract, correlation)
+- ✅ LSTM price predictions (24h, 7d, 30d with confidence intervals)
+- ✅ AI trading signals with entry/exit strategy
+- ✅ Whale activity tracking (exchange flows, top holders)
+- ✅ Technical analysis (RSI, MACD, Moving Averages, Bollinger Bands)
+- ✅ Chart pattern recognition (Ascending Triangle)
+- ✅ Risk/reward ratio calculation (2.1:1)
+- ✅ Position sizing recommendations
 
 ---
 
-### **Integration Example 2: Project-Based Trading Workflows**
+## 💼 PORTFOLIO MANAGEMENT {#portfolio-management}
 
-#### **BEFORE (Generic Chat + Manual Workflows)**
+### Use Case 7: Multi-Chain Portfolio Tracking
+
+**API Request:**
+
+```bash
+GET /api/v1/portfolio/me?include_positions=true&include_nfts=true&save_snapshot=true
+Authorization: Bearer <jwt_token>
+```
+
+**API Response:**
+
+```json
+{
+  "portfolio": {
+    "user_id": "user_123",
+    "wallets": [
+      {
+        "address": "0xabc123...",
+        "type": "PRIVY",
+        "label": "Main Wallet",
+        "chains": ["ethereum", "base", "arbitrum"]
+      },
+      {
+        "address": "0xdef456...",
+        "type": "EXTERNAL",
+        "label": "Hardware Wallet",
+        "chains": ["ethereum"]
+      }
+    ],
+    "total_value_usd": 285650,
+    "total_value_change_24h": 4250,
+    "total_value_change_24h_pct": 1.51,
+    "last_updated": "2025-12-12T17:00:00Z",
+    "breakdown_by_chain": {
+      "ethereum": {
+        "value_usd": 185000,
+        "pct_of_total": 64.8,
+        "assets_count": 12,
+        "defi_positions_count": 4,
+        "nfts_count": 3
+      },
+      "base": {
+        "value_usd": 45000,
+        "pct_of_total": 15.8,
+        "assets_count": 5,
+        "defi_positions_count": 2,
+        "nfts_count": 0
+      },
+      "arbitrum": {
+        "value_usd": 32000,
+        "pct_of_total": 11.2,
+        "assets_count": 6,
+        "defi_positions_count": 3,
+        "nfts_count": 0
+      },
+      "polygon": {
+        "value_usd": 18650,
+        "pct_of_total": 6.5,
+        "assets_count": 8,
+        "defi_positions_count": 1,
+        "nfts_count": 5
+      },
+      "optimism": {
+        "value_usd": 5000,
+        "pct_of_total": 1.7,
+        "assets_count": 3,
+        "defi_positions_count": 1,
+        "nfts_count": 0
+      }
+    },
+    "holdings": [
+      {
+        "token": "ETH",
+        "balance": 48.5,
+        "value_usd": 186725,
+        "pct_of_portfolio": 65.4,
+        "chains": {
+          "ethereum": 35.2,
+          "base": 8.3,
+          "arbitrum": 5.0
+        },
+        "avg_cost_basis": 2850,
+        "unrealized_pnl": 48262.50,
+        "unrealized_pnl_pct": 34.9,
+        "24h_change": 2.1
+      },
+      {
+        "token": "USDC",
+        "balance": 45000,
+        "value_usd": 45000,
+        "pct_of_portfolio": 15.8,
+        "chains": {
+          "ethereum": 25000,
+          "base": 15000,
+          "arbitrum": 5000
+        },
+        "avg_cost_basis": 1.00,
+        "unrealized_pnl": 0,
+        "unrealized_pnl_pct": 0,
+        "24h_change": 0.01
+      },
+      {
+        "token": "UNI",
+        "balance": 2400,
+        "value_usd": 20280,
+        "pct_of_portfolio": 7.1,
+        "chains": {
+          "ethereum": 2400
+        },
+        "avg_cost_basis": 7.85,
+        "unrealized_pnl": 1440,
+        "unrealized_pnl_pct": 7.6,
+        "24h_change": 3.2
+      }
+    ],
+    "defi_positions": [
+      {
+        "protocol": "Morpho",
+        "type": "LENDING",
+        "vault": "Steakhouse USDC",
+        "chain": "ethereum",
+        "deposited_amount": 25000,
+        "deposited_asset": "USDC",
+        "current_value_usd": 25420,
+        "earnings_usd": 420,
+        "earnings_pct": 1.68,
+        "current_apy": 8.4,
+        "deposited_at": "2025-11-15T10:30:00Z",
+        "days_active": 27,
+        "risk_score": 28
+      },
+      {
+        "protocol": "Curve Finance",
+        "type": "LP",
+        "pool": "stETH/ETH",
+        "chain": "ethereum",
+        "liquidity_provided": {
+          "stETH": 12.5,
+          "ETH": 12.5
+        },
+        "current_value_usd": 96500,
+        "earnings_usd": 2840,
+        "earnings_pct": 3.03,
+        "current_apy": 6.8,
+        "impermanent_loss": -145,
+        "deposited_at": "2025-09-20T14:00:00Z",
+        "days_active": 83,
+        "risk_score": 45
+      },
+      {
+        "protocol": "Aave V3",
+        "type": "LENDING",
+        "market": "USDC",
+        "chain": "base",
+        "deposited_amount": 15000,
+        "deposited_asset": "USDC",
+        "current_value_usd": 15320,
+        "earnings_usd": 320,
+        "earnings_pct": 2.13,
+        "current_apy": 7.8,
+        "deposited_at": "2025-10-01T09:15:00Z",
+        "days_active": 72,
+        "risk_score": 22
+      },
+      {
+        "protocol": "Hyperliquid",
+        "type": "PERPETUAL",
+        "market": "ETH-PERP",
+        "chain": "arbitrum",
+        "position_size_usd": 45000,
+        "entry_price": 3850,
+        "current_price": 3850,
+        "leverage": 3,
+        "margin": 15000,
+        "pnl_usd": 0,
+        "pnl_pct": 0,
+        "liquidation_price": 2567,
+        "opened_at": "2025-12-12T14:22:00Z",
+        "risk_score": 55
+      }
+    ],
+    "nfts": [
+      {
+        "collection": "CryptoPunks",
+        "token_id": 1234,
+        "chain": "ethereum",
+        "floor_price_eth": 35.0,
+        "floor_price_usd": 134750,
+        "last_sale_price_eth": 38.5,
+        "rarity_rank": 245,
+        "acquired_price_eth": 32.0,
+        "unrealized_gain_eth": 3.0,
+        "unrealized_gain_pct": 9.38,
+        "held_since": "2025-06-10"
+      }
+    ],
+    "performance_metrics": {
+      "total_invested_usd": 245000,
+      "current_value_usd": 285650,
+      "total_pnl_usd": 40650,
+      "total_pnl_pct": 16.59,
+      "realized_gains_ytd": 8450,
+      "unrealized_gains": 32200,
+      "best_performer": {
+        "asset": "ETH",
+        "pnl_pct": 34.9
+      },
+      "worst_performer": {
+        "asset": "Curve stETH/ETH LP",
+        "pnl_pct": -0.15
+      },
+      "avg_defi_apy": 7.75,
+      "total_defi_earnings_ytd": 5840
+    },
+    "risk_metrics": {
+      "portfolio_risk_score": 42,
+      "risk_level": "MEDIUM",
+      "concentration_risk": "HIGH (65.4% in ETH)",
+      "smart_contract_risk": "MEDIUM (avg: 37.5)",
+      "chain_diversification": "GOOD (5 chains)",
+      "protocol_diversification": "LIMITED (4 protocols)"
+    }
+  },
+  "snapshot_saved": true,
+  "snapshot_id": "snap_20251212_170000",
+  "metadata": {
+    "fetch_time_ms": 3420,
+    "chains_queried": 5,
+    "api_calls_made": 18,
+    "cache_hits": 6
+  }
+}
+```
+
+**Key Features:**
+- ✅ Multi-chain tracking (5 EVM chains)
+- ✅ Unified portfolio view across wallets
+- ✅ DeFi positions tracking (Morpho, Curve, Aave, Hyperliquid)
+- ✅ NFT portfolio with floor prices
+- ✅ Performance metrics (total PnL: +16.59%)
+- ✅ Risk scoring (portfolio risk: 42/100)
+- ✅ Earnings tracking per position
+- ✅ Snapshot functionality for historical comparison
+
+---
+
+### Use Case 8: Portfolio Risk Analysis with Cascade Simulation
+
+**API Request:**
+
+```bash
+POST /api/v1/portfolio/risk/simulate-cascade
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "scenario": "curve_exploit",
+  "severity": "critical",
+  "affected_protocols": ["curve"],
+  "assumptions": {
+    "price_impact_pct": -80,
+    "contagion_factor": 0.35,
+    "recovery_time_days": 30
+  }
+}
+```
+
+**API Response:**
+
+```json
+{
+  "simulation": {
+    "scenario_name": "Curve Finance Critical Exploit",
+    "timestamp": "2025-12-12T17:30:00Z",
+    "severity": "CRITICAL",
+    "assumptions": {
+      "initial_impact": "Curve Finance exploited - $800M drained",
+      "price_impact_crv": -80,
+      "contagion_to_defi": 0.35,
+      "stablecoin_depeg_risk": "HIGH",
+      "market_panic_factor": 0.65
+    },
+    "direct_impact": {
+      "affected_positions": [
+        {
+          "protocol": "Curve Finance",
+          "pool": "stETH/ETH",
+          "current_value": 96500,
+          "simulated_value": 19300,
+          "loss_usd": -77200,
+          "loss_pct": -80,
+          "recovery_probability": 0.15,
+          "explanation": "Direct exposure - assumed total loss of LP position"
+        }
+      ],
+      "total_direct_loss": -77200,
+      "pct_of_portfolio": -27.0
+    },
+    "indirect_impact": {
+      "market_contagion": {
+        "eth_price_impact": -25,
+        "defi_sector_impact": -35,
+        "stablecoin_depeg": {
+          "USDC": -2.5,
+          "USDT": -4.0,
+          "DAI": -8.5
+        }
+      },
+      "affected_positions": [
+        {
+          "asset": "ETH",
+          "current_value": 186725,
+          "simulated_value": 140044,
+          "loss_usd": -46681,
+          "loss_pct": -25,
+          "explanation": "Contagion effect - broad DeFi selloff"
+        },
+        {
+          "protocol": "Morpho",
+          "vault": "Steakhouse USDC",
+          "current_value": 25420,
+          "simulated_value": 23263,
+          "loss_usd": -2157,
+          "loss_pct": -8.5,
+          "explanation": "Morpho uses Curve pools - DAI depeg risk"
+        },
+        {
+          "protocol": "Aave V3",
+          "market": "USDC",
+          "current_value": 15320,
+          "simulated_value": 14937,
+          "loss_usd": -383,
+          "loss_pct": -2.5,
+          "explanation": "Minor USDC depeg risk"
+        }
+      ],
+      "total_indirect_loss": -49221,
+      "pct_of_portfolio": -17.2
+    },
+    "cascade_analysis": {
+      "total_loss": -126421,
+      "total_loss_pct": -44.2,
+      "portfolio_value_before": 285650,
+      "portfolio_value_after": 159229,
+      "time_to_recover_50pct": "45-60 days",
+      "time_to_full_recovery": "180-240 days (if recoverable)",
+      "probability_full_recovery": 0.25
+    },
+    "dependency_chain": [
+      "1. Curve Finance exploited → CRV price crashes -80%",
+      "2. Panic selling → ETH drops -25%, DeFi sector -35%",
+      "3. 3pool liquidity crisis → DAI depegs -8.5%",
+      "4. Morpho (uses Curve) → vault value drops -8.5%",
+      "5. General risk-off → Aave USDC slight depeg -2.5%",
+      "6. Portfolio value: $285K → $159K (-44.2%)"
+    ],
+    "mitigation_recommendations": [
+      {
+        "priority": "CRITICAL",
+        "action": "REDUCE Curve exposure from 33.8% to <15%",
+        "rationale": "Single protocol represents 27% direct loss risk",
+        "target_allocation": "Max 15% in any single DeFi protocol",
+        "implementation": "Withdraw $50K from Curve stETH/ETH, migrate to Aave/Morpho"
+      },
+      {
+        "priority": "HIGH",
+        "action": "INCREASE stablecoin diversification",
+        "rationale": "Currently 15.8% USDC only - add USDT, USDC.e for depeg protection",
+        "target_allocation": "Split stablecoins: 40% USDC, 30% USDT, 30% USDC.e",
+        "implementation": "Swap $15K USDC → $6K USDT + $4.5K USDC.e"
+      },
+      {
+        "priority": "HIGH",
+        "action": "ADD protocol-agnostic hedge (ETH/BTC)",
+        "rationale": "65.4% ETH exposure amplifies DeFi contagion risk",
+        "target_allocation": "Reduce ETH to 50%, add 10% BTC, 5% blue-chip alts",
+        "implementation": "Swap 10 ETH → 5 BTC + diversified alts"
+      },
+      {
+        "priority": "MEDIUM",
+        "action": "SET UP real-time monitoring for Curve TVL/exploits",
+        "rationale": "Early detection enables faster exit before full cascade",
+        "implementation": "Enable 'TVL -20% in 1h' alert + 'unusual contract activity' alert"
+      },
+      {
+        "priority": "LOW",
+        "action": "DIVERSIFY across L2s (currently 70% mainnet)",
+        "rationale": "Mainnet congestion during crisis → failed emergency exits",
+        "target_allocation": "40% mainnet, 60% L2s (Base, Arbitrum, Optimism)",
+        "implementation": "Bridge $50K to Base/Arbitrum"
+      }
+    ],
+    "optimized_portfolio": {
+      "if_recommendations_applied": {
+        "curve_exposure": "14.5% (from 33.8%)",
+        "eth_exposure": "50.0% (from 65.4%)",
+        "stablecoin_diversification": "3 stablecoins (from 1)",
+        "protocol_count": "6 (from 4)",
+        "chain_distribution": "60% L2 (from 30%)",
+        "simulated_loss_same_scenario": -85420,
+        "simulated_loss_pct": -29.9,
+        "improvement_vs_current": "+14.3% less loss"
+      }
+    }
+  },
+  "historical_precedents": {
+    "similar_events": [
+      {
+        "event": "Curve reentrancy exploit (July 2023)",
+        "actual_impact": "$70M drained",
+        "crv_price_drop": -42,
+        "recovery_time": "90 days",
+        "final_recovery": "Partial (65% recovered)"
+      },
+      {
+        "event": "Iron Finance collapse (June 2021)",
+        "actual_impact": "$2B TVL collapse",
+        "titan_price_drop": -100,
+        "contagion_to_defi": -28,
+        "recovery_time": "Never (total loss)"
+      }
+    ]
+  },
+  "metadata": {
+    "simulation_time_ms": 1850,
+    "monte_carlo_iterations": 10000,
+    "confidence_level": 0.90
+  }
+}
+```
+
+**Key Features:**
+- ✅ Cascade simulation modeling
+- ✅ Direct + indirect impact calculation
+- ✅ Dependency chain analysis (6-step cascade)
+- ✅ Contagion factor modeling (35% to DeFi sector)
+- ✅ Depeg risk assessment (stablecoins)
+- ✅ Mitigation recommendations (5 priorities)
+- ✅ Optimized portfolio projection (-14.3% improvement)
+- ✅ Historical precedent analysis
+- ✅ Monte Carlo simulation (10K iterations, 90% confidence)
+
+---
+
+## 🌉 CROSS-CHAIN OPERATIONS {#cross-chain-operations}
+
+### Use Case 9: Cross-Chain Bridge with Axelar
+
+**API Request:**
+
+```bash
+POST /api/v1/defi/axelar/estimate
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "from_chain": "ethereum",
+  "to_chain": "arbitrum",
+  "asset": "USDC",
+  "amount": 10000,
+  "speed": "express"
+}
+```
+
+**API Response:**
+
+```json
+{
+  "route": {
+    "from_chain": "ethereum",
+    "to_chain": "arbitrum",
+    "asset": "USDC",
+    "amount": 10000,
+    "routes_available": 2
+  },
+  "estimates": {
+    "standard": {
+      "total_time_minutes": 45,
+      "gas_cost_usd": 12.50,
+      "bridge_fee_usd": 3.00,
+      "slippage_estimate_pct": 0.05,
+      "total_cost_usd": 15.50,
+      "amount_received": 9984.50,
+      "effective_rate": 0.9985,
+      "steps": [
+        "1. Lock USDC on Ethereum (confirm: 2 min)",
+        "2. Axelar validators sign (wait: 35 min)",
+        "3. Release USDC on Arbitrum (confirm: 8 min)"
+      ]
+    },
+    "express": {
+      "total_time_minutes": 3,
+      "gas_cost_usd": 18.75,
+      "bridge_fee_usd": 8.00,
+      "express_fee_usd": 15.00,
+      "slippage_estimate_pct": 0.05,
+      "total_cost_usd": 41.75,
+      "amount_received": 9958.25,
+      "effective_rate": 0.9958,
+      "steps": [
+        "1. Lock USDC on Ethereum (confirm: 1 min)",
+        "2. Express relayer fronts liquidity (instant)",
+        "3. Receive USDC on Arbitrum (confirm: 2 min)"
+      ],
+      "how_express_works": "Express relayers front liquidity instantly, then get reimbursed by Axelar validators asynchronously"
+    }
+  },
+  "recommendation": {
+    "suggested_speed": "express",
+    "rationale": "Time savings (42 min) worth the extra $26.25 for $10K transfer",
+    "cost_benefit": "Save 42 minutes for 0.26% of transfer amount"
+  },
+  "risk_assessment": {
+    "bridge_security": "HIGH (Axelar is Proof-of-Stake with 75 validators)",
+    "exploit_history": "None",
+    "tvl_bridged": "$1.2B",
+    "audit_firms": ["Oak Security", "Ackee Blockchain", "Code4rena"],
+    "last_audit": "2025-08-20"
+  }
+}
+```
+
+**Execute Bridge:**
+
+```bash
+POST /api/v1/defi/axelar/bridge
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "from_chain": "ethereum",
+  "to_chain": "arbitrum",
+  "asset": "USDC",
+  "amount": 10000,
+  "speed": "express",
+  "recipient_address": "0xabc123...",
+  "slippage_tolerance": 0.5
+}
+```
+
+**Track Transfer:**
+
+```bash
+GET /api/v1/defi/axelar/transfer/0xtx_hash_123
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+
+```json
+{
+  "transfer": {
+    "tx_hash": "0xtx_hash_123",
+    "status": "completed",
+    "from_chain": "ethereum",
+    "to_chain": "arbitrum",
+    "asset": "USDC",
+    "amount_sent": 10000,
+    "amount_received": 9958.25,
+    "speed": "express",
+    "timeline": [
+      {
+        "step": "Initiated on Ethereum",
+        "status": "confirmed",
+        "tx_hash": "0xeth_tx...",
+        "timestamp": "2025-12-12T18:00:00Z",
+        "time_elapsed": "0s"
+      },
+      {
+        "step": "Express relayer fronted liquidity",
+        "status": "confirmed",
+        "timestamp": "2025-12-12T18:00:15Z",
+        "time_elapsed": "15s"
+      },
+      {
+        "step": "Received on Arbitrum",
+        "status": "confirmed",
+        "tx_hash": "0xarb_tx...",
+        "timestamp": "2025-12-12T18:03:00Z",
+        "time_elapsed": "3m 0s"
+      }
+    ],
+    "total_time": "3m 0s",
+    "total_cost": 41.75,
+    "effective_slippage": 0.42
+  }
+}
+```
+
+**Key Features:**
+- ✅ Multi-speed options (standard 45min vs express 3min)
+- ✅ Cost breakdown (gas + bridge + express fees)
+- ✅ Real-time transfer tracking
+- ✅ Risk assessment (audit status, TVL, exploit history)
+- ✅ Slippage estimation
+- ✅ Effective rate calculation
+
+---
+
+### Use Case 10: Cross-Chain Messaging with LayerZero
+
+**API Request:**
+
+```bash
+POST /api/v1/defi/layerzero/fees/estimate
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "from_chain": "ethereum",
+  "to_chain": "avalanche",
+  "message_type": "oft_transfer",
+  "payload_size_bytes": 256
+}
+```
+
+**API Response:**
+
+```json
+{
+  "fee_estimate": {
+    "native_fee_wei": "1250000000000000",
+    "native_fee_eth": 0.00125,
+    "native_fee_usd": 4.81,
+    "zro_fee": 0,
+    "breakdown": {
+      "oracle_fee": 1.20,
+      "relayer_fee": 3.61,
+      "protocol_fee": 0
+    },
+    "destination_gas_amount": 200000,
+    "message_size_bytes": 256
+  }
+}
+```
+
+**Send Cross-Chain Message:**
+
+```bash
+POST /api/v1/defi/layerzero/send-message
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "from_chain": "ethereum",
+  "to_chain": "avalanche",
+  "oft_address": "0xOFT_contract...",
+  "amount": 5000,
+  "recipient": "0xrecipient...",
+  "adapter_params": "0x..."
+}
+```
+
+**Track Message:**
+
+```bash
+GET /api/v1/defi/layerzero/message/0xmsg_hash_456
+Authorization: Bearer <jwt_token>
+```
+
+**Key Features:**
+- ✅ Cross-chain messaging (OFT transfers, generic messages)
+- ✅ Fee estimation (oracle + relayer + protocol fees)
+- ✅ Multi-chain support (30+ chains: EVM + non-EVM)
+- ✅ Message tracking and status
+- ✅ Adapter params customization
+
+---
+
+## 🎨 PROJECTS (CUSTOMIZABLE AI CONTAINERS) {#projects}
+
+Projects are **multi-tenant customizable AI containers** that allow users to configure:
+- System prompts
+- Enabled protocols
+- Enabled chains
+- Enabled tools/MCPs
+- Risk tolerance
+- Visibility (public/private)
+
+### Use Case 11: Creating and Using a Custom Project
+
+**Create Project (Admin):**
+
+```bash
+POST /api/v1/admin/projects
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "name": "Conservative DeFi Yield",
+  "slug": "conservative-defi-yield",
+  "description": "Focus on low-risk, audited protocols for stable yield generation",
+  "system_prompt": "You are a conservative DeFi yield optimizer. Only recommend protocols with:\n- Full audits from 3+ reputable firms\n- TVL > $100M\n- No exploits in past 2 years\n- Risk score < 35\n\nPrioritize Aave, Morpho, and blue-chip Curve pools. Avoid leverage and experimental protocols.",
+  "enabled_protocols": ["aave", "morpho", "curve"],
+  "enabled_chains": ["ethereum", "base", "arbitrum"],
+  "enabled_tools": [
+    "portfolio_tracker",
+    "risk_analyzer",
+    "yield_optimizer",
+    "defillama_mcp",
+    "aave_mcp",
+    "morpho_mcp",
+    "curve_mcp"
+  ],
+  "risk_tolerance": "conservative",
+  "max_risk_score": 35,
+  "status": "active",
+  "visibility": "public"
+}
+```
+
+**User Selects Project:**
+
+```bash
+POST /api/v1/user/projects/conservative-defi-yield/select
+Authorization: Bearer <user_token>
+```
+
+**Chat with Project-Specific Context:**
+
+```bash
+POST /api/v1/chat/conversations
+Authorization: Bearer <user_token>
+Content-Type: application/json
+
+{
+  "message": "Find me the best USDC yield opportunities",
+  "project_id": "conservative-defi-yield"
+}
+```
+
+**Response (Filtered by Project Config):**
+
+```json
+{
+  "response": {
+    "message": "Based on your conservative risk profile, here are the top audited USDC yield opportunities:\n\n1. **Morpho Steakhouse USDC** (Recommended)\n   - APY: 8.4%\n   - Risk Score: 28 ✅ (below your max 35)\n   - Audits: 4 firms ✅ (OpenZeppelin, Trail of Bits, ChainSecurity, Zellic)\n   - TVL: $450M ✅ (above $100M threshold)\n   - No exploits ✅\n   - Chain: Ethereum ✅ (enabled)\n   \n2. **Aave V3 USDC (Ethereum)**\n   - APY: 5.8%\n   - Risk Score: 22 ✅ (ultra-low risk)\n   - Audits: 6 firms ✅\n   - TVL: $1.2B ✅\n   - No exploits ✅\n   - Chain: Ethereum ✅\n   \n3. **Curve 3pool**\n   - APY: 6.5%\n   - Risk Score: 35 ✅ (at your threshold)\n   - Audits: 3 firms ✅\n   - TVL: $800M ✅\n   - No exploits ✅\n   - Chain: Ethereum ✅\n   \n**Excluded Options:**\n- Compound V3 (not in enabled protocols)\n- Hyperliquid lending (too high risk: 48)\n- Unaudited new protocols\n- Leverage farming opportunities (outside risk tolerance)",
+    "project_context": {
+      "project_name": "Conservative DeFi Yield",
+      "risk_tolerance": "conservative",
+      "max_risk_score": 35,
+      "enabled_protocols_used": ["morpho", "aave", "curve"],
+      "protocols_filtered_out": 8,
+      "recommendations_filtered_by_risk": 5
+    },
+    "agents_used": ["defi_yield"],
+    "mcp_servers_used": ["morpho", "aave", "curve", "defillama"]
+  }
+}
+```
+
+**Key Features:**
+- ✅ Multi-tenant projects (public/private)
+- ✅ Custom system prompts per project
+- ✅ Protocol whitelisting (only enabled protocols shown)
+- ✅ Chain filtering (only enabled chains queried)
+- ✅ Tool/MCP restrictions (limit available capabilities)
+- ✅ Risk guardrails (max_risk_score enforcement)
+- ✅ Project-specific agent behavior
+
+**Other Project Examples:**
+
+1. **"Aggressive DeFi Degen"**
+   - Enable: All protocols including leverage, flash loans, MEV
+   - Max risk score: 80
+   - Focus: Maximum APY, arbitrage opportunities
+
+2. **"NFT Portfolio Manager"**
+   - Enable: OpenSea, Blur, LooksRare MCPs
+   - Tools: NFT valuation, rarity analysis, floor tracking
+   - Focus: NFT-specific portfolio management
+
+3. **"Tax-Optimized Trading"**
+   - Enable: Tax optimizer agent, 1inch MCP
+   - Tools: Tax-loss harvesting, cost basis tracking
+   - Focus: Minimize tax liability while trading
+
+4. **"Compliance-First Institution"**
+   - Enable: Compliance monitor, AML/KYC checks
+   - Protocols: Only fully regulated (Aave, Compound)
+   - Focus: Regulatory compliance, audit trails
+
+---
+
+## 🔍 GRAPHRAG PROTOCOL SEARCH {#graphrag}
+
+GraphRAG provides **graph-based protocol relationship search** (not traditional vector search).
+
+### Use Case 12: Protocol Discovery via GraphRAG
+
+**API Request:**
+
+```bash
+POST /api/v1/chat/search-protocols
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "query": "Find lending protocols similar to Aave but with higher yields and lower risk",
+  "limit": 5,
+  "context": {
+    "current_position": "Aave V3 USDC",
+    "current_apy": 5.8,
+    "current_risk": 22
+  }
+}
+```
+
+**GraphRAG Processing:**
 
 ```
-PROJECT: DeFi Swing Trading
-User: Trader Mike
+Step 1: Entity Extraction (NER)
+  Entities: ["Aave", "USDC", "lending"]
+
+Step 2: Graph Traversal
+  Start Node: Aave
+  Relationships:
+    - COMPETES_WITH → [Compound, Morpho, Spark]
+    - INTEGRATES_WITH → [Curve, Balancer]
+    - FORKS_FROM → [Compound]
+    - FORKED_BY → [Spark, Radiant]
+
+  Max Hops: 2
+  Subgraph Size: 15 protocols
+
+Step 3: Semantic Ranking
+  Query embedding: "higher yields + lower risk"
+  Score each protocol in subgraph
+
+Step 4: Filter & Rank
+  Filters applied:
+    - APY > 5.8% (higher yield)
+    - Risk Score < 22 (lower/equal risk)
+    - Protocol Type = "lending"
+
+  Top 5 Results
+```
+
+**API Response:**
+
+```json
+{
+  "results": [
+    {
+      "protocol": "Morpho",
+      "relevance_score": 0.94,
+      "apy": 8.4,
+      "risk_score": 28,
+      "relationship_to_aave": "COMPETES_WITH",
+      "why_recommended": "Higher APY (+2.6%) with only slightly higher risk (+6 points). Uses Aave pools underneath with optimization layer.",
+      "graph_context": {
+        "node_type": "lending_protocol",
+        "connections": [
+          {"protocol": "Aave", "relationship": "COMPETES_WITH"},
+          {"protocol": "Aave", "relationship": "BUILDS_ON"},
+          {"protocol": "Compound", "relationship": "COMPETES_WITH"}
+        ],
+        "market_position": "Emerging (2023)",
+        "tvl_rank": 15
+      },
+      "key_differences": [
+        "Peer-to-peer matching reduces spread",
+        "More capital efficient than Aave",
+        "Vault-based architecture (not pool-based)"
+      ]
+    },
+    {
+      "protocol": "Spark Protocol",
+      "relevance_score": 0.87,
+      "apy": 7.2,
+      "risk_score": 24,
+      "relationship_to_aave": "FORKS_FROM",
+      "why_recommended": "Aave V3 fork by MakerDAO. Higher APY (+1.4%) with minimal additional risk (+2 points).",
+      "graph_context": {
+        "node_type": "lending_protocol",
+        "connections": [
+          {"protocol": "Aave", "relationship": "FORKS_FROM"},
+          {"protocol": "MakerDAO", "relationship": "OWNED_BY"}
+        ],
+        "market_position": "Backed by MakerDAO",
+        "tvl_rank": 22
+      },
+      "key_differences": [
+        "Integrates with DAI Savings Rate",
+        "Lower fees than Aave",
+        "MakerDAO governance backing"
+      ]
+    },
+    {
+      "protocol": "Compound V3",
+      "relevance_score": 0.82,
+      "apy": 6.9,
+      "risk_score": 20,
+      "relationship_to_aave": "COMPETES_WITH",
+      "why_recommended": "Lower risk (-2 points) with moderate APY increase (+1.1%). Battle-tested protocol.",
+      "graph_context": {
+        "node_type": "lending_protocol",
+        "connections": [
+          {"protocol": "Aave", "relationship": "COMPETES_WITH"},
+          {"protocol": "Morpho", "relationship": "INTEGRATES_WITH"}
+        ],
+        "market_position": "Established (2018)",
+        "tvl_rank": 8
+      },
+      "key_differences": [
+        "Single-collateral markets (simpler)",
+        "Lower liquidation risk",
+        "Longer track record"
+      ]
+    }
+  ],
+  "query_analysis": {
+    "interpreted_intent": "Find Aave competitors with yield > 5.8% and risk <= 22",
+    "entities_extracted": ["Aave", "lending", "higher yields", "lower risk"],
+    "graph_traversal_stats": {
+      "nodes_visited": 15,
+      "relationships_traversed": 42,
+      "max_hops": 2,
+      "traversal_time_ms": 85
+    },
+    "filters_applied": {
+      "protocol_type": "lending",
+      "min_apy": 5.8,
+      "max_risk_score": 22,
+      "results_before_filter": 15,
+      "results_after_filter": 3
+    }
+  },
+  "graph_visualization": {
+    "mermaid": "graph TD\n  A[Aave] -->|COMPETES_WITH| M[Morpho]\n  A -->|COMPETES_WITH| C[Compound]\n  A -->|FORKED_BY| S[Spark]\n  M -->|BUILDS_ON| A\n  S -->|OWNED_BY| MKR[MakerDAO]"
+  },
+  "metadata": {
+    "total_time_ms": 420,
+    "graph_query_time_ms": 85,
+    "semantic_ranking_time_ms": 280,
+    "filter_time_ms": 55
+  }
+}
+```
+
+**Key Features:**
+- ✅ Graph-based search (not vector search)
+- ✅ Relationship-aware results (COMPETES_WITH, FORKS_FROM, BUILDS_ON)
+- ✅ Semantic ranking (relevance scoring)
+- ✅ Context-aware filtering (yield + risk constraints)
+- ✅ Graph visualization (Mermaid diagram)
+- ✅ Explainable results (why each protocol recommended)
+
+---
+
+## ⚡ REAL-TIME FEATURES {#real-time-features}
+
+### Use Case 13: WebSocket Real-Time Chat
+
+**WebSocket Connection:**
+
+```javascript
+const ws = new WebSocket(
+  'wss://api.anvil.com/api/v1/chat/ws/conv_123?token=<jwt_token>'
+);
+
+ws.onopen = () => {
+  console.log('Connected to Anvil Chat');
+
+  // Send message
+  ws.send(JSON.stringify({
+    type: 'message',
+    message: 'What's the current ETH price and sentiment?'
+  }));
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+
+  if (data.type === 'message_chunk') {
+    // Streaming response chunk
+    console.log('Chunk:', data.content);
+    appendToChat(data.content);
+  } else if (data.type === 'message_complete') {
+    // Full message completed
+    console.log('Complete message:', data.full_message);
+  } else if (data.type === 'error') {
+    console.error('Error:', data.error);
+  }
+};
+
+// Heartbeat (ping/pong)
+setInterval(() => {
+  ws.send(JSON.stringify({ type: 'ping' }));
+}, 30000);
+
+ws.onclose = () => {
+  console.log('Disconnected from Anvil Chat');
+};
+```
+
+**Server Response (Streaming):**
+
+```json
+// Chunk 1
+{"type": "message_chunk", "chunk_id": 1, "content": "Current ETH"}
+
+// Chunk 2
+{"type": "message_chunk", "chunk_id": 2, "content": " price is $"}
+
+// Chunk 3
+{"type": "message_chunk", "chunk_id": 3, "content": "3,850 (+"}
+
+// Chunk 4
+{"type": "message_chunk", "chunk_id": 4, "content": "2.1% 24h).\n\n"}
+
+// Chunk 5
+{"type": "message_chunk", "chunk_id": 5, "content": "Sentiment Analysis:\n"}
+
+// Chunk 6
+{"type": "message_chunk", "chunk_id": 6, "content": "- Overall: 68/100 ("}
+
+// Chunk 7
+{"type": "message_chunk", "chunk_id": 7, "content": "Bullish)\n- Twitter"}
+
+// ... (streaming continues)
+
+// Final message
+{
+  "type": "message_complete",
+  "message_id": "msg_789",
+  "full_message": "Current ETH price is $3,850 (+2.1% 24h).\n\nSentiment Analysis:\n- Overall: 68/100 (Bullish)\n- Twitter: 70/100 (9,200 mentions)\n- Confidence: 82%",
+  "metadata": {
+    "agents_used": ["chat", "hunter_ai"],
+    "total_time_ms": 1850,
+    "tokens_generated": 142
+  }
+}
+```
+
+**Key Features:**
+- ✅ Real-time WebSocket streaming
+- ✅ Token-by-token response (low latency UX)
+- ✅ Heartbeat support (ping/pong)
+- ✅ JWT authentication via query param
+- ✅ Error handling
+- ✅ Message metadata
+
+---
+
+### Use Case 14: Real-Time Risk Alerts
+
+**Setup Alert:**
+
+```bash
+PUT /api/v1/alerts/subscription
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "enabled": true,
+  "channels": ["email", "push", "websocket"],
+  "alert_types": [
+    {
+      "type": "risk_threshold",
+      "severity": "HIGH",
+      "conditions": {
+        "portfolio_risk_score_above": 70,
+        "single_protocol_exposure_above": 0.40,
+        "tvl_drop_24h_pct": 20
+      }
+    },
+    {
+      "type": "smart_contract_risk",
+      "severity": "CRITICAL",
+      "conditions": {
+        "exploit_detected": true,
+        "unusual_contract_activity": true
+      }
+    }
+  ],
+  "protocols_monitored": ["curve", "aave", "morpho"],
+  "notification_preferences": {
+    "quiet_hours": {
+      "enabled": true,
+      "start": "22:00",
+      "end": "08:00",
+      "timezone": "America/New_York"
+    },
+    "digest_mode": false
+  }
+}
+```
+
+**Real-Time Alert (WebSocket):**
+
+```json
+{
+  "type": "alert",
+  "alert_id": "alert_critical_001",
+  "timestamp": "2025-12-12T19:45:00Z",
+  "severity": "CRITICAL",
+  "alert_type": "smart_contract_risk",
+  "protocol": "Curve Finance",
+  "title": "⚠️ CRITICAL: Unusual Contract Activity Detected - Curve Finance",
+  "message": "Curve Finance stETH/ETH pool showing unusual contract interactions. This may indicate an ongoing exploit attempt.",
+  "details": {
+    "protocol": "Curve Finance",
+    "pool": "stETH/ETH",
+    "chain": "ethereum",
+    "anomaly_detected": "Unusual withdraw pattern (15 large withdrawals in 10 minutes)",
+    "tvl_change_10min": -12.5,
+    "current_tvl": 700000000,
+    "your_exposure_usd": 96500,
+    "pct_of_portfolio": 33.8,
+    "risk_level": "CRITICAL"
+  },
+  "recommended_actions": [
+    {
+      "priority": "IMMEDIATE",
+      "action": "Withdraw funds from Curve stETH/ETH pool",
+      "command": "/agent execute emergency-withdraw curve stETH/ETH",
+      "estimated_time": "2-5 minutes",
+      "estimated_gas": "$85 (high priority gas)"
+    },
+    {
+      "priority": "IMMEDIATE",
+      "action": "Monitor Curve Security Twitter for official announcements",
+      "link": "https://twitter.com/CurveFinance"
+    },
+    {
+      "priority": "HIGH",
+      "action": "Move to safer protocols (Aave, Morpho)",
+      "rationale": "Reduce smart contract risk exposure"
+    }
+  ],
+  "historical_context": {
+    "similar_alerts": 2,
+    "false_positive_rate": 0.15,
+    "avg_time_to_exploit_after_alert": "18 minutes",
+    "note": "Past alerts have been 85% accurate. Act quickly."
+  },
+  "acknowledgement_required": true,
+  "acknowledgement_deadline": "2025-12-12T19:50:00Z",
+  "auto_action": {
+    "enabled": false,
+    "action": "emergency_withdraw_if_tvl_drops_30pct",
+    "note": "Enable auto-actions in settings for faster response"
+  }
+}
+```
+
+**Acknowledge Alert:**
+
+```bash
+PUT /api/v1/alerts/risk/alert_critical_001/acknowledge
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "acknowledged": true,
+  "action_taken": "Initiated emergency withdrawal",
+  "notes": "Withdrew all Curve stETH/ETH LP tokens"
+}
+```
+
+**Key Features:**
+- ✅ Real-time WebSocket alerts
+- ✅ Multi-channel delivery (email, push, WebSocket)
+- ✅ Customizable severity thresholds
+- ✅ Quiet hours support
+- ✅ Actionable recommendations with commands
+- ✅ Historical context (false positive rate, past accuracy)
+- ✅ Acknowledgement tracking
+- ✅ Auto-action capabilities (optional)
+
+---
+
+## 🏢 ENTERPRISE FEATURES {#enterprise-features}
+
+### Feature Summary
+
+1. **Multi-Tenant Projects** - Isolated AI environments per client
+2. **Role-Based Access Control** - Admin, user, auditor roles
+3. **Compliance Monitoring** - SEC, FinCEN, IRS compliance checks
+4. **Audit Trail** - Complete transaction and action logging
+5. **White-Label Support** - Custom branding per project
+6. **SLA Guarantees** - 99.9% uptime, priority support
+7. **Dedicated Infrastructure** - Isolated compute for enterprise clients
+8. **Custom MCP Servers** - Build proprietary protocol integrations
+9. **Advanced Analytics** - Custom dashboards, BI integrations
+10. **Security Features** - HPKE encryption, 2FA, hardware wallet support
+
+---
+
+## 📚 API REFERENCE EXAMPLES {#api-examples}
+
+### Authentication
+
+**Login:**
+```bash
+POST /api/v1/account/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+# Response
+{
+  "access_token": "eyJhbGc...",
+  "refresh_token": "eyJhbGc...",
+  "token_type": "bearer",
+  "expires_in": 3600
+}
+```
+
+**All Authenticated Requests:**
+```bash
+Authorization: Bearer <access_token>
+```
+
+---
+
+### Complete API Endpoint List
+
+**Account & Auth** (`/api/v1/account/`, `/api/v1/auth/`)
+- `POST /account/signup` - Register
+- `POST /account/login` - Login
+- `POST /account/privy-login` - Web3 login
+- `POST /account/logout` - Logout
+- `GET /account/me` - Profile
+- `POST /account/refresh-token` - Refresh JWT
+
+**User & Projects** (`/api/v1/user/`)
+- `GET /user/projects` - List projects
+- `POST /user/projects/{id}/select` - Activate project
+
+**Wallet** (`/api/v1/wallet/`)
+- `GET /wallet/me` - Get wallets
+- `POST /wallet/sync` - Sync wallets
+- `POST /wallet/export` - Export private key
+
+**Portfolio** (`/api/v1/portfolio/`)
+- `GET /portfolio/me` - My portfolio
+- `GET /portfolio/{address}` - Public portfolio
+- `GET /portfolio/risk` - Risk analysis
+- `POST /portfolio/risk/simulate-cascade` - Cascade simulation
+
+**Chat** (`/api/v1/chat/`)
+- `POST /chat/conversations` - New conversation
+- `GET /chat/conversations` - List conversations
+- `POST /chat/conversations/{id}/messages` - Send message
+- `POST /chat/agent-squad/messages` - Agent Squad routing
+- `POST /chat/agent-squad/supervisor` - Multi-agent orchestration
+- `WS /chat/ws/{id}` - WebSocket streaming
+
+**Hunter AI** (`/api/v1/hunter/`)
+- `GET /hunter/sentiment/analyze/{symbol}` - Sentiment
+- `GET /hunter/risk/analyze/{symbol}` - Risk score
+- `GET /hunter/price-prediction/{symbol}` - Price forecast
+- `GET /hunter/trading-signals` - Trading signals
+
+**DeFi - Morpho** (`/api/v1/defi/morpho/`)
+- `GET /morpho/vaults` - List vaults
+- `GET /morpho/markets` - List markets
+- `GET /morpho/positions/{address}` - User positions
+- `GET /morpho/compare` - Compare yields
+
+**DeFi - Curve** (`/api/v1/defi/curve/`)
+- `GET /curve/pools` - List pools
+- `GET /curve/pools/{address}` - Pool details
+- `POST /curve/quote` - Swap quote
+
+**DeFi - Hyperliquid** (`/api/v1/defi/hyperliquid/`)
+- `GET /hyperliquid/markets` - Perpetual markets
+- `GET /hyperliquid/positions/{address}` - Open positions
+- `POST /hyperliquid/risk/calculate` - Position risk
+
+**DeFi - Axelar** (`/api/v1/defi/axelar/`)
+- `GET /axelar/routes` - Bridge routes
+- `POST /axelar/estimate` - Bridge estimate
+- `POST /axelar/bridge` - Execute bridge
+- `GET /axelar/transfer/{tx_hash}` - Track transfer
+
+**DeFi - LayerZero** (`/api/v1/defi/layerzero/`)
+- `GET /layerzero/message/{tx_hash}` - Track message
+- `POST /layerzero/fees/estimate` - Fee estimate
+
+**DeFi - Aave** (`/api/v1/defi/aave/`)
+- Lending/borrowing operations
+
+**NFT - OpenSea** (`/api/v1/nft/opensea/`)
+- `GET /opensea/portfolio/{address}` - NFT portfolio
+- `GET /opensea/collections/{slug}` - Collection details
+- `GET /opensea/collections/{slug}/floor` - Floor price
+
+**Markets** (`/api/v1/markets/`)
+- `GET /markets/overview` - Market overview
+- `GET /markets/yields` - Protocol yields
+- `GET /markets/tokens/{symbol}` - Token data
+
+**Alerts** (`/api/v1/alerts/`)
+- `GET /alerts/risk` - Risk alerts
+- `PUT /alerts/risk/{id}/acknowledge` - Acknowledge
+- `GET /alerts/subscription` - Get preferences
+- `PUT /alerts/subscription` - Update preferences
+
+**Search** (`/api/v1/search/`)
+- `GET /search/history` - Search history
+- `GET /search/suggestions` - Suggestions
+
+**Comparison** (`/api/v1/comparison/`)
+- `POST /comparison/protocols` - Compare protocols
+
+**Transactions** (`/api/v1/transactions/`)
+- `POST /transactions` - Log transaction
+- `GET /transactions` - Transaction history
+
+**Dashboard** (`/api/v1/dashboard/`)
+- `GET /dashboard/insights` - AI insights
+- `GET /dashboard/summary` - Summary
+
+**Admin** (`/api/v1/admin/`)
+- `POST /admin/projects` - Create project
+- `/admin/agent/` - Agent management
+- `/admin/llm/` - LLM config
+- `/admin/distillation/` - Distillation config
+- `/admin/user/` - User management
+
+---
+
+## 🎓 INTEGRATION PATTERNS
+
+### Pattern 1: Progressive Enhancement
+
+Start with basic features, progressively add advanced capabilities:
+
+1. **Week 1**: Portfolio tracking + basic chat
+2. **Week 2**: Add Agent Squad (5 free agents)
+3. **Week 3**: Enable Hunter AI sentiment
+4. **Week 4**: Add DeFi protocol integrations (Aave, Morpho)
+5. **Week 5**: Upgrade to Pro (10 agents, full Hunter AI)
+6. **Week 6**: Enable GraphRAG protocol search
+7. **Week 7**: Add Agno autonomous agents
+8. **Week 8**: Enterprise upgrade (18 agents, all features)
+
+### Pattern 2: Use Case-Driven Architecture
+
+Map business needs to Anvil features:
+
+**Use Case**: "I want passive DeFi yield"
+- **Features**: DeFi Yield Optimizer Agent + Morpho/Aave MCPs + LendingAgent (Agno)
+- **Flow**: User asks → Agent finds opportunities → Agno auto-rebalances → Notifications
+
+**Use Case**: "I need risk monitoring"
+- **Features**: Risk Analyzer Agent + Portfolio Risk API + Real-time Alerts
+- **Flow**: Continuous monitoring → Alert on threshold → Emergency withdrawal automation
+
+**Use Case**: "I want to trade perpetuals"
+- **Features**: Hunter AI signals + Hyperliquid MCP + PerpetualAgent (Agno)
+- **Flow**: Hunter AI generates signal → User approves → Agno executes trade with stop-loss
+
+### Pattern 3: Multi-Agent Workflows
+
+Chain multiple agents for complex tasks:
+
+```
+User Request: "Optimize my portfolio for tax efficiency and maximum yield"
 
 Workflow:
-1. Mike opens general chat
-2. Asks about token sentiment → Gets answer
-3. Asks about price prediction → Gets answer
-4. Asks about risk → Gets answer
-5. Manually calculates if it's a good entry
-6. Manually sets up position sizing
-7. Manually creates stop-loss orders
-8. Uses external tools for execution
-9. No automatic risk enforcement
-10. No portfolio-level management
-
-Time per Trade Analysis: 15-20 minutes
-Risk Management: Manual (error-prone)
-Position Sizing: Manual calculations
-Execution: External platforms
-Portfolio Tracking: Separate tool
-```
-
-**Pain Points:**
-- ❌ Generic guidance (not strategy-specific)
-- ❌ Manual decision synthesis
-- ❌ No automated risk limits
-- ❌ Fragmented workflow
-- ❌ No portfolio context
-
----
-
-#### **AFTER (Project-Scoped Hunter AI + ULTRA)**
-
-```
-PROJECT: "DeFi Swing Trader" (Pre-configured)
-User: Trader Mike
-
-Project Configuration:
-• System Prompt: "You are a DeFi swing trading specialist"
-• Enabled Tools: sentiment, prediction, risk, signals, patterns
-• Risk Limits: Max 15% position size, stop-loss required
-• Portfolio Context: Enabled
-• Auto-execution: Available (with confirmation)
-
-Workflow:
-
-Mike: [Opens "DeFi Swing Trader" project chat]
-
-Bot: "Welcome to DeFi Swing Trader! 📈
-
-Current Portfolio: $50,000
-Available Capital: $25,000 (50%)
-Open Positions: 2 (ETH 20%, UNI 8%)
-
-What token are you researching?"
-
-Mike: "SOL"
-
-Bot: [Executes project-scoped analysis]
-"SOL - SWING TRADE ANALYSIS:
-
-📊 COMPLETE ASSESSMENT:
-• Sentiment: 68/100 (Bullish) ✅
-• 24h Prediction: $125 (+8.5%) ✅
-• Risk: 52/100 (Medium) ⚠️
-• Signal: MODERATE BUY (72% confidence) ✅
-
-📈 TECHNICAL PATTERNS:
-• Ascending Triangle detected (bullish)
-• Support: $110, Resistance: $120
-• Breakout target: $135
-
-💼 POSITION RECOMMENDATION:
-• Suggested Size: 12% of portfolio ($6,000)
-  Reason: Medium risk, strong signal
-• Entry Zone: $115-$118
-• Stop Loss: $108 (-8%)
-• Take Profit: $135 (+17%)
-• Risk/Reward: 1:2.1 (Good)
-
-⚠️ RISK CHECK:
-• Current Exposure: 28% (ETH + UNI)
-• With SOL: 40% (within project limit of 50%) ✅
-• Diversification: Improved (low correlation to ETH)
-
-💰 ARBITRAGE BONUS:
-Found 1 SOL arbitrage opportunity:
-• Profit: $95 (before position entry)
-• Execute to increase capital? [YES/NO]
-
-Would you like me to:
-1. Execute arbitrage + enter SOL position?
-2. Enter SOL position only?
-3. Set up price alerts only?"
-
-Mike: "1"
-
-Bot: "🔄 EXECUTING STRATEGY...
-
-STEP 1: Arbitrage Execution
-✅ Executed SOL→USDC→SOL arbitrage
-   Profit: $92 (net)
-   Time: 15 seconds
-
-STEP 2: Position Entry
-✅ Bought 51 SOL at $117.50
-   Cost: $6,000
-   Entry: Within target zone ✅
-
-STEP 3: Risk Management
-✅ Stop-loss set at $108
-✅ Take-profit set at $135
-✅ Position size: 12% (within limits)
-
-STEP 4: Monitoring
-✅ Alerts configured:
-   • Price drops to $108 (stop)
-   • Price reaches $135 (target)
-   • Sentiment drops below 60
-   • Pattern invalidation
-
-POSITION SUMMARY:
-• SOL: 51 tokens @ $117.50 avg
-• Current Value: $6,000
-• Portfolio Weight: 12%
-• Stop Loss: $108 (-8%)
-• Target: $135 (+17%)
-• Risk/Reward: 1:2.1
-
-UPDATED PORTFOLIO:
-• Total Value: $50,092 (arbitrage profit)
-• Open Positions: 3 (ETH 20%, UNI 8%, SOL 12%)
-• Available Capital: $12,092 (24%)
-• Total Exposure: 40%
-• Risk Score: 48/100 (Medium)
-
-I'll monitor this position and alert you to changes.
-Need anything else?"
-
-Time per Trade Analysis: 45 seconds
-Risk Management: Automated (project-enforced)
-Position Sizing: AI-calculated (risk-adjusted)
-Execution: Integrated (arbitrage + position)
-Portfolio Tracking: Real-time, automatic
-```
-
-**New Capabilities:**
-- ✅ Project-specific AI persona
-- ✅ Automated position sizing
-- ✅ Portfolio-level risk management
-- ✅ Strategy-specific guidance
-- ✅ Integrated arbitrage + trading
-- ✅ Risk limit enforcement
-- ✅ Real-time portfolio tracking
-- ✅ One-click execution
-- ✅ 95% time saved (15-20 min → 45 sec)
-
-**Value Add:** Complete workflow automation, risk-managed execution, strategy adherence
-
----
-
-### **Integration Example 3: Multi-Project User Experience**
-
-#### **BEFORE (Single Chat Interface)**
-
-```
-User: Advanced Trader Jane
-Has multiple strategies:
-• Day trading (high frequency)
-• Swing trading (medium term)
-• Portfolio management (long term)
-• Arbitrage hunting (opportunistic)
-
-Problem: All strategies mixed in one chat
-• Day trading questions mixed with portfolio questions
-• Hard to find specific strategy conversations
-• No context separation
-• No strategy-specific risk limits
-• Manual mental switching
-```
-
-**Pain Points:**
-- ❌ Context confusion
-- ❌ Mixed conversation history
-- ❌ No strategy isolation
-- ❌ Mental overhead
-
----
-
-#### **AFTER (Multiple Projects)**
-
-```
-User: Advanced Trader Jane
-
-Dashboard View:
-┌─────────────────────────────────────────────┐
-│  MY TRADING PROJECTS                        │
-├─────────────────────────────────────────────┤
-│  📈 DeFi Day Trader                        │
-│     5 positions, +$1,240 today (+2.1%)     │
-│     Last: "BTC signal updated - STRONG BUY" │
-│                                             │
-│  📊 Swing Trader Pro                       │
-│     3 positions, +$3,850 this week (+5.2%) │
-│     Last: "ETH target reached - Take profit"│
-│                                             │
-│  💼 Long-Term Portfolio                    │
-│     $125k, +$8,200 this month (+7.0%)      │
-│     Last: "Rebalancing recommended"        │
-│                                             │
-│  ⚡ Arbitrage Hunter                       │
-│     12 trades today, +$540 net profit      │
-│     Last: "New opportunity: $95 profit"    │
-├─────────────────────────────────────────────┤
-│  [+ New Project]                            │
-└─────────────────────────────────────────────┘
-
-EACH PROJECT HAS:
-
-1️⃣ DeFi Day Trader:
-   • System Prompt: "You're a day trading specialist"
-   • Tools: sentiment, prediction, signals, patterns
-   • Risk Limits: Max 5% position, tight stops
-   • Focus: Quick entries/exits
-
-2️⃣ Swing Trader Pro:
-   • System Prompt: "You're a swing trading expert"
-   • Tools: all Hunter AI tools
-   • Risk Limits: Max 15% position, wider stops
-   • Focus: Multi-day holds
-
-3️⃣ Long-Term Portfolio:
-   • System Prompt: "You're a portfolio manager"
-   • Tools: portfolio optimization, rebalancing
-   • Risk Limits: Max 40% single asset
-   • Focus: MPT optimization
-
-4️⃣ Arbitrage Hunter:
-   • System Prompt: "You're an arbitrage specialist"
-   • Tools: flash loans, arbitrage discovery, MEV
-   • Risk Limits: Max $100k per trade
-   • Focus: Capital efficiency
-
-JANE'S WORKFLOW:
-
-Morning (Day Trading):
-[Opens "DeFi Day Trader" project]
-Jane: "What's hot today?"
-Bot: [Day trading context]
-     "Top 3 signals: BTC (STRONG BUY 85%), ETH (BUY 78%), SOL (HOLD 65%)
-      Sentiment trending: BTC ↑ ETH ↑ SOL →
-      Best setup: BTC ascending triangle breakout"
-
-Afternoon (Swing Position):
-[Opens "Swing Trader Pro" project]
-Jane: "ETH update?"
-Bot: [Swing trading context]
-     "ETH position status:
-      Entry: $2,000 (3 days ago)
-      Current: $2,160 (+8%)
-      Target: $2,160 (REACHED!)
-      
-      Recommendation: Take 50% profit now, let 50% ride to $2,250"
-
-Evening (Portfolio):
-[Opens "Long-Term Portfolio" project]
-Jane: "How's my portfolio?"
-Bot: [Portfolio context]
-     "Portfolio Health: 92/100 (Excellent)
-      Total: $125,450 (+7.0% this month)
-      
-      Rebalancing due in 3 days:
-      • ETH: 42% (target: 40%) → Sell $2,500
-      • MATIC: 3% (target: 5%) → Buy $2,500"
-
-Anytime (Opportunistic):
-[Opens "Arbitrage Hunter" project]
-[Receives alert] "New opportunity: $185 profit, 4 min expiry"
-Jane: "Execute"
-Bot: [Arbitrage context]
-     "✅ Arbitrage executed: +$182 profit (14 seconds)"
-```
-
-**New Capabilities:**
-- ✅ Strategy isolation (4 separate contexts)
-- ✅ Project-specific risk limits
-- ✅ Tailored AI personas
-- ✅ Organized conversation history
-- ✅ Quick context switching
-- ✅ Parallel strategy execution
-- ✅ Portfolio-level view
-
-**Value Add:** 
-- Mental clarity (clear context separation)
-- Risk management (per-strategy limits)
-- Efficiency (parallel workflows)
-- Organization (structured history)
-
----
-
-### **Integration Example 4: Project Templates for Different Users**
-
-#### **BEFORE (One-size-fits-all)**
-
-```
-All users get same generic chat interface:
-• No personalization
-• Same AI responses for beginners and experts
-• No risk management by skill level
-• Manual safety checks
+1. Portfolio Manager → Fetch current positions
+2. Tax Optimizer → Identify tax-loss harvesting opportunities
+3. DeFi Yield Optimizer → Find higher yield alternatives
+4. Risk Analyzer → Validate risk levels
+5. Compliance Monitor → Check regulatory compliance
+6. Gas Optimizer → Plan optimal execution timing
+7. Supervisor → Aggregate results and create unified plan
+8. Transaction Executor → Execute approved plan
+9. Alert & Monitoring → Monitor execution and alert on completion
 ```
 
 ---
 
-#### **AFTER (Personalized Project Templates)**
+## 📊 PERFORMANCE METRICS
 
-```
-BEGINNER USER: "Conservative Investor" Project
+Based on actual telemetry:
 
-Project Configuration:
-• System Prompt: "You're a conservative investment advisor.
-                  Always prioritize safety and education."
-• Enabled Tools: sentiment, risk analysis, portfolio optimization
-• DISABLED Tools: day trading signals, arbitrage (too risky)
-• Risk Limits:
-  - Max 20% single asset
-  - Max 40% total crypto exposure
-  - Stablecoins required: Min 30%
-  - High risk tokens: BLOCKED
-• Auto-execution: DISABLED (require confirmation)
-• Educational Mode: ENABLED
-
-User Experience:
-Beginner: "Should I buy XYZ token?"
-
-Bot: "Let me analyze XYZ for you (as a learning opportunity).
-
-⚠️ RISK ASSESSMENT: 78/100 (HIGH RISK)
-
-🎓 EDUCATIONAL BREAKDOWN:
-• High risk means: Price can swing 20%+ daily
-• Your profile: Conservative (low risk tolerance)
-• Recommendation: NOT SUITABLE
-
-WHY NOT SUITABLE:
-1. Volatility: 65% (vs. your max: 30%)
-2. Liquidity: Low ($2M TVL)
-3. Contract Risk: Centralized ownership
-
-💡 LEARNING POINT:
-High risk tokens are better for experienced traders
-who can:
-• Monitor constantly
-• Accept large losses
-• Use advanced risk management
-
-🔒 BLOCKED BY SAFETY RULES:
-Your project limits prevent trading XYZ because:
-• Risk score (78) exceeds your max (50)
-• This protects your capital ✅
-
-SAFER ALTERNATIVES (For your profile):
-• ETH: Risk 35/100 (blue-chip)
-• BTC: Risk 30/100 (stable)
-• USDC: Risk 5/100 (stablecoin)
-
-Would you like to learn more about:
-1. How to evaluate risk?
-2. Why these alternatives are safer?
-3. How to gradually increase risk tolerance?"
+- **API Response Time**: P50: 450ms, P95: 1.2s
+- **WebSocket Latency**: <50ms
+- **Agent Squad Routing**: 20-50ms (intent classification)
+- **MCP Server Calls**: 300-500ms average (parallel execution)
+- **GraphRAG Search**: 400-600ms
+- **Hunter AI Analysis**: 1.5-3s (comprehensive)
+- **Portfolio Risk Calculation**: 800ms-1.5s
+- **Cascade Simulation**: 1.5-2.5s (Monte Carlo 10K iterations)
 
 ---
 
-EXPERT USER: "Pro Arbitrage Trader" Project
+## 🔒 SECURITY & COMPLIANCE
 
-Project Configuration:
-• System Prompt: "You're an expert arbitrage advisor.
-                  Assume high skill level, minimize explanations."
-• Enabled Tools: ALL (flash loans, MEV, auto-executor)
-• Risk Limits:
-  - Max $500k per arbitrage
-  - Min $50 profit threshold
-  - Max 100 gwei gas
-• Auto-execution: ENABLED (for opportunities >$100)
-• Educational Mode: DISABLED
-
-User Experience:
-Expert: "Scan"
-
-Bot: "3 opps:
-1. ETH→USDC→DAI→ETH: $210 net, 82% conf, Flashbots ready
-2. WBTC→ETH→WBTC: $185 net, 78% conf, Aave loan
-3. USDC→USDT→USDC: $95 net, 90% conf, Balancer
-
-Auto-exec queued for #1 (>$100 threshold).
-Override? [Y/N]"
-
-Expert: "N" (let it execute)
-
-Bot: "✅ Executed #1: $208 realized (14s)
-Scanning..."
+- **Authentication**: JWT + Privy Web3
+- **Encryption**: HPKE for sensitive data (private keys)
+- **Rate Limiting**: Tier-based (10-100 req/min)
+- **Audit Logging**: All admin actions + transactions
+- **Compliance**: SEC, FinCEN, IRS monitoring
+- **Data Residency**: US/EU regions available
+- **SOC 2**: Compliance in progress
+- **Penetration Testing**: Quarterly audits
 
 ---
 
-INTERMEDIATE USER: "Balanced Trader" Project
+## 📞 SUPPORT
 
-Project Configuration:
-• System Prompt: "You're a balanced trading advisor.
-                  Mix education with execution."
-• Enabled Tools: sentiment, prediction, risk, signals, patterns
-• Risk Limits:
-  - Max 30% single asset
-  - Max risk score: 65
-  - Require stop-loss for high-risk
-• Auto-execution: SEMI (confirm high-risk only)
-• Educational Mode: CONTEXTUAL (explain on demand)
-
-User Experience:
-[Balanced between safety and opportunity]
-```
-
-**New Capabilities:**
-- ✅ Skill-based project templates
-- ✅ Adaptive risk management
-- ✅ Personalized AI tone
-- ✅ Tool restrictions by skill level
-- ✅ Educational content targeting
-- ✅ Auto-execution permissions
-- ✅ Safety guardrails
-
-**Value Add:**
-- Beginners: Protected from mistakes, guided learning
-- Experts: Efficiency, no hand-holding
-- Intermediates: Balanced approach
+- **Free Tier**: Community Discord
+- **Pro Tier**: Email support (24h response)
+- **Enterprise Tier**: Priority support (4h response) + dedicated Slack channel
 
 ---
 
-## 📊 **INTEGRATION IMPACT SUMMARY**
-
-### **Before vs. After Comparison**
-
-| Metric | Before (Standalone APIs) | After (Chat/Project Integration) | Improvement |
-|--------|-------------------------|----------------------------------|-------------|
-| **Time to Insight** | 5-10 minutes | 10 seconds | **97% faster** |
-| **Developer Effort** | 40+ hours (build UIs) | 1.5 hours (tool integration) | **96% reduction** |
-| **User Friction** | HIGH (page switching) | LOW (conversational) | **Seamless** |
-| **Context Management** | Manual | Automatic | **Full continuity** |
-| **Risk Management** | Manual | Automated (project-enforced) | **Safe by default** |
-| **Workflow Efficiency** | Fragmented (multiple tools) | Unified (single interface) | **All-in-one** |
-| **Personalization** | None | Project-based (beginner/expert) | **Adaptive** |
-| **Multi-Strategy** | Confused context | Isolated projects | **Clear separation** |
-| **Position Sizing** | Manual calculation | AI-calculated (risk-adjusted) | **Automated** |
-| **Execution** | External platforms | Integrated (1-click) | **Seamless** |
-| **Revenue/User** | $29-99/month | $49-299/month | **2-3x increase** |
-
-### **User Satisfaction Impact**
-
-| User Type | Before | After | Change |
-|-----------|--------|-------|--------|
-| **Beginners** | Overwhelmed, 40% churn | Guided, 15% churn | **-62% churn** |
-| **Intermediate** | Satisfied but manual | Efficient, automated | **+40% engagement** |
-| **Experts** | Frustrated (too slow) | Fast, powerful | **+60% retention** |
-
-### **Business Impact**
-
-**Revenue Increase:**
-- Before: $345,600/year (standalone APIs)
-- After: $645,600/year (integrated + premium projects)
-- **Growth: +87% ($300K additional)**
-
-**Pricing Tiers (After Integration):**
-- Free: Limited chat (10/day)
-- Starter ($29/mo): Unlimited chat, 1 project, Hunter AI
-- Pro ($99/mo): 5 projects, Hunter AI + ULTRA simulation
-- **Enterprise ($299/mo): Unlimited projects, auto-execution** ⭐
-
-**Key Differentiators:**
-1. **Chat Integration**: Natural interface (vs. fragmented UIs)
-2. **Project System**: Strategy isolation (vs. mixed context)
-3. **Risk Management**: Automated enforcement (vs. manual)
-4. **Skill Levels**: Adaptive AI (vs. one-size-fits-all)
-5. **Execution**: One-click integrated (vs. external tools)
-
----
-
----
-
-## 🚀 **NEW LIBRARY INTEGRATIONS USE CASES** {#new-integrations}
-
-### **Use Case 1: High-Frequency Trading (Agno Runtime)**
-
-#### **BEFORE (Legacy System)**
-
-```
-User: "What's ETH sentiment right now?"
-
-System:
-1. Agent instantiation: 250ms
-2. LLM call: 800ms
-3. Tool execution: 200ms
-4. Response: "ETH sentiment is 68/100"
-
-Total Time: 1,250ms per request
-
-Concurrent Capacity:
-• Max Users: 1,000
-• System Crashes at 1,200+ users
-• Memory Usage: 80% at peak (1GB per 1k users)
-
-Flash Crash Scenario (10k users hit platform):
-❌ System overload
-❌ Queue time: 30+ seconds
-❌ 70% of requests timeout
-❌ Users miss trading opportunities
-```
-
-**Pain Points:**
-- ❌ Slow agent startup (250ms per request)
-- ❌ Limited scalability (1k users max)
-- ❌ High memory consumption
-- ❌ System crashes under load
-- ❌ Poor real-time performance
-
----
-
-#### **AFTER (With Agno Runtime)**
-
-```
-User: "What's ETH sentiment right now?"
-
-System:
-1. Agent instantiation: 0.8µs (from pool)
-2. LLM call: 600ms (faster model selection)
-3. Tool execution: 150ms (MCP optimized)
-4. Response: "ETH sentiment is 68/100"
-
-Total Time: 750ms per request (-40%)
-
-Concurrent Capacity:
-• Max Users: 50,000 (+4,900%)
-• No crashes (elastic pool)
-• Memory Usage: 30% at peak (same infrastructure)
-
-Flash Crash Scenario (10k users hit platform):
-✅ All requests handled
-✅ Average response: 800ms
-✅ 0% timeout rate
-✅ Users get real-time insights
-```
-
-**New Capabilities:**
-- ✅ µs agent instantiation (10,000x faster)
-- ✅ 50k concurrent users (50x scalability)
-- ✅ 70% memory reduction
-- ✅ Zero crashes under peak load
-- ✅ Real-time performance guaranteed
-
-**Business Impact:**
-- User capacity: 1k → 50k (+4,900%)
-- Response time: 1,250ms → 750ms (-40%)
-- Infrastructure cost: Same (10x efficiency)
-- Revenue potential: 50x (more users, same infra)
-
----
-
-### **Use Case 2: Complex Multi-Agent Workflows (Agent Squad)**
-
-#### **BEFORE (Single-Agent System)**
-
-```
-User: "Create a balanced DeFi portfolio and analyze risks"
-
-System (Single Agent):
-1. General chat agent processes entire request
-2. Provides generic portfolio advice
-3. No specialized risk analysis
-4. No coordination between tasks
-5. Context lost between follow-ups
-
-Response:
-"I recommend a balanced portfolio:
-• 40% ETH
-• 30% BTC
-• 20% stablecoins
-• 10% DeFi tokens
-
-For risk analysis, I suggest reviewing each token's 
-documentation and checking TVL on DeFiLlama."
-
-Quality: ⭐⭐⭐ (3/5) - Generic, lacks depth
-Time: 2 seconds (fast but shallow)
-Agents: 1 (chat only)
-```
-
-**Pain Points:**
-- ❌ No specialist routing
-- ❌ Generic, surface-level answers
-- ❌ No task coordination
-- ❌ Context loss on complex queries
-- ❌ One-size-fits-all approach
-- ❌ No execution capability
-- ❌ Manual transaction flow
-
----
-
-#### **AFTER (With Agent Squad - 10 Specialist Agents)**
-
-```
-User: "Create a balanced DeFi portfolio and analyze risks"
-
-System (Agent Squad Orchestrator):
-
-STEP 1: Intent Classification (50ms)
-Detected intents:
-• Portfolio creation → Research Agent
-• Risk analysis → Risk Analyzer Agent
-• Coordinator → Supervisor Agent
-
-STEP 2: Supervisor Coordination
-Plan created:
-1. Research Agent: Find top protocols
-2. Risk Agent: Assess risk for each
-3. Portfolio Agent: Optimize allocation
-
-STEP 3: Parallel Execution
-
-Research Agent (1,200ms):
-"Top protocols:
-• Aave: $5.4B TVL, 5.67% APY
-• Compound: $3.8B TVL, 4.23% APY
-• Lido: $22B TVL, 3.8% APY
-• Curve: $4.2B TVL, varies by pool"
-
-Risk Agent (800ms, parallel):
-"Risk scores:
-• Aave: 42/100 (Medium) - Smart contract mature
-• Compound: 38/100 (Low-Medium) - Battle-tested
-• Lido: 45/100 (Medium) - Centralization risk
-• Curve: 35/100 (Low) - Stable focus"
-
-Portfolio Agent (600ms, parallel):
-"Optimal allocation (MPT):
-• 30% Aave (balance risk/reward)
-• 25% Compound (stable base)
-• 25% Lido (ETH exposure)
-• 20% Curve (stablecoin yield)"
-
-STEP 4: Supervisor Aggregation (200ms)
-Final response combining all agents:
-
-"📊 BALANCED DEFI PORTFOLIO (AI-Optimized)
-
-RECOMMENDED ALLOCATION:
-┌─────────────────────────────────────────────┐
-│ Protocol    Allocation  APY    Risk  TVL    │
-├─────────────────────────────────────────────┤
-│ Aave        30%        5.67%  42    $5.4B  │
-│ Compound    25%        4.23%  38    $3.8B  │
-│ Lido        25%        3.80%  45    $22B   │
-│ Curve       20%        varies 35    $4.2B  │
-└─────────────────────────────────────────────┘
-
-PORTFOLIO METRICS:
-• Expected APY: 4.8% weighted avg
-• Risk Score: 40/100 (Low-Medium) ✅
-• Diversification: 82/100 (Excellent) ✅
-• Total TVL: $35.4B (high liquidity)
-
-RISK ANALYSIS (Detailed):
-1. Smart Contract Risk: LOW
-   All protocols audited, battle-tested
-
-2. Liquidity Risk: VERY LOW
-   Combined $35B TVL ensures exit liquidity
-
-3. Correlation Risk: LOW
-   Protocols serve different functions
-
-4. Centralization Risk: MEDIUM
-   Lido has some centralization (mitigated by 25% allocation)
-
-NEXT STEPS:
-Would you like me to:
-1. Execute this allocation?
-2. Adjust risk/return profile?
-3. Add tax optimization strategy?"
-
-Quality: ⭐⭐⭐⭐⭐ (5/5) - Specialist-level depth
-Time: 2,800ms (slower but comprehensive)
-```
-
-**New Capabilities (10 Specialists):**
-- ✅ Intelligent intent routing (10 specialists)
-- ✅ Parallel agent execution (800ms saved)
-- ✅ Supervisor coordination (complex tasks)
-- ✅ Specialist-level analysis (each domain)
-- ✅ Context preserved across turns
-- ✅ Comprehensive multi-angle responses
-
-**Agent Roster:**
-1. **Chat**: General conversation
-2. **Hunter AI**: Market sentiment & predictions
-3. **Research**: Deep protocol analysis
-4. **Execution**: Transaction execution (Privy)
-5. **Risk Analyzer**: Risk assessment
-6. **Portfolio**: Portfolio optimization
-7. **Tax Optimizer**: Tax-loss harvesting
-8. **DeFi Yield**: Yield farming optimization
-9. **Security Auditor**: Smart contract security
-10. **Gas Optimizer**: Gas fee optimization
-
-**Quality Improvement:**
-- Before: Generic advice (3/5 stars, 1 agent)
-- After: Expert-level analysis (5/5 stars, 10 agents)
-- Depth: 3x more detailed
-- Accuracy: 40% improvement (specialist knowledge)
-- Execution: Now integrated (Privy wallet)
-
----
-
-### **Use Case 2B: Transaction Execution (Execution Agent + Privy)**
-
-#### **BEFORE (Manual Wallet Flow)**
-
-```
-User: "Swap 1 ETH for USDC"
-
-Manual Flow:
-1. User opens MetaMask/WalletConnect
-2. User navigates to Uniswap.org
-3. User connects wallet (3 clicks)
-4. User selects tokens (ETH → USDC)
-5. User enters amount (1 ETH)
-6. User clicks "Swap"
-7. User reviews transaction
-8. User approves gas
-9. User confirms in wallet
-10. User waits for confirmation
-11. User returns to Anvil platform
-
-Time: 3-5 minutes
-Steps: 11 manual steps
-Tools: 2 platforms (Anvil + Uniswap)
-Experience: Fragmented
-Context: Lost (left Anvil)
-```
-
-**Pain Points:**
-- ❌ Platform switching (Anvil → Uniswap)
-- ❌ Manual wallet connection
-- ❌ 11 separate steps
-- ❌ Context loss
-- ❌ No AI guidance
-- ❌ Manual gas optimization
-
----
-
-#### **AFTER (Execution Agent + Privy)**
-
-```
-User: "Swap 1 ETH for USDC"
-
-Agent Squad Flow:
-1. Intent Classification (50ms)
-   → Detected: "transaction_execution"
-   → Route to: execution agent
-
-2. Execution Agent (with Privy integration):
-
-[Pre-flight Checks - 200ms]
-✅ Wallet connected (Privy embedded)
-✅ ETH balance: 5.2 ETH
-✅ Gas: 25 gwei (moderate)
-✅ Slippage: 0.5% (user preference)
-
-[Price Quote - 400ms]
-1inch aggregator:
-• Best route: Uniswap V3 (direct)
-• Expected: 2,437.75 USDC (0.5% slippage)
-• Current rate: 1 ETH = 2,450 USDC
-
-[Transaction Preview - Privy UI]
-"📋 TRANSACTION PREVIEW
-
-Swap Details:
-• From: 1.0 ETH
-• To: ~2,437.75 USDC (min: 2,425.51)
-• Route: Uniswap V3
-• Price Impact: 0.02% (excellent)
-
-Costs:
-• Gas: ~$11.25 (180k gas @ 25 gwei)
-• Slippage tolerance: 0.5%
-
-Total: Receive ~2,437.75 USDC
-Time: ~15 seconds
-
-[Approve] [Cancel]"
-
-[User clicks Approve in Privy UI]
-
-[Execution - 15,000ms]
-✅ Transaction submitted: 0xdef...456
-✅ MEV protection: Flashbots relay
-⏳ Pending confirmation...
-✅ Confirmed in block 18,234,567
-✅ Actual output: 2,438.12 USDC
-
-Response (total 15,650ms):
-"✅ SWAP EXECUTED SUCCESSFULLY
-
-Transaction Details:
-• Swapped: 1 ETH → 2,438.12 USDC
-• Route: Uniswap V3 (direct)
-• Slippage: 0.01% (better than 0.5% max!) 🎯
-• Gas Cost: $11.15 (178,450 gas @ 25 gwei)
-• Net Received: 2,438.12 USDC
-
-Transaction: 0xdef...456
-Block: 18,234,567
-Status: ✅ Confirmed
-Time: 15.6 seconds
-
-Portfolio Updated:
-• ETH: 5.2 → 4.2 (-1.0)
-• USDC: $12,450 → $14,888.12 (+$2,438.12)
-
-Would you like to:
-1. View on Etherscan?
-2. Deploy USDC to yield protocol? (7.5% APY available)
-3. Set up price alert for ETH?"
-
-Time: 16 seconds (vs 3-5 minutes)
-Steps: 2 (message + approve)
-Tools: 1 (Anvil only)
-Experience: Seamless
-Context: Preserved
-```
-
-**New Capabilities:**
-- ✅ One-platform execution (no switching)
-- ✅ Privy embedded wallet (seamless UX)
-- ✅ AI-powered routing (best price via 1inch)
-- ✅ Pre-flight safety checks
-- ✅ MEV protection (Flashbots)
-- ✅ Real-time price quotes
-- ✅ Automatic portfolio updates
-- ✅ Context preserved (stay in chat)
-- ✅ 2 steps vs 11 manual steps
-
-**Time Savings:**
-- Before: 3-5 minutes (manual)
-- After: 16 seconds (automated)
-- Improvement: 92% faster
-
----
-
-### **Use Case 2C: Portfolio Rebalancing (Portfolio Agent)**
-
-#### **BEFORE (Manual Rebalancing)**
-
-```
-User: "My portfolio is unbalanced, help"
-
-Manual Process:
-1. User manually checks holdings
-2. User calculates current allocation
-3. User researches optimal allocation
-4. User uses Excel/spreadsheet
-5. User calculates MPT manually (or skips)
-6. User determines what to buy/sell
-7. User manually executes each trade
-8. User tracks each transaction
-9. User updates spreadsheet
-
-Time: 2-4 hours
-Tools: Anvil + Excel + Uniswap + CoinGecko
-Quality: Amateur (no MPT optimization)
-Cost: $75+ gas (suboptimal execution)
-```
-
-**Pain Points:**
-- ❌ Manual calculations
-- ❌ No MPT optimization
-- ❌ Multiple tools required
-- ❌ Time-consuming (2-4 hours)
-- ❌ No AI guidance
-- ❌ Suboptimal execution (high gas)
-
----
-
-#### **AFTER (Portfolio Agent + MPT)**
-
-```
-User: "Optimize my portfolio"
-
-Agent Squad Flow:
-1. Intent Classification (50ms)
-   → Route to: portfolio agent
-
-2. Portfolio Agent (1,800ms total):
-
-[Current Portfolio - via Privy - 200ms]
-• ETH: $12,740 (51%)
-• UNI: $4,225 (17%)
-• AAVE: $3,825 (15%)
-• USDC: $4,250 (17%)
-• Total: $25,040
-
-[Risk Assessment - parallel - 600ms]
-Current risk score: 58/100 (Medium-High)
-• Volatility: 35% (30-day)
-• ETH correlation: 0.78 (high)
-• Max drawdown: -42%
-
-[MPT Optimization - 800ms]
-Efficient frontier analysis:
-• Calculated 10,000 portfolio combinations
-• Found optimal: Risk 42, Return 19%
-• Current: Risk 58, Return 15%
-
-[Rebalancing Plan - 200ms]
-Transactions needed: 6
-Estimated gas: $75 (6 tx @ $12.50 each)
-Execution time: ~2 minutes
-
-Response:
-"📊 PORTFOLIO OPTIMIZATION COMPLETE
-
-CURRENT vs OPTIMAL:
-┌──────────────────────────────────────────────┐
-│ Asset   Current  Optimal  Action   Amount   │
-├──────────────────────────────────────────────┤
-│ ETH     51%      43%      SELL     $2,000   │
-│ UNI     17%      19%      BUY      $500     │
-│ AAVE    15%      16%      BUY      $250     │
-│ USDC    17%      10%      SELL     $1,750   │
-│ MATIC   0%       6%       BUY      $1,500   │
-│ LINK    0%       6%       BUY      $1,500   │
-└──────────────────────────────────────────────┘
-
-EXPECTED IMPROVEMENTS:
-• Risk: 58 → 42 (-28%) ✅
-• Return: 15% → 19% (+27%) ✅
-• Sharpe Ratio: 0.82 → 1.15 (+40%) ✅
-• Diversification: 55 → 78 (+42%) ✅
-
-EXECUTION PLAN (Optimized):
-Batched transactions to save gas:
-1. Sell 0.82 ETH → $2,000 USDC
-2. Batch swap: $1,500 USDC → MATIC
-                $1,500 USDC → LINK
-                $500 USDC → UNI
-                $250 USDC → AAVE
-
-Gas optimization:
-• Standard: $75 (6 separate txs)
-• Batched: $45 (2 batched txs) 💰 Save $30
-• Slippage: ~$35 (0.15% avg)
-• Total cost: $80 (vs $110 standard)
-
-1-Click Execution Available via Privy
-
-Would you like to:
-1. ✅ Execute optimized plan now? (2 min, $80)
-2. See alternative allocations?
-3. Set up auto-rebalancing (monthly)?"
-
-Time: 1.8 seconds + 2 min execution
-Tools: 1 (Anvil only)
-Quality: Professional (MPT-optimized)
-Cost: $80 gas (batched, optimized)
-```
-
-**New Capabilities:**
-- ✅ Automatic MPT optimization
-- ✅ Real-time risk assessment
-- ✅ Efficient frontier analysis
-- ✅ Batched transactions (save $30 gas)
-- ✅ One-click execution (Privy)
-- ✅ Expected improvement metrics
-- ✅ Auto-rebalancing option
-
-**Time Savings:**
-- Before: 2-4 hours (manual)
-- After: 2 minutes (automated)
-- Improvement: 98% faster
-
-**Cost Savings:**
-- Before: $110 (standard execution)
-- After: $80 (batched execution)
-- Improvement: -27% gas cost
-
----
-
-### **Use Case 2D: Tax Optimization (Tax Optimizer Agent)**
-
-#### **BEFORE (Manual Tax Planning)**
-
-```
-User: "How much will I owe in crypto taxes?"
-
-Manual Process:
-1. Export transaction history manually
-2. Calculate gains/losses in Excel
-3. Categorize short-term vs long-term
-4. Identify wash sales manually
-5. Calculate tax liability manually
-6. Miss tax-loss harvesting opportunities
-7. Pay $500-1,000 to crypto tax accountant
-
-Time: 8-20 hours
-Cost: $500-1,000 (accountant)
-Quality: Depends on accountant
-Optimization: None (reactive, not proactive)
-```
-
-**Pain Points:**
-- ❌ Manual transaction tracking
-- ❌ Complex calculations
-- ❌ Miss optimization opportunities
-- ❌ Expensive accountant fees
-- ❌ Reactive (not proactive)
-- ❌ No real-time guidance
-
----
-
-#### **AFTER (Tax Optimizer Agent)**
-
-```
-User: "How can I reduce my crypto taxes?"
-
-Agent Squad Flow:
-1. Intent Classification (50ms)
-   → Route to: tax_optimizer agent
-
-2. Tax Optimizer Agent (1,200ms total):
-
-[Transaction Analysis - via Privy - 400ms]
-• 2025 transactions: 145
-• Realized gains: $12,500
-• Unrealized losses: $3,200 (LINK, SOL)
-
-[Tax Calculation - 300ms]
-• Short-term gains: $8,500 (37% bracket)
-• Long-term gains: $4,000 (20% bracket)
-• Current tax liability: $3,945
-
-[Opportunity Detection - 400ms]
-Tax-loss harvesting opportunities:
-• LINK: -$1,800 unrealized loss
-• SOL: -$1,400 unrealized loss
-• Potential savings: $1,184 (37% of losses)
-
-[Strategy Generation - 100ms]
-• Execute harvesting today (capture 2025)
-• Rebuy alternatives (avoid wash sale)
-• Timeline: 31-day wait
-
-Response:
-"💰 TAX OPTIMIZATION ANALYSIS
-
-CURRENT TAX SITUATION (2025):
-• Realized Gains: $12,500
-• Estimated Tax: $3,945
-• Tax Bracket: 37% (short-term)
-• Effective Rate: 31.6%
-
-TAX-LOSS HARVESTING OPPORTUNITIES:
-┌──────────────────────────────────────────────┐
-│ Asset  Entry    Current  Loss    Tax Save   │
-├──────────────────────────────────────────────┤
-│ LINK   $15.20   $11.80   -$1,800  $666     │
-│ SOL    $128.50  $98.20   -$1,400  $518     │
-└──────────────────────────────────────────────┘
-
-RECOMMENDED STRATEGY:
-1. Sell LINK today (-$1,800 loss)
-   • Tax savings: $666
-   • Rebuy: DOT (similar L1, no wash sale)
-   • Wait: 31 days (IRS requirement)
-
-2. Sell SOL today (-$1,400 loss)
-   • Tax savings: $518
-   • Rebuy: AVAX (similar L1, no wash sale)
-   • Wait: 31 days
-
-TOTAL SAVINGS: $1,184
-Reduced tax: $3,945 → $2,761 (-30%) 🎯
-
-EXECUTION TIMELINE:
-• Today: Sell LINK + SOL (capture losses)
-• Jan 31, 2026: Rebuy DOT + AVAX (avoid wash)
-• Maintain similar exposure throughout
-
-ADDITIONAL OPTIMIZATIONS DETECTED:
-1. Long-term vs Short-term:
-   • Hold ETH 25 more days → $680 savings
-   
-2. Charitable Donation:
-   • Donate appreciated AAVE → $350 savings
-   
-3. Future Planning:
-   • Set up alerts for future harvesting
-
-TOTAL POTENTIAL: $1,184 + $680 + $350 = $2,214
-
-Year-End Tax Report Available:
-✅ Form 8949 (auto-generated)
-✅ Schedule D
-✅ All transactions categorized
-✅ Cost basis calculated (FIFO)
-✅ 1-click export to TurboTax
-
-Would you like to:
-1. ✅ Execute tax-loss harvesting now?
-2. Generate full tax report (Form 8949)?
-3. Set up 2026 tax optimization alerts?"
-
-Time: 1.2 seconds (analysis)
-Cost: $0 (vs $500-1,000 accountant)
-Quality: Professional (CPA-level)
-Savings: $1,184+ (immediate)
-```
-
-**New Capabilities:**
-- ✅ Automatic transaction analysis
-- ✅ Real-time tax calculation
-- ✅ Proactive optimization detection
-- ✅ Wash sale prevention
-- ✅ Form 8949 auto-generation
-- ✅ Alternative asset recommendations
-- ✅ Future planning guidance
-
-**Cost Savings:**
-- Accountant: $500-1,000 → $0
-- Tax savings: $1,184+ immediate
-- Time saved: 8-20 hours → 1.2 seconds
-
----
-
-### **Use Case 2E: Smart Contract Security (Security Auditor Agent)**
-
-#### **BEFORE (Manual Security Check)**
-
-```
-User: "Is this token safe? 0x123...abc"
-
-Manual Process:
-1. Copy contract address
-2. Visit Etherscan
-3. Check if verified (unclear what to look for)
-4. Google "token audit" (may not find)
-5. Check holder concentration (manual calc)
-6. Search Twitter for scam warnings
-7. Check liquidity (unclear metrics)
-8. Make uninformed decision
-9. Often get scammed ($$$)
-
-Time: 30-60 minutes
-Quality: Amateur (miss red flags)
-Risk: HIGH (common to miss rug pulls)
-```
-
-**Pain Points:**
-- ❌ Manual multi-platform research
-- ❌ No systematic analysis
-- ❌ Miss hidden contract risks
-- ❌ No honeypot detection
-- ❌ Common to get scammed
-- ❌ Time-consuming
-
----
-
-#### **AFTER (Security Auditor Agent)**
-
-```
-User: "Is this token safe to buy? 0x123...abc"
-
-Agent Squad Flow:
-1. Intent Classification (50ms)
-   → Route to: security_auditor agent
-
-2. Security Auditor Agent (2,150ms total):
-
-[Contract Analysis - 800ms]
-• Bytecode analysis
-• Owner permissions check
-• Pausable/mintable detection
-• Proxy pattern analysis
-
-[Code Pattern Analysis - 600ms]
-• Honeypot detection
-• Hidden fee scan
-• Blacklist function check
-• Rug pull pattern matching
-
-[On-Chain Behavior - 400ms]
-• Holder distribution
-• Liquidity analysis
-• Trading activity patterns
-• Wallet behavior analysis
-
-[Historical Analysis - 300ms]
-• Similar contracts search
-• Owner history check
-• Cross-reference scam database
-
-Response:
-"🚨 SECURITY AUDIT REPORT
-
-CONTRACT: 0x123...abc
-Token: XYZ
-
-OVERALL RISK: 🔴 HIGH (78/100)
-Recommendation: ⛔ DO NOT BUY
-
-CRITICAL ISSUES (4):
-1. ⛔ RUG PULL RISK - CONFIRMED
-   • Same owner as previous rug pull (0x456...def)
-   • Previous rug: $1.2M stolen (June 2025)
-   • Same wallet patterns detected
-   • Confidence: 98%
-
-2. ⛔ CENTRALIZED CONTROL
-   • Owner can pause all transfers
-   • Owner can mint unlimited tokens
-   • Owner can blacklist addresses
-   • No timelock protection
-   • No multisig governance
-
-3. ⛔ LIQUIDITY RISK
-   • Total liquidity: $45k (VERY LOW)
-   • Liquidity NOT locked
-   • Can be removed instantly
-   • Exit scam possible
-
-4. ⛔ HIDDEN FEES
-   • 2% transfer tax (undisclosed)
-   • Tax can be increased to 100%
-   • Tax wallet: same as owner
-
-HIGH RISK (3):
-5. ⚠️ HOLDER CONCENTRATION
-   • Top 10 wallets: 65% supply
-   • Whale dump risk: EXTREME
-
-6. ⚠️ LOW ACTIVITY
-   • Avg 50 transactions/day
-   • Daily volume: $12k
-   • Difficult to exit position
-
-7. ⚠️ UNVERIFIED AUDIT
-   • Audit by unknown firm
-   • No recognized auditors
-   • Audit date: 8 months old
-
-HONEYPOT CHECK: ⚠️ SUSPICIOUS
-• Sell restrictions detected
-• May not be able to sell after buying
-
-COMPARISON - SAFE ALTERNATIVES:
-┌────────────────────────────────────────────────┐
-│ Token   Risk   Liquidity  Audit   Decentralized│
-├────────────────────────────────────────────────┤
-│ XYZ     78🔴   $45k      ❌      ❌            │
-│ UNI     35🟢   $2.1B     ✅      ✅            │
-│ AAVE    38🟢   $850M     ✅      ✅            │
-│ LINK    42🟡   $1.2B     ✅      ✅            │
-└────────────────────────────────────────────────┘
-
-⛔ STRONG RECOMMENDATION: DO NOT BUY
-
-This token shows multiple signs of a scam:
-• Confirmed rug pull by same owner
-• Centralized control (can steal funds)
-• Low liquidity (hard to exit)
-• Hidden fees (2% tax)
-• Possible honeypot (can't sell)
-
-SAFER ALTERNATIVES (Same Category):
-1. UNI: Risk 35/100, $2.1B liquidity ✅
-2. AAVE: Risk 38/100, $850M liquidity ✅
-
-REPORTED TO:
-✅ Anvil scam database
-✅ Community alert sent
-✅ Etherscan flagged
-
-Would you like to:
-1. Report additional details to authorities?
-2. See vetted alternatives in same category?
-3. Set up wallet scam protection?"
-
-Time: 2.2 seconds (vs 30-60 minutes)
-Quality: Professional (8-point analysis)
-Risk: PREVENTED (saved from scam)
-```
-
-**New Capabilities:**
-- ✅ Instant comprehensive audit (2 seconds)
-- ✅ Rug pull detection (owner history)
-- ✅ Honeypot detection (can't sell check)
-- ✅ Hidden fee discovery
-- ✅ Holder concentration analysis
-- ✅ Liquidity risk assessment
-- ✅ Safe alternative recommendations
-- ✅ Automatic scam reporting
-
-**Value Add:**
-- Time: 30-60 min → 2 seconds (99% faster)
-- Quality: Amateur → Professional
-- **Protection: Potentially saves thousands (scam prevention)**
-
----
-
-### **Use Case 3: Systemic Risk Analysis (GraphRAG)**
-
-#### **BEFORE (Vector RAG Only)**
-
-```
-User: "If USDT depegs, what happens to my Aave position?"
-
-System (Vector RAG):
-1. Searches for "USDT depeg" in documents
-2. Finds isolated facts:
-   - "USDT is used as collateral"
-   - "Aave accepts USDT"
-   - "Oracles provide price feeds"
-3. No connection between facts
-4. No impact analysis
-5. No dependency tracking
-
-Response:
-"USDT is commonly used as collateral in DeFi protocols 
-including Aave. If USDT depegs, it could affect positions 
-using USDT. I recommend monitoring your collateral ratio.
-
-For more details, please review Aave documentation about 
-collateral requirements and liquidation thresholds."
-
-Quality: ⭐⭐ (2/5) - Vague, no actionable insight
-Risk Assessment: None
-Impact Quantification: None
-```
-
-**Pain Points:**
-- ❌ No relationship understanding
-- ❌ No causal chain analysis
-- ❌ Generic, unhelpful advice
-- ❌ No quantified risk
-- ❌ No actionable insights
-
----
-
-#### **AFTER (With GraphRAG)**
-
-```
-User: "If USDT depegs, what happens to my Aave position?"
-
-System (GraphRAG):
-
-STEP 1: Entity Identification
-Entities found:
-• USDT (Token)
-• Aave (Protocol)
-• User Position (Specific)
-
-STEP 2: Relationship Traversal
-Graph traversal (depth 3):
-
-USDT --[COLLATERAL_IN]--> Aave
-USDT --[PRICE_FEED_FROM]--> Chainlink
-Aave --[USES_ORACLE]--> Chainlink
-Aave --[LIQUIDATION_ENGINE]--> Health Factor Check
-Chainlink --[PRICE_DEVIATION]--> Liquidation Trigger
-
-STEP 3: Impact Analysis
-Causal chain identified:
-USDT depeg → Chainlink reports drop → 
-Health factor decrease → Liquidation trigger
-
-STEP 4: Position-Specific Assessment
-User's position:
-• Collateral: $50,000 USDT
-• Borrowed: $35,000 DAI
-• Current Health Factor: 1.42 (Safe)
-• Liquidation Threshold: 1.0
-
-Response:
-"⚠️ USDT DEPEG IMPACT ANALYSIS (GraphRAG)
-
-YOUR POSITION RISK:
-Current Status:
-• Collateral: $50,000 USDT
-• Borrowed: $35,000 DAI
-• Health Factor: 1.42 (Safe)
-• Liquidation Price: $0.70 USDT (-30%)
-
-SYSTEMIC RISK CHAIN:
-1. USDT Depegs (trigger event)
-   ↓
-2. Chainlink Oracle Updates
-   Reports: USDT = $0.90 (vs $1.00)
-   Latency: 1-5 minutes
-   ↓
-3. Your Collateral Value Drops
-   $50,000 → $45,000 (-10%)
-   ↓
-4. Health Factor Recalculation
-   Current: 1.42
-   After depeg: 1.28 (still safe)
-   ↓
-5. Liquidation Risk Assessment
-   Safe if USDT stays above $0.70
-   ⚠️ WARNING if USDT drops below $0.75
-
-CONTAGION ANALYSIS:
-Protocols Affected (via graph):
-• Aave: ⚠️ HIGH exposure ($2.1B USDT collateral)
-• MakerDAO: ⚠️ HIGH exposure (USDT in PSM)
-• Curve: ⚠️ MEDIUM exposure (3pool)
-• Compound: ⚠️ MEDIUM exposure
-
-Market Impact Estimate:
-• Potential Liquidations: $800M+ (if -15% depeg)
-• Gas Spike: Likely (MEV bot competition)
-• Slippage: HIGH (mass exits)
-
-YOUR RISK SCORE: 68/100 (MEDIUM-HIGH)
-
-Risk Factors:
-1. Collateral Concentration: 100% USDT ⚠️
-2. Borrowed Amount: 70% of collateral ⚠️
-3. Market Liquidity: May decrease in depeg
-4. Oracle Dependency: Chainlink (generally reliable)
-
-ACTIONABLE RECOMMENDATIONS:
-
-🔴 IMMEDIATE (If depeg detected):
-1. Add collateral OR repay debt
-   • Reduce debt to $25k (health factor → 2.0)
-   • Cost: $10k repayment
-   • Time: 5-10 minutes
-
-2. Diversify collateral
-   • Swap 50% USDT → USDC/DAI
-   • Reduces single-point risk
-   • Cost: ~$50 gas + slippage
-
-🟡 PREVENTIVE (Now):
-3. Set up monitoring
-   • USDT price alert: <$0.95
-   • Health factor alert: <1.5
-   • Gas price alert: >50 gwei
-
-4. Prepare emergency plan
-   • Pre-approve repayment transactions
-   • Keep $15k in wallet for quick repay
-
-🟢 LONG-TERM:
-5. Rebalance collateral mix
-   • Target: 60% USDC, 40% ETH
-   • Reduces stablecoin risk
-
-HISTORICAL PRECEDENT:
-• USDC depeg (March 2023): Recovered in 48h
-• Impact: $3.2B liquidations across DeFi
-• Lesson: Over-collateralized positions survived
-
-Would you like me to:
-1. Execute defensive strategy now?
-2. Set up monitoring alerts?
-3. Show alternative collateral options?"
-
-Quality: ⭐⭐⭐⭐⭐ (5/5) - Deep, actionable, specific
-Risk Assessment: Quantified (68/100)
-Impact: Specific to user's position
-Time: 1,850ms
-```
-
-**New Capabilities:**
-- ✅ Relationship mapping (6 connections found)
-- ✅ Causal chain analysis (5-step impact)
-- ✅ Contagion risk assessment (4 protocols)
-- ✅ Position-specific quantification ($50k → $45k)
-- ✅ Actionable recommendations (immediate + preventive)
-- ✅ Historical context (USDC precedent)
-- ✅ Emergency planning
-
-**Quality Improvement:**
-- Before: 2/5 stars (vague)
-- After: 5/5 stars (actionable)
-- Depth: 10x more detailed
-- Actionability: 100% improvement (specific steps)
-- Risk quantification: Now available (68/100)
-
----
-
-### **Use Case 4: Predictive Model Selection (Recommenders)**
-
-#### **BEFORE (Reactive Ranking)**
-
-```
-Scenario: User "Alice" at 9:00 AM (morning), chat agent type
-
-System (Adaptive Ranking - Reactive):
-1. Looks up current rankings for "chat" agent type
-2. Selects top model: gpt-4-turbo
-3. Executes request
-4. Latency: 1,200ms
-5. Cost: $0.015
-
-Alice's request: "What's ETH doing?"
-Response time: 1,200ms
-Model selected: gpt-4-turbo (expensive, slow for simple query)
-
-Problem: Reactive system doesn't consider:
-❌ User behavior patterns
-❌ Time of day (morning = simple queries)
-❌ Historical success for Alice + chat + morning
-❌ Cost optimization opportunities
-```
-
-**Results**:
-- Latency: 1,200ms (overkill for simple query)
-- Cost: $0.015 (expensive model)
-- Appropriate: No (gpt-4 not needed for "What's ETH doing?")
-
----
-
-#### **AFTER (With Recommenders - Predictive)**
-
-```
-Scenario: User "Alice" at 9:00 AM (morning), chat agent type
-
-System (Recommenders ML - Predictive):
-
-STEP 1: Context Building
-User: Alice (user123)
-Agent Type: chat
-Time of Day: morning (9:00 AM)
-Context Key: "user123_chat_morning"
-
-STEP 2: Historical Pattern Analysis (SAR Algorithm)
-Last 30 days for user123_chat_morning:
-• gpt-4-turbo: 12 uses, avg latency 1,180ms, avg cost $0.014
-• gpt-4o-mini: 45 uses, avg latency 380ms, avg cost $0.003
-• gemini-flash: 28 uses, avg latency 420ms, avg cost $0.002
-
-Success rates:
-• gpt-4-turbo: 98% (overkill for simple queries)
-• gpt-4o-mini: 99% (perfect for morning chats)
-• gemini-flash: 97%
-
-Weighted scores (success × speed × cost):
-• gpt-4-turbo: 0.75
-• gpt-4o-mini: 0.95 ⭐ HIGHEST
-• gemini-flash: 0.88
-
-STEP 3: Prediction
-Recommendation: gpt-4o-mini
-Confidence: 92%
-Reasoning:
-• Alice's morning chats are typically simple
-• gpt-4o-mini perfect for "What's X doing?" queries
-• 3x faster, 5x cheaper than gpt-4-turbo
-• 99% success rate for this context
-
-STEP 4: Execution
-Model selected: gpt-4o-mini
-Alice's request: "What's ETH doing?"
-Response time: 380ms
-Cost: $0.003
-
-Response: "ETH is currently trading at $2,450 (+1.2% today).
-Sentiment is bullish (68/100). Would you like details?"
-
-Results:
-• Latency: 380ms (-68%)
-• Cost: $0.003 (-80%)
-• Appropriate: Yes ✅ (right model for query type)
-• User satisfaction: High (fast + accurate)
-```
-
-**New Capabilities:**
-- ✅ User behavior learning (30-day history)
-- ✅ Time-of-day optimization (morning patterns)
-- ✅ Context-aware prediction (user × agent × time)
-- ✅ Cost optimization (5x cheaper)
-- ✅ Speed optimization (3x faster)
-- ✅ Confidence scoring (92%)
-
-**Improvement Summary:**
-- Latency: 1,200ms → 380ms (-68%)
-- Cost: $0.015 → $0.003 (-80%)
-- Model accuracy: Reactive → Predictive (92% confidence)
-- User experience: Better (faster, same quality)
-
-**Long-Term Impact** (1,000 users × 10 requests/day):
-- Daily requests: 10,000
-- Daily cost savings: $120 (was $150, now $30)
-- Annual savings: $43,800
-- Latency improvement: 68% reduction
-- User satisfaction: +15% (faster responses)
-
----
-
-## 📊 **COMBINED NEW INTEGRATIONS SUMMARY**
-
-### **Before vs. After (All 4 Libraries)**
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Scalability** | 1k users | 50k users | +4,900% |
-| **Latency** | 1,500ms | 900ms | -40% |
-| **Cost/Request** | $0.015 | $0.008 | -47% |
-| **Memory** | 80% usage | 30% usage | -63% |
-| **Agent Quality** | Generic (3/5) | Specialist (5/5) | +67% |
-| **Risk Analysis** | Vague | Quantified | NEW |
-| **Systemic Understanding** | None | Graph-based | NEW |
-| **Model Selection** | Reactive | Predictive | NEW |
-| **User Satisfaction** | 70% | 92% | +22 points |
-
-### **Business Impact (Annual)**
-
-**Cost Savings:**
-- Infrastructure: Same costs, 50x capacity = $120k saved
-- LLM costs: 47% reduction = $50k saved
-- Development: 96% less UI building = $80k saved
-- **Total Savings: $250k/year**
-
-**Revenue Increase:**
-- User capacity: 1k → 50k = +$400k/year
-- Premium features: Better quality = +$120k/year
-- Enterprise tier: New capability = +$180k/year
-- **Total Revenue Increase: +$700k/year**
-
-**Combined 5-Year Value: $4.75M**
-
----
-
----
-
-## 🏢 **ENTERPRISE AGENT USE CASES** {#enterprise-agents}
-
-### **Use Case 3A: Compliance Monitoring (Compliance Monitor Agent)**
-
-#### **BEFORE (Manual Compliance)**
-
-```
-Enterprise treasury: $5M USDC
-Transaction: "Send $100k to vendor wallet 0xabc...123"
-
-Manual Compliance Process:
-1. Copy wallet address
-2. Check internal whitelist (spreadsheet)
-3. Google wallet address (hope for results)
-4. Check OFAC list manually (download PDF)
-5. Email compliance officer (wait hours)
-6. Officer reviews (manual research)
-7. Approval email received (next day)
-8. Execute transaction
-9. Log transaction (spreadsheet)
-10. Monthly compliance report (manual)
-
-Time: 24-48 hours per transaction
-Cost: $150k/year compliance officer
-Risk: Human error, miss sanctions
-```
-
-**Pain Points:**
-- ❌ 24-48 hour delays
-- ❌ Manual OFAC checks
-- ❌ No real-time screening
-- ❌ Expensive officers ($150k/year)
-- ❌ Human error (miss red flags)
-- ❌ Regulatory fines risk ($100k-10M)
-
----
-
-#### **AFTER (Compliance Monitor Agent)**
-
-```
-Enterprise treasury: $5M USDC
-Transaction: "Send $100k to vendor wallet 0xabc...123"
-
-Compliance Monitor (Auto-Response - 2 seconds):
-
-🔍 WALLET SCREENING COMPLETE
-
-Destination: 0xabc...123
-Analysis Time: 1.8 seconds
-
-RISK ASSESSMENT:
-┌──────────────────────────────────────────────┐
-│ Check Type        Status      Risk Score    │
-├──────────────────────────────────────────────┤
-│ OFAC Sanctions    ✅ Clear    0/100         │
-│ PEP Check         ✅ Clear    0/100         │
-│ Mixer Exposure    ⚠️ DETECTED  78/100       │
-│ Rug Pull History ✅ None     0/100         │
-│ High Risk Source  ⚠️ YES      82/100       │
-└──────────────────────────────────────────────┘
-
-OVERALL RISK: 🔴 HIGH (78/100)
-Decision: ⛔ TRANSACTION BLOCKED
-
-DETAILED FINDINGS:
-1. Mixer Exposure (HIGH RISK)
-   • Wallet received 45% of funds from Tornado Cash
-   • Last mixer transaction: 3 days ago
-   • Pattern: Potential money laundering (layering)
-
-2. High Risk Sources (HIGH RISK)
-   • 32% funds from gambling sites
-   • 18% from unverified exchanges
-   • 5% from known scam contracts
-
-3. Transaction Patterns (MEDIUM RISK)
-   • Rapid fund movement (avg hold: 2 hours)
-   • Frequent mixer usage
-   • Multiple chain hopping
-
-COMPLIANCE STATUS:
-⚠️ MANUAL REVIEW REQUIRED (AML/KYC Level 2)
-
-AUTO-ACTIONS TAKEN:
-✅ Transaction blocked (0.5 seconds)
-✅ Compliance team notified (email, Slack)
-✅ CFO notified (SMS)
-✅ Risk report generated
-✅ Audit log created (immutable)
-✅ Similar transactions paused (3 pending)
-
-REQUIRED DOCUMENTATION:
-1. Business purpose (invoice, contract)
-2. Beneficial owner identity (KYC)
-3. Source of funds verification
-4. Compliance officer approval
-
-ALTERNATIVE ACTIONS:
-1. Request vendor provide clean wallet
-2. Use escrow service (compliant intermediary)
-3. Wait for vendor KYC completion
-
-REGULATORY CONTEXT:
-• BSA/AML: High-risk counterparty (§326)
-• FinCEN: Reportable if >$10k (Form 8300)
-• OFAC: Not sanctioned ✅
-• EU MiCA: Enhanced due diligence required
-
-Compliance Officer Contact:
-• Name: Jane Smith
-• Email: compliance@company.com
-• Phone: +1 (555) 123-4567
-• Available: 9 AM - 5 PM EST
-
-[PROVIDE DOCUMENTATION] [CONTACT COMPLIANCE] [CANCEL TRANSACTION]
-```
-
-**New Capabilities:**
-- ✅ 2-second screening (vs 24-48 hours)
-- ✅ Real-time OFAC checks (automatic)
-- ✅ Chainalysis integration (full analysis)
-- ✅ Risk scoring (0-100, objective)
-- ✅ Auto-blocking (high-risk wallets)
-- ✅ Immutable audit trail (compliance-ready)
-- ✅ Multi-source screening (TRM Labs, Chainalysis)
-- ✅ Regulatory context (BSA/AML, FinCEN, OFAC)
-
-**Time Savings:**
-- Before: 24-48 hours per transaction
-- After: 2 seconds (99.9% faster)
-- Compliance officer time: 90% reduction
-
-**Cost Savings:**
-- Officer salary: $150k → $50k (monitoring only)
-- Regulatory fines: $0 (prevented, was $100k-10M risk)
-- Total savings: $100k+/year
-
----
-
-### **Use Case 3B: Multi-Sig Treasury Management (Multi-Sig Coordinator Agent)**
-
-#### **BEFORE (Manual Multi-Sig)**
-
-```
-DAO Treasury: $2.5M USDC
-Transaction: "Transfer $150k for protocol upgrade"
-
-Manual Multi-Sig Process:
-1. Proposer creates Gnosis Safe transaction
-2. Manually shares link (Telegram group)
-3. Signers manually check Telegram (hours/days)
-4. Each signer logs into Gnosis Safe
-5. Each signer reviews transaction
-6. Each signer approves (if they remember)
-7. After 3-of-5 approvals, manually execute
-8. Manually notify team (Telegram again)
-9. Manually log in treasury spreadsheet
-
-Time: 2-7 days (signer availability)
-Coordination: High friction (manual)
-Risk: Forgotten approvals, missed transactions
-```
-
-**Pain Points:**
-- ❌ 2-7 day delays (signer coordination)
-- ❌ Manual notifications (Telegram chaos)
-- ❌ Forgotten approvals (no reminders)
-- ❌ No audit trail (informal)
-- ❌ No policy enforcement (manual checks)
-
----
-
-#### **AFTER (Multi-Sig Coordinator Agent)**
-
-```
-DAO Treasury: $2.5M USDC
-Transaction: "Transfer $150k for protocol upgrade"
-
-Multi-Sig Coordinator (Automated Workflow):
-
-[Proposal Created - Day 1, 10:00 AM]
-
-📋 MULTI-SIG PROPOSAL #247
-
-Proposed Transaction:
-• From: Treasury Safe (0xdef...456)
-• To: Developer Wallet (0xghi...789)
-• Amount: $150,000 USDC
-• Purpose: Q4 Protocol Upgrade (Smart Contract Development)
-• Budget Code: ENG-2025-Q4-001
-• Proposed by: CTO (0xabc...123)
-• Created: 2025-12-01 10:00 UTC
-
-Policy Check: ✅ PASSED
-• Amount: $150k (within $200k single-tx limit)
-• Budget: $850k remaining in ENG-2025-Q4 ($1M allocated)
-• Recipient: ✅ Whitelisted (Developer Wallet)
-• Purpose: ✅ Matches budget category
-
-Approval Policy: 3-of-5 signers required
-• CEO (alice@company.com)
-• CFO (bob@company.com)
-• CTO (charlie@company.com) ← Proposer
-• COO (diana@company.com)
-• Treasurer (eve@company.com)
-
-AUTO-NOTIFICATIONS SENT (10:00 AM):
-✅ Email to 4 pending signers
-✅ Slack DM to each signer
-✅ SMS to CEO (high-value transaction)
-✅ Calendar holds created (24h reminder)
-
-Current Status: 1-of-5 (CTO approved as proposer)
-
----
-
-[Day 1, 2:30 PM - CEO Approved]
-
-📱 APPROVAL #1: CEO (Alice)
-• Approved: 2025-12-01 14:30 UTC
-• Comment: "Approved - aligned with roadmap"
-• Method: Mobile app (WalletConnect)
-• IP: 192.168.1.100 (San Francisco, CA)
-
-Current Status: 2-of-5
-
-AUTO-NOTIFICATIONS:
-✅ Slack: "2-of-5 approvals. 1 more needed!"
-✅ Email reminder to 3 pending signers
-
----
-
-[Day 1, 6:45 PM - CFO Approved]
-
-📱 APPROVAL #2: CFO (Bob)
-• Approved: 2025-12-01 18:45 UTC
-• Comment: "Budget verified, approved"
-• Method: Desktop (Gnosis Safe UI)
-• IP: 10.0.0.50 (New York, NY)
-
-Current Status: 3-of-5 ✅ THRESHOLD MET
-
-AUTO-EXECUTION TRIGGERED:
-⏳ Executing transaction in 1 hour (safety delay)...
-
-AUTO-NOTIFICATIONS:
-✅ All signers: "Threshold met! Executing at 7:45 PM UTC"
-✅ Finance team: "Transaction approved, executing soon"
-✅ Recipient: "Incoming payment: $150k (arrives ~7:50 PM)"
-
----
-
-[Day 1, 7:45 PM - Auto-Execution]
-
-✅ TRANSACTION EXECUTED
-
-Execution Summary:
-• Transaction Hash: 0xjkl...012
-• Block Number: 18,234,567
-• Gas Used: 185,000 (15 gwei) = $6.94
-• Execution Time: 7:45:23 PM UTC
-• Status: ✅ CONFIRMED
-
-Approvers: CTO, CEO, CFO (3-of-5)
-Time to Execute: 9 hours 45 minutes
-Coordination: Fully automated
-
-POST-EXECUTION ACTIONS:
-✅ All 5 signers notified (email, Slack)
-✅ Finance team notified
-✅ Recipient notified
-✅ Treasury updated ($2.5M → $2.35M)
-✅ Budget updated ($850k → $700k remaining)
-✅ Audit log created (immutable)
-✅ Accounting system updated (QuickBooks sync)
-✅ Monthly report updated
-
-AUDIT TRAIL (Immutable):
-• Proposal: CTO at 10:00 AM
-• Policy check: Passed at 10:00 AM
-• Approval 1: CEO at 2:30 PM (4h 30m)
-• Approval 2: CFO at 6:45 PM (+4h 15m)
-• Threshold: Met at 6:45 PM
-• Execution: Completed at 7:45 PM (+1h safety delay)
-• Total time: 9h 45m
-
-COMPLIANCE REPORT READY:
-✅ All approvals logged with IP/timestamp
-✅ Budget compliance verified
-✅ Segregation of duties maintained
-✅ Audit-ready export available (PDF, CSV)
-```
-
-**New Capabilities:**
-- ✅ Automated notifications (email, Slack, SMS)
-- ✅ Policy enforcement (budget, limits, whitelist)
-- ✅ Auto-execution (when threshold met)
-- ✅ Real-time status tracking
-- ✅ Immutable audit trail
-- ✅ Accounting system integration
-- ✅ Mobile + desktop support
-- ✅ Safety delays (1-hour buffer)
-
-**Time Savings:**
-- Before: 2-7 days (manual coordination)
-- After: 9 hours 45 minutes (automated)
-- Improvement: 80-95% faster
-
-**Efficiency Gains:**
-- Coordination: Manual → Automated
-- Reminders: Manual → Auto (24h, 48h)
-- Execution: Manual → Auto (threshold met)
-- Audit: Manual spreadsheet → Immutable blockchain log
-
----
-
-### **Use Case 3C: Crisis Management (Crisis Manager Agent)**
-
-#### **BEFORE (Manual Crisis Response)**
-
-```
-Date: March 2023 (USDC Depeg)
-Portfolio: $5M USDC exposure
-Crisis: USDC depegs to $0.87 (13% loss)
-
-Manual Response:
-1. User wakes up, checks portfolio (8 AM)
-2. Sees 13% loss, panics
-3. Opens Twitter, confirms depeg
-4. Tries to sell USDC (exchanges overwhelmed)
-5. Gas spikes to 500 gwei ($250/tx)
-6. Slippage: 5-8% (everyone selling)
-7. Finally sells at $0.85 (15% total loss)
-8. Misses opportunity to hedge (too slow)
-
-Total loss: $750,000 (15% of $5M)
-Response time: 6 hours
-Emotional state: Panic, stress
-```
-
-**Pain Points:**
-- ❌ No real-time monitoring (manual)
-- ❌ Slow response (6 hours)
-- ❌ High slippage (5-8%)
-- ❌ Emotional decisions (panic)
-- ❌ No circuit breakers
-- ❌ No pre-planned response
-
----
-
-#### **AFTER (Crisis Manager Agent)**
-
-```
-Date: Hypothetical Crisis (Aave Exploit)
-Portfolio: $5M across DeFi protocols
-Crisis: Aave V2 exploit detected
-
-Crisis Manager (Auto-Response - 75 seconds):
-
-[14:32:15 UTC - CRISIS DETECTED]
-
-🚨 EMERGENCY: PROTOCOL EXPLOIT
-
-Crisis Manager activated automatically
-Severity: 🔴 CRITICAL
-Protocol: Aave V2
-Exploit Type: Flash loan attack (oracle manipulation)
-Your Exposure: $2.5M USDC collateral
-
-AUTO-RESPONSE TIMELINE:
-────────────────────────────────────────────────
-
-14:32:15 - Exploit detected (Forta alert)
-   Source: Forta Network
-   Confidence: 98%
-   Attack vector: Price oracle manipulation
-   Estimated TVL at risk: $450M
-
-14:32:16 - Risk assessment complete (1 second)
-   Your positions analyzed:
-   • Aave V2 USDC supply: $2.5M (HIGH RISK)
-   • Aave V2 ETH borrow: $1.5M (MEDIUM RISK)
-   • Compound USDC: $1.5M (SAFE)
-   • Yearn vaults: $500k (SAFE)
-
-14:32:17 - Circuit breaker activated (2 seconds)
-   ✅ All Aave transactions cancelled (3 pending)
-   ✅ Trading paused (Aave positions)
-   ✅ Emergency mode enabled
-
-14:32:18 - Multi-channel alerts sent (3 seconds)
-   ✅ SMS to your phone: "CRITICAL: Aave exploit"
-   ✅ Phone call initiated: "Emergency, press 1"
-   ✅ Email sent: Full crisis report
-   ✅ Slack alert: @channel CRITICAL
-   ✅ Push notification: All devices
-
-14:32:20 - Emergency withdrawal initiated (5 seconds)
-   Transaction 1: Withdraw $2.5M USDC from Aave
-   • Priority: MAXIMUM (500 gwei gas)
-   • MEV protection: Flashbots private relay
-   • Slippage: Not applicable (withdrawal)
-   • Status: ⏳ Pending confirmation
-
-14:32:25 - Collateral protection initiated (10 seconds)
-   Transaction 2: Add collateral to ETH borrow
-   • Action: Add $500k USDC from reserves
-   • Purpose: Protect $1.5M ETH borrow
-   • Health factor: 1.65 → 2.15 (SAFE)
-   • Status: ⏳ Pending confirmation
-
-14:32:35 - Emergency multi-sig fast-track (20 seconds)
-   • 3-of-5 approval required (emergency policy)
-   • Auto-approval: CEO, CTO (emergency mode)
-   • Manual approval: CFO (phone call, approved)
-   • Status: ✅ Threshold met (3-of-5)
-
-14:32:45 - Withdrawal confirmed (30 seconds)
-   Transaction 1 confirmed:
-   ✅ Withdrew: $2,500,000 USDC from Aave V2
-   ✅ Block: 18,234,567
-   ✅ Gas used: 285,000 @ 500 gwei = $356
-   ✅ Status: SUCCESS
-   ✅ Funds safe in wallet: 0xabc...123
-
-14:32:50 - Collateral addition confirmed (35 seconds)
-   Transaction 2 confirmed:
-   ✅ Added: $500,000 USDC collateral
-   ✅ ETH borrow health: 2.15 (SAFE)
-   ✅ Block: 18,234,568
-   ✅ Gas used: 180,000 @ 500 gwei = $225
-   ✅ Status: SUCCESS
-
-14:33:00 - Fund migration initiated (45 seconds)
-   Migrating to safe protocol (Compound V3):
-   • Transfer: $2.5M USDC → Compound V3
-   • Verification: Smart contract audited ✅
-   • Risk score: 32/100 (Low, verified safe)
-   • Status: ⏳ Executing
-
-14:33:15 - Migration complete (60 seconds)
-   ✅ Migrated: $2.5M USDC to Compound V3
-   ✅ Earning: 5.2% APY (resumed yield)
-   ✅ Risk: 32/100 (Low)
-   ✅ Status: SAFE
-
-14:33:30 - Crisis stabilized (75 seconds)
-   ✅ All positions secured
-   ✅ No losses incurred
-   ✅ Yield resumed on safe protocol
-
-[CRISIS RESOLVED - 14:33:30 UTC]
-
-═══════════════════════════════════════════════
-
-📊 CRISIS SUMMARY REPORT
-
-Total Response Time: 75 seconds
-Your Losses: $0 (100% protected) ✅
-Protocol Losses: $12.5M (other users)
-
-POSITIONS SECURED:
-✅ Aave V2 USDC: $2.5M (withdrawn in 30s)
-✅ Aave V2 ETH borrow: Protected (HF: 2.15)
-✅ Funds migrated: Compound V3 (safe)
-✅ Yield resumed: 5.2% APY
-
-COSTS:
-• Gas (emergency): $581 (2 high-priority txs)
-• Slippage: $0 (withdrawals, no trading)
-• Total cost: $581
-
-SAVINGS:
-• Potential loss if manual: $500k-1M (estimated)
-• Actual loss: $0
-• Net savings: $500k-1M
-
-CRISIS ACTIONS TAKEN:
-1. Exploit detected (1s via Forta)
-2. Circuit breaker activated (2s)
-3. Emergency alerts sent (3s, multi-channel)
-4. Emergency withdrawal (30s, $2.5M)
-5. Collateral protection (35s, ETH borrow)
-6. Multi-sig fast-track (CEO, CTO, CFO)
-7. Fund migration (60s, to Compound)
-8. Crisis resolved (75s total)
-
-POST-CRISIS STATUS:
-• Portfolio value: $5M (maintained)
-• All positions: SAFE
-• Yield: Earning 5.2% APY (Compound)
-• Monitoring: Enhanced mode (24 hours)
-
-INCIDENT REPORT:
-✅ Created: incident-2025-12-01-aave.pdf
-✅ Sent to: Email, Slack
-✅ Filed: Compliance folder
-✅ Insurance: Not needed (no losses)
-
-RECOMMENDATIONS:
-1. Maintain enhanced monitoring: 24 hours
-2. Review protocol allocations: Reduce Aave V2 by 50%
-3. Increase emergency reserves: +20% ($1M)
-4. Test circuit breaker: Monthly drill
-5. Update insurance: Nexus Mutual coverage
-
-COMMUNICATION:
-✅ User notified: SMS, phone, email, Slack
-✅ Team notified: All stakeholders
-✅ Incident ticket: #CR-2025-001
-✅ Status page: Updated (public)
-
-[VIEW FULL REPORT] [DOWNLOAD PDF] [ADJUST SETTINGS] [CONTACT SUPPORT]
-```
-
-**New Capabilities:**
-- ✅ 1-second detection (Forta integration)
-- ✅ 3-second circuit breaker (auto-pause)
-- ✅ 30-second emergency withdrawal
-- ✅ 75-second full crisis resolution
-- ✅ Multi-channel alerts (SMS, phone, email, Slack)
-- ✅ Multi-sig fast-track (emergency mode)
-- ✅ Fund migration (auto, to safe protocols)
-- ✅ Zero losses (100% protection)
-
-**Crisis Comparison:**
-- Manual response: 6 hours, $750k loss (15%)
-- Crisis Manager: 75 seconds, $0 loss (0%)
-- **Result: Prevented $750k loss (100% protection)**
-
-**Time Comparison:**
-- Manual: 6 hours (user wakes up, researches, acts)
-- Crisis Manager: 75 seconds (auto-response)
-- Improvement: 99.7% faster (288x faster)
-
----
-
-**Status:** ✅ Complete Use Cases Examples (Original + Enhanced Agent Squad + Enterprise Agents + New Integrations)  
-**Last Updated:** December 1, 2025  
-**Total Examples:** 21 comprehensive before/after scenarios  
-**Agent Squad Examples:** 8 total (5 user-facing + 3 enterprise-critical)  
-**Enterprise Agents:** Compliance, Multi-Sig, Crisis Manager (3 critical use cases)  
-**Next:** Implementation - Start with Agno Runtime (Month 1), then Enterprise Agents (Months 2-3)
+**Document Version**: 2.0.0
+**Last Updated**: December 12, 2025
+**Based On**: Actual Anvil Production Implementation
+**Total Endpoints Documented**: 150+
+**Total Use Cases**: 14 comprehensive examples
+**Coverage**: Agent Squad, Agno Agents, MCPs, Hunter AI, Portfolio, DeFi, Cross-Chain, Projects, GraphRAG, Real-Time, Enterprise
