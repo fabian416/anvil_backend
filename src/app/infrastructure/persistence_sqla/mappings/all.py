@@ -42,6 +42,7 @@ from app.infrastructure.persistence_sqla.mappings.transaction import map_transac
 from app.infrastructure.persistence_sqla.mappings.defi_operations import map_defi_operations_tables
 from app.infrastructure.persistence_sqla.mappings.ai_telemetry import map_ai_telemetry_tables
 from app.infrastructure.persistence_sqla.mappings.system_config import map_system_config_tables
+from app.infrastructure.persistence_sqla.mappings.portfolio_snapshot import map_portfolio_snapshot_tables
 
 
 def map_tables() -> None:
@@ -69,3 +70,5 @@ def map_tables() -> None:
     map_ai_telemetry_tables()
     # System Config
     map_system_config_tables()
+    # Portfolio Snapshots
+    map_portfolio_snapshot_tables()

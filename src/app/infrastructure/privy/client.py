@@ -708,7 +708,8 @@ class PrivyClient(EmbeddedWalletProviderPort):
             return ChainType.ETHEREUM
         if chain_lower == "solana":
             return ChainType.SOLANA
-        if chain_lower == "bitcoin":
+        # Privy returns "bitcoin-segwit" or "bitcoin-taproot" for Bitcoin wallets
+        if chain_lower in ("bitcoin", "bitcoin-segwit", "bitcoin-taproot"):
             return ChainType.BITCOIN
         if chain_lower == "polygon":
             return ChainType.POLYGON
@@ -724,6 +725,24 @@ class PrivyClient(EmbeddedWalletProviderPort):
     # Wallet Creation
     # --------------------------------------------------------
 
+    def _map_chain_type_for_privy_api(self, chain_type: ChainType) -> str:
+        """
+        Map internal ChainType to Privy API chain_type string.
+
+        Privy uses different chain type identifiers than our internal enum.
+        For example, Bitcoin is 'bitcoin-segwit' in Privy API.
+        """
+        privy_chain_map = {
+            ChainType.ETHEREUM: "ethereum",
+            ChainType.SOLANA: "solana",
+            ChainType.BITCOIN: "bitcoin-segwit",  # Privy uses 'bitcoin-segwit'
+            ChainType.POLYGON: "ethereum",  # Polygon uses same wallet as Ethereum
+            ChainType.ARBITRUM: "ethereum",
+            ChainType.OPTIMISM: "ethereum",
+            ChainType.BASE: "ethereum",
+        }
+        return privy_chain_map.get(chain_type, "ethereum")
+
     async def create_wallet_for_user(
         self,
         user_id: str,
@@ -735,7 +754,7 @@ class PrivyClient(EmbeddedWalletProviderPort):
         API: POST /v1/wallets
 
         Args:
-            user_id: The Privy user ID.
+            user_id: The Privy user ID (e.g., 'did:privy:xxx').
             chain_type: Blockchain type for the new wallet.
 
         Returns:
@@ -743,13 +762,21 @@ class PrivyClient(EmbeddedWalletProviderPort):
         """
         client = await self._get_client()
 
+        # Map chain type to Privy API format
+        privy_chain_type = self._map_chain_type_for_privy_api(chain_type)
+
+        # Privy API expects owner.user_id directly, not owner.type and owner.id
+        payload = {
+            "owner": {"user_id": user_id},
+            "chain_type": privy_chain_type,
+        }
+
+        logger.info(f"Creating wallet via Privy API: chain={privy_chain_type}, user={user_id}")
+
         response = await client.post(
             "/v1/wallets",
             headers=self._get_headers(),
-            json={
-                "owner": {"type": "user", "id": user_id},
-                "chain_type": chain_type.value,
-            },
+            json=payload,
         )
 
         data = await self._handle_response(

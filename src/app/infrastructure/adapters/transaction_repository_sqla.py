@@ -93,10 +93,17 @@ class SqlaTransactionRepository(TransactionRepository):
                 return val
             return Decimal(str(val))
 
+        # Parse optional int values
+        def parse_optional_int(val: Any) -> int | None:
+            if val is None:
+                return None
+            return int(val)
+
         return Transaction(
             id_=TransactionId(row["id"]),
             user_id=UserId(row["user_id"]),
             wallet_id=WalletId(row["wallet_id"]),
+            to_address=row.get("to_address"),
             type=tx_type,
             chain=chain,
             asset_in=row.get("asset_in"),
@@ -114,6 +121,9 @@ class SqlaTransactionRepository(TransactionRepository):
             block_number=row.get("block_number"),
             confirmed_at=row.get("confirmed_at"),
             created_at=created_at,
+            gas_used=parse_optional_int(row.get("gas_used")),
+            gas_price=parse_optional_int(row.get("gas_price")),
+            tx_metadata=row.get("tx_metadata"),
         )
 
     def _transaction_to_dict(self, transaction: Transaction) -> dict[str, Any]:
@@ -121,6 +131,7 @@ class SqlaTransactionRepository(TransactionRepository):
         return {
             "user_id": transaction.user_id.value,
             "wallet_id": transaction.wallet_id.value,
+            "to_address": transaction.to_address,
             "type": transaction.type.value,
             "chain": transaction.chain.value,
             "asset_in": transaction.asset_in,
@@ -137,6 +148,9 @@ class SqlaTransactionRepository(TransactionRepository):
             "error_message": transaction.error_message,
             "block_number": transaction.block_number,
             "confirmed_at": transaction.confirmed_at,
+            "gas_used": transaction.gas_used,
+            "gas_price": transaction.gas_price,
+            "tx_metadata": transaction.tx_metadata,
         }
 
     async def get_by_id(self, transaction_id: TransactionId) -> Transaction | None:
@@ -150,10 +164,29 @@ class SqlaTransactionRepository(TransactionRepository):
             raise DataMapperError(DB_QUERY_FAILED) from error
 
     async def get_by_tx_hash(self, tx_hash: str) -> Transaction | None:
-        """Get transaction by blockchain hash."""
+        """Get transaction by blockchain hash (returns first match)."""
         try:
             table = self._get_table()
             stmt: Select = select(table).where(table.c.tx_hash == tx_hash.lower())
+            row = (await self._session.execute(stmt)).mappings().first()
+            return self._row_to_transaction(dict(row)) if row else None
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_by_user_and_tx_hash(
+        self,
+        user_id: UserId,
+        tx_hash: str,
+    ) -> Transaction | None:
+        """Get transaction by user ID and blockchain hash combination."""
+        try:
+            table = self._get_table()
+            stmt: Select = select(table).where(
+                and_(
+                    table.c.user_id == user_id.value,
+                    table.c.tx_hash == tx_hash.lower(),
+                )
+            )
             row = (await self._session.execute(stmt)).mappings().first()
             return self._row_to_transaction(dict(row)) if row else None
         except SQLAlchemyError as error:
@@ -292,6 +325,7 @@ class SqlaTransactionRepository(TransactionRepository):
                 id_=TransactionId(new_id),
                 user_id=transaction.user_id,
                 wallet_id=transaction.wallet_id,
+                to_address=transaction.to_address,
                 type=transaction.type,
                 chain=transaction.chain,
                 asset_in=transaction.asset_in,
@@ -309,6 +343,9 @@ class SqlaTransactionRepository(TransactionRepository):
                 block_number=transaction.block_number,
                 confirmed_at=transaction.confirmed_at,
                 created_at=transaction.created_at,
+                gas_used=transaction.gas_used,
+                gas_price=transaction.gas_price,
+                tx_metadata=transaction.tx_metadata,
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -320,9 +357,7 @@ class SqlaTransactionRepository(TransactionRepository):
             data = self._transaction_to_dict(transaction)
 
             stmt = (
-                update(table)
-                .where(table.c.id == transaction.id_.value)
-                .values(**data)
+                update(table).where(table.c.id == transaction.id_.value).values(**data)
             )
             await self._session.execute(stmt)
             await self._session.flush()
@@ -408,17 +443,13 @@ class SqlaTransactionRepository(TransactionRepository):
         """Get transaction counts grouped by status."""
         try:
             table = self._get_table()
-            stmt = (
-                select(table.c.status, func.count().label("count"))
-                .group_by(table.c.status)
+            stmt = select(table.c.status, func.count().label("count")).group_by(
+                table.c.status
             )
             result = await self._session.execute(stmt)
             rows = result.all()
             # Convert int enum values to string names
-            return {
-                TransactionStatus(row.status).name: row.count
-                for row in rows
-            }
+            return {TransactionStatus(row.status).name: row.count for row in rows}
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
@@ -426,9 +457,8 @@ class SqlaTransactionRepository(TransactionRepository):
         """Get transaction counts grouped by chain."""
         try:
             table = self._get_table()
-            stmt = (
-                select(table.c.chain, func.count().label("count"))
-                .group_by(table.c.chain)
+            stmt = select(table.c.chain, func.count().label("count")).group_by(
+                table.c.chain
             )
             result = await self._session.execute(stmt)
             rows = result.all()
@@ -440,17 +470,13 @@ class SqlaTransactionRepository(TransactionRepository):
         """Get transaction counts grouped by transaction type."""
         try:
             table = self._get_table()
-            stmt = (
-                select(table.c.type, func.count().label("count"))
-                .group_by(table.c.type)
+            stmt = select(table.c.type, func.count().label("count")).group_by(
+                table.c.type
             )
             result = await self._session.execute(stmt)
             rows = result.all()
             # Convert int enum values to string names
-            return {
-                TransactionType(row.type).name: row.count
-                for row in rows
-            }
+            return {TransactionType(row.type).name: row.count for row in rows}
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
@@ -478,11 +504,7 @@ class SqlaTransactionRepository(TransactionRepository):
             if tx_type is not None:
                 conditions.append(table.c.type == tx_type.value)
 
-            stmt = (
-                select(func.count())
-                .select_from(table)
-                .where(and_(*conditions))
-            )
+            stmt = select(func.count()).select_from(table).where(and_(*conditions))
             result = await self._session.execute(stmt)
             return result.scalar() or 0
         except SQLAlchemyError as error:
@@ -573,5 +595,160 @@ class SqlaTransactionRepository(TransactionRepository):
             result = await self._session.execute(stmt)
             rows = result.all()
             return [(row.date, row.count) for row in rows]
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    # ============================================================
+    # Volume Analytics Methods
+    # ============================================================
+
+    async def get_total_volume(
+        self,
+        *,
+        chain: ChainType | None = None,
+        tx_type: TransactionType | None = None,
+        status: TransactionStatus | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> tuple[float, float]:
+        """Get total transaction volume (sum of amount_in) with optional filters."""
+        try:
+            table = self._get_table()
+            conditions: list[Any] = []
+
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
+            if tx_type is not None:
+                conditions.append(table.c.type == tx_type.value)
+            if status is not None:
+                conditions.append(table.c.status == status.value)
+            if start_date is not None:
+                conditions.append(table.c.created_at >= start_date)
+            if end_date is not None:
+                conditions.append(table.c.created_at <= end_date)
+
+            stmt = select(
+                func.coalesce(func.sum(table.c.amount_in), 0).label("total_volume"),
+                func.count().label("tx_count"),
+            ).select_from(table)
+
+            if conditions:
+                stmt = stmt.where(and_(*conditions))
+
+            result = await self._session.execute(stmt)
+            row = result.first()
+            if row:
+                return (float(row.total_volume), float(row.tx_count))
+            return (0.0, 0.0)
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_volume_by_user(
+        self,
+        user_id: UserId,
+        *,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> float:
+        """Get total transaction volume for a specific user."""
+        try:
+            table = self._get_table()
+            conditions = [table.c.user_id == user_id.value]
+
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
+            if status is not None:
+                conditions.append(table.c.status == status.value)
+            if start_date is not None:
+                conditions.append(table.c.created_at >= start_date)
+            if end_date is not None:
+                conditions.append(table.c.created_at <= end_date)
+
+            stmt = (
+                select(func.coalesce(func.sum(table.c.amount_in), 0).label("total"))
+                .select_from(table)
+                .where(and_(*conditions))
+            )
+
+            result = await self._session.execute(stmt)
+            total = result.scalar()
+            return float(total) if total else 0.0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_daily_volume(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        *,
+        chain: ChainType | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> list[tuple[datetime, float]]:
+        """Get daily transaction volume for a date range."""
+        try:
+            table = self._get_table()
+            conditions = [
+                table.c.created_at >= start_date,
+                table.c.created_at <= end_date,
+            ]
+
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
+            if tx_type is not None:
+                conditions.append(table.c.type == tx_type.value)
+
+            stmt = (
+                select(
+                    func.date_trunc("day", table.c.created_at).label("date"),
+                    func.coalesce(func.sum(table.c.amount_in), 0).label("volume"),
+                )
+                .where(and_(*conditions))
+                .group_by(func.date_trunc("day", table.c.created_at))
+                .order_by(func.date_trunc("day", table.c.created_at))
+            )
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            return [(row.date, float(row.volume)) for row in rows]
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_top_senders(
+        self,
+        *,
+        limit: int = 10,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> list[tuple[int, int, float]]:
+        """Get top senders by transaction count and volume."""
+        try:
+            table = self._get_table()
+            conditions: list[Any] = []
+
+            if start_date is not None:
+                conditions.append(table.c.created_at >= start_date)
+            if end_date is not None:
+                conditions.append(table.c.created_at <= end_date)
+
+            stmt = (
+                select(
+                    table.c.user_id,
+                    func.count().label("tx_count"),
+                    func.coalesce(func.sum(table.c.amount_in), 0).label("total_volume"),
+                )
+                .group_by(table.c.user_id)
+                .order_by(func.count().desc())
+                .limit(limit)
+            )
+
+            if conditions:
+                stmt = stmt.where(and_(*conditions))
+
+            result = await self._session.execute(stmt)
+            rows = result.all()
+            return [
+                (row.user_id, row.tx_count, float(row.total_volume)) for row in rows
+            ]
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error

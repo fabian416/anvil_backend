@@ -125,6 +125,7 @@ async def process_batch_once(
     *,
     limit: int | None = None,
     older_than_seconds: int | None = None,
+    enable_portfolio_snapshots: bool = True,
 ) -> WorkerResult:
     """
     Process pending transactions once and return results.
@@ -134,6 +135,7 @@ async def process_batch_once(
         settings: Worker settings.
         limit: Override batch limit (optional).
         older_than_seconds: Override older_than filter (optional).
+        enable_portfolio_snapshots: Whether to create portfolio snapshots on confirmation.
 
     Returns:
         WorkerResult with processing summary.
@@ -141,6 +143,7 @@ async def process_batch_once(
     # Imports inside function to avoid circular imports in CLI entrypoint
     from app.application.transaction.factory import (  # noqa: PLC0415
         create_confirmation_service_from_settings,
+        create_confirmation_service_with_portfolio,
     )
     from app.domain.enums.transaction_status import (  # noqa: PLC0415
         TransactionStatus,
@@ -148,7 +151,11 @@ async def process_batch_once(
 
     started_at = datetime.now(UTC)
 
-    service = create_confirmation_service_from_settings(session, settings)
+    # Use portfolio-enabled service if enabled
+    if enable_portfolio_snapshots:
+        service = create_confirmation_service_with_portfolio(session, settings)
+    else:
+        service = create_confirmation_service_from_settings(session, settings)
 
     results = await service.process_pending_transactions(
         limit=limit or settings.batch_limit,
@@ -181,6 +188,7 @@ async def run_once(
     limit: int | None = None,
     older_than_seconds: int | None = None,
     use_testnet: bool | None = None,
+    enable_portfolio_snapshots: bool = True,
 ) -> WorkerResult:
     """
     Run one-off batch processing.
@@ -213,6 +221,7 @@ async def run_once(
             settings,
             limit=limit,
             older_than_seconds=older_than_seconds,
+            enable_portfolio_snapshots=enable_portfolio_snapshots,
         )
 
     logger.info(
@@ -230,6 +239,7 @@ async def run_loop(
     interval_seconds: int | None = None,
     limit_per_batch: int | None = None,
     use_testnet: bool | None = None,
+    enable_portfolio_snapshots: bool = True,
 ) -> None:
     """
     Run continuous confirmation loop.
@@ -284,6 +294,7 @@ async def run_loop(
                     session,
                     settings,
                     limit=effective_limit,
+                    enable_portfolio_snapshots=enable_portfolio_snapshots,
                 )
 
             if result.transactions_processed > 0:
@@ -374,6 +385,11 @@ Examples:
         default=None,
         help="Only process transactions older than N seconds",
     )
+    parser.add_argument(
+        "--no-portfolio-snapshots",
+        action="store_true",
+        help="Disable automatic portfolio snapshots on transaction confirmation",
+    )
 
     # Logging
     parser.add_argument(
@@ -401,6 +417,9 @@ def main() -> int:
     elif args.mainnet:
         use_testnet = False
 
+    # Determine if portfolio snapshots are enabled
+    enable_portfolio_snapshots = not args.no_portfolio_snapshots
+
     try:
         if args.once:
             result = asyncio.run(
@@ -408,6 +427,7 @@ def main() -> int:
                     limit=args.limit,
                     older_than_seconds=args.older_than,
                     use_testnet=use_testnet,
+                    enable_portfolio_snapshots=enable_portfolio_snapshots,
                 )
             )
             # Exit with non-zero if there were failures
@@ -419,6 +439,7 @@ def main() -> int:
                     interval_seconds=args.interval,
                     limit_per_batch=args.limit,
                     use_testnet=use_testnet,
+                    enable_portfolio_snapshots=enable_portfolio_snapshots,
                 )
             )
             return 0

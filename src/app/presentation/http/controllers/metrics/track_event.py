@@ -2,17 +2,17 @@
 Track Event endpoint - for ingesting user events/metrics.
 """
 
-from typing import Annotated, Any, Optional
+from typing import Any
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import Security, status, Request
+from fastapi import Request, Security, status
 from fastapi_error_map import rule
 from pydantic import BaseModel, Field
 
 from app.application.common.services.current_user import CurrentUserService
 from app.application.metrics.ports import UserMetricsRepository
-from app.domain.entities.user_event import UserEvent, EventTypes, EventCategories
+from app.domain.entities.user_event import EventTypes, UserEvent
 from app.domain.exceptions.base import DomainFieldError
 from app.infrastructure.auth.exceptions import AuthenticationError
 from app.infrastructure.exceptions.gateway import DataMapperError
@@ -25,12 +25,12 @@ from app.presentation.http.errors.translators import ServiceUnavailableTranslato
 class TrackEventRequest(BaseModel):
     """Request schema for tracking an event."""
     event_type: str = Field(..., description="Type of event (e.g., 'login', 'swap_completed')")
-    event_category: Optional[str] = Field(None, description="Category (e.g., 'auth', 'trading')")
-    properties: Optional[dict[str, Any]] = Field(default_factory=dict, description="Event-specific properties")
-    device_type: Optional[str] = Field(None, description="Device type: mobile, desktop, tablet")
-    platform: Optional[str] = Field(None, description="Platform: ios, android, web")
-    app_version: Optional[str] = Field(None, description="App version")
-    session_id: Optional[str] = Field(None, description="Session identifier")
+    event_category: str | None = Field(None, description="Category (e.g., 'auth', 'trading')")
+    properties: dict[str, Any] | None = Field(default_factory=dict, description="Event-specific properties")
+    device_type: str | None = Field(None, description="Device type: mobile, desktop, tablet")
+    platform: str | None = Field(None, description="Platform: ios, android, web")
+    app_version: str | None = Field(None, description="App version")
+    session_id: str | None = Field(None, description="Session identifier")
 
     class Config:
         json_schema_extra = {
@@ -60,6 +60,7 @@ class TrackEventResponse(BaseModel):
 
 class EventTypesResponse(BaseModel):
     """Response with available event types."""
+
     auth: list[str]
     navigation: list[str]
     trading: list[str]
@@ -68,6 +69,7 @@ class EventTypesResponse(BaseModel):
     perpetuals: list[str]
     ai: list[str]
     subscription: list[str]
+    bitcoin: list[str]
     error: list[str]
 
 
@@ -113,10 +115,10 @@ async def track_event(
     # Get current user from session
     current_user = await current_user_service.get_current_user()
     user_id = current_user.id_.value
-    
+
     # Get client IP
     client_ip = request.client.host if request.client else None
-    
+
     # Create event
     event = UserEvent.create(
         user_id=user_id,
@@ -129,9 +131,9 @@ async def track_event(
         session_id=request_body.session_id,
         ip_address=client_ip,
     )
-    
+
     event_id = await metrics_repo.record_event(event)
-    
+
     return TrackEventResponse(
         success=True,
         event_id=event_id,
@@ -189,6 +191,11 @@ async def get_event_types() -> EventTypesResponse:
             EventTypes.SUBSCRIPTION_STARTED,
             EventTypes.SUBSCRIPTION_CANCELLED,
             EventTypes.SUBSCRIPTION_UPGRADED,
+        ],
+        bitcoin=[
+            EventTypes.BTC_SEND_INITIATED,
+            EventTypes.BTC_SEND_COMPLETED,
+            EventTypes.BTC_SEND_FAILED,
         ],
         error=[
             EventTypes.ERROR_OCCURRED,

@@ -325,13 +325,19 @@ class SqlaWalletRepository(WalletRepository):
             if wallet_id is None and provider == WalletProvider.IMPORTED:
                 wallet_id = f"imported:{normalized_address}"
 
-            # Parse chain type
-            try:
-                default_chain = (
-                    ChainType(chain_type) if chain_type else ChainType.ETHEREUM
-                )
-            except ValueError:
-                default_chain = ChainType.ETHEREUM
+            # Parse chain type - handle Privy's bitcoin-segwit/bitcoin-taproot formats
+            default_chain = ChainType.ETHEREUM
+            if chain_type:
+                chain_lower = chain_type.lower()
+                if chain_lower in ("bitcoin", "bitcoin-segwit", "bitcoin-taproot"):
+                    default_chain = ChainType.BITCOIN
+                elif chain_lower == "bitcoin_testnet":
+                    default_chain = ChainType.BITCOIN_TESTNET
+                else:
+                    try:
+                        default_chain = ChainType(chain_type)
+                    except ValueError:
+                        default_chain = ChainType.ETHEREUM
 
             # PostgreSQL upsert
             stmt = pg_insert(table).values(

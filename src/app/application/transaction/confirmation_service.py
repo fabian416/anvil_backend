@@ -3,6 +3,8 @@ Transaction Confirmation Service.
 
 Background service that monitors pending transactions and updates their status
 when they are confirmed on-chain.
+
+Optionally creates portfolio snapshots when transactions are confirmed.
 """
 
 import asyncio
@@ -10,13 +12,17 @@ import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Callable, Awaitable
 
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
+from app.domain.entities.wallet import WalletId
 from app.domain.ports.transaction.transaction_repository import TransactionRepository
 
 logger = logging.getLogger(__name__)
+
+# Type alias for portfolio snapshot callback
+PortfolioSnapshotCallback = Callable[[WalletId], Awaitable[None]]
 
 
 # RPC endpoints by chain type
@@ -38,6 +44,7 @@ TESTNET_RPC_ENDPOINTS: dict[ChainType, str] = {
 @dataclass
 class TransactionReceipt:
     """Simplified transaction receipt from blockchain."""
+
     status: bool  # True = success, False = reverted
     block_number: int
     gas_used: int
@@ -48,6 +55,7 @@ class TransactionReceipt:
 @dataclass
 class ConfirmationResult:
     """Result of confirming a single transaction."""
+
     transaction_id: int
     tx_hash: str
     success: bool
@@ -61,12 +69,12 @@ class ConfirmationResult:
 class TransactionConfirmationService:
     """
     Service for confirming pending transactions on-chain.
-    
+
     This service:
     1. Fetches pending transactions from the database
     2. Queries the blockchain for transaction receipts
     3. Updates transaction status based on confirmation
-    
+
     Can be run as:
     - A periodic background task (asyncio loop)
     - A one-off command (CLI)
@@ -79,19 +87,23 @@ class TransactionConfirmationService:
         *,
         use_testnet: bool = False,
         http_timeout: int = 30,
+        on_transaction_confirmed: PortfolioSnapshotCallback | None = None,
     ):
         """
         Initialize the confirmation service.
-        
+
         Args:
             transaction_repository: Repository for transaction persistence.
             use_testnet: Whether to use testnet RPC endpoints.
             http_timeout: HTTP timeout for RPC calls in seconds.
+            on_transaction_confirmed: Optional callback to create portfolio snapshot
+                                      when a transaction is confirmed.
         """
         self._transaction_repository = transaction_repository
         self._use_testnet = use_testnet
         self._http_timeout = http_timeout
         self._rpc_endpoints = TESTNET_RPC_ENDPOINTS if use_testnet else RPC_ENDPOINTS
+        self._on_transaction_confirmed = on_transaction_confirmed
 
     def _get_rpc_url(self, chain: ChainType) -> str | None:
         """Get RPC URL for a chain."""
@@ -104,16 +116,16 @@ class TransactionConfirmationService:
     ) -> TransactionReceipt | None:
         """
         Fetch transaction receipt via JSON-RPC.
-        
+
         Args:
             rpc_url: RPC endpoint URL.
             tx_hash: Transaction hash to query.
-            
+
         Returns:
             TransactionReceipt if found, None otherwise.
         """
         import aiohttp
-        
+
         payload = {
             "jsonrpc": "2.0",
             "id": 1,
@@ -175,12 +187,12 @@ class TransactionConfirmationService:
     ) -> ConfirmationResult:
         """
         Confirm a single transaction on-chain.
-        
+
         Args:
             transaction_id: Database ID of the transaction.
             tx_hash: Transaction hash to check.
             chain: Blockchain where the transaction was sent.
-            
+
         Returns:
             ConfirmationResult with status and details.
         """
@@ -243,11 +255,11 @@ class TransactionConfirmationService:
     ) -> list[ConfirmationResult]:
         """
         Process all pending transactions.
-        
+
         Args:
             limit: Maximum number of transactions to process.
             older_than_seconds: Only process transactions older than this.
-            
+
         Returns:
             List of confirmation results.
         """
@@ -300,6 +312,22 @@ class TransactionConfirmationService:
                         f"confirmed: {result.status.name}"
                     )
 
+                    # Create portfolio snapshot for confirmed transactions
+                    if (
+                        result.status == TransactionStatus.SUCCESS
+                        and self._on_transaction_confirmed is not None
+                    ):
+                        try:
+                            await self._on_transaction_confirmed(tx.wallet_id)
+                            logger.info(
+                                f"Portfolio snapshot created for wallet {tx.wallet_id.value}"
+                            )
+                        except Exception as snapshot_error:
+                            # Don't fail the confirmation if snapshot fails
+                            logger.warning(
+                                f"Failed to create portfolio snapshot: {snapshot_error}"
+                            )
+
                 except Exception as e:
                     logger.error(
                         f"Failed to update transaction {tx.tx_hash[:16]}...: {e}"
@@ -325,7 +353,7 @@ class TransactionConfirmationService:
     ) -> None:
         """
         Run continuous confirmation loop.
-        
+
         Args:
             interval_seconds: Seconds between processing batches.
             limit_per_batch: Max transactions per batch.

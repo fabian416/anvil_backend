@@ -8,6 +8,11 @@ from app.application.portfolio.portfolio_risk_analysis import (
     DependencyRisk,
     CascadeImpact,
 )
+from app.application.portfolio.portfolio_service import (
+    PortfolioService,
+    PortfolioDTO,
+    TokenBalanceDTO,
+)
 
 __all__ = [
     "PortfolioRiskAnalysis",
@@ -16,4 +21,7 @@ __all__ = [
     "ProtocolRiskDetail",
     "DependencyRisk",
     "CascadeImpact",
+    "PortfolioService",
+    "PortfolioDTO",
+    "TokenBalanceDTO",
 ]

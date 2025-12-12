@@ -5,33 +5,33 @@ Tests the /api/v1/transactions endpoints for logging and retrieving
 transaction history.
 """
 
-import pytest
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
-from app.infrastructure.auth.handlers.transaction_log import (
-    LogTransactionHandler,
-    LogTransactionInput,
-    LogTransactionResult,
-    GetTransactionHistoryHandler,
-    TransactionHistoryItem,
-    TransactionHistoryResult,
-    WalletNotFoundForTransactionError,
-)
+import pytest
+
 from app.application.common.services.current_user import CurrentUserService
-from app.domain.ports.transaction.transaction_repository import TransactionRepository
-from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.entities.transaction import Transaction, TransactionId
 from app.domain.entities.wallet import Wallet, WalletId
 from app.domain.enums.chain_type import ChainType
-from app.domain.enums.transaction_type import TransactionType
 from app.domain.enums.transaction_status import TransactionStatus
+from app.domain.enums.transaction_type import TransactionType
 from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.enums.wallet_status import WalletStatus
-from app.domain.value_objects.user_id import UserId
+from app.domain.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt
+from app.domain.value_objects.user_id import UserId
+from app.infrastructure.auth.handlers.transaction_log import (
+    GetTransactionHistoryHandler,
+    LogTransactionHandler,
+    LogTransactionInput,
+    LogTransactionResult,
+    TransactionHistoryResult,
+    WalletNotFoundForTransactionError,
+)
 
 
 class TestLogTransactionHandler:
@@ -76,7 +76,14 @@ class TestLogTransactionHandler:
         """Create a mock WalletRepository."""
         repo = MagicMock(spec=WalletRepository)
         repo.get_by_user_and_address = AsyncMock(return_value=mock_wallet)
-        repo.get_by_address = AsyncMock(return_value=mock_wallet)
+
+        # Only return wallet for sender's address, not for receiver
+        async def mock_get_by_address(address: str):
+            if address.lower() == mock_wallet.address.lower():
+                return mock_wallet
+            return None  # Receiver not registered
+
+        repo.get_by_address = AsyncMock(side_effect=mock_get_by_address)
         return repo
 
     @pytest.fixture
@@ -84,6 +91,7 @@ class TestLogTransactionHandler:
         """Create a mock TransactionRepository."""
         repo = MagicMock(spec=TransactionRepository)
         repo.get_by_tx_hash = AsyncMock(return_value=None)
+        repo.get_by_user_and_tx_hash = AsyncMock(return_value=None)
 
         async def mock_save(tx):
             now = datetime.now(UTC)
@@ -91,6 +99,7 @@ class TestLogTransactionHandler:
                 id_=TransactionId(1),
                 user_id=tx.user_id,
                 wallet_id=tx.wallet_id,
+                to_address=tx.to_address,
                 type=tx.type,
                 chain=tx.chain,
                 asset_in=tx.asset_in,
@@ -108,6 +117,9 @@ class TestLogTransactionHandler:
                 block_number=tx.block_number,
                 confirmed_at=tx.confirmed_at,
                 created_at=CreatedAt(now),
+                gas_used=tx.gas_used,
+                gas_price=tx.gas_price,
+                tx_metadata=tx.tx_metadata,
             )
 
         repo.save = AsyncMock(side_effect=mock_save)
@@ -151,7 +163,9 @@ class TestLogTransactionHandler:
         mock_transaction_repository.save.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_log_transaction_base_sepolia(self, handler, mock_transaction_repository):
+    async def test_log_transaction_base_sepolia(
+        self, handler, mock_transaction_repository
+    ):
         """Test logging a transaction on Base Sepolia."""
         input_data = LogTransactionInput(
             tx_hash="0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
@@ -177,6 +191,7 @@ class TestLogTransactionHandler:
             id_=TransactionId(42),
             user_id=UserId(123),
             wallet_id=WalletId(1),
+            to_address="0xabcdef1234567890abcdef1234567890abcdef12",
             type=TransactionType.SEND,
             chain=ChainType.ETHEREUM,
             asset_in="ETH",
@@ -194,8 +209,14 @@ class TestLogTransactionHandler:
             block_number=18500000,
             confirmed_at=now,
             created_at=CreatedAt(now),
+            gas_used=21000,
+            gas_price=30000000000,
+            tx_metadata=None,
         )
-        mock_transaction_repository.get_by_tx_hash = AsyncMock(return_value=existing_tx)
+        # Now we check per-user, not globally
+        mock_transaction_repository.get_by_user_and_tx_hash = AsyncMock(
+            return_value=existing_tx
+        )
 
         input_data = LogTransactionInput(
             tx_hash="0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
@@ -240,6 +261,375 @@ class TestLogTransactionHandler:
             await handler.execute(input_data)
 
 
+class TestLogTransactionHandlerDualLogging:
+    """Tests for dual transaction logging (sender and receiver)."""
+
+    @pytest.fixture
+    def mock_sender_user(self):
+        """Create a mock sender user."""
+        user = MagicMock()
+        user.id_.value = 100
+        user.privy_user_id = MagicMock()
+        user.privy_user_id.value = "did:privy:sender123"
+        user.primary_wallet_address = MagicMock()
+        user.primary_wallet_address.value = "0x1111111111111111111111111111111111111111"
+        return user
+
+    @pytest.fixture
+    def mock_sender_wallet(self):
+        """Create a mock sender wallet."""
+        now = datetime.now(UTC)
+        return Wallet(
+            id_=WalletId(1),
+            user_id=UserId(100),
+            privy_wallet_id="sender_wallet_123",
+            address="0x1111111111111111111111111111111111111111",
+            provider=WalletProvider.PRIVY,
+            default_chain=ChainType.ETHEREUM,
+            status=WalletStatus.ACTIVE,
+            created_at=CreatedAt(now),
+            updated_at=UpdatedAt(now),
+        )
+
+    @pytest.fixture
+    def mock_receiver_wallet(self):
+        """Create a mock receiver wallet (different user)."""
+        now = datetime.now(UTC)
+        return Wallet(
+            id_=WalletId(2),
+            user_id=UserId(200),  # Different user ID
+            privy_wallet_id="receiver_wallet_456",
+            address="0x2222222222222222222222222222222222222222",
+            provider=WalletProvider.PRIVY,
+            default_chain=ChainType.ETHEREUM,
+            status=WalletStatus.ACTIVE,
+            created_at=CreatedAt(now),
+            updated_at=UpdatedAt(now),
+        )
+
+    @pytest.fixture
+    def mock_current_user_service(self, mock_sender_user):
+        """Create a mock CurrentUserService for sender."""
+        service = MagicMock(spec=CurrentUserService)
+        service.get_current_user = AsyncMock(return_value=mock_sender_user)
+        return service
+
+    @pytest.fixture
+    def mock_transaction_repository(self):
+        """Create a mock TransactionRepository."""
+        repo = MagicMock(spec=TransactionRepository)
+        repo.get_by_user_and_tx_hash = AsyncMock(return_value=None)
+        repo.get_by_tx_hash = AsyncMock(return_value=None)
+
+        saved_tx_counter = [0]  # Use list to allow mutation in closure
+
+        async def mock_save(tx):
+            saved_tx_counter[0] += 1
+            now = datetime.now(UTC)
+            return Transaction(
+                id_=TransactionId(saved_tx_counter[0]),
+                user_id=tx.user_id,
+                wallet_id=tx.wallet_id,
+                to_address=tx.to_address,
+                type=tx.type,
+                chain=tx.chain,
+                asset_in=tx.asset_in,
+                amount_in=tx.amount_in,
+                asset_out=tx.asset_out,
+                amount_out=tx.amount_out,
+                fee=tx.fee,
+                fee_usd=tx.fee_usd,
+                tx_hash=tx.tx_hash,
+                status=tx.status,
+                dex_aggregator=tx.dex_aggregator,
+                dex_route=tx.dex_route,
+                slippage=tx.slippage,
+                error_message=tx.error_message,
+                block_number=tx.block_number,
+                confirmed_at=tx.confirmed_at,
+                created_at=CreatedAt(now),
+                gas_used=tx.gas_used,
+                gas_price=tx.gas_price,
+                tx_metadata=tx.tx_metadata,
+            )
+
+        repo.save = AsyncMock(side_effect=mock_save)
+        return repo
+
+    @pytest.mark.asyncio
+    async def test_log_transaction_creates_sender_and_receiver_records(
+        self,
+        mock_current_user_service,
+        mock_transaction_repository,
+        mock_sender_wallet,
+        mock_receiver_wallet,
+    ):
+        """Test that transaction is logged for both sender and receiver."""
+        # Setup wallet repository to return sender wallet for sender address
+        # and receiver wallet for receiver address
+        mock_wallet_repository = MagicMock(spec=WalletRepository)
+
+        async def mock_get_by_user_and_address(user_id, address):
+            if user_id.value == 100 and address == mock_sender_wallet.address:
+                return mock_sender_wallet
+            return None
+
+        async def mock_get_by_address(address):
+            if address == mock_sender_wallet.address.lower():
+                return mock_sender_wallet
+            if address == mock_receiver_wallet.address.lower():
+                return mock_receiver_wallet
+            return None
+
+        mock_wallet_repository.get_by_user_and_address = AsyncMock(
+            side_effect=mock_get_by_user_and_address
+        )
+        mock_wallet_repository.get_by_address = AsyncMock(
+            side_effect=mock_get_by_address
+        )
+
+        handler = LogTransactionHandler(
+            current_user_service=mock_current_user_service,
+            transaction_repository=mock_transaction_repository,
+            wallet_repository=mock_wallet_repository,
+        )
+
+        input_data = LogTransactionInput(
+            tx_hash="0xabc123def456789012345678901234567890123456789012345678901234abcd",
+            from_address=mock_sender_wallet.address,
+            to_address=mock_receiver_wallet.address,
+            value="1000000000000000000",  # 1 ETH
+            chain_id=1,
+            tx_type="send",
+            asset_symbol="ETH",
+        )
+
+        result = await handler.execute(input_data)
+
+        # Verify the handler returns successfully
+        assert isinstance(result, LogTransactionResult)
+        assert result.tx_hash.startswith("0x")
+
+        # Verify save was called twice (once for sender, once for receiver)
+        assert mock_transaction_repository.save.call_count == 2
+
+        # Verify the first save was for the sender
+        first_save_call = mock_transaction_repository.save.call_args_list[0]
+        sender_tx = first_save_call[0][0]
+        assert sender_tx.user_id.value == 100  # Sender user ID
+        assert sender_tx.wallet_id.value == 1  # Sender wallet ID
+
+        # Verify the second save was for the receiver
+        second_save_call = mock_transaction_repository.save.call_args_list[1]
+        receiver_tx = second_save_call[0][0]
+        assert receiver_tx.user_id.value == 200  # Receiver user ID
+        assert receiver_tx.wallet_id.value == 2  # Receiver wallet ID
+        assert receiver_tx.tx_metadata == {
+            "receiver_view": True,
+            "from_address": mock_sender_wallet.address.lower(),
+        }
+
+    @pytest.mark.asyncio
+    async def test_log_transaction_only_sender_when_receiver_not_registered(
+        self,
+        mock_current_user_service,
+        mock_transaction_repository,
+        mock_sender_wallet,
+    ):
+        """Test that only sender's transaction is logged when receiver is not registered."""
+        mock_wallet_repository = MagicMock(spec=WalletRepository)
+
+        async def mock_get_by_user_and_address(user_id, address):
+            if user_id.value == 100 and address == mock_sender_wallet.address:
+                return mock_sender_wallet
+            return None
+
+        async def mock_get_by_address(address):
+            # Only sender wallet exists, receiver address is not in system
+            if address == mock_sender_wallet.address.lower():
+                return mock_sender_wallet
+            return None  # Receiver not found
+
+        mock_wallet_repository.get_by_user_and_address = AsyncMock(
+            side_effect=mock_get_by_user_and_address
+        )
+        mock_wallet_repository.get_by_address = AsyncMock(
+            side_effect=mock_get_by_address
+        )
+
+        handler = LogTransactionHandler(
+            current_user_service=mock_current_user_service,
+            transaction_repository=mock_transaction_repository,
+            wallet_repository=mock_wallet_repository,
+        )
+
+        input_data = LogTransactionInput(
+            tx_hash="0x9999888877776666555544443333222211110000aaabbbbccccddddeeeefffff",
+            from_address=mock_sender_wallet.address,
+            to_address="0x9999999999999999999999999999999999999999",  # Not registered
+            value="500000000000000000",  # 0.5 ETH
+            chain_id=1,
+            tx_type="send",
+        )
+
+        result = await handler.execute(input_data)
+
+        # Verify the handler returns successfully
+        assert isinstance(result, LogTransactionResult)
+
+        # Verify save was called only once (for sender only)
+        assert mock_transaction_repository.save.call_count == 1
+
+        # Verify it was the sender's transaction
+        save_call = mock_transaction_repository.save.call_args_list[0]
+        saved_tx = save_call[0][0]
+        assert saved_tx.user_id.value == 100
+
+    @pytest.mark.asyncio
+    async def test_log_transaction_no_duplicate_when_sender_is_receiver(
+        self,
+        mock_current_user_service,
+        mock_transaction_repository,
+        mock_sender_wallet,
+    ):
+        """Test that only one record is created when sender sends to themselves."""
+        mock_wallet_repository = MagicMock(spec=WalletRepository)
+
+        async def mock_get_by_user_and_address(user_id, address):
+            if user_id.value == 100:
+                return mock_sender_wallet
+            return None
+
+        async def mock_get_by_address(address):
+            # Same wallet for both sender and receiver
+            if address == mock_sender_wallet.address.lower():
+                return mock_sender_wallet
+            return None
+
+        mock_wallet_repository.get_by_user_and_address = AsyncMock(
+            side_effect=mock_get_by_user_and_address
+        )
+        mock_wallet_repository.get_by_address = AsyncMock(
+            side_effect=mock_get_by_address
+        )
+
+        handler = LogTransactionHandler(
+            current_user_service=mock_current_user_service,
+            transaction_repository=mock_transaction_repository,
+            wallet_repository=mock_wallet_repository,
+        )
+
+        input_data = LogTransactionInput(
+            tx_hash="0xeeeedddccccbbbbaaaa0000111122223333444455556666777788889999aaaa",
+            from_address=mock_sender_wallet.address,
+            to_address=mock_sender_wallet.address,  # Same as sender!
+            value="100000000000000000",  # 0.1 ETH
+            chain_id=1,
+            tx_type="send",
+        )
+
+        result = await handler.execute(input_data)
+
+        # Verify the handler returns successfully
+        assert isinstance(result, LogTransactionResult)
+
+        # Verify save was called only once (no duplicate for self-send)
+        assert mock_transaction_repository.save.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_log_transaction_receiver_error_does_not_break_sender(
+        self,
+        mock_current_user_service,
+        mock_sender_wallet,
+        mock_receiver_wallet,
+    ):
+        """Test that receiver logging error doesn't affect sender's transaction."""
+        mock_transaction_repository = MagicMock(spec=TransactionRepository)
+        mock_transaction_repository.get_by_user_and_tx_hash = AsyncMock(return_value=None)
+
+        save_call_count = [0]
+
+        async def mock_save(tx):
+            save_call_count[0] += 1
+            if save_call_count[0] == 1:
+                # First call (sender) succeeds
+                now = datetime.now(UTC)
+                return Transaction(
+                    id_=TransactionId(1),
+                    user_id=tx.user_id,
+                    wallet_id=tx.wallet_id,
+                    to_address=tx.to_address,
+                    type=tx.type,
+                    chain=tx.chain,
+                    asset_in=tx.asset_in,
+                    amount_in=tx.amount_in,
+                    asset_out=tx.asset_out,
+                    amount_out=tx.amount_out,
+                    fee=tx.fee,
+                    fee_usd=tx.fee_usd,
+                    tx_hash=tx.tx_hash,
+                    status=tx.status,
+                    dex_aggregator=tx.dex_aggregator,
+                    dex_route=tx.dex_route,
+                    slippage=tx.slippage,
+                    error_message=tx.error_message,
+                    block_number=tx.block_number,
+                    confirmed_at=tx.confirmed_at,
+                    created_at=CreatedAt(now),
+                    gas_used=tx.gas_used,
+                    gas_price=tx.gas_price,
+                    tx_metadata=tx.tx_metadata,
+                )
+            else:
+                # Second call (receiver) fails
+                raise Exception("Database error for receiver")
+
+        mock_transaction_repository.save = AsyncMock(side_effect=mock_save)
+
+        mock_wallet_repository = MagicMock(spec=WalletRepository)
+
+        async def mock_get_by_user_and_address(user_id, address):
+            if user_id.value == 100:
+                return mock_sender_wallet
+            return None
+
+        async def mock_get_by_address(address):
+            if address == mock_sender_wallet.address.lower():
+                return mock_sender_wallet
+            if address == mock_receiver_wallet.address.lower():
+                return mock_receiver_wallet
+            return None
+
+        mock_wallet_repository.get_by_user_and_address = AsyncMock(
+            side_effect=mock_get_by_user_and_address
+        )
+        mock_wallet_repository.get_by_address = AsyncMock(
+            side_effect=mock_get_by_address
+        )
+
+        handler = LogTransactionHandler(
+            current_user_service=mock_current_user_service,
+            transaction_repository=mock_transaction_repository,
+            wallet_repository=mock_wallet_repository,
+        )
+
+        input_data = LogTransactionInput(
+            tx_hash="0xfff000111222333444555666777888999aaabbbcccdddeeefff000111222333",
+            from_address=mock_sender_wallet.address,
+            to_address=mock_receiver_wallet.address,
+            value="1000000000000000000",
+            chain_id=1,
+            tx_type="send",
+        )
+
+        # Should not raise, even though receiver save fails
+        result = await handler.execute(input_data)
+
+        # Verify the sender's transaction was still saved successfully
+        assert isinstance(result, LogTransactionResult)
+        assert result.id == 1
+
+
 class TestGetTransactionHistoryHandler:
     """Tests for GetTransactionHistoryHandler."""
 
@@ -266,6 +656,7 @@ class TestGetTransactionHistoryHandler:
                 id_=TransactionId(1),
                 user_id=UserId(123),
                 wallet_id=WalletId(1),
+                to_address="0x" + "a" * 40,
                 type=TransactionType.SEND,
                 chain=ChainType.ETHEREUM,
                 asset_in="ETH",
@@ -283,11 +674,15 @@ class TestGetTransactionHistoryHandler:
                 block_number=18500000,
                 confirmed_at=now,
                 created_at=CreatedAt(now),
+                gas_used=21000,
+                gas_price=30000000000,
+                tx_metadata=None,
             ),
             Transaction(
                 id_=TransactionId(2),
                 user_id=UserId(123),
                 wallet_id=WalletId(1),
+                to_address="0x" + "b" * 40,
                 type=TransactionType.SWAP,
                 chain=ChainType.BASE,
                 asset_in="USDC",
@@ -305,6 +700,9 @@ class TestGetTransactionHistoryHandler:
                 block_number=None,
                 confirmed_at=None,
                 created_at=CreatedAt(now),
+                gas_used=None,
+                gas_price=None,
+                tx_metadata={"protocol": "1inch"},
             ),
         ]
 
@@ -335,7 +733,9 @@ class TestGetTransactionHistoryHandler:
         assert result.total == 2
 
     @pytest.mark.asyncio
-    async def test_get_history_with_pagination(self, handler, mock_transaction_repository):
+    async def test_get_history_with_pagination(
+        self, handler, mock_transaction_repository
+    ):
         """Test pagination parameters are passed correctly."""
         await handler.execute(limit=10, offset=5)
 
@@ -345,7 +745,9 @@ class TestGetTransactionHistoryHandler:
         assert call_kwargs["offset"] == 5
 
     @pytest.mark.asyncio
-    async def test_get_history_with_chain_filter(self, handler, mock_transaction_repository):
+    async def test_get_history_with_chain_filter(
+        self, handler, mock_transaction_repository
+    ):
         """Test chain filter is applied correctly."""
         await handler.execute(chain="ethereum")
 
@@ -353,7 +755,9 @@ class TestGetTransactionHistoryHandler:
         assert call_kwargs["chain"] == ChainType.ETHEREUM
 
     @pytest.mark.asyncio
-    async def test_get_history_with_status_filter(self, handler, mock_transaction_repository):
+    async def test_get_history_with_status_filter(
+        self, handler, mock_transaction_repository
+    ):
         """Test status filter is applied correctly."""
         await handler.execute(status="pending")
 

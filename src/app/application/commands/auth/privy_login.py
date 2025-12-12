@@ -1,5 +1,8 @@
 """
 Privy Login interactor - handles authentication via Privy tokens.
+
+Also handles automatic wallet synchronization to the wallets table
+when a user logs in with a wallet address.
 """
 
 import logging
@@ -12,7 +15,9 @@ from app.application.common.ports.transaction_manager import TransactionManager
 from app.application.common.ports.user_command_gateway import UserCommandGateway
 from app.domain.entities.user import User
 from app.domain.enums.user_role import UserRole
+from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.exceptions.user import EmailAlreadyExistsError
+from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.auth_provider import AuthProvider
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.email import Email
@@ -68,6 +73,8 @@ class PrivyLogin:
     
     Users whose email is in ALLOWED_ADMIN_EMAILS will automatically be
     assigned the admin role upon registration or login.
+    
+    Also automatically syncs wallets to the wallets table for portfolio tracking.
     """
 
     def __init__(
@@ -78,6 +85,7 @@ class PrivyLogin:
         flusher: Flusher,
         session_recorder: SessionRecorder,
         admin_settings: AdminSettings,
+        wallet_repository: WalletRepository,
     ):
         self._user_gateway = user_gateway
         self._auth_session_service = auth_session_service
@@ -85,6 +93,7 @@ class PrivyLogin:
         self._flusher = flusher
         self._session_recorder = session_recorder
         self._admin_settings = admin_settings
+        self._wallet_repository = wallet_repository
 
     async def execute(self, request: PrivyLoginRequest) -> PrivyLoginResponse:
         """
@@ -153,6 +162,10 @@ class PrivyLogin:
             except EmailAlreadyExistsError:
                 raise
             await self._transaction_manager.commit()
+
+            # Sync wallet to wallets table for portfolio tracking
+            if request.wallet_address and user.id_.value > 0:
+                await self._sync_wallet_to_db(user, request.wallet_address)
 
             # Now create session and get tokens (user exists in DB)
             auth_session, access_token = await self._auth_session_service.create_session(user.id_)
@@ -296,3 +309,41 @@ class PrivyLogin:
         await self._user_gateway.add(user)
         # No commit here - transaction is managed by the caller
         return user
+
+    async def _sync_wallet_to_db(self, user: User, wallet_address: str) -> None:
+        """
+        Sync the user's wallet to the wallets table.
+        
+        This ensures the wallet exists in the wallets table for portfolio
+        tracking and other features that depend on wallet records.
+        """
+        try:
+            # Determine chain type from address format
+            chain_type = "ethereum"  # Default
+            if wallet_address.startswith("bc1") or wallet_address.startswith("tb1"):
+                chain_type = "bitcoin"
+            elif wallet_address.startswith("1") or wallet_address.startswith("3"):
+                chain_type = "bitcoin"
+            elif wallet_address.startswith("m") or wallet_address.startswith("n") or wallet_address.startswith("2"):
+                chain_type = "bitcoin_testnet"
+
+            await self._wallet_repository.upsert(
+                user_id=user.id_,
+                address=wallet_address,
+                provider=WalletProvider.PRIVY,
+                privy_wallet_id=None,  # Will be updated when wallet is synced from Privy
+                chain_type=chain_type,
+            )
+            log.info(
+                "Synced wallet to DB: user=%s, address=%s, chain=%s",
+                user.id_.value,
+                wallet_address[:10] + "...",
+                chain_type,
+            )
+        except DataMapperError as e:
+            # Log but don't fail login if wallet sync fails
+            log.warning(
+                "Failed to sync wallet to DB for user %s: %s",
+                user.id_.value,
+                e,
+            )

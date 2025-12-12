@@ -7,8 +7,6 @@ Endpoints:
 - GET /transactions - Get transaction history for the current user
 """
 
-from typing import Optional
-
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Query, Security, status
@@ -28,10 +26,8 @@ from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.presentation.http.errors.callbacks import log_error, log_info
 from app.presentation.http.errors.translators import (
     BadRequestTranslator,
-    NotFoundTranslator,
     ServiceUnavailableTranslator,
 )
-
 
 # ============================================================
 # Pydantic Request/Response Models
@@ -55,7 +51,7 @@ class LogTransactionRequest(BaseModel):
         min_length=42,
         max_length=42,
     )
-    to_address: Optional[str] = Field(
+    to_address: str | None = Field(
         None,
         description="Recipient address (null for contract creation)",
         examples=["0xabcdef1234567890abcdef1234567890abcdef12"],
@@ -75,12 +71,12 @@ class LogTransactionRequest(BaseModel):
         description="Transaction type: send, swap, approve, fund, etc.",
         examples=["send", "swap", "approve"],
     )
-    asset_symbol: Optional[str] = Field(
+    asset_symbol: str | None = Field(
         None,
         description="Asset symbol being transferred",
         examples=["ETH", "USDC", "WETH"],
     )
-    data: Optional[str] = Field(
+    data: str | None = Field(
         None,
         description="Transaction data (for contract calls)",
         examples=["0x"],
@@ -96,7 +92,7 @@ class LogTransactionResponse(BaseModel):
     chain: str = Field(..., description="Blockchain name")
     tx_type: str = Field(..., description="Transaction type")
     from_address: str = Field(..., description="Sender address")
-    to_address: Optional[str] = Field(None, description="Recipient address")
+    to_address: str | None = Field(None, description="Recipient address")
     created_at: str = Field(..., description="ISO timestamp when logged")
 
     class Config:
@@ -118,19 +114,30 @@ class TransactionHistoryItemResponse(BaseModel):
     """Single transaction in history."""
 
     id: int = Field(..., description="Transaction database ID")
-    tx_hash: Optional[str] = Field(None, description="Transaction hash")
+    tx_hash: str | None = Field(None, description="Transaction hash")
     type: str = Field(..., description="Transaction type")
     chain: str = Field(..., description="Blockchain name")
     status: str = Field(..., description="Transaction status")
-    asset_in: Optional[str] = Field(None, description="Input asset symbol")
-    amount_in: Optional[str] = Field(None, description="Input amount")
-    asset_out: Optional[str] = Field(None, description="Output asset symbol")
-    amount_out: Optional[str] = Field(None, description="Output amount")
-    fee_usd: Optional[str] = Field(None, description="Fee in USD")
-    block_number: Optional[int] = Field(None, description="Confirmation block")
-    confirmed_at: Optional[str] = Field(None, description="Confirmation timestamp")
+    to_address: str | None = Field(None, description="Recipient address")
+    asset_in: str | None = Field(None, description="Input asset symbol")
+    amount_in: str | None = Field(None, description="Input amount")
+    asset_out: str | None = Field(None, description="Output asset symbol")
+    amount_out: str | None = Field(None, description="Output amount")
+    fee_usd: str | None = Field(None, description="Fee in USD")
+    block_number: int | None = Field(None, description="Confirmation block")
+    confirmed_at: str | None = Field(None, description="Confirmation timestamp")
     created_at: str = Field(..., description="Creation timestamp")
-    explorer_url: Optional[str] = Field(None, description="Block explorer URL")
+    explorer_url: str | None = Field(None, description="Block explorer URL")
+    # Analytics fields
+    gas_used: int | None = Field(None, description="Gas units consumed")
+    gas_price: int | None = Field(None, description="Gas price in wei")
+    # Direction fields (for dual transaction display)
+    is_incoming: bool = Field(
+        False, description="True if user is the receiver of this transaction"
+    )
+    from_address: str | None = Field(
+        None, description="Sender address (for incoming transactions)"
+    )
 
 
 class TransactionHistoryResponse(BaseModel):
@@ -155,8 +162,9 @@ class TransactionHistoryResponse(BaseModel):
                         "type": "send",
                         "chain": "ethereum",
                         "status": "success",
+                        "to_address": "0xabcd...",
                         "asset_in": "ETH",
-                        "amount_in": "1000000000000000000",
+                        "amount_in": "1.0",
                         "asset_out": None,
                         "amount_out": None,
                         "fee_usd": "2.50",
@@ -164,6 +172,8 @@ class TransactionHistoryResponse(BaseModel):
                         "confirmed_at": "2024-01-15T10:30:30Z",
                         "created_at": "2024-01-15T10:30:00Z",
                         "explorer_url": "https://etherscan.io/tx/0x1234...",
+                        "gas_used": 21000,
+                        "gas_price": 30000000000,
                     }
                 ],
                 "total": 42,
@@ -284,15 +294,15 @@ def create_transaction_router() -> APIRouter:
             ge=0,
             description="Number of results to skip",
         ),
-        chain: Optional[str] = Query(
+        chain: str | None = Query(
             default=None,
             description="Filter by chain: ethereum, base, arbitrum, etc.",
         ),
-        status: Optional[str] = Query(
+        status: str | None = Query(
             default=None,
             description="Filter by status: pending, success, failed",
         ),
-        tx_type: Optional[str] = Query(
+        tx_type: str | None = Query(
             default=None,
             description="Filter by type: send, swap, approve, etc.",
         ),
@@ -319,6 +329,7 @@ def create_transaction_router() -> APIRouter:
                     type=tx.type,
                     chain=tx.chain,
                     status=tx.status,
+                    to_address=tx.to_address,
                     asset_in=tx.asset_in,
                     amount_in=tx.amount_in,
                     asset_out=tx.asset_out,
@@ -328,6 +339,10 @@ def create_transaction_router() -> APIRouter:
                     confirmed_at=tx.confirmed_at,
                     created_at=tx.created_at,
                     explorer_url=tx.explorer_url,
+                    gas_used=tx.gas_used,
+                    gas_price=tx.gas_price,
+                    is_incoming=tx.is_incoming,
+                    from_address=tx.from_address,
                 )
                 for tx in result.transactions
             ],

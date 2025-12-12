@@ -5,24 +5,25 @@ Tests the TransactionConfirmationService that monitors pending transactions
 and updates their status when confirmed on-chain.
 """
 
-import pytest
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from app.application.transaction.confirmation_service import (
+    ConfirmationResult,
     TransactionConfirmationService,
     TransactionReceipt,
-    ConfirmationResult,
 )
-from app.domain.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.entities.transaction import Transaction, TransactionId
 from app.domain.entities.wallet import WalletId
 from app.domain.enums.chain_type import ChainType
-from app.domain.enums.transaction_type import TransactionType
 from app.domain.enums.transaction_status import TransactionStatus
-from app.domain.value_objects.user_id import UserId
+from app.domain.enums.transaction_type import TransactionType
+from app.domain.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.value_objects.created_at import CreatedAt
+from app.domain.value_objects.user_id import UserId
 
 
 class TestTransactionConfirmationService:
@@ -37,6 +38,7 @@ class TestTransactionConfirmationService:
                 id_=TransactionId(1),
                 user_id=UserId(123),
                 wallet_id=WalletId(1),
+                to_address="0x" + "a" * 40,
                 type=TransactionType.SEND,
                 chain=ChainType.ETHEREUM,
                 asset_in="ETH",
@@ -54,11 +56,15 @@ class TestTransactionConfirmationService:
                 block_number=None,
                 confirmed_at=None,
                 created_at=CreatedAt(now),
+                gas_used=None,
+                gas_price=None,
+                tx_metadata=None,
             ),
             Transaction(
                 id_=TransactionId(2),
                 user_id=UserId(123),
                 wallet_id=WalletId(1),
+                to_address="0x" + "b" * 40,
                 type=TransactionType.SWAP,
                 chain=ChainType.BASE,
                 asset_in="USDC",
@@ -76,6 +82,9 @@ class TestTransactionConfirmationService:
                 block_number=None,
                 confirmed_at=None,
                 created_at=CreatedAt(now),
+                gas_used=None,
+                gas_price=None,
+                tx_metadata=None,
             ),
         ]
 
@@ -83,7 +92,9 @@ class TestTransactionConfirmationService:
     def mock_transaction_repository(self, mock_pending_transactions):
         """Create a mock TransactionRepository."""
         repo = MagicMock(spec=TransactionRepository)
-        repo.get_pending_transactions = AsyncMock(return_value=mock_pending_transactions)
+        repo.get_pending_transactions = AsyncMock(
+            return_value=mock_pending_transactions
+        )
         repo.update_status = AsyncMock(return_value=True)
         return repo
 
@@ -201,9 +212,13 @@ class TestTransactionConfirmationService:
             mock_transaction_repository.update_status.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_process_pending_transactions_empty(self, mock_transaction_repository):
+    async def test_process_pending_transactions_empty(
+        self, mock_transaction_repository
+    ):
         """Test processing when there are no pending transactions."""
-        mock_transaction_repository.get_pending_transactions = AsyncMock(return_value=[])
+        mock_transaction_repository.get_pending_transactions = AsyncMock(
+            return_value=[]
+        )
 
         service = TransactionConfirmationService(
             transaction_repository=mock_transaction_repository,
