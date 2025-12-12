@@ -142,9 +142,9 @@ class TestAaveServerFlags:
     def test_aave_enabled_by_default(self):
         """Test Aave server is enabled by default."""
         settings = MCPSettings()
-        
+
         server = AaveMCPServer(settings=settings)
-        assert server.server_name == "aave"
+        assert server.name == "aave"
     
     def test_aave_can_be_disabled(self):
         """Test Aave server can be disabled."""
@@ -165,9 +165,9 @@ class TestPortfolioServerFlags:
     def test_portfolio_enabled_by_default(self):
         """Test Portfolio server is enabled by default."""
         settings = MCPSettings()
-        
+
         server = PortfolioMCPServer(settings=settings)
-        assert server.server_name == "portfolio"
+        assert server.name == "portfolio"
     
     def test_portfolio_can_be_disabled(self):
         """Test Portfolio server can be disabled."""
@@ -235,8 +235,8 @@ class TestSelectiveServerEnablement:
         # Free APIs should work
         defillama = DeFiLlamaMCPServer(settings=settings)
         coingecko = CoinGeckoMCPServer(settings=settings)
-        assert defillama.name == "defillama"
-        assert coingecko.name == "coingecko"
+        assert defillama.server_name == "defillama"
+        assert coingecko.server_name == "coingecko"
         
         # Paid APIs should be blocked
         with pytest.raises(MCPServerDisabledError):
@@ -261,8 +261,8 @@ class TestSelectiveServerEnablement:
         # Market data servers should work
         defillama = DeFiLlamaMCPServer(settings=settings)
         coingecko = CoinGeckoMCPServer(settings=settings)
-        assert defillama.name == "defillama"
-        assert coingecko.name == "coingecko"
+        assert defillama.server_name == "defillama"
+        assert coingecko.server_name == "coingecko"
         
         # Other servers should be blocked
         with pytest.raises(MCPServerDisabledError):

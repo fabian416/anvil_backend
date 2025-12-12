@@ -104,7 +104,10 @@ class MCPServerManager:
         Raises:
             MCPServerDisabledError: If server is disabled in settings
         """
-        server_name = server.name
+        # Handle both base.MCPServer (uses 'name') and base_server.MCPServer (uses 'server_name')
+        server_name = getattr(server, 'name', None) or getattr(server, 'server_name', None)
+        if not server_name:
+            raise ValueError("Server must have either 'name' or 'server_name' attribute")
         
         # Check if MCP is globally disabled
         if not self.settings.enabled:
