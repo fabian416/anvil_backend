@@ -1,0 +1,32 @@
+# Anvil Security Tools Docker Image
+# Contains: Helios, LLMExploiter, OWASP AI Testing tools
+
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /security
+
+# Install Python security testing dependencies
+COPY requirements.txt /security/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create directories
+RUN mkdir -p /config /reports /scripts
+
+# Copy security tools
+COPY . /security/
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV SECURITY_TOOLS_HOME=/security
+
+# Default command
+CMD ["python", "--version"]

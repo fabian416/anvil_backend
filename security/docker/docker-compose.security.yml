@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  security-tools:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.security-tools
+    image: anvil/security-tools:latest
+    container_name: anvil-security-tools
+    volumes:
+      - ../config:/config:ro
+      - ../reports:/reports
+      - ../scripts:/scripts
+    environment:
+      - ANVIL_TEST_TOKEN=${ANVIL_TEST_TOKEN}
+      - STAGING_URL=${STAGING_URL:-https://staging.anvil.com}
+    networks:
+      - security-net
+    command: ["tail", "-f", "/dev/null"]
+
+  nettacker:
+    image: owasp/nettacker:latest
+    container_name: anvil-nettacker
+    volumes:
+      - ../config:/config:ro
+      - ../reports:/reports
+    networks:
+      - security-net
+    command: ["--help"]
+
+networks:
+  security-net:
+    driver: bridge
