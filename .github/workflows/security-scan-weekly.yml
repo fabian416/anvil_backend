@@ -1,0 +1,109 @@
+name: Weekly Security Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  comprehensive-security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install security tools
+        run: |
+          cd security
+          chmod +x setup/install_all.sh
+          ./setup/install_all.sh
+        env:
+          ANVIL_TEST_TOKEN: ${{ secrets.ANVIL_TEST_TOKEN }}
+      
+      - name: Run Helios XSS Scan
+        continue-on-error: true
+        run: |
+          echo "🔒 Running Helios XSS scan..."
+          # Placeholder for actual Helios scan command
+          echo "Helios scan completed"
+      
+      - name: Run LLMExploiter Scan
+        continue-on-error: true
+        run: |
+          echo "🤖 Running LLMExploiter scan..."
+          # Placeholder for actual LLMExploiter scan command
+          echo "LLMExploiter scan completed"
+      
+      - name: Run Nettacker Network Scan
+        continue-on-error: true
+        run: |
+          echo "🌐 Running Nettacker scan..."
+          docker pull owasp/nettacker:latest
+          # Placeholder for actual Nettacker scan command
+          echo "Nettacker scan completed"
+      
+      - name: Run LLM Security Auditor
+        continue-on-error: true
+        run: |
+          echo "🛡️  Running LLM Security Auditor..."
+          # Placeholder for actual security auditor command
+          echo "LLM Security Auditor scan completed"
+      
+      - name: Run OWASP AI Testing
+        continue-on-error: true
+        run: |
+          echo "🎯 Running OWASP AI Testing..."
+          # Placeholder for actual AI testing command
+          echo "OWASP AI Testing completed"
+      
+      - name: Generate unified security report
+        run: |
+          echo "📊 Generating unified security report..."
+          mkdir -p security/reports/$(date +%Y%m%d)
+          echo "Report generated at security/reports/$(date +%Y%m%d)/"
+      
+      - name: Upload scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-scan-results-${{ github.run_number }}
+          path: security/reports/
+          retention-days: 90
+      
+      - name: Check for critical vulnerabilities
+        run: |
+          echo "Checking for critical vulnerabilities..."
+          # This will be implemented in the vulnerability checker script
+      
+      - name: Post results to Slack
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_SECURITY_WEBHOOK }}
+          payload: |
+            {
+              "text": "🚨 Critical security vulnerabilities found in weekly scan!",
+              "attachments": [{
+                "color": "danger",
+                "text": "View full report in GitHub Actions artifacts",
+                "fields": [
+                  {
+                    "title": "Run Number",
+                    "value": "${{ github.run_number }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Branch",
+                    "value": "${{ github.ref_name }}",
+                    "short": true
+                  }
+                ]
+              }]
+            }

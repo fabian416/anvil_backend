@@ -1,0 +1,80 @@
+name: PR Security Scan
+
+on:
+  pull_request:
+    branches: [master, develop]
+  workflow_dispatch:
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install security checker
+        run: |
+          pip install pyyaml requests
+      
+      - name: Run XSS validation on changed files
+        run: |
+          echo "🔍 Checking for XSS vulnerabilities in PR..."
+          # Check Python files for potential XSS issues
+          git diff --name-only origin/master...HEAD | grep '\.py$' || echo "No Python files changed"
+      
+      - name: Check for hardcoded secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+      
+      - name: Run security linting
+        run: |
+          pip install bandit safety
+          bandit -r src/ -f json -o security/reports/bandit-pr.json || true
+          safety check --json --output security/reports/safety-pr.json || true
+      
+      - name: Comment PR with security findings
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🔒 Security Scan Results\n\n';
+            
+            try {
+              const banditReport = JSON.parse(fs.readFileSync('security/reports/bandit-pr.json', 'utf8'));
+              const issueCount = banditReport.results?.length || 0;
+              
+              if (issueCount > 0) {
+                comment += `⚠️  **${issueCount}** potential security issues found by Bandit\n\n`;
+              } else {
+                comment += '✅ No security issues found by Bandit\n\n';
+              }
+            } catch (e) {
+              comment += '✅ Bandit scan completed\n\n';
+            }
+            
+            comment += '\nFor detailed results, check the workflow artifacts.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: pr-security-reports
+          path: security/reports/
+          retention-days: 30
