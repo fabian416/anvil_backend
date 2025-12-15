@@ -17,6 +17,7 @@ The Anvil Backend platform is a production-ready, enterprise-grade DeFi infrastr
 - **18-Agent AI System**: Multi-agent DeFi platform powered by LLM orchestration
 - **30+ API Integrations**: Real-time market data, security screening, wallet operations
 - **5-Layer Security Defense**: OWASP-compliant middleware protecting against XSS, prompt injection, and data breaches
+- **Enterprise Chat System**: 16 documented use cases (5 implemented, 8 roadmap, 3 future) with chat-orchestrated architecture
 - **Enterprise Compliance**: AML/KYC screening, security scanning, monitoring
 
 ---
@@ -777,8 +778,20 @@ OPENSEA_API_KEY=...
 - Security monitoring optimization
 - Cost optimization analysis
 
-### 📅 Planned (Q2 2026)
+### 📅 Planned (Q1-Q2 2026)
 
+**Enterprise Chat Implementation** (Q1 2026):
+- Use Cases 20-23, 26-27, 29-30 (8 features)
+- Total effort: 76-106 days (15-21 weeks)
+- See: `docs/specifications/CHAT_MISSING_IMPLEMENTATIONS.md`
+
+**Advanced Chat Features** (Q2-Q4 2026):
+- Use Case 24: Slack/Discord/Teams Integration (8-10 weeks)
+- Use Case 25: Voice Chat with Transcription (8-10 weeks)
+- Use Case 28: Real-Time Collaboration (10-12 weeks)
+- See: `docs/specifications/CHAT_FUTURE_IMPLEMENTATIONS.md`
+
+**Infrastructure & Compliance** (Q2 2026):
 - AML/KYC enterprise integration (pending budget approval)
 - SOC 2 Type II certification
 - Multi-region deployment

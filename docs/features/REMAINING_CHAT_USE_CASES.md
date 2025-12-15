@@ -1,22 +1,86 @@
-# Remaining Enterprise Chat Use Cases - Implementation Plan
+# Enterprise Chat Use Cases - Implementation Status
 
-## Status: 5 of 15 Use Cases Completed
+## Status: ALL 16 Use Cases Documented
 
-### ✅ Completed Use Cases (in USE_CASES_EXAMPLES.md)
+### ✅ Completed & Documented Use Cases (in USE_CASES_EXAMPLES.md)
 
+**Phase 1: Core Chat Features (Use Cases 15-19)** - Fully Implemented
 1. **Use Case 15**: Multi-Turn Conversation with Persistent Context
 2. **Use Case 16**: Conversation Branching and Fork Management
 3. **Use Case 17**: Team Collaboration and Shared Conversations
 4. **Use Case 18**: Advanced Conversation Search and Filtering
 5. **Use Case 19**: AI-Powered Conversation Summarization
 
+**Phase 2: Current Implementation Roadmap (Use Cases 20-23, 26-27, 29-30)** - Documented, Not Yet Implemented
+6. **Use Case 20**: Chat Analytics and Insights Dashboard (See CHAT_MISSING_IMPLEMENTATIONS.md)
+7. **Use Case 21**: Conversation Templates and Workflow Automation (See CHAT_MISSING_IMPLEMENTATIONS.md)
+8. **Use Case 22**: Multi-Language Chat with Auto-Translation (See CHAT_MISSING_IMPLEMENTATIONS.md)
+9. **Use Case 23**: Chat Personalization and User Preferences (See CHAT_MISSING_IMPLEMENTATIONS.md)
+10. **Use Case 26**: Conversation Export and Compliance Archiving (See CHAT_MISSING_IMPLEMENTATIONS.md)
+11. **Use Case 27**: Intent Detection and Auto-Suggestions (See CHAT_MISSING_IMPLEMENTATIONS.md)
+12. **Use Case 29**: Chat Performance and Optimization Features (See CHAT_MISSING_IMPLEMENTATIONS.md)
+13. **Use Case 30**: Advanced Agent Orchestration (See CHAT_MISSING_IMPLEMENTATIONS.md)
+
+**Phase 3: Future Implementations (Use Cases 24, 25, 28)** - Planned for Q2-Q4 2026
+14. **Use Case 24**: External Platform Integration (Slack/Discord/Teams) - See CHAT_FUTURE_IMPLEMENTATIONS.md 📅
+15. **Use Case 25**: Voice Chat with Transcription - See CHAT_FUTURE_IMPLEMENTATIONS.md 📅
+16. **Use Case 28**: Real-Time Collaboration Features (Advanced) - See CHAT_FUTURE_IMPLEMENTATIONS.md 📅
+
 ---
 
-### 🔄 Remaining Use Cases to Add
+## 📋 Implementation Specifications
+
+### Current Implementation Roadmap
+**Document**: `docs/specifications/CHAT_MISSING_IMPLEMENTATIONS.md`
+- Detailed gap analysis for use cases 20-23, 26-27, 29-30
+- Backend components required
+- Database schema extensions
+- API designs (chat-orchestrated approach)
+- Effort estimates: 76-106 days total
+
+### Future Implementations
+**Document**: `docs/specifications/CHAT_FUTURE_IMPLEMENTATIONS.md`
+- Use Case 24: External Platform Integration (8-10 weeks)
+- Use Case 25: Voice Chat with Transcription (8-10 weeks)
+- Use Case 26: Real-Time Collaboration (10-12 weeks)
+- Total effort: 26-32 weeks
+- Planned start: Q2 2026 (after core chat stabilizes)
+
+---
+
+### 🎯 Current Focus: Chat-Orchestrated Architecture
+
+**Key Principle**: All features are accessed through natural language conversation, not separate REST endpoints.
+
+**Example - Instead of:**
+```
+GET /api/v1/chat/analytics/dashboard
+```
+
+**We use:**
+```
+User: "Show me my chat analytics for the last 30 days"
+System: [Generates inline analytics summary in conversation]
+```
+
+This chat-first approach:
+- ✅ Reduces API surface area (fewer endpoints to maintain)
+- ✅ Improves user experience (natural language interface)
+- ✅ Centralizes all interactions in the chat conversation
+- ✅ Enables context-aware responses based on conversation history
+
+---
+
+## Detailed Feature Descriptions
 
 #### Use Case 20: Chat Analytics and Insights Dashboard
 **Agent Coverage**: Analytics Agent, Chat Agent
-**API**: `GET /api/v1/chat/analytics/dashboard`
+**Chat Commands**:
+- "Show analytics" / "chat stats" / "my metrics"
+- "Which agents do I use most?"
+- "What are my response times?"
+- "Show conversation trends"
+
 **Features**:
 - Conversation volume trends (daily/weekly/monthly)
 - Agent usage statistics (which agents used most)
@@ -32,7 +96,12 @@
 
 #### Use Case 21: Conversation Templates and Workflow Automation
 **Agent Coverage**: All 18 Agents
-**API**: `POST /api/v1/chat/templates/{template_id}/instantiate`
+**Chat Commands**:
+- "Run portfolio health check" / "execute template: portfolio review"
+- "Create new template called X"
+- "List my templates"
+- "Schedule portfolio check every Monday"
+
 **Features**:
 - Pre-built conversation templates for common scenarios
 - Portfolio Review Template (auto-runs Risk Analyzer + Yield Optimizer)
@@ -47,7 +116,11 @@
 
 #### Use Case 22: Multi-Language Chat with Auto-Translation
 **Agent Coverage**: Translation Agent, All Agents
-**API**: `POST /api/v1/chat/conversations/{id}/translate`
+**Chat Commands**:
+- "Translate this conversation to Spanish"
+- "Enable auto-translation to French"
+- "Show original language"
+
 **Features**:
 - Real-time translation of conversations (75+ languages)
 - Auto-detect user language preference
@@ -62,7 +135,12 @@
 
 #### Use Case 23: Chat Personalization and User Preferences
 **Agent Coverage**: All Agents
-**API**: `PUT /api/v1/chat/preferences`
+**Chat Commands**:
+- "Make responses more brief" / "use detailed mode"
+- "Always use Risk Analyzer for risk questions"
+- "Auto-delete conversations after 30 days"
+- "Enable dark mode" / "set font size to large"
+
 **Features**:
 - Response style preferences (brief/detailed/technical/executive)
 - Agent preferences (prefer Risk Analyzer over Yield Optimizer for risk questions)
@@ -75,41 +153,14 @@
 
 ---
 
-#### Use Case 24: External Platform Integration (Slack/Discord/Teams)
-**Agent Coverage**: Integration Agent, All Agents
-**API**: `POST /api/v1/chat/integrations/slack/sync`
-**Features**:
-- Bidirectional sync with Slack channels
-- Anvil bot in Slack (ask questions, get responses)
-- Discord server integration for community support
-- Microsoft Teams integration for enterprise
-- Slack slash commands (`/anvil risk-analysis @wallet`)
-- Auto-post important decisions to Slack
-- Sync conversation threads from Slack to Anvil
-- Mention Anvil agents in external platforms
-- Rich cards and interactive components
-
----
-
-#### Use Case 25: Voice Chat with Transcription
-**Agent Coverage**: Voice Agent, Transcription Agent, All Agents
-**API**: `POST /api/v1/chat/conversations/{id}/voice/start`
-**Features**:
-- Voice message recording in conversations
-- Real-time speech-to-text transcription
-- Multi-speaker diarization (identify who's speaking)
-- Voice commands ("Anvil, analyze my portfolio risk")
-- Text-to-speech for AI responses (natural voice)
-- Language detection (auto-detect spoken language)
-- Transcript editing and correction
-- Voice analytics (sentiment, tone, urgency detection)
-- Accessibility: Voice control for hands-free operation
-
----
-
 #### Use Case 26: Conversation Export and Compliance Archiving
 **Agent Coverage**: Compliance Agent, Export Agent
-**API**: `POST /api/v1/chat/conversations/{id}/export`
+**Chat Commands**:
+- "Export this conversation to PDF"
+- "Create compliance archive for last quarter"
+- "Email this conversation to myself"
+- "Generate SEC-compliant export"
+
 **Features**:
 - Export formats (PDF, JSON, CSV, HTML, Markdown)
 - Compliance-ready exports (SEC, FinCEN, IRS formats)
@@ -125,7 +176,8 @@
 
 #### Use Case 27: Intent Detection and Auto-Suggestions
 **Agent Coverage**: Intent Detection Agent, All Agents
-**API**: Real-time via WebSocket during typing
+**Real-time via WebSocket** (as user types)
+
 **Features**:
 - Real-time intent classification as user types
 - Auto-suggest completions ("Did you mean: analyze Morpho risk?")
@@ -139,25 +191,10 @@
 
 ---
 
-#### Use Case 28: Real-Time Collaboration Features (Advanced)
-**Agent Coverage**: Collaboration Agent
-**API**: WebSocket `/ws/chat/{conversation_id}/collaborate`
-**Features**:
-- Live cursor tracking (see where team members are typing)
-- Co-editing messages (Google Docs style collaboration)
-- Shared canvas for sketching ideas
-- Screen sharing integration
-- Video call integration (Zoom, Google Meet embedded)
-- Collaborative decision making (voting on options)
-- Simultaneous agent invocation (multiple users run same agent, results merged)
-- Conflict resolution (when multiple users edit same message)
-- Session recording and playback
-
----
-
 #### Use Case 29: Chat Performance and Optimization Features
 **Agent Coverage**: Performance Agent
-**API**: `GET /api/v1/chat/performance/metrics`
+**Automatic optimization** (no user commands needed)
+
 **Features**:
 - Real-time latency monitoring (p50, p95, p99 response times)
 - Message delivery guarantees (at-least-once, exactly-once)
@@ -173,7 +210,11 @@
 
 #### Use Case 30: Advanced Agent Orchestration
 **Agent Coverage**: All 18 Agents, Supervisor Agent
-**API**: `POST /api/v1/chat/agent-squad/orchestrate`
+**Chat Commands**:
+- "Get opinions from 3 agents on whether to invest in Curve"
+- "Have Risk Analyzer and Yield Optimizer debate this strategy"
+- "Run these agents in parallel and merge results"
+
 **Features**:
 - Multi-agent workflows (Risk Analyzer → Yield Optimizer → Transaction Executor)
 - Agent chaining (output of one agent feeds into next)
@@ -184,6 +225,50 @@
 - Agent specialization routing (route to expert based on question type)
 - Agent performance tracking (which agents most accurate)
 - Custom agent creation (users define custom agent prompts)
+
+---
+
+## 📅 Future Use Cases (Q2-Q4 2026)
+
+These use cases are documented but planned for future implementation:
+
+#### Use Case 24: External Platform Integration (Slack/Discord/Teams) 📅
+**Status**: Planned for Q2 2026
+**Documentation**: See `docs/specifications/CHAT_FUTURE_IMPLEMENTATIONS.md`
+**Effort**: 8-10 weeks
+
+**Key Features**:
+- Slack bidirectional sync and slash commands
+- Discord community server integration
+- Microsoft Teams enterprise integration
+- Rich cards and interactive components
+
+---
+
+#### Use Case 25: Voice Chat with Transcription 📅
+**Status**: Planned for Q3 2026
+**Documentation**: See `docs/specifications/CHAT_FUTURE_IMPLEMENTATIONS.md`
+**Effort**: 8-10 weeks
+
+**Key Features**:
+- Speech-to-text with Google Cloud
+- Text-to-speech responses
+- Multi-speaker diarization
+- Voice commands ("Anvil, analyze my portfolio")
+
+---
+
+#### Use Case 28: Real-Time Collaboration Features (Advanced) 📅
+**Status**: Planned for Q4 2026
+**Documentation**: See `docs/specifications/CHAT_FUTURE_IMPLEMENTATIONS.md`
+**Effort**: 10-12 weeks
+
+**Key Features**:
+- Live cursor tracking (Google Docs style)
+- Co-editing messages
+- Shared whiteboard canvas
+- Collaborative voting
+- Video/screen sharing integration
 
 ---
 
