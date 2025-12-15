@@ -419,3 +419,142 @@ class AttachmentTooLargeError(ApplicationError):
             field="attachment",
             override_message="Attachment exceeds maximum size limit",
         )
+
+
+# =============================================================================
+# TEMPLATE ERRORS
+# =============================================================================
+
+
+class TemplateNotFoundError(ApplicationError):
+    """Raised when a conversation template is not found."""
+
+    def __init__(
+        self,
+        template_id: str | UUID | None = None,
+        template_name: str | None = None,
+    ) -> None:
+        details = {}
+        if template_id:
+            details["template_id"] = str(template_id)
+        if template_name:
+            details["template_name"] = template_name
+        super().__init__(
+            ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
+            details=details,
+            override_message="Conversation template not found",
+        )
+
+
+class TemplateValidationError(ApplicationError):
+    """Raised when template validation fails."""
+
+    def __init__(
+        self,
+        template_id: str | UUID | None = None,
+        validation_errors: list[str] | None = None,
+    ) -> None:
+        details = {}
+        if template_id:
+            details["template_id"] = str(template_id)
+        if validation_errors:
+            details["validation_errors"] = validation_errors
+        super().__init__(
+            ErrorCode.CHAT_MESSAGE_EMPTY,
+            details=details,
+            override_message="Template validation failed",
+        )
+
+
+class TemplateExecutionError(ApplicationError):
+    """Raised when template execution fails."""
+
+    def __init__(
+        self,
+        template_id: str | UUID | None = None,
+        step_index: int | None = None,
+        error_message: str | None = None,
+    ) -> None:
+        details = {}
+        if template_id:
+            details["template_id"] = str(template_id)
+        if step_index is not None:
+            details["failed_step"] = step_index
+        if error_message:
+            details["error_message"] = error_message
+        super().__init__(
+            ErrorCode.CHAT_AGENT_ERROR,
+            details=details,
+            override_message="Template execution failed",
+        )
+
+
+# =============================================================================
+# PREFERENCE ERRORS
+# =============================================================================
+
+
+class PreferencesNotFoundError(ApplicationError):
+    """Raised when user preferences are not found."""
+
+    def __init__(
+        self,
+        user_id: str | UUID | None = None,
+    ) -> None:
+        details = {}
+        if user_id:
+            details["user_id"] = str(user_id)
+        super().__init__(
+            ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
+            details=details,
+            override_message="User chat preferences not found",
+        )
+
+
+class InvalidPreferenceError(ApplicationError):
+    """Raised when an invalid preference value is provided."""
+
+    def __init__(
+        self,
+        preference_name: str | None = None,
+        invalid_value: Any | None = None,
+        valid_values: list[Any] | None = None,
+    ) -> None:
+        details = {}
+        if preference_name:
+            details["preference_name"] = preference_name
+        if invalid_value is not None:
+            details["invalid_value"] = str(invalid_value)
+        if valid_values:
+            details["valid_values"] = [str(v) for v in valid_values]
+        super().__init__(
+            ErrorCode.CHAT_MESSAGE_EMPTY,
+            details=details,
+            field=preference_name,
+            override_message="Invalid preference value",
+        )
+
+
+# =============================================================================
+# INTENT DETECTION ERRORS
+# =============================================================================
+
+
+class IntentDetectionError(ApplicationError):
+    """Raised when intent detection fails."""
+
+    def __init__(
+        self,
+        message: str | None = None,
+        reason: str | None = None,
+    ) -> None:
+        details = {}
+        if message:
+            details["message"] = message[:100]  # Truncate for privacy
+        if reason:
+            details["reason"] = reason
+        super().__init__(
+            ErrorCode.CHAT_AGENT_ERROR,
+            details=details,
+            override_message="Failed to detect user intent",
+        )
