@@ -1,1 +1,1 @@
-"""Performance and load testing suite."""
+"""Performance testing suite for Anvil platform."""

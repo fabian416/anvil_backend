@@ -1,0 +1,249 @@
+# Security Alerting Rules Configuration
+# Phase 4.3: Production Deployment Alerting
+
+# Prometheus AlertManager configuration for security monitoring
+# Reference: docs/security/deployment/DEPLOYMENT_GUIDE.md
+
+groups:
+  - name: security_critical_alerts
+    interval: 30s
+    rules:
+      # XSS Attack Alerts
+      - alert: HighVolumeXSSAttacks
+        expr: rate(anvil_xss_attacks_detected_total[5m]) > 2
+        for: 5m
+        labels:
+          severity: critical
+          component: xss_guard
+        annotations:
+          summary: "High volume XSS attacks detected"
+          description: "More than 10 XSS attacks detected in 5 minutes. Block rate: {{ $value }}"
+          action: "Review XSS guard logs and check for attack patterns"
+
+      - alert: XSSAttackBlocked
+        expr: anvil_xss_attacks_blocked_total > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: xss_guard
+        annotations:
+          summary: "XSS attack blocked"
+          description: "XSS attack successfully blocked at endpoint {{ $labels.endpoint }}"
+
+      # Prompt Injection Alerts
+      - alert: CriticalPromptInjectionDetected
+        expr: anvil_prompt_injection_detected_total{risk_level="critical"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: prompt_guard
+        annotations:
+          summary: "Critical prompt injection detected"
+          description: "High-risk prompt injection attempt detected"
+          action: "Review prompt injection logs immediately"
+
+      - alert: HighVolumePromptInjection
+        expr: rate(anvil_prompt_injection_detected_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: critical
+          component: prompt_guard
+        annotations:
+          summary: "High volume prompt injection attempts"
+          description: "Multiple prompt injection attempts in short time window"
+
+      # PII Leakage Alerts
+      - alert: PIIDetectedInLogs
+        expr: increase(anvil_pii_detected_total[1h]) > 10
+        for: 1m
+        labels:
+          severity: critical
+          component: pii_redaction
+        annotations:
+          summary: "PII detected in logs"
+          description: "Multiple PII instances detected. Type: {{ $labels.pii_type }}"
+          action: "Verify PII redaction is working correctly"
+
+      - alert: HighRiskPII
+        expr: anvil_pii_risk_score > 15
+        for: 1m
+        labels:
+          severity: high
+          component: pii_redaction
+        annotations:
+          summary: "High-risk PII detected"
+          description: "PII with high risk score detected: {{ $value }}"
+
+      # Agent Isolation Alerts
+      - alert: AgentIsolationViolation
+        expr: increase(anvil_agent_isolation_violations_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: agent_isolation
+        annotations:
+          summary: "Agent isolation violation detected"
+          description: "Agent {{ $labels.agent_id }} violated isolation policy. Type: {{ $labels.violation_type }}"
+          action: "Review agent permissions and audit logs immediately"
+
+      - alert: HighPermissionDenialRate
+        expr: rate(anvil_agent_permission_denied_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: agent_isolation
+        annotations:
+          summary: "High rate of permission denials"
+          description: "Agent {{ $labels.agent_id }} experiencing high denial rate for {{ $labels.resource_type }}"
+
+      # Transaction Approval Alerts
+      - alert: PendingApprovalsBacklog
+        expr: anvil_pending_approvals > 10
+        for: 10m
+        labels:
+          severity: warning
+          component: transaction_approval
+        annotations:
+          summary: "Approval backlog detected"
+          description: "{{ $value }} pending transaction approvals"
+          action: "Review approval queue and process pending requests"
+
+      - alert: HighApprovalDenialRate
+        expr: rate(anvil_transaction_approvals_denied_total[1h]) > rate(anvil_transaction_approvals_granted_total[1h])
+        for: 15m
+        labels:
+          severity: warning
+          component: transaction_approval
+        annotations:
+          summary: "High transaction denial rate"
+          description: "More transactions being denied than approved"
+
+      # Security Scan Alerts
+      - alert: VulnerabilitiesFound
+        expr: anvil_vulnerabilities_found{severity="critical"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security_scan
+        annotations:
+          summary: "Critical vulnerabilities found"
+          description: "{{ $value }} critical vulnerabilities found by {{ $labels.tool }}"
+          action: "Review scan results and create remediation plan"
+
+      - alert: SecurityScanFailed
+        expr: increase(anvil_security_scan_failures_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: security_scan
+        annotations:
+          summary: "Security scan failed"
+          description: "Security scan {{ $labels.tool }} failed. Error: {{ $labels.error_type }}"
+
+      # Overall Security Posture
+      - alert: SecurityPostureDegraded
+        expr: anvil_security_posture_score < 60
+        for: 5m
+        labels:
+          severity: high
+          component: security_posture
+        annotations:
+          summary: "Security posture degraded"
+          description: "Overall security score dropped to {{ $value }}. Category: {{ $labels.category }}"
+          action: "Review security dashboard and address vulnerabilities"
+
+  - name: security_warning_alerts
+    interval: 1m
+    rules:
+      # Middleware Performance Alerts
+      - alert: SecurityMiddlewareSlowResponse
+        expr: histogram_quantile(0.95, rate(anvil_xss_middleware_seconds_bucket[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: middleware_performance
+        annotations:
+          summary: "Security middleware response time degraded"
+          description: "XSS middleware 95th percentile latency: {{ $value }}s (target: <0.05s)"
+          action: "Review middleware performance and optimize if needed"
+
+      - alert: PromptGuardSlowResponse
+        expr: histogram_quantile(0.95, rate(anvil_prompt_guard_seconds_bucket[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: middleware_performance
+        annotations:
+          summary: "Prompt guard response time degraded"
+          description: "Prompt injection guard 95th percentile latency: {{ $value }}s"
+
+      # Repeated Attack Patterns
+      - alert: RepeatedAttackPatterns
+        expr: increase(anvil_xss_attacks_detected_total{pattern_type!=""}[1h]) > 20
+        for: 5m
+        labels:
+          severity: warning
+          component: attack_pattern
+        annotations:
+          summary: "Repeated attack pattern detected"
+          description: "Pattern {{ $labels.pattern_type }} seen frequently. May indicate coordinated attack."
+
+      # Transaction Approval Timeouts
+      - alert: TransactionApprovalsExpiring
+        expr: rate(anvil_transaction_approvals_expired_total[1h]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: transaction_approval
+        annotations:
+          summary: "High transaction approval expiration rate"
+          description: "Approvals expiring before user response"
+          action: "Consider increasing approval timeout or improving notification delivery"
+
+# Notification Channels Configuration
+# Configure these in your AlertManager configuration
+
+# Example Slack notification:
+# receivers:
+#   - name: 'security-alerts'
+#     slack_configs:
+#       - api_url: $SLACK_SECURITY_WEBHOOK
+#         channel: '#security-alerts'
+#         title: '{{ .GroupLabels.severity | toUpper }}: {{ .GroupLabels.alertname }}'
+#         text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+# Example Email notification:
+# receivers:
+#   - name: 'security-team'
+#     email_configs:
+#       - to: 'security@anvil.com'
+#         from: 'alerts@anvil.com'
+#         subject: 'Security Alert: {{ .GroupLabels.alertname }}'
+
+# Example PagerDuty for critical alerts:
+# receivers:
+#   - name: 'pagerduty-critical'
+#     pagerduty_configs:
+#       - service_key: $PAGERDUTY_SERVICE_KEY
+#         description: '{{ .GroupLabels.alertname }}: {{ .GroupLabels.instance }}'
+
+# Route configuration
+# route:
+#   receiver: 'security-alerts'
+#   group_by: ['alertname', 'severity']
+#   group_wait: 10s
+#   group_interval: 10s
+#   repeat_interval: 1h
+#   routes:
+#     - match:
+#         severity: critical
+#       receiver: 'pagerduty-critical'
+#       repeat_interval: 15m
+#     - match:
+#         severity: high
+#       receiver: 'security-team'
+#       repeat_interval: 30m
+#     - match:
+#         severity: warning
+#       receiver: 'security-alerts'
+#       repeat_interval: 4h
