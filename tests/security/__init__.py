@@ -1,1 +1,1 @@
-"""Security testing suite."""
+"""Security tests for OWASP defense middleware."""
