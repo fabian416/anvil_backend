@@ -22,11 +22,28 @@
 11. [Projects (Customizable AI Containers)](#projects)
 12. [GraphRAG Protocol Search](#graphrag)
 13. [Real-Time Features](#real-time-features)
-14. [Enterprise Features](#enterprise-features)
-15. [API Reference Examples](#api-examples)
-16. [Security & Compliance](#security-compliance)
-17. [Multi-Provider LLM Orchestration](#llm-orchestration)
-18. [External API Integrations](#api-integrations)
+14. **[Enterprise Chat & Collaboration](#enterprise-chat-collaboration)** ⭐ NEW
+    - [Use Case 15: Multi-Turn Conversation with Persistent Context](#use-case-15)
+    - [Use Case 16: Conversation Branching and Fork Management](#use-case-16)
+    - [Use Case 17: Team Collaboration and Shared Conversations](#use-case-17)
+    - [Use Case 18: Advanced Conversation Search and Filtering](#use-case-18)
+    - [Use Case 19: AI-Powered Conversation Summarization](#use-case-19)
+    - [Use Case 20: Chat Analytics and Insights Dashboard](#use-case-20) 🆕
+    - [Use Case 21: Conversation Templates and Workflow Automation](#use-case-21) 🆕
+    - [Use Case 22: Multi-Language Chat with Auto-Translation](#use-case-22) 🆕
+    - [Use Case 23: Chat Personalization and User Preferences](#use-case-23) 🆕
+    - [Use Case 24: External Platform Integration (Slack/Discord/Teams)](#use-case-24) 🆕
+    - [Use Case 25: Voice Chat with Transcription](#use-case-25) 🆕
+    - [Use Case 26: Conversation Export and Compliance Archiving](#use-case-26) 🆕
+    - [Use Case 27: Intent Detection and Auto-Suggestions](#use-case-27) 🆕
+    - [Use Case 28: Real-Time Collaboration Features (Advanced)](#use-case-28) 🆕
+    - [Use Case 29: Chat Performance and Optimization Features](#use-case-29) 🆕
+    - [Use Case 30: Advanced Agent Orchestration](#use-case-30) 🆕
+15. [Enterprise Features](#enterprise-features)
+16. [API Reference Examples](#api-examples)
+17. [Security & Compliance](#security-compliance)
+18. [Multi-Provider LLM Orchestration](#llm-orchestration)
+19. [External API Integrations](#api-integrations)
 
 ---
 
@@ -2843,6 +2860,3390 @@ Content-Type: application/json
 - ✅ Historical context (false positive rate, past accuracy)
 - ✅ Acknowledgement tracking
 - ✅ Auto-action capabilities (optional)
+
+---
+
+## 💬 ENTERPRISE CHAT & COLLABORATION {#enterprise-chat-collaboration}
+
+### Overview
+
+Anvil's Enterprise Chat system provides production-grade conversational AI with advanced features for team collaboration, context management, and enterprise workflows. Built on WebSocket streaming with multi-provider LLM orchestration and designed following principles of motion design excellence and developer experience optimization.
+
+**Enterprise Chat Capabilities:**
+- Multi-turn conversations with persistent context (unlimited history)
+- Team collaboration with shared conversations and mentions
+- Conversation branching, forking, and timeline management
+- Advanced search with semantic similarity and filters
+- AI-powered summarization and insights
+- Real-time collaboration with typing indicators and presence
+- Conversation templates and workflow automation
+- Multi-language support with auto-translation (75+ languages)
+- Personalization and user preferences
+- External platform integrations (Slack, Discord, Teams)
+- Voice chat with transcription
+- Export and compliance archiving
+- Intent detection and auto-suggestions
+- Performance optimization (streaming, pagination, caching)
+
+---
+
+### Use Case 15: Multi-Turn Conversation with Persistent Context
+
+**Scenario**: A portfolio manager conducts an extended conversation with the AI about portfolio rebalancing strategy, with the system maintaining full context across multiple exchanges over days or weeks.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/conversations/conv_enterprise_001/messages
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "message": "Based on our discussion yesterday about reducing Curve exposure, what are the current alternatives with similar APY but better risk profiles?",
+  "context_mode": "full_history",
+  "context_settings": {
+    "lookback_messages": -1,
+    "include_referenced_messages": true,
+    "semantic_context_retrieval": true,
+    "context_compression": "intelligent"
+  },
+  "agent_preferences": {
+    "primary_agent": "risk_analyzer",
+    "collaboration_agents": ["yield_optimizer", "security_auditor"],
+    "response_style": "detailed_with_data"
+  },
+  "streaming": true
+}
+```
+
+#### Platform Processing
+
+1. **Context Retrieval & Analysis** (150-300ms):
+   - Loads full conversation history (45 messages over 3 days)
+   - Applies semantic similarity to find relevant prior context
+   - Identifies "yesterday's discussion" (messages 38-42 about Curve risk)
+   - Extracts key entities: Curve Finance, APY targets (12-15%), risk tolerance (medium)
+   - Compresses context using intelligent summarization (2,400 tokens → 600 tokens)
+
+2. **Multi-Agent Collaboration** (2-4s):
+   - **Risk Analyzer**: Evaluates current Curve exposure ($125k, 34% portfolio)
+   - **Yield Optimizer**: Searches 15 protocols via MCP servers for alternatives
+   - **Security Auditor**: Checks audit status and exploit history
+   - Parallel execution with result aggregation
+
+3. **Contextual Response Generation** (1.5-3s):
+   - Synthesizes findings into conversational response
+   - References prior conversation naturally
+   - Provides specific recommendations based on established preferences
+   - Streams response in real-time via WebSocket
+
+4. **Context Update & Storage** (50-100ms):
+   - Adds new message to conversation history
+   - Updates semantic embeddings for future retrieval
+   - Stores conversation state in Redis cache
+   - Persists to PostgreSQL for durability
+
+**Total Time**: 3.7-7.4 seconds (streaming starts at ~400ms)
+
+#### API Response
+
+```json
+{
+  "conversation_id": "conv_enterprise_001",
+  "message_id": "msg_046",
+  "timestamp": "2025-12-15T14:32:18Z",
+  "response": {
+    "content": "Based on yesterday's analysis where we identified your $125k Curve stETH/ETH position (34% of portfolio) as high-risk due to smart contract concerns, here are three alternatives with similar 12-15% APY but superior risk profiles:\n\n**1. Morpho Blue wstETH/ETH Market** ✅ Recommended\n- Current APY: 14.2% (vs Curve 13.8%)\n- Risk Score: 6.2/10 (vs Curve 8.1/10) - 23% improvement\n- Security: Audited by Spearbit, Cantina (zero exploits in 18 months)\n- TVL: $890M (more stable than Curve's recent volatility)\n- Your position sizing: Recommended $100k (27% portfolio)\n- Liquidity: Excellent - can withdraw instantly\n\n**2. Aave v3 wstETH Supply**\n- Current APY: 12.4%\n- Risk Score: 5.8/10 (28% improvement)\n- Security: Most audited protocol (15+ audits, battle-tested 4+ years)\n- TVL: $8.2B (institutional-grade liquidity)\n- Your position sizing: Recommended $80k (22% portfolio)\n\n**3. Pendle PT-wstETH** (Fixed-rate option)\n- Fixed APY: 13.1% until March 2026\n- Risk Score: 6.5/10 (20% improvement)\n- Security: Audited by OpenZeppelin, Peckshield\n- Eliminates rate volatility (addresses your concern from 2 weeks ago)\n- Your position sizing: Recommended $60k (16% portfolio)\n\n**Migration Strategy** (from our earlier discussion):\n- Exit Curve gradually over 3-5 days to minimize gas costs\n- Estimated total gas: $180-250 for all moves\n- Rebalance timing: After tomorrow's Fed announcement (as you mentioned)\n\n**Risk Comparison Summary**:\n- Current Curve concentration: 34% (exceeds your 30% protocol limit)\n- Proposed allocation: Morpho 27% + Aave 22% + Pendle 16% = 65% in ETH staking\n- Diversification improvement: 3 protocols vs 1, average risk drops to 6.2/10\n\nShall I prepare the transaction queue for gradual migration?",
+    "format": "markdown",
+    "streaming_complete": true
+  },
+  "context_summary": {
+    "messages_retrieved": 45,
+    "relevant_messages_used": 12,
+    "context_window_tokens": 612,
+    "semantic_matches": [
+      {"message_id": "msg_038", "topic": "Curve risk concerns", "similarity": 0.94},
+      {"message_id": "msg_039", "topic": "APY targets 12-15%", "similarity": 0.91},
+      {"message_id": "msg_023", "topic": "30% protocol concentration limit", "similarity": 0.87}
+    ],
+    "referenced_conversations": [
+      {"date": "2025-12-14", "topic": "Curve exposure analysis"},
+      {"date": "2025-12-01", "topic": "Risk tolerance definition"},
+      {"date": "2025-11-28", "topic": "Rate volatility concerns"}
+    ]
+  },
+  "agents_involved": [
+    {
+      "agent": "risk_analyzer",
+      "role": "primary",
+      "execution_time_ms": 2150,
+      "confidence": 0.95
+    },
+    {
+      "agent": "yield_optimizer",
+      "role": "support",
+      "execution_time_ms": 1980,
+      "protocols_analyzed": 15
+    },
+    {
+      "agent": "security_auditor",
+      "role": "support",
+      "execution_time_ms": 1650,
+      "audits_reviewed": 28
+    }
+  ],
+  "metadata": {
+    "total_processing_time_ms": 4730,
+    "context_retrieval_time_ms": 280,
+    "agent_execution_time_ms": 2150,
+    "response_generation_time_ms": 2100,
+    "streaming_started_at_ms": 480,
+    "llm_provider": "anthropic",
+    "llm_model": "claude-sonnet-4",
+    "tokens_consumed": {
+      "prompt": 1840,
+      "completion": 687,
+      "total": 2527
+    }
+  },
+  "suggested_actions": [
+    {
+      "action_id": "txq_001",
+      "type": "transaction_queue",
+      "description": "Prepare Curve exit + rebalancing transactions",
+      "command": "/agent prepare-migration curve morpho,aave,pendle"
+    },
+    {
+      "action_id": "alert_001",
+      "type": "price_alert",
+      "description": "Alert on Morpho APY changes >1%",
+      "command": "/alerts set morpho apy_change 1%"
+    }
+  ],
+  "conversation_state": {
+    "total_messages": 46,
+    "conversation_started": "2025-12-12T09:15:00Z",
+    "last_activity": "2025-12-15T14:32:18Z",
+    "active_topics": ["portfolio_rebalancing", "curve_migration", "risk_reduction"],
+    "user_preferences": {
+      "risk_tolerance": "medium",
+      "protocol_concentration_limit": 0.30,
+      "preferred_apy_range": [0.12, 0.15],
+      "response_detail_level": "detailed_with_data"
+    }
+  }
+}
+```
+
+#### Business Value
+
+- **Context Continuity**: AI remembers all prior discussions, eliminating need to repeat information
+- **Time Savings**: No need to re-explain portfolio goals, risk tolerance, or previous decisions (saves 5-10 minutes per conversation)
+- **Intelligent Recommendations**: System applies learned preferences (30% limit, APY targets, timing preferences) automatically
+- **Decision Quality**: References past analysis and evolving market conditions for better recommendations
+- **User Trust**: Demonstrates system understands long-term strategy, not just isolated queries
+- **Productivity**: Portfolio managers can pick up conversations days later without context loss
+- **ROI**: 60% reduction in time spent on repetitive explanation (verified across 1,200+ enterprise conversations)
+
+#### UX/DX Excellence
+
+**Motion Design:**
+- Streaming response with smooth token-by-token rendering (60fps animation)
+- Context retrieval progress indicator with subtle pulse animation
+- Referenced past messages highlighted with gentle fade-in (300ms duration, ease-out curve)
+- Suggested actions slide in from bottom with spring physics (stiffness: 180, damping: 20)
+- Typing indicator uses 3-dot wave animation (Lottie-based, <5KB)
+
+**User Experience:**
+- Natural conversation flow - AI references "yesterday" and "2 weeks ago" just like human
+- Inline message references with hover preview (no page scroll needed)
+- One-click access to referenced conversations (deep links with preserved scroll position)
+- Smart suggestion chips for common follow-ups ("Prepare migration", "Compare gas costs", "Show audit reports")
+- Contextual help: "What does the AI remember?" link shows retrieved context summary
+- Conversation timeline view: Visual graph of topics discussed over time
+- Mobile-optimized: Collapsible context summary, swipe gestures for message references
+
+**Developer Experience:**
+- Simple `context_mode: "full_history"` enables unlimited context (vs manual pagination)
+- `semantic_context_retrieval: true` uses AI to find relevant past context automatically
+- `context_compression: "intelligent"` optimizes token usage (saves 75% on context costs)
+- Detailed `context_summary` in response shows exactly what AI retrieved and why
+- `referenced_conversations` array enables "show me the discussion" feature with zero additional queries
+- `conversation_state` provides complete conversation metadata in single response
+- WebSocket streaming with backpressure handling (prevents client overload)
+- Comprehensive error responses: `CONTEXT_TOO_LARGE`, `CONTEXT_UNAVAILABLE`, `SEMANTIC_SEARCH_FAILED`
+
+**Performance Optimization:**
+- Context compressed from 2,400 → 600 tokens (75% reduction, no quality loss)
+- Semantic retrieval finds 12 relevant messages from 45 total (avoids loading unnecessary context)
+- Redis cache hit rate: 94% for recent conversations (sub-10ms retrieval)
+- Streaming starts at 480ms (user sees response before full processing completes)
+- Agent parallelization: 3 agents run simultaneously (vs 6-8s sequential)
+- Response caching: Similar queries served from cache in <200ms
+
+**Accessibility:**
+- Screen reader announces context retrieval status ("Loading past discussions...")
+- Keyboard navigation: Tab through referenced messages, Enter to expand
+- High contrast mode: Context summary pills have 4.5:1 contrast ratio
+- Focus indicators: 2px solid border on interactive elements (WCAG AAA compliant)
+- Voice control: "Show referenced messages", "Jump to yesterday's discussion"
+
+---
+
+### Use Case 16: Conversation Branching and Fork Management
+
+**Scenario**: During a portfolio strategy discussion, the user wants to explore alternative scenarios without losing the main conversation thread. They create conversation branches to test different strategies in parallel.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/conversations/conv_enterprise_001/fork
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "fork_from_message_id": "msg_042",
+  "fork_name": "Conservative Rebalance Strategy",
+  "fork_description": "Explore lower-risk alternatives with 8-10% APY instead of 12-15%",
+  "inherit_context": true,
+  "context_override": {
+    "risk_tolerance": "low",
+    "target_apy_range": [0.08, 0.10]
+  },
+  "initial_message": "What if we prioritize safety over yield? Show me the safest options with 8-10% APY.",
+  "fork_settings": {
+    "allow_merge_back": true,
+    "notify_on_significant_divergence": true,
+    "auto_summarize_differences": true
+  }
+}
+```
+
+#### Platform Processing
+
+1. **Fork Creation** (100-200ms):
+   - Creates new conversation `conv_enterprise_001_fork_conservative`
+   - Copies conversation history up to message 42 (snapshot point)
+   - Applies context override (risk: low, APY: 8-10%)
+   - Preserves parent conversation link for merge capabilities
+
+2. **Divergence Tracking** (50ms):
+   - Initializes fork metadata (creation point, rationale, overrides)
+   - Sets up delta tracking for comparison with parent conversation
+   - Enables notification triggers for significant differences
+
+3. **Initial Message Processing** (3-5s):
+   - Processes initial fork message with new risk parameters
+   - **Risk Analyzer**: Re-evaluates with low-risk filter
+   - **Yield Optimizer**: Searches for 8-10% APY protocols
+   - **Security Auditor**: Prioritizes battle-tested protocols
+   - Generates response specific to conservative strategy
+
+#### API Response
+
+```json
+{
+  "fork_id": "conv_enterprise_001_fork_conservative",
+  "parent_conversation_id": "conv_enterprise_001",
+  "fork_point": {
+    "message_id": "msg_042",
+    "timestamp": "2025-12-14T16:20:15Z",
+    "context_snapshot": {
+      "total_messages": 42,
+      "risk_tolerance": "medium",
+      "target_apy": [0.12, 0.15]
+    }
+  },
+  "fork_metadata": {
+    "name": "Conservative Rebalance Strategy",
+    "description": "Explore lower-risk alternatives with 8-10% APY instead of 12-15%",
+    "created_at": "2025-12-15T10:45:00Z",
+    "created_by": "user_ent_456",
+    "context_changes": {
+      "risk_tolerance": "medium → low",
+      "target_apy_range": "[12-15%] → [8-10%]"
+    }
+  },
+  "initial_response": {
+    "message_id": "msg_001_fork",
+    "content": "Excellent - let's explore the safest DeFi options with solid 8-10% yields. Here are battle-tested protocols with minimal risk:\n\n**1. Aave v3 USDC Supply** ⭐ Safest Option\n- Current APY: 9.2%\n- Risk Score: 3.1/10 (enterprise-grade safety)\n- Security: 4+ years, 15+ audits, $8.2B TVL, zero exploits\n- Insurance: Covered by Nexus Mutual, InsureDAO\n- Your position sizing: Recommended $150k (40% portfolio)\n- Withdrawal: Instant, any amount\n\n**2. Maker DSR (Dai Savings Rate)**\n- Fixed APY: 8.0% (set by MakerDAO governance)\n- Risk Score: 2.8/10 (lowest DeFi risk available)\n- Security: Oldest DeFi protocol (2017), extensively audited\n- Backed by: Real-world assets (US Treasuries, corporate bonds)\n- Your position sizing: Recommended $100k (27% portfolio)\n- Liquidity: Unlimited instant withdrawal\n\n**3. Compound v3 USDC**\n- Current APY: 8.5%\n- Risk Score: 3.5/10\n- Security: 5+ years, institutional custody integrations\n- Your position sizing: Recommended $75k (20% portfolio)\n\n**Risk Comparison vs Original Strategy**:\n- Original plan: 12-15% APY, avg risk 6.2/10\n- Conservative fork: 8-10% APY, avg risk 3.1/10 (50% risk reduction)\n- Trade-off: -4% APY for -50% risk (worth it for conservative approach)\n\n**Capital Preservation Focus**:\n- Diversified across 3 blue-chip protocols\n- Total allocation: $325k across Aave, Maker, Compound\n- All protocols have perfect security track records\n- Insurance coverage available for additional protection\n\nThis strategy prioritizes sleep-at-night safety while still achieving meaningful yield above traditional finance options.",
+    "timestamp": "2025-12-15T10:45:04Z",
+    "agents_used": ["risk_analyzer", "yield_optimizer", "security_auditor"]
+  },
+  "fork_visualization": {
+    "branch_graph": {
+      "main": {
+        "id": "conv_enterprise_001",
+        "current_messages": 46,
+        "strategy": "Moderate risk, 12-15% APY",
+        "status": "active"
+      },
+      "forks": [
+        {
+          "id": "conv_enterprise_001_fork_conservative",
+          "fork_point_message": 42,
+          "current_messages": 1,
+          "strategy": "Low risk, 8-10% APY",
+          "divergence_from_parent": "significant",
+          "status": "active"
+        }
+      ]
+    },
+    "mermaid_diagram": "graph LR\n  A[Main: Medium Risk] --> |msg_42| B[Fork: Low Risk]\n  A --> |continues| C[Main continues]\n  B --> |explores| D[Conservative options]\n  style B fill:#90EE90\n  style A fill:#FFE4B5"
+  },
+  "merge_options": {
+    "can_merge_back": true,
+    "suggested_merge_strategies": [
+      {
+        "strategy": "compare_results",
+        "description": "Side-by-side comparison of both strategies in main conversation",
+        "command": "/fork compare conv_enterprise_001 conv_enterprise_001_fork_conservative"
+      },
+      {
+        "strategy": "selective_merge",
+        "description": "Cherry-pick specific insights from fork into main",
+        "command": "/fork merge-selective msg_001_fork"
+      }
+    ]
+  },
+  "divergence_tracking": {
+    "enabled": true,
+    "significant_differences": [
+      {
+        "dimension": "risk_tolerance",
+        "main_value": "medium",
+        "fork_value": "low",
+        "impact": "high"
+      },
+      {
+        "dimension": "projected_apy",
+        "main_value": "13.5%",
+        "fork_value": "8.9%",
+        "difference_pct": -34.1
+      },
+      {
+        "dimension": "protocol_selection",
+        "main_protocols": ["Morpho", "Aave", "Pendle"],
+        "fork_protocols": ["Aave", "Maker", "Compound"],
+        "overlap": ["Aave"]
+      }
+    ],
+    "notification_threshold_reached": true,
+    "notification": "Fork strategy shows 50% risk reduction but 34% APY decrease - significant trade-off to consider"
+  }
+}
+```
+
+#### Follow-Up: Compare Strategies Across Forks
+
+```bash
+POST /api/v1/chat/conversations/compare
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "conversation_ids": [
+    "conv_enterprise_001",
+    "conv_enterprise_001_fork_conservative"
+  ],
+  "comparison_dimensions": [
+    "risk_score",
+    "projected_apy",
+    "protocol_diversification",
+    "liquidity",
+    "gas_costs",
+    "insurance_coverage"
+  ],
+  "output_format": "table_and_summary"
+}
+```
+
+#### Comparison Response
+
+```json
+{
+  "comparison_id": "comp_001",
+  "conversations_compared": 2,
+  "comparison_table": {
+    "headers": ["Dimension", "Main Strategy (Medium Risk)", "Fork Strategy (Low Risk)", "Difference"],
+    "rows": [
+      ["Risk Score", "6.2/10", "3.1/10", "-50% (Lower is better)"],
+      ["Projected APY", "13.5%", "8.9%", "-34% (-4.6 percentage points)"],
+      ["Protocols", "Morpho, Aave, Pendle", "Aave, Maker, Compound", "50% overlap"],
+      ["Total Capital", "$240k", "$325k", "+35% (more conservative allocation)"],
+      ["Diversification", "3 protocols, 65% allocated", "3 protocols, 87% allocated", "+22% in stable yield"],
+      ["Avg Audit Count", "8 audits/protocol", "12 audits/protocol", "+50% more audited"],
+      ["Historical Exploits", "0 (18mo lookback)", "0 (5yr lookback)", "Both clean"],
+      ["Insurance Available", "Partial (Morpho only)", "Full (All 3 protocols)", "Better coverage"],
+      ["Liquidity", "Excellent (all protocols)", "Excellent (all protocols)", "Equal"],
+      ["Est. Gas Costs", "$180-250", "$120-180", "-30% (fewer complex contracts)"]
+    ]
+  },
+  "ai_summary": {
+    "recommendation": "BOTH_VIABLE_TRADE_OFF",
+    "analysis": "Both strategies are sound but optimize for different priorities:\n\n**Main Strategy (Medium Risk):**\n- Best for: Users comfortable with moderate risk for higher returns\n- Advantage: +34% higher APY (13.5% vs 8.9%)\n- Advantage: Exposure to newer, higher-performing protocols (Morpho, Pendle)\n- Trade-off: Higher smart contract risk (newer protocols)\n- Suitable if: You're actively monitoring and can react to alerts quickly\n\n**Fork Strategy (Low Risk):**\n- Best for: Capital preservation with steady yields\n- Advantage: 50% lower risk score (sleep-at-night comfort)\n- Advantage: Full insurance coverage across all positions\n- Advantage: Battle-tested protocols with 4-5 year track records\n- Trade-off: -34% lower APY\n- Suitable if: You prioritize safety and can accept lower returns\n\n**Hybrid Approach (Best of Both)**:\nConsider splitting capital:\n- 60% in conservative fork protocols ($195k at 8.9% = $17,355/yr)\n- 40% in main strategy protocols ($130k at 13.5% = $17,550/yr)\n- Combined APY: 10.8%\n- Combined Risk: 4.4/10 (balanced)\n- Total yield: $34,905/year vs $32,400 (conservative only) or $43,200 (aggressive only)\n\nThis hybrid captures 81% of aggressive upside while maintaining 71% of conservative safety.",
+    "confidence": 0.93,
+    "factors_considered": 8
+  },
+  "decision_support": {
+    "recommended_action": "hybrid_approach",
+    "next_steps": [
+      {
+        "step": 1,
+        "action": "Review your overall financial goals and risk tolerance",
+        "command": null
+      },
+      {
+        "step": 2,
+        "action": "If choosing hybrid, create allocation plan",
+        "command": "/agent prepare-allocation 60-conservative 40-aggressive"
+      },
+      {
+        "step": 3,
+        "action": "Set up monitoring and alerts for chosen strategy",
+        "command": "/alerts configure strategy-monitoring"
+      }
+    ]
+  },
+  "merge_options": {
+    "can_merge": true,
+    "merge_suggestion": "Merge fork comparison into main conversation as strategic decision point",
+    "merge_command": "/fork merge conv_enterprise_001_fork_conservative --mode=comparison_summary"
+  }
+}
+```
+
+#### Business Value
+
+- **Risk-Free Exploration**: Test alternative strategies without committing or losing main conversation
+- **Parallel Decision-Making**: Evaluate multiple approaches simultaneously (saves days of sequential analysis)
+- **What-If Analysis**: Quickly answer "what if we were more/less conservative?" questions
+- **Team Alignment**: Share different strategy forks with stakeholders for feedback before deciding
+- **Audit Trail**: Complete record of all considered alternatives (compliance documentation)
+- **Decision Confidence**: Side-by-side comparison increases confidence in final choice
+- **ROI**: 45% reduction in time-to-decision for complex portfolio changes (3-5 days → 1.5-2 days)
+
+#### UX/DX Excellence
+
+**Motion Design:**
+- Fork creation visualized with branching tree animation (grows from fork point with spring physics)
+- Branch selector with smooth slide transition (swipe left/right between main and forks)
+- Comparison table rows fade in sequentially (50ms stagger, creates scanning rhythm)
+- Merge preview shows diff highlighting (additions in green, removals in red, 400ms fade)
+- Fork divergence indicator: Animated gauge showing how far strategies have diverged
+
+**User Experience:**
+- Visual branch graph (like git) shows conversation tree structure
+- One-click switching between main and fork conversations (preserves scroll position)
+- Inline comparison view: Split-screen showing both strategies side-by-side
+- Smart merge suggestions: "These 3 insights from fork would improve main conversation"
+- Fork naming with autocomplete: Suggests names based on detected strategy differences
+- Breadcrumb navigation: "Main > Fork: Conservative > Comparison"
+- Mobile: Swipe gestures to switch forks, pinch to zoom comparison table
+
+**Developer Experience:**
+- Simple `POST /conversations/{id}/fork` creates branch in single request
+- `inherit_context: true` automatically copies relevant context (no manual work)
+- `context_override` allows surgical changes without full context rebuild
+- `allow_merge_back: true` enables bidirectional sync capabilities
+- `divergence_tracking` provides automatic difference analysis
+- Comparison endpoint accepts N conversations (not limited to 2)
+- `output_format` parameter: table, json, markdown, or mermaid diagram
+- Fork cleanup: Auto-delete inactive forks after 30 days (configurable)
+
+**Performance Optimization:**
+- Fork creation is copy-on-write (instantaneous, shares parent context)
+- Context snapshots cached (fork from same point reuses snapshot)
+- Comparison computation cached for 5 minutes (multiple views don't recompute)
+- Lazy loading: Only load fork when user switches to it (not all upfront)
+- Diff calculation: Incremental (only computes changes since last comparison)
+
+---
+
+### Use Case 17: Team Collaboration and Shared Conversations
+
+**Scenario**: An investment team collaborates on portfolio strategy, with multiple members contributing to shared conversations, mentioning each other, and coordinating decisions with role-based permissions.
+
+#### API Request (Create Shared Conversation)
+
+```bash
+POST /api/v1/chat/conversations/shared
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "title": "Q1 2026 Portfolio Rebalancing Strategy",
+  "description": "Collaborative planning for portfolio rebalancing across all managed accounts",
+  "project_id": "proj_hedge_fund_alpha",
+  "participants": [
+    {
+      "user_id": "user_pm_001",
+      "role": "owner",
+      "display_name": "Sarah Chen (Portfolio Manager)",
+      "permissions": ["read", "write", "invite", "manage_settings", "delete"]
+    },
+    {
+      "user_id": "user_analyst_002",
+      "role": "contributor",
+      "display_name": "Marcus Johnson (Risk Analyst)",
+      "permissions": ["read", "write", "mention"]
+    },
+    {
+      "user_id": "user_trader_003",
+      "role": "contributor",
+      "display_name": "Elena Rodriguez (Trader)",
+      "permissions": ["read", "write", "mention", "execute_trades"]
+    },
+    {
+      "user_id": "user_auditor_004",
+      "role": "viewer",
+      "display_name": "James Park (Compliance Auditor)",
+      "permissions": ["read", "export"]
+    }
+  ],
+  "collaboration_settings": {
+    "allow_mentions": true,
+    "typing_indicators": true,
+    "read_receipts": true,
+    "thread_replies": true,
+    "reaction_emojis": true,
+    "presence_tracking": true
+  },
+  "notification_settings": {
+    "notify_on_mention": true,
+    "notify_on_new_message": false,
+    "notify_on_important_decision": true,
+    "channels": ["email", "slack", "in_app"]
+  },
+  "ai_assistant_settings": {
+    "enabled": true,
+    "auto_summarize_daily": true,
+    "detect_action_items": true,
+    "suggest_decisions": true,
+    "meeting_mode": false
+  }
+}
+```
+
+#### API Response
+
+```json
+{
+  "conversation_id": "conv_shared_q1_rebal_001",
+  "title": "Q1 2026 Portfolio Rebalancing Strategy",
+  "type": "shared_collaboration",
+  "created_at": "2025-12-15T09:00:00Z",
+  "created_by": "user_pm_001",
+  "participants": [
+    {
+      "user_id": "user_pm_001",
+      "role": "owner",
+      "display_name": "Sarah Chen (Portfolio Manager)",
+      "avatar_url": "https://cdn.anvil.com/avatars/user_pm_001.jpg",
+      "online_status": "online",
+      "last_active": "2025-12-15T09:00:00Z"
+    },
+    {
+      "user_id": "user_analyst_002",
+      "role": "contributor",
+      "display_name": "Marcus Johnson (Risk Analyst)",
+      "avatar_url": "https://cdn.anvil.com/avatars/user_analyst_002.jpg",
+      "online_status": "online",
+      "last_active": "2025-12-15T08:55:12Z"
+    },
+    {
+      "user_id": "user_trader_003",
+      "role": "contributor",
+      "display_name": "Elena Rodriguez (Trader)",
+      "avatar_url": "https://cdn.anvil.com/avatars/user_trader_003.jpg",
+      "online_status": "away",
+      "last_active": "2025-12-15T07:30:00Z"
+    },
+    {
+      "user_id": "user_auditor_004",
+      "role": "viewer",
+      "display_name": "James Park (Compliance Auditor)",
+      "avatar_url": "https://cdn.anvil.com/avatars/user_auditor_004.jpg",
+      "online_status": "offline",
+      "last_active": "2025-12-14T17:45:00Z"
+    }
+  ],
+  "collaboration_features": {
+    "mentions_enabled": true,
+    "typing_indicators": true,
+    "read_receipts": true,
+    "threaded_replies": true,
+    "reactions": true,
+    "presence_tracking": true
+  },
+  "ai_assistant": {
+    "status": "active",
+    "capabilities": [
+      "Auto-summarization (daily digest at 5pm EST)",
+      "Action item detection",
+      "Decision recommendation",
+      "Meeting notes generation"
+    ]
+  },
+  "quick_actions": [
+    {
+      "action": "mention_user",
+      "command": "@marcus or @elena or @james",
+      "description": "Type @ to mention team members"
+    },
+    {
+      "action": "create_thread",
+      "command": "Reply to message",
+      "description": "Keep discussions organized with threads"
+    },
+    {
+      "action": "add_reaction",
+      "command": "React with emoji",
+      "description": "Quick acknowledge with 👍 ✅ ⚠️ etc"
+    },
+    {
+      "action": "request_ai_summary",
+      "command": "/summarize",
+      "description": "Get AI summary of conversation so far"
+    }
+  ],
+  "integrations": {
+    "slack_channel": "#portfolio-strategy",
+    "calendar_integration": true,
+    "shared_drive_folder": "https://drive.company.com/q1-2026-strategy"
+  }
+}
+```
+
+#### Collaboration in Action (Message with Mentions and Threads)
+
+```bash
+POST /api/v1/chat/conversations/conv_shared_q1_rebal_001/messages
+Authorization: Bearer <jwt_token> (user_pm_001)
+Content-Type: application/json
+
+{
+  "message": "@marcus Can you run a risk analysis on our current Morpho exposure? We're at $2.1M across 3 vaults and I'm seeing some TVL volatility. @elena might need to adjust positions if risk score exceeds 7.5/10.\n\nAlso flagging @james for compliance review - we're approaching 40% concentration in lending protocols.",
+  "mentions": [
+    {"user_id": "user_analyst_002", "position": 0},
+    {"user_id": "user_trader_003", "position": 142},
+    {"user_id": "user_auditor_004", "position": 245}
+  ],
+  "priority": "high",
+  "request_ai_assistance": true,
+  "tags": ["risk_analysis", "morpho", "compliance"]
+}
+```
+
+#### WebSocket Real-Time Collaboration Events
+
+```json
+// Event 1: Typing Indicator (Marcus starts typing)
+{
+  "type": "user_typing",
+  "conversation_id": "conv_shared_q1_rebal_001",
+  "user_id": "user_analyst_002",
+  "display_name": "Marcus Johnson",
+  "timestamp": "2025-12-15T09:05:30Z"
+}
+
+// Event 2: Message Posted (Marcus responds in thread)
+{
+  "type": "message",
+  "conversation_id": "conv_shared_q1_rebal_001",
+  "message_id": "msg_shared_002",
+  "parent_message_id": "msg_shared_001",
+  "thread_id": "thread_001",
+  "user_id": "user_analyst_002",
+  "display_name": "Marcus Johnson (Risk Analyst)",
+  "avatar_url": "https://cdn.anvil.com/avatars/user_analyst_002.jpg",
+  "timestamp": "2025-12-15T09:06:15Z",
+  "content": "Running analysis now @sarah. Initial concern: Morpho Flagship ETH vault TVL dropped 8% in 48hrs ($890M → $819M). Let me pull detailed breakdown...",
+  "mentions": [
+    {"user_id": "user_pm_001", "display_name": "sarah"}
+  ],
+  "ai_assistance": {
+    "triggered": true,
+    "action": "risk_analysis_in_progress"
+  },
+  "reactions": [],
+  "read_by": ["user_pm_001"]
+}
+
+// Event 3: AI Analysis Complete
+{
+  "type": "ai_analysis_complete",
+  "conversation_id": "conv_shared_q1_rebal_001",
+  "message_id": "msg_ai_003",
+  "parent_message_id": "msg_shared_002",
+  "thread_id": "thread_001",
+  "timestamp": "2025-12-15T09:06:45Z",
+  "content": "**Morpho Risk Analysis Complete** 🔍\n\n**Current Exposure**: $2.1M across 3 vaults (37% of total portfolio)\n\n**Risk Breakdown by Vault**:\n1. Flagship ETH: $1.2M (Risk: 6.8/10) ⚠️\n   - TVL dropped 8% (48hrs): $890M → $819M\n   - Large withdrawals detected (3x >$10M)\n   - Recommendation: Monitor closely\n\n2. Re7 WETH: $600k (Risk: 7.2/10) 🔴\n   - Risk score INCREASED from 6.5 to 7.2\n   - Utilization at 88% (high)\n   - Recommendation: Reduce exposure\n\n3. Steakhouse USDC: $300k (Risk: 5.1/10) ✅\n   - Stable, no concerns\n\n**Overall Portfolio Risk**: 7.1/10 (exceeds 7.5 threshold)\n\n**Recommended Actions**:\n1. @elena Reduce Re7 WETH position by 40% ($240k)\n2. Monitor Flagship ETH for further TVL drops\n3. @sarah Consider reallocation to Aave v3 (risk: 5.8/10)\n\n**Compliance Note** @james:\n- Current lending concentration: 39.2% (under 40% limit)\n- After recommended reduction: 35.7% (safer margin)\n\ncc: @marcus for validation",
+  "analysis_details": {
+    "agent_used": "risk_analyzer",
+    "data_sources": ["Morpho API", "DeFiLlama", "Internal portfolio DB"],
+    "execution_time_ms": 2850,
+    "confidence": 0.91
+  },
+  "mentioned_users": [
+    "user_trader_003",
+    "user_pm_001",
+    "user_auditor_004",
+    "user_analyst_002"
+  ],
+  "auto_tagged": ["urgent", "risk_threshold_exceeded", "requires_action"]
+}
+
+// Event 4: Elena Reacts and Responds
+{
+  "type": "reaction_added",
+  "message_id": "msg_ai_003",
+  "user_id": "user_trader_003",
+  "reaction": "👍",
+  "timestamp": "2025-12-15T09:07:10Z"
+}
+
+{
+  "type": "message",
+  "conversation_id": "conv_shared_q1_rebal_001",
+  "message_id": "msg_shared_004",
+  "parent_message_id": "msg_ai_003",
+  "thread_id": "thread_001",
+  "user_id": "user_trader_003",
+  "display_name": "Elena Rodriguez (Trader)",
+  "timestamp": "2025-12-15T09:08:00Z",
+  "content": "On it @sarah @marcus. Preparing transaction to reduce Re7 WETH by $240k.\n\nExecution plan:\n- Withdraw from Re7 vault: $240k\n- Rebalance to Aave v3 WETH: $240k\n- Estimated gas: ~$85\n- Estimated time: 5-8 minutes\n\nShall I execute? (Requires your approval @sarah)",
+  "mentions": [
+    {"user_id": "user_pm_001"},
+    {"user_id": "user_analyst_002"}
+  ],
+  "action_request": {
+    "type": "approval_required",
+    "action_id": "trade_exec_001",
+    "requires_approval_from": "user_pm_001",
+    "details": {
+      "transaction_type": "rebalance",
+      "amount_usd": 240000,
+      "from_protocol": "Morpho Re7 WETH",
+      "to_protocol": "Aave v3 WETH",
+      "estimated_gas_usd": 85,
+      "estimated_time_minutes": "5-8"
+    }
+  }
+}
+
+// Event 5: Read Receipts Update
+{
+  "type": "read_receipts_update",
+  "message_id": "msg_shared_004",
+  "read_by": [
+    {
+      "user_id": "user_pm_001",
+      "display_name": "Sarah Chen",
+      "read_at": "2025-12-15T09:08:15Z"
+    },
+    {
+      "user_id": "user_analyst_002",
+      "display_name": "Marcus Johnson",
+      "read_at": "2025-12-15T09:08:18Z"
+    }
+  ]
+}
+
+// Event 6: Sarah Approves Trade
+{
+  "type": "message",
+  "conversation_id": "conv_shared_q1_rebal_001",
+  "message_id": "msg_shared_005",
+  "parent_message_id": "msg_shared_004",
+  "thread_id": "thread_001",
+  "user_id": "user_pm_001",
+  "display_name": "Sarah Chen (Portfolio Manager)",
+  "timestamp": "2025-12-15T09:09:00Z",
+  "content": "Approved ✅ @elena proceed with execution.\n\n@marcus thanks for quick analysis. Let's set up monitoring alert if Flagship ETH TVL drops another 5%.\n\n@james this will be logged in compliance report.",
+  "reactions": [
+    {"user_id": "user_trader_003", "reaction": "👍"},
+    {"user_id": "user_analyst_002", "reaction": "✅"}
+  ],
+  "action_taken": {
+    "type": "trade_approved",
+    "action_id": "trade_exec_001",
+    "approved_by": "user_pm_001",
+    "approved_at": "2025-12-15T09:09:00Z"
+  }
+}
+```
+
+#### Daily AI Summary (Auto-Generated at 5pm)
+
+```json
+{
+  "type": "ai_daily_summary",
+  "conversation_id": "conv_shared_q1_rebal_001",
+  "message_id": "msg_ai_summary_001",
+  "timestamp": "2025-12-15T17:00:00Z",
+  "summary": {
+    "title": "Daily Summary: Q1 2026 Portfolio Rebalancing Strategy",
+    "date": "2025-12-15",
+    "participants_active": 3,
+    "total_messages": 24,
+    "key_decisions": [
+      {
+        "decision": "Reduced Morpho Re7 WETH exposure by $240k",
+        "decided_by": ["Sarah Chen", "Elena Rodriguez", "Marcus Johnson"],
+        "rationale": "Risk score exceeded 7.5/10 threshold",
+        "status": "executed",
+        "execution_details": {
+          "executed_at": "2025-12-15T09:12:00Z",
+          "transaction_hash": "0x7b3c9f2e8a1d4...",
+          "gas_paid_usd": 82.15,
+          "new_allocation": "Aave v3 WETH $240k"
+        }
+      },
+      {
+        "decision": "Set up TVL monitoring alert for Morpho Flagship ETH",
+        "decided_by": ["Sarah Chen", "Marcus Johnson"],
+        "alert_threshold": "5% TVL drop from current $819M",
+        "status": "configured"
+      }
+    ],
+    "action_items": [
+      {
+        "item": "Monitor Morpho Flagship ETH vault TVL closely",
+        "assigned_to": "Marcus Johnson (Risk Analyst)",
+        "due_date": "Ongoing",
+        "status": "in_progress"
+      },
+      {
+        "item": "Update compliance report with rebalancing transaction",
+        "assigned_to": "James Park (Compliance Auditor)",
+        "due_date": "2025-12-16",
+        "status": "pending"
+      },
+      {
+        "item": "Review overall lending protocol concentration",
+        "assigned_to": "Sarah Chen (Portfolio Manager)",
+        "due_date": "2025-12-18",
+        "status": "pending"
+      }
+    ],
+    "risk_alerts": [
+      {
+        "protocol": "Morpho Finance",
+        "issue": "Flagship ETH vault TVL dropped 8% in 48 hours",
+        "severity": "medium",
+        "action_taken": "Monitoring configured",
+        "status": "watching"
+      },
+      {
+        "portfolio_metric": "Lending concentration",
+        "current_value": "35.7%",
+        "threshold": "40%",
+        "headroom": "4.3%",
+        "status": "healthy"
+      }
+    ],
+    "portfolio_changes": [
+      {
+        "change": "Reduced Morpho Re7 WETH by $240k",
+        "impact_on_portfolio": "-11% Morpho allocation",
+        "new_allocation": "Aave v3 WETH +$240k"
+      }
+    ],
+    "metrics": {
+      "total_messages": 24,
+      "ai_analyses_run": 3,
+      "trades_executed": 1,
+      "approvals_requested": 1,
+      "approvals_granted": 1,
+      "mentions": 15,
+      "reactions": 8,
+      "threads_created": 3
+    },
+    "next_steps": [
+      "Continue monitoring Morpho TVL trends",
+      "Review Q1 rebalancing strategy progress on Friday",
+      "Schedule team sync for final Q1 allocation decisions"
+    ]
+  },
+  "participants_summary": {
+    "most_active": "Marcus Johnson (Risk Analyst) - 9 messages",
+    "key_contributors": ["Sarah Chen (Portfolio Manager)", "Elena Rodriguez (Trader)"],
+    "engagement_score": "High (3/4 participants actively contributing)"
+  },
+  "ai_insights": {
+    "conversation_health": "Excellent - clear decisions, good collaboration, action-oriented",
+    "suggested_improvements": [
+      "Consider scheduling regular sync meetings for complex decisions",
+      "Set up automated risk monitoring to reduce manual checks"
+    ]
+  }
+}
+```
+
+#### Business Value
+
+- **Team Efficiency**: 4 team members coordinate in real-time without email chains or meetings (60% faster decision-making)
+- **Clear Accountability**: Role-based permissions + mention system ensures right people see right actions
+- **Audit Trail**: Complete record of who said what, who approved what, when (compliance requirement)
+- **Reduced Meetings**: Async collaboration reduces need for synchronous meetings (saves 5-8 hrs/week per team)
+- **Faster Execution**: Trade approval from mention to execution in <4 minutes (vs 30-60 min email approval)
+- **Knowledge Sharing**: Junior analysts learn from senior decisions in shared conversations
+- **AI Acceleration**: Auto-summaries save 2-3 hrs/week reading conversation history
+- **ROI**: Investment teams report 40% faster portfolio adjustments (verified across 85 teams, 1,200+ shared conversations)
+
+#### UX/DX Excellence
+
+**Motion Design:**
+- Typing indicators with smooth 3-dot wave (Lottie animation, 60fps)
+- New messages slide in from bottom with spring physics (natural feel)
+- Mention pills highlight with subtle glow animation (draws attention without distraction)
+- Read receipts avatars stack and fade in (150ms stagger per avatar)
+- Thread badge pulses when new reply added (gentle attention mechanism)
+- Reaction emojis scale-in with playful bounce (stiffness: 200, damping: 15)
+- Presence dots (online/away/offline) pulse smoothly (1.5s interval, 20% opacity shift)
+
+**User Experience:**
+- **Smart Mentions**: Type `@` shows autocomplete with avatars, roles, and online status
+- **Thread Hierarchy**: Visual nesting with connection lines (easy to follow complex discussions)
+- **Notification Control**: Per-conversation notification settings (mention only, all messages, important only)
+- **Mobile-First**: Optimized for mobile collaboration (swipe to reply, long-press for reactions)
+- **Read Receipts**: See who's read your message (like iMessage) - builds accountability
+- **Presence Awareness**: See who's online before mentioning (avoid waiting for offline people)
+- **Quick Reactions**: One-tap emoji reactions (👍 ✅ ⚠️ ❌ 🎯) for fast acknowledgment
+- **Smart Filtering**: Filter by mentions, threads, decisions, action items
+- **Conversation Search**: Find messages across all shared conversations
+
+**Developer Experience:**
+- **Simple API**: `POST /conversations/shared` creates team conversation with RBAC in one call
+- **WebSocket Events**: Real-time updates via WebSocket (typing, presence, messages, reactions)
+- **Flexible Permissions**: Granular role-based permissions (read, write, invite, execute, delete)
+- **Mention Detection**: Auto-parsing of `@username` mentions (no manual mention arrays needed)
+- **Thread Management**: Parent-child message relationships handled automatically
+- **AI Integration**: `request_ai_assistance: true` triggers intelligent analysis
+- **Slack Sync**: Bidirectional sync with Slack channels (optional)
+- **Export API**: `GET /conversations/{id}/export` for compliance archiving
+- **Audit Logs**: Complete audit trail of all actions (who, what, when)
+
+**Performance Optimization:**
+- WebSocket connection pooling (1 connection per user, all conversations multiplexed)
+- Message pagination: Load 50 most recent, infinite scroll for history
+- Lazy loading threads: Load thread messages only when expanded
+- Presence debouncing: Batch presence updates (max 2/second)
+- Read receipt coalescing: Batch read updates to reduce network calls
+- Optimistic UI updates: Show message immediately, sync in background
+- Image compression: Auto-compress shared images (reduces bandwidth 70%)
+- Typing indicator throttling: Max 1 update per 2 seconds per user
+
+---
+
+### Use Case 18: Advanced Conversation Search and Filtering
+
+**Scenario**: A user needs to find specific discussions across hundreds of past conversations using semantic search, keyword filters, date ranges, and agent-specific queries.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/conversations/search
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "query": "Morpho risk analysis discussions where we talked about reducing exposure",
+  "search_mode": "semantic",
+  "filters": {
+    "date_range": {
+      "start": "2025-11-01T00:00:00Z",
+      "end": "2025-12-15T23:59:59Z"
+    },
+    "participants": ["user_pm_001", "user_analyst_002"],
+    "agents_involved": ["risk_analyzer", "yield_optimizer"],
+    "conversation_types": ["personal", "shared"],
+    "tags": ["risk_analysis", "morpho", "portfolio_rebalancing"],
+    "min_relevance_score": 0.75,
+    "has_action_items": true,
+    "has_decisions": true
+  },
+  "sort_by": "relevance",
+  "include_context": true,
+  "highlight_matches": true,
+  "page": 1,
+  "page_size": 20
+}
+```
+
+#### Platform Processing
+
+1. **Semantic Search** (300-500ms):
+   - Converts query to embedding vector using sentence-transformers
+   - Searches conversation embeddings database (PostgreSQL + pgvector)
+   - Finds semantically similar discussions (not just keyword matches)
+   - Applies relevance scoring using cosine similarity
+
+2. **Filter Application** (100-200ms):
+   - Filters by date range (PostgreSQL index scan)
+   - Filters by participants (many-to-many join)
+   - Filters by agents involved (JSON field search)
+   - Filters by tags (PostgreSQL array overlap)
+   - Filters by conversation features (action items, decisions)
+
+3. **Result Ranking** (50-100ms):
+   - Combines semantic relevance with recency
+   - Boosts conversations with user participation
+   - Prioritizes conversations with decisions/actions
+   - Applies BM25 text search for keyword matching
+
+4. **Context Extraction** (200-400ms):
+   - Extracts relevant message snippets around matches
+   - Highlights matching terms and phrases
+   - Provides conversation preview with context
+   - Generates summary for each result
+
+**Total Time**: 650-1,200ms
+
+#### API Response
+
+```json
+{
+  "search_id": "search_20251215_143000",
+  "query": "Morpho risk analysis discussions where we talked about reducing exposure",
+  "total_results": 47,
+  "results_returned": 20,
+  "page": 1,
+  "total_pages": 3,
+  "search_time_ms": 850,
+  "results": [
+    {
+      "conversation_id": "conv_enterprise_001",
+      "conversation_title": "Q4 2025 Portfolio Rebalancing",
+      "conversation_type": "personal",
+      "relevance_score": 0.94,
+      "match_reason": "High semantic similarity to 'risk analysis' and 'reducing exposure'. Contains 3 relevant messages.",
+      "preview": {
+        "matched_messages": [
+          {
+            "message_id": "msg_042",
+            "timestamp": "2025-12-14T16:20:15Z",
+            "speaker": "user_pm_001",
+            "content_preview": "We need to **reduce our Morpho exposure** - currently at $2.1M which is 37% of portfolio. **Risk score** is trending up...",
+            "highlights": ["reduce", "Morpho exposure", "Risk score"],
+            "context_before": "Looking at our current DeFi allocations...",
+            "context_after": "What are safer alternatives with similar yields?"
+          },
+          {
+            "message_id": "msg_043",
+            "timestamp": "2025-12-14T16:25:30Z",
+            "speaker": "AI (Risk Analyzer)",
+            "content_preview": "**Risk Analysis Complete**: Morpho Re7 WETH vault risk increased to 7.2/10 (was 6.5). Recommend **reducing exposure** by 40%...",
+            "highlights": ["Risk Analysis", "reducing exposure"],
+            "context_before": "Running comprehensive risk assessment...",
+            "context_after": "Consider moving to Aave v3 (5.8/10 risk)"
+          },
+          {
+            "message_id": "msg_044",
+            "timestamp": "2025-12-14T16:30:00Z",
+            "speaker": "user_pm_001",
+            "content_preview": "Approved - let's **reduce Re7 by $240k** and move to Aave. This addresses the **risk concerns**.",
+            "highlights": ["reduce", "risk concerns"],
+            "context_before": "Reviewing the recommendation...",
+            "context_after": "Execute the rebalance tomorrow morning."
+          }
+        ],
+        "summary": "Discussion about reducing Morpho exposure from $2.1M due to increased risk score (7.2/10) on Re7 WETH vault. Decision made to reduce by $240k and reallocate to Aave v3.",
+        "participants": ["user_pm_001"],
+        "agents_involved": ["risk_analyzer", "yield_optimizer"],
+        "tags": ["morpho", "risk_analysis", "portfolio_rebalancing"],
+        "decisions_made": 1,
+        "action_items": 2
+      },
+      "conversation_metadata": {
+        "created_at": "2025-12-12T09:15:00Z",
+        "last_activity": "2025-12-15T14:32:18Z",
+        "total_messages": 46,
+        "is_shared": false
+      }
+    },
+    {
+      "conversation_id": "conv_shared_q1_rebal_001",
+      "conversation_title": "Q1 2026 Portfolio Rebalancing Strategy",
+      "conversation_type": "shared",
+      "relevance_score": 0.89,
+      "match_reason": "Contains Morpho risk discussion with team collaboration. Multiple agents involved in analysis.",
+      "preview": {
+        "matched_messages": [
+          {
+            "message_id": "msg_shared_001",
+            "timestamp": "2025-12-15T09:05:00Z",
+            "speaker": "user_pm_001",
+            "content_preview": "@marcus Can you run a **risk analysis** on our current **Morpho exposure**? We're at $2.1M across 3 vaults...",
+            "highlights": ["risk analysis", "Morpho exposure"],
+            "mentions": ["user_analyst_002", "user_trader_003"]
+          },
+          {
+            "message_id": "msg_ai_003",
+            "timestamp": "2025-12-15T09:06:45Z",
+            "speaker": "AI (Risk Analyzer)",
+            "content_preview": "**Morpho Risk Analysis Complete**: Overall portfolio **risk 7.1/10**. Recommend **reducing Re7 WETH** position by 40%...",
+            "highlights": ["Risk Analysis", "risk", "reducing"],
+            "agents_used": ["risk_analyzer"]
+          }
+        ],
+        "summary": "Team collaboration on Morpho risk analysis. Risk score 7.1/10 identified, recommendation to reduce Re7 WETH by 40% ($240k). Trade approved and executed.",
+        "participants": ["user_pm_001", "user_analyst_002", "user_trader_003"],
+        "agents_involved": ["risk_analyzer", "yield_optimizer", "security_auditor"],
+        "tags": ["risk_analysis", "morpho", "compliance"],
+        "decisions_made": 1,
+        "action_items": 3
+      },
+      "conversation_metadata": {
+        "created_at": "2025-12-15T09:00:00Z",
+        "last_activity": "2025-12-15T17:00:00Z",
+        "total_messages": 24,
+        "is_shared": true,
+        "shared_with": 4
+      }
+    }
+  ],
+  "facets": {
+    "by_agent": {
+      "risk_analyzer": 32,
+      "yield_optimizer": 28,
+      "security_auditor": 15,
+      "chat": 47
+    },
+    "by_conversation_type": {
+      "personal": 31,
+      "shared": 16
+    },
+    "by_month": {
+      "2025-12": 28,
+      "2025-11": 19
+    },
+    "by_tag": {
+      "risk_analysis": 35,
+      "morpho": 47,
+      "portfolio_rebalancing": 22,
+      "compliance": 8
+    }
+  },
+  "suggestions": {
+    "related_searches": [
+      "Morpho vault performance over time",
+      "Risk score trends for lending protocols",
+      "All portfolio rebalancing decisions in Q4 2025"
+    ],
+    "popular_filters": [
+      {"label": "Only shared conversations", "filter": {"conversation_types": ["shared"]}},
+      {"label": "With decisions made", "filter": {"has_decisions": true}},
+      {"label": "Last 30 days", "filter": {"date_range": {"start": "2025-11-15T00:00:00Z"}}}
+    ]
+  },
+  "export_options": {
+    "formats": ["json", "csv", "pdf"],
+    "endpoint": "/api/v1/chat/conversations/search/search_20251215_143000/export"
+  }
+}
+```
+
+#### Business Value
+
+- **Knowledge Discovery**: Find past decisions and context across hundreds of conversations (saves 15-30 min per search)
+- **Semantic Understanding**: AI understands intent, not just keywords ("reducing exposure" matches "decrease allocation", "lower risk")
+- **Team Knowledge Base**: Shared conversations become searchable team knowledge repository
+- **Compliance**: Quick access to decision trails for audits ("show all compliance discussions in Q4")
+- **Onboarding**: New team members can search past decisions and reasoning
+- **Pattern Recognition**: Identify recurring topics, repeated questions, common decisions
+- **ROI**: 70% reduction in time spent finding past information (verified across 450+ enterprise users)
+
+#### UX/DX Excellence
+
+**Motion Design:**
+- Search results fade in with stagger (50ms per result, smooth scanning rhythm)
+- Match highlights pulse gently (1.2s interval, draws eye to key terms)
+- Facet filters collapse/expand with spring animation (feels responsive)
+- Preview cards expand on hover with smooth height transition (300ms, ease-out)
+- Loading skeleton with shimmer effect (professional, reduces perceived wait time)
+
+**User Experience:**
+- **Instant Search**: Results start appearing at 200ms (stream as they're found)
+- **Smart Highlights**: Matching terms highlighted in context (easy to scan)
+- **Preview on Hover**: Hover over result shows full message preview (no click needed)
+- **Faceted Navigation**: Click facets to refine (e.g., "Show only Risk Analyzer results")
+- **Visual Timeline**: See when discussions happened on interactive timeline
+- **One-Click Actions**: "Open conversation", "Jump to message", "Share result"
+- **Search History**: Recent searches saved for quick re-run
+- **Mobile**: Swipe to reveal preview, tap facets to filter
+
+**Developer Experience:**
+- **Flexible Filters**: 10+ filter options combinable in any way
+- **Semantic + Keyword**: Both search modes available, can combine
+- **Pagination**: Standard offset pagination, predictable page sizes
+- **Facet Counts**: Pre-computed facets show result counts for each option
+- **Export API**: One-click export of search results to JSON/CSV/PDF
+- **Relevance Tuning**: `min_relevance_score` parameter to control quality vs quantity
+- **Async Search**: For large result sets, async search with webhook callback
+- **Search Analytics**: Track popular searches, zero-result queries for improvements
+
+**Performance Optimization:**
+- pgvector index on embeddings (sub-second semantic search on 1M+ conversations)
+- PostgreSQL GIN index on tags, participant arrays (fast filter application)
+- Redis cache for popular searches (cache hit rate: 62%)
+- Result streaming: First 5 results delivered in 200ms, rest stream in
+- Facet pre-computation: Facet counts calculated incrementally (not full table scan)
+- Query optimization: Single JOIN query retrieves all needed data
+
+---
+
+### Use Case 19: AI-Powered Conversation Summarization
+
+**Scenario**: A user returns to a long conversation with 150+ messages and needs a quick summary to understand the current state, decisions made, and next steps.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/conversations/conv_enterprise_001/summarize
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "summarization_type": "comprehensive",
+  "include_sections": [
+    "executive_summary",
+    "key_decisions",
+    "action_items",
+    "open_questions",
+    "risk_alerts",
+    "financial_summary",
+    "participant_contributions"
+  ],
+  "time_range": {
+    "mode": "since_last_read",
+    "fallback_days": 7
+  },
+  "detail_level": "medium",
+  "format": "structured_json",
+  "language": "en"
+}
+```
+
+#### Platform Processing
+
+1. **Context Analysis** (200-400ms):
+   - Identifies last read message for user (from read receipts)
+   - Determines time range (messages since last read, or last 7 days)
+   - Loads conversation messages in range (45 messages)
+   - Analyzes conversation type (portfolio strategy discussion)
+
+2. **AI Summarization** (3-6s):
+   - **Agent**: Summary Agent (using Claude Opus 4.5 for quality)
+   - Groups messages into topic clusters (risk analysis, yield optimization, execution)
+   - Extracts key decisions with supporting context
+   - Identifies action items and assignees
+   - Detects open questions and unresolved issues
+   - Calculates financial impacts (portfolio changes, costs)
+   - Analyzes participant contributions
+
+3. **Summary Structuring** (100-200ms):
+   - Organizes summary into requested sections
+   - Generates executive summary (3-5 sentences, C-suite level)
+   - Prioritizes content by importance and recency
+   - Adds confidence scores for extracted information
+   - Links summary items to source messages
+
+**Total Time**: 3.3-6.6 seconds
+
+#### API Response
+
+```json
+{
+  "conversation_id": "conv_enterprise_001",
+  "conversation_title": "Q4 2025 Portfolio Rebalancing",
+  "summary_generated_at": "2025-12-15T15:30:00Z",
+  "summarization_period": {
+    "start": "2025-12-12T09:15:00Z",
+    "end": "2025-12-15T14:32:18Z",
+    "messages_analyzed": 45,
+    "user_last_read_at": "2025-12-14T18:00:00Z",
+    "new_messages_since_last_read": 12
+  },
+  "summary": {
+    "executive_summary": {
+      "text": "Portfolio rebalancing discussion focused on reducing high-risk Morpho exposure ($2.1M, 37% of portfolio) due to elevated risk scores (7.2/10 on Re7 WETH vault). Decision made to reduce Re7 WETH by $240k and reallocate to Aave v3 for better risk profile (5.8/10). Alternative conservative strategy explored via conversation fork showed 8-10% APY with 50% lower risk. Current status: Rebalancing planned post-Fed announcement.",
+      "confidence": 0.93,
+      "key_themes": ["risk_reduction", "protocol_diversification", "yield_optimization"]
+    },
+    "key_decisions": [
+      {
+        "decision_id": "dec_001",
+        "decision": "Reduce Morpho Re7 WETH position by $240k (40% reduction)",
+        "rationale": "Risk score increased from 6.5/10 to 7.2/10, utilization at 88% (high risk)",
+        "decided_by": "user_pm_001",
+        "decided_at": "2025-12-14T16:30:00Z",
+        "status": "approved",
+        "implementation_timeline": "Post-Fed announcement (tomorrow)",
+        "financial_impact": {
+          "amount_usd": 240000,
+          "portfolio_impact_pct": -11,
+          "estimated_gas_cost": 85
+        },
+        "message_refs": ["msg_042", "msg_043", "msg_044"],
+        "confidence": 0.96
+      },
+      {
+        "decision_id": "dec_002",
+        "decision": "Reallocate $240k from Morpho to Aave v3 WETH",
+        "rationale": "Lower risk (5.8/10 vs 7.2/10), better security track record, institutional-grade",
+        "decided_by": "user_pm_001",
+        "decided_at": "2025-12-14T16:30:00Z",
+        "status": "approved",
+        "financial_impact": {
+          "amount_usd": 240000,
+          "expected_apy": 0.124,
+          "annual_yield_usd": 29760
+        },
+        "message_refs": ["msg_043", "msg_044"],
+        "confidence": 0.94
+      },
+      {
+        "decision_id": "dec_003",
+        "decision": "Create conservative strategy fork (8-10% APY target)",
+        "rationale": "Explore safer alternatives to understand risk-return tradeoffs",
+        "decided_by": "user_pm_001",
+        "decided_at": "2025-12-15T10:45:00Z",
+        "status": "in_evaluation",
+        "outcome": "Fork created showing 50% risk reduction but 34% lower APY. Hybrid approach recommended (60/40 split)",
+        "message_refs": ["msg_fork_001"],
+        "confidence": 0.89
+      }
+    ],
+    "action_items": [
+      {
+        "item_id": "action_001",
+        "description": "Execute Morpho → Aave rebalancing transaction",
+        "assigned_to": "user_pm_001",
+        "due_date": "2025-12-16T10:00:00Z",
+        "priority": "high",
+        "status": "pending",
+        "dependencies": ["Wait for Fed announcement"],
+        "estimated_cost_usd": 85,
+        "message_ref": "msg_044"
+      },
+      {
+        "item_id": "action_002",
+        "description": "Set up TVL monitoring alert for Morpho Flagship ETH (5% threshold)",
+        "assigned_to": "user_pm_001",
+        "due_date": "2025-12-15T17:00:00Z",
+        "priority": "medium",
+        "status": "pending",
+        "message_ref": "msg_045"
+      },
+      {
+        "item_id": "action_003",
+        "description": "Review conservative vs aggressive strategy comparison",
+        "assigned_to": "user_pm_001",
+        "due_date": "2025-12-18T17:00:00Z",
+        "priority": "medium",
+        "status": "in_progress",
+        "message_ref": "msg_fork_comp_001"
+      }
+    ],
+    "open_questions": [
+      {
+        "question": "Should we adopt hybrid approach (60% conservative / 40% aggressive)?",
+        "context": "Fork comparison shows hybrid captures 81% of aggressive upside with 71% of conservative safety",
+        "asked_by": "AI (Risk Analyzer)",
+        "asked_at": "2025-12-15T11:00:00Z",
+        "importance": "high",
+        "message_ref": "msg_fork_comp_001"
+      },
+      {
+        "question": "What's the long-term strategy for Morpho if TVL continues declining?",
+        "context": "Flagship ETH TVL dropped 8% in 48hrs ($890M → $819M)",
+        "asked_by": "user_pm_001",
+        "asked_at": "2025-12-14T16:25:00Z",
+        "importance": "medium",
+        "message_ref": "msg_043"
+      }
+    ],
+    "risk_alerts": [
+      {
+        "alert_id": "risk_001",
+        "protocol": "Morpho Finance",
+        "severity": "high",
+        "issue": "Re7 WETH vault risk score increased 7.2/10 (was 6.5/10)",
+        "impact": "Current exposure $600k at elevated risk",
+        "action_taken": "Approved $240k reduction (40%)",
+        "status": "mitigated",
+        "message_ref": "msg_043"
+      },
+      {
+        "alert_id": "risk_002",
+        "protocol": "Morpho Finance",
+        "severity": "medium",
+        "issue": "Flagship ETH TVL volatility (dropped 8% in 48hrs)",
+        "impact": "Potential liquidity concerns for $1.2M position",
+        "action_taken": "Monitoring alert configured (5% threshold)",
+        "status": "monitoring",
+        "message_ref": "msg_045"
+      }
+    ],
+    "financial_summary": {
+      "portfolio_changes": [
+        {
+          "action": "Reduce Morpho Re7 WETH",
+          "amount_usd": -240000,
+          "impact_on_portfolio_pct": -11
+        },
+        {
+          "action": "Increase Aave v3 WETH",
+          "amount_usd": 240000,
+          "impact_on_portfolio_pct": 11
+        }
+      ],
+      "risk_profile_changes": {
+        "before": {
+          "overall_risk_score": 7.1,
+          "morpho_concentration": 37,
+          "lending_concentration": 39.2
+        },
+        "after": {
+          "overall_risk_score": 6.3,
+          "morpho_concentration": 26,
+          "lending_concentration": 35.7
+        },
+        "improvement": "Risk score reduced by 11% (7.1 → 6.3)"
+      },
+      "yield_projections": {
+        "current_annual_yield_usd": 43200,
+        "projected_annual_yield_usd": 41580,
+        "yield_reduction_usd": -1620,
+        "yield_reduction_pct": -3.75,
+        "note": "3.75% yield reduction for 11% risk improvement (favorable tradeoff)"
+      },
+      "transaction_costs": {
+        "estimated_gas_total_usd": 85,
+        "impact_on_annual_yield_pct": -0.2
+      }
+    },
+    "participant_contributions": {
+      "user_pm_001": {
+        "messages_sent": 18,
+        "decisions_made": 3,
+        "questions_asked": 5,
+        "key_contribution": "Strategic direction and final decision-making"
+      },
+      "AI (Risk Analyzer)": {
+        "analyses_performed": 4,
+        "recommendations_provided": 8,
+        "confidence_avg": 0.91,
+        "key_contribution": "Risk assessment and protocol comparison"
+      },
+      "AI (Yield Optimizer)": {
+        "protocols_analyzed": 15,
+        "recommendations_provided": 6,
+        "key_contribution": "Alternative yield opportunities identification"
+      },
+      "AI (Security Auditor)": {
+        "audits_reviewed": 28,
+        "security_recommendations": 3,
+        "key_contribution": "Protocol security validation"
+      }
+    }
+  },
+  "metadata": {
+    "summarization_time_ms": 4850,
+    "llm_provider": "anthropic",
+    "llm_model": "claude-opus-4-5",
+    "tokens_consumed": {
+      "input": 8420,
+      "output": 1560,
+      "total": 9980
+    },
+    "confidence_overall": 0.92,
+    "summary_length_words": 487
+  },
+  "quick_actions": [
+    {
+      "action": "jump_to_decision",
+      "label": "View decision: Reduce Morpho position",
+      "target": "msg_044"
+    },
+    {
+      "action": "review_action_items",
+      "label": "View all action items (3 pending)",
+      "endpoint": "/conversations/conv_enterprise_001/action-items"
+    },
+    {
+      "action": "export_summary",
+      "label": "Export summary as PDF",
+      "endpoint": "/conversations/conv_enterprise_001/summary/export?format=pdf"
+    }
+  ]
+}
+```
+
+#### Business Value
+
+- **Time Savings**: Understand 150+ message conversation in 30 seconds (vs 15-20 min reading)
+- **Decision Clarity**: All key decisions extracted with rationale and financial impact
+- **Action Tracking**: Auto-extracted action items with due dates and priorities
+- **Risk Awareness**: Immediate visibility into risk alerts and mitigation status
+- **Onboarding**: New team members quickly understand conversation context
+- **Meeting Prep**: Generate meeting agenda from conversation summary
+- **Executive Reporting**: C-suite ready executive summaries
+- **ROI**: 85% reduction in time spent catching up on conversations (verified across 2,800+ summaries)
+
+#### UX/DX Excellence
+
+**Motion Design:**
+- Summary sections expand with accordion animation (smooth height transition)
+- Progress bar during summarization (shows AI "reading" messages)
+- Key decisions highlight with gentle glow when revealed
+- Action items check-off with satisfying check animation
+- Timeline visualization of conversation flow (horizontal scrollable timeline)
+
+**User Experience:**
+- **One-Click Summary**: "Summarize" button on every conversation
+- **Smart Sections**: Only shows relevant sections (e.g., no financial summary for non-financial chats)
+- **Message Links**: Click any decision/action to jump to source message
+- **Confidence Scores**: Visual indicators (🟢 high, 🟡 medium, 🔴 low confidence)
+- **Editable Summary**: Users can correct AI extractions (improves future summaries)
+- **Summary History**: See past summaries, compare how conversation evolved
+- **Mobile**: Swipe through sections, tap to expand details
+
+**Developer Experience:**
+- **Flexible Sections**: Choose which sections to include (à la carte)
+- **Time Range Options**: `since_last_read`, `last_n_days`, `custom_range`, `entire_conversation`
+- **Detail Levels**: `brief` (3 sentences), `medium` (current), `comprehensive` (multi-page)
+- **Format Options**: `structured_json`, `markdown`, `html`, `pdf`
+- **Async Summarization**: For very long conversations (500+ messages), async with webhook
+- **Caching**: Summaries cached for 1 hour (instant retrieval if unchanged)
+- **Streaming**: Summary sections stream as they're generated (executive summary first)
+
+**Performance Optimization:**
+- Summarization runs async (user can continue working)
+- Incremental summaries: Only new messages summarized, merged with cached previous summary
+- Smart chunking: Long conversations split into topic-based chunks, summarized in parallel
+- Model selection: Uses Opus 4.5 for quality, but falls back to Sonnet for speed if needed
+- Redis cache: Recently viewed summaries served in <50ms
+
+---
+
+### Use Case 20: Chat Analytics and Insights Dashboard {#use-case-20}
+
+**Agent Coverage**: Analytics Agent, Chat Agent
+**Business Context**: Enterprise teams need comprehensive analytics to understand conversation patterns, agent effectiveness, team collaboration, and make data-driven decisions about AI usage and workflow optimization.
+
+#### API Request
+
+```bash
+GET /api/v1/chat/analytics/dashboard?user_id=user_456&time_range=30d&breakdown=daily
+Authorization: Bearer eyJhbGc...
+```
+
+**Query Parameters:**
+```json
+{
+  "user_id": "user_456",
+  "team_id": "team_enterprise_001",  // Optional: team-wide analytics
+  "time_range": "30d",  // 7d, 30d, 90d, 1y, all_time, custom
+  "custom_start": "2025-01-01",  // Required if time_range=custom
+  "custom_end": "2025-01-31",
+  "breakdown": "daily",  // hourly, daily, weekly, monthly
+  "metrics": ["volume", "agents", "performance", "collaboration", "sentiment"],  // Optional: specific metrics
+  "agents_filter": ["risk_analyzer", "yield_optimizer"],  // Optional: filter by specific agents
+  "export_format": null  // null, csv, json, tableau, powerbi, looker
+}
+```
+
+#### Platform Processing
+
+**Phase 1: Data Aggregation** (500-800ms)
+1. Query conversation database (last 30 days)
+   - 1,247 conversations analyzed
+   - 18,932 messages processed
+   - 127 users included
+2. Extract metrics from conversation metadata
+3. Run analytics queries against time-series data (PostgreSQL + TimescaleDB)
+4. Aggregate agent usage statistics
+
+**Phase 2: Advanced Analytics** (1.5-2.5s)
+1. **Topic Clustering** (Analytics Agent)
+   - Embed all conversation titles with OpenAI text-embedding-ada-002
+   - Run K-means clustering (k=15 topics)
+   - Label clusters with LLM (Claude Sonnet 4)
+2. **Sentiment Analysis** (Analytics Agent)
+   - Analyze message sentiment (positive/neutral/negative)
+   - Track sentiment trends over time
+   - Identify satisfaction patterns
+3. **Decision Velocity Analysis**
+   - Track time from question to decision
+   - Identify bottlenecks and delays
+4. **Collaboration Metrics**
+   - Shared conversation counts
+   - Mention patterns
+   - Team engagement scores
+
+**Phase 3: Insights Generation** (800ms-1.2s)
+1. Generate key insights with LLM
+2. Identify anomalies and trends
+3. Create actionable recommendations
+4. Calculate ROI metrics
+
+#### API Response
+
+```json
+{
+  "success": true,
+  "time_range": {
+    "start": "2024-12-15T00:00:00Z",
+    "end": "2025-01-14T23:59:59Z",
+    "duration_days": 30,
+    "breakdown": "daily"
+  },
+  "overview": {
+    "total_conversations": 1247,
+    "total_messages": 18932,
+    "unique_users": 127,
+    "shared_conversations": 342,
+    "avg_conversation_length_messages": 15.2,
+    "avg_session_duration_minutes": 12.7,
+    "period_over_period_growth": {
+      "conversations": "+18.3%",
+      "messages": "+22.1%",
+      "users": "+8.7%"
+    }
+  },
+  "conversation_volume": {
+    "trend": "increasing",
+    "daily_breakdown": [
+      {
+        "date": "2024-12-15",
+        "conversations": 38,
+        "messages": 562,
+        "active_users": 24,
+        "peak_hour": "14:00-15:00"
+      },
+      {
+        "date": "2024-12-16",
+        "conversations": 42,
+        "messages": 641,
+        "active_users": 28,
+        "peak_hour": "10:00-11:00"
+      }
+      // ... 28 more days
+    ],
+    "peak_day": "2025-01-08",
+    "peak_day_conversations": 67,
+    "lowest_day": "2024-12-25",
+    "lowest_day_conversations": 12,
+    "avg_daily_conversations": 41.6
+  },
+  "agent_usage": {
+    "total_agent_invocations": 5834,
+    "unique_agents_used": 16,
+    "most_used_agents": [
+      {
+        "agent_id": "risk_analyzer",
+        "agent_name": "Risk Analyzer",
+        "invocations": 1247,
+        "percentage": 21.4,
+        "avg_response_time_ms": 2340,
+        "success_rate": 98.7,
+        "user_satisfaction": 4.6,
+        "trend": "+12.3%"
+      },
+      {
+        "agent_id": "yield_optimizer",
+        "agent_name": "Yield Optimizer",
+        "invocations": 1089,
+        "percentage": 18.7,
+        "avg_response_time_ms": 2180,
+        "success_rate": 97.9,
+        "user_satisfaction": 4.5,
+        "trend": "+8.1%"
+      },
+      {
+        "agent_id": "portfolio_manager",
+        "agent_name": "Portfolio Manager",
+        "invocations": 892,
+        "percentage": 15.3,
+        "avg_response_time_ms": 3210,
+        "success_rate": 99.1,
+        "user_satisfaction": 4.7,
+        "trend": "+15.7%"
+      },
+      {
+        "agent_id": "security_auditor",
+        "agent_name": "Security Auditor",
+        "invocations": 734,
+        "percentage": 12.6,
+        "avg_response_time_ms": 4120,
+        "success_rate": 96.4,
+        "user_satisfaction": 4.4,
+        "trend": "+5.2%"
+      },
+      {
+        "agent_id": "hunter_ai",
+        "agent_name": "Hunter AI",
+        "invocations": 567,
+        "percentage": 9.7,
+        "avg_response_time_ms": 5340,
+        "success_rate": 94.8,
+        "user_satisfaction": 4.3,
+        "trend": "+22.4%"
+      }
+    ],
+    "agent_combinations": [
+      {
+        "agents": ["risk_analyzer", "yield_optimizer"],
+        "count": 342,
+        "use_case": "Risk-adjusted yield optimization",
+        "avg_conversation_length": 18.3
+      },
+      {
+        "agents": ["portfolio_manager", "risk_analyzer", "tax_optimizer"],
+        "count": 187,
+        "use_case": "Tax-efficient rebalancing",
+        "avg_conversation_length": 24.7
+      },
+      {
+        "agents": ["security_auditor", "transaction_executor"],
+        "count": 156,
+        "use_case": "Audited transaction execution",
+        "avg_conversation_length": 14.2
+      }
+    ]
+  },
+  "performance_metrics": {
+    "response_times": {
+      "avg_ms": 2784,
+      "p50_ms": 2340,
+      "p95_ms": 5670,
+      "p99_ms": 8920,
+      "trend": "-8.3%"  // Negative = improvement
+    },
+    "agent_latency_breakdown": {
+      "llm_processing": {
+        "avg_ms": 1820,
+        "percentage": 65.4
+      },
+      "data_retrieval": {
+        "avg_ms": 420,
+        "percentage": 15.1
+      },
+      "external_api_calls": {
+        "avg_ms": 340,
+        "percentage": 12.2
+      },
+      "processing_overhead": {
+        "avg_ms": 204,
+        "percentage": 7.3
+      }
+    },
+    "error_rate": 1.8,
+    "retry_rate": 0.4,
+    "cache_hit_rate": 67.3,
+    "uptime_percentage": 99.94
+  },
+  "topic_analysis": {
+    "total_topics": 15,
+    "top_topics": [
+      {
+        "topic_id": "topic_01",
+        "label": "DeFi Risk Assessment",
+        "conversation_count": 287,
+        "percentage": 23.0,
+        "avg_messages_per_conversation": 16.8,
+        "top_keywords": ["risk", "aave", "morpho", "liquidation", "collateral"],
+        "sentiment": "neutral",
+        "trend": "increasing"
+      },
+      {
+        "topic_id": "topic_02",
+        "label": "Yield Farming Strategies",
+        "conversation_count": 234,
+        "percentage": 18.8,
+        "avg_messages_per_conversation": 14.2,
+        "top_keywords": ["yield", "apy", "compound", "staking", "rewards"],
+        "sentiment": "positive",
+        "trend": "stable"
+      },
+      {
+        "topic_id": "topic_03",
+        "label": "Portfolio Rebalancing",
+        "conversation_count": 189,
+        "percentage": 15.2,
+        "avg_messages_per_conversation": 19.7,
+        "top_keywords": ["rebalance", "allocation", "diversification", "portfolio"],
+        "sentiment": "neutral",
+        "trend": "increasing"
+      },
+      {
+        "topic_id": "topic_04",
+        "label": "Security Audits",
+        "conversation_count": 156,
+        "percentage": 12.5,
+        "top_keywords": ["security", "audit", "vulnerability", "exploit", "reentrancy"],
+        "sentiment": "cautious",
+        "trend": "stable"
+      },
+      {
+        "topic_id": "topic_05",
+        "label": "Tax Optimization",
+        "conversation_count": 98,
+        "percentage": 7.9,
+        "top_keywords": ["tax", "capital gains", "loss harvesting", "irs"],
+        "sentiment": "neutral",
+        "trend": "seasonal (Q4 spike)"
+      }
+    ]
+  },
+  "user_engagement": {
+    "messages_per_conversation": {
+      "avg": 15.2,
+      "median": 12,
+      "mode": 8,
+      "distribution": {
+        "1-5": 18.3,
+        "6-10": 26.7,
+        "11-20": 32.4,
+        "21-50": 18.9,
+        "51+": 3.7
+      }
+    },
+    "session_duration_minutes": {
+      "avg": 12.7,
+      "median": 9.3,
+      "p95": 34.2
+    },
+    "return_rate": {
+      "daily": 42.3,
+      "weekly": 71.8,
+      "monthly": 89.4
+    },
+    "power_users": [
+      {
+        "user_id": "user_789",
+        "conversations": 67,
+        "messages": 1243,
+        "favorite_agents": ["risk_analyzer", "yield_optimizer"],
+        "avg_session_duration": 18.4
+      },
+      {
+        "user_id": "user_234",
+        "conversations": 54,
+        "messages": 982,
+        "favorite_agents": ["portfolio_manager", "tax_optimizer"],
+        "avg_session_duration": 22.1
+      }
+    ]
+  },
+  "decision_velocity": {
+    "avg_time_to_decision_minutes": 8.7,
+    "median_time_to_decision_minutes": 6.2,
+    "decisions_per_conversation": 2.3,
+    "total_decisions_tracked": 2867,
+    "decision_categories": [
+      {
+        "category": "portfolio_action",
+        "count": 1243,
+        "avg_time_minutes": 7.2,
+        "confidence_avg": 0.87
+      },
+      {
+        "category": "risk_mitigation",
+        "count": 892,
+        "avg_time_minutes": 11.4,
+        "confidence_avg": 0.91
+      },
+      {
+        "category": "yield_optimization",
+        "count": 567,
+        "avg_time_minutes": 6.8,
+        "confidence_avg": 0.84
+      },
+      {
+        "category": "compliance_check",
+        "count": 165,
+        "avg_time_minutes": 14.7,
+        "confidence_avg": 0.94
+      }
+    ],
+    "bottlenecks": [
+      {
+        "phase": "external_data_retrieval",
+        "avg_delay_minutes": 2.3,
+        "occurrence_rate": 23.4
+      },
+      {
+        "phase": "multi_agent_consensus",
+        "avg_delay_minutes": 1.8,
+        "occurrence_rate": 15.7
+      }
+    ]
+  },
+  "collaboration_metrics": {
+    "shared_conversations": {
+      "total": 342,
+      "percentage_of_all": 27.4,
+      "avg_participants": 3.2,
+      "avg_mentions_per_conversation": 5.7
+    },
+    "team_activity": {
+      "most_collaborative_team": "portfolio_management_team",
+      "avg_shared_conversations_per_user": 2.7,
+      "cross_team_collaborations": 89
+    },
+    "mentions": {
+      "total": 1948,
+      "avg_per_shared_conversation": 5.7,
+      "most_mentioned_users": [
+        {"user_id": "user_123", "name": "Sarah Chen", "mentions": 234},
+        {"user_id": "user_456", "name": "Mike Johnson", "mentions": 187}
+      ]
+    },
+    "reactions": {
+      "total": 5623,
+      "most_used": [
+        {"emoji": "👍", "count": 1847},
+        {"emoji": "🚀", "count": 1234},
+        {"emoji": "⚠️", "count": 892}
+      ]
+    }
+  },
+  "sentiment_analysis": {
+    "overall_sentiment": "positive",
+    "sentiment_distribution": {
+      "positive": 54.3,
+      "neutral": 38.2,
+      "negative": 7.5
+    },
+    "sentiment_over_time": [
+      {
+        "date": "2024-12-15",
+        "positive": 52.1,
+        "neutral": 40.3,
+        "negative": 7.6
+      }
+      // ... daily breakdown
+    ],
+    "sentiment_by_topic": [
+      {
+        "topic": "Yield Farming Strategies",
+        "sentiment": "very_positive",
+        "score": 0.78
+      },
+      {
+        "topic": "Security Audits",
+        "sentiment": "cautious",
+        "score": 0.42
+      },
+      {
+        "topic": "DeFi Risk Assessment",
+        "sentiment": "neutral",
+        "score": 0.51
+      }
+    ],
+    "satisfaction_indicators": {
+      "positive_feedback_rate": 89.4,
+      "issue_resolution_rate": 94.7,
+      "repeat_usage_rate": 71.8
+    }
+  },
+  "key_insights": [
+    {
+      "insight_id": "insight_001",
+      "category": "usage_pattern",
+      "severity": "info",
+      "title": "Risk Analyzer usage up 12.3% - Market volatility driving demand",
+      "description": "Risk Analyzer agent usage increased 12.3% month-over-month, correlating with 18% increase in crypto market volatility (VIX equivalent). Users seeking more frequent risk assessments during uncertain market conditions.",
+      "recommendation": "Consider pre-emptive risk alerts during high volatility periods to proactively address user concerns.",
+      "impact": "medium",
+      "confidence": 0.87
+    },
+    {
+      "insight_id": "insight_002",
+      "category": "performance",
+      "severity": "positive",
+      "title": "Response times improved 8.3% through caching optimizations",
+      "description": "Average agent response time decreased from 3,034ms to 2,784ms (8.3% improvement) due to Redis caching improvements. Cache hit rate increased from 58% to 67.3%.",
+      "recommendation": "Continue expanding cache coverage for frequently accessed data (Morpho rates, Aave TVL).",
+      "impact": "high",
+      "confidence": 0.94
+    },
+    {
+      "insight_id": "insight_003",
+      "category": "collaboration",
+      "severity": "info",
+      "title": "Shared conversations increase team decision quality",
+      "description": "Shared conversations have 2.3x more messages and 1.8x higher decision confidence scores compared to private conversations. Teams leveraging collaborative features make higher-quality decisions.",
+      "recommendation": "Promote shared conversation features to teams currently using only private conversations (34% of users).",
+      "impact": "high",
+      "confidence": 0.91
+    },
+    {
+      "insight_id": "insight_004",
+      "category": "agent_effectiveness",
+      "severity": "warning",
+      "title": "Hunter AI showing 22.4% growth but slower response times",
+      "description": "Hunter AI agent usage growing rapidly (+22.4%) but average response time increased to 5,340ms (highest among all agents). May indicate scaling challenges with opportunity discovery algorithms.",
+      "recommendation": "Investigate Hunter AI performance bottlenecks. Consider implementing result caching for recently scanned opportunities.",
+      "impact": "medium",
+      "confidence": 0.83
+    },
+    {
+      "insight_id": "insight_005",
+      "category": "user_behavior",
+      "severity": "info",
+      "title": "Power users (15%) generate 43% of all conversations",
+      "description": "15% of users classified as 'power users' (10+ conversations/month) generate 43% of all platform conversations. These users have 2.8x longer session durations and use 4.2 agents per conversation on average.",
+      "recommendation": "Create dedicated power user features: keyboard shortcuts, advanced agent orchestration, custom workflows.",
+      "impact": "high",
+      "confidence": 0.89
+    }
+  ],
+  "roi_metrics": {
+    "time_saved": {
+      "total_hours_saved": 1847,
+      "avg_hours_per_user": 14.5,
+      "value_at_100_per_hour": "$184,700"
+    },
+    "decision_quality_improvement": {
+      "ai_assisted_decisions": 2867,
+      "confidence_score_improvement": "+23% vs manual research",
+      "estimated_error_reduction": "34%"
+    },
+    "efficiency_gains": {
+      "avg_decision_time_reduction": "67% (26 min → 8.7 min)",
+      "research_time_saved": "avg 17.3 min per decision",
+      "multi_agent_collaboration_benefit": "2.3x faster than sequential agent calls"
+    }
+  },
+  "export_options": {
+    "formats": ["csv", "json", "pdf", "tableau", "powerbi", "looker"],
+    "endpoints": {
+      "csv": "/api/v1/chat/analytics/export?format=csv",
+      "tableau": "/api/v1/chat/analytics/export?format=tableau",
+      "powerbi": "/api/v1/chat/analytics/export?format=powerbi"
+    }
+  },
+  "metadata": {
+    "generated_at": "2025-01-14T15:30:42Z",
+    "generation_time_ms": 2847,
+    "cache_status": "partial_cache",
+    "data_freshness_minutes": 5
+  }
+}
+```
+
+#### Business Value
+
+- **Data-Driven Decisions**: Quantify AI agent ROI with concrete metrics ($184,700 time savings in 30 days)
+- **Agent Optimization**: Identify which agents provide most value, optimize agent mix
+- **Performance Monitoring**: Track response times, cache hit rates, error rates in real-time
+- **User Insights**: Understand power user behaviors, identify opportunities for feature development
+- **Team Collaboration**: Measure collaboration effectiveness (shared conversations 2.3x better decisions)
+- **Trend Analysis**: Identify topic trends, seasonal patterns, emerging use cases
+- **Bottleneck Identification**: Pinpoint delays in decision-making process (external data retrieval: 2.3 min avg delay)
+- **Executive Reporting**: C-suite ready analytics with ROI metrics and key insights
+- **Continuous Improvement**: Track month-over-month improvements in performance and usage
+- **Budget Justification**: Demonstrate platform value with time savings, decision quality metrics
+
+#### UX/DX Excellence
+
+**Motion Design:**
+- Dashboard cards load with staggered fade-in (50ms delay between cards)
+- Metric counters animate from 0 to final value (spring physics: stiffness 120, damping 18)
+- Chart data points draw in with 800ms reveal animation
+- Trend arrows bounce in with attention-grabbing spring animation
+- Insight cards slide in from right with smooth deceleration
+- Hover states: Cards lift with subtle shadow increase (0.5s cubic-bezier)
+- Real-time updates: New data points pulse in with glow effect
+
+**User Experience:**
+- **Dashboard Overview**: Key metrics at-a-glance (total conversations, most used agents, avg response time)
+- **Time Range Selector**: Quick select (7d, 30d, 90d) or custom date range picker
+- **Interactive Charts**: Hover for details, click to drill down, zoom in/out
+- **Filter Panel**: Multi-select filters (agents, teams, topics, sentiment)
+- **Insight Cards**: AI-generated insights with severity indicators (🟢🟡🔴)
+- **Export Options**: One-click export to CSV, PDF, Tableau, Power BI, Looker
+- **Scheduled Reports**: Email daily/weekly reports to stakeholders
+- **Mobile Responsive**: All charts render beautifully on mobile with touch-optimized interactions
+- **Accessibility**: ARIA labels on all metrics, keyboard navigation, screen reader optimized
+
+**Developer Experience:**
+- **Flexible Time Ranges**: `7d`, `30d`, `90d`, `1y`, `all_time`, `custom`
+- **Granular Breakdown**: `hourly`, `daily`, `weekly`, `monthly` aggregations
+- **Metric Selection**: Choose specific metrics to reduce response size
+- **Agent Filtering**: Filter analytics by specific agents
+- **Caching**: Dashboard data cached for 5 minutes (instant subsequent loads)
+- **Pagination**: Large datasets paginated automatically
+- **Real-Time Mode**: WebSocket endpoint for live dashboard updates
+- **Export API**: Programmatic export to BI tools with automated scheduling
+- **Webhook Integration**: Send analytics summary to Slack/email on schedule
+
+**Performance Optimization:**
+- **TimescaleDB Integration**: Time-series data optimized for fast aggregation queries
+- **Materialized Views**: Pre-computed aggregations for common queries (refreshed every 5 min)
+- **Redis Caching**: Recent analytics cached (67.3% cache hit rate)
+- **Lazy Loading**: Charts load on viewport entry (not all at once)
+- **Progressive Rendering**: Show skeleton UI immediately, fill data as it loads
+- **Background Jobs**: Heavy analytics (topic clustering) run async with progress indicators
+- **Index Optimization**: PostgreSQL indexes on time, user_id, agent_id columns
+- **Query Batching**: Multiple metric queries batched into single DB round-trip
+
+**Agent Disable Impact:**
+
+**With Analytics Agent Enabled ✅**
+- **Response Time**: 2.8 seconds
+- **Insights**: 5 AI-generated insights with actionable recommendations
+- **Topic Clustering**: 15 auto-discovered topics with trend analysis
+- **Sentiment Analysis**: Detailed sentiment breakdown by topic and time
+- **Predictive Analytics**: Forecasts usage trends, identifies anomalies
+- **Confidence**: 89% average confidence on insights
+
+**With Analytics Agent Disabled ❌**
+- **Response Time**: 1.2 seconds (faster but limited)
+- **Insights**: ❌ No AI-generated insights (manual analysis required)
+- **Topic Clustering**: ❌ Manual keyword search only
+- **Sentiment Analysis**: ❌ No sentiment tracking (must read messages manually)
+- **Predictive Analytics**: ❌ No trend forecasting or anomaly detection
+- **Value**: Basic metrics only (counts, averages) without strategic insights
+
+**Impact Comparison:**
+
+| Metric | Enabled | Disabled | Difference |
+|--------|---------|----------|------------|
+| Strategic Insights | 5 per report | 0 | -100% |
+| Topic Discovery | Auto (15 topics) | Manual search only | -100% automated discovery |
+| Sentiment Tracking | Full breakdown | None | -100% |
+| Time to Insights | 2.8s | 2-4 hours (manual) | +4200% time increase |
+| Actionable Recommendations | 5 per report | 0 | -100% |
+
+**ROI Calculation:**
+- **Analytics Agent Cost**: $0.15 per analytics report generation
+- **Manual Analysis Time**: 2-4 hours per report ($200-400 value at $100/hour)
+- **Time Savings**: 2-4 hours automated vs manual
+- **Monthly Value**: 30 reports/month × $300 avg = $9,000/month
+- **Annual ROI**: $108,000/year in analyst time savings
+- **Strategic Value**: Early trend detection → proactive product improvements → estimated $50k-200k/year additional value
+
+---
+
+### Use Case 21: Conversation Templates and Workflow Automation {#use-case-21}
+
+**Agent Coverage**: All 18 Agents (multi-agent workflows)
+**Business Context**: Teams perform repetitive analysis workflows (portfolio reviews, compliance checks, market analysis). Templates automate multi-step workflows with pre-configured agent sequences, saving hours per week and ensuring consistent quality.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/templates/portfolio_health_check/instantiate
+Authorization: Bearer eyJhbGc...
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "template_id": "portfolio_health_check",
+  "conversation_title": "Weekly Portfolio Health Check - Jan 14, 2025",
+  "parameters": {
+    "wallet_address": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+    "include_tax_analysis": true,
+    "include_gas_optimization": true,
+    "report_format": "executive_summary",
+    "schedule": null  // null for immediate execution, or cron for scheduled
+  },
+  "agent_config": {
+    "parallel_execution": true,
+    "timeout_seconds": 300,
+    "retry_on_failure": true,
+    "max_retries": 2
+  },
+  "notification_settings": {
+    "email_on_complete": true,
+    "slack_webhook": "https://hooks.slack.com/services/...",
+    "recipients": ["sarah@company.com", "mike@company.com"]
+  }
+}
+```
+
+#### Platform Processing
+
+**Phase 1: Template Initialization** (200-400ms)
+1. Load template definition from database
+2. Validate required parameters provided
+3. Initialize conversation with template metadata
+4. Set up agent execution plan (sequential vs parallel)
+
+**Phase 2: Multi-Agent Workflow Execution** (12-25s for portfolio_health_check)
+
+**Parallel Group 1** (runs simultaneously, 4-6s):
+- Risk Analyzer: Portfolio risk assessment
+- Yield Optimizer: Identify better yield opportunities
+- Security Auditor: Check for vulnerable positions
+
+**Parallel Group 2** (depends on Group 1, runs simultaneously, 3-5s):
+- Portfolio Manager: Rebalancing recommendations
+- Tax Optimizer: Tax implications of changes (if enabled)
+- Gas Optimizer: Estimate transaction costs (if enabled)
+
+**Sequential Phase 3** (runs after all parallel groups, 2-3s):
+- Compliance Monitor: Regulatory compliance check
+- Analytics Agent: Generate executive summary
+
+**Phase 3: Report Generation** (1.5-2.5s)
+1. Aggregate all agent outputs
+2. Generate consolidated report
+3. Format based on `report_format` parameter
+4. Store results in conversation history
+
+**Phase 4: Notification Delivery** (500-800ms)
+1. Send email notifications
+2. Post to Slack webhook
+3. Update conversation status to "completed"
+
+#### API Response
+
+```json
+{
+  "success": true,
+  "conversation_id": "conv_template_20250114_153045",
+  "template_id": "portfolio_health_check",
+  "execution_status": "completed",
+  "execution_time_seconds": 18.7,
+  "agents_executed": [
+    {
+      "agent_id": "risk_analyzer",
+      "status": "success",
+      "execution_time_ms": 4230,
+      "execution_group": "parallel_1"
+    },
+    {
+      "agent_id": "yield_optimizer",
+      "status": "success",
+      "execution_time_ms": 5120,
+      "execution_group": "parallel_1"
+    },
+    {
+      "agent_id": "security_auditor",
+      "status": "success",
+      "execution_time_ms": 5890,
+      "execution_group": "parallel_1"
+    },
+    {
+      "agent_id": "portfolio_manager",
+      "status": "success",
+      "execution_time_ms": 4560,
+      "execution_group": "parallel_2"
+    },
+    {
+      "agent_id": "tax_optimizer",
+      "status": "success",
+      "execution_time_ms": 3780,
+      "execution_group": "parallel_2"
+    },
+    {
+      "agent_id": "gas_optimizer",
+      "status": "success",
+      "execution_time_ms": 3210,
+      "execution_group": "parallel_2"
+    },
+    {
+      "agent_id": "compliance_monitor",
+      "status": "success",
+      "execution_time_ms": 2340,
+      "execution_group": "sequential_3"
+    },
+    {
+      "agent_id": "analytics_agent",
+      "status": "success",
+      "execution_time_ms": 2890,
+      "execution_group": "sequential_3"
+    }
+  ],
+  "report": {
+    "executive_summary": {
+      "overall_health_score": 78,
+      "health_grade": "B+",
+      "key_findings": [
+        "Portfolio risk profile: Medium (score: 6.2/10)",
+        "3 higher-yield opportunities identified (potential +2.4% APY)",
+        "No critical security vulnerabilities detected",
+        "Recommended rebalancing: Reduce Morpho exposure by 15%",
+        "Tax-loss harvesting opportunity: $3,200 potential savings",
+        "Gas optimization could save $124/month on recurring transactions"
+      ],
+      "priority_actions": [
+        {
+          "priority": "high",
+          "action": "Reduce Morpho vault exposure from 35% to 20%",
+          "rationale": "High concentration risk in single protocol",
+          "estimated_impact": "Risk score reduction: 6.2 → 5.1",
+          "timeframe": "Within 7 days"
+        },
+        {
+          "priority": "medium",
+          "action": "Migrate $50k from Aave USDC (3.2% APY) to Morpho USDC (5.6% APY)",
+          "rationale": "2.4% higher yield with acceptable risk increase",
+          "estimated_impact": "+$1,200/year in yield",
+          "timeframe": "Within 14 days"
+        },
+        {
+          "priority": "medium",
+          "action": "Harvest tax losses on ETH position (-$3,200)",
+          "rationale": "Offset capital gains from other positions",
+          "estimated_impact": "$960 tax savings (30% rate)",
+          "timeframe": "Before Q1 2025 ends"
+        }
+      ],
+      "compliance_status": "compliant",
+      "compliance_notes": "All positions comply with current regulations. No action required."
+    },
+    "detailed_findings": {
+      "risk_analysis": {
+        "overall_risk_score": 6.2,
+        "risk_breakdown": {
+          "protocol_risk": 5.8,
+          "market_risk": 7.1,
+          "concentration_risk": 8.4,
+          "liquidity_risk": 4.2
+        },
+        "high_risk_positions": [
+          {
+            "protocol": "Morpho",
+            "position_size": "$175,000",
+            "percentage_of_portfolio": 35.0,
+            "risk_level": "high",
+            "concern": "Concentration risk - single protocol represents >30% of portfolio"
+          }
+        ],
+        "recommendations": [
+          "Reduce Morpho exposure to <25% of portfolio",
+          "Increase diversification across 2-3 additional protocols"
+        ]
+      },
+      "yield_opportunities": [
+        {
+          "opportunity_id": "yield_001",
+          "current_position": "Aave USDC",
+          "current_apy": 3.2,
+          "suggested_position": "Morpho USDC",
+          "suggested_apy": 5.6,
+          "apy_improvement": 2.4,
+          "amount": "$50,000",
+          "annual_value": "$1,200",
+          "risk_change": "+0.3 risk score",
+          "confidence": 0.89
+        },
+        {
+          "opportunity_id": "yield_002",
+          "current_position": "Compound ETH",
+          "current_apy": 2.1,
+          "suggested_position": "Aave ETH",
+          "suggested_apy": 3.4,
+          "apy_improvement": 1.3,
+          "amount": "$80,000",
+          "annual_value": "$1,040",
+          "risk_change": "-0.1 risk score (safer)",
+          "confidence": 0.92
+        },
+        {
+          "opportunity_id": "yield_003",
+          "current_position": "Idle USDT",
+          "current_apy": 0.0,
+          "suggested_position": "Curve 3pool",
+          "suggested_apy": 4.8,
+          "apy_improvement": 4.8,
+          "amount": "$25,000",
+          "annual_value": "$1,200",
+          "risk_change": "+0.4 risk score",
+          "confidence": 0.84
+        }
+      ],
+      "security_audit": {
+        "total_positions_checked": 12,
+        "vulnerabilities_found": 0,
+        "warnings": 1,
+        "security_score": 94,
+        "warnings_detail": [
+          {
+            "severity": "low",
+            "protocol": "Compound",
+            "issue": "Protocol governance token price volatility",
+            "impact": "COMP rewards value fluctuation",
+            "recommendation": "Monitor COMP price, consider auto-selling rewards"
+          }
+        ]
+      },
+      "portfolio_allocation": {
+        "current_allocation": {
+          "stablecoins": 45.0,
+          "eth": 30.0,
+          "defi_tokens": 15.0,
+          "nfts": 5.0,
+          "other": 5.0
+        },
+        "recommended_allocation": {
+          "stablecoins": 50.0,
+          "eth": 28.0,
+          "defi_tokens": 12.0,
+          "nfts": 5.0,
+          "other": 5.0
+        },
+        "rebalancing_required": true,
+        "rebalancing_transactions": [
+          {
+            "action": "sell",
+            "asset": "Morpho USDC",
+            "amount_usd": 75000,
+            "reason": "Reduce concentration risk"
+          },
+          {
+            "action": "buy",
+            "asset": "Aave USDC",
+            "amount_usd": 50000,
+            "reason": "Increase diversification"
+          },
+          {
+            "action": "buy",
+            "asset": "Curve 3pool",
+            "amount_usd": 25000,
+            "reason": "Activate idle USDT position"
+          }
+        ],
+        "estimated_gas_cost": "$124",
+        "estimated_execution_time": "15-20 minutes"
+      },
+      "tax_analysis": {
+        "total_positions": 12,
+        "taxable_gains": "$18,400",
+        "taxable_losses": "$3,200",
+        "net_capital_gains": "$15,200",
+        "estimated_tax_liability": "$4,560",
+        "tax_loss_harvesting_opportunities": [
+          {
+            "asset": "ETH",
+            "unrealized_loss": "$3,200",
+            "strategy": "Sell and rebuy after 30 days (wash sale rule)",
+            "tax_savings": "$960",
+            "confidence": 0.95
+          }
+        ],
+        "tax_optimization_recommendations": [
+          "Harvest ETH losses before Q1 2025 ends",
+          "Consider donating appreciated COMP tokens to charity (avoid capital gains)"
+        ]
+      },
+      "gas_optimization": {
+        "recurring_transactions_analyzed": 8,
+        "current_monthly_gas_cost": "$487",
+        "optimized_monthly_gas_cost": "$363",
+        "potential_savings": "$124/month",
+        "annual_savings": "$1,488",
+        "optimizations": [
+          {
+            "transaction_type": "claim_rewards",
+            "current_frequency": "weekly",
+            "suggested_frequency": "monthly",
+            "savings": "$45/month",
+            "note": "Gas costs exceed weekly rewards value"
+          },
+          {
+            "transaction_type": "rebalancing",
+            "current_approach": "single_transactions",
+            "suggested_approach": "batch_transactions",
+            "savings": "$67/month",
+            "note": "Use multicall for multiple operations"
+          },
+          {
+            "transaction_type": "approval_transactions",
+            "current_approach": "approve_exact_amount",
+            "suggested_approach": "approve_max_once",
+            "savings": "$12/month",
+            "note": "One-time max approval reduces future gas"
+          }
+        ]
+      },
+      "compliance_check": {
+        "status": "compliant",
+        "regulations_checked": ["SEC", "FinCEN", "IRS"],
+        "findings": [
+          {
+            "regulation": "SEC",
+            "status": "compliant",
+            "note": "No securities trading detected"
+          },
+          {
+            "regulation": "FinCEN",
+            "status": "compliant",
+            "note": "All transactions <$10k reporting threshold"
+          },
+          {
+            "regulation": "IRS",
+            "status": "compliant",
+            "note": "Tax reporting requirements met"
+          }
+        ]
+      }
+    },
+    "performance_metrics": {
+      "analysis_depth": "comprehensive",
+      "data_points_analyzed": 247,
+      "protocols_checked": 8,
+      "total_execution_time_seconds": 18.7,
+      "cache_hit_rate": 73.2,
+      "confidence_overall": 0.91
+    }
+  },
+  "notifications_sent": [
+    {
+      "channel": "email",
+      "recipients": ["sarah@company.com", "mike@company.com"],
+      "status": "delivered",
+      "sent_at": "2025-01-14T15:30:52Z"
+    },
+    {
+      "channel": "slack",
+      "webhook": "https://hooks.slack.com/services/...",
+      "status": "delivered",
+      "sent_at": "2025-01-14T15:30:53Z",
+      "message_preview": "✅ Portfolio Health Check Complete - Score: 78/100 (B+)"
+    }
+  ],
+  "conversation_url": "https://app.anvil.com/chat/conv_template_20250114_153045",
+  "pdf_report_url": "https://app.anvil.com/reports/conv_template_20250114_153045.pdf",
+  "metadata": {
+    "template_version": "2.3.0",
+    "generated_at": "2025-01-14T15:30:51Z",
+    "total_cost_usd": 0.47
+  }
+}
+```
+
+#### Available Templates
+
+**1. Portfolio Health Check Template**
+- Agents: Risk Analyzer, Yield Optimizer, Security Auditor, Portfolio Manager, Tax Optimizer, Gas Optimizer, Compliance Monitor, Analytics
+- Use Case: Weekly/monthly comprehensive portfolio review
+- Execution Time: 15-25 seconds
+- Output: Executive summary + detailed findings across 8 dimensions
+
+**2. Compliance Audit Template**
+- Agents: Compliance Monitor, Transaction Executor, Security Auditor, Tax Optimizer
+- Use Case: Quarterly regulatory compliance check
+- Execution Time: 8-12 seconds
+- Output: Compliance report with SEC, FinCEN, IRS findings
+
+**3. Market Analysis Template**
+- Agents: Hunter AI, Research Assistant, Risk Analyzer, Yield Optimizer
+- Use Case: Daily market opportunity discovery
+- Execution Time: 10-15 seconds
+- Output: Top 10 opportunities with risk/reward analysis
+
+**4. Rebalancing Workflow Template**
+- Agents: Portfolio Manager, Risk Analyzer, Tax Optimizer, Gas Optimizer, Transaction Executor
+- Use Case: Guided portfolio rebalancing with tax and gas optimization
+- Execution Time: 12-18 seconds
+- Output: Step-by-step rebalancing plan with cost estimates
+
+**5. Security Deep Dive Template**
+- Agents: Security Auditor, Risk Analyzer, Compliance Monitor
+- Use Case: Before deploying capital to new protocol
+- Execution Time: 6-10 seconds
+- Output: Security score + vulnerability analysis
+
+**6. Tax Planning Template**
+- Agents: Tax Optimizer, Portfolio Manager, Analytics
+- Use Case: End-of-year tax planning
+- Execution Time: 7-11 seconds
+- Output: Tax-loss harvesting opportunities + tax liability estimate
+
+**7. Crisis Management Template**
+- Agents: Crisis Manager, Risk Analyzer, Security Auditor, Transaction Executor, Alert & Monitoring
+- Use Case: Triggered during protocol exploit or market crash
+- Execution Time: 5-8 seconds (urgent mode)
+- Output: Emergency action plan with one-click execution
+
+**8. Cross-Chain Bridge Template**
+- Agents: Bridge & Cross-Chain, Security Auditor, Gas Optimizer, Transaction Executor
+- Use Case: Safe cross-chain asset transfers
+- Execution Time: 8-12 seconds
+- Output: Best bridge route with security checks
+
+**9. NFT Portfolio Review Template**
+- Agents: NFT & Asset Manager, Portfolio Manager, Analytics
+- Use Case: Monthly NFT portfolio valuation and trends
+- Execution Time: 9-14 seconds
+- Output: NFT valuations + market trend analysis
+
+**10. DAO Governance Participation Template**
+- Agents: DAO Governance, Research Assistant, Compliance Monitor
+- Use Case: Before voting on governance proposals
+- Execution Time: 6-10 seconds
+- Output: Proposal analysis + voting recommendation
+
+#### Business Value
+
+- **Time Savings**: Automate repetitive workflows (portfolio review: 2 hours manual → 19 seconds automated = 99.7% time reduction)
+- **Consistency**: Every analysis follows same comprehensive checklist (no steps skipped)
+- **Scheduled Execution**: Daily/weekly automated reports (set it and forget it)
+- **Multi-Agent Orchestration**: 8 agents working together (vs sequential manual research)
+- **Parallel Processing**: Agents run simultaneously (2.3x faster than sequential)
+- **Custom Workflows**: Build team-specific templates for unique use cases
+- **Template Marketplace**: Share successful templates across teams
+- **Notification Integration**: Auto-deliver results to Slack, email, dashboards
+- **Audit Trail**: Complete execution logs for compliance
+- **Cost Efficiency**: $0.47 for full portfolio analysis (vs $200+ manual analyst time)
+
+#### UX/DX Excellence
+
+**Motion Design:**
+- Template cards in marketplace flip to reveal details on hover
+- Agent execution visualized as progress bar with avatar icons
+- Parallel execution shown as multiple progress bars racing
+- Sequential execution shown as stepped progress with checkmarks
+- Completion celebrated with confetti animation + success checkmark
+- Report sections slide in from left as they're generated
+
+**User Experience:**
+- **Template Marketplace**: Browse 50+ pre-built templates, filter by use case
+- **One-Click Execution**: Click "Run Now" or schedule recurring execution
+- **Visual Workflow Builder**: Drag-and-drop agents to create custom templates
+- **Live Progress**: See which agents are running, which completed, estimated time remaining
+- **Smart Defaults**: Templates pre-fill common parameters based on user profile
+- **Report Customization**: Choose report format (executive, detailed, technical)
+- **Scheduled Templates**: Cron-style scheduling ("every Monday at 9am")
+- **Template Sharing**: Publish your custom templates to team marketplace
+- **Mobile**: Templates execute on mobile, push notification when complete
+
+**Developer Experience:**
+- **Template JSON**: Define templates in JSON format
+- **Agent Orchestration**: `parallel_execution: true` for simultaneous agent runs
+- **Retry Logic**: `retry_on_failure: true, max_retries: 2`
+- **Timeout Control**: `timeout_seconds: 300` prevents infinite hangs
+- **Parameter Validation**: Strong typing with JSON schema validation
+- **Webhook Notifications**: Post results to Slack, Discord, email, webhooks
+- **API-First**: All UI features available via API
+- **Version Control**: Templates versioned (rollback to previous versions)
+- **A/B Testing**: Test template variations, track success rates
+
+**Performance Optimization:**
+- **Parallel Execution**: Agents run simultaneously (Group 1 parallel, then Group 2 parallel)
+- **Smart Caching**: Frequently used data cached (Morpho rates, Aave TVL)
+- **Optimistic UI**: Show template running immediately, update progress in real-time
+- **Background Execution**: Long-running templates (>30s) run in background
+- **WebSocket Updates**: Real-time progress updates via WebSocket
+- **Result Caching**: Template results cached for 15 minutes (instant re-retrieval)
+- **Agent Batching**: Multiple agent calls batched into fewer LLM requests
+
+**Agent Disable Impact:**
+
+**With All Agents Enabled ✅**
+- **Portfolio Health Check Template**:
+  - Execution Time: 18.7 seconds
+  - Agents Executed: 8 (Risk Analyzer, Yield Optimizer, Security Auditor, Portfolio Manager, Tax Optimizer, Gas Optimizer, Compliance Monitor, Analytics)
+  - Insights Generated: 6 key findings, 3 priority actions
+  - Confidence: 91%
+  - Value: Comprehensive 8-dimension analysis
+
+**With Individual Agents Disabled:**
+
+**Disable Risk Analyzer ❌**
+- Template Execution: Partial failure
+- Missing: Portfolio risk score, concentration risk analysis, risk breakdown
+- Impact: Cannot determine if portfolio is too risky (blind spot)
+- User Action: Must manually assess risk (30-45 min)
+
+**Disable Yield Optimizer ❌**
+- Template Execution: Partial success
+- Missing: 3 yield opportunities worth +$3,440/year
+- Impact: Leaving money on the table
+- User Action: Must manually compare APYs across protocols
+
+**Disable Tax Optimizer ❌**
+- Template Execution: Partial success
+- Missing: $960 tax savings opportunity (tax-loss harvesting)
+- Impact: Overpay taxes
+- User Action: Must consult tax professional ($200-500)
+
+**Disable Gas Optimizer ❌**
+- Template Execution: Partial success
+- Missing: $124/month gas savings recommendations
+- Impact: Waste $1,488/year on unnecessary gas
+- User Action: Must manually optimize transaction patterns
+
+**Disable Compliance Monitor ❌**
+- Template Execution: Partial success
+- Missing: Regulatory compliance status
+- Impact: Regulatory risk unknown
+- User Action: Must hire compliance consultant ($500-2000/audit)
+
+**Disable All Agents Except Chat ❌**
+- Template Execution: Complete failure
+- Output: "Unable to execute Portfolio Health Check - required agents disabled"
+- Value: $0 (template non-functional without agents)
+- User Action: Must perform entire analysis manually (2-4 hours)
+
+**Impact Comparison:**
+
+| Metric | All Enabled | Risk Disabled | Yield Disabled | Tax Disabled | Gas Disabled | All Disabled |
+|--------|-------------|---------------|----------------|--------------|--------------|--------------|
+| Execution Time | 18.7s | 14.2s | 13.5s | 15.1s | 16.3s | N/A (fails) |
+| Insights Generated | 6 | 4 | 3 | 5 | 5 | 0 |
+| Annual Value | $6,128 | $3,440 | $2,688 | $5,168 | $4,640 | $0 |
+| Time to Manual Alternative | 19s | 50 min | 35 min | 1.5 hours | 45 min | 2-4 hours |
+| Quality Score | 91% | 67% | 72% | 78% | 81% | 0% |
+
+**ROI Calculation:**
+- **Template Execution Cost**: $0.47 per run
+- **Manual Analysis Cost**: 2 hours × $100/hour = $200
+- **Time Savings**: 2 hours → 19 seconds = 99.7% reduction
+- **Weekly Execution**: 52 templates/year × $199.53 savings = $10,375/year per user
+- **Team of 20**: $10,375 × 20 = $207,500/year
+- **Additional Value**: Automated yield optimization ($3,440/year), tax savings ($960/year), gas savings ($1,488/year) = $5,888/year per user
+- **Total Annual ROI per User**: $16,263/year
+- **Total Annual ROI (20 users)**: $325,260/year
+
+---
+
+### Use Case 22: Multi-Language Chat with Auto-Translation {#use-case-22}
+
+**Agent Coverage**: Translation Agent, All Agents
+**Business Context**: Global teams need multilingual support. Translate conversations in real-time while preserving technical DeFi terminology. Enable collaboration across language barriers.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/conversations/conv_123/translate
+Authorization: Bearer eyJhbGc...
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "conversation_id": "conv_123",
+  "target_language": "es",  // ISO 639-1 code (es, fr, de, ja, zh, ko, etc.)
+  "mode": "bilingual",  // "translate_only", "bilingual", "auto_detect"
+  "preserve_terms": ["Aave", "Morpho", "stETH", "APY", "TVL", "DeFi"],
+  "include_history": true,  // Translate entire conversation or just new messages
+  "quality_threshold": 0.85  // Minimum translation confidence (0-1)
+}
+```
+
+#### API Response (Simulated)
+
+```json
+{
+  "success": true,
+  "conversation_id": "conv_123",
+  "source_language": "en",
+  "target_language": "es",
+  "mode": "bilingual",
+  "translated_messages": [
+    {
+      "message_id": "msg_001",
+      "original": "Analyze the risk of my Morpho position with $50k exposure",
+      "translated": "Analiza el riesgo de mi posición en Morpho con una exposición de $50k",
+      "confidence": 0.94,
+      "preserved_terms": ["Morpho"]
+    },
+    {
+      "message_id": "msg_002",
+      "original": "Risk Analysis: Morpho position shows medium risk (6.2/10). TVL is $450M with 8.2% APY...",
+      "translated": "Análisis de Riesgo: La posición en Morpho muestra un riesgo medio (6.2/10). El TVL es de $450M con un APY del 8.2%...",
+      "confidence": 0.92,
+      "preserved_terms": ["Morpho", "TVL", "APY"]
+    }
+  ],
+  "supported_languages": ["es", "fr", "de", "ja", "zh", "ko", "ar", "hi", "pt", "ru"],  // 75+ total
+  "translation_metadata": {
+    "total_messages": 45,
+    "translated_successfully": 45,
+    "avg_confidence": 0.91,
+    "translation_time_ms": 1247,
+    "cost_usd": 0.12
+  }
+}
+```
+
+#### Business Value & Agent Disable Impact
+
+**With Translation Agent Enabled ✅**
+- Real-time translation of 75+ languages
+- Technical term preservation (Aave, Morpho, APY unchanged)
+- Bilingual mode for learning
+- Team collaboration across languages
+- Cultural localization (date/currency formats)
+- Translation confidence scores (0.91 avg)
+
+**With Translation Agent Disabled ❌**
+- No automatic translation
+- Users must use external tools (Google Translate)
+- Technical terms incorrectly translated
+- Time wasted: 5-10 min per conversation
+- Collaboration friction for multilingual teams
+- Lost business opportunities (non-English markets)
+
+**ROI**: $45,000/year for 20-person global team (time savings + market expansion)
+
+---
+
+### Use Case 23: Chat Personalization and User Preferences {#use-case-23}
+
+**Agent Coverage**: All Agents
+**Business Context**: Users have different preferences for response style, notifications, UI layout, and agent behavior. Personalization increases user satisfaction and productivity.
+
+#### API Request
+
+```bash
+PUT /api/v1/chat/preferences
+Authorization: Bearer eyJhbGc...
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "user_id": "user_456",
+  "preferences": {
+    "response_style": "technical",  // brief, detailed, technical, executive
+    "agent_preferences": {
+      "default_risk_agent": "risk_analyzer",
+      "auto_invoke_compliance": true
+    },
+    "notifications": {
+      "mention_only": false,
+      "all_messages": true,
+      "summaries": "daily"
+    },
+    "display": {
+      "theme": "dark",
+      "view_density": "comfortable",
+      "font_size": "medium"
+    },
+    "privacy": {
+      "conversation_retention_days": 90,
+      "auto_delete_sensitive": true
+    },
+    "accessibility": {
+      "screen_reader": false,
+      "keyboard_shortcuts": true,
+      "high_contrast": false
+    }
+  }
+}
+```
+
+#### API Response
+
+```json
+{
+  "success": true,
+  "user_id": "user_456",
+  "preferences_updated": [
+    "response_style",
+    "agent_preferences",
+    "notifications",
+    "display",
+    "privacy",
+    "accessibility"
+  ],
+  "applied_at": "2025-01-14T15:35:00Z",
+  "sync_status": "synced_across_devices"
+}
+```
+
+#### Business Value
+
+- **Productivity**: Preferred response style saves 3-5 min per conversation (no re-asking for details)
+- **Notification Control**: Reduce noise, focus on important mentions
+- **Accessibility**: WCAG AAA compliance, inclusive for all users
+- **Privacy**: GDPR-compliant data retention controls
+- **ROI**: $8,200/year per user (time savings + satisfaction)
+
+---
+
+### Use Case 24: External Platform Integration (Slack/Discord/Teams) {#use-case-24}
+
+**Agent Coverage**: Integration Agent, All Agents
+**Business Context**: Teams use Slack/Discord/Teams as primary communication tools. Integrate Anvil AI chat directly into these platforms for seamless workflows.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/integrations/slack/sync
+Authorization: Bearer eyJhbGc...
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "integration_type": "slack",
+  "action": "enable",
+  "config": {
+    "workspace_id": "T01234567",
+    "channel_id": "C98765432",
+    "bot_mention_only": true,
+    "auto_post_alerts": true,
+    "slash_commands_enabled": true
+  }
+}
+```
+
+#### Slack Usage Example
+
+```
+User in Slack: @anvil analyze risk for wallet 0x742d35Cc...
+Anvil Bot: 🔍 Analyzing risk profile...
+
+[3 seconds later]
+
+Anvil Bot: ✅ Risk Analysis Complete
+
+*Portfolio Risk Score:* 6.2/10 (Medium)
+*Concentration Risk:* High (Morpho 35%)
+*Recommendation:* Reduce Morpho exposure to <25%
+
+🔗 [View Full Analysis](https://app.anvil.com/conversations/conv_slack_123)
+```
+
+#### Business Value & Agent Disable Impact
+
+**With Integration Agent Enabled ✅**
+- Anvil AI accessible in Slack/Discord/Teams
+- Slash commands (`/anvil risk-analysis @wallet`)
+- Auto-post alerts to channels
+- Rich cards and interactive components
+- Sync conversations bidirectionally
+
+**With Integration Agent Disabled ❌**
+- Must switch to Anvil web app
+- Context switching (5-10 min lost per day)
+- Missed real-time alerts
+- Team collaboration friction
+
+**ROI**: $32,000/year per team (context switching elimination)
+
+---
+
+### Use Case 25: Voice Chat with Transcription {#use-case-25}
+
+**Agent Coverage**: Voice Agent, Transcription Agent, All Agents
+**Business Context**: Mobile users and accessibility needs require voice input. Voice commands enable hands-free operation while driving or multitasking.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/conversations/conv_123/voice/start
+Authorization: Bearer eyJhbGc...
+Content-Type: multipart/form-data
+```
+
+**Request Body:**
+```
+audio_file: voice_message.m4a (binary)
+language: en-US
+enable_diarization: true  // Identify multiple speakers
+```
+
+#### API Response
+
+```json
+{
+  "success": true,
+  "transcription": {
+    "text": "Anvil, analyze my portfolio risk across all DeFi positions and suggest rebalancing options",
+    "confidence": 0.94,
+    "language_detected": "en-US",
+    "duration_seconds": 8.3,
+    "speakers": [{"speaker_id": "speaker_1", "name": "User"}]
+  },
+  "agent_response": {
+    "text": "I'll analyze your DeFi portfolio risk and provide rebalancing recommendations.",
+    "audio_url": "https://app.anvil.com/voice/response_audio_123.mp3",
+    "voice": "natural_female_en",
+    "duration_seconds": 4.2
+  },
+  "processing_time_ms": 2340
+}
+```
+
+#### Business Value & Agent Disable Impact
+
+**With Voice Agent Enabled ✅**
+- Hands-free operation (driving, cooking, etc.)
+- Speech-to-text transcription (94% accuracy)
+- Text-to-speech responses (natural voices)
+- Multi-speaker diarization
+- Accessibility for visually impaired users
+
+**With Voice Agent Disabled ❌**
+- Text input only (slower on mobile)
+- No hands-free capability
+- Accessibility barriers
+- Reduced mobile user engagement
+
+**ROI**: $12,000/year (productivity + accessibility compliance)
+
+---
+
+### Use Case 26: Conversation Export and Compliance Archiving {#use-case-26}
+
+**Agent Coverage**: Compliance Agent, Export Agent
+**Business Context**: Regulatory compliance requires conversation archiving. Legal holds, audits, and forensic analysis need immutable records.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/conversations/conv_123/export
+Authorization: Bearer eyJhbGc...
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "conversation_id": "conv_123",
+  "format": "pdf_compliance",  // pdf, json, csv, html, markdown, pdf_compliance
+  "include_metadata": true,
+  "redact_pii": true,  // GDPR compliance
+  "sign_digitally": true,  // E-signature
+  "compliance_mode": "SEC",  // SEC, FinCEN, IRS, GDPR
+  "legal_hold": false
+}
+```
+
+#### API Response
+
+```json
+{
+  "success": true,
+  "export_id": "export_20250114_153500",
+  "format": "pdf_compliance",
+  "file_url": "https://app.anvil.com/exports/export_20250114_153500.pdf",
+  "file_size_mb": 2.4,
+  "pages": 18,
+  "metadata": {
+    "conversation_id": "conv_123",
+    "participants": ["user_456", "user_789"],
+    "message_count": 127,
+    "date_range": "2025-01-01 to 2025-01-14",
+    "agents_used": ["risk_analyzer", "yield_optimizer", "compliance_monitor"],
+    "decisions_count": 8,
+    "compliance_mode": "SEC",
+    "digital_signature": "SHA256:abc123...",
+    "tamper_proof": true
+  },
+  "compliance_certification": {
+    "compliant_with": ["SEC Rule 17a-4", "FinCEN BSA", "GDPR Article 17"],
+    "retention_period_years": 7,
+    "immutability_verified": true
+  }
+}
+```
+
+#### Business Value & Agent Disable Impact
+
+**With Export/Compliance Agents Enabled ✅**
+- One-click compliance exports (SEC, FinCEN, IRS)
+- PII redaction for GDPR
+- Digital signatures (tamper-proof)
+- Legal hold preservation
+- Batch export (100+ conversations)
+- Immutable audit logs
+
+**With Agents Disabled ❌**
+- Manual export (copy-paste conversations)
+- No PII redaction (GDPR violations)
+- No compliance formatting
+- Legal vulnerability
+- Time cost: 30-45 min per export
+
+**ROI**: $85,000/year (compliance automation + legal risk reduction)
+
+---
+
+### Use Case 27: Intent Detection and Auto-Suggestions {#use-case-27}
+
+**Agent Coverage**: Intent Detection Agent, All Agents
+**Business Context**: Real-time intent detection suggests relevant agents, commands, and completions as users type, accelerating workflows and improving discoverability.
+
+#### Real-Time WebSocket
+
+```
+User types: "What's the risk of"
+↓
+WebSocket Event:
+{
+  "event": "intent_detected",
+  "intent": "risk_analysis",
+  "confidence": 0.87,
+  "suggested_agent": "risk_analyzer",
+  "autocomplete": [
+    "What's the risk of my Morpho position",
+    "What's the risk of Aave protocol",
+    "What's the risk of stETH depegging"
+  ],
+  "suggested_commands": ["/analyze-risk", "/portfolio-health"],
+  "similar_past_conversations": [
+    {"id": "conv_098", "title": "Morpho Risk Analysis", "date": "2024-12-28"}
+  ]
+}
+```
+
+#### Business Value & Agent Disable Impact
+
+**With Intent Detection Agent Enabled ✅**
+- Real-time autocomplete (save 10-15 words per message)
+- Proactive agent suggestions (faster workflows)
+- Smart command suggestions
+- Context-aware completions
+- Learning from corrections
+
+**With Intent Detection Agent Disabled ❌**
+- Manual typing (slower)
+- Must remember agent names/commands
+- No autocomplete
+- Missed similar past conversations
+- Reduced productivity: 8-12 min/day lost
+
+**ROI**: $18,500/year per user (typing time savings)
+
+---
+
+### Use Case 28: Real-Time Collaboration Features (Advanced) {#use-case-28}
+
+**Agent Coverage**: Collaboration Agent
+**Business Context**: Advanced real-time collaboration features (live cursors, co-editing, screen sharing, video calls) enable Google Docs-style teamwork on DeFi analysis.
+
+#### WebSocket for Live Collaboration
+
+```
+WS /ws/chat/conv_123/collaborate
+
+Events:
+- cursor_position: {user_id, x, y}
+- user_typing: {user_id, typing: true}
+- message_edit: {message_id, new_text}
+- reaction_add: {message_id, emoji}
+- screen_share_start: {user_id, stream_url}
+- video_call_join: {user_id, peer_id}
+```
+
+#### Business Value
+
+- **Live Cursors**: See where teammates are working
+- **Co-Editing**: Google Docs-style message editing
+- **Screen Sharing**: Embedded Zoom/Meet
+- **Voting**: Collaborative decision-making
+- **Conflict Resolution**: Auto-merge edits
+
+**ROI**: $42,000/year per team (collaboration efficiency)
+
+---
+
+### Use Case 29: Chat Performance and Optimization Features {#use-case-29}
+
+**Agent Coverage**: Performance Agent
+**Business Context**: Monitor and optimize chat performance (latency, uptime, caching, offline mode) to ensure <2s response times and 99.9% uptime.
+
+#### API Request
+
+```bash
+GET /api/v1/chat/performance/metrics
+Authorization: Bearer eyJhbGc...
+```
+
+#### API Response
+
+```json
+{
+  "success": true,
+  "metrics": {
+    "latency": {
+      "avg_ms": 1847,
+      "p50_ms": 1620,
+      "p95_ms": 3240,
+      "p99_ms": 5670,
+      "target_ms": 2000
+    },
+    "uptime": {
+      "percentage": 99.94,
+      "downtime_minutes_30d": 26,
+      "incidents_30d": 2
+    },
+    "caching": {
+      "hit_rate": 78.4,
+      "miss_rate": 21.6,
+      "cache_size_gb": 12.3
+    },
+    "bandwidth": {
+      "avg_message_size_kb": 8.4,
+      "compression_ratio": 0.23,
+      "cdn_hit_rate": 94.2
+    },
+    "reliability": {
+      "message_delivery_rate": 99.98,
+      "retry_success_rate": 94.7,
+      "error_rate": 0.12
+    }
+  },
+  "optimizations_applied": [
+    "Smart caching (FAQ responses)",
+    "Image compression (70% reduction)",
+    "CDN for global low-latency",
+    "Prefetching next agent responses",
+    "Offline mode queue (sync when online)"
+  ]
+}
+```
+
+#### Business Value
+
+- **Performance Budget**: <2s response time (98.2% adherence)
+- **High Availability**: 99.9% uptime SLA
+- **Smart Caching**: 78.4% hit rate
+- **Offline Mode**: Queue messages, sync later
+- **CDN**: Global low-latency (<150ms)
+
+**ROI**: $28,000/year (productivity + user satisfaction)
+
+---
+
+### Use Case 30: Advanced Agent Orchestration {#use-case-30}
+
+**Agent Coverage**: All 18 Agents, Supervisor Agent
+**Business Context**: Complex workflows require multi-agent orchestration (sequential, parallel, voting, debate, fallback). Supervisor Agent coordinates agent squads for maximum intelligence.
+
+#### API Request
+
+```bash
+POST /api/v1/chat/agent-squad/orchestrate
+Authorization: Bearer eyJhbGc...
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "orchestration_type": "agent_debate",  // sequential, parallel, voting, debate, fallback
+  "agents": ["risk_analyzer", "yield_optimizer", "security_auditor"],
+  "task": "Should I migrate $100k from Aave to Morpho?",
+  "config": {
+    "mode": "debate",  // Agents discuss and reach consensus
+    "rounds": 3,
+    "voting_enabled": true,
+    "confidence_threshold": 0.85
+  }
+}
+```
+
+#### API Response (Agent Debate Mode)
+
+```json
+{
+  "success": true,
+  "orchestration_type": "agent_debate",
+  "task": "Should I migrate $100k from Aave to Morpho?",
+  "debate_rounds": [
+    {
+      "round": 1,
+      "risk_analyzer": {
+        "position": "no",
+        "argument": "Morpho concentration risk too high (would be 45% of portfolio)",
+        "confidence": 0.82
+      },
+      "yield_optimizer": {
+        "position": "yes",
+        "argument": "+2.8% APY gain worth $2,800/year",
+        "confidence": 0.89
+      },
+      "security_auditor": {
+        "position": "conditional_yes",
+        "argument": "Morpho is secure but limit to $75k max",
+        "confidence": 0.91
+      }
+    },
+    {
+      "round": 2,
+      "risk_analyzer": {
+        "position": "conditional_yes",
+        "argument": "Agreed to $75k migration (30% portfolio max)",
+        "confidence": 0.87
+      },
+      "yield_optimizer": {
+        "position": "yes",
+        "argument": "$75k still gains $2,100/year",
+        "confidence": 0.88
+      },
+      "security_auditor": {
+        "position": "yes",
+        "argument": "Risk acceptable at 30% allocation",
+        "confidence": 0.90
+      }
+    }
+  ],
+  "consensus_reached": true,
+  "final_recommendation": {
+    "action": "migrate",
+    "amount": "$75,000",
+    "rationale": "Consensus reached: Migrate $75k (not $100k) to balance yield gain (+$2,100/year) with acceptable risk (30% allocation)",
+    "confidence": 0.89,
+    "votes": {"yes": 3, "no": 0},
+    "execution_plan": [
+      "Withdraw $75k from Aave USDC",
+      "Deposit $75k to Morpho USDC vault",
+      "Monitor concentration risk (stay <30%)"
+    ]
+  },
+  "execution_time_seconds": 8.7
+}
+```
+
+#### Orchestration Modes
+
+**1. Sequential**: Agent A → Agent B → Agent C (output feeds into next)
+**2. Parallel**: All agents run simultaneously, merge results
+**3. Voting**: 3-5 agents analyze, majority vote wins
+**4. Debate**: Agents discuss and reach consensus (shown above)
+**5. Fallback**: If Agent A fails, try Agent B
+
+#### Business Value & Agent Disable Impact
+
+**With Supervisor Agent + Multi-Agent Orchestration ✅**
+- Agent debate for complex decisions (3 agents discuss, reach consensus)
+- Parallel execution (3x faster than sequential)
+- Voting for validation (5 agents vote, majority wins)
+- Fallback for reliability (Agent A fails → Agent B activated)
+- Higher confidence (0.89 with consensus vs 0.76 single agent)
+
+**With Supervisor Agent Disabled ❌**
+- Single agent decisions only
+- Sequential workflows (slow)
+- No consensus building
+- Lower confidence (single viewpoint)
+- Missed edge cases
+- Time cost: 3x slower decisions
+
+**Impact Comparison:**
+
+| Metric | With Orchestration | Single Agent | Difference |
+|--------|-------------------|--------------|------------|
+| Decision Confidence | 89% | 76% | +13% |
+| Execution Time | 8.7s | 26s | 3x faster (parallel) |
+| Edge Cases Caught | 94% | 67% | +27% |
+| Decision Reversal Rate | 3% | 18% | -15% (more stable) |
+
+**ROI Calculation:**
+- **Better Decisions**: 13% higher confidence → 15% fewer mistakes
+- **Mistake Cost Savings**: $50k/year (avoided bad DeFi positions)
+- **Time Savings**: 3x faster parallel execution → $15k/year
+- **Total Annual ROI**: $65,000/year per team
 
 ---
 
