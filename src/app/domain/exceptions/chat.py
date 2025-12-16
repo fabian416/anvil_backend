@@ -604,3 +604,128 @@ class IntentDetectionError(ApplicationError):
             details=details,
             override_message="Failed to detect user intent",
         )
+
+
+# =============================================================================
+# ORCHESTRATION ERRORS
+# =============================================================================
+
+
+class VotingFailedError(ApplicationError):
+    """Raised when multi-agent voting fails."""
+
+    def __init__(
+        self,
+        agent_count: int | None = None,
+        reason: str | None = None,
+    ) -> None:
+        details = {}
+        if agent_count is not None:
+            details["agent_count"] = agent_count
+        if reason:
+            details["reason"] = reason
+        super().__init__(
+            ErrorCode.CHAT_AGENT_ERROR,
+            details=details,
+            override_message="Multi-agent voting failed",
+        )
+
+
+class DebateTimeoutError(ApplicationError):
+    """Raised when agent debate exceeds time limit."""
+
+    def __init__(
+        self,
+        max_rounds: int | None = None,
+        current_round: int | None = None,
+    ) -> None:
+        details = {}
+        if max_rounds is not None:
+            details["max_rounds"] = max_rounds
+        if current_round is not None:
+            details["current_round"] = current_round
+        super().__init__(
+            ErrorCode.CHAT_AGENT_ERROR,
+            details=details,
+            override_message="Agent debate timed out",
+        )
+
+
+class NoConsensusError(ApplicationError):
+    """Raised when agents cannot reach consensus."""
+
+    def __init__(
+        self,
+        participating_agents: list[str] | None = None,
+        reason: str | None = None,
+    ) -> None:
+        details = {}
+        if participating_agents:
+            details["participating_agents"] = participating_agents
+        if reason:
+            details["reason"] = reason
+        super().__init__(
+            ErrorCode.CHAT_AGENT_ERROR,
+            details=details,
+            override_message="Agents could not reach consensus",
+        )
+
+
+class AllAgentsUnavailableError(ApplicationError):
+    """Raised when all fallback agents are unavailable."""
+
+    def __init__(
+        self,
+        attempted_agents: list[str] | None = None,
+        fallback_reasons: list[str] | None = None,
+    ) -> None:
+        details = {}
+        if attempted_agents:
+            details["attempted_agents"] = attempted_agents
+        if fallback_reasons:
+            details["fallback_reasons"] = fallback_reasons
+        super().__init__(
+            ErrorCode.CHAT_AGENT_UNAVAILABLE,
+            details=details,
+            override_message="All fallback agents unavailable",
+        )
+
+
+class CustomAgentValidationError(ApplicationError):
+    """Raised when custom agent configuration is invalid."""
+
+    def __init__(
+        self,
+        validation_errors: list[str] | None = None,
+        agent_name: str | None = None,
+    ) -> None:
+        details = {}
+        if validation_errors:
+            details["validation_errors"] = validation_errors
+        if agent_name:
+            details["agent_name"] = agent_name
+        super().__init__(
+            ErrorCode.CHAT_MESSAGE_EMPTY,
+            details=details,
+            override_message="Custom agent configuration is invalid",
+        )
+
+
+class CustomAgentNotFoundError(ApplicationError):
+    """Raised when custom agent is not found."""
+
+    def __init__(
+        self,
+        config_id: str | None = None,
+        agent_name: str | None = None,
+    ) -> None:
+        details = {}
+        if config_id:
+            details["config_id"] = config_id
+        if agent_name:
+            details["agent_name"] = agent_name
+        super().__init__(
+            ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
+            details=details,
+            override_message="Custom agent not found",
+        )
