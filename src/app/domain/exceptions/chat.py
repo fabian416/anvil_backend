@@ -238,6 +238,52 @@ class ConversationLimitExceededError(ApplicationError):
         )
 
 
+class CacheError(ApplicationError):
+    """Raised when cache operations fail."""
+
+    def __init__(
+        self,
+        operation: str | None = None,
+        cache_key: str | None = None,
+        reason: str | None = None,
+    ) -> None:
+        details = {}
+        if operation:
+            details["operation"] = operation
+        if cache_key:
+            details["cache_key"] = cache_key
+        if reason:
+            details["reason"] = reason
+        super().__init__(
+            ErrorCode.CHAT_SERVICE_OVERLOADED,
+            details=details,
+            override_message="Cache operation failed",
+        )
+
+
+class PerformanceBudgetViolation(ApplicationError):
+    """Raised when performance budget is violated."""
+
+    def __init__(
+        self,
+        metric: str | None = None,
+        actual_value: float | None = None,
+        budget_value: float | None = None,
+    ) -> None:
+        details = {}
+        if metric:
+            details["metric"] = metric
+        if actual_value is not None:
+            details["actual_value"] = actual_value
+        if budget_value is not None:
+            details["budget_value"] = budget_value
+        super().__init__(
+            ErrorCode.CHAT_RATE_LIMIT,
+            details=details,
+            override_message=f"Performance budget violated: {metric}",
+        )
+
+
 class AgentRoutingError(ApplicationError):
     """Raised when the system cannot route to an appropriate agent."""
 
