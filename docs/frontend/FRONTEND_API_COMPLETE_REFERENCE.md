@@ -3,7 +3,7 @@
 **Version:** 3.2
 **Last Updated:** December 17, 2025
 **Total Endpoints:** 301+ (11 new chat endpoints)
-**API Structure:** `/api/v1/chat/*`, `/api/v1/user/*`, `/api/v1/admin/*`
+**API Structure:** `/api/v1/user/*`, `/api/v1/admin/*`
 
 ---
 
@@ -57,26 +57,26 @@ interface APIError {
 
 # 📱 USER ENDPOINTS (`/api/v1/user/`)
 
-## 1. Chat & Conversations (`/api/v1/chat/`)
+## 1. Chat & Conversations (`/api/v1/user/chat/`)
 
 ### Conversations
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/chat/conversations` | Create conversation | ✅ |
-| GET | `/chat/conversations` | List conversations | ✅ |
-| GET | `/chat/conversations/{id}` | Get conversation | ✅ |
-| DELETE | `/chat/conversations/{id}` | Delete conversation | ✅ |
-| GET | `/chat/conversations/{id}/messages` | Get messages | ✅ |
-| POST | `/chat/conversations/{id}/messages` | Send message | ✅ |
+| POST | `/user/chat/conversations` | Create conversation | ✅ |
+| GET | `/user/chat/conversations` | List conversations | ✅ |
+| GET | `/user/chat/conversations/{id}` | Get conversation | ✅ |
+| DELETE | `/user/chat/conversations/{id}` | Delete conversation | ✅ |
+| GET | `/user/chat/conversations/{id}/messages` | Get messages | ✅ |
+| POST | `/user/chat/conversations/{id}/messages` | Send message | ✅ |
 
 ### Intent Detection ⭐ NEW
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/chat/intent/detect` | Detect intent from message | ✅ |
-| POST | `/chat/intent/autocomplete` | Get autocomplete suggestions | ✅ |
-| POST | `/chat/intent/similar-conversations` | Find similar conversations | ✅ |
+| POST | `/user/chat/intent/detect` | Detect intent from message | ✅ |
+| POST | `/user/chat/intent/autocomplete` | Get autocomplete suggestions | ✅ |
+| POST | `/user/chat/intent/similar-conversations` | Find similar conversations | ✅ |
 
 **See:** [Chat Analytics & Intent Detection API](./user-modules/user/chat/CHAT_ANALYTICS_AND_INTENT_API.md) for complete documentation
 
@@ -84,14 +84,14 @@ interface APIError {
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/chat/my-analytics` | Analytics dashboard overview | ✅ |
-| GET | `/chat/my-analytics/usage` | Detailed usage statistics | ✅ |
-| GET | `/chat/my-analytics/insights` | Conversation insights | ✅ |
-| GET | `/chat/my-analytics/costs` | Personal cost breakdown | ✅ |
-| GET | `/chat/my-analytics/agents/favorites` | Favorite agents analysis | ✅ |
-| GET | `/chat/my-analytics/trends` | Historical trends | ✅ |
-| GET | `/chat/my-analytics/conversations/history` | Conversation history | ✅ |
-| GET | `/chat/my-analytics/export` | Export analytics data | ✅ |
+| GET | `/user/chat/my-analytics` | Analytics dashboard overview | ✅ |
+| GET | `/user/chat/my-analytics/usage` | Detailed usage statistics | ✅ |
+| GET | `/user/chat/my-analytics/insights` | Conversation insights | ✅ |
+| GET | `/user/chat/my-analytics/costs` | Personal cost breakdown | ✅ |
+| GET | `/user/chat/my-analytics/agents/favorites` | Favorite agents analysis | ✅ |
+| GET | `/user/chat/my-analytics/trends` | Historical trends | ✅ |
+| GET | `/user/chat/my-analytics/conversations/history` | Conversation history | ✅ |
+| GET | `/user/chat/my-analytics/export` | Export analytics data | ✅ |
 
 **See:** [Chat Analytics & Intent Detection API](./user-modules/user/chat/CHAT_ANALYTICS_AND_INTENT_API.md) for complete documentation
 

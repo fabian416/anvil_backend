@@ -40,7 +40,7 @@ from app.infrastructure.auth.context import get_current_user_id
 
 
 router = APIRouter(
-    prefix="/chat",
+    prefix="/user/chat",
     tags=["chat", "analytics", "user"],
 )
 

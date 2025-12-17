@@ -29,7 +29,7 @@ from app.presentation.http.schemas.chat import (
 
 def create_intent_detection_router() -> APIRouter:
     router = APIRouter(
-        prefix="/chat/intent",
+        prefix="/user/chat/intent",
         tags=["chat-intent"],
     )
 

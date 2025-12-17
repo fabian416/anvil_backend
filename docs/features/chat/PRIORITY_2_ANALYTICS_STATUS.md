@@ -28,14 +28,14 @@
 **Status**: Complete (506 lines, 8 endpoints)
 
 Registered endpoints:
-- ✅ `GET /api/v1/chat/my-analytics` - Dashboard overview
-- ✅ `GET /api/v1/chat/my-analytics/usage` - Usage statistics
-- ✅ `GET /api/v1/chat/my-analytics/insights` - Conversation insights
-- ✅ `GET /api/v1/chat/my-analytics/costs` - Cost breakdown
-- ✅ `GET /api/v1/chat/my-analytics/agents/favorites` - Favorite agents
-- ✅ `GET /api/v1/chat/my-analytics/trends` - Historical trends
-- ✅ `GET /api/v1/chat/my-analytics/conversations/history` - Conversation history
-- ✅ `GET /api/v1/chat/my-analytics/export` - Export data
+- ✅ `GET /api/v1/user/chat/my-analytics` - Dashboard overview
+- ✅ `GET /api/v1/user/chat/my-analytics/usage` - Usage statistics
+- ✅ `GET /api/v1/user/chat/my-analytics/insights` - Conversation insights
+- ✅ `GET /api/v1/user/chat/my-analytics/costs` - Cost breakdown
+- ✅ `GET /api/v1/user/chat/my-analytics/agents/favorites` - Favorite agents
+- ✅ `GET /api/v1/user/chat/my-analytics/trends` - Historical trends
+- ✅ `GET /api/v1/user/chat/my-analytics/conversations/history` - Conversation history
+- ✅ `GET /api/v1/user/chat/my-analytics/export` - Export data
 
 #### Analytics Repository ✅
 **File**: `src/app/infrastructure/adapters/chat/analytics_repository_adapter.py`

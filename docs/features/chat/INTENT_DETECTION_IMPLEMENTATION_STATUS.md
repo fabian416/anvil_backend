@@ -34,17 +34,17 @@ Created comprehensive request/response schemas:
 **Lines**: 207 (new file)
 
 Implemented 3 FastAPI endpoints:
-- `POST /api/v1/chat/intent/detect` - Detect intent from user message
+- `POST /api/v1/user/chat/intent/detect` - Detect intent from user message
   - Returns intent type, confidence, suggested agent, extracted entities
   - Optional agent suggestions with reasoning
   - Performance timing
 
-- `POST /api/v1/chat/intent/autocomplete` - Real-time autocomplete suggestions
+- `POST /api/v1/user/chat/intent/autocomplete` - Real-time autocomplete suggestions
   - Suggests protocols, tokens, and actions
   - Returns completion text, display text, confidence
   - Metadata and icons for UI rendering
 
-- `POST /api/v1/chat/intent/similar-conversations` - Find related conversations
+- `POST /api/v1/user/chat/intent/similar-conversations` - Find related conversations
   - Semantic similarity search
   - Returns conversation snippets and metadata
   - Configurable similarity threshold
@@ -64,7 +64,7 @@ Added `AdvancedIntentDetector` provider:
 
 - Added import for `create_intent_detection_router`
 - Registered router in `sub_routers` tuple
-- Routes available at `/api/v1/chat/intent/*`
+- Routes available at `/api/v1/user/chat/intent/*`
 
 ### 5. Pre-existing Import Fixes
 **File**: `src/app/application/chat/services/agent_orchestration_service.py`
@@ -83,7 +83,7 @@ Fixed incorrect import paths:
 $ python -c "from app.presentation.http.controllers.chat.intent_detection_router import create_intent_detection_router; router = create_intent_detection_router(); print(f'✓ Intent detection router created successfully'); print(f'✓ Routes: {[route.path for route in router.routes]}')"
 
 ✓ Intent detection router created successfully
-✓ Routes: ['/chat/intent/detect', '/chat/intent/autocomplete', '/chat/intent/similar-conversations']
+✓ Routes: ['/user/chat/intent/detect', '/user/chat/intent/autocomplete', '/user/chat/intent/similar-conversations']
 ```
 
 **Result**: ✅ Router creates successfully with all 3 endpoints properly configured.
@@ -212,9 +212,9 @@ $ python -c "from app.presentation.http.controllers.api_v1_router import create_
 The intent detection feature is **100% complete** with both API and WebSocket integration:
 
 **API Layer** (Complete):
-- `POST /api/v1/chat/intent/detect` - Detect user intent with confidence scoring
-- `POST /api/v1/chat/intent/autocomplete` - Real-time typing suggestions
-- `POST /api/v1/chat/intent/similar-conversations` - Find related conversation history
+- `POST /api/v1/user/chat/intent/detect` - Detect user intent with confidence scoring
+- `POST /api/v1/user/chat/intent/autocomplete` - Real-time typing suggestions
+- `POST /api/v1/user/chat/intent/similar-conversations` - Find related conversation history
 
 **WebSocket Integration** (Complete):
 - Real-time intent detection on every user message

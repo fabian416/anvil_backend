@@ -40,7 +40,7 @@ Authorization: Bearer <jwt_token>
 
 Analyzes user message to detect intent, extract entities, and suggest appropriate agents.
 
-**Endpoint:** `POST /api/v1/chat/intent/detect`
+**Endpoint:** `POST /api/v1/user/chat/intent/detect`
 
 ### Request Body
 
@@ -81,7 +81,7 @@ interface DetectIntentResponse {
 ### Example Request
 
 ```typescript
-POST /api/v1/chat/intent/detect
+POST /api/v1/user/chat/intent/detect
 Content-Type: application/json
 Authorization: Bearer eyJ0eXAi...
 
@@ -127,7 +127,7 @@ Authorization: Bearer eyJ0eXAi...
 
 Provides real-time autocomplete suggestions for partial messages.
 
-**Endpoint:** `POST /api/v1/chat/intent/autocomplete`
+**Endpoint:** `POST /api/v1/user/chat/intent/autocomplete`
 
 ### Request Body
 
@@ -161,7 +161,7 @@ interface AutocompleteResponse {
 ### Example Request
 
 ```typescript
-POST /api/v1/chat/intent/autocomplete
+POST /api/v1/user/chat/intent/autocomplete
 Content-Type: application/json
 Authorization: Bearer eyJ0eXAi...
 
@@ -211,7 +211,7 @@ Authorization: Bearer eyJ0eXAi...
 
 Finds semantically similar past conversations using vector similarity search.
 
-**Endpoint:** `POST /api/v1/chat/intent/similar-conversations`
+**Endpoint:** `POST /api/v1/user/chat/intent/similar-conversations`
 
 ### Request Body
 
@@ -247,7 +247,7 @@ interface SimilarConversationsResponse {
 ### Example Request
 
 ```typescript
-POST /api/v1/chat/intent/similar-conversations
+POST /api/v1/user/chat/intent/similar-conversations
 Content-Type: application/json
 Authorization: Bearer eyJ0eXAi...
 
@@ -301,7 +301,7 @@ All analytics endpoints support date range filtering via query parameters:
 
 Get high-level personal analytics summary for the dashboard.
 
-**Endpoint:** `GET /api/v1/chat/my-analytics`
+**Endpoint:** `GET /api/v1/user/chat/my-analytics`
 
 ### Query Parameters
 
@@ -369,7 +369,7 @@ interface UserAnalyticsDashboardResponse {
 ### Example Request
 
 ```bash
-GET /api/v1/chat/my-analytics?date_from=2025-11-17&date_to=2025-12-17
+GET /api/v1/user/chat/my-analytics?date_from=2025-11-17&date_to=2025-12-17
 Authorization: Bearer eyJ0eXAi...
 ```
 
@@ -419,7 +419,7 @@ Authorization: Bearer eyJ0eXAi...
 
 Get comprehensive usage statistics with activity breakdowns.
 
-**Endpoint:** `GET /api/v1/chat/my-analytics/usage`
+**Endpoint:** `GET /api/v1/user/chat/my-analytics/usage`
 
 ### Response
 
@@ -469,7 +469,7 @@ interface PersonalUsageStatsResponse {
 
 Get AI-driven insights about conversation patterns and quality.
 
-**Endpoint:** `GET /api/v1/chat/my-analytics/insights`
+**Endpoint:** `GET /api/v1/user/chat/my-analytics/insights`
 
 ### Response
 
@@ -526,7 +526,7 @@ interface ConversationInsightsResponse {
 
 Get detailed breakdown of AI costs by agent, model, and time.
 
-**Endpoint:** `GET /api/v1/chat/my-analytics/costs`
+**Endpoint:** `GET /api/v1/user/chat/my-analytics/costs`
 
 ### Response
 
@@ -579,7 +579,7 @@ interface PersonalCostBreakdownResponse {
 
 Get analysis of agent preferences and performance.
 
-**Endpoint:** `GET /api/v1/chat/my-analytics/agents/favorites`
+**Endpoint:** `GET /api/v1/user/chat/my-analytics/agents/favorites`
 
 ### Response
 
@@ -628,7 +628,7 @@ interface FavoriteAgentsResponse {
 
 Get time-series data showing trends over time.
 
-**Endpoint:** `GET /api/v1/chat/my-analytics/trends`
+**Endpoint:** `GET /api/v1/user/chat/my-analytics/trends`
 
 ### Query Parameters
 
@@ -709,7 +709,7 @@ interface HistoricalTrendsResponse {
 
 Get detailed conversation history with filtering and analysis.
 
-**Endpoint:** `GET /api/v1/chat/my-analytics/conversations/history`
+**Endpoint:** `GET /api/v1/user/chat/my-analytics/conversations/history`
 
 ### Query Parameters
 
@@ -773,7 +773,7 @@ interface ConversationHistoryResponse {
 
 Export analytics data in JSON or CSV format.
 
-**Endpoint:** `GET /api/v1/chat/my-analytics/export`
+**Endpoint:** `GET /api/v1/user/chat/my-analytics/export`
 
 ### Query Parameters
 
@@ -1094,9 +1094,9 @@ If migrating from the old chat API, note these changes:
 **Old (multiple endpoints):**
 ```typescript
 // Legacy fragmented approach
-const stats = await fetch('/api/v1/chat/stats');
-const costs = await fetch('/api/v1/chat/costs');
-const agents = await fetch('/api/v1/chat/agents/usage');
+const stats = await fetch('/api/v1/user/chat/stats');
+const costs = await fetch('/api/v1/user/chat/costs');
+const agents = await fetch('/api/v1/user/chat/agents/usage');
 ```
 
 **New (unified dashboard):**
