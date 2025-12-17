@@ -42,6 +42,12 @@ from app.presentation.http.controllers.chat.router import create_chat_router
 from app.presentation.http.controllers.chat.websocket_router import (
     create_chat_websocket_router,
 )
+from app.presentation.http.controllers.chat.intent_detection_router import (
+    create_intent_detection_router,
+)
+from app.presentation.http.controllers.chat.analytics_dashboard import (
+    router as analytics_dashboard_router,
+)
 
 # Comparison router
 from app.presentation.http.controllers.comparison.router import create_comparison_router
@@ -136,6 +142,8 @@ def create_api_v1_router() -> APIRouter:
         metrics_router,
         create_chat_router(),
         create_chat_websocket_router(),
+        create_intent_detection_router(),
+        analytics_dashboard_router,
         create_admin_stats_router(),
         create_admin_agent_router(),
         # Admin wallet router (for admin management of Privy wallets)

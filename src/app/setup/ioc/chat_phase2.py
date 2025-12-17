@@ -70,6 +70,12 @@ from app.presentation.http.websocket.analytics_handler import AnalyticsWebSocket
 from app.presentation.http.websocket.template_handler import TemplateExecutionWebSocketHandler
 from app.presentation.http.websocket.connection_manager import ConnectionManager
 
+# Application Services
+from app.application.chat.services.advanced_intent_detector import AdvancedIntentDetector
+from app.application.chat.services.user_analytics_service import UserChatAnalyticsService
+from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
+from app.domain.ports.conversation_repository import ConversationRepository
+
 
 class ChatPhase2Provider(Provider):
     """
@@ -535,6 +541,60 @@ class ChatPhase2Provider(Provider):
         return TemplateExecutionWebSocketHandler(
             connection_manager=connection_manager,
             template_execution_repository=template_execution_repository,
+        )
+
+    # ========================================
+    # Analytics Services (REQUEST-scoped)
+    # ========================================
+
+    @provide
+    def provide_user_chat_analytics_service(
+        self,
+        conversation_repository: ConversationRepository,
+        analytics_repository: AnalyticsRepository,
+    ) -> UserChatAnalyticsService:
+        """
+        Provide user-level chat analytics service.
+
+        Generates personalized analytics for individual users.
+        """
+        return UserChatAnalyticsService(
+            conversation_repository=conversation_repository,
+            analytics_repository=analytics_repository,
+        )
+
+    @provide
+    def provide_admin_chat_analytics_service(
+        self,
+        conversation_repository: ConversationRepository,
+        analytics_repository: AnalyticsRepository,
+    ) -> AdminChatAnalyticsService:
+        """
+        Provide admin-level chat analytics service.
+
+        Aggregates analytics across all users for admin dashboards.
+        """
+        return AdminChatAnalyticsService(
+            conversation_repository=conversation_repository,
+            analytics_repository=analytics_repository,
+        )
+
+    # ========================================
+    # Intent Detection (REQUEST-scoped)
+    # ========================================
+
+    @provide
+    def provide_advanced_intent_detector(
+        self,
+        conversation_repository: ConversationRepository,
+    ) -> AdvancedIntentDetector:
+        """
+        Provide advanced intent detection service.
+
+        Analyzes user input to detect intent and provide real-time suggestions.
+        """
+        return AdvancedIntentDetector(
+            conversation_repository=conversation_repository,
         )
 
 
