@@ -1,9 +1,9 @@
 # MASTER API INDEX - COMPLETE DOCUMENTATION
 
-**🎯 Enterprise-Grade API Documentation**  
-**📚 Complete Frontend Integration Guide**  
-**Last Updated:** December 9, 2025  
-**Version:** 3.1
+**🎯 Enterprise-Grade API Documentation**
+**📚 Complete Frontend Integration Guide**
+**Last Updated:** December 17, 2025
+**Version:** 3.2
 
 ---
 
@@ -14,8 +14,9 @@
 │                                                     │
 │       🏆  ENTERPRISE API STRUCTURE  🏆             │
 │                                                     │
-│         290+ TOTAL ENDPOINTS                        │
+│         301+ TOTAL ENDPOINTS                        │
 │                                                     │
+│   /api/v1/chat/   →  11 routes (Chat/Analytics) ⭐ │
 │   /api/v1/user/   → 145 routes (User Features)     │
 │   /api/v1/admin/  → 119 routes (Admin/System)      │
 │   /api/v1/        →  28 routes (Public/Auth)       │
@@ -24,7 +25,8 @@
 │                                                     │
 └─────────────────────────────────────────────────────┘
 
-Total Endpoints:        290+ ✅
+Total Endpoints:        301+ ✅ (+11 new chat endpoints)
+Chat Endpoints:         11  (/api/v1/chat/*) ⭐ NEW
 User Endpoints:         145+ (/api/v1/user/*)
 Admin Endpoints:        119 (/api/v1/admin/*)
 Public Endpoints:       28  (/api/v1/*)
@@ -60,7 +62,8 @@ All endpoints are now organized under clear prefixes:
 **Coverage:** 116 endpoints under `/api/v1/user/`
 
 **Quick Links:**
-- [Chat & Agent Squad](./user-modules/user/chat/FRONTEND_USER_CHAT_MAIN_V2.md) - `/user/chat/*`
+- [Chat & Agent Squad](./user-modules/user/chat/FRONTEND_USER_CHAT_MAIN_V2.md) - `/chat/*`
+- **[Chat Analytics & Intent Detection](./user-modules/user/chat/CHAT_ANALYTICS_AND_INTENT_API.md)** ⭐ NEW - `/chat/intent/*`, `/chat/my-analytics/*`
 - [Wallet Operations](./user-modules/user/wallet/FRONTEND_USER_WALLET_OVERVIEW.md) - `/user/wallet/*`
 - [Portfolio & Risk](./user-modules/portfolio/FRONTEND_PORTFOLIO.md) - `/user/portfolio/*`
 - [Markets & Data](./user-modules/markets/FRONTEND_MARKETS.md) - `/user/markets/*`

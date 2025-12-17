@@ -1,9 +1,9 @@
 # Frontend API Complete Reference
 
-**Version:** 3.1  
-**Last Updated:** December 9, 2025  
-**Total Endpoints:** 290+  
-**API Structure:** `/api/v1/user/*`, `/api/v1/admin/*`
+**Version:** 3.2
+**Last Updated:** December 17, 2025
+**Total Endpoints:** 301+ (11 new chat endpoints)
+**API Structure:** `/api/v1/chat/*`, `/api/v1/user/*`, `/api/v1/admin/*`
 
 ---
 
@@ -57,34 +57,59 @@ interface APIError {
 
 # 📱 USER ENDPOINTS (`/api/v1/user/`)
 
-## 1. Chat & Conversations (`/api/v1/user/chat/`)
+## 1. Chat & Conversations (`/api/v1/chat/`)
 
 ### Conversations
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/user/chat/conversations` | Create conversation | ✅ |
-| GET | `/user/chat/conversations` | List conversations | ✅ |
-| GET | `/user/chat/conversations/{id}` | Get conversation | ✅ |
-| DELETE | `/user/chat/conversations/{id}` | Delete conversation | ✅ |
-| GET | `/user/chat/conversations/{id}/messages` | Get messages | ✅ |
-| POST | `/user/chat/conversations/{id}/messages` | Send message | ✅ |
+| POST | `/chat/conversations` | Create conversation | ✅ |
+| GET | `/chat/conversations` | List conversations | ✅ |
+| GET | `/chat/conversations/{id}` | Get conversation | ✅ |
+| DELETE | `/chat/conversations/{id}` | Delete conversation | ✅ |
+| GET | `/chat/conversations/{id}/messages` | Get messages | ✅ |
+| POST | `/chat/conversations/{id}/messages` | Send message | ✅ |
+
+### Intent Detection ⭐ NEW
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/chat/intent/detect` | Detect intent from message | ✅ |
+| POST | `/chat/intent/autocomplete` | Get autocomplete suggestions | ✅ |
+| POST | `/chat/intent/similar-conversations` | Find similar conversations | ✅ |
+
+**See:** [Chat Analytics & Intent Detection API](./user-modules/user/chat/CHAT_ANALYTICS_AND_INTENT_API.md) for complete documentation
+
+### Personal Analytics Dashboard ⭐ NEW
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/chat/my-analytics` | Analytics dashboard overview | ✅ |
+| GET | `/chat/my-analytics/usage` | Detailed usage statistics | ✅ |
+| GET | `/chat/my-analytics/insights` | Conversation insights | ✅ |
+| GET | `/chat/my-analytics/costs` | Personal cost breakdown | ✅ |
+| GET | `/chat/my-analytics/agents/favorites` | Favorite agents analysis | ✅ |
+| GET | `/chat/my-analytics/trends` | Historical trends | ✅ |
+| GET | `/chat/my-analytics/conversations/history` | Conversation history | ✅ |
+| GET | `/chat/my-analytics/export` | Export analytics data | ✅ |
+
+**See:** [Chat Analytics & Intent Detection API](./user-modules/user/chat/CHAT_ANALYTICS_AND_INTENT_API.md) for complete documentation
 
 ### Agent Squad
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/user/chat/agent-squad/messages` | Send to agent squad | ✅ |
-| POST | `/user/chat/agent-squad/supervisor` | Multi-agent workflow | ✅ |
-| GET | `/user/chat/agent-squad/agents` | List enabled agents | ✅ |
+| POST | `/chat/agent-squad/messages` | Send to agent squad | ✅ |
+| POST | `/chat/agent-squad/supervisor` | Multi-agent workflow | ✅ |
+| GET | `/chat/agent-squad/agents` | List enabled agents | ✅ |
 
 ### GraphRAG Chat
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/user/chat/protocol-search` | Search protocols | ✅ |
-| POST | `/user/chat/analyze-risk` | Analyze protocol risk | ✅ |
-| POST | `/user/chat/similar-protocols` | Find similar protocols | ✅ |
+| POST | `/chat/protocol-search` | Search protocols | ✅ |
+| POST | `/chat/analyze-risk` | Analyze protocol risk | ✅ |
+| POST | `/chat/similar-protocols` | Find similar protocols | ✅ |
 
 ---
 
