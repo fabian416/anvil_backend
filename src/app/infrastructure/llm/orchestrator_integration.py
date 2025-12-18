@@ -260,6 +260,7 @@ def create_orchestrator_integration(
     vertex_location: str,
     deepinfra_api_key: str,
     bedrock_region: str,
+    vertex_api_key: Optional[str] = None,
     aws_access_key_id: Optional[str] = None,
     aws_secret_access_key: Optional[str] = None,
 ) -> OrchestratorIntegration:
@@ -271,6 +272,7 @@ def create_orchestrator_integration(
         vertex_location: GCP region
         deepinfra_api_key: DeepInfra API key
         bedrock_region: AWS region
+        vertex_api_key: Vertex AI API key (optional, alternative to OAuth)
         aws_access_key_id: AWS access key (optional)
         aws_secret_access_key: AWS secret key (optional)
 
@@ -279,7 +281,9 @@ def create_orchestrator_integration(
     """
     # Create provider adapters
     vertex_adapter = VertexAIAdapter(
-        project_id=vertex_project_id, location=vertex_location
+        project_id=vertex_project_id, 
+        location=vertex_location,
+        api_key=vertex_api_key,
     )
 
     deepinfra_adapter = DeepInfraAdapter(api_key=deepinfra_api_key)

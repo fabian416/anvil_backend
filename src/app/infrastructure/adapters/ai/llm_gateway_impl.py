@@ -30,9 +30,25 @@ class LLMGatewayImpl(LLMGateway):
         tools: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         
-        # For MVP, we hardcode the chain: DeepInfra -> None
-        # In real implementation, we would look up AgentModelConfig to build the chain
-        primary_strategy = self._factory.get_strategy(LLMProvider.DEEPINFRA)
+        # Provider Priority: Vertex AI (Primary) -> DeepInfra (Fallback)
+        # Try Vertex AI first, fallback to DeepInfra if not available/implemented
+        primary_strategy = None
+        
+        try:
+            primary_strategy = self._factory.get_strategy(LLMProvider.VERTEX)
+        except (NotImplementedError, KeyError, ValueError) as e:
+            # Fallback to DeepInfra if Vertex AI not implemented/configured
+            # This is expected until VertexStrategy adapter is implemented
+            try:
+                primary_strategy = self._factory.get_strategy(LLMProvider.DEEPINFRA)
+            except Exception as fallback_error:
+                raise RuntimeError(
+                    f"Failed to initialize LLM providers. "
+                    f"Vertex AI: {str(e)}, DeepInfra: {str(fallback_error)}"
+                ) from fallback_error
+        
+        if primary_strategy is None:
+            raise RuntimeError("No LLM provider strategy available")
         
         chain = RetryHandler(primary_strategy)
         

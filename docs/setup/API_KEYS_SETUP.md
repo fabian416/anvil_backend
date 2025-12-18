@@ -22,8 +22,23 @@ cp config/local/.env.example config/local/.env
 
 ### **2. Required for Basic Functionality**
 ```bash
-# Minimum required keys
-OPENAI_API_KEY=sk-...  # ✅ Required for all agents
+# Minimum required keys for LLM providers
+VERTEX_AI_PROJECT_ID=your-gcp-project-id  # ✅ Required - Primary LLM provider
+
+# Authentication (choose ONE method):
+# Option 1: API Key (✅ Recommended - Simplest)
+VERTEX_AI_API_KEY=AIzaSy...  # Get from Google Cloud Console > Credentials
+
+# Option 2: Service account JSON file path
+VERTEX_AI_CREDENTIALS_PATH=/path/to/credentials.json
+
+# Option 3: Standard Google Cloud env var
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
+
+# Option 4: Application Default Credentials (if running on GCP)
+# No env var needed - uses metadata service automatically
+
+DEEPINFRA_API_KEY=...  # ✅ Recommended - Fallback LLM provider
 ```
 
 ### **3. Recommended for Production**
@@ -38,27 +53,194 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ## 🔑 **API Keys by Category**
 
-### **Week 1: DeFi Data APIs**
+### **Week 1: LLM Provider APIs**
 
-#### **1. OpenAI** ✅ **REQUIRED**
-- **Purpose**: Powers all agent LLM capabilities
+#### **1. Google Vertex AI** ⭐ **PRIMARY PROVIDER (REQUIRED)**
+- **Purpose**: Primary LLM provider for all agent capabilities, distillation engine
+- **Get from**: https://console.cloud.google.com/vertex-ai
+- **Pricing**: 
+  - Gemini 1.5 Flash: ~$0.00001875/1K chars (fast, cheap)
+  - Gemini 1.5 Pro: ~$0.00125/1K chars (complex reasoning)
+- **Environment Variables**: 
+  - `VERTEX_AI_PROJECT_ID` ✅ **Required** - Your GCP project ID
+  - **Authentication** (choose ONE method):
+    - `VERTEX_AI_API_KEY` ✅ **Recommended** - API key from Google Cloud Console (simplest method)
+    - `VERTEX_AI_CREDENTIALS_PATH` - Path to service account JSON (alternative)
+    - `GOOGLE_APPLICATION_CREDENTIALS` - Standard Google Cloud env var (alternative)
+    - **Application Default Credentials** - Automatic if running on GCP Compute/Cloud Run (no env var needed)
+- **Feature Flag**: N/A (always required as primary)
+
+**Important**: Vertex AI does **NOT** use API keys like other services. It requires:
+- **Service Account JSON file** (contains private key, client email, project ID, etc.)
+- **OR** Application Default Credentials (if running on GCP)
+
+**Important**: Vertex AI does **NOT** use API keys like other services (OpenAI, DeepInfra, etc.). It requires:
+- **Service Account JSON file** (contains private key, client email, project ID, etc.)
+- **OR** Application Default Credentials (if running on GCP)
+
+**If you have an "API key" for Vertex AI**, it's likely:
+- A **service account JSON file** that you downloaded from Google Cloud Console
+- This file contains credentials, not a simple string key
+- You need to save this JSON file and reference it by **file path**, not as an environment variable string
+
+**Note**: `VERTEX_AI_CREDENTIALS_PATH` is **NOT strictly required**. The code supports multiple authentication methods:
+- If `credentials_path` is provided → uses that JSON file
+- If not provided → uses `GOOGLE_APPLICATION_CREDENTIALS` env var pointing to JSON file
+- If neither → uses Application Default Credentials (automatic on GCP)
+
+**Example**: If you have a JSON file at `/home/user/vertex-credentials.json`:
+```bash
+export VERTEX_AI_PROJECT_ID="your-project-id"
+export VERTEX_AI_CREDENTIALS_PATH="/home/user/vertex-credentials.json"
+# OR
+export GOOGLE_APPLICATION_CREDENTIALS="/home/user/vertex-credentials.json"
+```
+
+**Setup** (API Key Method - Recommended):
+
+1. Go to https://console.cloud.google.com/
+2. Create a new project or select existing
+3. Enable **Vertex AI API**:
+   - Go to **APIs & Services** → **Enable APIs**
+   - Search for "Vertex AI API" and enable it
+4. Create API Key:
+   - Go to **APIs & Services** → **Credentials**
+   - Click **Create Credentials** → **API Key**
+   - Copy the API key (starts with `AIza...`)
+   - (Optional) Restrict the API key to Vertex AI API only for security
+
+**Alternative Setup** (Service Account JSON - for advanced use):
+
+1. Follow steps 1-3 above
+2. Create a Service Account:
+   - Go to **IAM & Admin** → **Service Accounts**
+   - Click **Create Service Account**
+   - Name: `anvil-vertex-ai`
+   - Grant role: **Vertex AI User**
+3. Create and download JSON key:
+   - Click on the service account
+   - Go to **Keys** tab → **Add Key** → **Create new key**
+   - Select JSON format
+   - Save the file securely (e.g., `/path/to/vertex-ai-credentials.json`)
+
+**Important Note**: Vertex AI does **NOT** use traditional API keys like other services. It uses:
+- **Service Account JSON file** (recommended for local development)
+- **Application Default Credentials** (automatic on GCP environments)
+
+If you have a service account JSON file, that's what you need - not an API key string.
+
+**Configuration**:
+
+**Option 1: Using API Key** (✅ Recommended - Simplest):
+```bash
+# Environment variables
+export VERTEX_AI_PROJECT_ID="your-gcp-project-id"
+export VERTEX_AI_API_KEY="AIzaSy..."  # Your API key from Google Cloud Console
+```
+
+```toml
+# config/local/.secrets.toml
+[vertex_ai]
+PROJECT_ID = "your-gcp-project-id"
+API_KEY = "AIzaSy..."  # Your API key
+```
+
+**Option 2: Using Service Account JSON** (for advanced use):
+```bash
+# Environment variables
+export VERTEX_AI_PROJECT_ID="your-gcp-project-id"
+export VERTEX_AI_CREDENTIALS_PATH="/path/to/vertex-ai-credentials.json"
+```
+
+```toml
+# config/local/.secrets.toml
+[vertex_ai]
+PROJECT_ID = "your-gcp-project-id"
+CREDENTIALS_PATH = "/path/to/vertex-ai-credentials.json"
+```
+
+**Option 3: Using GOOGLE_APPLICATION_CREDENTIALS** (standard Google Cloud approach):
+```bash
+export VERTEX_AI_PROJECT_ID="your-gcp-project-id"
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/vertex-ai-credentials.json"
+```
+
+**Option 4: Application Default Credentials** (if running on GCP):
+```bash
+# No credentials needed - uses metadata service automatically
+export VERTEX_AI_PROJECT_ID="your-gcp-project-id"
+```
+
+**Config File**:
+```toml
+# config/local/config.toml
+[distillation]
+provider = "vertex_ai"
+fallback_provider = "deepinfra"
+```
+
+**Available Models**:
+- `gemini-1.5-flash` - Fast inference, distillation (recommended)
+- `gemini-1.5-pro` - Complex reasoning tasks
+- `gemini-1.0-pro` - General purpose
+
+**Used By**: All 18 agents (primary), distillation engine, LLM orchestration carousel
+
+---
+
+#### **2. DeepInfra** 🟡 **FALLBACK PROVIDER (RECOMMENDED)**
+- **Purpose**: Fallback LLM provider, open-source models (Llama, Mixtral, Qwen)
+- **Get from**: https://deepinfra.com/
+- **Pricing**: Pay-as-you-go (~$0.0001-0.001/1K tokens, very cost-effective)
+- **Environment Variable**: `DEEPINFRA_API_KEY`
+- **Feature Flag**: `distillation.fallback_provider = "deepinfra"`
+
+**Setup**:
+1. Sign up at https://deepinfra.com/
+2. Navigate to API Keys section
+3. Create new API key
+4. Add to `config/local/.secrets.toml`:
+   ```toml
+   [deepinfra]
+   DEEPINFRA_API_KEY = "..."
+   ```
+
+**Available Models**:
+- `meta-llama/Llama-3.2-3B-Instruct` - Fast, efficient
+- `meta-llama/Llama-3.1-70B-Instruct` - High quality
+- `mistralai/Mixtral-8x7B-Instruct` - Mixture of experts
+- `Qwen/Qwen2.5-7B-Instruct` - Multilingual
+
+**Used By**: Fallback for all agents, distillation fallback, LLM orchestration carousel
+
+---
+
+#### **3. OpenAI** 🟠 **OPTIONAL FALLBACK**
+- **Purpose**: Optional fallback LLM provider (GPT-4 for complex tasks)
 - **Get from**: https://platform.openai.com/api-keys
-- **Pricing**: Pay-as-you-go (~$0.002/1K tokens)
-- **Environment Variable**: `OPENAI_API_KEY`
-- **Feature Flag**: N/A (always required)
+- **Pricing**: Pay-as-you-go (~$0.01-0.03/1K tokens for GPT-4)
+- **Environment Variable**: `OPENAI_API_KEY` (optional)
+- **Feature Flag**: `llm_orchestration.fallback_providers = ["openai"]`
 
 **Setup**:
 1. Sign up at https://platform.openai.com/
 2. Navigate to API Keys section
 3. Create new API key
-4. Add to `config/local/.env`:
-   ```bash
-   OPENAI_API_KEY=sk-proj-...
+4. Add to `config/local/.secrets.toml`:
+   ```toml
+   [openai]
+   OPENAI_API_KEY = "sk-proj-..."
    ```
+
+**Note**: OpenAI is **not required** for basic functionality. Vertex AI + DeepInfra provide full coverage. OpenAI is only needed if you want GPT-4 as an additional fallback option.
+
+**Used By**: Optional fallback in LLM orchestration carousel
 
 ---
 
-#### **2. CoinGecko** 🟡 **RECOMMENDED**
+### **Week 2: DeFi Data APIs**
+
+#### **4. CoinGecko** 🟡 **RECOMMENDED**
 - **Purpose**: Real-time cryptocurrency prices, market data
 - **Get from**: https://www.coingecko.com/en/api/pricing
 - **Pricing**: 
@@ -81,7 +263,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **3. 1inch DEX Aggregator** 🟡 **RECOMMENDED**
+#### **5. 1inch DEX Aggregator** 🟡 **RECOMMENDED**
 - **Purpose**: Multi-DEX swap quotes, optimal routing
 - **Get from**: https://portal.1inch.dev/
 - **Pricing**:
@@ -103,7 +285,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **4. Hyperliquid** ✨ **NEW**
+#### **6. Hyperliquid** ✨ **NEW**
 - **Purpose**: Perpetual futures trading, liquidation data
 - **Get from**: Hyperliquid Dashboard > API Keys
 - **Pricing**: Free for market data, trading requires account
@@ -127,7 +309,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **5. DeFiLlama** ✅ **FREE**
+#### **7. DeFiLlama** ✅ **FREE**
 - **Purpose**: Protocol TVL, yield data, 15k+ protocols
 - **Get from**: N/A (public API)
 - **Pricing**: Free, no limits
@@ -140,7 +322,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **6. The Graph** 🟡 **RECOMMENDED**
+#### **8. The Graph** 🟡 **RECOMMENDED**
 - **Purpose**: GraphQL queries for Uniswap, Aave, other protocols
 - **Get from**: https://thegraph.com/studio/
 - **Pricing**:
@@ -164,7 +346,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **7. Curve Finance** ✅ **FREE**
+#### **9. Curve Finance** ✅ **FREE**
 - **Purpose**: Stablecoin swap data, pool APY
 - **Get from**: N/A (public API)
 - **Pricing**: Free
@@ -175,9 +357,9 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-### **Week 2: Enterprise & Security APIs**
+### **Week 3: Enterprise & Security APIs**
 
-#### **8. Chainalysis** 🔴 **ENTERPRISE ONLY**
+#### **10. Chainalysis** 🔴 **ENTERPRISE ONLY**
 - **Purpose**: AML/KYC screening, sanctions compliance
 - **Get from**: https://www.chainalysis.com/contact/
 - **Pricing**: ~$20k/year (enterprise license)
@@ -198,7 +380,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **9. TRM Labs** 🔴 **ENTERPRISE ONLY**
+#### **11. TRM Labs** 🔴 **ENTERPRISE ONLY**
 - **Purpose**: Alternative to Chainalysis for AML/KYC
 - **Get from**: https://www.trmlabs.com/contact
 - **Pricing**: Enterprise pricing
@@ -209,7 +391,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **10. Forta Network** 🟡 **RECOMMENDED**
+#### **12. Forta Network** 🟡 **RECOMMENDED**
 - **Purpose**: Real-time security alerts, anomaly detection
 - **Get from**: https://app.forta.network/
 - **Pricing**: Free tier, Pro for advanced features
@@ -229,7 +411,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **11. Twilio** 🟠 **OPTIONAL**
+#### **13. Twilio** 🟠 **OPTIONAL**
 - **Purpose**: SMS/voice alerts for critical events
 - **Get from**: https://console.twilio.com/
 - **Pricing**: Pay-as-you-go (~$0.0075/SMS)
@@ -255,9 +437,9 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-### **Week 3: Advanced APIs**
+### **Week 4: Advanced APIs**
 
-#### **12. Privy** 🟡 **RECOMMENDED**
+#### **14. Privy** 🟡 **RECOMMENDED**
 - **Purpose**: Embedded wallet, user authentication
 - **Get from**: Privy Dashboard > Settings > API Keys
 - **Pricing**:
@@ -274,7 +456,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **13. OpenSea API** 🟠 **OPTIONAL**
+#### **15. OpenSea API** 🟠 **OPTIONAL**
 - **Purpose**: NFT market data, valuations
 - **Get from**: https://docs.opensea.io/
 - **Pricing**: Free tier (rate limited)
@@ -294,7 +476,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **14. Axelar Network** ✅ **FREE**
+#### **16. Axelar Network** ✅ **FREE**
 - **Purpose**: Cross-chain messaging, asset bridging
 - **Get from**: N/A (public RPC)
 - **Pricing**: Free
@@ -305,7 +487,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **15. LayerZero** ✅ **FREE**
+#### **17. LayerZero** ✅ **FREE**
 - **Purpose**: Omnichain interoperability
 - **Get from**: N/A (public)
 - **Pricing**: Free
@@ -316,7 +498,7 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ---
 
-#### **16. Snapshot** ✅ **FREE**
+#### **18. Snapshot** ✅ **FREE**
 - **Purpose**: DAO governance, voting
 - **Get from**: N/A (public GraphQL API)
 - **Pricing**: Free
@@ -329,28 +511,36 @@ THEGRAPH_API_KEY=...   # DeFi protocol data
 
 ## 💰 **Cost Breakdown**
 
-### **Development/Testing** ($0/month)
+### **Development/Testing** (~$5-20/month)
 ```
-✅ Free APIs only:
+✅ Free APIs:
 - DeFiLlama (protocol data)
 - Curve (stablecoin data)
 - Snapshot (DAO governance)
 - Axelar/LayerZero (bridging)
-- Gnosis Safe (multi-sig)
 
-Total: $0/month
+💰 Required LLM Providers:
+- Vertex AI Gemini Flash: ~$5-15/month (low usage)
+- DeepInfra: ~$0-5/month (fallback only)
+
+Total: ~$5-20/month
 ```
 
-### **Production - Basic** ($364/month)
+### **Production - Basic** (~$400-500/month)
 ```
 All Free APIs +
+💰 LLM Providers:
+- Vertex AI Gemini Flash/Pro: ~$50-150/month (depending on usage)
+- DeepInfra: ~$10-30/month (fallback usage)
+
+📊 DeFi Data APIs:
 - 1inch Pro: $49/month
 - CoinGecko Pro: $129/month
 - The Graph Growth: $99/month
 - Forta Pro: $50/month
 - Twilio (5k SMS): $37.50/month
 
-Total: $364.50/month
+Total: ~$424-550/month
 ```
 
 ### **Production - Enterprise** ($2,330/month)
@@ -378,10 +568,21 @@ vim config/local/.secrets.toml
 
 ### **2. Add Required Keys**
 ```bash
-# Minimum for testing
-export OPENAI_API_KEY="sk-proj-..."
+# Minimum for testing (LLM providers)
+export VERTEX_AI_PROJECT_ID="your-gcp-project-id"
 
-# Recommended for production
+# Authentication (choose ONE method):
+# Method 1: Direct path (for distillation config)
+export VERTEX_AI_CREDENTIALS_PATH="/path/to/credentials.json"
+
+# Method 2: Standard Google Cloud env var (for orchestrator)
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/credentials.json"
+
+# Method 3: If running on GCP, no credentials needed (uses ADC)
+
+export DEEPINFRA_API_KEY="..."  # Recommended fallback
+
+# Recommended for production (DeFi data)
 export COINGECKO_API_KEY="CG-..."
 export ONEINCH_API_KEY="..."
 export THEGRAPH_API_KEY="..."
@@ -400,10 +601,13 @@ enable_hyperliquid = true
 ### **4. Verify Setup**
 ```bash
 # Check environment variables
-env | grep -E "(OPENAI|COINGECKO|ONEINCH)"
+env | grep -E "(VERTEX_AI|DEEPINFRA|COINGECKO|ONEINCH)"
 
-# Test API client
-python -c "from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient; import asyncio; client = CoinGeckoClient(); print(asyncio.run(client.get_price('ethereum')))"
+# Test Vertex AI connection
+python -c "from app.infrastructure.llm.providers.vertex_ai_adapter import VertexAIAdapter; import asyncio; print('Vertex AI configured')"
+
+# Test DeepInfra connection
+python -c "from app.infrastructure.adapters.ai.llm.deepinfra import DeepInfraStrategy; print('DeepInfra configured')"
 ```
 
 ---
@@ -439,12 +643,28 @@ python -c "from app.infrastructure.adapters.external.coingecko_client import Coi
 
 ### **"API key not found" error**
 ```bash
-# Check if key is set
-echo $OPENAI_API_KEY
+# Check if Vertex AI project ID is set
+echo $VERTEX_AI_PROJECT_ID
+
+# Check authentication method (choose one):
+echo $VERTEX_AI_CREDENTIALS_PATH  # For distillation
+echo $GOOGLE_APPLICATION_CREDENTIALS  # For orchestrator
+
+# Verify credentials file exists
+test -f "$VERTEX_AI_CREDENTIALS_PATH" && echo "Credentials file exists" || echo "Credentials file not found"
+
+# Check if DeepInfra key is set
+echo $DEEPINFRA_API_KEY
 
 # Check TOML file
-cat config/local/.secrets.toml | grep COINGECKO
+cat config/local/.secrets.toml | grep -E "(VERTEX_AI|DEEPINFRA|COINGECKO)"
 ```
+
+### **"Authentication failed" error for Vertex AI**
+- **Local Development**: Ensure `VERTEX_AI_CREDENTIALS_PATH` or `GOOGLE_APPLICATION_CREDENTIALS` points to valid JSON file
+- **GCP Environment**: Verify Application Default Credentials are configured
+- **Service Account**: Ensure the service account has "Vertex AI User" role
+- **Project ID**: Verify `VERTEX_AI_PROJECT_ID` matches your GCP project
 
 ### **"Rate limit exceeded" error**
 - Upgrade to paid tier
@@ -469,3 +689,21 @@ cat config/local/.secrets.toml | grep COINGECKO
 
 **Last Updated**: December 1, 2025  
 **Next Review**: After Week 2 APIs implementation
+
+---
+
+## 📝 **LLM Provider Architecture**
+
+### **Provider Priority**
+1. **Vertex AI (Primary)** - Google Gemini models, fast and cost-effective
+2. **DeepInfra (Fallback)** - Open-source models (Llama, Mixtral), very cheap
+3. **OpenAI (Optional)** - GPT-4 available as additional fallback
+
+### **Why Vertex AI + DeepInfra?**
+- **Cost Efficiency**: Vertex AI Gemini Flash is ~10x cheaper than GPT-4
+- **Performance**: Gemini 1.5 Pro matches GPT-4 quality at lower cost
+- **Reliability**: DeepInfra provides excellent fallback with open-source models
+- **Flexibility**: Multi-provider orchestration ensures high availability
+
+### **Configuration Reference**
+See `docs/setup/API_INTEGRATIONS_CONFIGURATION.md` for detailed LLM provider setup.

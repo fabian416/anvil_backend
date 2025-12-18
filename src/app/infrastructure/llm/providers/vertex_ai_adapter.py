@@ -41,6 +41,7 @@ class VertexAIAdapter:
         project_id: str,
         location: str = "us-central1",
         provider_id: Optional[UUID] = None,
+        api_key: Optional[str] = None,
     ):
         """
         Initialize Vertex AI adapter.
@@ -49,10 +50,12 @@ class VertexAIAdapter:
             project_id: GCP project ID
             location: GCP region (default: us-central1)
             provider_id: Database provider ID
+            api_key: Optional API key for authentication (alternative to OAuth)
         """
         self.project_id = project_id
         self.location = location
         self._provider_id = provider_id
+        self._api_key = api_key
         self._base_url = f"https://{location}-aiplatform.googleapis.com/v1"
         self._client: Optional[httpx.AsyncClient] = None
         self._credentials = None
@@ -147,16 +150,26 @@ class VertexAIAdapter:
         start_time = datetime.utcnow()
 
         try:
-            token = await self._get_access_token()
-
-            response = await self._client.post(
-                endpoint,
-                json=payload,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-            )
+            # Build headers - use API key if available, otherwise use OAuth token
+            headers = {"Content-Type": "application/json"}
+            
+            if self._api_key:
+                # Use API key authentication (add as query parameter)
+                endpoint_with_key = f"{endpoint}?key={self._api_key}"
+                response = await self._client.post(
+                    endpoint_with_key,
+                    json=payload,
+                    headers=headers,
+                )
+            else:
+                # Use OAuth token authentication
+                token = await self._get_access_token()
+                headers["Authorization"] = f"Bearer {token}"
+                response = await self._client.post(
+                    endpoint,
+                    json=payload,
+                    headers=headers,
+                )
 
             response.raise_for_status()
             data = response.json()

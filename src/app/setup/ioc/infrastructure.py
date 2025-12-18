@@ -362,7 +362,14 @@ class InfrastructureProvider(Provider):
         import os
 
         config = {
+            # Primary: Vertex AI
+            "VERTEX_AI_PROJECT_ID": os.environ.get("VERTEX_AI_PROJECT_ID", ""),
+            "VERTEX_AI_API_KEY": os.environ.get("VERTEX_AI_API_KEY", ""),
+            "VERTEX_AI_CREDENTIALS_PATH": os.environ.get("VERTEX_AI_CREDENTIALS_PATH", ""),
+            "GOOGLE_APPLICATION_CREDENTIALS": os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", ""),
+            # Fallback: DeepInfra
             "DEEPINFRA_API_KEY": os.environ.get("DEEPINFRA_API_KEY", ""),
+            # Optional: OpenAI
             "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
         }
         return LLMProviderFactory(config)

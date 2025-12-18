@@ -16,6 +16,9 @@ class VertexAIConfig(BaseModel):
     credentials_path: Optional[str] = Field(
         default=None, description="Path to service account JSON"
     )
+    api_key: Optional[str] = Field(
+        default=None, description="API key for Vertex AI (alternative to credentials)"
+    )
 
 
 class DeepInfraConfig(BaseModel):
@@ -114,6 +117,7 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
             project_id=os.getenv("VERTEX_AI_PROJECT_ID", ""),
             location=os.getenv("VERTEX_AI_LOCATION", "us-central1"),
             credentials_path=os.getenv("GOOGLE_APPLICATION_CREDENTIALS"),
+            api_key=os.getenv("VERTEX_AI_API_KEY"),
         ),
         deepinfra=DeepInfraConfig(
             api_key=os.getenv("DEEPINFRA_API_KEY", ""),
