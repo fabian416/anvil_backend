@@ -27,7 +27,7 @@
 
 ### Purpose
 
-This master specification documents complete user experience flows for ALL user-facing modules in the DeFi Multi-Agent Chat platform (excluding Chat module which has its own dedicated spec). It provides frontend developers with comprehensive guidance for implementing consistent, accessible, and delightful user experiences across 17 modules and 69+ endpoints.
+This master specification documents complete user experience flows for ALL user-facing modules in the DeFi Multi-Agent Chat platform (excluding Chat and Projects modules which have their own dedicated specs). It provides frontend developers with comprehensive guidance for implementing consistent, accessible, and delightful user experiences across 16 modules and 69+ endpoints.
 
 ### Scope
 
@@ -45,9 +45,8 @@ This master specification documents complete user experience flows for ALL user-
 - Markets & Data
 - Portfolio Risk Analysis
 
-**Advanced Features (4 modules):**
+**Advanced Features (3 modules):**
 - GraphRAG & Analytics
-- Projects & Workspaces
 - Real-Time Communication (WebSocket)
 - Chat GraphRAG Enhanced
 
@@ -2209,44 +2208,7 @@ export const useGraphRAGSearch = () => {
 
 ---
 
-### Flow 10: Projects & Workspaces
-
-**Module**: `projects/`
-**Endpoints**: 5 endpoints
-**Priority**: MEDIUM
-
-#### Quick Flow: Project Management
-
-```typescript
-// Get assigned projects
-const { data: projects } = useQuery({
-  queryKey: ['projects', 'assigned'],
-  queryFn: async () => {
-    const response = await fetch('/api/v1/user/projects/assigned');
-    return response.json();
-  }
-});
-
-// Select active project
-const selectProject = useMutation({
-  mutationFn: async (projectId: string) => {
-    const response = await fetch(`/api/v1/user/projects/${projectId}/select`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${getToken()}` }
-    });
-    return response.json();
-  },
-  onSuccess: () => {
-    // Refresh dashboard and preferences
-    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    queryClient.invalidateQueries({ queryKey: ['preferences'] });
-  }
-});
-```
-
----
-
-### Flow 11: Notifications
+### Flow 10: Notifications
 
 **Module**: `notifications/`
 **Endpoints**: 1 endpoint
@@ -2287,7 +2249,7 @@ const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
 
 ## 🛠️ Utilities & System Flows
 
-### Flow 12: Metrics & Analytics
+### Flow 11: Metrics & Analytics
 
 **Module**: `metrics/`
 **Endpoints**: 5 endpoints
@@ -2329,7 +2291,7 @@ const { data: analytics } = useQuery({
 
 ---
 
-### Flow 13: ML Prediction
+### Flow 12: ML Prediction
 
 **Module**: `ml/`
 **Endpoints**: 4 endpoints
@@ -2389,7 +2351,7 @@ const { data: batchPredictions } = useQuery({
 
 ---
 
-### Flow 14: ML Network Analysis
+### Flow 13: ML Network Analysis
 
 **Module**: `ml/` (network)
 **Endpoints**: 4 endpoints
@@ -3051,7 +3013,7 @@ const Modal = ({ isOpen, onClose }: ModalProps) => {
 
 **Coverage:**
 - 6 detailed flows (Auth, Preferences, Search, Comparison, Alerts, Dashboard)
-- 11 condensed flows (Markets, Portfolio, GraphRAG, Projects, Notifications, Metrics, ML x2)
+- 10 condensed flows (Markets, Portfolio, GraphRAG, Notifications, Metrics, ML x2)
 - Cross-module patterns
 - Global error handling
 - Performance optimization
