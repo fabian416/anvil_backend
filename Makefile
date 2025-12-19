@@ -25,17 +25,119 @@ start:
 
 # Celery
 .PHONY: celery celery.worker celery.beat celery.flower
+.PHONY: celery.worker.maintenance celery.worker.agents celery.worker.graph
+.PHONY: celery.worker.distillation celery.worker.projects celery.worker.llm
+.PHONY: celery.worker.transactions celery.worker.risk celery.worker.email
+.PHONY: celery.stop
+
+# Iniciar todos los workers, beat y flower con logs en tiempo real
 celery: venv
-	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker -B --loglevel=INFO
+	@./scripts/start_all_celery.sh
+
+# Detener todos los procesos de Celery
+celery.stop:
+	@echo "Deteniendo todos los procesos de Celery..."
+	@pkill -f "celery.*worker" || true
+	@pkill -f "celery.*beat" || true
+	@pkill -f "flower" || true
+	@echo "✅ Todos los procesos detenidos"
+
+# Worker general (legacy - usa todas las colas)
+celery.all: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker -B --loglevel=INFO -n worker@%h
 
 celery.worker: venv
-	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker --loglevel=INFO
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker --loglevel=INFO -n worker@%h
 
 celery.beat: venv
 	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app beat --loglevel=INFO
 
 celery.flower: venv
-	PYTHONPATH=src ./env/bin/flower --broker=redis://localhost:6379/0 --port=5555
+	PYTHONPATH=src ./env/bin/python -m flower -A app.infrastructure.celery.app.celery_app --broker=redis://localhost:6379/0 flower --address=0.0.0.0 --port=5555
+
+# Workers especializados por cola (recomendado para producción)
+# Cada worker procesa solo su cola específica para evitar latencia
+
+# Maintenance Worker - Tareas de limpieza y mantenimiento (baja prioridad)
+celery.worker.maintenance: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q maintenance \
+		-n maintenance@%h \
+		--concurrency=2 \
+		--max-tasks-per-child=500
+
+# Agents Worker - Procesamiento de agentes IA (alta prioridad, tiempo real)
+celery.worker.agents: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q agents \
+		-n agents@%h \
+		--concurrency=8 \
+		--max-tasks-per-child=200
+
+# Graph Worker - Mantenimiento de grafo y embeddings (procesamiento pesado)
+celery.worker.graph: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q graph \
+		-n graph@%h \
+		--concurrency=2 \
+		--max-tasks-per-child=100
+
+# Distillation Worker - Procesamiento de LLM y caché
+celery.worker.distillation: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q distillation \
+		-n distillation@%h \
+		--concurrency=4 \
+		--max-tasks-per-child=300
+
+# Projects Worker - Knowledge base y proyectos
+celery.worker.projects: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q projects \
+		-n projects@%h \
+		--concurrency=3 \
+		--max-tasks-per-child=200
+
+# LLM Worker - Ranking y orchestration de LLM
+celery.worker.llm: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q llm \
+		-n llm@%h \
+		--concurrency=4 \
+		--max-tasks-per-child=250
+
+# Transactions Worker - Confirmación de transacciones blockchain (crítico)
+celery.worker.transactions: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q transactions \
+		-n transactions@%h \
+		--concurrency=6 \
+		--max-tasks-per-child=500
+
+# Risk Worker - Monitoreo de riesgo
+celery.worker.risk: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q risk \
+		-n risk@%h \
+		--concurrency=3 \
+		--max-tasks-per-child=300
+
+# Email Worker - Envío de emails
+celery.worker.email: venv
+	PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+		--loglevel=INFO \
+		-Q email \
+		-n email@%h \
+		--concurrency=2 \
+		--max-tasks-per-child=1000
 
 # Transaction Confirmation Worker
 # Confirms pending blockchain transactions and updates DB status
