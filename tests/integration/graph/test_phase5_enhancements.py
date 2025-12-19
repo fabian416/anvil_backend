@@ -12,7 +12,7 @@ from app.application.graph.entity_extraction import (
     EntityType,
     ExtractedEntity,
 )
-from app.domain.services.graph.pagerank import (
+from app.domain.graph.services.pagerank import (
     PageRankService,
     PageRankConfig,
     PageRankResult,

@@ -11,11 +11,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.application.transaction.confirmation_service import (
+from app.application.transactions.services.confirmation_service import (
     TransactionConfirmationService,
     TransactionReceipt,
 )
-from app.application.transaction.factory import (
+from app.application.transactions.services.factory import (
     ConfirmationServiceFactory,
     create_confirmation_service,
     create_confirmation_service_from_settings,
@@ -269,11 +269,11 @@ class TestIntegrationWithConfirmationService:
     @pytest.fixture
     def mock_transaction_repository(self):
         """Create a mock TransactionRepository."""
-        from app.domain.entities.transaction import Transaction, TransactionId
+        from app.domain.transactions.entities.transaction import Transaction, TransactionId
         from app.domain.entities.wallet import WalletId
         from app.domain.enums.chain_type import ChainType
         from app.domain.enums.transaction_type import TransactionType
-        from app.domain.ports.transaction.transaction_repository import (
+        from app.domain.transactions.ports.transaction.transaction_repository import (
             TransactionRepository,
         )
         from app.domain.value_objects.created_at import CreatedAt

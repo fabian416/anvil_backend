@@ -208,7 +208,7 @@ class TestGraphRAGAgentSquadIntegration:
     
     def test_graphrag_services_exist(self):
         """Verify GraphRAG services exist"""
-        from app.domain.services.graph.graph_service import GraphService
+        from app.domain.graph.services.graph_service import GraphService
         assert GraphService is not None
     
     @pytest.mark.skip(reason="Requires full GraphRAG setup")

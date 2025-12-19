@@ -516,15 +516,13 @@ natural.
 ├── ...
 └── src/
     └── app/
-        ├── domain/                              # domain layer
-        │   ├── services/...                     # domain layer services
-        │   ├── entities/...                     # entities (have identity)
-        │   │   ├── base.py                      # base declarations
-        │   │   └── ...                          # concrete entities
-        │   ├── value_objects/...                # value objects (no identity)
-        │   │   ├── base.py                      # base declarations
-        │   │   └── ...                          # concrete value objects
-        │   └── ...                              # ports, enums, exceptions, etc.
+        ├── domain/                              # domain layer (modular structure)
+        │   ├── {module}/                       # Feature modules (alerts, chat, transactions, etc.)
+        │   │   ├── entities/                   # Domain entities with identity
+        │   │   ├── value_objects/              # Immutable value objects
+        │   │   ├── ports/                      # Port interfaces (abstractions)
+        │   │   └── services/                   # Domain services
+        │   └── ...                              # Other domain modules, enums, exceptions, etc.
         │
         ├── application/...                      # application layer
         │   ├── commands/                        # write ops, business-critical reads

@@ -18,11 +18,11 @@ description: Project structure, hexagonal architecture, and how to add new featu
   - **Infrastructure Layer** (`src/app/infrastructure/`): Adapters implementing domain ports
   - **Presentation Layer** (`src/app/presentation/http/`): HTTP controllers and routers
 
-- **Key directories**:
-  - Domain entities: [src/app/domain/entities/](mdc:src/app/domain/entities/)
-  - Domain value objects: [src/app/domain/value_objects/](mdc:src/app/domain/value_objects/)
-  - Application commands: [src/app/application/commands/](mdc:src/app/application/commands/)
-  - Application queries: [src/app/application/queries/](mdc:src/app/application/queries/)
+- **Key directories** (Modular Structure):
+  - Domain modules: [src/app/domain/{module}/](mdc:src/app/domain/) - Organized by feature (alerts, chat, transactions, portfolio, etc.)
+    - Each module contains: `entities/`, `value_objects/`, `ports/`, `services/`
+  - Application modules: [src/app/application/{module}/](mdc:src/app/application/) - Organized by feature
+    - Each module contains: `commands/`, `queries/`, `services/`
   - Infrastructure adapters: [src/app/infrastructure/adapters/](mdc:src/app/infrastructure/adapters/)
   - HTTP controllers: [src/app/presentation/http/controllers/](mdc:src/app/presentation/http/controllers/)
   - Database mappings: [src/app/infrastructure/persistence_sqla/mappings/](mdc:src/app/infrastructure/persistence_sqla/mappings/)

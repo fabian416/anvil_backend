@@ -12,14 +12,14 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.application.common.services.current_user import CurrentUserService
-from app.domain.entities.transaction import Transaction, TransactionId
+from app.domain.transactions.entities.transaction import Transaction, TransactionId
 from app.domain.entities.wallet import Wallet, WalletId
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
 from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.enums.wallet_status import WalletStatus
-from app.domain.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt

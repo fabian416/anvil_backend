@@ -49,9 +49,9 @@ from app.presentation.http.schemas import SomeSchema  # ❌
 
 ### Creating New Features
 
-**1. Start with Domain Layer**:
+**1. Start with Domain Layer** (Modular Structure):
 ```python
-# src/app/domain/entities/conversation.py
+# src/app/domain/chat/entities/conversation.py
 class Conversation(BaseEntity):
     """Domain entity - pure business logic"""
     def __init__(self, id: UUID, user_id: UUID):
@@ -62,7 +62,7 @@ class Conversation(BaseEntity):
 
 **2. Define Ports (Interfaces)**:
 ```python
-# src/app/domain/ports/conversation_repository.py
+# src/app/domain/chat/ports/conversation_repository.py
 class ConversationRepository(Protocol):
     """Port - interface defined in domain"""
     async def save(self, conversation: Conversation) -> None: ...
@@ -71,13 +71,14 @@ class ConversationRepository(Protocol):
 
 **3. Create Application Interactor**:
 ```python
-# src/app/application/commands/create_conversation.py
+# src/app/application/chat/commands/create_conversation.py
 class CreateConversation:
     """Interactor - orchestrates domain logic"""
     def __init__(self, repository: ConversationRepository):  # Uses port
         self._repository = repository
     
     async def execute(self, user_id: UUID) -> Conversation:
+        from app.domain.chat.entities.conversation import Conversation
         conversation = Conversation.create(user_id)  # Domain logic
         await self._repository.save(conversation)  # Uses port
         return conversation
@@ -145,7 +146,7 @@ class GetConversation:
 # src/app/setup/ioc/infrastructure.py
 from dishka import Provider, provide
 from app.infrastructure.adapters.conversation_repository_sqla import ConversationRepositorySqla
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 class InfrastructureProvider(Provider):
     @provide

@@ -8,7 +8,7 @@ import pytest
 from uuid import uuid4
 from datetime import datetime, timedelta
 
-from app.domain.entities.conversation import Conversation
+from app.domain.chat.entities.conversation import Conversation
 
 
 @pytest.mark.unit

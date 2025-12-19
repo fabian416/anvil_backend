@@ -87,7 +87,7 @@ class TestUserDataIsolation:
         assert user1_id != user2_id
         
         # Conversations should be keyed by user_id
-        from app.domain.entities.conversation import Conversation
+        from app.domain.chat.entities.conversation import Conversation
         
         conv1 = Conversation(id=uuid4(), user_id=user1_id, created_at=None)
         conv2 = Conversation(id=uuid4(), user_id=user2_id, created_at=None)
@@ -388,14 +388,14 @@ class TestComplianceAudit:
     
     def test_conversation_has_timestamps(self):
         """Verify conversations track created_at for audit"""
-        from app.domain.entities.conversation import Conversation
+        from app.domain.chat.entities.conversation import Conversation
         
         conv = Conversation(id=uuid4(), user_id=uuid4(), created_at=None)
         assert hasattr(conv, 'created_at')
     
     def test_messages_have_timestamps(self):
         """Verify messages track created_at for audit"""
-        from app.domain.entities.message import Message
+        from app.domain.chat.entities.message import Message
         import inspect
         
         # Message should have created_at field

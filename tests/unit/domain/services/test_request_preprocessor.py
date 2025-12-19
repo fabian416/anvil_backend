@@ -7,8 +7,8 @@ import pytest
 from uuid import UUID
 
 from app.domain.services.distillation.request_preprocessor import RequestPreprocessor
-from app.domain.entities.message import Message
-from app.domain.value_objects.message_role import MessageRole
+from app.domain.chat.entities.message import Message
+from app.domain.chat.value_objects.message_role import MessageRole
 
 
 class TestRequestPreprocessor:

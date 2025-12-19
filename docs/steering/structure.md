@@ -11,10 +11,12 @@ project-root/
 ├── src/                             # Source code
 │   └── app/
 │       ├── domain/                  # Domain layer (business logic)
-│       │   ├── entities/            # Domain entities with identity
-│       │   ├── value_objects/       # Immutable value objects
-│       │   ├── services/            # Domain services
-│       │   └── ports/               # Port interfaces (abstractions)
+│       │   ├── {module}/            # Modular organization by feature
+│       │   │   ├── entities/        # Domain entities with identity
+│       │   │   ├── value_objects/   # Immutable value objects
+│       │   │   ├── ports/           # Port interfaces (abstractions)
+│       │   │   └── services/        # Domain services
+│       │   └── ...                  # Other domain modules (alerts, chat, transactions, etc.)
 │       ├── application/             # Application layer (use cases)
 │       │   ├── commands/            # Write operations (CQRS)
 │       │   ├── queries/             # Read operations (CQRS)
@@ -49,26 +51,28 @@ project-root/
 
 ### DeFi Multi-Agents Chat Specific Structure
 
-For the DeFi multi-agents chat feature, the following structure will be added:
+For the DeFi multi-agents chat feature, the following modular structure is used:
 
 ```
 src/app/
 ├── domain/
-│   ├── entities/
-│   │   ├── conversation.py          # Conversation entity
-│   │   ├── message.py               # Message entity
-│   │   ├── agent.py                 # Agent entity
-│   │   └── agent_session.py          # Agent session state
-│   ├── value_objects/
-│   │   ├── agent_type.py             # Agent type enum/value object
-│   │   ├── message_role.py           # Message role (user/agent/system)
-│   │   └── conversation_context.py   # Conversation context value object
-│   ├── services/
-│   │   └── agent_orchestrator.py     # Domain service for agent coordination
-│   └── ports/
-│       ├── agent_gateway.py          # Interface for agent interactions
-│       ├── conversation_repository.py # Conversation persistence interface
-│       └── defi_data_provider.py     # DeFi data source interface
+│   ├── chat/                         # Chat module
+│   │   ├── entities/
+│   │   │   ├── conversation.py      # Conversation entity
+│   │   │   ├── message.py           # Message entity
+│   │   │   └── conversation_context.py # Conversation context
+│   │   ├── value_objects/
+│   │   │   └── message_role.py       # Message role (user/agent/system)
+│   │   ├── ports/
+│   │   │   ├── conversation_repository.py # Conversation persistence interface
+│   │   │   ├── message_repository.py # Message persistence interface
+│   │   │   └── analytics_repository.py # Analytics interface
+│   │   └── services/                # Domain services (if any)
+│   ├── agent_squad/                  # Agent Squad module
+│   │   ├── entities/
+│   │   │   ├── agent_telemetry.py
+│   │   │   └── ...
+│   │   └── ...
 ├── application/
 │   ├── commands/
 │   │   ├── create_conversation.py    # Start new conversation
@@ -163,9 +167,13 @@ from uuid import UUID
 from sqlalchemy import select
 from pydantic import BaseModel
 
-# Application (absolute imports)
-from app.domain.entities.conversation import Conversation
-from app.domain.value_objects.message_role import MessageRole
+# Application (absolute imports - modular structure)
+from app.domain.chat.entities.conversation import Conversation
+from app.domain.chat.entities.message import Message
+from app.domain.chat.value_objects.message_role import MessageRole
+from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.transactions.entities.transaction import Transaction
+from app.domain.portfolio.entities.user_portfolio import UserPortfolio
 from app.application.common.ports.conversation_query_gateway import ConversationQueryGateway
 
 # Relative imports (within same package)

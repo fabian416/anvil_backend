@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 from decimal import Decimal
 
-from app.domain.entities.project import Project
+from app.domain.projects.entities.project import Project
 from app.application.projects.services.project_tool_executor import (
     ProjectToolExecutor,
     ToolExecutionError,
@@ -339,7 +339,7 @@ class TestConversationProjectLinking:
     
     def test_conversation_without_project(self):
         """Test conversation without project (general chat)."""
-        from app.domain.entities.conversation import Conversation
+        from app.domain.chat.entities.conversation import Conversation
         
         conversation = Conversation.create(
             user_id=1,
@@ -351,7 +351,7 @@ class TestConversationProjectLinking:
     
     def test_conversation_with_project(self):
         """Test conversation linked to project."""
-        from app.domain.entities.conversation import Conversation
+        from app.domain.chat.entities.conversation import Conversation
         
         project_id = uuid4()
         conversation = Conversation.create(

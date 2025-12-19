@@ -6,7 +6,7 @@ Tests message role enumeration and validation.
 
 import pytest
 
-from app.domain.value_objects.message_role import MessageRole
+from app.domain.chat.value_objects.message_role import MessageRole
 
 
 @pytest.mark.unit

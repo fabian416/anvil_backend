@@ -8,8 +8,8 @@ import pytest
 from uuid import uuid4
 from datetime import datetime
 
-from app.domain.entities.message import Message
-from app.domain.value_objects.message_role import MessageRole
+from app.domain.chat.entities.message import Message
+from app.domain.chat.value_objects.message_role import MessageRole
 
 
 @pytest.mark.unit
