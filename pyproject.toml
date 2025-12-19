@@ -61,6 +61,7 @@ dependencies = [
     "numpy>=1.24.0",  # Numerical computing
     "pandas>=2.0.0",  # Data manipulation
     "tenacity>=8.0.0",  # Retry library for enterprise retry system
+    "boto3>=1.34.0",  # AWS SDK for Bedrock integration
 ]
 
 [project.optional-dependencies]
