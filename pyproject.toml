@@ -32,6 +32,7 @@ dependencies = [
     "pyjwt[crypto]",
     "rtoml==0.12.0",
     "sqlalchemy[mypy]==2.0.41",
+    "greenlet>=3.0.0",
     "uuid6==2025.0.1",
     "uvicorn==0.35.0",
     "uvloop==0.21.0",
