@@ -10,8 +10,8 @@ from datetime import datetime
 from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.entities.conversation_context import ConversationContext
-from app.domain.ports.conversation_context_repository import ConversationContextRepository
+from app.domain.chat.entities.conversation_context import ConversationContext
+from app.domain.chat.ports.conversation_context_repository import ConversationContextRepository
 from app.infrastructure.persistence_sqla.mappings.conversation_context import (
     conversation_context_table,
 )

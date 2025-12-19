@@ -8,7 +8,7 @@ configuration and risk limits.
 from typing import Any, Dict, Optional
 from decimal import Decimal
 
-from app.domain.entities.project import Project
+from app.domain.projects.entities.project import Project
 from app.application.chat.services.hunter_tool_executor import HunterToolExecutor
 from app.application.chat.services.ultra_tool_executor import ULTRAToolExecutor
 from app.domain.value_objects.agent_tools.hunter_tools import HunterToolType

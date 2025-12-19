@@ -1,5 +1,5 @@
 from uuid import UUID, uuid4
-from app.domain.entities.message import Message
+from app.domain.chat.entities.message import Message
 from app.domain.enums.message_role import MessageRole
 from app.domain.value_objects.message_id import MessageId
 from app.domain.value_objects.conversation_id import ConversationId

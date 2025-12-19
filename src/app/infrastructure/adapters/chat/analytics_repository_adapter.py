@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Integer, Float, DateTime, Index
 
-from app.domain.ports.analytics_repository import AnalyticsRepository
+from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.domain.entities.chat.conversation_analytics import ConversationAnalytics
 from app.infrastructure.persistence_sqla.base import Base
 

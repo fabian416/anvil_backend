@@ -6,7 +6,7 @@ from sqlalchemy import Table, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 import sqlalchemy as sa
 
-from app.domain.entities.conversation import Conversation
+from app.domain.chat.entities.conversation import Conversation
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 conversations_table = Table(

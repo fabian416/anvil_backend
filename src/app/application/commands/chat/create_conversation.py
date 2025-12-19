@@ -1,5 +1,5 @@
 from uuid import UUID, uuid4
-from app.domain.entities.conversation import Conversation
+from app.domain.chat.entities.conversation import Conversation
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.ports.ai.llm_conversation_repository import LLMConversationRepository
 from app.application.common.ports.transaction_manager import TransactionManager

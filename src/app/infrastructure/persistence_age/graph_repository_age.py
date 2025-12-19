@@ -22,7 +22,7 @@ import json
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.ports.graph import (
+from app.domain.graph.ports import (
     GraphRepository,
     GraphNode,
     GraphEdge,

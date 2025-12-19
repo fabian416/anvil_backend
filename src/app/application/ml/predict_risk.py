@@ -7,7 +7,7 @@ Application service for ML-based risk prediction.
 from typing import List
 from uuid import UUID
 
-from app.domain.services.ml.risk_prediction_service import (
+from app.domain.ml.services.risk_prediction_service import (
     RiskPredictionService,
     RiskPrediction,
 )

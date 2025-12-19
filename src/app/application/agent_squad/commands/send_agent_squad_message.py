@@ -12,14 +12,14 @@ This interactor orchestrates the complete flow of:
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from app.domain.entities.message import Message
+from app.domain.chat.entities.message import Message
 from app.domain.entities.agent_squad.agent_telemetry import AgentTelemetry
 from app.domain.enums.agent_type import AgentType
 from app.domain.enums.message_role import MessageRole
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway
 from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageGateway
 from app.domain.ports.agent_squad.feature_flags_gateway import FeatureFlagsGateway
-from app.domain.ports.message_repository import MessageRepository
+from app.domain.chat.ports.message_repository import MessageRepository
 from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 from app.domain.services.agent_squad.context_manager import ContextManager
 from app.domain.value_objects.agent_squad.conversation_context import (

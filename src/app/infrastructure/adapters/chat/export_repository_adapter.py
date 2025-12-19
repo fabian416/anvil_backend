@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Boolean, Integer, Text, DateTime
 
-from app.domain.ports.export_repository import ExportRepository
+from app.domain.chat.ports.export_repository import ExportRepository
 from app.domain.entities.chat.conversation_export import ConversationExport
 from app.domain.value_objects.chat.export import (
     ExportFormat,

@@ -6,8 +6,8 @@ from typing import Any, List, Dict, Optional
 from uuid import UUID
 from datetime import datetime
 
-from app.domain.ports.conversation_repository import ConversationRepository
-from app.domain.entities.message import Message
+from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.chat.entities.message import Message
 from app.domain.value_objects.message_id import MessageId
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent

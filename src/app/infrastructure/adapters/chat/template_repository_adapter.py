@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Boolean, Integer, Float, Text, DateTime
 
-from app.domain.ports.template_repository import TemplateRepository
+from app.domain.chat.ports.template_repository import TemplateRepository
 from app.domain.entities.chat.conversation_template import (
     ConversationTemplate,
     AgentStep,

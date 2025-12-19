@@ -16,14 +16,14 @@ from redis.asyncio import Redis, ConnectionPool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Domain Ports - Repositories
-from app.domain.ports.analytics_repository import AnalyticsRepository
+from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.domain.ports.agent_orchestration_repository import AgentOrchestrationRepository
 from app.domain.ports.audit_log_repository import AuditLogRepository
-from app.domain.ports.export_repository import ExportRepository
+from app.domain.chat.ports.export_repository import ExportRepository
 from app.domain.ports.export_generator import ExportGenerator
-from app.domain.ports.template_repository import TemplateRepository
-from app.domain.ports.template_execution_repository import TemplateExecutionRepository
-from app.domain.ports.user_preferences_repository import UserPreferencesRepository
+from app.domain.chat.ports.template_repository import TemplateRepository
+from app.domain.chat.ports.template_execution_repository import TemplateExecutionRepository
+from app.domain.preferences.ports.user_preferences_repository import UserPreferencesRepository
 
 # Domain Ports - External Services
 from app.domain.ports.chat_llm_provider import ChatLLMProvider
@@ -74,7 +74,7 @@ from app.presentation.http.websocket.connection_manager import ConnectionManager
 from app.application.chat.services.advanced_intent_detector import AdvancedIntentDetector
 from app.application.chat.services.user_analytics_service import UserChatAnalyticsService
 from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 
 class ChatPhase2Provider(Provider):

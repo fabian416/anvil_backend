@@ -14,7 +14,7 @@ from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
 from app.domain.enums.wallet_provider import WalletProvider
-from app.domain.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 
 logger = logging.getLogger(__name__)

@@ -10,7 +10,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.ports.user_preferences_repository import UserPreferencesRepository
+from app.domain.preferences.ports.user_preferences_repository import UserPreferencesRepository
 from app.domain.value_objects.chat.preferences import (
     UserChatPreferences,
     VerbosityLevel,

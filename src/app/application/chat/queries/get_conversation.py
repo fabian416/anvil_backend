@@ -5,8 +5,8 @@ Get conversation query.
 from uuid import UUID
 from typing import Optional
 
-from app.domain.entities.conversation import Conversation
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.entities.conversation import Conversation
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 
 class GetConversation:

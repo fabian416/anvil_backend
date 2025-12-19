@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 from datetime import datetime
 import logging
 
-from app.domain.ports.graph import GraphRepository, TraversalDirection
+from app.domain.graph.ports import GraphRepository, TraversalDirection
 
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ class ValidateGraphInteractor:
     async def _check_circular_dependencies(self) -> Dict[str, Any]:
         """Find circular dependencies"""
         
-        from app.domain.services.graph import GraphService
+        from app.domain.graph.services import GraphService
         
         graph_service = GraphService(self._graph_repo)
         cycles = await graph_service.find_circular_dependencies(max_depth=5)

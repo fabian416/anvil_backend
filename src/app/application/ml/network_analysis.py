@@ -7,7 +7,7 @@ Application services for advanced graph algorithms.
 from typing import List, Optional
 from uuid import UUID
 
-from app.domain.services.ml.network_analysis_service import (
+from app.domain.ml.services.network_analysis_service import (
     NetworkAnalysisService,
     PageRankResult,
     CommunityDetectionResult,

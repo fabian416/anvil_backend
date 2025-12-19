@@ -13,7 +13,7 @@ from app.application.common.services.current_user import CurrentUserService
 from app.application.dashboard.dashboard_aggregation_service import (
     DashboardAggregationService,
 )
-from app.domain.entities.user_portfolio import UserPortfolio, ProtocolExposure
+from app.domain.portfolio.entities.user_portfolio import UserPortfolio, ProtocolExposure
 
 
 def create_dashboard_router() -> APIRouter:

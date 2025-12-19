@@ -7,7 +7,7 @@ import logging
 from typing import List, Optional
 
 from app.domain.entities.distillation import DistillationRequest
-from app.domain.entities.message import Message
+from app.domain.chat.entities.message import Message
 
 logger = logging.getLogger(__name__)
 

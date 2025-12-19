@@ -20,7 +20,7 @@ from app.domain.value_objects.chat.export import (
     ComplianceStandard,
     ExportAuditEntry,
 )
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 logger = logging.getLogger(__name__)
 

@@ -5,9 +5,9 @@ from typing import List, Optional
 from uuid import UUID
 import logging
 
-from app.domain.entities.risk_alert import RiskAlert, AlertSubscription
-from app.domain.entities.user_portfolio import UserPortfolio
-from app.domain.services.ml.risk_prediction_service import (
+from app.domain.alerts.entities.risk_alert import RiskAlert, AlertSubscription
+from app.domain.portfolio.entities.user_portfolio import UserPortfolio
+from app.domain.ml.services.risk_prediction_service import (
     RiskPredictionService,
     RiskLevel,
 )

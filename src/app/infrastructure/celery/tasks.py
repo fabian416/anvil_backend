@@ -120,7 +120,7 @@ def populate_graph_protocols():
     """
     async def runner(container):
         from app.application.graph import PopulateGraphInteractor
-        from app.domain.ports.graph import GraphRepository
+        from app.domain.graph.ports import GraphRepository
         from app.domain.ports.external_data import DefiDataProvider
         
         graph_repo = await container.get(GraphRepository)
@@ -140,7 +140,7 @@ def update_graph_metadata():
     Update graph metadata and statistics.
     """
     async def runner(container):
-        from app.domain.ports.graph import GraphRepository
+        from app.domain.graph.ports import GraphRepository
         from sqlalchemy import text
         
         graph_repo = await container.get(GraphRepository)
@@ -161,8 +161,8 @@ def validate_graph_integrity():
     Validate graph integrity and identify issues.
     """
     async def runner(container):
-        from app.domain.services.graph import GraphService
-        from app.domain.ports.graph import GraphRepository
+        from app.domain.graph.services import GraphService
+        from app.domain.graph.ports import GraphRepository
         
         graph_repo = await container.get(GraphRepository)
         graph_service = GraphService(graph_repo)

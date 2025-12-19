@@ -5,8 +5,8 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.application.graph.hybrid_retrieval import HybridRetrievalInteractor
-from app.domain.ports.graph.graph_repository import GraphRepository
-from app.domain.services.ml.risk_prediction_service import (
+from app.domain.graph.ports.graph_repository import GraphRepository
+from app.domain.ml.services.risk_prediction_service import (
     RiskLevel,
     RiskPrediction,
     RiskPredictionService,

@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Integer, Float, DateTime
 
-from app.domain.ports.template_execution_repository import TemplateExecutionRepository
+from app.domain.chat.ports.template_execution_repository import TemplateExecutionRepository
 from app.domain.entities.chat.template_execution import (
     TemplateExecution,
     StepResult,

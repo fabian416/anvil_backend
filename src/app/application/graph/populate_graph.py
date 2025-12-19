@@ -9,7 +9,7 @@ from uuid import UUID
 from datetime import datetime
 import logging
 
-from app.domain.ports.graph import GraphRepository
+from app.domain.graph.ports import GraphRepository
 from app.domain.ports.external_data import DefiDataProvider, ProtocolData
 
 

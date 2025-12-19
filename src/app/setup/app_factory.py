@@ -36,8 +36,8 @@ async def init_database(engine: AsyncEngine) -> None:
         
         # Import entities to ensure they are registered
         from app.domain.entities.user import User
-        from app.domain.entities.country import Country
-        from app.domain.entities.city import City
+        from app.domain.atlas.entities.country import Country
+        from app.domain.atlas.entities.city import City
         from app.domain.entities.email_verification import EmailVerification
         from app.domain.entities.notification import Notification
         from app.domain.entities.password_reset import PasswordReset

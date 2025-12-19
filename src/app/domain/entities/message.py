@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, Optional, Any
 from uuid import UUID, uuid4
 
-from app.domain.value_objects.message_role import MessageRole
+from app.domain.chat.value_objects.message_role import MessageRole
 
 
 class Message:

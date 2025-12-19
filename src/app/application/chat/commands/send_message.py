@@ -7,11 +7,11 @@ from typing import Optional, Dict, Any
 import asyncio
 import re
 
-from app.domain.entities.message import Message
-from app.domain.entities.conversation import Conversation
-from app.domain.entities.project import Project
-from app.domain.ports.conversation_repository import ConversationRepository
-from app.domain.ports.project_repository import ProjectRepository
+from app.domain.chat.entities.message import Message
+from app.domain.chat.entities.conversation import Conversation
+from app.domain.projects.entities.project import Project
+from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.projects.ports.project_repository import ProjectRepository
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.application.chat.services.hunter_tool_executor import HunterToolExecutor
 from app.application.chat.services.ultra_tool_executor import ULTRAToolExecutor

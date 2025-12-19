@@ -21,7 +21,7 @@ from app.domain.value_objects.chat.analytics import (
     TeamCollaborationMetrics,
     CostMetrics,
 )
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 logger = logging.getLogger(__name__)
 

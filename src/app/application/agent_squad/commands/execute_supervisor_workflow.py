@@ -14,7 +14,7 @@ from uuid import UUID
 from app.domain.enums.agent_type import AgentType
 from app.domain.enums.message_role import MessageRole
 from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageGateway
-from app.domain.ports.message_repository import MessageRepository
+from app.domain.chat.ports.message_repository import MessageRepository
 from app.domain.services.agent_squad.context_manager import ContextManager
 from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
 from app.domain.value_objects.agent_squad.conversation_context import (

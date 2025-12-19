@@ -6,9 +6,9 @@ from uuid import UUID
 from typing import Optional
 import asyncio
 
-from app.domain.entities.message import Message
-from app.domain.entities.conversation import Conversation
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.entities.message import Message
+from app.domain.chat.entities.conversation import Conversation
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.services.distillation.engine import DistillationEngine
 from app.domain.value_objects.distillation import RouteType

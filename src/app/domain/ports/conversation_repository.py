@@ -5,8 +5,8 @@ Repository port for chat conversations and messages.
 from typing import Protocol, List, Optional
 from uuid import UUID
 
-from app.domain.entities.conversation import Conversation
-from app.domain.entities.message import Message
+from app.domain.chat.entities.conversation import Conversation
+from app.domain.chat.entities.message import Message
 
 
 class ConversationRepository(Protocol):

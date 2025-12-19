@@ -8,7 +8,7 @@ from typing import Dict, Any, List
 from datetime import datetime
 import logging
 
-from app.domain.ports.graph import GraphRepository, TraversalDirection
+from app.domain.graph.ports import GraphRepository, TraversalDirection
 
 
 logger = logging.getLogger(__name__)

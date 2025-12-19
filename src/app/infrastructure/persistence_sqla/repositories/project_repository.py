@@ -4,8 +4,8 @@ from uuid import UUID
 
 from sqlalchemy import delete, func, or_, select, update
 
-from app.domain.entities.project import Project
-from app.domain.ports.project_repository import ProjectRepository
+from app.domain.projects.entities.project import Project
+from app.domain.projects.ports.project_repository import ProjectRepository
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.persistence_sqla.mappings.projects import (
     projects,

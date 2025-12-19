@@ -14,8 +14,8 @@ from app.domain.value_objects.chat import (
     AutocompleteSuggestion,
     ConversationMatch,
 )
-from app.domain.entities.message import Message
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.entities.message import Message
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 logger = logging.getLogger(__name__)
 

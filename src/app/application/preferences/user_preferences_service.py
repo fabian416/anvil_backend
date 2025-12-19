@@ -3,7 +3,7 @@
 from typing import Optional
 from uuid import UUID
 
-from app.domain.entities.user_preferences import (
+from app.domain.preferences.entities.user_preferences import (
     UserPreferences,
     SearchPreferences,
     NotificationPreferences,

@@ -14,14 +14,14 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from app.domain.entities.portfolio_snapshot import (
+from app.domain.portfolio.entities.portfolio_snapshot import (
     PortfolioSnapshot,
     TokenHolding,
     TokenHoldingId,
 )
 from app.domain.entities.wallet import Wallet, WalletId
 from app.domain.enums.chain_type import ChainType
-from app.domain.ports.portfolio.portfolio_repository import PortfolioRepository
+from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 
 logger = logging.getLogger(__name__)

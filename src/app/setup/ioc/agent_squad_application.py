@@ -18,7 +18,7 @@ from app.application.agent_squad.queries.get_conversation_context import (
 )
 from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageGateway
 from app.domain.ports.agent_squad.feature_flags_gateway import FeatureFlagsGateway
-from app.domain.ports.message_repository import MessageRepository
+from app.domain.chat.ports.message_repository import MessageRepository
 from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 from app.domain.services.agent_squad.context_manager import ContextManager
 from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator

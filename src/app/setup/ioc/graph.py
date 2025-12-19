@@ -10,12 +10,12 @@ import os
 from app.infrastructure.adapters.types import MainAsyncSession
 import redis.asyncio as aioredis
 
-from app.domain.ports.graph import GraphRepository
+from app.domain.graph.ports import GraphRepository
 from app.domain.ports.external_data import DefiDataProvider
 from app.domain.ports.embeddings import EmbeddingService
 from app.domain.ports.vector import VectorRepository
-from app.domain.services.graph import GraphService, RiskAnalysisService
-from app.domain.services.ml import RiskPredictionService, NetworkAnalysisService
+from app.domain.graph.services import GraphService, RiskAnalysisService
+from app.domain.ml.services import RiskPredictionService, NetworkAnalysisService
 from app.infrastructure.persistence_age import GraphRepositoryAge
 from app.infrastructure.external_data.defillama import DeFiLlamaClient
 from app.infrastructure.embeddings import OpenAIEmbeddingService

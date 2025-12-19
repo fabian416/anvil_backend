@@ -21,7 +21,7 @@ from app.domain.value_objects.chat.translation import (
     UserLanguagePreference,
 )
 from app.domain.ports.translation_adapter import TranslationAdapter
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.exceptions.chat import (
     TranslationError,
     LanguageNotSupportedError,

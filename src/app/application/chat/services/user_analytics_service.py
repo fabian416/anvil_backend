@@ -22,8 +22,8 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from collections import Counter
 
-from app.domain.ports.conversation_repository import ConversationRepository
-from app.domain.ports.analytics_repository import AnalyticsRepository
+from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.presentation.http.schemas.user_chat_analytics import (
     UserAnalyticsDashboardResponse,
     PersonalUsageStatsResponse,

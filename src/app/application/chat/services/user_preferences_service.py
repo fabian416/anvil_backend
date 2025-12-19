@@ -10,7 +10,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from app.domain.entities.chat.user_chat_preferences import UserChatPreferences
-from app.domain.ports.user_preferences_repository import UserPreferencesRepository
+from app.domain.preferences.ports.user_preferences_repository import UserPreferencesRepository
 
 logger = logging.getLogger(__name__)
 

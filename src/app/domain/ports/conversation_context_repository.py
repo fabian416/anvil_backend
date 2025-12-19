@@ -5,7 +5,7 @@ Repository port for ConversationContext.
 from typing import Protocol, Optional
 from uuid import UUID
 
-from app.domain.entities.conversation_context import ConversationContext
+from app.domain.chat.entities.conversation_context import ConversationContext
 
 
 class ConversationContextRepository(Protocol):

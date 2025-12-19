@@ -8,7 +8,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from app.domain.entities.distillation import DistillationRequest, DistillationResult
-from app.domain.entities.message import Message
+from app.domain.chat.entities.message import Message
 from app.domain.ports.distillator import (
     Distillator,
     DistillationError,

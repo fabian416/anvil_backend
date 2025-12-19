@@ -6,13 +6,13 @@ from decimal import Decimal
 from typing import List, Dict, Optional
 from uuid import UUID
 
-from app.domain.entities.user_portfolio import UserPortfolio, ProtocolExposure
-from app.domain.ports.graph.graph_repository import GraphRepository
-from app.domain.services.ml.risk_prediction_service import (
+from app.domain.portfolio.entities.user_portfolio import UserPortfolio, ProtocolExposure
+from app.domain.graph.ports.graph_repository import GraphRepository
+from app.domain.ml.services.risk_prediction_service import (
     RiskPredictionService,
     RiskLevel,
 )
-from app.domain.services.ml.network_analysis_service import NetworkAnalysisService
+from app.domain.ml.services.network_analysis_service import NetworkAnalysisService
 
 
 @dataclass

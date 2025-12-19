@@ -6,7 +6,7 @@ Provides graph query operations for visualization and analytics.
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 
-from app.domain.ports.graph import GraphRepository
+from app.domain.graph.ports import GraphRepository
 
 
 @dataclass

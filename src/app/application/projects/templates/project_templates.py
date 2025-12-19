@@ -9,7 +9,7 @@ Feature Flags: projects.templates.{template_name}_enabled
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 
-from app.domain.entities.project import Project
+from app.domain.projects.entities.project import Project
 from app.setup.config.projects import ProjectSettings, TemplateDisabledError
 
 

@@ -9,10 +9,10 @@ from dataclasses import dataclass
 from uuid import UUID
 import logging
 
-from app.domain.ports.graph import GraphRepository, TraversalDirection
+from app.domain.graph.ports import GraphRepository, TraversalDirection
 from app.domain.ports.embeddings import EmbeddingService
 from app.domain.ports.vector import VectorRepository, SimilarityResult
-from app.domain.services.graph import GraphService, RiskAnalysisService
+from app.domain.graph.services import GraphService, RiskAnalysisService
 
 
 logger = logging.getLogger(__name__)

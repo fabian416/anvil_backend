@@ -8,7 +8,7 @@ from app.application.chat.queries.list_conversations import ListConversations
 from app.application.chat.queries.get_messages import GetMessages
 
 # Domain ports for SendMessage
-from app.domain.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.ports.ai.agent_gateway import AgentGateway
 
 from app.application.commands.user.activate_user import ActivateUserInteractor

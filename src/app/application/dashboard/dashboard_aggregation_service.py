@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from app.application.portfolio.portfolio_risk_analysis import PortfolioRiskAnalysis
 from app.application.preferences.user_preferences_service import UserPreferencesService
 from app.application.graph import HybridRetrievalInteractor
-from app.domain.entities.user_portfolio import UserPortfolio
+from app.domain.portfolio.entities.user_portfolio import UserPortfolio
 
 
 class AIInsight:

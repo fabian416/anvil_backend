@@ -6,8 +6,8 @@ import logging
 from typing import Optional, Dict, Any, List
 from uuid import UUID
 
-from app.domain.entities.conversation_context import ConversationContext
-from app.domain.ports.conversation_context_repository import ConversationContextRepository
+from app.domain.chat.entities.conversation_context import ConversationContext
+from app.domain.chat.ports.conversation_context_repository import ConversationContextRepository
 
 logger = logging.getLogger(__name__)
 

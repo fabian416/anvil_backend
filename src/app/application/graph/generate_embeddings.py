@@ -8,7 +8,7 @@ from typing import Dict, Any, List, Optional
 from uuid import UUID
 import logging
 
-from app.domain.ports.graph import GraphRepository
+from app.domain.graph.ports import GraphRepository
 from app.domain.ports.embeddings import EmbeddingService
 from app.domain.ports.vector import VectorRepository
 

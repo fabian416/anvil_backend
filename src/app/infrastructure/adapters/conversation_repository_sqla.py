@@ -7,9 +7,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.ports.conversation_repository import ConversationRepository
-from app.domain.entities.conversation import Conversation
-from app.domain.entities.message import Message
+from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.chat.entities.conversation import Conversation
+from app.domain.chat.entities.message import Message
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_id import MessageId
 from app.domain.value_objects.user_id import UserId

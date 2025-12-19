@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from app.domain.entities.message import Message
+from app.domain.chat.entities.message import Message
 
 
 @dataclass

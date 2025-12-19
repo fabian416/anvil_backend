@@ -41,11 +41,11 @@ from app.application.subscription.ports import (
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.domain.ports.auth_gateway import AuthGateway
-from app.domain.ports.conversation_repository import ConversationRepository
-from app.domain.ports.message_repository import MessageRepository
-from app.domain.ports.portfolio.portfolio_repository import PortfolioRepository
-from app.domain.ports.project_repository import ProjectRepository
-from app.domain.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.message_repository import MessageRepository
+from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
+from app.domain.projects.ports.project_repository import ProjectRepository
+from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.embedded_wallet_provider import EmbeddedWalletProviderPort
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.infrastructure.adapters.ai.agent_gateway_impl import AgentGatewayImpl

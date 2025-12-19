@@ -28,7 +28,7 @@ from app.presentation.http.schemas.portfolio import (
     CascadeSimulationResponse,
 )
 from app.application.portfolio import PortfolioRiskAnalysis, PortfolioService
-from app.domain.entities.user_portfolio import UserPortfolio
+from app.domain.portfolio.entities.user_portfolio import UserPortfolio
 from app.domain.entities.wallet import WalletId
 from app.domain.enums.chain_type import ChainType
 from app.domain.ports.wallet.wallet_repository import WalletRepository

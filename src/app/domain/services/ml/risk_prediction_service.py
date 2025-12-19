@@ -15,7 +15,7 @@ from uuid import UUID
 import numpy as np
 from enum import Enum
 
-from app.domain.ports.graph.graph_repository import GraphRepository
+from app.domain.graph.ports.graph_repository import GraphRepository
 
 
 class RiskLevel(str, Enum):

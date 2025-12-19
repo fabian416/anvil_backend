@@ -1,7 +1,7 @@
 """Delete project command."""
 from uuid import UUID
 
-from app.domain.ports.project_repository import ProjectRepository
+from app.domain.projects.ports.project_repository import ProjectRepository
 
 
 class DeleteProject:

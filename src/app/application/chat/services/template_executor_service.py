@@ -15,7 +15,7 @@ from app.domain.entities.chat.conversation_template import (
     ConversationTemplate,
     AgentStep,
 )
-from app.domain.ports.template_repository import TemplateRepository
+from app.domain.chat.ports.template_repository import TemplateRepository
 from app.domain.exceptions.chat import (
     TemplateNotFoundError,
     TemplateValidationError,

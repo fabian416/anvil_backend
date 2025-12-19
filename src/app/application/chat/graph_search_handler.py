@@ -8,7 +8,7 @@ from app.application.graph.hybrid_retrieval import (
     HybridRetrievalInteractor,
     HybridRetrievalResult,
 )
-from app.domain.ports.graph.graph_repository import GraphRepository
+from app.domain.graph.ports.graph_repository import GraphRepository
 
 
 @dataclass
