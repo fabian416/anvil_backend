@@ -27,7 +27,7 @@ from .schemas import (
 logger = logging.getLogger(__name__)
 
 
-router = APIRouter(prefix="/graph/search", tags=["Graph Search"])
+router = APIRouter(prefix="/user/graph/search", tags=["Graph Search"])
 
 
 @router.post(

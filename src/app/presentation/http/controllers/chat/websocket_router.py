@@ -18,7 +18,7 @@ def create_chat_websocket_router() -> APIRouter:
         APIRouter with WebSocket endpoint
     """
     router = APIRouter(
-        prefix="/chat",
+        prefix="/user/chat",
         tags=["chat-websocket"],
     )
     

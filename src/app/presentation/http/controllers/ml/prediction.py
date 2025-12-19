@@ -24,7 +24,7 @@ from app.application.ml import (
     ForecastRiskInteractor,
 )
 
-router = APIRouter(prefix="/ml/prediction", tags=["ML Prediction"])
+router = APIRouter(prefix="/user/ml/prediction", tags=["ML Prediction"])
 
 
 @router.get(

@@ -192,7 +192,7 @@ class TestSearchLoad:
         def search(query):
             """Perform search."""
             return client.post(
-                "/api/v1/graph/search/hybrid",
+                "/api/v1/user/graph/search/hybrid",
                 json={"query": query, "limit": 10},
                 headers=headers,
             )

@@ -14,7 +14,7 @@ from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 
 def create_markets_router() -> APIRouter:
     """Create and configure markets router."""
-    router = APIRouter(prefix="/markets", tags=["markets"])
+    router = APIRouter(prefix="/user/markets", tags=["markets"])
 
     @router.get("/overview")
     @inject

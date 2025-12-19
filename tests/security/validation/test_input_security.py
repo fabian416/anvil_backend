@@ -67,7 +67,7 @@ class TestSQLInjectionPrevention:
 
         for payload in sql_payloads:
             response = client.post(
-                "/api/v1/graph/search/hybrid",
+                "/api/v1/user/graph/search/hybrid",
                 json={"query": payload, "limit": 10},
                 headers=headers,
             )
@@ -204,7 +204,7 @@ class TestCommandInjectionPrevention:
 
         for payload in command_payloads:
             response = client.post(
-                "/api/v1/graph/search/hybrid",
+                "/api/v1/user/graph/search/hybrid",
                 json={"query": payload, "limit": 10},
                 headers=headers,
             )

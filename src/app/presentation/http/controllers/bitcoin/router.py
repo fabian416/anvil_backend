@@ -237,7 +237,7 @@ class GetBitcoinWalletResponse(BaseModel):
 def create_bitcoin_router() -> APIRouter:
     """Create and configure the Bitcoin transaction router."""
 
-    router = ErrorAwareRouter(prefix="/bitcoin", tags=["bitcoin"])
+    router = ErrorAwareRouter(prefix="/user/bitcoin", tags=["bitcoin"])
 
     @router.post(
         "/transactions",

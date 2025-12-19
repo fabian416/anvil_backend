@@ -81,7 +81,7 @@ def create_patterns_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/hunter/patterns", tags=["hunter-patterns"])
+    router = APIRouter(prefix="/user/hunter/patterns", tags=["hunter-patterns"])
 
     @router.get(
         "/chart/{token_symbol}",

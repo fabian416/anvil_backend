@@ -191,7 +191,7 @@ class TransactionHistoryResponse(BaseModel):
 def create_transaction_router() -> APIRouter:
     """Create and configure the transaction router."""
 
-    router = ErrorAwareRouter(prefix="/transactions", tags=["transactions"])
+    router = ErrorAwareRouter(prefix="/user/transactions", tags=["transactions"])
 
     @router.post(
         "",

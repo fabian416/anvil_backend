@@ -88,7 +88,7 @@ def create_trading_signals_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/hunter/signals", tags=["hunter-signals"])
+    router = APIRouter(prefix="/user/hunter/signals", tags=["hunter-signals"])
 
     @router.get(
         "/generate/{token_symbol}",

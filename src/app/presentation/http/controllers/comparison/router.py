@@ -26,7 +26,7 @@ class CompareProtocolsRequest(BaseModel):
 
 def create_comparison_router() -> APIRouter:
     router = APIRouter(
-        prefix="/comparison",
+        prefix="/user/comparison",
         tags=["comparison"],
     )
 

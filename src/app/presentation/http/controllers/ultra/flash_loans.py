@@ -98,7 +98,7 @@ def create_flash_loans_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/ultra/flash-loans", tags=["ultra-flash-loans"])
+    router = APIRouter(prefix="/user/ultra/flash-loans", tags=["ultra-flash-loans"])
 
     @router.get(
         "/protocols",

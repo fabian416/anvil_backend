@@ -63,7 +63,7 @@ def create_risk_analysis_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/hunter/risk", tags=["hunter-risk"])
+    router = APIRouter(prefix="/user/hunter/risk", tags=["hunter-risk"])
 
     @router.get(
         "/analyze/{token_symbol}",

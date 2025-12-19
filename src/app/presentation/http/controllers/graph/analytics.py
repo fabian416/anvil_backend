@@ -25,7 +25,7 @@ from .schemas import (
 )
 
 
-router = APIRouter(prefix="/graph/analytics", tags=["Graph Analytics"])
+router = APIRouter(prefix="/user/graph/analytics", tags=["Graph Analytics"])
 
 
 @router.get(

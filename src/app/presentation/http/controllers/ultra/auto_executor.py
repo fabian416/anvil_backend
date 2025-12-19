@@ -33,7 +33,7 @@ def create_auto_executor_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/ultra/auto-executor", tags=["ultra-auto-executor"])
+    router = APIRouter(prefix="/user/ultra/auto-executor", tags=["ultra-auto-executor"])
 
     # Global auto-executor instance
     _auto_executor = AutoExecutor()

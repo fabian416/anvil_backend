@@ -15,7 +15,7 @@ from app.application.search import SearchHistoryService
 
 def create_search_router() -> APIRouter:
     router = APIRouter(
-        prefix="/search",
+        prefix="/user/search",
         tags=["search"],
     )
 

@@ -48,7 +48,7 @@ from app.application.chat import (
 
 def create_chat_router() -> APIRouter:
     router = APIRouter(
-        prefix="/chat",
+        prefix="/user/chat",
         tags=["chat"],
     )
     

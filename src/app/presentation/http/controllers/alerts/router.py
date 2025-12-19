@@ -23,7 +23,7 @@ from app.application.alerts import RiskAlertService
 
 def create_alerts_router() -> APIRouter:
     router = APIRouter(
-        prefix="/alerts",
+        prefix="/user/alerts",
         tags=["alerts"],
     )
 

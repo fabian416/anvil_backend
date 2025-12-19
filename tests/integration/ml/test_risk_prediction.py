@@ -31,7 +31,7 @@ class TestRiskPrediction:
         protocol_id = str(uuid4())
 
         response = client.get(
-            f"/api/v1/ml/prediction/{protocol_id}",
+            f"/api/v1/user/ml/prediction/{protocol_id}",
             headers=headers,
         )
 
@@ -53,7 +53,7 @@ class TestRiskPrediction:
         nonexistent_id = str(uuid4())
 
         response = client.get(
-            f"/api/v1/ml/prediction/{nonexistent_id}",
+            f"/api/v1/user/ml/prediction/{nonexistent_id}",
             headers=headers,
         )
 
@@ -66,7 +66,7 @@ class TestRiskPrediction:
         """
         protocol_id = str(uuid4())
 
-        response = client.get(f"/api/v1/ml/prediction/{protocol_id}")
+        response = client.get(f"/api/v1/user/ml/prediction/{protocol_id}")
 
         assert response.status_code in (401, 403, 422)
 
@@ -88,7 +88,7 @@ class TestBatchRiskPrediction:
         }
 
         response = client.post(
-            "/api/v1/ml/prediction/batch",
+            "/api/v1/user/ml/prediction/batch",
             json=batch_request,
             headers=headers,
         )
@@ -108,7 +108,7 @@ class TestBatchRiskPrediction:
             "protocol_ids": [str(uuid4())],
         }
 
-        response = client.post("/api/v1/ml/prediction/batch", json=batch_request)
+        response = client.post("/api/v1/user/ml/prediction/batch", json=batch_request)
 
         assert response.status_code in (401, 403, 422)
 
@@ -128,7 +128,7 @@ class TestAnomalyDetection:
         protocol_id = str(uuid4())
 
         response = client.get(
-            f"/api/v1/ml/prediction/{protocol_id}/anomalies",
+            f"/api/v1/user/ml/prediction/{protocol_id}/anomalies",
             params={"lookback_days": 7},
             headers=headers,
         )
@@ -146,7 +146,7 @@ class TestAnomalyDetection:
         protocol_id = str(uuid4())
 
         response = client.get(
-            f"/api/v1/ml/prediction/{protocol_id}/anomalies",
+            f"/api/v1/user/ml/prediction/{protocol_id}/anomalies",
             params={"lookback_days": 100},  # Exceeds max of 90
             headers=headers,
         )
@@ -169,7 +169,7 @@ class TestRiskForecast:
         protocol_id = str(uuid4())
 
         response = client.get(
-            f"/api/v1/ml/prediction/{protocol_id}/forecast",
+            f"/api/v1/user/ml/prediction/{protocol_id}/forecast",
             params={"forecast_days": 7},
             headers=headers,
         )
@@ -187,7 +187,7 @@ class TestRiskForecast:
         protocol_id = str(uuid4())
 
         response = client.get(
-            f"/api/v1/ml/prediction/{protocol_id}/forecast",
+            f"/api/v1/user/ml/prediction/{protocol_id}/forecast",
             params={"forecast_days": 50},  # Exceeds max of 30
             headers=headers,
         )

@@ -72,7 +72,7 @@ def create_portfolio_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/hunter/portfolio", tags=["hunter-portfolio"])
+    router = APIRouter(prefix="/user/hunter/portfolio", tags=["hunter-portfolio"])
 
     @router.post(
         "/optimize",

@@ -36,7 +36,7 @@ from app.domain.ports.wallet.wallet_repository import WalletRepository
 
 def create_portfolio_router() -> APIRouter:
     router = APIRouter(
-        prefix="/portfolio",
+        prefix="/user/portfolio",
         tags=["portfolio"],
     )
 

@@ -91,7 +91,7 @@ def create_arbitrage_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/ultra/arbitrage", tags=["ultra-arbitrage"])
+    router = APIRouter(prefix="/user/ultra/arbitrage", tags=["ultra-arbitrage"])
 
     # In-memory storage for discovered opportunities (would be Redis in production)
     _discovered_opportunities = []

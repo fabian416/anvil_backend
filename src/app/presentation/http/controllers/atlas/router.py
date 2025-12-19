@@ -7,7 +7,7 @@ from app.presentation.http.controllers.atlas.init import create_init_atlas_route
 
 def create_atlas_router() -> APIRouter:
     router = APIRouter(
-        prefix="/atlas",
+        prefix="/user/atlas",
         tags=["Atlas"],
     )
 

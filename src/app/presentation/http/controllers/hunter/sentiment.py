@@ -69,7 +69,7 @@ class SentimentHistoryResponse(BaseModel):
 
 def create_sentiment_router() -> APIRouter:
     """Create sentiment analysis router."""
-    router = APIRouter(prefix="/hunter/sentiment", tags=["hunter-sentiment"])
+    router = APIRouter(prefix="/user/hunter/sentiment", tags=["hunter-sentiment"])
 
     @router.get(
         "/analyze/{token_symbol}",

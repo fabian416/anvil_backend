@@ -290,7 +290,7 @@ async def chat_websocket(
         await connection_manager.disconnect(websocket, user_id, session_id)
 
 
-@router.get("/ws/stats")
+@router.get("/user/ws/stats")
 async def get_websocket_stats():
     """
     Get WebSocket connection statistics.

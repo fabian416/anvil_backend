@@ -57,7 +57,7 @@ def create_mev_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/ultra/mev", tags=["ultra-mev"])
+    router = APIRouter(prefix="/user/ultra/mev", tags=["ultra-mev"])
 
     # Global instances
     _mev_protection = MEVProtection()

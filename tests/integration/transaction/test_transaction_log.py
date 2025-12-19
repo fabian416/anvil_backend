@@ -1,7 +1,7 @@
 """
 Integration tests for transaction logging and history endpoints.
 
-Tests the /api/v1/transactions endpoints for logging and retrieving
+Tests the /api/v1/user/transactions endpoints for logging and retrieving
 transaction history.
 """
 

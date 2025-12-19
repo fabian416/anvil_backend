@@ -18,7 +18,7 @@ from app.domain.entities.user_portfolio import UserPortfolio, ProtocolExposure
 
 def create_dashboard_router() -> APIRouter:
     router = APIRouter(
-        prefix="/dashboard",
+        prefix="/user/dashboard",
         tags=["dashboard"],
     )
 

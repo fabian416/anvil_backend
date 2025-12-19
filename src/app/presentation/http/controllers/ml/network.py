@@ -26,7 +26,7 @@ from app.application.ml import (
     SimulateContagionInteractor,
 )
 
-router = APIRouter(prefix="/ml/network", tags=["Network Analysis"])
+router = APIRouter(prefix="/user/ml/network", tags=["Network Analysis"])
 
 
 @router.get(

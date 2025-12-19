@@ -13,7 +13,7 @@ from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.infrastructure.cache.graph_cache import GraphQueryCache
 
 
-router = APIRouter(prefix="/graph/monitoring", tags=["Graph Monitoring"])
+router = APIRouter(prefix="/user/graph/monitoring", tags=["Graph Monitoring"])
 
 
 class CacheStats(BaseModel):

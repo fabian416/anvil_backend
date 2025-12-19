@@ -69,7 +69,7 @@ def create_price_prediction_router() -> APIRouter:
     Returns:
         Configured FastAPI router
     """
-    router = APIRouter(prefix="/hunter/predictions", tags=["hunter-predictions"])
+    router = APIRouter(prefix="/user/hunter/predictions", tags=["hunter-predictions"])
 
     @router.post(
         "/train/{token_symbol}",

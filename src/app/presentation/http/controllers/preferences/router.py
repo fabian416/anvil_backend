@@ -22,7 +22,7 @@ from app.application.preferences.user_preferences_service import UserPreferences
 
 def create_preferences_router() -> APIRouter:
     router = APIRouter(
-        prefix="/users/me/preferences",
+        prefix="/user/preferences",
         tags=["preferences"],
     )
 

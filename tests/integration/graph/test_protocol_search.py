@@ -34,7 +34,7 @@ class TestHybridSearch:
         }
 
         response = client.post(
-            "/api/v1/graph/search/hybrid",
+            "/api/v1/user/graph/search/hybrid",
             json=search_request,
             headers=headers,
         )
@@ -59,7 +59,7 @@ class TestHybridSearch:
         }
 
         response = client.post(
-            "/api/v1/graph/search/hybrid",
+            "/api/v1/user/graph/search/hybrid",
             json=search_request,
             headers=headers,
         )
@@ -77,7 +77,7 @@ class TestHybridSearch:
             "limit": 10,
         }
 
-        response = client.post("/api/v1/graph/search/hybrid", json=search_request)
+        response = client.post("/api/v1/user/graph/search/hybrid", json=search_request)
 
         assert response.status_code in (401, 403, 422)
 
@@ -96,7 +96,7 @@ class TestHybridSearch:
         }
 
         response = client.post(
-            "/api/v1/graph/search/hybrid",
+            "/api/v1/user/graph/search/hybrid",
             json=search_request,
             headers=headers,
         )
@@ -122,7 +122,7 @@ class TestSimilarProtocols:
         }
 
         response = client.post(
-            "/api/v1/graph/search/similar",
+            "/api/v1/user/graph/search/similar",
             json=similar_request,
             headers=headers,
         )
@@ -144,7 +144,7 @@ class TestSimilarProtocols:
         }
 
         response = client.post(
-            "/api/v1/graph/search/similar",
+            "/api/v1/user/graph/search/similar",
             json=similar_request,
             headers=headers,
         )
@@ -175,7 +175,7 @@ class TestContextualSearch:
         }
 
         response = client.post(
-            "/api/v1/graph/search/contextual",
+            "/api/v1/user/graph/search/contextual",
             json=contextual_request,
             headers=headers,
         )
@@ -196,7 +196,7 @@ class TestContextualSearch:
         }
 
         response = client.post(
-            "/api/v1/graph/search/contextual",
+            "/api/v1/user/graph/search/contextual",
             json=contextual_request,
             headers=headers,
         )

@@ -61,7 +61,7 @@ class SubgraphResponse(BaseModel):
 
 def create_graph_visualization_router() -> APIRouter:
     """Create graph visualization router."""
-    router = APIRouter(prefix="/graph/visualization", tags=["graph-visualization"])
+    router = APIRouter(prefix="/user/graph/visualization", tags=["graph-visualization"])
 
     @router.get(
         "/nodes",

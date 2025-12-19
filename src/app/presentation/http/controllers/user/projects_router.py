@@ -16,7 +16,7 @@ from app.infrastructure.persistence_sqla.repositories.assignment_repository impo
 from app.domain.services.assignment.assignment_service import AssignmentService
 
 
-router = APIRouter(prefix="/projects", tags=["User - Projects"])
+router = APIRouter(prefix="/user/projects", tags=["User - Projects"])
 
 
 @router.get(
