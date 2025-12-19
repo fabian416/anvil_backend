@@ -38,33 +38,44 @@ Complete specification for Anvil's Enterprise Chat & Collaboration system, cover
 
 ## 1. Use Cases Overview {#use-cases-overview}
 
-### ✅ Completed Use Cases (1-19)
+### ✅ Completed Use Cases with REST Endpoints (8 Use Cases)
 
 | # | Use Case | Agent(s) | API | Status |
 |---|----------|----------|-----|--------|
-| 1 | Intelligent Query Routing | Agent Squad Router | POST /agent-squad/messages | ✅ Documented |
-| 13 | WebSocket Real-Time Chat | Chat Agent | WS /chat/ws/{id} | ✅ Documented |
-| 15 | Multi-Turn Persistent Context | Chat, Risk, Yield, Security | POST /conversations/{id}/messages | ✅ Documented |
-| 16 | Conversation Branching | Chat, Risk, Yield, Security | POST /conversations/{id}/fork | ✅ Documented |
-| 17 | Team Collaboration | All Agents | POST /conversations/shared | ✅ Documented |
-| 18 | Advanced Search | All Agents | POST /conversations/search | ✅ Documented |
-| 19 | AI Summarization | Summary Agent | POST /conversations/{id}/summarize | ✅ Documented |
+| 1 | Intelligent Query Routing | Agent Squad Router | POST /api/v1/user/chat/agent-squad/messages | ✅ Implemented |
+| 13 | WebSocket Real-Time Chat | Chat Agent | WS /api/v1/user/chat/ws/{id} | ✅ Implemented |
+| 15 | Multi-Turn Persistent Context | Chat, Risk, Yield, Security | POST /api/v1/user/chat/conversations/{id}/messages | ✅ Implemented |
+| 18 | Advanced Search (GraphRAG) | All Agents | POST /api/v1/user/chat/search-protocols | ✅ Implemented |
+| 20 | Chat Analytics Dashboard | Analytics Agent | GET /api/v1/user/chat/my-analytics/* (8 endpoints) | ✅ Implemented |
+| 27 | Intent Detection | Intent Agent | POST /api/v1/user/chat/intent/* (3 endpoints) | ✅ Implemented |
+| 30 | Advanced Agent Orchestration | Supervisor Agent | POST /api/v1/user/chat/agent-squad/supervisor | ✅ Implemented |
+| - | Risk Analysis (ML) | Risk Analyzer | POST /api/v1/user/chat/analyze-risk | ✅ Implemented |
 
-### 🔄 Remaining Use Cases (20-30)
+### ✅ Completed Use Cases as Services (5 Use Cases - Chat-Orchestrated)
 
-| # | Use Case | Primary Agent(s) | Priority | Complexity |
-|---|----------|------------------|----------|------------|
-| 20 | Chat Analytics Dashboard | Analytics Agent | High | Medium |
-| 21 | Conversation Templates | All Agents | High | Medium |
-| 22 | Multi-Language Translation | Translation Agent | Medium | High |
-| 23 | Personalization | Preference Agent | High | Low |
-| 24 | External Integrations (Slack/Discord) | Integration Agent | Medium | High |
-| 25 | Voice Chat & Transcription | Voice Agent | Low | High |
-| 26 | Export & Compliance | Compliance Agent | High | Medium |
-| 27 | Intent Detection | Intent Agent | High | Medium |
-| 28 | Advanced Real-Time Collaboration | Collaboration Agent | Medium | High |
-| 29 | Performance Optimization | Performance Agent | Medium | Medium |
-| 30 | Advanced Agent Orchestration | Supervisor Agent | High | High |
+| # | Use Case | Primary Agent(s) | Service | Status |
+|---|----------|------------------|--------|--------|
+| 21 | Conversation Templates | All Agents | `TemplateExecutorService` | ✅ Service Implemented |
+| 22 | Multi-Language Translation | Translation Agent | `TranslationService` | ✅ Service Implemented |
+| 23 | Personalization | Preference Agent | `UserPreferencesService` | ✅ Service Implemented |
+| 26 | Export & Compliance | Compliance Agent | `ConversationExportService` | ✅ Service Implemented |
+| 29 | Performance Optimization | Performance Agent | `PerformanceOptimizationService` | ✅ Service Implemented |
+
+### ⏳ Partially Implemented (3 Use Cases - Services Exist, Endpoints Missing)
+
+| # | Use Case | Primary Agent(s) | Service | Status |
+|---|----------|------------------|--------|--------|
+| 16 | Conversation Branching | Chat, Risk, Yield, Security | Service exists | ⚠️ Endpoint Missing |
+| 17 | Team Collaboration | All Agents | Service exists | ⚠️ Endpoint Missing |
+| 19 | AI Summarization | Summary Agent | Service exists | ⚠️ Endpoint Missing |
+
+### 📅 Future Use Cases (3 Use Cases - Not Yet Implemented)
+
+| # | Use Case | Primary Agent(s) | Priority | Complexity | Timeline |
+|---|----------|------------------|----------|------------|----------|
+| 24 | External Integrations (Slack/Discord) | Integration Agent | Medium | High | Q2 2026 |
+| 25 | Voice Chat & Transcription | Voice Agent | Low | High | Q3 2026 |
+| 28 | Advanced Real-Time Collaboration | Collaboration Agent | Medium | High | Q4 2026 |
 
 ---
 
@@ -166,76 +177,334 @@ Demonstrate the value of each agent by showing functionality degradation when di
 
 ## 4. API Specification {#api-specification}
 
-### 4.1 Completed APIs
+**Last Updated**: December 19, 2025  
+**Total Endpoints**: 22 REST endpoints + 1 WebSocket endpoint
 
-#### Chat Conversations
+### 4.1 ✅ Implemented REST Endpoints
+
+#### Core Conversations (5 endpoints)
 
 ```yaml
-POST /api/v1/chat/conversations
+POST /api/v1/user/chat/conversations
   Description: Create new conversation
-  Auth: Required
+  Auth: Required (Bearer token)
+  Status: ✅ Implemented
   Request:
     title: string (optional)
-    type: "personal" | "shared"
-    initial_message: string (optional)
   Response:
-    conversation_id: string
+    id: UUID
+    user_id: int
+    title: string | null
     created_at: datetime
-    participants: array
+    updated_at: datetime
 
-POST /api/v1/chat/conversations/{id}/messages
+GET /api/v1/user/chat/conversations
+  Description: List conversations for authenticated user
+  Auth: Required
+  Status: ✅ Implemented
+  Query Params:
+    limit: int (default: 20)
+    offset: int (default: 0)
+  Response:
+    conversations: array[ConversationResponse]
+    total: int
+
+GET /api/v1/user/chat/conversations/{conversation_id}
+  Description: Get specific conversation
+  Auth: Required
+  Status: ✅ Implemented
+  Response:
+    id: UUID
+    user_id: int
+    title: string | null
+    created_at: datetime
+    updated_at: datetime
+
+POST /api/v1/user/chat/conversations/{conversation_id}/messages
   Description: Send message to conversation
   Auth: Required
+  Status: ✅ Implemented
+  Request:
+    content: string
+  Response:
+    user_message: Message
+    agent_message: Message
+
+GET /api/v1/user/chat/conversations/{conversation_id}/messages
+  Description: Get messages for conversation
+  Auth: Required
+  Status: ✅ Implemented
+  Query Params:
+    limit: int (default: 50)
+  Response:
+    messages: array[Message]
+    total: int
+```
+
+#### WebSocket (1 endpoint)
+
+```yaml
+WS /api/v1/user/chat/ws/{conversation_id}
+  Description: Real-time chat WebSocket connection
+  Auth: Required (token query parameter)
+  Status: ✅ Implemented
+  Events:
+    - message: Real-time message updates
+    - typing: Typing indicators
+    - ping/pong: Heartbeat
+```
+
+#### Intent Detection (3 endpoints)
+
+```yaml
+POST /api/v1/user/chat/intent/detect
+  Description: Detect intent from user message
+  Auth: Required
+  Status: ✅ Implemented
   Request:
     message: string
-    context_mode: "full_history" | "recent" | "minimal"
-    streaming: boolean
-    agent_preferences: object
+    conversation_id: UUID (optional)
+    include_suggestions: boolean
   Response:
-    message_id: string
-    response: object
-    agents_involved: array
+    intent: IntentPredictionResponse
+    suggested_agents: array[AgentSuggestionResponse]
+    processing_time_ms: int
+
+POST /api/v1/user/chat/intent/autocomplete
+  Description: Get autocomplete suggestions
+  Auth: Required
+  Status: ✅ Implemented
+  Request:
+    partial_message: string
+    limit: int (default: 5)
+  Response:
+    suggestions: array[AutocompleteSuggestionResponse]
+    processing_time_ms: int
+
+POST /api/v1/user/chat/intent/similar-conversations
+  Description: Find similar past conversations
+  Auth: Required
+  Status: ✅ Implemented
+  Request:
+    message: string
+    limit: int (default: 5)
+    similarity_threshold: float (default: 0.7)
+  Response:
+    matches: array[ConversationMatchResponse]
+    processing_time_ms: int
+```
+
+#### Analytics Dashboard (8 endpoints)
+
+```yaml
+GET /api/v1/user/chat/my-analytics
+  Description: Get analytics dashboard overview
+  Auth: Required
+  Status: ✅ Implemented
+  Query Params:
+    date_from: datetime (optional, default: 30 days ago)
+    date_to: datetime (optional, default: now)
+  Response:
+    total_conversations: int
+    total_messages: int
+    most_used_agents: array
+    total_spending: float
+    activity_trends: array
+
+GET /api/v1/user/chat/my-analytics/usage
+  Description: Get usage statistics
+  Auth: Required
+  Status: ✅ Implemented
+  Response:
+    total_conversations: int
+    total_messages: int
+    avg_messages_per_conversation: float
+    most_active_days: array
+    session_duration_stats: object
+
+GET /api/v1/user/chat/my-analytics/insights
+  Description: Get conversation insights
+  Auth: Required
+  Status: ✅ Implemented
+  Response:
+    avg_conversation_length: int
+    topic_distribution: array[TopicDistribution]
+    sentiment_analysis: object
+    engagement_patterns: object
+
+GET /api/v1/user/chat/my-analytics/costs
+  Description: Get cost breakdown
+  Auth: Required
+  Status: ✅ Implemented
+  Query Params:
+    group_by: "agent" | "model" | "day" | "conversation"
+  Response:
+    total_spending: float
+    cost_by_agent: array
+    cost_by_model: array
+    daily_trends: array
+    token_usage: object
+
+GET /api/v1/user/chat/my-analytics/agents/favorites
+  Description: Get favorite agents statistics
+  Auth: Required
+  Status: ✅ Implemented
+  Response:
+    favorite_agents: array[AgentPreferenceEntry]
+    usage_count: int
+    success_rate: float
+    avg_response_time: float
+
+GET /api/v1/user/chat/my-analytics/trends
+  Description: Get historical trends
+  Auth: Required
+  Status: ✅ Implemented
+  Query Params:
+    granularity: "hourly" | "daily" | "weekly"
+  Response:
+    trends: array[DailyActivityPoint]
+    growth_metrics: object
+
+GET /api/v1/user/chat/my-analytics/conversations/history
+  Description: Get conversation history analysis
+  Auth: Required
+  Status: ✅ Implemented
+  Response:
+    recent_conversations: array
+    duration_stats: object
+    quality_metrics: object
+
+GET /api/v1/user/chat/my-analytics/export
+  Description: Export analytics data
+  Auth: Required
+  Status: ✅ Implemented
+  Query Params:
+    format: "json" | "csv"
+    include_conversations: boolean
+  Response:
+    export_data: object
+    format: string
+```
+
+#### GraphRAG & Risk Analysis (3 endpoints)
+
+```yaml
+POST /api/v1/user/chat/search-protocols
+  Description: Search protocols using GraphRAG
+  Auth: Required
+  Status: ✅ Implemented
+  Request:
+    query: string
+    conversation_id: UUID (optional)
+    user_preferences: object (optional)
+  Response:
+    results: array[ProtocolSearchResult]
+    search_context: string
+    recommendations: array[string]
+
+POST /api/v1/user/chat/analyze-risk
+  Description: ML-powered risk analysis
+  Auth: Required
+  Status: ✅ Implemented
+  Request:
+    protocol_name: string
+    conversation_id: UUID (optional)
+    operation_type: string (optional)
+    amount_usd: float (optional)
+  Response:
+    risk_analysis: RiskAnalysis
+    alternatives: array[AlternativeProtocol]
+    contextual_message: string
+
+POST /api/v1/user/chat/similar-protocols
+  Description: Find similar protocols
+  Auth: Required
+  Status: ✅ Implemented
+  Request:
+    protocol_name: string
+    conversation_id: UUID (optional)
+    limit: int (default: 5)
+  Response:
+    base_protocol: ProtocolInfo
+    similar_protocols: array[SimilarProtocol]
+```
+
+#### Agent Squad (3 endpoints)
+
+```yaml
+POST /api/v1/user/chat/agent-squad/messages
+  Description: Send message with intelligent agent routing
+  Auth: Required
+  Status: ✅ Implemented
+  Request:
+    conversation_id: UUID
+    content: string
+    force_agent: string (optional)
+  Response:
+    message_id: UUID
+    agent_response: string
+    agent_used: string
+    confidence: float
     metadata: object
 
-POST /api/v1/chat/conversations/{id}/fork
+POST /api/v1/user/chat/agent-squad/supervisor
+  Description: Execute multi-agent workflow
+  Auth: Required
+  Status: ✅ Implemented
+  Request:
+    conversation_id: UUID
+    complex_task: string
+    max_agents: int (default: 5)
+  Response:
+    workflow_id: UUID
+    agents_involved: array[string]
+    results: object
+    execution_time: float
+
+GET /api/v1/user/chat/agent-squad/agents
+  Description: List enabled agents for user
+  Auth: Required
+  Status: ✅ Implemented
+  Query Params:
+    user_subscription_tier: string (optional)
+  Response:
+    agents: array[AgentInfo]
+    total_count: int
+```
+
+### 4.2 ⏳ Missing Endpoints (Services Exist)
+
+```yaml
+POST /api/v1/user/chat/conversations/{id}/fork
   Description: Create conversation branch
-  Auth: Required
-  Request:
-    fork_from_message_id: string
-    fork_name: string
-    context_override: object
-    initial_message: string
-  Response:
-    fork_id: string
-    parent_conversation_id: string
-    fork_metadata: object
+  Status: ⚠️ Service exists, endpoint missing
+  Service: Conversation branching service exists
 
-POST /api/v1/chat/conversations/compare
-  Description: Compare conversation strategies
-  Auth: Required
-  Request:
-    conversation_ids: array[string]
-    comparison_dimensions: array[string]
-    output_format: "table" | "json" | "markdown"
-  Response:
-    comparison_table: object
-    ai_summary: object
-    merge_options: object
+POST /api/v1/user/chat/conversations/shared
+  Description: Create shared conversation
+  Status: ⚠️ Service exists, endpoint missing
+  Service: Team collaboration service exists
 
-POST /api/v1/chat/conversations/shared
-  Description: Create team shared conversation
-  Auth: Required
-  Request:
-    title: string
-    participants: array[object]
-    collaboration_settings: object
-    notification_settings: object
-  Response:
-    conversation_id: string
-    participants: array
-    collaboration_features: object
+POST /api/v1/user/chat/conversations/{id}/summarize
+  Description: AI-powered summarization
+  Status: ⚠️ Service exists, endpoint missing
+  Service: Summarization service exists
+```
 
-POST /api/v1/chat/conversations/search
+### 4.3 📅 Future Endpoints (Not Yet Implemented)
+
+```yaml
+POST /api/v1/user/chat/integrations/slack/sync
+  Description: Slack bidirectional sync
+  Status: 📅 Planned Q2 2026
+
+POST /api/v1/user/chat/conversations/{id}/voice/start
+  Description: Start voice chat session
+  Status: 📅 Planned Q3 2026
+
+WS /api/v1/user/chat/ws/{id}/intent
+  Description: Real-time intent detection WebSocket
+  Status: 📅 Planned
   Description: Semantic search across conversations
   Auth: Required
   Request:
@@ -573,35 +842,32 @@ class TestAgentDisableScenarios:
 
 ## 6. Implementation Phases {#implementation-phases}
 
-### Phase 1: Core Chat Features (Weeks 1-2) ✅ COMPLETE
-- [x] Use Case 15: Multi-Turn Context
-- [x] Use Case 16: Conversation Branching
-- [x] Use Case 17: Team Collaboration
-- [x] Use Case 18: Advanced Search
-- [x] Use Case 19: AI Summarization
+### ✅ Phase 1: Core Chat Features - COMPLETED
+- [x] Use Case 15: Multi-Turn Context ✅ (POST /conversations/{id}/messages)
+- [x] Use Case 18: Advanced Search ✅ (POST /search-protocols, POST /similar-protocols)
+- [x] Use Case 20: Chat Analytics Dashboard ✅ (8 GET endpoints)
+- [x] Use Case 27: Intent Detection ✅ (3 POST endpoints)
+- [x] Use Case 30: Advanced Agent Orchestration ✅ (3 endpoints)
+- [x] GraphRAG Protocol Search ✅ (POST /search-protocols)
+- [x] ML Risk Analysis ✅ (POST /analyze-risk)
+- [x] WebSocket Real-Time Chat ✅ (WS /ws/{id})
 
-### Phase 2: Analytics & Templates (Weeks 3-4) 🔄 IN PROGRESS
-- [ ] Use Case 20: Chat Analytics Dashboard
-- [ ] Use Case 21: Conversation Templates
-- [ ] Use Case 27: Intent Detection
-- [ ] Agent Disable Tests (all 18 agents)
+### ✅ Phase 2: Chat-Orchestrated Services - COMPLETED
+- [x] Use Case 21: Conversation Templates ✅ (TemplateExecutorService)
+- [x] Use Case 22: Multi-Language ✅ (TranslationService)
+- [x] Use Case 23: Personalization ✅ (UserPreferencesService)
+- [x] Use Case 26: Export & Compliance ✅ (ConversationExportService)
+- [x] Use Case 29: Performance Optimization ✅ (PerformanceOptimizationService)
 
-### Phase 3: Advanced Features (Weeks 5-6)
-- [ ] Use Case 23: Personalization
-- [ ] Use Case 26: Export & Compliance
-- [ ] Use Case 29: Performance Optimization
-- [ ] API Implementation (Phase 2 endpoints)
+### ⏳ Phase 3: Partially Implemented - NEEDS ENDPOINTS
+- [ ] Use Case 16: Conversation Branching ⚠️ (Service exists, endpoint missing)
+- [ ] Use Case 17: Team Collaboration ⚠️ (Service exists, endpoint missing)
+- [ ] Use Case 19: AI Summarization ⚠️ (Service exists, endpoint missing)
 
-### Phase 4: Integrations (Weeks 7-8)
-- [ ] Use Case 22: Multi-Language
-- [ ] Use Case 24: External Integrations (Slack/Discord)
-- [ ] Use Case 30: Advanced Agent Orchestration
-
-### Phase 5: Specialized Features (Weeks 9-10)
-- [ ] Use Case 25: Voice Chat
-- [ ] Use Case 28: Advanced Real-Time Collaboration
-- [ ] Performance Testing & Optimization
-- [ ] Security Audit
+### 📅 Phase 4: Future Implementations - NOT STARTED
+- [ ] Use Case 24: External Integrations (Slack/Discord) 📅 Q2 2026
+- [ ] Use Case 25: Voice Chat 📅 Q3 2026
+- [ ] Use Case 28: Advanced Real-Time Collaboration 📅 Q4 2026
 
 ---
 

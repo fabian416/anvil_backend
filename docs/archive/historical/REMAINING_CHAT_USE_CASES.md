@@ -1,25 +1,33 @@
 # Enterprise Chat Use Cases - Implementation Status
 
-## Status: ALL 16 Use Cases Documented
+**Last Updated**: December 19, 2025  
+**Status**: Based on actual codebase implementation analysis
 
-### ✅ Completed & Documented Use Cases (in USE_CASES_EXAMPLES.md)
+## 📊 Implementation Summary
 
-**Phase 1: Core Chat Features (Use Cases 15-19)** - Fully Implemented
-1. **Use Case 15**: Multi-Turn Conversation with Persistent Context
-2. **Use Case 16**: Conversation Branching and Fork Management
-3. **Use Case 17**: Team Collaboration and Shared Conversations
-4. **Use Case 18**: Advanced Conversation Search and Filtering
-5. **Use Case 19**: AI-Powered Conversation Summarization
+### ✅ Fully Implemented with REST Endpoints (8 Use Cases)
+1. **Use Case 15**: Multi-Turn Conversation with Persistent Context ✅
+2. **Use Case 18**: Advanced Conversation Search and Filtering ✅
+3. **Use Case 20**: Chat Analytics and Insights Dashboard ✅
+4. **Use Case 27**: Intent Detection and Auto-Suggestions ✅
+5. **Use Case 30**: Advanced Agent Orchestration ✅
+6. **GraphRAG Protocol Search**: Protocol search from chat ✅
+7. **Risk Analysis**: ML-powered risk analysis from chat ✅
+8. **WebSocket Real-Time Chat**: Real-time message streaming ✅
 
-**Phase 2: Current Implementation Roadmap (Use Cases 20-23, 26-27, 29-30)** - Documented, Not Yet Implemented
-6. **Use Case 20**: Chat Analytics and Insights Dashboard (See CHAT_MISSING_IMPLEMENTATIONS.md)
-7. **Use Case 21**: Conversation Templates and Workflow Automation (See CHAT_MISSING_IMPLEMENTATIONS.md)
-8. **Use Case 22**: Multi-Language Chat with Auto-Translation (See CHAT_MISSING_IMPLEMENTATIONS.md)
-9. **Use Case 23**: Chat Personalization and User Preferences (See CHAT_MISSING_IMPLEMENTATIONS.md)
-10. **Use Case 26**: Conversation Export and Compliance Archiving (See CHAT_MISSING_IMPLEMENTATIONS.md)
-11. **Use Case 27**: Intent Detection and Auto-Suggestions (See CHAT_MISSING_IMPLEMENTATIONS.md)
-12. **Use Case 29**: Chat Performance and Optimization Features (See CHAT_MISSING_IMPLEMENTATIONS.md)
-13. **Use Case 30**: Advanced Agent Orchestration (See CHAT_MISSING_IMPLEMENTATIONS.md)
+### 🔄 Implemented as Services (Chat-Orchestrated, 5 Use Cases)
+These features are implemented as services but accessed through natural language in chat, not separate REST endpoints:
+
+9. **Use Case 21**: Conversation Templates and Workflow Automation ✅ (Service: `TemplateExecutorService`)
+10. **Use Case 22**: Multi-Language Chat with Auto-Translation ✅ (Service: `TranslationService`)
+11. **Use Case 23**: Chat Personalization and User Preferences ✅ (Service: `UserPreferencesService`)
+12. **Use Case 26**: Conversation Export and Compliance Archiving ✅ (Service: `ConversationExportService`)
+13. **Use Case 29**: Chat Performance and Optimization Features ✅ (Service: `PerformanceOptimizationService`)
+
+### ⏳ Partially Implemented (3 Use Cases)
+14. **Use Case 16**: Conversation Branching and Fork Management ⚠️ (Service exists, endpoint missing)
+15. **Use Case 17**: Team Collaboration and Shared Conversations ⚠️ (Service exists, endpoint missing)
+16. **Use Case 19**: AI-Powered Conversation Summarization ⚠️ (Service exists, endpoint missing)
 
 **Phase 3: Future Implementations (Use Cases 24, 25, 28)** - Planned for Q2-Q4 2026
 14. **Use Case 24**: External Platform Integration (Slack/Discord/Teams) - See CHAT_FUTURE_IMPLEMENTATIONS.md 📅
@@ -73,158 +81,203 @@ This chat-first approach:
 
 ## Detailed Feature Descriptions
 
-#### Use Case 20: Chat Analytics and Insights Dashboard
+#### Use Case 20: Chat Analytics and Insights Dashboard ✅ IMPLEMENTED
+**Status**: ✅ Fully implemented with 8 REST endpoints  
+**Implementation**: `UserChatAnalyticsService` + `analytics_dashboard.py` router  
 **Agent Coverage**: Analytics Agent, Chat Agent
-**Chat Commands**:
-- "Show analytics" / "chat stats" / "my metrics"
-- "Which agents do I use most?"
-- "What are my response times?"
-- "Show conversation trends"
 
-**Features**:
-- Conversation volume trends (daily/weekly/monthly)
-- Agent usage statistics (which agents used most)
-- Response time metrics (avg, p50, p95, p99)
-- Topic clustering and trend analysis
-- User engagement metrics (messages per conversation, session duration)
-- Decision velocity (time from question to decision)
-- Team collaboration metrics (shared conversations, mentions, reactions)
-- Sentiment analysis of conversations
-- Export to BI tools (Tableau, Power BI, Looker)
+**REST Endpoints**:
+- `GET /api/v1/user/chat/my-analytics` - Dashboard overview
+- `GET /api/v1/user/chat/my-analytics/usage` - Usage statistics
+- `GET /api/v1/user/chat/my-analytics/insights` - Conversation insights
+- `GET /api/v1/user/chat/my-analytics/costs` - Cost breakdown
+- `GET /api/v1/user/chat/my-analytics/agents/favorites` - Favorite agents
+- `GET /api/v1/user/chat/my-analytics/trends` - Historical trends
+- `GET /api/v1/user/chat/my-analytics/conversations/history` - Conversation history
+- `GET /api/v1/user/chat/my-analytics/export` - Export analytics data
+
+**Features Implemented**:
+- ✅ Conversation volume trends (daily/weekly/monthly)
+- ✅ Agent usage statistics (which agents used most)
+- ✅ Response time metrics (avg, p50, p95, p99)
+- ✅ Topic clustering and trend analysis
+- ✅ User engagement metrics (messages per conversation, session duration)
+- ✅ Cost tracking and breakdown
+- ✅ Historical trends with time-series data
+- ✅ Export capabilities (JSON, CSV)
+- ⏳ Decision velocity (time from question to decision) - Partial
+- ⏳ Team collaboration metrics - Not yet implemented
+- ⏳ Sentiment analysis - Not yet implemented
 
 ---
 
-#### Use Case 21: Conversation Templates and Workflow Automation
-**Agent Coverage**: All 18 Agents
-**Chat Commands**:
+#### Use Case 21: Conversation Templates and Workflow Automation ✅ IMPLEMENTED (Service)
+**Status**: ✅ Service implemented, accessed via chat commands  
+**Implementation**: `TemplateExecutorService` in `src/app/application/chat/services/`  
+**Agent Coverage**: All 18 Agents  
+**Access Method**: Chat-orchestrated (natural language commands)
+
+**Chat Commands** (Implemented):
 - "Run portfolio health check" / "execute template: portfolio review"
 - "Create new template called X"
 - "List my templates"
 - "Schedule portfolio check every Monday"
 
-**Features**:
-- Pre-built conversation templates for common scenarios
-- Portfolio Review Template (auto-runs Risk Analyzer + Yield Optimizer)
-- Compliance Check Template (auto-generates audit report)
-- Market Analysis Template (Hunter AI + Research Assistant)
-- Rebalancing Workflow Template (step-by-step guided process)
-- Custom template builder with agent sequencing
-- Template marketplace (share templates across teams)
-- Scheduled template execution (daily/weekly automated reports)
+**Features Implemented**:
+- ✅ Template execution with multi-agent workflows
+- ✅ Agent sequencing and dependency management
+- ✅ Parallel agent execution
+- ✅ Template execution result tracking
+- ✅ Custom template builder with agent sequencing
+- ⏳ Pre-built conversation templates - Partial
+- ⏳ Template marketplace - Not yet implemented
+- ⏳ Scheduled template execution - Not yet implemented
 
 ---
 
-#### Use Case 22: Multi-Language Chat with Auto-Translation
-**Agent Coverage**: Translation Agent, All Agents
-**Chat Commands**:
+#### Use Case 22: Multi-Language Chat with Auto-Translation ✅ IMPLEMENTED (Service)
+**Status**: ✅ Service implemented, accessed via chat commands  
+**Implementation**: `TranslationService` in `src/app/application/chat/services/`  
+**Agent Coverage**: Translation Agent, All Agents  
+**Access Method**: Chat-orchestrated (natural language commands)
+
+**Chat Commands** (Implemented):
 - "Translate this conversation to Spanish"
 - "Enable auto-translation to French"
 - "Show original language"
 
-**Features**:
-- Real-time translation of conversations (75+ languages)
-- Auto-detect user language preference
-- Preserve technical terms (Aave, Morpho, stETH unchanged)
-- Translate agent responses to user's preferred language
-- Bilingual mode (show original + translation side-by-side)
-- Translation quality scoring
-- Cultural localization (date formats, currency symbols)
-- Team conversations with multi-language participants
+**Features Implemented**:
+- ✅ Natural language translation commands
+- ✅ Real-time translation in shared conversations
+- ✅ Technical term preservation (DeFi protocols, tokens)
+- ✅ Multiple display modes (side-by-side, inline, popup)
+- ✅ Translation quality scoring
+- ✅ Bilingual mode for learning
+- ⏳ Auto-detect user language preference - Partial
+- ⏳ Cultural localization - Not yet implemented
 
 ---
 
-#### Use Case 23: Chat Personalization and User Preferences
-**Agent Coverage**: All Agents
-**Chat Commands**:
+#### Use Case 23: Chat Personalization and User Preferences ✅ IMPLEMENTED (Service)
+**Status**: ✅ Service implemented, accessed via chat commands  
+**Implementation**: `UserPreferencesService` in `src/app/application/chat/services/`  
+**Agent Coverage**: All Agents  
+**Access Method**: Chat-orchestrated (natural language commands)
+
+**Chat Commands** (Implemented):
 - "Make responses more brief" / "use detailed mode"
 - "Always use Risk Analyzer for risk questions"
 - "Auto-delete conversations after 30 days"
 - "Enable dark mode" / "set font size to large"
 
-**Features**:
-- Response style preferences (brief/detailed/technical/executive)
-- Agent preferences (prefer Risk Analyzer over Yield Optimizer for risk questions)
-- Notification preferences (mention only, all messages, summaries only)
-- Display preferences (dark mode, compact/comfortable view, font size)
-- Quick actions customization (add custom shortcuts)
-- Conversation organization (folders, tags, favorites)
-- Privacy settings (conversation retention, auto-delete after N days)
-- Accessibility settings (screen reader optimization, keyboard shortcuts)
+**Features Implemented**:
+- ✅ Response style preferences (brief/detailed/technical/executive)
+- ✅ Agent preferences (prefer Risk Analyzer over Yield Optimizer for risk questions)
+- ✅ Natural language preference updates
+- ✅ Preference persistence via `UserPreferencesRepository`
+- ⏳ Notification preferences - Partial
+- ⏳ Display preferences - Partial
+- ⏳ Conversation organization (folders, tags, favorites) - Not yet implemented
+- ⏳ Privacy settings - Partial
+- ⏳ Accessibility settings - Not yet implemented
 
 ---
 
-#### Use Case 26: Conversation Export and Compliance Archiving
-**Agent Coverage**: Compliance Agent, Export Agent
-**Chat Commands**:
+#### Use Case 26: Conversation Export and Compliance Archiving ✅ IMPLEMENTED (Service)
+**Status**: ✅ Service implemented, accessed via chat commands  
+**Implementation**: `ConversationExportService` in `src/app/application/chat/services/`  
+**Agent Coverage**: Compliance Agent, Export Agent  
+**Access Method**: Chat-orchestrated (natural language commands)
+
+**Chat Commands** (Implemented):
 - "Export this conversation to PDF"
 - "Create compliance archive for last quarter"
 - "Email this conversation to myself"
 - "Generate SEC-compliant export"
 
-**Features**:
-- Export formats (PDF, JSON, CSV, HTML, Markdown)
-- Compliance-ready exports (SEC, FinCEN, IRS formats)
-- Include metadata (participants, timestamps, IP addresses, decisions)
-- Redaction options (PII redaction for GDPR compliance)
-- Batch export (export 100+ conversations at once)
-- Scheduled exports (weekly/monthly compliance archives)
-- E-signature integration (sign exported reports)
-- Immutable audit logs (tamper-proof conversation archives)
-- Legal hold (preserve conversations for litigation)
+**Features Implemented**:
+- ✅ Export format support (PDF, JSON, CSV, HTML, Markdown)
+- ✅ Compliance-ready exports (SEC, FinCEN, IRS formats)
+- ✅ Include metadata (participants, timestamps, IP addresses, decisions)
+- ✅ PII redaction options (GDPR compliance)
+- ✅ Export audit logging
+- ⏳ Batch export - Partial
+- ⏳ Scheduled exports - Not yet implemented
+- ⏳ E-signature integration - Not yet implemented
+- ⏳ Immutable audit logs - Partial
+- ⏳ Legal hold - Not yet implemented
 
 ---
 
-#### Use Case 27: Intent Detection and Auto-Suggestions
+#### Use Case 27: Intent Detection and Auto-Suggestions ✅ IMPLEMENTED
+**Status**: ✅ Fully implemented with 3 REST endpoints  
+**Implementation**: `AdvancedIntentDetector` + `intent_detection_router.py`  
 **Agent Coverage**: Intent Detection Agent, All Agents
-**Real-time via WebSocket** (as user types)
 
-**Features**:
-- Real-time intent classification as user types
-- Auto-suggest completions ("Did you mean: analyze Morpho risk?")
-- Proactive agent suggestions ("Risk Analyzer can help with this")
-- Smart command suggestions ("/execute trade" when discussing trades)
-- Context-aware autocomplete (suggest relevant protocols, wallets, amounts)
-- Learning from user corrections (improve suggestions over time)
-- Quick replies (common responses as buttons)
-- Similar past conversations ("You asked this 2 weeks ago")
-- Action predictions (predict what user will do next)
+**REST Endpoints**:
+- `POST /api/v1/user/chat/intent/detect` - Detect intent with agent suggestions
+- `POST /api/v1/user/chat/intent/autocomplete` - Autocomplete suggestions
+- `POST /api/v1/user/chat/intent/similar-conversations` - Find similar conversations
 
----
-
-#### Use Case 29: Chat Performance and Optimization Features
-**Agent Coverage**: Performance Agent
-**Automatic optimization** (no user commands needed)
-
-**Features**:
-- Real-time latency monitoring (p50, p95, p99 response times)
-- Message delivery guarantees (at-least-once, exactly-once)
-- Automatic failover (if primary LLM provider down, switch to backup)
-- Smart caching (frequently asked questions cached)
-- Prefetching (preload likely next agent responses)
-- Bandwidth optimization (image compression, lazy loading)
-- Offline mode (queue messages when offline, sync when online)
-- Performance budgets (max 2s response time, alert if slower)
-- CDN integration for global low-latency access
+**Features Implemented**:
+- ✅ Real-time intent classification
+- ✅ Auto-suggest completions ("Did you mean: analyze Morpho risk?")
+- ✅ Proactive agent suggestions ("Risk Analyzer can help with this")
+- ✅ Context-aware autocomplete (suggest relevant protocols, wallets, amounts)
+- ✅ Similar past conversations ("You asked this 2 weeks ago")
+- ✅ Intent confidence scoring
+- ✅ Alternative intent suggestions
+- ✅ Agent recommendation with reasoning
+- ⏳ Smart command suggestions - Partial
+- ⏳ Learning from user corrections - Not yet implemented
+- ⏳ Quick replies - Not yet implemented
+- ⏳ Action predictions - Not yet implemented
+- ⏳ Real-time WebSocket intent detection - Not yet implemented
 
 ---
 
-#### Use Case 30: Advanced Agent Orchestration
+#### Use Case 29: Chat Performance and Optimization Features ✅ IMPLEMENTED (Service)
+**Status**: ✅ Service implemented, automatic optimization  
+**Implementation**: `PerformanceOptimizationService` in `src/app/application/chat/services/`  
+**Agent Coverage**: Performance Agent  
+**Access Method**: Automatic (background optimization)
+
+**Features Implemented**:
+- ✅ Smart caching with semantic similarity
+- ✅ Predictive prefetching based on conversation patterns
+- ✅ Offline mode with message queuing
+- ✅ Performance budget monitoring and alerting
+- ✅ LLM provider failover
+- ✅ Cost and latency tracking
+- ✅ Cache statistics and management
+- ⏳ Real-time latency monitoring (p50, p95, p99) - Partial
+- ⏳ Message delivery guarantees - Partial
+- ⏳ Bandwidth optimization - Not yet implemented
+- ⏳ CDN integration - Not yet implemented
+
+---
+
+#### Use Case 30: Advanced Agent Orchestration ✅ IMPLEMENTED
+**Status**: ✅ Fully implemented with 3 REST endpoints + service  
+**Implementation**: `AgentOrchestrationService` + `SendAgentSquadMessage` + `ExecuteSupervisorWorkflow`  
 **Agent Coverage**: All 18 Agents, Supervisor Agent
-**Chat Commands**:
-- "Get opinions from 3 agents on whether to invest in Curve"
-- "Have Risk Analyzer and Yield Optimizer debate this strategy"
-- "Run these agents in parallel and merge results"
 
-**Features**:
-- Multi-agent workflows (Risk Analyzer → Yield Optimizer → Transaction Executor)
-- Agent chaining (output of one agent feeds into next)
-- Parallel agent execution (run 5 agents simultaneously, merge results)
-- Agent voting (3 agents analyze, majority vote wins)
-- Agent debate (agents discuss and reach consensus)
-- Fallback agents (if primary fails, try secondary)
-- Agent specialization routing (route to expert based on question type)
-- Agent performance tracking (which agents most accurate)
-- Custom agent creation (users define custom agent prompts)
+**REST Endpoints**:
+- `POST /api/v1/user/chat/agent-squad/messages` - Intelligent agent routing
+- `POST /api/v1/user/chat/agent-squad/supervisor` - Multi-agent workflow execution
+- `GET /api/v1/user/chat/agent-squad/agents` - List enabled agents
+
+**Features Implemented**:
+- ✅ Multi-agent workflows (Risk Analyzer → Yield Optimizer → Transaction Executor)
+- ✅ Agent chaining (output of one agent feeds into next)
+- ✅ Parallel agent execution (run 5 agents simultaneously, merge results)
+- ✅ Agent voting (3 agents analyze, majority vote wins)
+- ✅ Agent debate (agents discuss and reach consensus)
+- ✅ Fallback agents (if primary fails, try secondary)
+- ✅ Agent specialization routing (route to expert based on question type)
+- ✅ Agent performance tracking (which agents most accurate)
+- ✅ Supervisor workflow coordination
+- ⏳ Custom agent creation - Not yet implemented
 
 ---
 
@@ -272,31 +325,31 @@ These use cases are documented but planned for future implementation:
 
 ---
 
-## Implementation Priority
+## Implementation Status Summary
 
-### Phase 1 (High Value, Low Complexity) - Week 1
+### ✅ Phase 1: Core Chat Features - COMPLETED
 1. ✅ Use Case 15: Multi-Turn Context (COMPLETED)
-2. ✅ Use Case 16: Conversation Branching (COMPLETED)
-3. ✅ Use Case 17: Team Collaboration (COMPLETED)
-4. ✅ Use Case 18: Advanced Search (COMPLETED)
-5. ✅ Use Case 19: AI Summarization (COMPLETED)
-6. **Use Case 20**: Chat Analytics Dashboard (Next)
-7. **Use Case 27**: Intent Detection (Next)
+2. ✅ Use Case 18: Advanced Search (COMPLETED - GraphRAG integration)
+3. ✅ Use Case 20: Chat Analytics Dashboard (COMPLETED - 8 endpoints)
+4. ✅ Use Case 27: Intent Detection (COMPLETED - 3 endpoints)
+5. ✅ Use Case 30: Advanced Agent Orchestration (COMPLETED - 3 endpoints)
 
-### Phase 2 (Medium Complexity, High Value) - Week 2
-8. **Use Case 21**: Conversation Templates
-9. **Use Case 23**: Personalization
-10. **Use Case 26**: Export and Compliance
+### ✅ Phase 2: Chat-Orchestrated Services - COMPLETED
+6. ✅ Use Case 21: Conversation Templates (Service implemented)
+7. ✅ Use Case 22: Multi-Language (Service implemented)
+8. ✅ Use Case 23: Personalization (Service implemented)
+9. ✅ Use Case 26: Export and Compliance (Service implemented)
+10. ✅ Use Case 29: Performance Optimization (Service implemented)
 
-### Phase 3 (High Complexity, Strategic) - Week 3-4
-11. **Use Case 22**: Multi-Language
-12. **Use Case 24**: External Platform Integration (Slack/Discord)
-13. **Use Case 25**: Voice Chat
-14. **Use Case 28**: Advanced Real-Time Collaboration
-15. **Use Case 30**: Advanced Agent Orchestration
+### ⏳ Phase 3: Partially Implemented - NEEDS ENDPOINTS
+11. ⚠️ Use Case 16: Conversation Branching (Service exists, endpoint missing)
+12. ⚠️ Use Case 17: Team Collaboration (Service exists, endpoint missing)
+13. ⚠️ Use Case 19: AI Summarization (Service exists, endpoint missing)
 
-### Phase 4 (Continuous Improvement)
-16. **Use Case 29**: Performance Optimization (ongoing)
+### 📅 Phase 4: Future Implementations - NOT STARTED
+14. 📅 Use Case 24: External Platform Integration (Slack/Discord/Teams) - Q2 2026
+15. 📅 Use Case 25: Voice Chat with Transcription - Q3 2026
+16. 📅 Use Case 28: Advanced Real-Time Collaboration - Q4 2026
 
 ---
 
@@ -327,25 +380,61 @@ These use cases are documented but planned for future implementation:
 
 ## API Implementation Status
 
-### Completed APIs
-- ✅ `POST /api/v1/chat/conversations/{id}/messages` - Send message
-- ✅ `POST /api/v1/chat/conversations/{id}/fork` - Create conversation branch
-- ✅ `POST /api/v1/chat/conversations/compare` - Compare strategies
-- ✅ `POST /api/v1/chat/conversations/shared` - Create shared conversation
-- ✅ `POST /api/v1/chat/conversations/search` - Semantic search
-- ✅ `POST /api/v1/chat/conversations/{id}/summarize` - AI summarization
-- ✅ `WS /api/v1/chat/ws/{id}` - WebSocket real-time chat
+### ✅ Implemented REST Endpoints (22 endpoints)
 
-### Pending APIs
-- ⏳ `GET /api/v1/chat/analytics/dashboard` - Analytics dashboard
-- ⏳ `POST /api/v1/chat/templates/{id}/instantiate` - Templates
-- ⏳ `POST /api/v1/chat/conversations/{id}/translate` - Translation
-- ⏳ `PUT /api/v1/chat/preferences` - User preferences
-- ⏳ `POST /api/v1/chat/integrations/slack/sync` - Slack integration
-- ⏳ `POST /api/v1/chat/conversations/{id}/voice/start` - Voice chat
-- ⏳ `POST /api/v1/chat/conversations/{id}/export` - Export
-- ⏳ `WS /ws/chat/{id}/intent` - Intent detection (real-time)
-- ⏳ `POST /api/v1/chat/agent-squad/orchestrate` - Agent orchestration
+#### Core Conversations (5 endpoints)
+- ✅ `POST /api/v1/user/chat/conversations` - Create conversation
+- ✅ `GET /api/v1/user/chat/conversations` - List conversations
+- ✅ `GET /api/v1/user/chat/conversations/{conversation_id}` - Get conversation
+- ✅ `POST /api/v1/user/chat/conversations/{conversation_id}/messages` - Send message
+- ✅ `GET /api/v1/user/chat/conversations/{conversation_id}/messages` - Get messages
+
+#### WebSocket (1 endpoint)
+- ✅ `WS /api/v1/user/chat/ws/{conversation_id}` - Real-time chat WebSocket
+
+#### Intent Detection (3 endpoints)
+- ✅ `POST /api/v1/user/chat/intent/detect` - Detect intent with agent suggestions
+- ✅ `POST /api/v1/user/chat/intent/autocomplete` - Autocomplete suggestions
+- ✅ `POST /api/v1/user/chat/intent/similar-conversations` - Find similar conversations
+
+#### Analytics Dashboard (8 endpoints)
+- ✅ `GET /api/v1/user/chat/my-analytics` - Analytics dashboard overview
+- ✅ `GET /api/v1/user/chat/my-analytics/usage` - Usage statistics
+- ✅ `GET /api/v1/user/chat/my-analytics/insights` - Conversation insights
+- ✅ `GET /api/v1/user/chat/my-analytics/costs` - Cost breakdown
+- ✅ `GET /api/v1/user/chat/my-analytics/agents/favorites` - Favorite agents
+- ✅ `GET /api/v1/user/chat/my-analytics/trends` - Historical trends
+- ✅ `GET /api/v1/user/chat/my-analytics/conversations/history` - Conversation history
+- ✅ `GET /api/v1/user/chat/my-analytics/export` - Export analytics data
+
+#### GraphRAG & Risk Analysis (3 endpoints)
+- ✅ `POST /api/v1/user/chat/search-protocols` - Search protocols using GraphRAG
+- ✅ `POST /api/v1/user/chat/analyze-risk` - ML-powered risk analysis
+- ✅ `POST /api/v1/user/chat/similar-protocols` - Find similar protocols
+
+#### Agent Squad (3 endpoints)
+- ✅ `POST /api/v1/user/chat/agent-squad/messages` - Send message with intelligent routing
+- ✅ `POST /api/v1/user/chat/agent-squad/supervisor` - Execute multi-agent workflow
+- ✅ `GET /api/v1/user/chat/agent-squad/agents` - List enabled agents
+
+### 🔄 Chat-Orchestrated Features (No REST Endpoints)
+These features are implemented as services but accessed through natural language commands in chat:
+
+- ✅ Templates: `TemplateExecutorService` - "Run portfolio health check"
+- ✅ Translation: `TranslationService` - "Translate this conversation to Spanish"
+- ✅ Preferences: `UserPreferencesService` - "Make responses more brief"
+- ✅ Export: `ConversationExportService` - "Export this conversation to PDF"
+- ✅ Performance: `PerformanceOptimizationService` - Automatic optimization
+
+### ⏳ Missing Endpoints (Partially Implemented)
+- ⏳ `POST /api/v1/user/chat/conversations/{id}/fork` - Conversation branching (service exists)
+- ⏳ `POST /api/v1/user/chat/conversations/shared` - Shared conversations (service exists)
+- ⏳ `POST /api/v1/user/chat/conversations/{id}/summarize` - AI summarization (service exists)
+
+### 📅 Future Endpoints (Not Yet Implemented)
+- ⏳ `POST /api/v1/user/chat/integrations/slack/sync` - Slack integration
+- ⏳ `POST /api/v1/user/chat/conversations/{id}/voice/start` - Voice chat
+- ⏳ `WS /api/v1/user/chat/ws/{id}/intent` - Real-time intent detection WebSocket
 
 ---
 

@@ -22,23 +22,27 @@
 11. [Projects (Customizable AI Containers)](#projects)
 12. [GraphRAG Protocol Search](#graphrag)
 13. [Real-Time Features](#real-time-features)
-14. **[Enterprise Chat & Collaboration](#enterprise-chat-collaboration)** ⭐ NEW
-    - **Phase 1: Core Features (Implemented)**
-      - [Use Case 15: Multi-Turn Conversation with Persistent Context](#use-case-15)
-      - [Use Case 16: Conversation Branching and Fork Management](#use-case-16)
-      - [Use Case 17: Team Collaboration and Shared Conversations](#use-case-17)
-      - [Use Case 18: Advanced Conversation Search and Filtering](#use-case-18)
-      - [Use Case 19: AI-Powered Conversation Summarization](#use-case-19)
-    - **Phase 2: Current Roadmap (Documented, Not Implemented)**
-      - [Use Case 20: Chat Analytics and Insights Dashboard](#use-case-20) 🆕
-      - [Use Case 21: Conversation Templates and Workflow Automation](#use-case-21) 🆕
-      - [Use Case 22: Multi-Language Chat with Auto-Translation](#use-case-22) 🆕
-      - [Use Case 23: Chat Personalization and User Preferences](#use-case-23) 🆕
-      - [Use Case 26: Conversation Export and Compliance Archiving](#use-case-26) 🆕
-      - [Use Case 27: Intent Detection and Auto-Suggestions](#use-case-27) 🆕
-      - [Use Case 29: Chat Performance and Optimization Features](#use-case-29) 🆕
-      - [Use Case 30: Advanced Agent Orchestration](#use-case-30) 🆕
-    - **Phase 3: Future Implementations (Q2-Q4 2026)** 📅
+14. **[Enterprise Chat & Collaboration](#enterprise-chat-collaboration)** ⭐ UPDATED
+    - **✅ Phase 1: Fully Implemented with REST Endpoints (8 Use Cases)**
+      - [Use Case 15: Multi-Turn Conversation with Persistent Context](#use-case-15) ✅
+      - [Use Case 18: Advanced Conversation Search and Filtering (GraphRAG)](#use-case-18) ✅
+      - [Use Case 20: Chat Analytics and Insights Dashboard](#use-case-20) ✅ (8 endpoints)
+      - [Use Case 27: Intent Detection and Auto-Suggestions](#use-case-27) ✅ (3 endpoints)
+      - [Use Case 30: Advanced Agent Orchestration](#use-case-30) ✅ (3 endpoints)
+      - GraphRAG Protocol Search ✅
+      - ML-Powered Risk Analysis ✅
+      - WebSocket Real-Time Chat ✅
+    - **✅ Phase 2: Implemented as Services (Chat-Orchestrated, 5 Use Cases)**
+      - [Use Case 21: Conversation Templates and Workflow Automation](#use-case-21) ✅ (Service)
+      - [Use Case 22: Multi-Language Chat with Auto-Translation](#use-case-22) ✅ (Service)
+      - [Use Case 23: Chat Personalization and User Preferences](#use-case-23) ✅ (Service)
+      - [Use Case 26: Conversation Export and Compliance Archiving](#use-case-26) ✅ (Service)
+      - [Use Case 29: Chat Performance and Optimization Features](#use-case-29) ✅ (Service)
+    - **⚠️ Phase 3: Partially Implemented (3 Use Cases - Services Exist, Endpoints Missing)**
+      - [Use Case 16: Conversation Branching and Fork Management](#use-case-16) ⚠️
+      - [Use Case 17: Team Collaboration and Shared Conversations](#use-case-17) ⚠️
+      - [Use Case 19: AI-Powered Conversation Summarization](#use-case-19) ⚠️
+    - **📅 Phase 4: Future Implementations (Q2-Q4 2026)** 📅
       - [Use Case 24: External Platform Integration (Slack/Discord/Teams)](#use-case-24) 📅
       - [Use Case 25: Voice Chat with Transcription](#use-case-25) 📅
       - [Use Case 28: Real-Time Collaboration Features (Advanced)](#use-case-28) 📅
@@ -2890,34 +2894,28 @@ Anvil's Enterprise Chat system provides production-grade conversational AI with 
 
 ---
 
-### Use Case 15: Multi-Turn Conversation with Persistent Context
+### Use Case 15: Multi-Turn Conversation with Persistent Context ✅ IMPLEMENTED
 
 **Scenario**: A portfolio manager conducts an extended conversation with the AI about portfolio rebalancing strategy, with the system maintaining full context across multiple exchanges over days or weeks.
 
 #### API Request
 
 ```bash
-POST /api/v1/chat/conversations/conv_enterprise_001/messages
+# ✅ IMPLEMENTED
+POST /api/v1/user/chat/conversations/{conversation_id}/messages
 Authorization: Bearer <jwt_token>
 Content-Type: application/json
 
 {
-  "message": "Based on our discussion yesterday about reducing Curve exposure, what are the current alternatives with similar APY but better risk profiles?",
-  "context_mode": "full_history",
-  "context_settings": {
-    "lookback_messages": -1,
-    "include_referenced_messages": true,
-    "semantic_context_retrieval": true,
-    "context_compression": "intelligent"
-  },
-  "agent_preferences": {
-    "primary_agent": "risk_analyzer",
-    "collaboration_agents": ["yield_optimizer", "security_auditor"],
-    "response_style": "detailed_with_data"
-  },
-  "streaming": true
+  "content": "Based on our discussion yesterday about reducing Curve exposure, what are the current alternatives with similar APY but better risk profiles?"
 }
 ```
+
+**Note**: 
+- Context is automatically maintained by the system (full conversation history)
+- Agent routing is handled by Agent Squad intelligent routing
+- For multi-agent workflows, use: `POST /api/v1/user/chat/agent-squad/supervisor`
+- For forcing a specific agent, use: `POST /api/v1/user/chat/agent-squad/messages` with `force_agent` parameter
 
 #### Platform Processing
 
@@ -3093,7 +3091,7 @@ Content-Type: application/json
 
 ---
 
-### Use Case 16: Conversation Branching and Fork Management
+### Use Case 16: Conversation Branching and Fork Management ⚠️ PARTIALLY IMPLEMENTED
 
 **Scenario**: During a portfolio strategy discussion, the user wants to explore alternative scenarios without losing the main conversation thread. They create conversation branches to test different strategies in parallel.
 
@@ -3363,7 +3361,7 @@ Content-Type: application/json
 
 ---
 
-### Use Case 17: Team Collaboration and Shared Conversations
+### Use Case 17: Team Collaboration and Shared Conversations ⚠️ PARTIALLY IMPLEMENTED
 
 **Scenario**: An investment team collaborates on portfolio strategy, with multiple members contributing to shared conversations, mentioning each other, and coordinating decisions with role-based permissions.
 
@@ -3840,7 +3838,7 @@ Content-Type: application/json
 
 ---
 
-### Use Case 18: Advanced Conversation Search and Filtering
+### Use Case 18: Advanced Conversation Search and Filtering ✅ IMPLEMENTED
 
 **Scenario**: A user needs to find specific discussions across hundreds of past conversations using semantic search, keyword filters, date ranges, and agent-specific queries.
 
@@ -4097,7 +4095,7 @@ Content-Type: application/json
 
 ---
 
-### Use Case 19: AI-Powered Conversation Summarization
+### Use Case 19: AI-Powered Conversation Summarization ⚠️ PARTIALLY IMPLEMENTED
 
 **Scenario**: A user returns to a long conversation with 150+ messages and needs a quick summary to understand the current state, decisions made, and next steps.
 
@@ -4432,30 +4430,36 @@ Content-Type: application/json
 
 ---
 
-### Use Case 20: Chat Analytics and Insights Dashboard {#use-case-20}
+### Use Case 20: Chat Analytics and Insights Dashboard {#use-case-20} ✅ IMPLEMENTED
 
 **Agent Coverage**: Analytics Agent, Chat Agent
 **Business Context**: Enterprise teams need comprehensive analytics to understand conversation patterns, agent effectiveness, team collaboration, and make data-driven decisions about AI usage and workflow optimization.
 
-#### API Request
+#### API Request (✅ IMPLEMENTED - 8 Analytics Endpoints)
 
 ```bash
-GET /api/v1/chat/analytics/dashboard?user_id=user_456&time_range=30d&breakdown=daily
+# Main Dashboard
+GET /api/v1/user/chat/my-analytics?date_from=2024-12-15&date_to=2025-01-14
+GET /api/v1/user/chat/my-analytics/usage?date_from=...&date_to=...
+GET /api/v1/user/chat/my-analytics/insights?date_from=...&date_to=...
+GET /api/v1/user/chat/my-analytics/costs?date_from=...&date_to=...&group_by=agent
+GET /api/v1/user/chat/my-analytics/agents/favorites?date_from=...&date_to=...&limit=10
+GET /api/v1/user/chat/my-analytics/trends?date_from=...&date_to=...&granularity=daily
+GET /api/v1/user/chat/my-analytics/conversations/history?date_from=...&date_to=...&limit=20
+GET /api/v1/user/chat/my-analytics/export?format=json&date_from=...&date_to=...
+
 Authorization: Bearer eyJhbGc...
 ```
 
 **Query Parameters:**
 ```json
 {
-  "user_id": "user_456",
-  "team_id": "team_enterprise_001",  // Optional: team-wide analytics
-  "time_range": "30d",  // 7d, 30d, 90d, 1y, all_time, custom
-  "custom_start": "2025-01-01",  // Required if time_range=custom
-  "custom_end": "2025-01-31",
-  "breakdown": "daily",  // hourly, daily, weekly, monthly
-  "metrics": ["volume", "agents", "performance", "collaboration", "sentiment"],  // Optional: specific metrics
-  "agents_filter": ["risk_analyzer", "yield_optimizer"],  // Optional: filter by specific agents
-  "export_format": null  // null, csv, json, tableau, powerbi, looker
+  "date_from": "2024-12-15T00:00:00Z",  // Optional, defaults to 30 days ago
+  "date_to": "2025-01-14T23:59:59Z",    // Optional, defaults to now
+  "group_by": "agent",                   // For costs: "agent" | "model" | "day" | "conversation"
+  "granularity": "daily",                // For trends: "hourly" | "daily" | "weekly"
+  "limit": 10,                           // For favorites/history
+  "format": "json"                       // For export: "json" | "csv"
 }
 ```
 
@@ -5034,7 +5038,7 @@ Authorization: Bearer eyJhbGc...
 
 ---
 
-### Use Case 21: Conversation Templates and Workflow Automation {#use-case-21}
+### Use Case 21: Conversation Templates and Workflow Automation {#use-case-21} ✅ IMPLEMENTED (Service)
 
 **Agent Coverage**: All 18 Agents (multi-agent workflows)
 **Business Context**: Teams perform repetitive analysis workflows (portfolio reviews, compliance checks, market analysis). Templates automate multi-step workflows with pre-configured agent sequences, saving hours per week and ensuring consistent quality.
@@ -5612,7 +5616,7 @@ Content-Type: application/json
 
 ---
 
-### Use Case 22: Multi-Language Chat with Auto-Translation {#use-case-22}
+### Use Case 22: Multi-Language Chat with Auto-Translation {#use-case-22} ✅ IMPLEMENTED (Service)
 
 **Agent Coverage**: Translation Agent, All Agents
 **Business Context**: Global teams need multilingual support. Translate conversations in real-time while preserving technical DeFi terminology. Enable collaboration across language barriers.
@@ -5695,7 +5699,7 @@ Content-Type: application/json
 
 ---
 
-### Use Case 23: Chat Personalization and User Preferences {#use-case-23}
+### Use Case 23: Chat Personalization and User Preferences {#use-case-23} ✅ IMPLEMENTED (Service)
 
 **Agent Coverage**: All Agents
 **Business Context**: Users have different preferences for response style, notifications, UI layout, and agent behavior. Personalization increases user satisfaction and productivity.
@@ -5895,7 +5899,7 @@ enable_diarization: true  // Identify multiple speakers
 
 ---
 
-### Use Case 26: Conversation Export and Compliance Archiving {#use-case-26}
+### Use Case 26: Conversation Export and Compliance Archiving {#use-case-26} ✅ IMPLEMENTED (Service)
 
 **Agent Coverage**: Compliance Agent, Export Agent
 **Business Context**: Regulatory compliance requires conversation archiving. Legal holds, audits, and forensic analysis need immutable records.
@@ -5971,33 +5975,39 @@ Content-Type: application/json
 
 ---
 
-### Use Case 27: Intent Detection and Auto-Suggestions {#use-case-27}
+### Use Case 27: Intent Detection and Auto-Suggestions {#use-case-27} ✅ IMPLEMENTED
 
 **Agent Coverage**: Intent Detection Agent, All Agents
 **Business Context**: Real-time intent detection suggests relevant agents, commands, and completions as users type, accelerating workflows and improving discoverability.
 
-#### Real-Time WebSocket
+#### REST Endpoints (✅ IMPLEMENTED)
 
-```
-User types: "What's the risk of"
-↓
-WebSocket Event:
+```bash
+# Intent Detection
+POST /api/v1/user/chat/intent/detect
 {
-  "event": "intent_detected",
-  "intent": "risk_analysis",
-  "confidence": 0.87,
-  "suggested_agent": "risk_analyzer",
-  "autocomplete": [
-    "What's the risk of my Morpho position",
-    "What's the risk of Aave protocol",
-    "What's the risk of stETH depegging"
-  ],
-  "suggested_commands": ["/analyze-risk", "/portfolio-health"],
-  "similar_past_conversations": [
-    {"id": "conv_098", "title": "Morpho Risk Analysis", "date": "2024-12-28"}
-  ]
+  "message": "What's the risk of my Morpho position",
+  "conversation_id": "uuid-optional",
+  "include_suggestions": true
+}
+
+# Autocomplete
+POST /api/v1/user/chat/intent/autocomplete
+{
+  "partial_message": "What's the risk of",
+  "limit": 5
+}
+
+# Similar Conversations
+POST /api/v1/user/chat/intent/similar-conversations
+{
+  "message": "What's the risk of my Morpho position",
+  "limit": 5,
+  "similarity_threshold": 0.7
 }
 ```
+
+**Note**: Real-time WebSocket intent detection is planned but not yet implemented. Currently uses REST endpoints with debounced requests.
 
 #### Business Value & Agent Disable Impact
 
@@ -6050,36 +6060,55 @@ Events:
 
 ---
 
-### Use Case 29: Chat Performance and Optimization Features {#use-case-29}
+### Use Case 29: Chat Performance and Optimization Features {#use-case-29} ✅ IMPLEMENTED (Service)
 
 **Agent Coverage**: Performance Agent
 **Business Context**: Monitor and optimize chat performance (latency, uptime, caching, offline mode) to ensure <2s response times and 99.9% uptime.
 
-#### API Request
+#### Implementation Status
 
-```bash
-GET /api/v1/chat/performance/metrics
-Authorization: Bearer eyJhbGc...
-```
+**✅ Service Implemented**: `PerformanceOptimizationService`  
+**⚠️ REST Endpoint**: Not yet exposed (automatic background optimization)
 
-#### API Response
+**Access Method**: Automatic optimization (no user commands needed)
+- Smart caching with semantic similarity
+- Predictive prefetching
+- Offline mode with message queuing
+- Performance budget monitoring
+- LLM provider failover
+
+**Note**: Performance metrics are tracked internally. Some performance data is available via analytics endpoints (`/api/v1/user/chat/my-analytics`). Direct performance metrics endpoint is planned for future release.
+
+#### Service Features (Automatic)
 
 ```json
 {
-  "success": true,
-  "metrics": {
-    "latency": {
-      "avg_ms": 1847,
-      "p50_ms": 1620,
-      "p95_ms": 3240,
-      "p99_ms": 5670,
-      "target_ms": 2000
-    },
-    "uptime": {
-      "percentage": 99.94,
-      "downtime_minutes_30d": 26,
-      "incidents_30d": 2
-    },
+  "caching": {
+    "strategy": "semantic_similarity",
+    "hit_rate": 0.68,
+    "avg_response_time_ms": 145
+  },
+  "prefetching": {
+    "enabled": true,
+    "prediction_accuracy": 0.72,
+    "cache_warmup_rate": 0.45
+  },
+  "offline_mode": {
+    "enabled": true,
+    "queued_messages": 0,
+    "sync_on_reconnect": true
+  },
+  "failover": {
+    "primary_provider": "openai",
+    "backup_provider": "anthropic",
+    "failover_count_30d": 3
+  },
+  "performance_budgets": {
+    "max_response_time_ms": 2000,
+    "target_uptime_percentage": 99.9,
+    "current_uptime_percentage": 99.94
+  }
+}
     "caching": {
       "hit_rate": 78.4,
       "miss_rate": 21.6,
@@ -6118,15 +6147,16 @@ Authorization: Bearer eyJhbGc...
 
 ---
 
-### Use Case 30: Advanced Agent Orchestration {#use-case-30}
+### Use Case 30: Advanced Agent Orchestration {#use-case-30} ✅ IMPLEMENTED
 
 **Agent Coverage**: All 18 Agents, Supervisor Agent
 **Business Context**: Complex workflows require multi-agent orchestration (sequential, parallel, voting, debate, fallback). Supervisor Agent coordinates agent squads for maximum intelligence.
 
-#### API Request
+#### API Request (✅ IMPLEMENTED)
 
 ```bash
-POST /api/v1/chat/agent-squad/orchestrate
+# Supervisor Workflow (Multi-Agent Orchestration)
+POST /api/v1/user/chat/agent-squad/supervisor
 Authorization: Bearer eyJhbGc...
 Content-Type: application/json
 ```
@@ -6134,17 +6164,13 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "orchestration_type": "agent_debate",  // sequential, parallel, voting, debate, fallback
-  "agents": ["risk_analyzer", "yield_optimizer", "security_auditor"],
-  "task": "Should I migrate $100k from Aave to Morpho?",
-  "config": {
-    "mode": "debate",  // Agents discuss and reach consensus
-    "rounds": 3,
-    "voting_enabled": true,
-    "confidence_threshold": 0.85
-  }
+  "conversation_id": "uuid-required",
+  "complex_task": "Should I migrate $100k from Aave to Morpho?",
+  "max_agents": 5  // Optional, default: 5
 }
 ```
+
+**Note**: The supervisor automatically coordinates multiple agents (sequential, parallel, voting, debate) based on task complexity. For simple routing, use `POST /api/v1/user/chat/agent-squad/messages`.
 
 #### API Response (Agent Debate Mode)
 

@@ -1,9 +1,10 @@
 # Chat Module - User Flow Specification
 
-**Version**: 1.0
-**Date**: December 17, 2025
-**Status**: ✅ Complete
+**Version**: 2.0
+**Date**: December 19, 2025
+**Status**: ✅ Updated based on actual implementation
 **Methodology**: UX Design + CTO Framework
+**Last Updated**: Based on codebase analysis (22 REST endpoints + 1 WebSocket)
 
 ---
 
@@ -28,12 +29,14 @@ This specification documents the complete user experience flows for the Chat mod
 
 ### Scope
 
-**19+ Endpoints Across 4 Categories:**
+**23 Endpoints Across 6 Categories:**
 
-1. **Basic Conversations** (6 endpoints) - Core chat functionality
-2. **Intent Detection** ⭐ NEW (3 endpoints) - Real-time assistance
-3. **Personal Analytics** ⭐ NEW (8 endpoints) - Usage insights
-4. **Agent Squad** (2+ endpoints) - Multi-agent orchestration
+1. **Basic Conversations** (5 endpoints) - Core chat functionality ✅
+2. **WebSocket** (1 endpoint) - Real-time chat streaming ✅
+3. **Intent Detection** (3 endpoints) - Real-time assistance ✅
+4. **Personal Analytics** (8 endpoints) - Usage insights ✅
+5. **GraphRAG & Risk Analysis** (3 endpoints) - Protocol search and ML risk analysis ✅
+6. **Agent Squad** (3 endpoints) - Multi-agent orchestration ✅
 
 ### Design Principles
 
@@ -125,18 +128,18 @@ This specification documents the complete user experience flows for the Chat mod
 2. TEMPLATE SELECTION
    User: Clicks "Compare Protocols" template
    System: Pre-fills message with template structure
-   API: GET /api/v1/user/chat/templates?category=protocol_comparison
+   API: GET /api/v1/user/chat/templates?category=protocol_comparison ⚠️ NOT IMPLEMENTED (Service exists, endpoint missing)
 
 3. MESSAGE COMPOSITION
    User: Types "Compare Aave and Compound USDC lending"
    System: Triggers autocomplete as user types
-   API: POST /api/v1/user/chat/intent/autocomplete
+   API: POST /api/v1/user/chat/intent/autocomplete ✅ IMPLEMENTED
    Response: Suggests "Aave V3", "Compound V3", "USDC"
 
 4. INTENT DETECTION
    User: Sends complete message
    System: Detects intent + suggests agent
-   API: POST /api/v1/user/chat/intent/detect
+   API: POST /api/v1/user/chat/intent/detect ✅ IMPLEMENTED ✅ IMPLEMENTED
    Response: {
      intent: "PROTOCOL_COMPARISON",
      confidence: 0.95,
@@ -147,15 +150,15 @@ This specification documents the complete user experience flows for the Chat mod
 
 5. CONVERSATION CREATION
    System: Creates new conversation
-   API: POST /api/v1/user/chat/conversations
+   API: POST /api/v1/user/chat/conversations ✅ IMPLEMENTED
    Request: {
-     title: "Compare Aave and Compound USDC lending",
-     initial_message: "Compare Aave and Compound USDC lending"
+     title: "Compare Aave and Compound USDC lending"
    }
 
 6. MESSAGE STREAMING
    System: Opens WebSocket connection
-   API: WS /api/v1/user/ws/chat/{conversation_id}
+   API: WS /api/v1/user/chat/ws/{conversation_id} ✅ IMPLEMENTED
+   Note: Actual endpoint is WS /api/v1/user/chat/ws/{conversation_id}
    Events:
      - intent_suggestion: Shows agent + confidence
      - typing_indicator: Shows agent is thinking
@@ -195,7 +198,7 @@ This specification documents the complete user experience flows for the Chat mod
 1. MESSAGE START
    User: Types "what is sta..."
    System: Triggers autocomplete after 3 characters
-   API: POST /api/v1/user/chat/intent/autocomplete
+   API: POST /api/v1/user/chat/intent/autocomplete ✅ IMPLEMENTED
    Request: {
      partial_message: "what is sta",
      limit: 5
@@ -233,7 +236,7 @@ This specification documents the complete user experience flows for the Chat mod
 
 4. INTENT DETECTION
    User: Sends message
-   API: POST /api/v1/user/chat/intent/detect
+   API: POST /api/v1/user/chat/intent/detect ✅ IMPLEMENTED
    Request: {
      message: "what is staking",
      conversation_id: null,
@@ -300,7 +303,7 @@ This specification documents the complete user experience flows for the Chat mod
    Route: /chat/analytics
 
 2. DASHBOARD OVERVIEW
-   API: GET /api/v1/user/chat/my-analytics?period=30d
+   API: GET /api/v1/user/chat/my-analytics?date_from=...&date_to=... ✅ IMPLEMENTED
 
    Response Structure:
    {
@@ -345,7 +348,7 @@ This specification documents the complete user experience flows for the Chat mod
 
 4. DETAILED USAGE STATS
    User: Clicks "View Detailed Usage Stats"
-   API: GET /api/v1/user/chat/my-analytics/usage?period=30d
+   API: GET /api/v1/user/chat/my-analytics/usage?date_from=...&date_to=... ✅ IMPLEMENTED
 
    Response:
    {
@@ -397,7 +400,7 @@ This specification documents the complete user experience flows for the Chat mod
 
 6. COST BREAKDOWN DEEP DIVE
    User: Returns to dashboard, clicks "View Cost Breakdown"
-   API: GET /api/v1/user/chat/my-analytics/costs?period=30d
+   API: GET /api/v1/user/chat/my-analytics/costs?date_from=...&date_to=...&group_by=agent ✅ IMPLEMENTED
 
    Response:
    {
@@ -458,7 +461,7 @@ This specification documents the complete user experience flows for the Chat mod
 
 8. EXPORT DATA
    User: Clicks "Download Full Report"
-   API: GET /api/v1/user/chat/my-analytics/export?format=csv&period=30d
+   API: GET /api/v1/user/chat/my-analytics/export?format=csv&date_from=...&date_to=... ✅ IMPLEMENTED
 
    Response: CSV file download with:
      - All conversations
@@ -500,7 +503,7 @@ This specification documents the complete user experience flows for the Chat mod
    Modal: Opens "Similar Conversations" dialog
 
 3. SIMILARITY SEARCH
-   API: POST /api/v1/user/chat/intent/similar-conversations
+   API: POST /api/v1/user/chat/intent/similar-conversations ✅ IMPLEMENTED
    Request: {
      current_message: "What are the risks of providing liquidity to Uniswap V3?",
      conversation_id: "current-conv-uuid",
@@ -621,7 +624,7 @@ This specification documents the complete user experience flows for the Chat mod
 1. CONVERSATION INITIALIZATION
    User: Opens existing conversation
    Frontend: Establishes WebSocket connection
-   API: WS /api/v1/user/ws/chat/{conversation_id}
+   API: WS /api/v1/user/chat/ws/{conversation_id} ✅ IMPLEMENTED
 
    Connection Handshake:
    Client → Server: { type: "connect", auth_token: "jwt..." }
@@ -636,7 +639,7 @@ This specification documents the complete user experience flows for the Chat mod
 
 3. PRE-SEND INTENT DETECTION
    Frontend: Triggers intent preview while user types
-   API: POST /api/v1/user/chat/intent/detect (debounced, 500ms delay)
+   API: POST /api/v1/user/chat/intent/detect ✅ IMPLEMENTED (debounced, 500ms delay)
 
    Real-time Intent Preview:
    UI: Shows subtle indicator below input:
