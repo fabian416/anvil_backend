@@ -27,15 +27,19 @@ Welcome to the Anvil Backend enterprise documentation. This documentation is org
 ```
 docs/
 ├── README.md                    # This file - Main documentation index
-├── DOCUMENTATION_INDEX.md       # Complete documentation index
-├── STRUCTURE.md                 # Folder structure documentation
 │
 ├── getting-started/             # Onboarding and setup guides
 │   ├── README.md               # Getting started overview
-│   └── setup.md                # Development environment setup
+│   ├── setup.md                # Development environment setup
+│   ├── quick-start.md          # Quick start guide
+│   └── architecture-overview.md # High-level architecture
 │
 ├── architecture/                # System architecture documentation
-│   └── README.md               # Architecture index
+│   ├── README.md               # Architecture index
+│   ├── system-design.md        # Overall system design
+│   ├── hexagonal-architecture.md # Clean architecture patterns
+│   ├── data-flow.md            # Data flow diagrams
+│   └── integration-patterns.md # Integration patterns
 │
 ├── api/                         # API documentation
 │   ├── README.md               # API index
@@ -45,10 +49,10 @@ docs/
 │
 ├── guides/                      # Development guides
 │   ├── README.md               # Guides index
-│   ├── code-standards.md       # Coding standards
-│   ├── feature-development.md  # Feature development guide
-│   ├── refactor/               # Refactoring documentation
-│   └── development/            # Development scripts/examples
+│   ├── code-standards.md       # Coding standards and conventions
+│   ├── testing.md              # Testing guidelines
+│   ├── database.md             # Database guide
+│   └── deployment.md           # Deployment procedures
 │
 ├── features/                    # Feature documentation
 │   ├── README.md               # Features index
@@ -59,56 +63,35 @@ docs/
 │
 ├── operations/                  # Operations and runbooks
 │   ├── README.md               # Operations index
-│   ├── runbooks/               # Operational runbooks
-│   └── performance/            # Performance documentation
+│   ├── deployment.md           # Deployment procedures
+│   ├── monitoring.md           # Monitoring and observability
+│   ├── troubleshooting.md      # Troubleshooting guide
+│   └── runbooks/               # Operational runbooks
 │
-├── deployment/                  # Deployment documentation
-│   ├── README.md               # Deployment index
-│   └── guides/                 # Deployment guides
+├── specifications/              # Technical specifications
+│   ├── README.md               # Specifications index
+│   ├── api-specs/              # API specifications
+│   ├── integration-specs/       # Integration specifications
+│   └── feature-specs/          # Feature specifications
+│
+├── reference/                   # Quick reference guides
+│   ├── README.md               # Reference index
+│   ├── commands.md             # Common commands
+│   ├── configuration.md        # Configuration reference
+│   └── troubleshooting.md      # Quick troubleshooting
+│
+├── security/                    # Security documentation
+│   ├── README.md               # Security index
+│   ├── guidelines.md           # Security guidelines
+│   └── audit.md                # Security audit procedures
 │
 ├── testing/                     # Testing documentation
 │   ├── README.md               # Testing index
-│   └── guides/                 # Testing guides
-│
-├── reference/                   # Quick reference guides
-│   └── README.md               # Reference index
-│
-├── database/                     # Database documentation
-│   └── README.md               # Database index
-│
-├── security/                    # Security documentation
-│   └── README.md               # Security index
-│
-├── setup/                        # Setup and configuration
-│   └── README.md               # Setup index
-│
-├── specifications/              # Technical specifications
-│   └── README.md               # Specifications index
-│
-├── specs/                        # Specifications
-│   └── README.md               # Specs index
-│
-├── steering/                     # Steering documents
-│   └── README.md               # Steering index
-│
-├── product/                      # Product documentation
-│   └── README.md               # Product index
-│
-├── project_management/           # Project management docs
-│   └── README.md               # Project management index
-│
-├── use-cases/                    # Use cases documentation
-│   └── README.md               # Use cases index
-│
-├── frontend/                     # Frontend integration docs
-│   └── README.md               # Frontend index
-│
-├── developer/                    # Developer documentation
-│   └── README.md               # Developer index
+│   ├── guidelines.md           # Testing guidelines
+│   └── coverage.md             # Test coverage reports
 │
 └── archive/                     # Historical documentation
-    ├── README.md               # Archive index
-    ├── historical/             # Historical documents (439 files)
+    ├── historical/             # Historical documents
     └── obsolete/               # Obsolete/deprecated docs
 ```
 
@@ -190,11 +173,10 @@ docs/
 
 ## 📊 Documentation Statistics
 
-- **Total Documents**: 450+ markdown files
-- **Main Categories**: 22 organized sections
+- **Total Documents**: 453+ markdown files
+- **Main Categories**: 15+ organized sections
 - **API Endpoints**: 100+ documented endpoints
 - **Features**: 20+ major features documented
-- **Structure**: Enterprise-grade organization
 - **Last Updated**: December 19, 2025
 
 ---
