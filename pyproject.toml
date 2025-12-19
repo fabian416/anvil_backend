@@ -20,6 +20,12 @@ authors = [
 requires-python = "==3.12.*"
 dependencies = [
     "agent-squad>=0.1.0",  # Multi-agent orchestration
+    "agno>=0.1.0",  # High-performance agent runtime
+    "openai>=1.0.0",  # Required by agno for OpenAI models
+    "graphrag>=2.0.0",  # Microsoft GraphRAG for knowledge graphs
+    "recommenders>=1.2.0",  # Recommendation engine
+    "python-patterns>=0.0.1",  # Design patterns library
+    "python-toon>=0.1.0",  # Utilities library
     "alembic",
     "alembic-postgresql-enum==1.8.0",
     "bcrypt==4.3.0",

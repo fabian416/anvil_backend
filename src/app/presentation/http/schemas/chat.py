@@ -271,3 +271,107 @@ class ListEnabledAgentsResponse(BaseModel):
     total: int
     core_agents: int  # Number of core agents
     enterprise_agents: int  # Number of enterprise agents
+
+
+# ========================================
+# Intent Detection Schemas
+# ========================================
+
+class DetectIntentRequest(BaseModel):
+    """Request to detect intent from user message."""
+    
+    message: str = Field(..., min_length=1, max_length=10000, description="User message to analyze")
+    conversation_id: Optional[UUID] = Field(None, description="Optional conversation ID for context")
+    include_suggestions: bool = Field(True, description="Whether to include agent suggestions")
+
+
+class AlternativeIntent(BaseModel):
+    """Alternative intent prediction."""
+    
+    intent_type: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+
+
+class IntentPredictionResponse(BaseModel):
+    """Intent prediction response."""
+    
+    intent_type: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    confidence_level: str  # low, medium, high
+    suggested_agent: Optional[str]
+    extracted_entities: dict
+    reasoning: Optional[str]
+    alternative_intents: List[AlternativeIntent]
+    is_high_confidence: bool
+    is_ambiguous: bool
+
+
+class AgentSuggestionResponse(BaseModel):
+    """Agent suggestion response."""
+    
+    agent_name: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    reasoning: Optional[str]
+    agent_description: Optional[str]
+    estimated_response_time_seconds: Optional[float]
+    is_high_confidence: bool
+
+
+class DetectIntentResponse(BaseModel):
+    """Response for intent detection."""
+    
+    intent: IntentPredictionResponse
+    suggested_agents: List[AgentSuggestionResponse]
+    processing_time_ms: int
+
+
+class AutocompleteRequest(BaseModel):
+    """Request for autocomplete suggestions."""
+    
+    partial_message: str = Field(..., min_length=1, max_length=1000)
+    limit: int = Field(10, ge=1, le=50)
+
+
+class AutocompleteSuggestionResponse(BaseModel):
+    """Autocomplete suggestion response."""
+    
+    completion_text: str
+    display_text: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    suggestion_type: str  # protocol, token, action, etc.
+    icon: Optional[str]
+    metadata: dict
+
+
+class AutocompleteResponse(BaseModel):
+    """Response for autocomplete."""
+    
+    suggestions: List[AutocompleteSuggestionResponse]
+    processing_time_ms: int
+
+
+class SimilarConversationsRequest(BaseModel):
+    """Request to find similar conversations."""
+    
+    message: str = Field(..., min_length=1, max_length=10000)
+    limit: int = Field(5, ge=1, le=20)
+    similarity_threshold: float = Field(0.7, ge=0.0, le=1.0)
+
+
+class ConversationMatchResponse(BaseModel):
+    """Similar conversation match response."""
+    
+    conversation_id: UUID
+    title: Optional[str]
+    similarity_score: float = Field(..., ge=0.0, le=1.0)
+    snippet: str
+    created_at: datetime
+    message_count: int
+    was_helpful: Optional[bool]
+
+
+class SimilarConversationsResponse(BaseModel):
+    """Response for similar conversations."""
+    
+    matches: List[ConversationMatchResponse]
+    processing_time_ms: int

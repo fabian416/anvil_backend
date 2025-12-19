@@ -4,8 +4,9 @@ Cache Layer Providers.
 Provides DI configuration for caching infrastructure.
 """
 
+import os
 from dishka import Provider, Scope, provide
-from redis.asyncio import Redis
+from redis.asyncio import Redis, ConnectionPool
 
 from app.infrastructure.cache.external_api_cache import CacheConfig, ExternalAPICache
 from app.infrastructure.cache.graph_cache import GraphQueryCache
@@ -15,6 +16,25 @@ class CacheProvider(Provider):
     """Provider for cache infrastructure."""
     
     scope = Scope.APP
+    
+    @provide
+    async def provide_redis_client(self) -> Redis:
+        """
+        Provide Redis async client for caching.
+        
+        Uses dedicated Redis database (db 3) for external API cache.
+        """
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/3")
+        
+        pool = ConnectionPool.from_url(
+            redis_url,
+            max_connections=30,
+            decode_responses=False,  # Keep binary for flexibility
+            socket_timeout=3,
+            socket_connect_timeout=3,
+        )
+        
+        return Redis(connection_pool=pool)
     
     @provide
     def provide_cache_config(self) -> CacheConfig:

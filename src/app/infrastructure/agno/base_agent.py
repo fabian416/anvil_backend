@@ -22,15 +22,7 @@ from dataclasses import dataclass
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
-# Agno imports (from submodule)
-import sys
-from pathlib import Path
-
-# Add agno to path
-agno_path = Path(__file__).parents[5] / "libs" / "agno" / "libs" / "agno"
-if str(agno_path) not in sys.path:
-    sys.path.insert(0, str(agno_path))
-
+# Agno imports (from PyPI package)
 from agno.agent import Agent, Message, RunEvent, RunOutput
 from agno.tools import Toolkit
 from agno.tools.function import Function

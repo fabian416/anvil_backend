@@ -16,6 +16,7 @@ from app.setup.ioc.llm_ranking import LLMRankingProvider
 from app.setup.ioc.agent_squad_domain import AgentSquadDomainProvider
 from app.setup.ioc.agent_squad_infrastructure import AgentSquadInfrastructureProvider
 from app.setup.ioc.agent_squad_application import AgentSquadApplicationProvider
+from app.setup.ioc.cache import CacheProvider
 
 # TODO: These providers are pending implementation - uncomment when ready
 # from app.setup.ioc.curve import CurveProvider
@@ -41,6 +42,7 @@ def get_providers() -> Iterable[Provider]:
         AgentSquadDomainProvider(),  # Agent Squad domain services
         AgentSquadInfrastructureProvider(),  # Agent Squad infrastructure adapters
         AgentSquadApplicationProvider(),  # Agent Squad application interactors
+        CacheProvider(),  # Cache infrastructure (Redis, ExternalAPICache)
         AaveProvider(),  # Aave V3 lending protocol integration
         # TODO: Uncomment when implementations are ready
         # CurveProvider(),  # Curve Finance DeFi integration

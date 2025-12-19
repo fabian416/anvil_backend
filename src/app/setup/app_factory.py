@@ -18,8 +18,15 @@ from app.setup.config.settings import AppSettings
 
 async def init_database(engine: AsyncEngine) -> None:
     """
-    Initialize the database by creating all tables.
-    This function ensures all SQLAlchemy mappings are registered and tables are created.
+    Initialize the database by ensuring all tables exist.
+    
+    This function:
+    - Registers all SQLAlchemy mappings
+    - Creates any missing tables (idempotent - does NOT drop existing tables)
+    - Does NOT recreate or drop existing tables
+    
+    Note: SQLAlchemy's create_all() only creates tables that don't exist.
+    For a full reset (drop + recreate), use: make init-db
     """
     logger = logging.getLogger(__name__)
     
@@ -39,13 +46,47 @@ async def init_database(engine: AsyncEngine) -> None:
         from app.domain.entities.subscription import Subscription
         from app.domain.entities.subscription_user import SubscriptionUser
         
-        # Create all tables
+        # Check existing tables before creating
+        from sqlalchemy import text
+        async with engine.connect() as conn:
+            result = await conn.execute(
+                text("""
+                    SELECT COUNT(*) 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_type = 'BASE TABLE'
+                """)
+            )
+            existing_count = result.scalar()
+        
+        # Create all tables (only creates missing ones - idempotent)
         async with engine.begin() as conn:
             await conn.run_sync(mapping_registry.metadata.create_all)
         
-        logger.info("Database tables created successfully")
+        # Check tables after creation
+        async with engine.connect() as conn:
+            result = await conn.execute(
+                text("""
+                    SELECT COUNT(*) 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_type = 'BASE TABLE'
+                """)
+            )
+            final_count = result.scalar()
+        
+        if final_count > existing_count:
+            logger.info(
+                f"Database initialized: Created {final_count - existing_count} new table(s). "
+                f"Total tables: {final_count}"
+            )
+        else:
+            logger.info(
+                f"Database verified: All {final_count} tables already exist. "
+                "No tables were recreated."
+            )
     except Exception as e:
-        logger.error(f"Error creating database tables: {str(e)}")
+        logger.error(f"Error initializing database: {str(e)}")
         raise
 
 
