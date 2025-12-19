@@ -367,10 +367,9 @@ class InfrastructureProvider(Provider):
             "VERTEX_AI_API_KEY": os.environ.get("VERTEX_AI_API_KEY", ""),
             "VERTEX_AI_CREDENTIALS_PATH": os.environ.get("VERTEX_AI_CREDENTIALS_PATH", ""),
             "GOOGLE_APPLICATION_CREDENTIALS": os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", ""),
-            # Fallback: DeepInfra
+            # Fallback: DeepInfra (only used if Vertex AI fails)
             "DEEPINFRA_API_KEY": os.environ.get("DEEPINFRA_API_KEY", ""),
-            # Optional: OpenAI
-            "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
+            # Note: OpenAI is NOT used - removed from configuration
         }
         return LLMProviderFactory(config)
 

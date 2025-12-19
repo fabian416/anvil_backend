@@ -38,7 +38,9 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
 # Option 4: Application Default Credentials (if running on GCP)
 # No env var needed - uses metadata service automatically
 
-DEEPINFRA_API_KEY=...  # ✅ Recommended - Fallback LLM provider
+DEEPINFRA_API_KEY=...  # ✅ Required - Fallback LLM provider (used only if Vertex AI fails)
+
+# Note: OpenAI is NOT used - do not configure OPENAI_API_KEY
 ```
 
 ### **3. Recommended for Production**
@@ -215,26 +217,20 @@ fallback_provider = "deepinfra"
 
 ---
 
-#### **3. OpenAI** 🟠 **OPTIONAL FALLBACK**
-- **Purpose**: Optional fallback LLM provider (GPT-4 for complex tasks)
-- **Get from**: https://platform.openai.com/api-keys
-- **Pricing**: Pay-as-you-go (~$0.01-0.03/1K tokens for GPT-4)
-- **Environment Variable**: `OPENAI_API_KEY` (optional)
-- **Feature Flag**: `llm_orchestration.fallback_providers = ["openai"]`
+#### **3. OpenAI** ❌ **NOT USED**
+- **Status**: **Disabled** - OpenAI is not used in this system
+- **Reason**: Vertex AI + DeepInfra provide complete coverage at lower cost
+- **Configuration**: OpenAI is explicitly excluded from the provider chain
 
-**Setup**:
-1. Sign up at https://platform.openai.com/
-2. Navigate to API Keys section
-3. Create new API key
-4. Add to `config/local/.secrets.toml`:
-   ```toml
-   [openai]
-   OPENAI_API_KEY = "sk-proj-..."
-   ```
+**Note**: OpenAI is **NOT configured or used**. The system uses:
+- **Vertex AI** (Primary) - First attempt for all requests
+- **DeepInfra** (Fallback) - Only used if Vertex AI fails
 
-**Note**: OpenAI is **not required** for basic functionality. Vertex AI + DeepInfra provide full coverage. OpenAI is only needed if you want GPT-4 as an additional fallback option.
-
-**Used By**: Optional fallback in LLM orchestration carousel
+This architecture provides:
+- ✅ Lower costs (Vertex AI is ~10x cheaper than GPT-4)
+- ✅ Better performance (Gemini 1.5 Pro matches GPT-4 quality)
+- ✅ High availability (DeepInfra as reliable fallback)
+- ✅ No dependency on OpenAI API
 
 ---
 
@@ -696,14 +692,22 @@ cat config/local/.secrets.toml | grep -E "(VERTEX_AI|DEEPINFRA|COINGECKO)"
 
 ### **Provider Priority**
 1. **Vertex AI (Primary)** - Google Gemini models, fast and cost-effective
+   - Used for **all first attempts**
+   - Handles 100% of requests when available
 2. **DeepInfra (Fallback)** - Open-source models (Llama, Mixtral), very cheap
-3. **OpenAI (Optional)** - GPT-4 available as additional fallback
+   - Only used if Vertex AI fails or is unavailable
+   - Automatic failover mechanism
+3. **OpenAI** ❌ **NOT USED** - Explicitly disabled
+   - Removed from provider chain
+   - Not configured or required
 
-### **Why Vertex AI + DeepInfra?**
+### **Why Vertex AI + DeepInfra (No OpenAI)?**
 - **Cost Efficiency**: Vertex AI Gemini Flash is ~10x cheaper than GPT-4
 - **Performance**: Gemini 1.5 Pro matches GPT-4 quality at lower cost
 - **Reliability**: DeepInfra provides excellent fallback with open-source models
-- **Flexibility**: Multi-provider orchestration ensures high availability
+- **No OpenAI Dependency**: Removes dependency on OpenAI API, reducing costs and complexity
+- **Simplified Architecture**: Two-provider system (Primary + Fallback) is easier to manage
+- **High Availability**: Automatic failover from Vertex AI to DeepInfra ensures uptime
 
 ### **Configuration Reference**
 See `docs/setup/API_INTEGRATIONS_CONFIGURATION.md` for detailed LLM provider setup.
