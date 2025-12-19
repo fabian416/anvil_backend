@@ -34,6 +34,71 @@ def create_celery() -> Celery:
     app.conf.enable_utc = True
 
     # =========================================================================
+    # Task Routing Configuration
+    # Workers especializados para evitar latencia y mejorar performance
+    # =========================================================================
+    
+    # Definir colas especializadas
+    app.conf.task_routes = {
+        # Maintenance tasks - baja prioridad, puede esperar
+        "cleanup_expired_sessions": {"queue": "maintenance"},
+        "cleanup_expired_password_resets": {"queue": "maintenance"},
+        "invalidate_all_sessions": {"queue": "maintenance"},
+        
+        # Agent tasks - alta prioridad, tiempo real
+        "process_agent_response": {"queue": "agents"},
+        "update_agent_stats": {"queue": "agents"},
+        
+        # Graph tasks - procesamiento pesado, puede ser lento
+        "populate_graph_protocols": {"queue": "graph"},
+        "update_graph_metadata": {"queue": "graph"},
+        "validate_graph_integrity": {"queue": "graph"},
+        "generate_protocol_embeddings": {"queue": "graph"},
+        
+        # Distillation tasks - procesamiento de LLM
+        "aggregate_distillation_telemetry": {"queue": "distillation"},
+        "cleanup_expired_cache": {"queue": "distillation"},
+        "cache_llm_response": {"queue": "distillation"},
+        
+        # Projects tasks - procesamiento de knowledge base
+        "reindex_knowledge_base": {"queue": "projects"},
+        "evaluate_auto_assignment_rules": {"queue": "projects"},
+        "aggregate_project_analytics": {"queue": "projects"},
+        "check_knowledge_base_health": {"queue": "projects"},
+        
+        # LLM tasks - ranking y orchestration
+        "recalculate_all_rankings": {"queue": "llm"},
+        "recalculate_agent_rankings": {"queue": "llm"},
+        "recalculate_llm_rankings": {"queue": "llm"},
+        "aggregate_llm_telemetry": {"queue": "llm"},
+        "llm_provider_health_checks": {"queue": "llm"},
+        "reset_daily_budgets": {"queue": "llm"},
+        "cleanup_old_llm_data": {"queue": "llm"},
+        
+        # Transaction confirmation - crítico, alta prioridad
+        "confirm_pending_transactions": {"queue": "transactions"},
+        "confirm_pending_transactions_mainnet": {"queue": "transactions"},
+        "confirm_pending_transactions_testnet": {"queue": "transactions"},
+        
+        # Risk monitoring
+        "check_user_risk_alerts": {"queue": "risk"},
+        
+        # Email tasks
+        "send_email": {"queue": "email"},
+        "tasks.email_tasks.*": {"queue": "email"},
+    }
+    
+    # Configuración de colas con prioridades
+    app.conf.task_default_queue = "default"
+    app.conf.task_default_exchange = "tasks"
+    app.conf.task_default_exchange_type = "direct"
+    app.conf.task_default_routing_key = "default"
+    
+    # Configuración de workers (concurrency por tipo de worker)
+    app.conf.worker_prefetch_multiplier = 4  # Prefetch 4 tasks at a time
+    app.conf.worker_max_tasks_per_child = 1000  # Restart worker after 1000 tasks
+
+    # =========================================================================
     # Celery Beat Schedule (Periodic Tasks)
     # =========================================================================
     # Get transaction confirmation settings
@@ -51,7 +116,7 @@ def create_celery() -> Celery:
                 "older_than_seconds": tx_conf.older_than_seconds,
                 "use_testnet": tx_conf.use_testnet,
             },
-            "options": {"queue": "default"},
+            "options": {"queue": "transactions"},
         },
     }
 
