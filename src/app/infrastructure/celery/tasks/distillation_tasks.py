@@ -6,7 +6,7 @@ from celery.schedules import crontab
 
 from app.infrastructure.celery.app import celery_app
 from app.setup.config.settings import load_settings
-from app.setup.ioc.container import create_async_ioc_container
+from app.setup.app_factory import create_async_ioc_container
 from app.setup.ioc.provider_registry import get_providers
 
 
