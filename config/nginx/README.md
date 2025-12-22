@@ -8,7 +8,16 @@ This directory contains the nginx configuration for the Anvil Backend developmen
 - **HTTP Port**: 80 (redirects to HTTPS)
 - **HTTPS Port**: 443
 - **Backend Port**: 8080 (FastAPI)
+- **Frontend Port**: 5173 (Vite dev server)
 - **SSL**: Self-signed certificate (for development)
+
+## URL Structure
+
+- **Frontend**: https://18.168.176.189/ (React app via Vite dev server)
+- **API Backend**: https://18.168.176.189/api/* (FastAPI)
+- **API Docs**: https://18.168.176.189/docs
+- **OpenAPI Schema**: https://18.168.176.189/openapi.json
+- **WebSocket**: https://18.168.176.189/ws
 
 ## Configuration Files
 
@@ -101,12 +110,62 @@ sudo tail -f /var/log/nginx/anvil-backend-error.log
 
 ✅ HTTP to HTTPS redirect
 ✅ SSL/TLS encryption (TLS 1.2/1.3)
-✅ Reverse proxy to FastAPI on port 8080
+✅ Frontend reverse proxy to Vite dev server (port 5173) on root path
+✅ Backend reverse proxy to FastAPI (port 8080) on /api path
+✅ API documentation available at /docs
 ✅ WebSocket support (on /ws path)
+✅ Vite HMR (Hot Module Replacement) support
 ✅ Security headers (HSTS, X-Frame-Options, etc.)
 ✅ Access and error logging
 ✅ 100MB file upload limit
 ✅ Connection timeouts configured
+
+## Starting the Application
+
+### Backend (FastAPI)
+```bash
+cd /home/ubuntu/anvil_backend
+make start-dev  # Starts FastAPI + Celery workers
+```
+
+### Frontend (React/Vite)
+```bash
+cd /home/ubuntu/anvil_frontend
+npm run dev -- --host 0.0.0.0  # Start Vite dev server
+```
+
+**Note**: The frontend currently has TypeScript compilation errors. These need to be fixed before running `npm run build` for production.
+
+## Production Build (When Ready)
+
+Once frontend TypeScript errors are fixed:
+
+1. **Build frontend**:
+   ```bash
+   cd /home/ubuntu/anvil_frontend
+   npm run build
+   ```
+
+2. **Update nginx config** to serve static files:
+   ```nginx
+   # Replace the location / block in anvil-backend.conf with:
+   location / {
+       root /home/ubuntu/anvil_frontend/dist;
+       try_files $uri $uri/ /index.html;
+
+       # Cache static assets
+       location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+           expires 1y;
+           add_header Cache-Control "public, immutable";
+       }
+   }
+   ```
+
+3. **Reload nginx**:
+   ```bash
+   sudo nginx -t
+   sudo systemctl reload nginx
+   ```
 
 ## Troubleshooting
 
