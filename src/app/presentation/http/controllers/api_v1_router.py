@@ -70,7 +70,7 @@ from app.presentation.http.controllers.graph.visualization import (
     create_graph_visualization_router,
 )
 from app.presentation.http.controllers.hunter.patterns import create_patterns_router
-from app.presentation.http.controllers.hunter.portfolio import create_portfolio_router
+from app.presentation.http.controllers.hunter.portfolio import create_portfolio_router as create_hunter_portfolio_router
 from app.presentation.http.controllers.hunter.price_prediction import (
     create_price_prediction_router,
 )
@@ -169,7 +169,7 @@ def create_api_v1_router() -> APIRouter:
         # Hunter AI trading signals router
         create_trading_signals_router(),
         # Hunter AI portfolio optimizer router
-        create_portfolio_router(),
+        create_hunter_portfolio_router(),
         # Hunter AI pattern recognition router
         create_patterns_router(),
         # ULTRA Arbitrage flash loans router

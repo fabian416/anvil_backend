@@ -50,7 +50,7 @@ class DistillationValidationResponse(BaseModel):
     )
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "success": True,
                 "message": "Request validated successfully",
@@ -126,7 +126,7 @@ class DistillationMetricsResponse(BaseModel):
     )
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "date": "2025-12-01T00:00:00Z",
                 "provider": "vertex_ai",
@@ -172,7 +172,7 @@ class ProviderStatusResponse(BaseModel):
     )
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "provider": "vertex_ai",
                 "healthy": True,
@@ -220,7 +220,7 @@ class DistillationConfigResponse(BaseModel):
     )
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "enabled": True,
                 "provider": "vertex_ai",
@@ -293,7 +293,7 @@ class DistillationHealthResponse(BaseModel):
     )
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "healthy": True,
                 "primary_provider": {

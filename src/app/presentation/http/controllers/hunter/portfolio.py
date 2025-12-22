@@ -3,7 +3,7 @@
 REST API for Modern Portfolio Theory (MPT) portfolio optimization.
 """
 
-from fastapi import APIRouter, Query, HTTPException, status
+from fastapi import APIRouter, Body, Query, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
 
@@ -201,7 +201,7 @@ def create_portfolio_router() -> APIRouter:
         description="Analyze existing portfolio allocation and calculate metrics",
     )
     async def analyze_portfolio(
-        portfolio: Dict[str, float] = Query(..., description="Portfolio weights (e.g., {\"BTC\": 0.6, \"ETH\": 0.4})"),
+        portfolio: Dict[str, float] = Body(..., description="Portfolio weights (e.g., {\"BTC\": 0.6, \"ETH\": 0.4})"),
     ) -> Dict:
         """Analyze existing portfolio.
 
@@ -256,7 +256,7 @@ def create_portfolio_router() -> APIRouter:
         description="Suggest portfolio rebalancing to optimal allocation",
     )
     async def suggest_rebalancing(
-        current_portfolio: Dict[str, float] = Query(..., description="Current portfolio weights"),
+        current_portfolio: Dict[str, float] = Body(..., description="Current portfolio weights"),
         risk_tolerance: float = Query(0.5, ge=0.0, le=1.0, description="Risk tolerance"),
     ) -> RebalancingPlanResponse:
         """Generate rebalancing plan.
