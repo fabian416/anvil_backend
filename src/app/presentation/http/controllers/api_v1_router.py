@@ -30,6 +30,9 @@ from app.presentation.http.controllers.admin.user.router import create_users_rou
 from app.presentation.http.controllers.admin.wallet.router import (
     create_admin_wallet_router,
 )
+from app.presentation.http.controllers.admin.policies.router import (
+    create_admin_policies_router,
+)
 
 # Alerts router
 from app.presentation.http.controllers.alerts.router import create_alerts_router
@@ -149,6 +152,8 @@ def create_api_v1_router() -> APIRouter:
         create_admin_agent_router(),
         # Admin wallet router (for admin management of Privy wallets)
         create_admin_wallet_router(),
+        # Admin policies router (for managing Privy policies)
+        create_admin_policies_router(),
         # Admin metrics router (for analytics and metrics)
         create_admin_metrics_router(),
         # Wallet router (for user operations)

@@ -86,6 +86,18 @@ class PrivyUserNotFoundError(PrivyClientError, UserNotFoundError):
     pass
 
 
+class PrivyPolicyNotFoundError(PrivyClientError):
+    """Policy not found in Privy."""
+
+    pass
+
+
+class PrivyMethodNotAllowedError(PrivyClientError):
+    """HTTP method not allowed for the requested Privy resource."""
+
+    pass
+
+
 class PrivyRateLimitError(PrivyClientError, RateLimitError):
     """Rate limit exceeded."""
 
@@ -194,6 +206,11 @@ class PrivyClient(EmbeddedWalletProviderPort):
 
         if response.status_code == 404:
             raise PrivyClientError(f"Resource not found: {context}")
+
+        if response.status_code == 405:
+            raise PrivyMethodNotAllowedError(
+                f"Method not allowed: {context} ({response.request.method} {response.request.url})"
+            )
 
         if response.status_code == 429:
             retry_after = response.headers.get("Retry-After")
@@ -642,6 +659,212 @@ class PrivyClient(EmbeddedWalletProviderPort):
         """
         user = await self.get_user(user_id)
         return user.linked_wallets
+
+    # --------------------------------------------------------
+    # Policy Operations
+    # --------------------------------------------------------
+
+    async def create_policy(
+        self,
+        *,
+        version: str,
+        name: str,
+        chain_type: str,
+        rules: list[dict[str, Any]],
+        owner: dict[str, Any] | None = None,
+        owner_id: str | None = None,
+        authorization_signature: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a policy in Privy.
+
+        API: POST /v1/policies
+
+        Note:
+        - If the policy has an owner/owner_id, Privy may require the
+          `privy-authorization-signature` header.
+        """
+        client = await self._get_client()
+
+        payload: dict[str, Any] = {
+            "version": version,
+            "name": name,
+            "chain_type": chain_type,
+            "rules": rules,
+        }
+        if owner is not None:
+            payload["owner"] = owner
+        elif owner_id is not None:
+            payload["owner_id"] = owner_id
+
+        headers = self._get_headers()
+        if authorization_signature:
+            headers["privy-authorization-signature"] = authorization_signature
+
+        response = await client.post(
+            "/v1/policies",
+            headers=headers,
+            json=payload,
+        )
+        return await self._handle_response(response, "create_policy")
+
+    async def list_policies(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        chain_type: str | None = None,
+    ) -> Any:
+        """
+        List policies for the application.
+
+        API: GET /v1/policies
+
+        Notes:
+        - Response shape may vary; this method returns the parsed JSON.
+        - Pagination parameters are passed through when provided.
+        """
+        client = await self._get_client()
+
+        params: dict[str, Any] = {}
+        if cursor:
+            params["cursor"] = cursor
+        if limit is not None:
+            params["limit"] = limit
+        if chain_type:
+            params["chain_type"] = chain_type
+
+        response = await client.get(
+            "/v1/policies",
+            params=params or None,
+            headers=self._get_headers(),
+        )
+        return await self._handle_response(response, "list_policies")
+
+    async def get_policy(self, policy_id: str) -> dict[str, Any]:
+        """Get a policy by ID from Privy. API: GET /v1/policies/{policy_id}"""
+        client = await self._get_client()
+
+        response = await client.get(
+            f"/v1/policies/{policy_id}",
+            headers=self._get_headers(),
+        )
+        if response.status_code == 404:
+            raise PrivyPolicyNotFoundError(f"Policy not found: {policy_id}")
+        return await self._handle_response(response, f"get_policy({policy_id})")
+
+    async def update_policy(
+        self,
+        policy_id: str,
+        *,
+        name: str | None = None,
+        rules: list[dict[str, Any]] | None = None,
+        authorization_signature: str | None = None,
+    ) -> dict[str, Any]:
+        """Update a policy. API: PATCH /v1/policies/{policy_id}"""
+        client = await self._get_client()
+
+        payload: dict[str, Any] = {}
+        if name is not None:
+            payload["name"] = name
+        if rules is not None:
+            payload["rules"] = rules
+
+        headers = self._get_headers()
+        if authorization_signature:
+            headers["privy-authorization-signature"] = authorization_signature
+
+        response = await client.patch(
+            f"/v1/policies/{policy_id}",
+            headers=headers,
+            json=payload,
+        )
+        if response.status_code == 404:
+            raise PrivyPolicyNotFoundError(f"Policy not found: {policy_id}")
+        return await self._handle_response(response, f"update_policy({policy_id})")
+
+    async def create_policy_rule(
+        self,
+        policy_id: str,
+        *,
+        rule: dict[str, Any],
+        authorization_signature: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a rule for a policy. API: POST /v1/policies/{policy_id}/rules"""
+        client = await self._get_client()
+
+        headers = self._get_headers()
+        if authorization_signature:
+            headers["privy-authorization-signature"] = authorization_signature
+
+        response = await client.post(
+            f"/v1/policies/{policy_id}/rules",
+            headers=headers,
+            json=rule,
+        )
+        if response.status_code == 404:
+            raise PrivyPolicyNotFoundError(f"Policy not found: {policy_id}")
+        return await self._handle_response(
+            response, f"create_policy_rule({policy_id})"
+        )
+
+    async def update_policy_rule(
+        self,
+        policy_id: str,
+        rule_id: str,
+        *,
+        rule: dict[str, Any],
+        authorization_signature: str | None = None,
+    ) -> dict[str, Any]:
+        """Update a policy rule. API: PATCH /v1/policies/{policy_id}/rules/{rule_id}"""
+        client = await self._get_client()
+
+        headers = self._get_headers()
+        if authorization_signature:
+            headers["privy-authorization-signature"] = authorization_signature
+
+        response = await client.patch(
+            f"/v1/policies/{policy_id}/rules/{rule_id}",
+            headers=headers,
+            json=rule,
+        )
+        if response.status_code == 404:
+            raise PrivyPolicyNotFoundError(
+                f"Policy or rule not found: policy_id={policy_id}, rule_id={rule_id}"
+            )
+        return await self._handle_response(
+            response, f"update_policy_rule({policy_id},{rule_id})"
+        )
+
+    async def delete_policy_rule(
+        self,
+        policy_id: str,
+        rule_id: str,
+        *,
+        authorization_signature: str | None = None,
+    ) -> dict[str, Any]:
+        """Delete a policy rule. API: DELETE /v1/policies/{policy_id}/rules/{rule_id}"""
+        client = await self._get_client()
+
+        headers = self._get_headers()
+        if authorization_signature:
+            headers["privy-authorization-signature"] = authorization_signature
+
+        response = await client.delete(
+            f"/v1/policies/{policy_id}/rules/{rule_id}",
+            headers=headers,
+            json={"policy_id": policy_id},
+        )
+        if response.status_code == 404:
+            raise PrivyPolicyNotFoundError(
+                f"Policy or rule not found: policy_id={policy_id}, rule_id={rule_id}"
+            )
+        # Some Privy endpoints may return 204 No Content for deletes.
+        if response.status_code == 204:
+            return {"success": True}
+        return await self._handle_response(
+            response, f"delete_policy_rule({policy_id},{rule_id})"
+        )
 
     def _parse_wallet_response(self, data: dict[str, Any]) -> WalletInfo:
         """Parse Privy wallet API response into WalletInfo."""

@@ -43,6 +43,7 @@ from app.infrastructure.persistence_sqla.mappings.defi_operations import map_def
 from app.infrastructure.persistence_sqla.mappings.ai_telemetry import map_ai_telemetry_tables
 from app.infrastructure.persistence_sqla.mappings.system_config import map_system_config_tables
 from app.infrastructure.persistence_sqla.mappings.portfolio_snapshot import map_portfolio_snapshot_tables
+from app.infrastructure.persistence_sqla.mappings.policy import map_policy_tables
 
 
 def map_tables() -> None:
@@ -64,6 +65,8 @@ def map_tables() -> None:
     # Wallet & Transactions
     map_wallet_tables()
     map_transaction_table()
+    # Policies (Privy cache + audit)
+    map_policy_tables()
     # DeFi Operations
     map_defi_operations_tables()
     # AI Telemetry

@@ -21,6 +21,14 @@ from app.application.commands.auth.change_role import ChangeRoleInteractor
 from app.application.commands.auth.privy_login import PrivyLogin
 from app.application.commands.wallet.export_wallet import ExportWallet
 from app.application.commands.wallet.update_privy_wallet import UpdatePrivyWallet
+from app.application.commands.policy.create_privy_policy import CreatePrivyPolicy
+from app.application.commands.policy.get_privy_policy import GetPrivyPolicy
+from app.application.commands.policy.update_privy_policy import UpdatePrivyPolicy
+from app.application.commands.policy.manage_privy_policy_rules import (
+    CreatePrivyPolicyRule,
+    UpdatePrivyPolicyRule,
+    DeletePrivyPolicyRule,
+)
 from app.application.common.ports.access_revoker import AccessRevoker
 from app.application.common.ports.flusher import Flusher
 from app.application.common.ports.identity_provider import IdentityProvider
@@ -32,6 +40,7 @@ from app.application.common.ports.user_query_gateway import UserQueryGateway
 from app.application.common.services.current_user import CurrentUserService
 from app.application.queries.list_users import ListUsersQueryService
 from app.application.queries.wallet.get_privy_wallet_details import GetPrivyWalletDetails
+from app.application.queries.policy.list_privy_policies import ListPrivyPolicies
 from app.application.atlas.queries import (
     SearchCountriesQueryService,
     SearchCitiesQueryService,
@@ -166,6 +175,13 @@ class ApplicationProvider(Provider):
         PrivyLogin,
         ExportWallet,
         UpdatePrivyWallet,
+        # Privy policy management (admin)
+        CreatePrivyPolicy,
+        GetPrivyPolicy,
+        UpdatePrivyPolicy,
+        CreatePrivyPolicyRule,
+        UpdatePrivyPolicyRule,
+        DeletePrivyPolicyRule,
     )
 
     # Queries
@@ -175,4 +191,5 @@ class ApplicationProvider(Provider):
         SearchCitiesQueryService,
         ListStatesByCountryQueryService,
         GetPrivyWalletDetails,
+        ListPrivyPolicies,
     )
