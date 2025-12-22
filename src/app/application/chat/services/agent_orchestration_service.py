@@ -14,9 +14,10 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Tuple
 from uuid import UUID
 
-from app.domain.entities.chat import Conversation, Message
+from app.domain.entities.conversation import Conversation
+from app.domain.entities.message import Message
 from app.domain.ports.agent_orchestration_repository import AgentOrchestrationRepository
-from app.domain.ports.llm_gateway import LLMGateway
+from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.domain.value_objects.chat.orchestration import (
     VotingRound,
     AgentVote,

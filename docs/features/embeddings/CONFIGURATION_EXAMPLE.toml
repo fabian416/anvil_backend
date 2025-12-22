@@ -1,0 +1,104 @@
+# Embedding Services Configuration Example
+# Add these sections to your config/{env}/config.toml file
+
+# =============================================================================
+# OpenAI Embeddings
+# =============================================================================
+[openai]
+# API key from https://platform.openai.com/api-keys
+api_key = "sk-..."
+
+# Optional organization ID
+organization = "org-..."
+
+# Model selection:
+# - "text-embedding-3-large" (3072 dims, best quality, $0.13/1M tokens)
+# - "text-embedding-3-small" (1536 dims, good quality, $0.02/1M tokens)
+# - "text-embedding-ada-002" (1536 dims, legacy, $0.10/1M tokens)
+embedding_model = "text-embedding-3-large"
+
+# Optional dimension reduction (only for v3 models)
+# Reduces dimensions while maintaining most of the quality
+# Options: 256, 512, 1024, 1536 (for 3-large: up to 3072)
+# Lower dimensions = lower storage costs
+embedding_dimensions = 1536  # Reduce from 3072 to 1536
+
+# =============================================================================
+# Cohere Embeddings
+# =============================================================================
+[cohere]
+# API key from https://dashboard.cohere.com/api-keys
+api_key = "..."
+
+# Model selection:
+# - "embed-english-v3.0" (1024 dims, optimized for English, $0.10/1M tokens)
+# - "embed-multilingual-v3.0" (1024 dims, 100+ languages, $0.10/1M tokens)
+# - "embed-english-light-v3.0" (384 dims, faster/cheaper)
+# - "embed-multilingual-light-v3.0" (384 dims, faster/cheaper)
+embedding_model = "embed-english-v3.0"
+
+# =============================================================================
+# Embedding Cache
+# =============================================================================
+[embedding_cache]
+# Enable Redis caching for embeddings
+# Significantly reduces API calls and costs for repeated texts
+enabled = true
+
+# Cache TTL in seconds
+# 3600 = 1 hour
+# 86400 = 24 hours
+# 604800 = 7 days
+ttl = 3600
+
+# Cache key prefix (for namespacing in Redis)
+prefix = "emb_cache"
+
+# =============================================================================
+# Example Usage Configurations
+# =============================================================================
+
+# Production (High Quality, Cached)
+# [openai]
+# api_key = "sk-..."
+# embedding_model = "text-embedding-3-large"
+# embedding_dimensions = 1536  # Reduce storage while maintaining quality
+#
+# [embedding_cache]
+# enabled = true
+# ttl = 86400  # Cache for 24 hours
+
+# Development (Cost Optimized)
+# [openai]
+# api_key = "sk-..."
+# embedding_model = "text-embedding-3-small"  # Cheaper model
+#
+# [embedding_cache]
+# enabled = true
+# ttl = 3600  # Cache for 1 hour
+
+# Multilingual (Cohere)
+# [cohere]
+# api_key = "..."
+# embedding_model = "embed-multilingual-v3.0"
+#
+# [embedding_cache]
+# enabled = true
+# ttl = 3600
+
+# High Volume (Maximum Caching)
+# [openai]
+# api_key = "sk-..."
+# embedding_model = "text-embedding-3-small"
+#
+# [embedding_cache]
+# enabled = true
+# ttl = 604800  # Cache for 7 days
+
+# Testing (No Cache)
+# [openai]
+# api_key = "sk-..."
+# embedding_model = "text-embedding-3-small"
+#
+# [embedding_cache]
+# enabled = false

@@ -43,6 +43,37 @@ class BedrockConfig(BaseModel):
     )
 
 
+class OpenAIConfig(BaseModel):
+    """OpenAI configuration."""
+
+    api_key: str = Field(..., description="OpenAI API key")
+    base_url: str = Field(
+        default="https://api.openai.com/v1",
+        description="API base URL",
+    )
+    organization: Optional[str] = Field(
+        default=None, description="OpenAI organization ID"
+    )
+    timeout: int = Field(default=60, description="Request timeout in seconds")
+    max_retries: int = Field(default=3, description="Maximum retry attempts")
+
+
+class AnthropicConfig(BaseModel):
+    """Anthropic configuration."""
+
+    api_key: str = Field(..., description="Anthropic API key")
+    base_url: str = Field(
+        default="https://api.anthropic.com/v1",
+        description="API base URL",
+    )
+    anthropic_version: str = Field(
+        default="2023-06-01",
+        description="API version header",
+    )
+    timeout: int = Field(default=60, description="Request timeout in seconds")
+    max_retries: int = Field(default=3, description="Maximum retry attempts")
+
+
 class OrchestratorConfig(BaseModel):
     """LLM Orchestrator configuration."""
 
@@ -88,6 +119,14 @@ class OrchestratorConfig(BaseModel):
         default=60, description="Timeout before half-open"
     )
 
+    # Failover settings
+    enable_cost_fallback: bool = Field(
+        default=True, description="Use cheaper models on fallback"
+    )
+    primary_chat_provider: str = Field(
+        default="openai", description="Primary chat provider (openai or anthropic)"
+    )
+
 
 class LLMOrchestrationConfig(BaseModel):
     """Complete LLM orchestration configuration."""
@@ -95,6 +134,8 @@ class LLMOrchestrationConfig(BaseModel):
     vertex_ai: VertexAIConfig
     deepinfra: DeepInfraConfig
     bedrock: BedrockConfig
+    openai: Optional[OpenAIConfig] = None
+    anthropic: Optional[AnthropicConfig] = None
     orchestrator: OrchestratorConfig = Field(default_factory=OrchestratorConfig)
 
 
@@ -111,6 +152,28 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
         LLM orchestration configuration
     """
     import os
+
+    # Load OpenAI config if API key is present
+    openai_config = None
+    if os.getenv("OPENAI_API_KEY"):
+        openai_config = OpenAIConfig(
+            api_key=os.getenv("OPENAI_API_KEY", ""),
+            base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            organization=os.getenv("OPENAI_ORGANIZATION"),
+            timeout=int(os.getenv("OPENAI_TIMEOUT", "60")),
+            max_retries=int(os.getenv("OPENAI_MAX_RETRIES", "3")),
+        )
+
+    # Load Anthropic config if API key is present
+    anthropic_config = None
+    if os.getenv("ANTHROPIC_API_KEY"):
+        anthropic_config = AnthropicConfig(
+            api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+            base_url=os.getenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1"),
+            anthropic_version=os.getenv("ANTHROPIC_VERSION", "2023-06-01"),
+            timeout=int(os.getenv("ANTHROPIC_TIMEOUT", "60")),
+            max_retries=int(os.getenv("ANTHROPIC_MAX_RETRIES", "3")),
+        )
 
     return LLMOrchestrationConfig(
         vertex_ai=VertexAIConfig(
@@ -130,6 +193,8 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         ),
+        openai=openai_config,
+        anthropic=anthropic_config,
         orchestrator=OrchestratorConfig(
             max_retries_per_provider=int(
                 os.getenv("LLM_MAX_RETRIES_PER_PROVIDER", "2")
@@ -137,5 +202,8 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
             max_total_retries=int(os.getenv("LLM_MAX_TOTAL_RETRIES", "6")),
             enable_ranking=os.getenv("LLM_ENABLE_RANKING", "true").lower() == "true",
             enable_caching=os.getenv("LLM_ENABLE_CACHING", "true").lower() == "true",
+            enable_cost_fallback=os.getenv("LLM_ENABLE_COST_FALLBACK", "true").lower()
+            == "true",
+            primary_chat_provider=os.getenv("LLM_PRIMARY_CHAT_PROVIDER", "openai"),
         ),
     )

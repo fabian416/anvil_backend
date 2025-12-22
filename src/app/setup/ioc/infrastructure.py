@@ -40,6 +40,7 @@ from app.application.subscription.ports import (
 # AI / Agent Infrastructure
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
+from app.domain.ports.audit_log_repository import AuditLogRepository
 from app.domain.ports.auth_gateway import AuthGateway
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.chat.ports.message_repository import MessageRepository
@@ -52,6 +53,9 @@ from app.infrastructure.adapters.ai.agent_gateway_impl import AgentGatewayImpl
 from app.infrastructure.adapters.ai.agent_squad_gateway import AgentSquadGateway
 from app.infrastructure.adapters.ai.llm_gateway_impl import LLMGatewayImpl
 from app.infrastructure.adapters.ai.squad_storage import AnvilSquadStorage
+from app.infrastructure.adapters.chat.audit_log_repository_adapter import (
+    AuditLogRepositoryAdapter,
+)
 from app.infrastructure.adapters.city_reader_sqla import SqlaCityReader
 from app.infrastructure.adapters.conversation_repository_sqla import (
     SqlaConversationRepository,
@@ -336,6 +340,13 @@ class InfrastructureProvider(Provider):
     project_repo = provide(
         source=ProjectRepositorySqla,
         provides=ProjectRepository,
+        scope=Scope.REQUEST,
+    )
+
+    # Audit Log Repository (for compliance and security logging)
+    audit_log_repo = provide(
+        source=AuditLogRepositoryAdapter,
+        provides=AuditLogRepository,
         scope=Scope.REQUEST,
     )
 

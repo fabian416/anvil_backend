@@ -339,3 +339,41 @@ HTTP_TIMEOUT = 30
 
 # Enable/disable worker
 ENABLED = true
+
+# ========================================
+# Translation Services Configuration
+# ========================================
+[translation]
+# Master switch for translation features
+enabled = false  # Disabled by default - enable when API keys are configured
+
+# Default provider: "deepl", "google", or "fallback"
+default_provider = "deepl"
+
+# DeepL API Configuration
+# Sign up at: https://www.deepl.com/pro-api
+# Free tier: 500,000 characters/month
+deepl_api_key = ""  # Add your DeepL API key here
+deepl_formality = "default"  # Options: default, more, less, prefer_more, prefer_less
+
+# Google Cloud Translation Configuration
+# Setup guide: https://cloud.google.com/translate/docs/setup
+# Pricing: $20 per 1M characters
+google_project_id = ""  # Add your GCP project ID here
+google_location = "global"  # Options: global, us-central1, europe-west1, etc.
+google_credentials_path = ""  # Path to service account JSON (leave empty to use default credentials)
+google_enable_html = true  # Enable HTML translation support
+
+# Caching and performance
+cache_ttl = 300  # Cache translations for 5 minutes
+
+# Cost tracking and limits
+enable_cost_tracking = true  # Track translation costs
+cost_limit_usd = 100.0  # Monthly cost limit in USD (optional)
+
+# Quality settings
+min_confidence_score = 0.7  # Minimum acceptable confidence (0.0-1.0)
+
+# Feature flags
+auto_detect_language = true  # Auto-detect source language
+preserve_technical_terms = true  # Preserve DeFi protocols, tokens, technical terms

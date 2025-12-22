@@ -29,6 +29,7 @@ def create_user_router() -> APIRouter:
     
     # Import routers here to avoid circular imports
     from app.presentation.http.controllers.chat.router import create_chat_router
+    from app.presentation.http.controllers.chat.analytics_dashboard import router as chat_analytics_router
     from app.presentation.http.controllers.wallet.router import create_wallet_router
     from app.presentation.http.controllers.portfolio.router import create_portfolio_router
     from app.presentation.http.controllers.markets.router import create_markets_router
@@ -80,6 +81,7 @@ def create_user_router() -> APIRouter:
     
     # Include all user routers
     router.include_router(create_chat_router())
+    router.include_router(chat_analytics_router)
     router.include_router(create_wallet_router())
     router.include_router(create_portfolio_router())
     router.include_router(create_markets_router())

@@ -12,6 +12,7 @@ Structure:
 - /api/v1/admin/distillation - Distillation management
 - /api/v1/admin/projects - Project management
 - /api/v1/admin/security - Security dashboard & OWASP scan results
+- /api/v1/admin/chat - Chat analytics dashboard
 """
 
 from fastapi import APIRouter
@@ -23,7 +24,7 @@ def create_admin_router() -> APIRouter:
         prefix="/admin",
         tags=["Admin"],
     )
-    
+
     # Import routers here to avoid circular imports
     from app.presentation.http.controllers.admin.user.router import create_users_router
     from app.presentation.http.controllers.admin.llm.router import create_llm_admin_router
@@ -36,7 +37,8 @@ def create_admin_router() -> APIRouter:
     from app.presentation.http.controllers.admin.llm.ranking_router import router as llm_ranking_router
     from app.presentation.http.controllers.telemetry.router import router as telemetry_router
     from app.presentation.http.controllers.admin.security_dashboard_router import router as security_dashboard_router
-    
+    from app.presentation.http.controllers.admin.chat_dashboard import router as chat_dashboard_router
+
     # Include all admin routers - they already have their own prefixes
     # But we need to strip /admin/ from their prefixes since we're adding it here
     router.include_router(create_users_router())  # /users
@@ -50,5 +52,6 @@ def create_admin_router() -> APIRouter:
     router.include_router(llm_ranking_router)  # /llm-rankings
     router.include_router(telemetry_router)  # /telemetry
     router.include_router(security_dashboard_router)  # /security
-    
+    router.include_router(chat_dashboard_router)  # /chat
+
     return router

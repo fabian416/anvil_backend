@@ -23,3 +23,13 @@ class InsufficientPermissionsError(DomainError):
 class RoleChangeNotAllowedError(DomainError):
     """Raised when a role change is not allowed."""
     pass
+
+
+class InvalidTokenError(DomainError):
+    """Raised when a JWT token is invalid."""
+    pass
+
+
+class TokenExpiredError(DomainError):
+    """Raised when a JWT token has expired."""
+    pass

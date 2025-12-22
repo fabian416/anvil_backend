@@ -214,10 +214,16 @@ class ExternalAPICache:
             # Cross-chain
             ("axelar", "routes"): self._config.chain_data_ttl,
             ("layerzero", "routes"): self._config.chain_data_ttl,
-            
+
             # Gnosis Safe
             ("gnosis", "safes"): self._config.chain_data_ttl,
             ("gnosis", "transactions"): self._config.historical_ttl,
+
+            # Translation
+            ("deepl", "translate"): self._config.protocol_details_ttl,  # 15 minutes
+            ("deepl", "detect"): self._config.protocol_details_ttl,
+            ("google_translate", "translate"): self._config.protocol_details_ttl,
+            ("google_translate", "detect"): self._config.protocol_details_ttl,
         }
     
     def _make_key(self, api: str, operation: str, **params) -> str:

@@ -11,7 +11,7 @@ This module provides all exceptions related to:
 from typing import Any
 from uuid import UUID
 
-from app.domain.exceptions.base import ApplicationError
+from app.application.common.exceptions.base import ApplicationError
 from app.domain.exceptions.error_codes import ErrorCode
 
 
@@ -728,4 +728,92 @@ class CustomAgentNotFoundError(ApplicationError):
             ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
             details=details,
             override_message="Custom agent not found",
+        )
+
+
+# =============================================================================
+# EXPORT ERRORS
+# =============================================================================
+
+
+class ExportGenerationError(ApplicationError):
+    """Raised when export generation fails."""
+
+    def __init__(
+        self,
+        reason: str | None = None,
+        export_format: str | None = None,
+        conversation_id: str | UUID | None = None,
+    ) -> None:
+        details = {}
+        if reason:
+            details["reason"] = reason
+        if export_format:
+            details["export_format"] = export_format
+        if conversation_id:
+            details["conversation_id"] = str(conversation_id)
+        super().__init__(
+            ErrorCode.CHAT_AGENT_ERROR,
+            details=details,
+            override_message=f"Export generation failed: {reason}" if reason else "Export generation failed",
+        )
+
+
+class ComplianceViolationError(ApplicationError):
+    """Raised when export violates compliance requirements."""
+
+    def __init__(
+        self,
+        compliance_standard: str | None = None,
+        violation_reason: str | None = None,
+        export_format: str | None = None,
+    ) -> None:
+        details = {}
+        if compliance_standard:
+            details["compliance_standard"] = compliance_standard
+        if violation_reason:
+            details["violation_reason"] = violation_reason
+        if export_format:
+            details["export_format"] = export_format
+        super().__init__(
+            ErrorCode.CHAT_ACCESS_DENIED,
+            details=details,
+            override_message=f"Compliance violation: {violation_reason}" if violation_reason else "Compliance requirements violated",
+        )
+
+
+class ExportNotFoundError(ApplicationError):
+    """Raised when an export is not found."""
+
+    def __init__(
+        self,
+        export_id: str | UUID | None = None,
+    ) -> None:
+        details = {}
+        if export_id:
+            details["export_id"] = str(export_id)
+        super().__init__(
+            ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
+            details=details,
+            override_message="Export not found",
+        )
+
+
+class ExportExpiredError(ApplicationError):
+    """Raised when an export has expired."""
+
+    def __init__(
+        self,
+        export_id: str | UUID | None = None,
+        expired_at: str | None = None,
+    ) -> None:
+        details = {}
+        if export_id:
+            details["export_id"] = str(export_id)
+        if expired_at:
+            details["expired_at"] = expired_at
+        super().__init__(
+            ErrorCode.CHAT_ACCESS_DENIED,
+            details=details,
+            override_message="Export has expired",
         )
