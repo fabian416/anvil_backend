@@ -23,6 +23,19 @@ dotenv:
 start:
 	. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload
 
+# Development environment - Start FastAPI + Celery + Beat + Flower
+.PHONY: start-dev stop-dev
+start-dev:
+	@./scripts/start_dev.sh
+
+stop-dev:
+	@echo "Deteniendo todos los servicios de desarrollo..."
+	@pkill -f "uvicorn app.run:make_app" || true
+	@pkill -f "celery.*worker" || true
+	@pkill -f "celery.*beat" || true
+	@pkill -f "flower" || true
+	@echo "✅ Todos los servicios detenidos"
+
 # Celery
 .PHONY: celery celery.worker celery.beat celery.flower
 .PHONY: celery.worker.maintenance celery.worker.agents celery.worker.graph
