@@ -21,7 +21,7 @@ dotenv:
 	@$(PYTHON) $(TOML_CONFIG_MANAGER) ${APP_ENV}
 
 start:
-	. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app --factory --port 8000 --reload
+	. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload
 
 # Celery
 .PHONY: celery celery.worker celery.beat celery.flower
