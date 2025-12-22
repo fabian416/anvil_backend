@@ -146,9 +146,9 @@ def aggregate_project_analytics():
     """
     async def runner(container):
         from sqlalchemy import text
-        from sqlalchemy.ext.asyncio import AsyncSession
-        
-        session = await container.get(AsyncSession)
+        from app.infrastructure.adapters.types import MainAsyncSession
+
+        session = await container.get(MainAsyncSession)
         
         # Calculate yesterday's date
         yesterday = datetime.utcnow().date() - timedelta(days=1)
@@ -206,9 +206,9 @@ def check_knowledge_base_health():
             KnowledgeDocumentRepositorySqla,
         )
         from sqlalchemy import text
-        from sqlalchemy.ext.asyncio import AsyncSession
-        
-        session = await container.get(AsyncSession)
+        from app.infrastructure.adapters.types import MainAsyncSession
+
+        session = await container.get(MainAsyncSession)
         
         # Find documents with errors
         error_query = text("""

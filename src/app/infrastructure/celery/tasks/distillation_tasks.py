@@ -38,9 +38,9 @@ def aggregate_distillation_telemetry():
             DistillationTelemetryRepositorySqla,
         )
         from sqlalchemy import text
-        from sqlalchemy.ext.asyncio import AsyncSession
-        
-        session = await container.get(AsyncSession)
+        from app.infrastructure.adapters.types import MainAsyncSession
+
+        session = await container.get(MainAsyncSession)
         
         # Calculate the previous hour window
         now = datetime.utcnow()
@@ -108,9 +108,9 @@ def cleanup_expired_cache():
             DistillationCacheRepositorySqla,
         )
         from sqlalchemy import text
-        from sqlalchemy.ext.asyncio import AsyncSession
-        
-        session = await container.get(AsyncSession)
+        from app.infrastructure.adapters.types import MainAsyncSession
+
+        session = await container.get(MainAsyncSession)
         
         # Delete expired exact cache
         exact_query = text("""
