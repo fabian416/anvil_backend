@@ -8,7 +8,7 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from app.domain.preferences.ports.user_preferences_repository import UserPreferencesRepository
 from app.domain.value_objects.chat.preferences import (
@@ -28,7 +28,7 @@ class UserPreferencesRepositoryAdapter(UserPreferencesRepository):
     Implements persistence for user preferences using PostgreSQL.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: MainAsyncSession) -> None:
         """
         Initialize repository adapter.
 
@@ -251,10 +251,12 @@ from sqlalchemy import String, Boolean, Integer, ARRAY, Text, DateTime
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.infrastructure.persistence_sqla.base import Base
+from app.infrastructure.persistence_sqla.registry import mapping_registry
+from app.infrastructure.adapters.types import MainAsyncSession
 
 
-class UserChatPreferencesModel(Base):
+@mapping_registry.mapped
+class UserChatPreferencesModel:
     """
     SQLAlchemy model for user chat preferences.
 

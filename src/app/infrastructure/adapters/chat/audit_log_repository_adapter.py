@@ -11,14 +11,14 @@ from uuid import UUID
 
 from sqlalchemy import Text, and_, func, or_, select
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import DateTime, String, Index
 
 from app.domain.entities.chat.audit_log import AuditLogEntry
 from app.domain.enums.audit_event_type import AuditEventType
 from app.domain.ports.audit_log_repository import AuditLogRepository
-from app.infrastructure.persistence_sqla.base import Base
+from app.infrastructure.adapters.types import MainAsyncSession
+from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 
 class AuditLogRepositoryAdapter(AuditLogRepository):
@@ -30,7 +30,7 @@ class AuditLogRepositoryAdapter(AuditLogRepository):
     indexed queries and retention policy support.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: MainAsyncSession) -> None:
         """
         Initialize repository adapter.
 
@@ -548,7 +548,7 @@ class AuditLogRepositoryAdapter(AuditLogRepository):
             user_id=model.user_id,
             resource_id=model.resource_id,
             resource_type=model.resource_type,
-            metadata=model.metadata or {},
+            metadata=model.entry_metadata or {},
             ip_address=model.ip_address,
             user_agent=model.user_agent,
             error_message=model.error_message,
@@ -574,7 +574,7 @@ class AuditLogRepositoryAdapter(AuditLogRepository):
             user_id=entry.user_id,
             resource_id=entry.resource_id,
             resource_type=entry.resource_type,
-            metadata=entry.metadata,
+            entry_metadata=entry.metadata,
             ip_address=entry.ip_address,
             user_agent=entry.user_agent,
             error_message=entry.error_message,
@@ -588,7 +588,8 @@ class AuditLogRepositoryAdapter(AuditLogRepository):
 # =============================================================================
 
 
-class AuditLogModel(Base):
+@mapping_registry.mapped
+class AuditLogModel:
     """
     SQLAlchemy model for audit logs.
 
@@ -613,7 +614,7 @@ class AuditLogModel(Base):
     resource_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Additional Data (JSONB for flexible storage)
-    metadata: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    entry_metadata: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)
     user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
 

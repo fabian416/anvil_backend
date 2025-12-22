@@ -9,7 +9,7 @@ from uuid import UUID
 from datetime import datetime
 
 from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Boolean, Integer, Text, DateTime
@@ -21,7 +21,8 @@ from app.domain.value_objects.chat.export import (
     ComplianceStandard,
     PIIRedactionConfig,
 )
-from app.infrastructure.persistence_sqla.base import Base
+from app.infrastructure.persistence_sqla.registry import mapping_registry
+from app.infrastructure.adapters.types import MainAsyncSession
 
 
 class ExportRepositoryAdapter(ExportRepository):
@@ -31,7 +32,7 @@ class ExportRepositoryAdapter(ExportRepository):
     Implements persistence for export requests and results using PostgreSQL.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: MainAsyncSession) -> None:
         """
         Initialize repository adapter.
 
@@ -341,7 +342,8 @@ class ExportRepositoryAdapter(ExportRepository):
 # =============================================================================
 
 
-class ConversationExportModel(Base):
+@mapping_registry.mapped
+class ConversationExportModel:
     """
     SQLAlchemy model for conversation exports.
 

@@ -10,7 +10,7 @@ from uuid import UUID
 from datetime import datetime, timedelta
 
 from sqlalchemy import select, and_, or_, update as sql_update
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Boolean, Integer, Float, Text, DateTime
@@ -29,7 +29,8 @@ from app.domain.value_objects.chat.orchestration import (
     AgentPerformanceMetrics,
     CustomAgentConfig,
 )
-from app.infrastructure.persistence_sqla.base import Base
+from app.infrastructure.persistence_sqla.registry import mapping_registry
+from app.infrastructure.adapters.types import MainAsyncSession
 
 
 class AgentOrchestrationRepositoryAdapter(AgentOrchestrationRepository):
@@ -43,7 +44,7 @@ class AgentOrchestrationRepositoryAdapter(AgentOrchestrationRepository):
     - Custom agent configurations
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: MainAsyncSession) -> None:
         """
         Initialize repository adapter.
 
@@ -772,7 +773,8 @@ class AgentOrchestrationRepositoryAdapter(AgentOrchestrationRepository):
 # =============================================================================
 
 
-class VotingRoundModel(Base):
+@mapping_registry.mapped
+class VotingRoundModel:
     """SQLAlchemy model for voting rounds."""
 
     __tablename__ = "voting_rounds"
@@ -798,7 +800,8 @@ class VotingRoundModel(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
-class AgentDebateModel(Base):
+@mapping_registry.mapped
+class AgentDebateModel:
     """SQLAlchemy model for agent debates."""
 
     __tablename__ = "agent_debates"
@@ -826,7 +829,8 @@ class AgentDebateModel(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
-class AgentPerformanceMetricsModel(Base):
+@mapping_registry.mapped
+class AgentPerformanceMetricsModel:
     """SQLAlchemy model for agent performance metrics."""
 
     __tablename__ = "agent_performance_metrics"
@@ -853,7 +857,8 @@ class AgentPerformanceMetricsModel(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 
-class CustomAgentConfigModel(Base):
+@mapping_registry.mapped
+class CustomAgentConfigModel:
     """SQLAlchemy model for custom agent configurations."""
 
     __tablename__ = "custom_agent_configs"

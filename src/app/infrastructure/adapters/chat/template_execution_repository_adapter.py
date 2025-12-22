@@ -9,7 +9,7 @@ from uuid import UUID
 from datetime import datetime
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Integer, Float, DateTime
@@ -19,7 +19,8 @@ from app.domain.entities.chat.template_execution import (
     TemplateExecution,
     StepResult,
 )
-from app.infrastructure.persistence_sqla.base import Base
+from app.infrastructure.persistence_sqla.registry import mapping_registry
+from app.infrastructure.adapters.types import MainAsyncSession
 
 
 class TemplateExecutionRepositoryAdapter(TemplateExecutionRepository):
@@ -30,7 +31,7 @@ class TemplateExecutionRepositoryAdapter(TemplateExecutionRepository):
     Stores step results as JSONB for flexible data storage.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: MainAsyncSession) -> None:
         """
         Initialize repository adapter.
 
@@ -330,7 +331,8 @@ class TemplateExecutionRepositoryAdapter(TemplateExecutionRepository):
 # =============================================================================
 
 
-class TemplateExecutionModel(Base):
+@mapping_registry.mapped
+class TemplateExecutionModel:
     """
     SQLAlchemy model for template executions.
 

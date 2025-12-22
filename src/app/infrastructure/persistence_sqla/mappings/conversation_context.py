@@ -5,12 +5,12 @@ SQLAlchemy mapping for ConversationContext entity.
 from sqlalchemy import Table, Column, String, Integer, Float, DateTime, JSON
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.infrastructure.persistence_sqla.base import metadata
+from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 
 conversation_context_table = Table(
     "conversation_contexts",
-    metadata,
+    mapping_registry.metadata,
     Column("id", UUID(as_uuid=True), primary_key=True),
     Column("conversation_id", UUID(as_uuid=True), nullable=False, index=True),
     Column("user_id", UUID(as_uuid=True), nullable=False, index=True),

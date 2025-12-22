@@ -47,7 +47,7 @@ def test_db_session(test_db_engine):
     """
     # Create tables
     # Note: In real implementation, import Base and create_all
-    # from app.infrastructure.persistence_sqla.base import Base
+    # from app.infrastructure.persistence_sqla.registry import mapping_registry
     # Base.metadata.create_all(bind=test_db_engine)
     
     # Create session

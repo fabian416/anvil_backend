@@ -9,14 +9,15 @@ from uuid import UUID
 from datetime import datetime, timedelta
 
 from sqlalchemy import select, func, and_, case, cast
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Integer, Float, DateTime, Index
 
 from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.domain.entities.chat.conversation_analytics import ConversationAnalytics
-from app.infrastructure.persistence_sqla.base import Base
+from app.infrastructure.persistence_sqla.registry import mapping_registry
+from app.infrastructure.adapters.types import MainAsyncSession
 
 
 class AnalyticsRepositoryAdapter(AnalyticsRepository):
@@ -27,7 +28,7 @@ class AnalyticsRepositoryAdapter(AnalyticsRepository):
     using PostgreSQL with JSONB for flexible data storage.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: MainAsyncSession) -> None:
         """
         Initialize repository adapter.
 
@@ -830,7 +831,8 @@ class AnalyticsRepositoryAdapter(AnalyticsRepository):
 # =============================================================================
 
 
-class ConversationAnalyticsModel(Base):
+@mapping_registry.mapped
+class ConversationAnalyticsModel:
     """
     SQLAlchemy model for conversation analytics.
 

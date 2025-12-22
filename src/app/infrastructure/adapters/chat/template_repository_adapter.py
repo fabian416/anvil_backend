@@ -9,7 +9,7 @@ from uuid import UUID
 from datetime import datetime
 
 from sqlalchemy import select, and_, or_
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, Boolean, Integer, Float, Text, DateTime
@@ -20,7 +20,8 @@ from app.domain.entities.chat.conversation_template import (
     AgentStep,
     InputSpec,
 )
-from app.infrastructure.persistence_sqla.base import Base
+from app.infrastructure.persistence_sqla.registry import mapping_registry
+from app.infrastructure.adapters.types import MainAsyncSession
 
 
 class TemplateRepositoryAdapter(TemplateRepository):
@@ -31,7 +32,7 @@ class TemplateRepositoryAdapter(TemplateRepository):
     Stores complex structures (agent sequences, inputs) as JSONB.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: MainAsyncSession) -> None:
         """
         Initialize repository adapter.
 
@@ -362,7 +363,8 @@ class TemplateRepositoryAdapter(TemplateRepository):
 # =============================================================================
 
 
-class ConversationTemplateModel(Base):
+@mapping_registry.mapped
+class ConversationTemplateModel:
     """
     SQLAlchemy model for conversation templates.
 
