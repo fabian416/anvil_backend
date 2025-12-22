@@ -1,41 +1,46 @@
-# Module: Notifications & Alerts
+# FRONTEND_USER_NOTIFICATIONS_MAIN
 
-**Route**: `/notifications`
-**Auth Required**: Yes
-**Package**: `user/notifications`
+> **Enterprise Grade Specification**
+> Version: 2.0.0
+> Status: **Live**
+> Source Validation: `src/app/presentation/http/controllers/notification/router.py`
 
-## 1. Overview
-Central hub for system messages and high-priority risk alerts.
+## 1. Module Overview
+The **Notifications** module provides a stream of user alerts, including price alerts, system messages, and security warnings.
 
-## 2. API Contract
+**Base URL**: `/api/v1/notifications`
 
-### System Notifications (General)
-**Endpoint**: `GET /api/v1/notifications/`
-**Query**: `page`, `per_page`.
-**Response**: `List<Notification>` (`title`, `body`).
+---
 
-### Risk Alerts (High Priority)
-**Endpoint**: `GET /api/v1/user/alerts/risk`
-**Query**: `unacknowledged_only`, `severity`.
-**Response**: `RiskAlertListResponse`.
+## 2. Endpoints
 
-### Alert Preferences
-**Endpoint**: `GET /api/v1/user/alerts/subscription`
-**Response**:
+### 2.1 Get Notifications
+**GET** `/api/v1/notifications/`
+
+Paginated list of notifications.
+
+**Query Params**:
+*   `page`: `int` (default 1)
+*   `per_page`: `int` (default 10, max 100)
+
+**Response (200 OK):**
 ```json
-{
-  "risk_alerts_enabled": true,
-  "push_notifications": true,
-  "min_severity": "MEDIUM",
-  "email_notifications": false
-}
+[
+  {
+    "id": "uuid",
+    "type": "price_alert",
+    "title": "ETH is up 5%",
+    "body": "Ethereum has reached $3,200.",
+    "is_read": false,
+    "created_at": "..."
+  }
+]
 ```
 
-### Update Preferences
-**Endpoint**: `PUT /api/v1/user/alerts/subscription`
-**Body**: Same structure as Response.
+---
 
-## 3. Implementation Flow
-1.  **Bell Icon**: Shows red dot if `unacknowledged_risk > 0` or `unread_notifications > 0`.
-2.  **Tabs**: "All" (Notifications) vs "Risk" (Alerts).
-3.  **Settings**: "Manage Custom Alerts" calls the Subscription endpoints.
+## 3. Error Handling
+
+| Status | Code | Meaning |
+| :--- | :--- | :--- |
+| 503 | `SERVICE_UNAVAILABLE` | Notification service down. |

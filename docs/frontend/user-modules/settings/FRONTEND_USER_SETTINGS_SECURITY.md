@@ -1,42 +1,41 @@
-# Module: Security Settings
+# FRONTEND_USER_SETTINGS_SECURITY
 
-**Route**: `/settings/security`
-**Auth Required**: Yes
-**Package**: `user/settings`
+> **Enterprise Grade Specification**
+> Version: 2.0.0
+> Status: **Live**
+> Source Validation: `src/app/presentation/http/controllers/account` & `wallet`
 
-## 1. Overview
-Manage account credentials and wallet exports.
+## 1. Module Overview
+The **Security Settings** module handles sensitive operations like password updates (if applicable) and wallet key exports.
 
-## 2. API Contract
+**Base URL**: `/api/v1`
 
-### Change Password
-**Endpoint**: `PUT /api/v1/account/change-password`
-**Body**:
+---
+
+## 2. Endpoints
+
+### 2.1 Export Wallet Key
+**POST** `/api/v1/wallet/export`
+
+Requests an encrypted export of the embedded wallet's private key.
+
+**Request**:
+*   Requires re-authentication (MFA or password confirmation) via Privy.
+
+**Response (200 OK):**
 ```json
 {
-  "current_password": "...",
-  "new_password": "...",
-  "confirm_password": "..."
+  "encrypted_key": "...",
+  "format": "hpke"
 }
 ```
 
-### Export Wallet
-**Endpoint**: `POST /api/v1/wallet/export`
-**Body**: `{"wallet_id": "..."}`
-**Response (`ExportWalletResponse`)**:
-```json
-{
-  "private_key": "0x...",
-  "chain_type": "ethereum"
-}
-```
-**Constraints**:
-- Must be the owner.
-- Verification required (Auth Token).
+### 2.2 Change Password / Auth Methods
+*   **Redirect**: Authentication settings are managed directly via the **Privy Modal** on the frontend.
+*   **API**: Backend endpoints for auth updates are primarily internal hooks for Privy webhooks.
 
-## 3. Implementation Flow
-1.  **Export Flow**:
-    - "Export Private Key" button (Red, Dangerous).
-    - Modal: "Are you sure? Never share this key."
-    - User confirms -> Call Backend.
-    - Display Key *once*, allow copy, then clear from memory on close.
+---
+
+## 3. Security Notes
+*   **MFA**: Critical actions require step-up authentication.
+*   **Audit**: All exports are logged in `audit_log` table.
