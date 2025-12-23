@@ -6,7 +6,7 @@
 ## 📖 Overview
 This is the landing page for the Admin Console. It answers the question: **"Is the system healthy and performing?"**
 
-## 🧩 Modules
+## 🧩 Submodules
 1.  **Chat Analytics (`FRONTEND_ADMIN_DASHBOARD_CHAT.md`)**:
     - Usage volume, Agent Performance, and Cost Tracking.
 2.  **Security Dashboard (`FRONTEND_ADMIN_DASHBOARD_SECURITY.md`)**:
