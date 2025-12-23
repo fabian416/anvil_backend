@@ -41,6 +41,19 @@ The **DeFi Core** module provides users with access to core DeFi operations: len
 3. **Real-Time Updates**: Live rates, health factor, position updates
 4. **Transaction Preview**: Clear preview before confirmation
 
+### Trade-off Analysis (Design Thinking)
+
+**Key Design Decisions with Trade-offs**:
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **Safety-First Design** | Convenience-First | Security vs. Speed | DeFi operations are irreversible; safety cannot be compromised |
+| **Health Factor Prominence** | Hidden Until Needed | Visibility vs. Clutter | Health factor is critical; users must see it before actions |
+| **Progressive Disclosure** | Show All Details | Simplicity vs. Completeness | Too much info causes paralysis; progressive disclosure improves UX |
+| **Real-Time Updates** | On-Demand Refresh | Accuracy vs. Performance | DeFi rates change rapidly; real-time updates prevent bad decisions |
+| **Transaction Preview** | Direct Execution | Safety vs. Speed | Preview prevents errors, but adds friction; safety wins |
+| **Multi-Protocol Support** | Single Protocol | Flexibility vs. Complexity | Users need access to multiple protocols, but adds UI complexity |
+
 ### Visual Design
 
 #### Layout Structure (Supply Example)
@@ -1138,17 +1151,31 @@ export const swapService = {
 
 ### Validation & Testing Strategy
 
-**Success Criteria**:
-- ✅ DeFi operations success rate > 99%
-- ✅ Zero liquidations due to UI issues
-- ✅ Health factor accuracy > 99.9%
-- ✅ Average transaction time < 30 seconds
+**Module-Specific Success Criteria**:
+- ✅ DeFi operations success rate > 99% (supply, borrow, swap, stake, bridge)
+- ✅ Zero liquidations due to UI issues (no UI-caused liquidations)
+- ✅ Health factor accuracy > 99.9% (calculated health factor matches protocol)
+- ✅ Average transaction time < 30 seconds (end-to-end, including confirmation)
+- ✅ Protocol integration success rate > 99.5% (Aave, Curve, Morpho, Axelar, LayerZero, Hyperliquid)
+- ✅ Real-time rate update latency < 1 second (APY, health factor, prices)
+- ✅ Slippage protection accuracy > 99% (actual slippage within tolerance)
 
-**Failure Detection**:
-- Monitor health factor changes
-- Track transaction failures
-- Alert on liquidation events
-- Log all DeFi operations
+**Module-Specific Test Requirements**:
+- **Unit Tests**: Health factor calculations, slippage calculations, rate formatting
+- **Integration Tests**: Protocol API integration, transaction signing, position updates
+- **E2E Tests**: Complete DeFi flows (supply → monitor → withdraw), multi-protocol operations
+- **Security Tests**: Transaction signing, health factor validation, slippage protection
+- **Performance Tests**: Multiple concurrent operations, large positions, high-frequency updates
+- **Accessibility Tests**: DeFi operation forms, risk warnings, transaction confirmations
+
+**Failure Detection & Monitoring**:
+- Monitor health factor changes (alert if drops below 1.5)
+- Track transaction failures (alert if > 1%)
+- Alert on low health factors (alert if < 1.2)
+- Log all DeFi operations (for audit trail)
+- Monitor protocol integration errors (alert if any protocol fails)
+- Track slippage protection failures (alert if actual slippage > tolerance)
+- Monitor real-time update latency (alert if > 2 seconds)
 
 ---
 

@@ -41,6 +41,18 @@ The **Wallet & Asset Management** module provides users with complete control ov
 3. **Transaction Safety**: Multi-step confirmation with clear previews
 4. **Real-Time Updates**: Show transaction status immediately
 
+### Trade-off Analysis (Design Thinking)
+
+**Key Design Decisions with Trade-offs**:
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **Wallet-Centric Design** | Transaction-Centric | User Mental Model vs. Data Model | Users think in terms of wallets, not transactions |
+| **Multi-Wallet Support** | Single Wallet | Complexity vs. Flexibility | Power users need multiple wallets, but adds UI complexity |
+| **Security-First Approach** | Convenience-First | Security vs. UX Speed | Private keys are critical; security cannot be compromised |
+| **Transaction History** | Summary Only | Completeness vs. Performance | Full history needed for audits, but can be slow with many transactions |
+| **HPKE Encryption for Export** | Plain Text | Security vs. Simplicity | Private keys must be encrypted, even during export |
+
 ### Visual Design
 
 #### Layout Structure
@@ -884,17 +896,32 @@ export const ReceiveTokens: React.FC = () => {
 
 ### Validation & Testing Strategy
 
-**Success Criteria**:
-- ✅ Wallet operations success rate > 99%
-- ✅ Transaction logging accuracy > 99.9%
-- ✅ Average send time < 30 seconds
-- ✅ Zero private key leaks
+**Module-Specific Success Criteria**:
+- ✅ Wallet operations success rate > 99% (sync, export, create)
+- ✅ Transaction logging accuracy > 99.9% (verified against blockchain)
+- ✅ Average send time < 30 seconds (end-to-end)
+- ✅ Zero private key leaks (security audit required)
+- ✅ Wallet sync time < 2 seconds (for 5 wallets)
+- ✅ Transaction history load < 1 second (for 100 transactions)
+- ✅ NFT portfolio load < 3 seconds (for 50 NFTs)
+- ✅ Bitcoin transaction accuracy > 99.9% (when enabled)
 
-**Failure Detection**:
-- Monitor transaction logging errors
-- Track wallet sync failures
-- Alert on export operations
-- Log all wallet operations
+**Module-Specific Test Requirements**:
+- **Unit Tests**: Wallet validation, transaction parsing, NFT metadata processing
+- **Integration Tests**: Wallet sync, transaction logging, NFT fetching, Bitcoin integration
+- **E2E Tests**: Complete wallet flow (create → sync → send → history), NFT browsing
+- **Security Tests**: Private key encryption, export security, transaction signing
+- **Performance Tests**: Large transaction history (1000+), multiple wallets (10+), large NFT collections (100+)
+- **Accessibility Tests**: Wallet selection, transaction forms, NFT gallery navigation
+
+**Failure Detection & Monitoring**:
+- Monitor transaction logging errors (alert if > 0.1%)
+- Track wallet sync failures (alert if > 1%)
+- Alert on ALL export operations (security audit trail)
+- Log all wallet operations (for security audit)
+- Monitor private key encryption/decryption operations
+- Track transaction signing failures
+- Alert on suspicious wallet activity patterns
 
 ---
 

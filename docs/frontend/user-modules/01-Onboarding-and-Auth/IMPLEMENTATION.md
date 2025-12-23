@@ -37,6 +37,19 @@ The **Authentication & Onboarding** module is the critical entry point for all u
 3. **Error Recovery**: Clear, actionable error messages with recovery paths
 4. **Visual Feedback**: Loading states, success animations, error toasts
 
+### Trade-off Analysis (Design Thinking)
+
+**Key Design Decisions with Trade-offs**:
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **Single Entry Point** | Multiple Entry Points | Simplicity vs. Flexibility | Single flow reduces confusion, but limits customization |
+| **Progressive Disclosure** | Show Everything | Simplicity vs. Completeness | Too much info upfront causes abandonment; progressive disclosure improves conversion |
+| **Privy Integration** | Custom Auth | Speed vs. Control | Privy provides fast auth, but less control over UX |
+| **Token Refresh** | Re-Login | Convenience vs. Security | Auto-refresh improves UX, but requires secure token storage |
+| **KYC Optional** | KYC Required | Conversion vs. Compliance | Optional KYC improves conversion, but may limit features later |
+| **Session Persistence** | Session-Only | Convenience vs. Security | Persistent sessions improve UX, but require secure storage |
+
 ### Visual Design
 
 #### Layout Structure
@@ -1075,17 +1088,31 @@ export const kycService = {
 
 ### Validation & Testing Strategy
 
-**Success Criteria**:
-- ✅ Login success rate > 99%
-- ✅ Average login time < 2 seconds
-- ✅ Error recovery rate > 95%
-- ✅ Accessibility score 100/100
+**Module-Specific Success Criteria**:
+- ✅ Login success rate > 99% (all authentication methods)
+- ✅ Average login time < 2 seconds (p95, from button click to dashboard)
+- ✅ Error recovery rate > 95% (users can recover from errors)
+- ✅ Accessibility score 100/100 (WCAG 2.1 AA compliance)
+- ✅ Token refresh success rate > 99.9% (automatic token renewal)
+- ✅ Session persistence > 99.9% (sessions survive app restarts)
+- ✅ KYC completion rate > 80% (users who start KYC complete it)
 
-**Failure Detection**:
-- Monitor login failure rates
-- Track error types
-- Alert on high failure rates
-- Log all authentication attempts
+**Module-Specific Test Requirements**:
+- **Unit Tests**: Token validation, session management, password strength checks
+- **Integration Tests**: Privy integration, token refresh, session persistence
+- **E2E Tests**: Complete auth flow (welcome → login → dashboard), error recovery, KYC flow
+- **Security Tests**: Token storage security, password hashing, session security
+- **Performance Tests**: Concurrent logins, large user base, token refresh under load
+- **Accessibility Tests**: Keyboard navigation, screen reader compatibility, form accessibility
+
+**Failure Detection & Monitoring**:
+- Monitor login failure rates (alert if > 1%)
+- Track error types (categorize and prioritize)
+- Alert on high failure rates (alert if > 2%)
+- Log all authentication attempts (for security audit)
+- Monitor token refresh failures (alert if > 0.1%)
+- Track session persistence failures (alert if > 0.1%)
+- Monitor KYC abandonment rates (alert if < 70% completion)
 
 ---
 

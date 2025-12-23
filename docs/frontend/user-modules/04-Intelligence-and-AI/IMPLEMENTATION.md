@@ -40,6 +40,19 @@ The **AI Chat Module** is the central intelligence hub of Anvil. It's not just a
 3. **Real-Time Feedback**: WebSocket streaming for immediate responses
 4. **Context Preservation**: Maintain conversation history and context
 
+### Trade-off Analysis (Design Thinking)
+
+**Key Design Decisions with Trade-offs**:
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **Conversation-First UI** | Feature-First | Simplicity vs. Feature Discovery | Chat is core value prop; features should emerge from conversation |
+| **Progressive Disclosure of Agent Thinking** | Hide Thinking | Transparency vs. Clutter | Users want to understand AI reasoning, but too much detail is overwhelming |
+| **WebSocket Streaming** | Polling | Real-Time vs. Complexity | Real-time responses critical for chat UX; WebSocket more efficient than polling |
+| **Multi-Agent Routing** | Single Agent | Specialization vs. Complexity | Different agents excel at different tasks; routing improves quality |
+| **GraphRAG Integration** | Simple RAG | Accuracy vs. Complexity | GraphRAG provides better context, but adds implementation complexity |
+| **Intent Detection While Typing** | Post-Submit | UX Speed vs. API Calls | Real-time intent improves UX, but increases API load |
+
 ### Visual Design
 
 #### Layout Structure
@@ -1269,17 +1282,32 @@ export function useChatWebSocket(options: UseChatWebSocketOptions) {
 
 ### Validation & Testing Strategy
 
-**Success Criteria**:
-- ✅ Message send success rate > 99%
-- ✅ Average response time < 3 seconds
-- ✅ WebSocket uptime > 99.9%
-- ✅ User satisfaction > 4.5/5
+**Module-Specific Success Criteria**:
+- ✅ Message send success rate > 99% (messages delivered to backend)
+- ✅ Average response time < 3 seconds (p95, from send to first token)
+- ✅ WebSocket uptime > 99.9% (connection reliability)
+- ✅ User satisfaction > 4.5/5 (user ratings)
+- ✅ Agent routing accuracy > 95% (correct agent selected)
+- ✅ Intent detection accuracy > 90% (intent matches user query)
+- ✅ GraphRAG search relevance > 85% (relevant protocols returned)
+- ✅ Streaming latency < 100ms (time between tokens)
 
-**Failure Detection**:
-- Monitor WebSocket connection health
-- Track agent routing accuracy
-- Alert on high error rates
-- Log all chat interactions
+**Module-Specific Test Requirements**:
+- **Unit Tests**: Message parsing, agent routing logic, intent detection algorithms
+- **Integration Tests**: WebSocket connection, message streaming, GraphRAG search, agent squad routing
+- **E2E Tests**: Complete chat flow (create → send → receive → stream), multi-turn conversations
+- **Performance Tests**: Long conversations (100+ messages), large context windows, concurrent users
+- **Accessibility Tests**: Chat interface navigation, message reading, input accessibility
+- **AI Quality Tests**: Response relevance, agent routing accuracy, intent detection accuracy
+
+**Failure Detection & Monitoring**:
+- Monitor WebSocket connection health (alert if uptime < 99%)
+- Track agent routing accuracy (alert if < 90%)
+- Alert on high error rates (alert if > 1%)
+- Log all chat interactions (for quality improvement)
+- Monitor response quality metrics (user ratings, relevance scores)
+- Track intent detection accuracy (alert if < 85%)
+- Monitor GraphRAG search performance (alert if relevance < 80%)
 
 ---
 

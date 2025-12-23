@@ -38,6 +38,18 @@ The **Dashboard & Discovery** module provides users with a comprehensive view of
 3. **Real-Time Updates**: WebSocket for live data
 4. **Action-Oriented**: Clear CTAs to DeFi operations
 
+### Trade-off Analysis (Design Thinking)
+
+**Key Design Decisions with Trade-offs**:
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **Dashboard-First Layout** | Details-First | Simplicity vs. Information Density | Users need quick overview before diving into details |
+| **Unified Multi-Chain View** | Chain-Specific Views | Complexity vs. Convenience | Users manage assets across chains, unified view reduces cognitive load |
+| **Real-Time WebSocket Updates** | Polling | Performance vs. Complexity | Real-time updates critical for DeFi decisions, WebSocket more efficient |
+| **Action-Oriented CTAs** | Information-Only | Engagement vs. Clutter | Users want to act, not just view; CTAs drive engagement |
+| **Progressive Disclosure** | Show Everything | Simplicity vs. Completeness | Too much data causes paralysis; progressive disclosure improves UX |
+
 ### Visual Design
 
 #### Layout Structure
@@ -878,15 +890,29 @@ export function useMarkNotificationRead() {
 
 ### Validation & Testing Strategy
 
-**Success Criteria**:
-- ✅ Portfolio loads in < 2 seconds
-- ✅ Data accuracy > 99%
-- ✅ Error recovery rate > 95%
+**Module-Specific Success Criteria**:
+- ✅ Portfolio loads in < 2 seconds (p95)
+- ✅ Data accuracy > 99% (verified against blockchain)
+- ✅ Error recovery rate > 95% (users can recover from errors)
+- ✅ Real-time update latency < 500ms (WebSocket)
+- ✅ Multi-chain portfolio aggregation < 3 seconds
+- ✅ Chart rendering performance: 60 FPS for 30-day view
+- ✅ Accessibility score: 100/100 (WCAG 2.1 AA)
 
-**Failure Detection**:
-- Monitor API response times
-- Track error rates
-- Alert on stale data
+**Module-Specific Test Requirements**:
+- **Unit Tests**: Portfolio calculation logic, data formatting, chart data processing
+- **Integration Tests**: API integration, WebSocket connection, multi-chain aggregation
+- **E2E Tests**: Complete dashboard load flow, chain switching, real-time updates
+- **Performance Tests**: Load with 100+ tokens, 10+ chains, large transaction history
+- **Accessibility Tests**: Screen reader navigation, keyboard shortcuts, color contrast
+
+**Failure Detection & Monitoring**:
+- Monitor API response times (alert if p95 > 2s)
+- Track error rates (alert if > 1%)
+- Alert on stale data (> 5 minutes old)
+- Monitor WebSocket connection health (alert if uptime < 99%)
+- Track user engagement metrics (dashboard views, interactions)
+- Log all portfolio calculations for audit trail
 
 ---
 

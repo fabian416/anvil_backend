@@ -9,9 +9,19 @@
 ## 📋 Table of Contents
 
 1. [Portfolio Endpoints](#portfolio-endpoints)
-2. [Market Endpoints](#market-endpoints)
-3. [Request/Response Schemas](#requestresponse-schemas)
-4. [Error Handling](#error-handling)
+2. [Dashboard Endpoints](#dashboard-endpoints)
+3. [Market Endpoints](#market-endpoints)
+4. [Comparison Endpoints](#comparison-endpoints)
+5. [Notification Endpoints](#notification-endpoints)
+6. [Graph Visualization Endpoints](#graph-visualization-endpoints)
+7. [Graph Search Endpoints](#graph-search-endpoints)
+8. [Graph Analytics Endpoints](#graph-analytics-endpoints)
+9. [Graph Monitoring Endpoints](#graph-monitoring-endpoints)
+10. [Search Endpoints](#search-endpoints)
+11. [Metrics Endpoints](#metrics-endpoints)
+12. [WebSocket Connections](#websocket-connections)
+13. [Request/Response Schemas](#requestresponse-schemas)
+14. [Error Handling](#error-handling)
 
 ---
 
@@ -1368,6 +1378,459 @@ interface UserEvent {
   created_at: string;              // ISO 8601
 }
 ```
+
+---
+
+## 🔌 WebSocket Connections
+
+### 1. Graph WebSocket
+
+**Endpoint**: `ws://localhost:8000/api/v1/ws/graph`  
+**Auth Required**: Yes (JWT Token in Query Parameter)  
+**Purpose**: Real-time updates for graph changes, protocol updates, and risk alerts
+
+#### Connection
+
+**Connection URL**:
+```
+ws://localhost:8000/api/v1/ws/graph?token={jwt_token}
+```
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `token` | `string` | **Yes** | JWT authentication token |
+
+#### Client-to-Server Messages
+
+##### Subscribe to Channel
+```typescript
+interface SubscribeMessage {
+  action: "subscribe";
+  channel: string;  // "protocol:{protocol_id}" | "risk:alerts" | "graph:changes" | "all"
+}
+```
+
+**Channels**:
+- `protocol:{protocol_id}` - Updates for specific protocol (e.g., `protocol:aave-id`)
+- `risk:alerts` - Risk alerts for any protocol
+- `graph:changes` - Graph structure changes
+- `all` - All updates
+
+**JSON Example**:
+```json
+{
+  "action": "subscribe",
+  "channel": "protocol:aave-id"
+}
+```
+
+##### Unsubscribe from Channel
+```typescript
+interface UnsubscribeMessage {
+  action: "unsubscribe";
+  channel: string;
+}
+```
+
+**JSON Example**:
+```json
+{
+  "action": "unsubscribe",
+  "channel": "protocol:aave-id"
+}
+```
+
+##### Heartbeat (Ping)
+```typescript
+interface PingMessage {
+  action: "ping";
+}
+```
+
+**JSON Example**:
+```json
+{
+  "action": "ping"
+}
+```
+
+#### Server-to-Client Messages
+
+##### Protocol Update
+```typescript
+interface ProtocolUpdateMessage {
+  type: "protocol:update";
+  protocol_id: string;
+  protocol_name: string;
+  field: string;              // Field that changed (e.g., "tvl", "apy")
+  old_value: number | string;
+  new_value: number | string;
+  timestamp: string;           // ISO 8601
+  source: "graph";
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "protocol:update",
+  "protocol_id": "aave-id",
+  "protocol_name": "Aave",
+  "field": "tvl",
+  "old_value": 5000000000,
+  "new_value": 5500000000,
+  "timestamp": "2024-01-15T10:30:00Z",
+  "source": "graph"
+}
+```
+
+##### Risk Alert
+```typescript
+interface RiskAlertMessage {
+  type: "risk:alert";
+  protocol_id: string;
+  protocol_name: string;
+  risk_type: string;          // "liquidation", "slippage", "smart_contract", etc.
+  severity: "low" | "medium" | "high" | "critical";
+  message: string;
+  data: object;
+  timestamp: string;           // ISO 8601
+  source: "graph";
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "risk:alert",
+  "protocol_id": "aave-id",
+  "protocol_name": "Aave",
+  "risk_type": "liquidation",
+  "severity": "high",
+  "message": "High liquidation risk detected",
+  "data": {
+    "health_factor": 1.2,
+    "threshold": 1.5
+  },
+  "timestamp": "2024-01-15T10:30:00Z",
+  "source": "graph"
+}
+```
+
+##### Graph Structure Change
+```typescript
+interface GraphChangeMessage {
+  type: "graph:changes";
+  change_type: "node_added" | "node_updated" | "node_removed" | "edge_added" | "edge_removed";
+  node_id?: string;
+  edge_id?: string;
+  data: object;
+  timestamp: string;           // ISO 8601
+  source: "graph";
+}
+```
+
+##### Subscription Confirmed
+```typescript
+interface SubscribedMessage {
+  type: "subscribed";
+  channel: string;
+}
+```
+
+##### Unsubscribed Confirmed
+```typescript
+interface UnsubscribedMessage {
+  type: "unsubscribed";
+  channel: string;
+}
+```
+
+##### Heartbeat Response (Pong)
+```typescript
+interface PongMessage {
+  type: "pong";
+}
+```
+
+##### Error Message
+```typescript
+interface ErrorMessage {
+  type: "error";
+  message: string;
+}
+```
+
+#### Connection Lifecycle
+
+1. **Connect**: Client connects with JWT token
+2. **Subscribe**: Client subscribes to desired channels
+3. **Receive Updates**: Server broadcasts updates to subscribed channels
+4. **Heartbeat**: Client sends ping every 30 seconds
+5. **Disconnect**: Client closes connection or server disconnects on error
+
+#### Error Handling
+
+**Connection Errors**:
+- Invalid token → Connection rejected (code 1008)
+- Network error → Client should reconnect
+- Server error → Connection closed (code 1011)
+
+**Message Errors**:
+- Unknown action → Server sends error message
+- Invalid channel → Server sends error message
+
+---
+
+### 2. Analytics WebSocket
+
+**Endpoint**: `ws://localhost:8000/api/v1/analytics/ws/{user_id}`  
+**Auth Required**: Yes (JWT Token in Query Parameter)  
+**Purpose**: Real-time analytics streaming for dashboards (metrics, alerts, performance, costs, quality)
+
+#### Connection
+
+**Connection URL**:
+```
+ws://localhost:8000/api/v1/analytics/ws/{user_id}?token={jwt_token}
+```
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `user_id` | `string` | **Yes** | User identifier |
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `token` | `string` | **Yes** | JWT authentication token |
+
+#### Client-to-Server Messages
+
+##### Subscribe to Updates
+```typescript
+interface SubscribeMessage {
+  type: "subscribe";
+  subscriptions: string[];  // ["metrics", "alerts", "performance", "costs", "quality"]
+}
+```
+
+**Subscription Types**:
+- `metrics` - Real-time metrics updates
+- `alerts` - All alert types (cost, performance, quality)
+- `performance` - Performance-related alerts only
+- `costs` - Cost-related alerts only
+- `quality` - Quality-related alerts only
+
+**JSON Example**:
+```json
+{
+  "type": "subscribe",
+  "subscriptions": ["metrics", "alerts", "performance"]
+}
+```
+
+##### Unsubscribe
+```typescript
+interface UnsubscribeMessage {
+  type: "unsubscribe";
+  subscriptions: string[];
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "unsubscribe",
+  "subscriptions": ["performance"]
+}
+```
+
+##### Request Snapshot
+```typescript
+interface RequestSnapshotMessage {
+  type: "request_snapshot";
+  start_date?: string;        // ISO 8601, optional
+  end_date?: string;          // ISO 8601, optional
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "request_snapshot",
+  "start_date": "2024-01-01T00:00:00Z",
+  "end_date": "2024-01-15T23:59:59Z"
+}
+```
+
+##### Heartbeat (Ping)
+```typescript
+interface PingMessage {
+  type: "ping";
+}
+```
+
+#### Server-to-Client Messages
+
+##### Metrics Update
+```typescript
+interface MetricsUpdateMessage {
+  type: "metrics_update";
+  data: {
+    conversation_id: string;
+    total_cost_usd: number;
+    avg_response_time_ms: number;
+    total_messages: number;
+    total_tokens: number;
+    quality_score?: number;
+  };
+  timestamp: string;          // ISO 8601
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "metrics_update",
+  "data": {
+    "conversation_id": "uuid-123",
+    "total_cost_usd": 5.23,
+    "avg_response_time_ms": 1234.5,
+    "total_messages": 42,
+    "total_tokens": 15000,
+    "quality_score": 0.85
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+##### Cost Alert
+```typescript
+interface CostAlertMessage {
+  type: "cost_alert";
+  severity: "info" | "warning" | "error";
+  message: string;
+  data: {
+    conversation_id?: string;
+    cost_usd: number;
+    threshold_usd: number;
+  };
+  timestamp: string;          // ISO 8601
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "cost_alert",
+  "severity": "warning",
+  "message": "Conversation cost exceeded threshold",
+  "data": {
+    "conversation_id": "uuid-123",
+    "cost_usd": 12.50,
+    "threshold_usd": 10.00
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+##### Performance Alert
+```typescript
+interface PerformanceAlertMessage {
+  type: "performance_alert";
+  severity: "info" | "warning" | "error";
+  message: string;
+  data: {
+    conversation_id?: string;
+    response_time_ms: number;
+    threshold_ms: number;
+    p95_response_time_ms?: number;
+  };
+  timestamp: string;          // ISO 8601
+}
+```
+
+##### Quality Alert
+```typescript
+interface QualityAlertMessage {
+  type: "quality_alert";
+  severity: "info" | "warning" | "error";
+  message: string;
+  data: {
+    conversation_id?: string;
+    quality_score: number;
+    threshold: number;
+  };
+  timestamp: string;          // ISO 8601
+}
+```
+
+##### Snapshot Response
+```typescript
+interface SnapshotMessage {
+  type: "snapshot";
+  data: {
+    aggregate: {
+      total_cost_usd: number;
+      total_conversations: number;
+      avg_response_time_ms: number;
+    };
+    daily: Array<{
+      date: string;
+      cost_usd: number;
+      conversations: number;
+    }>;
+    agent_stats: Record<string, {
+      cost_usd: number;
+      conversations: number;
+      avg_response_time_ms: number;
+    }>;
+    cost_breakdown: {
+      model_costs: Record<string, number>;
+      api_costs: Record<string, number>;
+    };
+  };
+  timestamp: string;          // ISO 8601
+}
+```
+
+##### Heartbeat Response (Pong)
+```typescript
+interface PongMessage {
+  type: "pong";
+}
+```
+
+##### Error Message
+```typescript
+interface ErrorMessage {
+  type: "error";
+  message: string;
+  code?: string;
+}
+```
+
+#### Connection Lifecycle
+
+1. **Connect**: Client connects with user_id and JWT token
+2. **Subscribe**: Client subscribes to desired analytics types
+3. **Receive Updates**: Server streams real-time metrics and alerts
+4. **Request Snapshot**: Client can request historical snapshot
+5. **Heartbeat**: Client sends ping every 30 seconds
+6. **Disconnect**: Client closes connection or server disconnects on error
+
+#### Error Handling
+
+**Connection Errors**:
+- Invalid token → Connection rejected (code 1008)
+- Invalid user_id → Connection rejected (code 1008)
+- Network error → Client should reconnect with exponential backoff
+
+**Message Errors**:
+- Invalid subscription type → Server sends error message
+- Invalid date range → Server sends error message
 
 ---
 
