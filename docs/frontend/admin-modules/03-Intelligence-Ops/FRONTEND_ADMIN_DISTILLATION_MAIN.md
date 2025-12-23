@@ -1,73 +1,43 @@
-# Admin Module: Distillation Management
+# Module: Distillation Management
 
-> **Technical Specification**: `FRONTEND_ADMIN_DISTILLATION_MAIN`
-> **Backend Controller**: `admin/distillation_router.py`
-> **Base URL**: `/api/admin/distillation`
+**Route**: `/admin/intelligence-ops/distillation`  
+**Auth Required**: Yes (Admin Only)  
+**Package**: `admin/intelligence-ops/distillation`
 
-## 📖 Overview
-The **Distillation Management** submodule enables administrators to manage AI response optimization through static responses, configuration, cache management, and telemetry. Distillation optimizes AI responses by routing simple queries to static responses or lightweight models, reducing costs and latency.
+## 1. Overview
+Enables administrators to manage AI response optimization through static responses, configuration, cache management, and telemetry. Distillation optimizes AI responses by routing simple queries to static responses or lightweight models, reducing costs and latency.
 
-### Key Capabilities
-1. **Static Response Management**: Create, list, update, and delete static response templates.
-2. **Configuration**: Manage distillation settings (enabled/disabled, cache settings, thresholds).
-3. **Cache Management**: Invalidate cache entries and view cache statistics.
-4. **Telemetry**: View distillation request telemetry and hourly summaries.
+## 2. API Contract
 
----
+### List Static Responses
+**Endpoint**: `GET /api/admin/distillation/static-responses`  
+**Query Params**:
+- `intent` (string, optional): Filter by intent.
+- `is_active` (boolean, optional): Filter by active status.
 
-## 🔌 API Endpoints
+#### Response Body (`StaticResponseResponse[]`)
+Array of static response objects.
 
-### Static Responses
+**StaticResponseResponse Object**:
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Static response UUID |
+| `intent` | `string` | Intent identifier |
+| `variant` | `string` | Response variant |
+| `response_template` | `string` | Response template with variables |
+| `template_variables` | `string[]` | Array of template variable names |
+| `data_source` | `string` | Data source identifier |
+| `conditions` | `{ [key: string]: any }` | Conditions for matching |
+| `priority` | `number` | Priority (higher = preferred) |
+| `is_active` | `boolean` | Whether response is active |
+| `created_at` | `string` | ISO 8601 creation timestamp |
+| `updated_at` | `string` | ISO 8601 update timestamp |
 
-#### 1. Create Static Response
-**POST** `/api/admin/distillation/static-responses`
-Create a new static response template.
-
-**Request Body (`StaticResponseCreate`)**:
-```json
-{
-  "intent": "price_query",
-  "variant": "default",
-  "response_template": "The current price of {token} is ${price}",
-  "template_variables": ["token", "price"],
-  "data_source": "coingecko",
-  "conditions": {"min_confidence": 0.9},
-  "priority": 1,
-  "is_active": true
-}
-```
-
-**Response (`StaticResponseResponse`)**:
-```json
-{
-  "id": "uuid",
-  "intent": "price_query",
-  "variant": "default",
-  "response_template": "The current price of {token} is ${price}",
-  "template_variables": ["token", "price"],
-  "data_source": "coingecko",
-  "conditions": {"min_confidence": 0.9},
-  "priority": 1,
-  "is_active": true,
-  "created_at": "2023-10-01T10:00:00Z",
-  "updated_at": "2023-10-01T10:00:00Z"
-}
-```
-
-#### 2. List Static Responses
-**GET** `/api/admin/distillation/static-responses`
-List all static response templates.
-
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `intent` | `str` | No | Filter by intent. |
-| `is_active` | `bool` | No | Filter by active status. |
-
-**Response (`List[StaticResponseResponse]`)**:
+**JSON Example**:
 ```json
 [
   {
-    "id": "uuid",
+    "id": "550e8400-e29b-41d4-a716-446655440000",
     "intent": "price_query",
     "variant": "default",
     "response_template": "The current price of {token} is ${price}",
@@ -82,33 +52,87 @@ List all static response templates.
 ]
 ```
 
-#### 3. Update Static Response
-**PATCH** `/api/admin/distillation/static-responses/{response_id}`
-Update a static response template.
+### Create Static Response
+**Endpoint**: `POST /api/admin/distillation/static-responses`  
+**Query Params**: None
 
-**Request Body (`StaticResponseUpdate`)**:
+#### Request Body (`StaticResponseCreate`)
+| Field | Type | Description |
+|---|---|---|
+| `intent` | `string` | Intent identifier (required) |
+| `variant` | `string` | Response variant (required) |
+| `response_template` | `string` | Response template (required) |
+| `template_variables` | `string[]` | Array of template variable names (required) |
+| `data_source` | `string` | Data source identifier (required) |
+| `conditions` | `{ [key: string]: any }` | Conditions for matching (required) |
+| `priority` | `number` | Priority (required) |
+| `is_active` | `boolean` | Whether response is active (Default: true) |
+
+**JSON Example**:
 ```json
 {
-  "response_template": "Updated template",
-  "is_active": false
+  "intent": "price_query",
+  "variant": "default",
+  "response_template": "The current price of {token} is ${price}",
+  "template_variables": ["token", "price"],
+  "data_source": "coingecko",
+  "conditions": {"min_confidence": 0.9},
+  "priority": 1,
+  "is_active": true
 }
 ```
 
-**Response**: `StaticResponseResponse`
+#### Response Body (`StaticResponseResponse`)
+Returns created static response object.
 
-#### 4. Delete Static Response
-**DELETE** `/api/admin/distillation/static-responses/{response_id}`
-Delete a static response template.
+### Update Static Response
+**Endpoint**: `PATCH /api/admin/distillation/static-responses/{response_id}`  
+**Path Params**:
+- `response_id` (string, **required**): Static response UUID.
 
-**Response**: `204 No Content`
+#### Request Body (`StaticResponseUpdate`)
+| Field | Type | Description |
+|---|---|---|
+| `response_template` | `string` | Optional: Updated template |
+| `is_active` | `boolean` | Optional: Updated active status |
+| `priority` | `number` | Optional: Updated priority |
 
-### Configuration
+**JSON Example**:
+```json
+{
+  "response_template": "Updated template with {token} at ${price}",
+  "is_active": false,
+  "priority": 2
+}
+```
 
-#### 5. Get Distillation Config
-**GET** `/api/admin/distillation/config`
-Get current distillation configuration.
+#### Response Body (`StaticResponseResponse`)
+Returns updated static response object.
 
-**Response (`DistillationConfigResponse`)**:
+### Delete Static Response
+**Endpoint**: `DELETE /api/admin/distillation/static-responses/{response_id}`  
+**Path Params**:
+- `response_id` (string, **required**): Static response UUID.
+
+#### Response
+`204 No Content` - No response body
+
+### Get Distillation Config
+**Endpoint**: `GET /api/admin/distillation/config`  
+**Query Params**: None
+
+#### Response Body (`DistillationConfigResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `enabled` | `boolean` | Whether distillation is enabled |
+| `cache_enabled` | `boolean` | Whether cache is enabled |
+| `static_responses_enabled` | `boolean` | Whether static responses are enabled |
+| `semantic_cache_enabled` | `boolean` | Whether semantic cache is enabled |
+| `min_confidence_threshold` | `number` | Minimum confidence threshold (0-1) |
+| `semantic_similarity_threshold` | `number` | Semantic similarity threshold (0-1) |
+| `max_classification_latency_ms` | `number` | Maximum classification latency in milliseconds |
+
+**JSON Example**:
 ```json
 {
   "enabled": true,
@@ -121,160 +145,105 @@ Get current distillation configuration.
 }
 ```
 
-#### 6. Update Distillation Config
-**PATCH** `/api/admin/distillation/config`
-Update distillation configuration.
+### Update Distillation Config
+**Endpoint**: `PATCH /api/admin/distillation/config`  
+**Query Params**: None
 
-**Request Body (`DistillationConfigUpdate`)**:
+#### Request Body (`DistillationConfigUpdate`)
+| Field | Type | Description |
+|---|---|---|
+| `enabled` | `boolean` | Optional: Enable/disable distillation |
+| `cache_enabled` | `boolean` | Optional: Enable/disable cache |
+| `static_responses_enabled` | `boolean` | Optional: Enable/disable static responses |
+| `semantic_cache_enabled` | `boolean` | Optional: Enable/disable semantic cache |
+| `min_confidence_threshold` | `number` | Optional: Minimum confidence threshold |
+| `semantic_similarity_threshold` | `number` | Optional: Semantic similarity threshold |
+| `max_classification_latency_ms` | `number` | Optional: Maximum classification latency |
+
+**JSON Example**:
 ```json
 {
   "enabled": true,
-  "cache_enabled": true,
-  "static_responses_enabled": true,
-  "semantic_cache_enabled": true,
-  "min_confidence_threshold": 0.85,
-  "semantic_similarity_threshold": 0.90,
-  "max_classification_latency_ms": 100
+  "min_confidence_threshold": 0.90,
+  "semantic_similarity_threshold": 0.95
 }
 ```
 
-**Response**: `DistillationConfigResponse`
+#### Response Body (`DistillationConfigResponse`)
+Returns updated configuration object.
 
-### Cache Management
+### Get Cache Statistics
+**Endpoint**: `GET /api/admin/distillation/cache/stats`  
+**Query Params**: None
 
-#### 7. Invalidate Cache
-**POST** `/api/admin/distillation/cache/invalidate`
-Invalidate cache entries.
+#### Response Body (`CacheStatsResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `total_entries` | `number` | Total cache entries |
+| `hit_count` | `number` | Cache hit count |
+| `miss_count` | `number` | Cache miss count |
+| `hit_rate` | `number` | Cache hit rate (0-1) |
+| `memory_usage_mb` | `number` | Memory usage in MB |
+| `eviction_count` | `number` | Number of evictions |
 
-**Request Body (`CacheInvalidateRequest`)**:
+### Invalidate Cache
+**Endpoint**: `POST /api/admin/distillation/cache/invalidate`  
+**Query Params**: None
+
+#### Request Body (`CacheInvalidateRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `intent` | `string` | Optional: Invalidate specific intent |
+| `all` | `boolean` | Optional: Invalidate all cache (if true) |
+
+**JSON Example**:
 ```json
 {
-  "cache_type": "exact",
-  "filters": {"intent": "price_query"}
+  "intent": "price_query"
 }
 ```
 
-**Response**: `204 No Content`
+#### Response
+`204 No Content` - No response body
 
-**Cache Types**:
-- `exact`: Exact match cache
-- `semantic`: Semantic similarity cache
-- `all`: Both caches
+### Error Codes
+| Status | Error Code | Description | UI Behavior |
+|---|---|---|---|
+| `401` | `AuthenticationError` | Invalid or expired token | Redirect to login |
+| `403` | `AuthorizationError` | Not admin | Show error: "Admin access required" |
+| `404` | `NotFoundError` | Static response not found | Show error: "Static response not found" |
+| `400` | `DomainFieldError` | Invalid request data | Show error: "Invalid static response configuration" |
+| `500` | `Exception` | Internal server error | Show error: "Failed to manage distillation" + Retry button |
+| `503` | `DataMapperError` | Service unavailable | Show error: "Service unavailable" + Retry button |
 
-#### 8. Get Cache Stats
-**GET** `/api/admin/distillation/cache/stats`
-Get cache statistics.
+## 3. Implementation Flow
 
-**Response (`CacheStatsResponse`)**:
-```json
-{
-  "exact_cache": {
-    "hits": 1500,
-    "misses": 200,
-    "hit_rate": 0.882
-  },
-  "semantic_cache": {
-    "hits": 800,
-    "misses": 100,
-    "hit_rate": 0.889
-  }
-}
-```
-
-### Telemetry
-
-#### 9. Get Telemetry Requests
-**GET** `/api/admin/distillation/telemetry/requests`
-Get distillation telemetry requests.
-
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `user_id` | `UUID` | No | Filter by user ID. |
-| `intent` | `str` | No | Filter by intent. |
-| `route_type` | `str` | No | Filter by route type. |
-| `limit` | `int` | No | Limit results (max 1000, default 100). |
-
-**Response (`List[DistillationTelemetryResponse]`)**:
-```json
-[
-  {
-    "request_id": "uuid",
-    "user_id": "user-uuid",
-    "original_query": "What is the price of ETH?",
-    "intent": "price_query",
-    "complexity": "simple",
-    "route_type": "static_response",
-    "cache_hit": true,
-    "cache_level": "exact",
-    "classification_latency_ms": 15,
-    "created_at": "2023-10-01T10:00:00Z"
-  }
-]
-```
-
-#### 10. Get Telemetry Summary
-**GET** `/api/admin/distillation/telemetry/summary`
-Get hourly distillation telemetry summary.
-
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `hours` | `int` | No | Number of hours to retrieve (max 168, default 24). |
-
-**Response (`List[DistillationSummaryResponse]`)**:
-```json
-[
-  {
-    "hour": "2023-10-01T10:00:00Z",
-    "total_requests": 1500,
-    "cache_hits": 800,
-    "static_responses": 400,
-    "light_llm": 200,
-    "full_llm": 100,
-    "rejected": 0,
-    "avg_classification_ms": 20,
-    "avg_confidence": 0.92
-  }
-]
-```
-
----
-
-## 🎨 UI/UX Guidelines
-
-### Static Response Management
-- **List View**: Table showing all static responses with intent, variant, template preview, and active status.
-- **Create Form**: Multi-step form for creating static responses:
-  1. Intent and variant selection
-  2. Template editor with variable placeholders
-  3. Data source configuration
-  4. Conditions and priority settings
-- **Edit View**: Inline editing or modal for updating responses.
-- **Status Toggle**: Quick toggle for enabling/disabling responses.
-
-### Configuration Panel
-- **Toggle Switches**: Enable/disable distillation features.
-- **Threshold Sliders**: Adjust confidence and similarity thresholds.
-- **Latency Input**: Set maximum classification latency.
-- **Save Button**: Prominent save button with confirmation.
-
-### Cache Management
-- **Cache Stats Dashboard**: Visual display of cache hit rates and statistics.
-- **Invalidation Controls**: Dropdown to select cache type and filters.
-- **Confirmation**: Require confirmation before invalidating cache.
-
-### Telemetry Dashboard
-- **Request List**: Paginated table of telemetry requests with filters.
-- **Summary Charts**: Visual charts showing hourly summaries:
-  - Request volume over time
-  - Cache hit rates
-  - Route type distribution
-  - Average confidence scores
-- **Filters**: Filter by user, intent, route type, and time range.
-
----
-
-## 🔒 Security Considerations
-
-- **Admin Only**: All endpoints require admin authentication.
-- **Sensitive Data**: Telemetry may contain user queries; ensure proper access controls.
-- **Cache Invalidation**: Require confirmation for cache invalidation operations.
+1. **Mount**: Call `useStaticResponses({ intent, is_active })` hook which fetches `/api/admin/distillation/static-responses`.
+2. **Display**:
+   - Static responses table: Display responses array with columns: Intent, Variant, Template Preview, Data Source, Priority, Status (Active/Inactive), Actions.
+   - Filter: Provide filters for intent and active status.
+3. **Create Static Response**: On "Create" button click:
+   - Open create modal/form.
+   - Collect all required fields (intent, variant, template, variables, data source, conditions, priority).
+   - Validate template variables match template placeholders.
+   - On submit, call `POST /api/admin/distillation/static-responses` with request body.
+   - On success: Add to list, show success toast, invalidate query cache.
+4. **Update Static Response**: On "Edit" button click:
+   - Open edit modal with current values pre-populated.
+   - Allow updating template, active status, priority.
+   - On submit, call `PATCH /api/admin/distillation/static-responses/{response_id}`.
+   - On success: Update display, show success toast, invalidate query cache.
+5. **Delete Static Response**: On "Delete" button click:
+   - Show confirmation modal: "Are you sure you want to delete this static response?"
+   - On confirm, call `DELETE /api/admin/distillation/static-responses/{response_id}`.
+   - On success: Remove from list, show success toast, invalidate query cache.
+6. **Configuration Management**: 
+   - Call `GET /api/admin/distillation/config` to load current configuration.
+   - Display configuration form with toggles and threshold inputs.
+   - On save, call `PATCH /api/admin/distillation/config` with updated values.
+   - On success: Update display, show success toast.
+7. **Cache Management**:
+   - Call `GET /api/admin/distillation/cache/stats` to display cache statistics.
+   - On "Invalidate Cache" button click, show confirmation modal.
+   - Call `POST /api/admin/distillation/cache/invalidate` with optional intent filter.
+   - On success: Refresh cache stats, show success toast.

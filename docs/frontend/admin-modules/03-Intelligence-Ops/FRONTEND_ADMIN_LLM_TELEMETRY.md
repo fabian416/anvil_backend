@@ -1,30 +1,62 @@
-# Admin Module: LLM Telemetry
+# Module: LLM Telemetry
 
-> **Technical Specification**: `FRONTEND_ADMIN_LLM_TELEMETRY`
-> **Backend Controller**: `admin/llm/telemetry.py`
-> **Base URL**: `/api/admin/llm/telemetry`
+**Route**: `/admin/intelligence-ops/telemetry`  
+**Auth Required**: Yes (Admin Only)  
+**Package**: `admin/intelligence-ops/telemetry`
 
-## 📖 Overview
-The **LLM Telemetry** submodule enables administrators to monitor and analyze LLM orchestration metrics and analytics. It provides comprehensive insights into request volume, latency, costs, token usage, and performance by provider, model, and agent.
+## 1. Overview
+Enables administrators to monitor and analyze LLM orchestration metrics and analytics. Provides comprehensive insights into request volume, latency, costs, token usage, and performance by provider, model, and agent. Supports real-time updates via WebSocket.
 
-### Key Capabilities
-1. **Overview Dashboard**: High-level summary of LLM metrics for a specified period.
-2. **Time-Series Analytics**: Time-series data for charts and visualizations.
-3. **Cost Analysis**: Comprehensive cost breakdown and projections.
+## 2. API Contract
 
----
+### Get Telemetry Overview
+**Endpoint**: `GET /api/admin/llm/telemetry/overview`  
+**Query Params**:
+- `period` (string, optional): Time period - `1h`, `24h`, `7d`, `30d` (Default: `24h`).
 
-## 🔌 API Endpoints
+#### Response Body (`TelemetryResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | Whether request was successful |
+| `data` | `TelemetryOverviewData` | Telemetry overview data |
 
-### 1. Get Telemetry Overview
-**GET** `/api/admin/llm/telemetry/overview`
-High-level telemetry summary.
+**TelemetryOverviewData Object**:
+| Field | Type | Description |
+|---|---|---|
+| `period` | `string` | Time period used |
+| `total_requests` | `number` | Total requests in period |
+| `success_rate` | `number` | Overall success rate (0-1) |
+| `avg_latency_ms` | `number` | Average latency in milliseconds |
+| `p95_latency_ms` | `number` | 95th percentile latency |
+| `total_cost_usd` | `number` | Total cost in USD |
+| `total_tokens` | `TokenCounts` | Total token counts |
+| `requests_by_provider` | `ProviderMetrics[]` | Request metrics by provider |
+| `requests_by_agent` | `AgentMetrics[]` | Request metrics by agent |
+| `retry_rate` | `number` | Retry rate (0-1) |
+| `circuit_breakers_open` | `number` | Number of open circuit breakers |
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `period` | `str` | No | Time period: `1h`, `24h`, `7d`, `30d` (default: `24h`). |
+**TokenCounts Object**:
+| Field | Type | Description |
+|---|---|---|
+| `input` | `number` | Total input tokens |
+| `output` | `number` | Total output tokens |
 
-**Response (`TelemetryResponse`)**:
+**ProviderMetrics Object**:
+| Field | Type | Description |
+|---|---|---|
+| `provider` | `string` | Provider name |
+| `count` | `number` | Request count |
+| `success_rate` | `number` | Success rate (0-1) |
+| `avg_latency_ms` | `number` | Average latency |
+
+**AgentMetrics Object**:
+| Field | Type | Description |
+|---|---|---|
+| `agent` | `string` | Agent type |
+| `count` | `number` | Request count |
+| `avg_latency_ms` | `number` | Average latency |
+
+**JSON Example**:
 ```json
 {
   "success": true,
@@ -60,18 +92,36 @@ High-level telemetry summary.
 }
 ```
 
-### 2. Get Telemetry Time-Series
-**GET** `/api/admin/llm/telemetry/timeseries`
-Time-series metrics for charts.
+### Get Telemetry Time Series
+**Endpoint**: `GET /api/admin/llm/telemetry/timeseries`  
+**Query Params**:
+- `metric` (string, optional): Metric type - `requests`, `latency`, `cost`, `errors`, `tokens` (Default: `requests`).
+- `period` (string, optional): Time period - `1h`, `24h`, `7d`, `30d` (Default: `24h`).
+- `group_by` (string, optional): Grouping dimension - `provider`, `model`, `agent` (Default: `provider`).
+- `interval` (string, optional): Interval - `auto`, `5m`, `1h`, `1d` (Default: `auto`).
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `metric` | `str` | No | Metric type: `requests`, `latency`, `cost`, `errors`, `tokens` (default: `requests`). |
-| `period` | `str` | No | Time period: `1h`, `24h`, `7d`, `30d` (default: `24h`). |
-| `group_by` | `str` | No | Grouping: `provider`, `model`, `agent` (default: `provider`). |
-| `interval` | `str` | No | Interval: `auto`, `5m`, `1h`, `1d` (default: `auto`). |
+#### Response Body (`TelemetryResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | Whether request was successful |
+| `data` | `TelemetryTimeSeriesData` | Time series data |
 
-**Response (`TelemetryResponse`)**:
+**TelemetryTimeSeriesData Object**:
+| Field | Type | Description |
+|---|---|---|
+| `metric` | `string` | Metric type |
+| `period` | `string` | Time period |
+| `interval` | `string` | Interval used |
+| `data` | `TimeSeriesPoint[]` | Array of time series points |
+
+**TimeSeriesPoint Object**:
+| Field | Type | Description |
+|---|---|---|
+| `timestamp` | `string` | ISO 8601 timestamp |
+| `value` | `number` | Metric value |
+| `breakdown` | `{ [key: string]: number }` | Optional: Breakdown by group_by dimension |
+
+**JSON Example**:
 ```json
 {
   "success": true,
@@ -81,7 +131,7 @@ Time-series metrics for charts.
     "interval": "1h",
     "data": [
       {
-        "timestamp": "2025-12-01T00:00:00Z",
+        "timestamp": "2024-01-15T00:00:00Z",
         "value": 1500,
         "breakdown": {
           "vertex_ai": 800,
@@ -94,129 +144,62 @@ Time-series metrics for charts.
 }
 ```
 
-### 3. Get Cost Analysis
-**GET** `/api/admin/llm/telemetry/cost`
-Cost analysis and projections.
+### Get Cost Analysis
+**Endpoint**: `GET /api/admin/llm/telemetry/cost`  
+**Query Params**:
+- `period` (string, optional): Time period - `1h`, `24h`, `7d`, `30d` (Default: `24h`).
+- `group_by` (string, optional): Grouping - `provider`, `model`, `agent`, `day` (Default: `provider`).
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `period` | `str` | No | Time period: `7d`, `30d`, `90d` (default: `30d`). |
+#### Response Body (`TelemetryResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | Whether request was successful |
+| `data` | `CostAnalysisData` | Cost analysis data |
 
-**Response (`TelemetryResponse`)**:
-```json
-{
-  "success": true,
-  "data": {
-    "period": "30d",
-    "total_cost_usd": 2847.50,
-    "cost_by_provider": [
-      {
-        "provider": "vertex_ai",
-        "cost": 1200.00,
-        "percentage": 42.1
-      }
-    ],
-    "cost_by_agent": [
-      {
-        "agent": "swap_agent",
-        "cost": 1100.00,
-        "requests": 180000
-      }
-    ],
-    "cost_by_model": [
-      {
-        "model": "gemini-1.5-pro",
-        "cost": 800.00
-      }
-    ],
-    "daily_trend": [
-      {
-        "date": "2025-11-01",
-        "cost": 85.50
-      }
-    ],
-    "projected_monthly_cost": 3150.00,
-    "budget_status": {
-      "monthly_budget": 10000.00,
-      "current_spend": 2847.50,
-      "percentage_used": 28.5,
-      "days_remaining": 15
-    }
-  }
-}
-```
+**CostAnalysisData Object**:
+| Field | Type | Description |
+|---|---|---|
+| `period` | `string` | Time period |
+| `total_cost_usd` | `number` | Total cost in USD |
+| `avg_cost_per_request` | `number` | Average cost per request |
+| `cost_breakdown` | `CostBreakdownEntry[]` | Cost breakdown by group_by |
+| `projected_monthly_cost` | `number` | Projected monthly cost |
+| `cost_trend` | `TimeSeriesPoint[]` | Cost trend over time |
 
----
+**CostBreakdownEntry Object**:
+| Field | Type | Description |
+|---|---|---|
+| `key` | `string` | Group key (provider/model/agent name) |
+| `cost_usd` | `number` | Cost in USD |
+| `percentage` | `number` | Percentage of total (0-100) |
+| `request_count` | `number` | Request count |
 
-## 🎨 UI/UX Guidelines
+### Error Codes
+| Status | Error Code | Description | UI Behavior |
+|---|---|---|---|
+| `401` | `AuthenticationError` | Invalid or expired token | Redirect to login |
+| `403` | `AuthorizationError` | Not admin | Show error: "Admin access required" |
+| `400` | `DomainFieldError` | Invalid period or metric parameter | Show error: "Invalid parameter" + Reset to defaults |
+| `500` | `Exception` | Internal server error | Show error: "Failed to load telemetry" + Retry button |
+| `503` | `DataMapperError` | Service unavailable | Show error: "Service unavailable" + Retry button |
 
-### Overview Dashboard
-- **Summary Cards**: Display key metrics:
-  - Total requests (with trend indicator)
-  - Success rate (with color coding: green >0.95, yellow 0.90-0.95, red <0.90)
-  - Average latency (with p95 indicator)
-  - Total cost (with budget status)
-  - Total tokens (input/output breakdown)
-- **Provider Breakdown**: Pie chart or bar chart showing requests by provider.
-- **Agent Breakdown**: Bar chart showing requests by agent.
-- **Period Selector**: Dropdown to select time period (1h, 24h, 7d, 30d).
-- **Refresh Button**: Manual refresh button to update data.
+## 3. Implementation Flow
 
-### Time-Series Charts
-- **Chart Types**:
-  - **Line Chart**: For request volume, latency, cost trends over time.
-  - **Area Chart**: For cumulative metrics.
-  - **Bar Chart**: For grouped comparisons.
-- **Metric Selector**: Dropdown to select metric (requests, latency, cost, errors, tokens).
-- **Group By Selector**: Dropdown to group by provider, model, or agent.
-- **Interval Selector**: Dropdown to select time interval (auto, 5m, 1h, 1d).
-- **Interactive Tooltips**: Show detailed values on hover.
-- **Legend**: Color-coded legend for different groups.
-- **Zoom Controls**: Allow zooming into specific time ranges.
-
-### Cost Analysis Dashboard
-- **Total Cost Display**: Large, prominent display of total cost with period.
-- **Cost Breakdown Charts**:
-  - **Pie Chart**: Cost by provider (percentage breakdown).
-  - **Bar Chart**: Cost by agent (with request counts).
-  - **Bar Chart**: Cost by model (top models).
-- **Daily Trend Chart**: Line chart showing daily cost trends.
-- **Budget Status Card**: 
-  - Progress bar showing budget usage
-  - Percentage used
-  - Days remaining
-  - Projected monthly cost
-  - Color coding (green <50%, yellow 50-80%, red >80%)
-- **Export Button**: Export cost data to CSV/Excel.
-
-### Filters and Controls
-- **Period Selector**: Consistent period selector across all views.
-- **Date Range Picker**: Advanced date range selection for custom periods.
-- **Provider Filter**: Multi-select filter for providers.
-- **Agent Filter**: Multi-select filter for agents.
-- **Model Filter**: Multi-select filter for models.
-- **Apply Filters Button**: Apply selected filters.
-
-### Data Visualization Best Practices
-- **Color Consistency**: Use consistent colors for providers/agents/models across charts.
-- **Responsive Design**: Charts should be responsive and work on different screen sizes.
-- **Loading States**: Show loading indicators while fetching data.
-- **Empty States**: Show helpful messages when no data is available.
-- **Error States**: Display error messages if data fetch fails.
-
----
-
-## 🔒 Security Considerations
-
-- **Admin Only**: All endpoints require admin authentication.
-- **Data Privacy**: Ensure telemetry data doesn't expose sensitive user information.
-- **Cost Data**: Cost data is sensitive; ensure proper access controls.
-
----
-
-## 📝 Notes
-
-- Telemetry data is aggregated from hourly snapshots for performance.
-- Time-series data supports real-time updates for recent periods.
-- Cost projections are estimates based on current spending patterns.
-- Budget status requires budget configuration in the Budgets submodule.
+1. **Mount**: Call `useTelemetryOverview(period)` hook which fetches `/api/admin/llm/telemetry/overview`.
+2. **Display**:
+   - Overview cards: Display `total_requests`, `success_rate`, `avg_latency_ms`, `total_cost_usd` in summary cards.
+   - Provider breakdown: Display `requests_by_provider` in a table or chart.
+   - Agent breakdown: Display `requests_by_agent` in a table or chart.
+   - Token usage: Display `total_tokens.input` and `total_tokens.output`.
+3. **Period Selection**: On period change (1h, 24h, 7d, 30d), update `period` query param and refetch overview.
+4. **Time Series Charts**: 
+   - Call `GET /api/admin/llm/telemetry/timeseries` with selected `metric`, `period`, `group_by`, `interval`.
+   - Display time series chart using `data` array.
+   - Support metric switching (requests, latency, cost, errors, tokens).
+   - Support group_by switching (provider, model, agent).
+5. **Cost Analysis**: 
+   - Call `GET /api/admin/llm/telemetry/cost` with selected `period` and `group_by`.
+   - Display cost breakdown chart using `cost_breakdown`.
+   - Display projected monthly cost.
+   - Display cost trend chart.
+6. **Real-time Updates**: Connect to WebSocket endpoint `/api/admin/llm/dashboard/ws` for live telemetry updates (optional).

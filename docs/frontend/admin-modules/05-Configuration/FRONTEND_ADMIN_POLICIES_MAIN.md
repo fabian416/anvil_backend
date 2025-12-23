@@ -1,40 +1,43 @@
-# Admin Module: Policy Management
+# Module: Policy Management
 
-> **Technical Specification**: `FRONTEND_ADMIN_POLICIES_MAIN`
-> **Backend Controllers**: `admin/policies/list_policies.py`, `admin/policies/get_policy.py`, `admin/policies/create_policy.py`, `admin/policies/update_policy.py`, `admin/policies/policy_rules.py`
-> **Base URL**: `/api/admin/policies`
+**Route**: `/admin/configuration/policies`  
+**Auth Required**: Yes (Admin Only)  
+**Package**: `admin/configuration/policies`
 
-## 📖 Overview
-The **Policy Management** submodule enables administrators to manage Privy policies for wallet security and access control. Policies define rules for wallet operations, transaction limits, and authorization requirements.
+## 1. Overview
+Enables administrators to manage Privy policies for wallet security and access control. Policies define rules for wallet operations, transaction limits, and authorization requirements. Policies are managed through Privy API integration.
 
-### Key Capabilities
-1. **Policy Listing**: List and search Privy policies.
-2. **Policy Details**: View detailed policy information including rules.
-3. **Policy Creation**: Create new Privy policies.
-4. **Policy Updates**: Update existing policies.
-5. **Policy Rules Management**: Create, update, and delete individual policy rules.
+## 2. API Contract
 
----
+### List Policies
+**Endpoint**: `GET /api/admin/policies/`  
+**Query Params**:
+- `cursor` (string, optional): Pagination cursor.
+- `limit` (number, optional): Number of results (1-1000, default varies).
+- `chain_type` (string, optional): Filter by chain type (e.g., "ethereum").
+- `include_raw` (boolean, optional): Include raw Privy response (Default: false).
+- `refresh` (boolean, optional): Refresh from Privy before returning (Default: false).
+- `meta_key` (string, optional): Filter by local metadata key.
+- `meta_value` (string, optional): Filter by local metadata key value.
 
-## 🔌 API Endpoints
+#### Response Body (`ListPoliciesResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `policies` | `PolicySummary[]` | Array of policy summaries |
+| `next_cursor` | `string \| null` | Pagination cursor or null |
+| `total_count` | `number` | Total number of policies |
+| `raw` | `any \| null` | Raw Privy response or null (if include_raw=true) |
 
-### Policies
+**PolicySummary Object**:
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Policy identifier |
+| `name` | `string` | Policy name |
+| `version` | `string` | Policy version |
+| `chain_type` | `string` | Chain type |
+| `owner_id` | `string` | Owner UUID |
 
-#### 1. List Policies
-**GET** `/api/admin/policies/`
-List Privy policies with optional filtering and pagination.
-
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `cursor` | `str` | No | Pagination cursor. |
-| `limit` | `int` | No | Number of results (1-1000, default: varies). |
-| `chain_type` | `str` | No | Filter by chain type (e.g., "ethereum"). |
-| `include_raw` | `bool` | No | Include raw Privy response (default: false). |
-| `refresh` | `bool` | No | Refresh from Privy before returning (default: false). |
-| `meta_key` | `str` | No | Filter by local metadata key. |
-| `meta_value` | `str` | No | Filter by local metadata key value. |
-
-**Response (`ListPoliciesResponse`)**:
+**JSON Example**:
 ```json
 {
   "policies": [
@@ -43,7 +46,7 @@ List Privy policies with optional filtering and pagination.
       "name": "Standard Wallet Policy",
       "version": "1.0",
       "chain_type": "ethereum",
-      "owner_id": "user-uuid"
+      "owner_id": "550e8400-e29b-41d4-a716-446655440000"
     }
   ],
   "next_cursor": "cursor-string",
@@ -52,11 +55,30 @@ List Privy policies with optional filtering and pagination.
 }
 ```
 
-#### 2. Get Policy
-**GET** `/api/admin/policies/{policy_id}`
-Retrieve detailed information about a specific policy.
+### Get Policy
+**Endpoint**: `GET /api/admin/policies/{policy_id}`  
+**Path Params**:
+- `policy_id` (string, **required**): Policy identifier.
 
-**Response (`GetPolicyResponse`)**:
+#### Response Body (`GetPolicyResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Policy identifier |
+| `name` | `string` | Policy name |
+| `version` | `string` | Policy version |
+| `chain_type` | `string` | Chain type |
+| `rules` | `PolicyRule[]` | Array of policy rules |
+| `owner_id` | `string` | Owner UUID |
+| `metadata` | `{ [key: string]: any } \| null` | Optional metadata |
+
+**PolicyRule Object**:
+| Field | Type | Description |
+|---|---|---|
+| `rule_id` | `string` | Rule identifier |
+| `type` | `string` | Rule type |
+| `config` | `{ [key: string]: any }` | Rule configuration |
+
+**JSON Example**:
 ```json
 {
   "id": "policy-abc123",
@@ -67,19 +89,41 @@ Retrieve detailed information about a specific policy.
     {
       "rule_id": "rule-1",
       "type": "transaction_limit",
-      "max_amount": "1000",
-      "currency": "USD"
+      "config": {
+        "max_amount": "1000",
+        "currency": "USD"
+      }
     }
   ],
-  "owner_id": "user-uuid"
+  "owner_id": "550e8400-e29b-41d4-a716-446655440000",
+  "metadata": {
+    "description": "Standard policy for regular users"
+  }
 }
 ```
 
-#### 3. Create Policy
-**POST** `/api/admin/policies/`
-Create a new Privy policy.
+### Create Policy
+**Endpoint**: `POST /api/admin/policies/`  
+**Query Params**: None
 
-**Request Body (`CreatePolicyRequest`)**:
+#### Request Body (`CreatePolicyRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `version` | `string` | Policy version (required) |
+| `name` | `string` | Policy name (required) |
+| `chain_type` | `string` | Chain type (required) |
+| `rules` | `PolicyRuleRequestBody[]` | Array of policy rules (required) |
+| `metadata` | `{ [key: string]: any }` | Optional: Metadata |
+| `owner` | `{ [key: string]: any }` | Optional: Owner object |
+| `authorization_signature` | `string` | Optional: Authorization signature |
+
+**PolicyRuleRequestBody Object**:
+| Field | Type | Description |
+|---|---|---|
+| `type` | `string` | Rule type (required) |
+| `config` | `{ [key: string]: any }` | Rule configuration (required) |
+
+**JSON Example**:
 ```json
 {
   "version": "1.0",
@@ -88,235 +132,151 @@ Create a new Privy policy.
   "rules": [
     {
       "type": "transaction_limit",
-      "max_amount": "5000",
-      "currency": "USD"
+      "config": {
+        "max_amount": "5000",
+        "currency": "USD"
+      }
     }
   ],
   "metadata": {
     "description": "Custom policy for high-value transactions"
   },
   "owner": {
-    "user_id": "user-uuid"
-  },
-  "authorization_signature": "signature-string"
+    "user_id": "550e8400-e29b-41d4-a716-446655440000"
+  }
 }
 ```
 
-**Response (`CreatePolicyResponse`)**:
-```json
-{
-  "id": "policy-xyz789",
-  "name": "Custom Wallet Policy",
-  "version": "1.0",
-  "chain_type": "ethereum",
-  "rules": [
-    {
-      "type": "transaction_limit",
-      "max_amount": "5000",
-      "currency": "USD"
-    }
-  ],
-  "owner_id": "user-uuid"
-}
-```
+#### Response Body (`CreatePolicyResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Created policy identifier |
+| `name` | `string` | Policy name |
+| `version` | `string` | Policy version |
+| `chain_type` | `string` | Chain type |
+| `rules` | `PolicyRuleResponse[]` | Array of policy rules |
+| `owner_id` | `string` | Owner UUID |
 
-#### 4. Update Policy
-**PATCH** `/api/admin/policies/{policy_id}`
-Update an existing Privy policy.
+### Update Policy
+**Endpoint**: `PATCH /api/admin/policies/{policy_id}`  
+**Path Params**:
+- `policy_id` (string, **required**): Policy identifier.
 
-**Request Body (`UpdatePolicyRequest`)**:
+#### Request Body (`UpdatePolicyRequestBody`)
+| Field | Type | Description |
+|---|---|---|
+| `name` | `string` | Optional: Updated policy name |
+| `rules` | `PolicyRuleRequestBody[]` | Optional: Updated rules |
+| `metadata` | `{ [key: string]: any }` | Optional: Updated metadata |
+| `authorization_signature` | `string` | Optional: Authorization signature |
+
+**JSON Example**:
 ```json
 {
   "name": "Updated Policy Name",
   "rules": [
     {
       "type": "transaction_limit",
-      "max_amount": "10000",
-      "currency": "USD"
+      "config": {
+        "max_amount": "10000",
+        "currency": "USD"
+      }
     }
-  ],
-  "authorization_signature": "signature-string"
+  ]
 }
 ```
 
-**Response (`UpdatePolicyResponse`)**:
-```json
-{
-  "id": "policy-abc123",
-  "name": "Updated Policy Name",
-  "version": "1.0",
-  "chain_type": "ethereum",
-  "rules": [
-    {
-      "type": "transaction_limit",
-      "max_amount": "10000",
-      "currency": "USD"
-    }
-  ],
-  "owner_id": "user-uuid"
-}
-```
+#### Response Body (`UpdatePolicyResponse`)
+Returns updated policy object.
 
-### Policy Rules
+### Create Policy Rule
+**Endpoint**: `POST /api/admin/policies/{policy_id}/rules`  
+**Path Params**:
+- `policy_id` (string, **required**): Policy identifier.
 
-#### 5. Create Policy Rule
-**POST** `/api/admin/policies/{policy_id}/rules`
-Create a new rule for a policy.
+#### Request Body (`PolicyRuleRequestBody`)
+| Field | Type | Description |
+|---|---|---|
+| `type` | `string` | Rule type (required) |
+| `config` | `{ [key: string]: any }` | Rule configuration (required) |
 
-**Request Body (`PolicyRuleRequestBody`)**:
-```json
-{
-  "rule": {
-    "type": "transaction_limit",
-    "max_amount": "2000",
-    "currency": "USD"
-  },
-  "authorization_signature": "signature-string"
-}
-```
+#### Response Body (`PolicyRuleResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `rule_id` | `string` | Created rule identifier |
+| `type` | `string` | Rule type |
+| `config` | `{ [key: string]: any }` | Rule configuration |
+| `priority` | `number` | Rule priority |
+| `created_at` | `string` | ISO 8601 creation timestamp |
 
-**Response (`PolicyRuleResponse`)**:
-```json
-{
-  "result": {
-    "rule_id": "rule-2",
-    "type": "transaction_limit",
-    "max_amount": "2000",
-    "currency": "USD"
-  }
-}
-```
+### Update Policy Rule
+**Endpoint**: `PATCH /api/admin/policies/{policy_id}/rules/{rule_id}`  
+**Path Params**:
+- `policy_id` (string, **required**): Policy identifier.
+- `rule_id` (string, **required**): Rule identifier.
 
-#### 6. Update Policy Rule
-**PATCH** `/api/admin/policies/{policy_id}/rules/{rule_id}`
-Update an existing policy rule.
+#### Request Body (`PolicyRuleRequestBody`)
+Same as create rule.
 
-**Request Body (`PolicyRuleRequestBody`)**:
-```json
-{
-  "rule": {
-    "type": "transaction_limit",
-    "max_amount": "3000",
-    "currency": "USD"
-  },
-  "authorization_signature": "signature-string"
-}
-```
+#### Response Body (`PolicyRuleResponse`)
+Returns updated rule object.
 
-**Response (`PolicyRuleResponse`)**:
-```json
-{
-  "result": {
-    "rule_id": "rule-2",
-    "type": "transaction_limit",
-    "max_amount": "3000",
-    "currency": "USD"
-  }
-}
-```
+### Delete Policy Rule
+**Endpoint**: `DELETE /api/admin/policies/{policy_id}/rules/{rule_id}`  
+**Path Params**:
+- `policy_id` (string, **required**): Policy identifier.
+- `rule_id` (string, **required**): Rule identifier.
 
-#### 7. Delete Policy Rule
-**DELETE** `/api/admin/policies/{policy_id}/rules/{rule_id}`
-Delete a policy rule.
+#### Response
+`204 No Content` - No response body
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `authorization_signature` | `str` | No | Authorization signature for owner-protected policies. |
+### Error Codes
+| Status | Error Code | Description | UI Behavior |
+|---|---|---|---|
+| `401` | `AuthenticationError` | Invalid or expired token | Redirect to login |
+| `403` | `AuthorizationError` | Not admin | Show error: "Admin access required" |
+| `404` | `NotFoundError` | Policy or rule not found | Show error: "Policy not found" or "Rule not found" |
+| `400` | `DomainFieldError` | Invalid request data | Show error: "Invalid policy configuration" |
+| `502` | `GatewayError` | Privy API error | Show error: "Unable to connect to Privy" + Retry button |
+| `500` | `Exception` | Internal server error | Show error: "Failed to manage policy" + Retry button |
+| `503` | `DataMapperError` | Service unavailable | Show error: "Service unavailable" + Retry button |
 
-**Response (`PolicyRuleResponse`)**:
-```json
-{
-  "result": {
-    "rule_id": "rule-2",
-    "deleted": true
-  }
-}
-```
+## 3. Implementation Flow
 
----
-
-## 🎨 UI/UX Guidelines
-
-### Policy List View
-- **Table Display**: Table showing policies with:
-  - Policy ID (truncated with tooltip for full ID)
-  - Policy name
-  - Version badge
-  - Chain type badge
-  - Owner ID (if available)
-  - Actions (View, Edit, Delete)
-- **Filters**:
-  - Chain type dropdown
-  - Metadata key/value filters
-  - Search by name or ID
-- **Pagination**: Cursor-based pagination with next/previous buttons.
-- **Refresh Button**: Manual refresh button to sync with Privy.
-- **Create Button**: Prominent "Create Policy" button.
-
-### Policy Detail View
-- **Header**: Policy name, version, and chain type.
-- **Sections**:
-  - **Basic Information**: ID, name, version, chain type, owner.
-  - **Rules Section**: List of policy rules with:
-    - Rule ID
-    - Rule type
-    - Rule configuration (formatted JSON or structured display)
-    - Actions (Edit, Delete)
-  - **Metadata**: Display metadata if available.
-- **Actions**:
-  - Edit Policy button
-  - Add Rule button
-  - Delete Policy button (with confirmation)
-
-### Create/Edit Policy Form
-- **Basic Information**:
-  - Policy name input (required)
-  - Version input (default: "1.0")
-  - Chain type selector (required)
-  - Owner selector (optional)
-- **Rules Section**:
-  - List of rules with add/edit/remove buttons
-  - Rule editor (JSON editor or structured form)
-- **Metadata Section**:
-  - Key-value pairs for metadata
-- **Authorization**:
-  - Authorization signature input (if required)
-- **Save Button**: Save button with validation.
-- **Cancel Button**: Cancel button to discard changes.
-
-### Policy Rules Management
-- **Rules List**: Display rules in a table or list:
-  - Rule ID
-  - Rule type badge
-  - Rule configuration preview
-  - Actions (Edit, Delete)
-- **Add Rule Form**: Modal or inline form to add new rule:
-  - Rule type selector
-  - Rule configuration editor (JSON or structured form)
-  - Authorization signature (if required)
-- **Edit Rule Form**: Similar to add form, pre-populated with existing rule data.
-- **Delete Confirmation**: Require confirmation before deleting rules.
-
-### Error Handling
-- **404 Not Found**: Display "Policy not found" message.
-- **502 Bad Gateway**: Show "Unable to connect to Privy" error with retry option.
-- **503 Service Unavailable**: Display service unavailable message.
-- **Validation Errors**: Display field-level validation errors.
-
----
-
-## 🔒 Security Considerations
-
-- **Admin Only**: All endpoints require admin authentication.
-- **Owner Protection**: Owner-protected policies require authorization signatures.
-- **Policy Rules**: Policy rules can affect wallet security; require careful review.
-- **Audit Trail**: Log all policy creation, updates, and rule changes for audit.
-
----
-
-## 📝 Notes
-
-- Policies are managed through Privy API; local database stores metadata for advanced search.
-- Policy rules follow Privy's policy engine format.
-- Owner-protected policies require authorization signatures for modifications.
-- Chain type determines which blockchain the policy applies to (e.g., "ethereum", "polygon").
+1. **Mount**: Call `usePolicies({ cursor, limit, chain_type, refresh })` hook which fetches `/api/admin/policies/`.
+2. **Display**:
+   - Policies table: Display `policies` array with columns: Name, Version, Chain Type, Owner, Rules Count, Actions.
+   - Pagination: Use `next_cursor` for cursor-based pagination.
+   - Filter: Provide filters for chain type and metadata.
+3. **Create Policy**: On "Create Policy" button click:
+   - Open create policy modal/form.
+   - Collect required fields (version, name, chain_type, rules).
+   - Validate rules configuration.
+   - On submit, call `POST /api/admin/policies/` with request body.
+   - On success: Add policy to list, show success toast, invalidate query cache.
+   - On Privy API error (502): Show specific error message with retry option.
+4. **View Policy Details**: On policy click, call `GET /api/admin/policies/{policy_id}` to show detailed view in modal or navigate to detail page.
+5. **Update Policy**: On "Edit" button click:
+   - Open edit modal with current values pre-populated.
+   - Allow updating name, rules, metadata.
+   - On submit, call `PATCH /api/admin/policies/{policy_id}` with request body.
+   - On success: Update display, show success toast, invalidate query cache.
+6. **Manage Policy Rules**:
+   - In policy details view, display `rules` array.
+   - **Create Rule**: On "Add Rule" button click:
+     - Open create rule modal.
+     - Select rule type and configure rule config.
+     - Call `POST /api/admin/policies/{policy_id}/rules` with request body.
+     - On success: Add rule to list, show success toast.
+   - **Update Rule**: On "Edit Rule" button click:
+     - Open edit modal with current rule values.
+     - Call `PATCH /api/admin/policies/{policy_id}/rules/{rule_id}` with request body.
+     - On success: Update rule in list, show success toast.
+   - **Delete Rule**: On "Delete Rule" button click:
+     - Show confirmation modal: "Are you sure you want to delete this rule?"
+     - Call `DELETE /api/admin/policies/{policy_id}/rules/{rule_id}`.
+     - On success: Remove rule from list, show success toast.
+7. **Refresh from Privy**: On "Refresh from Privy" button click:
+   - Call `GET /api/admin/policies/?refresh=true` to refresh policies from Privy API.
+   - Show loading state during refresh.
+   - On success: Update policies list, show success toast.

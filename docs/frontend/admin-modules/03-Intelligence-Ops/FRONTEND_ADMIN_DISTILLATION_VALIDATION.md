@@ -1,48 +1,64 @@
-# Admin Module: Distillation Validation
+# Module: Distillation Validation
 
-> **Technical Specification**: `FRONTEND_ADMIN_DISTILLATION_VALIDATION`
-> **Backend Controller**: `admin/distillation_router.py` (validation endpoints)
-> **Base URL**: `/api/admin/distillation/validation`
+**Route**: `/admin/intelligence-ops/distillation/validation`  
+**Auth Required**: Yes (Admin Only)  
+**Package**: `admin/intelligence-ops/distillation/validation`
 
-## 📖 Overview
-The **Distillation Validation** submodule enables administrators to review, approve, and manage validation responses for distillation. This module provides a workflow for validating static responses and ensuring quality before they are used in production.
+## 1. Overview
+Enables administrators to review, approve, and manage validation responses for distillation. Provides a workflow for validating static responses and ensuring quality before they are used in production. Includes analytics on validation responses and approval rates.
 
-### Key Capabilities
-1. **Validation Response Review**: View validation responses awaiting approval.
-2. **Response Approval**: Approve or reject validation responses.
-3. **Validation Analytics**: View analytics on validation responses and approval rates.
+## 2. API Contract
 
----
+### List Validation Responses
+**Endpoint**: `GET /api/admin/distillation/validation/responses`  
+**Query Params**:
+- `status` (string, optional): Filter by status - `pending`, `approved`, `rejected` (Default: all).
+- `intent` (string, optional): Filter by intent.
+- `limit` (number, optional): Limit results (Default: 50, Max: 100).
+- `offset` (number, optional): Pagination offset (Default: 0).
 
-## 🔌 API Endpoints
+#### Response Body (`ValidationResponseList`)
+| Field | Type | Description |
+|---|---|---|
+| `items` | `ValidationResponse[]` | Array of validation responses |
+| `total` | `number` | Total number of responses |
+| `limit` | `number` | Limit used |
+| `offset` | `number` | Offset used |
 
-### Validation Responses
+**ValidationResponse Object**:
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Validation response UUID |
+| `intent` | `string` | Intent identifier |
+| `original_query` | `string` | Original user query |
+| `proposed_response` | `string` | Proposed static response |
+| `confidence` | `number` | Confidence score (0-1) |
+| `status` | `string` | Status: `pending`, `approved`, `rejected` |
+| `metadata` | `{ [key: string]: any }` | Optional: Additional metadata |
+| `created_at` | `string` | ISO 8601 creation timestamp |
+| `reviewed_by` | `string \| null` | Reviewer user ID or null |
+| `reviewed_at` | `string \| null` | ISO 8601 review timestamp or null |
+| `rejection_reason` | `string \| null` | Rejection reason or null |
 
-#### 1. List Validation Responses
-**GET** `/api/admin/distillation/validation/responses`
-List validation responses for review.
-
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `status` | `str` | No | Filter by status (pending, approved, rejected). |
-| `intent` | `str` | No | Filter by intent. |
-| `limit` | `int` | No | Limit results (default 50). |
-| `offset` | `int` | No | Pagination offset (default 0). |
-
-**Response**:
+**JSON Example**:
 ```json
 {
   "items": [
     {
-      "id": "uuid",
+      "id": "550e8400-e29b-41d4-a716-446655440000",
       "intent": "price_query",
       "original_query": "What is the price of ETH?",
       "proposed_response": "The current price of ETH is $2,500",
       "confidence": 0.95,
       "status": "pending",
-      "created_at": "2023-10-01T10:00:00Z",
+      "metadata": {
+        "data_source": "coingecko",
+        "template_variables": {"token": "ETH", "price": "2500"}
+      },
+      "created_at": "2024-01-15T10:00:00Z",
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "rejection_reason": null
     }
   ],
   "total": 25,
@@ -51,69 +67,93 @@ List validation responses for review.
 }
 ```
 
-#### 2. Get Validation Response
-**GET** `/api/admin/distillation/validation/responses/{response_id}`
-Get detailed information about a specific validation response.
+### Get Validation Response
+**Endpoint**: `GET /api/admin/distillation/validation/responses/{response_id}`  
+**Path Params**:
+- `response_id` (string, **required**): Validation response UUID.
 
-**Response**:
-```json
-{
-  "id": "uuid",
-  "intent": "price_query",
-  "original_query": "What is the price of ETH?",
-  "proposed_response": "The current price of ETH is $2,500",
-  "confidence": 0.95,
-  "status": "pending",
-  "metadata": {
-    "data_source": "coingecko",
-    "template_variables": {"token": "ETH", "price": "2500"}
-  },
-  "created_at": "2023-10-01T10:00:00Z",
-  "reviewed_by": null,
-  "reviewed_at": null,
-  "rejection_reason": null
-}
-```
+#### Response Body (`ValidationResponse`)
+Returns detailed validation response object (same structure as above).
 
-#### 3. Approve Validation Response
-**PATCH** `/api/admin/distillation/validation/responses/{response_id}/approve`
-Approve a validation response.
+### Approve Validation Response
+**Endpoint**: `PATCH /api/admin/distillation/validation/responses/{response_id}/approve`  
+**Path Params**:
+- `response_id` (string, **required**): Validation response UUID.
 
-**Request Body**:
+#### Request Body (`ApproveValidationRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `notes` | `string` | Optional: Approval notes |
+
+**JSON Example**:
 ```json
 {
   "notes": "Response looks good, approved for production"
 }
 ```
 
-**Response**: `200 OK`
+#### Response
+`200 OK` - No response body
 
-#### 4. Reject Validation Response
-**PATCH** `/api/admin/distillation/validation/responses/{response_id}/reject`
-Reject a validation response.
+### Reject Validation Response
+**Endpoint**: `PATCH /api/admin/distillation/validation/responses/{response_id}/reject`  
+**Path Params**:
+- `response_id` (string, **required**): Validation response UUID.
 
-**Request Body**:
+#### Request Body (`RejectValidationRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `reason` | `string` | Rejection reason (required) |
+| `notes` | `string` | Optional: Additional notes |
+
+**JSON Example**:
 ```json
 {
   "reason": "Response is inaccurate",
-  "notes": "Price data is outdated"
+  "notes": "Price data is outdated, needs refresh"
 }
 ```
 
-**Response**: `200 OK`
+#### Response
+`200 OK` - No response body
 
-### Validation Analytics
+### Get Validation Analytics
+**Endpoint**: `GET /api/admin/distillation/validation/analytics`  
+**Query Params**:
+- `period` (string, optional): Time period - `24h`, `7d`, `30d` (Default: `7d`).
+- `intent` (string, optional): Filter by intent.
 
-#### 5. Get Validation Analytics
-**GET** `/api/admin/distillation/validation/analytics`
-Get analytics on validation responses.
+#### Response Body (`ValidationAnalyticsResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `period` | `string` | Time period used |
+| `total_responses` | `number` | Total validation responses |
+| `pending` | `number` | Pending responses count |
+| `approved` | `number` | Approved responses count |
+| `rejected` | `number` | Rejected responses count |
+| `approval_rate` | `number` | Approval rate (0-1) |
+| `average_confidence` | `number` | Average confidence score (0-1) |
+| `by_intent` | `IntentAnalytics[]` | Analytics grouped by intent |
+| `trends` | `ValidationTrend[]` | Daily validation trends |
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `period` | `str` | No | Time period (24h, 7d, 30d, default 7d). |
-| `intent` | `str` | No | Filter by intent. |
+**IntentAnalytics Object**:
+| Field | Type | Description |
+|---|---|---|
+| `intent` | `string` | Intent identifier |
+| `total` | `number` | Total responses for this intent |
+| `approved` | `number` | Approved count |
+| `rejected` | `number` | Rejected count |
+| `pending` | `number` | Pending count |
 
-**Response**:
+**ValidationTrend Object**:
+| Field | Type | Description |
+|---|---|---|
+| `date` | `string` | ISO 8601 date |
+| `total` | `number` | Total responses on this date |
+| `approved` | `number` | Approved count |
+| `rejected` | `number` | Rejected count |
+
+**JSON Example**:
 ```json
 {
   "period": "7d",
@@ -134,7 +174,7 @@ Get analytics on validation responses.
   ],
   "trends": [
     {
-      "date": "2023-10-01",
+      "date": "2024-01-15",
       "total": 20,
       "approved": 18,
       "rejected": 2
@@ -143,68 +183,37 @@ Get analytics on validation responses.
 }
 ```
 
----
+### Error Codes
+| Status | Error Code | Description | UI Behavior |
+|---|---|---|---|
+| `401` | `AuthenticationError` | Invalid or expired token | Redirect to login |
+| `403` | `AuthorizationError` | Not admin | Show error: "Admin access required" |
+| `404` | `NotFoundError` | Validation response not found | Show error: "Validation response not found" |
+| `400` | `DomainFieldError` | Invalid request data (missing reason for reject) | Show error: "Rejection reason is required" |
+| `409` | `DomainConflictError` | Response already reviewed | Show error: "Response has already been reviewed" |
+| `500` | `Exception` | Internal server error | Show error: "Failed to process validation" + Retry button |
+| `503` | `DataMapperError` | Service unavailable | Show error: "Service unavailable" + Retry button |
 
-## 🎨 UI/UX Guidelines
+## 3. Implementation Flow
 
-### Validation Response List
-- **Table View**: Display validation responses in a table with:
-  - Intent badge
-  - Original query (truncated)
-  - Proposed response (truncated)
-  - Confidence score (with color coding: green >0.9, yellow 0.7-0.9, red <0.7)
-  - Status badge (pending, approved, rejected)
-  - Created date
-  - Actions (Approve/Reject buttons)
-- **Filters**: Filter by status, intent, and date range.
-- **Sorting**: Sort by confidence, date, or status.
-- **Pagination**: Paginate results for large datasets.
-
-### Validation Response Detail View
-- **Header**: Display response ID and status.
-- **Sections**:
-  - **Original Query**: Full original user query.
-  - **Proposed Response**: Full proposed response with formatting.
-  - **Confidence Score**: Visual indicator (progress bar or gauge).
-  - **Metadata**: Data source, template variables, and other metadata.
-  - **Review History**: Show review status, reviewer, and review date.
-- **Actions**:
-  - **Approve Button**: Green button with confirmation modal.
-  - **Reject Button**: Red button with reason input field.
-  - **Notes Field**: Optional notes for approval/rejection.
-
-### Validation Analytics Dashboard
-- **Summary Cards**: Display key metrics:
-  - Total responses
-  - Pending count
-  - Approval rate
-  - Average confidence
-- **Charts**:
-  - Approval/rejection trend over time
-  - Distribution by intent
-  - Confidence score distribution
-- **Filters**: Filter by period and intent.
-
-### Approval/Rejection Workflow
-- **Confirmation Modal**: Require confirmation before approving/rejecting.
-- **Reason Input**: Require reason for rejection (optional for approval).
-- **Notes Field**: Optional notes field for additional context.
-- **Success Feedback**: Show success message after approval/rejection.
-
----
-
-## 🔒 Security Considerations
-
-- **Admin Only**: All endpoints require admin authentication.
-- **Audit Trail**: Log all approval/rejection actions with reviewer information.
-- **Data Privacy**: Ensure validation responses don't expose sensitive user data.
-
----
-
-## 📝 Notes
-
-- This module may be expanded in the future to include:
-  - Bulk approval/rejection
-  - Automated validation rules
-  - Validation response templates
-  - Integration with static response management
+1. **Mount**: Call `useValidationResponses({ status, intent, limit, offset })` hook which fetches `/api/admin/distillation/validation/responses`.
+2. **Display**:
+   - Validation queue table: Display `items` array with columns: Intent, Original Query, Proposed Response, Confidence, Status, Created Date, Actions.
+   - Status badges: Color-code by status (Pending=Yellow, Approved=Green, Rejected=Red).
+   - Confidence indicator: Display confidence score with color coding (High=Green >0.9, Medium=Yellow 0.7-0.9, Low=Red <0.7).
+3. **Filter**: On status or intent filter change, update query params and refetch.
+4. **Pagination**: Use `total`, `limit`, `offset` to display pagination controls.
+5. **View Details**: On validation response click, call `GET /api/admin/distillation/validation/responses/{response_id}` to show detailed view in modal or navigate to detail page.
+6. **Approve Response**: On "Approve" button click:
+   - Open approval modal with optional notes field.
+   - Call `PATCH /api/admin/distillation/validation/responses/{response_id}/approve` with optional notes.
+   - On success: Update status to "approved", show success toast, invalidate query cache.
+7. **Reject Response**: On "Reject" button click:
+   - Open rejection modal with required reason field and optional notes.
+   - Validate reason is provided.
+   - Call `PATCH /api/admin/distillation/validation/responses/{response_id}/reject` with reason and notes.
+   - On success: Update status to "rejected", show success toast, invalidate query cache.
+8. **View Analytics**: Call `GET /api/admin/distillation/validation/analytics` with selected period to display:
+   - Summary cards: Total, Pending, Approved, Rejected, Approval Rate.
+   - Intent breakdown: Display `by_intent` in a table or chart.
+   - Trends chart: Display `trends` as a line chart showing approval/rejection trends over time.

@@ -1,70 +1,86 @@
-# Admin Module: Retry System
+# Module: Retry System
 
-> **Technical Specification**: `FRONTEND_ADMIN_RETRY_MAIN`
-> **Backend Controller**: `admin/retry/router.py`
-> **Base URL**: `/api/v1/admin/retry`
+**Route**: `/admin/system-health/retry`  
+**Auth Required**: Yes (Admin Only)  
+**Package**: `admin/system-health/retry`
 
-## 📖 Overview
-The **Retry System** submodule enables administrators to monitor and control the retry system for service reliability. It provides visibility into service status, circuit breakers, and retry metrics, allowing admins to manage service availability and troubleshoot issues.
+## 1. Overview
+Enables administrators to monitor and control the retry system for service reliability. Provides visibility into service status, circuit breakers, and retry metrics, allowing admins to manage service availability and troubleshoot issues.
 
-### Key Capabilities
-1. **Service Status Monitoring**: View status of all services in the retry system.
-2. **Service Control**: Enable or disable services manually.
-3. **Circuit Breaker Management**: View and reset circuit breakers.
-4. **Retry Metrics**: View aggregated metrics for services over time.
+## 2. API Contract
 
----
+### List Services
+**Endpoint**: `GET /api/v1/admin/retry/services`  
+**Query Params**: None
 
-## 🔌 API Endpoints
+#### Response Body (`ServiceListResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `services` | `ServiceStatusResponse[]` | Array of service status objects |
 
-### Services
+**ServiceStatusResponse Object**:
+| Field | Type | Description |
+|---|---|---|
+| `service_name` | `string` | Service identifier |
+| `enabled` | `boolean` | Whether service is enabled |
+| `circuit_state` | `string` | Circuit breaker state: `CLOSED`, `OPEN`, `HALF_OPEN` |
+| `failure_count` | `number` | Total failure count |
+| `success_count` | `number` | Total success count |
+| `last_error` | `string \| null` | Last error message or null |
+| `last_error_at` | `string \| null` | ISO 8601 timestamp of last error or null |
+| `override_reason` | `string \| null` | Manual override reason or null |
+| `override_expires_at` | `string \| null` | ISO 8601 expiration timestamp or null |
 
-#### 1. List Services
-**GET** `/api/v1/admin/retry/services`
-Get comprehensive status of all services in the retry system.
-
-**Response (`ServiceListResponse`)**:
+**JSON Example**:
 ```json
 {
   "services": [
     {
       "service_name": "openai_api",
-      "status": "enabled",
-      "circuit_breaker_state": "closed",
-      "retry_count": 3,
-      "last_success": "2023-10-01T10:00:00Z",
-      "last_failure": null,
-      "consecutive_failures": 0
+      "enabled": true,
+      "circuit_state": "CLOSED",
+      "failure_count": 0,
+      "success_count": 100,
+      "last_error": null,
+      "last_error_at": null,
+      "override_reason": null,
+      "override_expires_at": null
+    },
+    {
+      "service_name": "anthropic_api",
+      "enabled": true,
+      "circuit_state": "OPEN",
+      "failure_count": 6,
+      "success_count": 50,
+      "last_error": "Rate limit exceeded",
+      "last_error_at": "2024-01-15T10:00:00Z",
+      "override_reason": null,
+      "override_expires_at": null
     }
   ]
 }
 ```
 
-#### 2. Get Service Status
-**GET** `/api/v1/admin/retry/services/{service_name}`
-Get detailed status for a specific service.
+### Get Service Status
+**Endpoint**: `GET /api/v1/admin/retry/services/{service_name}`  
+**Path Params**:
+- `service_name` (string, **required**): Service identifier.
 
-**Response (`ServiceStatusResponse`)**:
-```json
-{
-  "service_name": "openai_api",
-  "status": "enabled",
-  "circuit_breaker_state": "closed",
-  "retry_count": 3,
-  "last_success": "2023-10-01T10:00:00Z",
-  "last_failure": null,
-  "consecutive_failures": 0,
-  "failure_threshold": 5,
-  "success_threshold": 2,
-  "timeout_seconds": 30
-}
-```
+#### Response Body (`ServiceStatusResponse`)
+Returns detailed service status object (same structure as above).
 
-#### 3. Disable Service
-**POST** `/api/v1/admin/retry/services/{service_name}/disable`
-Manually disable a service (stops all retry attempts).
+### Disable Service
+**Endpoint**: `POST /api/v1/admin/retry/services/{service_name}/disable`  
+**Path Params**:
+- `service_name` (string, **required**): Service identifier.
 
-**Request Body (`DisableServiceRequest`)**:
+#### Request Body (`DisableServiceRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `reason` | `string` | Reason for disabling (required) |
+| `duration_minutes` | `number \| null` | Optional: Duration in minutes (null = indefinite) |
+
+**JSON Example**:
 ```json
 {
   "reason": "Maintenance window",
@@ -72,206 +88,160 @@ Manually disable a service (stops all retry attempts).
 }
 ```
 
-**Response**:
-```json
-{
-  "message": "Service 'openai_api' disabled",
-  "reason": "Maintenance window",
-  "duration_minutes": 60
-}
-```
+#### Response
+`200 OK` - Returns success message
 
-#### 4. Enable Service
-**POST** `/api/v1/admin/retry/services/{service_name}/enable`
-Manually enable a previously disabled service.
+### Enable Service
+**Endpoint**: `POST /api/v1/admin/retry/services/{service_name}/enable`  
+**Path Params**:
+- `service_name` (string, **required**): Service identifier.
 
-**Request Body (`EnableServiceRequest`)**:
+#### Request Body (`EnableServiceRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `reason` | `string` | Reason for enabling (required) |
+
+**JSON Example**:
 ```json
 {
   "reason": "Maintenance complete"
 }
 ```
 
-**Response**:
-```json
-{
-  "message": "Service 'openai_api' enabled",
-  "reason": "Maintenance complete"
-}
-```
+#### Response
+`200 OK` - Returns success message
 
-### Circuit Breakers
+### Get Circuit Breakers
+**Endpoint**: `GET /api/v1/admin/retry/circuit-breakers`  
+**Query Params**: None
 
-#### 5. Get Circuit Breakers
-**GET** `/api/v1/admin/retry/circuit-breakers`
-Get circuit breaker status for all services.
+#### Response Body (`CircuitBreakerStatusResponse[]`)
+Array of circuit breaker status objects.
 
-**Response (`List[CircuitBreakerStatusResponse]`)**:
+**CircuitBreakerStatusResponse Object**:
+| Field | Type | Description |
+|---|---|---|
+| `service_name` | `string` | Service identifier |
+| `state` | `string` | Breaker state: `CLOSED`, `OPEN`, `HALF_OPEN` |
+| `failure_count` | `number` | Failure count |
+| `success_count` | `number` | Success count |
+| `opened_at` | `string \| null` | ISO 8601 timestamp when opened or null |
+| `config` | `CircuitBreakerConfig` | Breaker configuration |
+
+**CircuitBreakerConfig Object**:
+| Field | Type | Description |
+|---|---|---|
+| `failure_threshold` | `number` | Failure threshold to open |
+| `success_threshold` | `number` | Success threshold to close |
+| `timeout_seconds` | `number` | Timeout in seconds |
+
+**JSON Example**:
 ```json
 [
   {
     "service_name": "openai_api",
-    "state": "closed",
+    "state": "CLOSED",
     "failure_count": 0,
     "success_count": 100,
-    "last_state_change": "2023-10-01T09:00:00Z",
-    "next_attempt_at": null
+    "opened_at": null,
+    "config": {
+      "failure_threshold": 5,
+      "success_threshold": 2,
+      "timeout_seconds": 60
+    }
   }
 ]
 ```
 
-**Circuit Breaker States**:
-- `closed`: Normal operation, requests allowed.
-- `open`: Circuit is open, requests blocked.
-- `half_open`: Testing state, limited requests allowed.
+### Reset Circuit Breaker
+**Endpoint**: `POST /api/v1/admin/retry/circuit-breakers/{service_name}/reset`  
+**Path Params**:
+- `service_name` (string, **required**): Service identifier.
 
-#### 6. Reset Circuit Breaker
-**POST** `/api/v1/admin/retry/circuit-breakers/{service_name}/reset`
-Manually reset a circuit breaker to CLOSED state.
+#### Request Body (`ResetCircuitBreakerRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `reason` | `string` | Reason for reset (required) |
 
-**Request Body (`ResetCircuitBreakerRequest`)**:
+**JSON Example**:
 ```json
 {
-  "reason": "Issue resolved"
+  "reason": "Issue resolved, provider has recovered"
 }
 ```
 
-**Response**:
-```json
-{
-  "message": "Circuit breaker for 'openai_api' reset to CLOSED",
-  "reason": "Issue resolved"
-}
-```
+#### Response
+`200 OK` - Returns success message
 
-### Metrics
+### Get Service Metrics
+**Endpoint**: `GET /api/v1/admin/retry/metrics/{service_name}`  
+**Path Params**:
+- `service_name` (string, **required**): Service identifier.
 
-#### 7. Get Service Metrics
-**GET** `/api/v1/admin/retry/metrics/{service_name}`
-Get aggregated metrics for a service over time.
+**Query Params**:
+- `days` (number, optional): Number of days to look back (Default: 7, Max: 30).
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `days` | `int` | No | Number of days to retrieve (1-90, default: 7). |
+#### Response Body (`ServiceMetricsResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `service_name` | `string` | Service identifier |
+| `period_days` | `number` | Period in days |
+| `total_requests` | `number` | Total requests |
+| `successful_requests` | `number` | Successful requests |
+| `failed_requests` | `number` | Failed requests |
+| `success_rate` | `number` | Success rate (0-1) |
+| `avg_latency_ms` | `number` | Average latency in milliseconds |
+| `p95_latency_ms` | `number` | 95th percentile latency |
+| `retry_count` | `number` | Total retry count |
+| `circuit_breaker_opens` | `number` | Number of times circuit breaker opened |
+| `daily_metrics` | `DailyServiceMetric[]` | Daily metrics breakdown |
 
-**Response (`ServiceMetricsResponse`)**:
-```json
-{
-  "service_name": "openai_api",
-  "period_days": 7,
-  "total_requests": 15000,
-  "successful_requests": 14850,
-  "failed_requests": 150,
-  "success_rate": 0.99,
-  "avg_retry_count": 1.2,
-  "circuit_breaker_opens": 2,
-  "circuit_breaker_resets": 2,
-  "daily_breakdown": [
-    {
-      "date": "2023-10-01",
-      "requests": 2000,
-      "successful": 1980,
-      "failed": 20,
-      "avg_retry_count": 1.1
-    }
-  ]
-}
-```
+**DailyServiceMetric Object**:
+| Field | Type | Description |
+|---|---|---|
+| `date` | `string` | ISO 8601 date |
+| `requests` | `number` | Request count |
+| `success_rate` | `number` | Success rate (0-1) |
+| `avg_latency_ms` | `number` | Average latency |
 
----
+### Error Codes
+| Status | Error Code | Description | UI Behavior |
+|---|---|---|---|
+| `401` | `AuthenticationError` | Invalid or expired token | Redirect to login |
+| `403` | `AuthorizationError` | Not admin | Show error: "Admin access required" |
+| `404` | `NotFoundError` | Service not found | Show error: "Service not found" |
+| `400` | `DomainFieldError` | Invalid request data (missing reason) | Show error: "Reason is required" |
+| `409` | `DomainConflictError` | Service already in requested state | Show error: "Service is already {state}" |
+| `500` | `Exception` | Internal server error | Show error: "Failed to manage retry system" + Retry button |
+| `503` | `DataMapperError` | Service unavailable | Show error: "Service unavailable" + Retry button |
 
-## 🎨 UI/UX Guidelines
+## 3. Implementation Flow
 
-### Service List View
-- **Table Display**: Table showing all services with:
-  - Service name
-  - Status badge (enabled/disabled)
-  - Circuit breaker state (closed/open/half-open) with color coding
-  - Retry count
-  - Last success/failure timestamps
-  - Consecutive failures count
-- **Status Indicators**:
-  - **Enabled**: Green badge
-  - **Disabled**: Grey badge
-  - **Circuit Closed**: Green indicator
-  - **Circuit Open**: Red indicator
-  - **Circuit Half-Open**: Yellow indicator
-- **Actions**: 
-  - Enable/Disable buttons (contextual based on current status)
-  - View details link
-  - Reset circuit breaker button (if open)
-
-### Service Detail View
-- **Header**: Service name and current status.
-- **Status Card**: Large status display with:
-  - Current status (enabled/disabled)
-  - Circuit breaker state
-  - Last success/failure timestamps
-- **Configuration Section**: Display retry configuration:
-  - Retry count
-  - Failure threshold
-  - Success threshold
-  - Timeout seconds
-- **Metrics Section**: Show recent metrics and trends.
-- **Actions**: 
-  - Enable/Disable service button
-  - Reset circuit breaker button
-  - View metrics link
-
-### Circuit Breaker Management
-- **Circuit Breaker List**: Table showing all circuit breakers:
-  - Service name
-  - State (with color coding)
-  - Failure count
-  - Success count
-  - Last state change timestamp
-  - Next attempt timestamp (if half-open)
-  - Reset button
-- **State Indicators**:
-  - **Closed**: Green badge (normal operation)
-  - **Open**: Red badge (blocking requests)
-  - **Half-Open**: Yellow badge (testing state)
-- **Reset Confirmation**: Require confirmation before resetting circuit breaker.
-
-### Service Control
-- **Disable Service Form**:
-  - Reason textarea (required)
-  - Duration input (optional, in minutes)
-  - Confirmation checkbox
-- **Enable Service Form**:
-  - Reason textarea (required)
-  - Confirmation checkbox
-- **Confirmation Modal**: Show confirmation before enabling/disabling services.
-
-### Metrics Dashboard
-- **Summary Cards**: Display key metrics:
-  - Total requests
-  - Success rate (with color coding)
-  - Average retry count
-  - Circuit breaker opens/resets
-- **Daily Breakdown Chart**: Line or bar chart showing daily metrics over time.
-- **Period Selector**: Dropdown to select number of days (1-90).
-- **Export Button**: Export metrics to CSV.
-
-### Error Handling
-- **Service Not Found**: Display "Service not found" message.
-- **Operation Failed**: Show error message with retry option.
-- **Validation Errors**: Display field-level validation errors.
-
----
-
-## 🔒 Security Considerations
-
-- **Admin Only**: All endpoints require admin authentication.
-- **Service Control**: Require confirmation for enable/disable operations.
-- **Circuit Breaker Reset**: Require confirmation and reason for reset operations.
-- **Audit Trail**: Log all service control and circuit breaker operations.
-
----
-
-## 📝 Notes
-
-- Circuit breakers automatically transition between states based on failure/success thresholds.
-- Manual service disable takes precedence over automatic retry logic.
-- Service metrics are aggregated from retry system logs.
-- Circuit breaker resets should be used carefully; ensure underlying issues are resolved first.
+1. **Mount**: Call `useRetryServices()` hook which fetches `/api/v1/admin/retry/services`.
+2. **Display**:
+   - Service status table: Display `services` array with columns: Service Name, Status (Enabled/Disabled badge), Circuit State (with color coding), Failure Count, Success Count, Last Error, Actions.
+   - Circuit state indicators:
+     - **CLOSED (Green)**: Normal operation, requests allowed.
+     - **OPEN (Red)**: Circuit is open, requests blocked.
+     - **HALF_OPEN (Yellow)**: Testing state, limited requests allowed.
+3. **Service Control**:
+   - **Disable Service**: On "Disable" button click:
+     - Open disable modal with reason field (required) and optional duration.
+     - Call `POST /api/v1/admin/retry/services/{service_name}/disable` with reason and duration.
+     - On success: Update service status, show success toast, invalidate query cache.
+   - **Enable Service**: On "Enable" button click:
+     - Open enable modal with reason field (required).
+     - Call `POST /api/v1/admin/retry/services/{service_name}/enable` with reason.
+     - On success: Update service status, show success toast, invalidate query cache.
+4. **Circuit Breaker Management**:
+   - Call `GET /api/v1/admin/retry/circuit-breakers` to display circuit breaker status.
+   - **Reset Circuit Breaker**: On "Reset" button click (only available when state is `OPEN` or `HALF_OPEN`):
+     - Show confirmation modal with reason field (required).
+     - Call `POST /api/v1/admin/retry/circuit-breakers/{service_name}/reset` with reason.
+     - On success: Update circuit breaker state to "CLOSED", show success toast, invalidate query cache.
+5. **View Service Metrics**: On "View Metrics" button click:
+   - Call `GET /api/v1/admin/retry/metrics/{service_name}` with optional days parameter.
+   - Display metrics in modal or navigate to metrics view:
+     - Summary cards: Total requests, success rate, average latency.
+     - Daily metrics chart: Line chart showing daily request counts and success rates.
+6. **Auto-refresh**: Poll service status every 30 seconds for real-time updates.

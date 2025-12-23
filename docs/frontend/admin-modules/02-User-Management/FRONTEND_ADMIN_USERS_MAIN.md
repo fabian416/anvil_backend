@@ -1,38 +1,45 @@
-# Admin Module: User Management
+# Module: User Management
 
-> **Technical Specification**: `FRONTEND_ADMIN_USERS_MAIN`
-> **Backend Controllers**: `admin/user/list_users.py`, `admin/user/activate_user.py`
-> **Base URL**: `/api/admin/users`
+**Route**: `/admin/users`  
+**Auth Required**: Yes (Admin Only)  
+**Package**: `admin/users`
 
-## 📖 Overview
-The **User Management** module enables administrators to oversee the user base. It provides search, filtering, and status management capabilities (Active/Inactive), along with role assignment (Grant/Revoke Admin).
+## 1. Overview
+Enables administrators to oversee the user base. Provides search, filtering, pagination, and status management capabilities (Activate/Deactivate), along with role assignment (Grant/Revoke Admin) and password management.
 
-### Key Capabilities
-1.  **User Roster**: Paginated list of all users with sorting.
-2.  **Status Control**: Activate or Deactivate user accounts.
-3.  **Role Management**: Promote users to Admin status.
+## 2. API Contract
 
----
+### List Users
+**Endpoint**: `GET /api/admin/users/`  
+**Query Params**:
+- `limit` (number, optional): Users per page (Default: 20, Min: 1, Max: 100).
+- `offset` (number, optional): Pagination offset (Default: 0).
+- `sorting_field` (string, optional): Field to sort by - `email`, `created_at`, `is_active`, `is_admin` (Default: `email`).
+- `sorting_order` (string, optional): Sort order - `ASC`, `DESC` (Default: `ASC`).
 
-## 🔌 API Endpoints
+#### Response Body (`ListUsersResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `items` | `User[]` | Array of user objects |
+| `total` | `number` | Total number of users |
+| `limit` | `number` | Limit used |
+| `offset` | `number` | Offset used |
 
-### 1. List Users
-**GET** `/api/admin/users/`
-Retrieve a paginated list of users.
+**User Object**:
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | User UUID |
+| `email` | `string` | User email address |
+| `is_active` | `boolean` | Whether user account is active |
+| `is_admin` | `boolean` | Whether user has admin role |
+| `created_at` | `string` | ISO 8601 creation timestamp |
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `limit` | `int` | No | Users per page (Default: 20, Min: 1). |
-| `offset` | `int` | No | Pagination offset (Default: 0). |
-| `sorting_field` | `str` | No | Field to sort by (Default: "email"). |
-| `sorting_order` | `str` | No | `ASC` or `DESC` (Default: ASC). |
-
-**Response (`ListUsersResponse`)**:
+**JSON Example**:
 ```json
 {
   "items": [
     {
-      "id": "user-uuid",
+      "id": "550e8400-e29b-41d4-a716-446655440000",
       "email": "user@example.com",
       "is_active": true,
       "is_admin": false,
@@ -45,45 +52,85 @@ Retrieve a paginated list of users.
 }
 ```
 
-### 2. Activate User
-**PATCH** `/api/admin/users/{email}/activate`
-Enable a user account that was previously inactive or pending.
+### Activate User
+**Endpoint**: `PATCH /api/admin/users/{email}/activate`  
+**Path Params**:
+- `email` (string, **required**): User email address.
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `email` | `str` | **Yes** | Email of the user to activate (in URL). |
+#### Response
+`204 No Content` - No response body
 
-**Response**: `204 No Content`
+### Deactivate User
+**Endpoint**: `PATCH /api/admin/users/{email}/deactivate`  
+**Path Params**:
+- `email` (string, **required**): User email address.
 
-### 3. Deactivate User
-**PATCH** `/api/admin/users/{email}/deactivate`
-Suspend a user account.
+#### Response
+`204 No Content` - No response body
 
-**Response**: `204 No Content`
+### Grant Admin Role
+**Endpoint**: `PATCH /api/admin/users/{email}/grant-admin`  
+**Path Params**:
+- `email` (string, **required**): User email address.
 
-### 4. Grant Admin Role
-**POST** `/api/admin/users/{email}/grant-admin`
-Promote a standard user to Administrator.
+**Auth Required**: Super Admin Only
 
-**Response**: `204 No Content`
+#### Response
+`204 No Content` - No response body
 
-### 5. Revoke Admin Role
-**POST** `/api/admin/users/{email}/revoke-admin`
-Demote an Administrator to standard user.
+### Revoke Admin Role
+**Endpoint**: `PATCH /api/admin/users/{email}/revoke-admin`  
+**Path Params**:
+- `email` (string, **required**): User email address.
 
-**Response**: `204 No Content`
+**Auth Required**: Super Admin Only
 
----
+**Note**: Cannot revoke super admin role.
 
-## 🎨 UI/UX Guidelines
+#### Response
+`204 No Content` - No response body
 
-### User Table
-- **Columns**: Name, Email, Status (Badge), Role (Badge), Joined Date, Actions.
-- **Badges**:
-    - **Active**: Green dot or badge.
-    - **Inactive**: Grey dot or badge.
-    - **Admin**: Purple badge.
-- **Actions**: "Kebab" menu (three dots) on the right of each row containing "Activate/Deactivate", "Promote to Admin".
+### Change User Password
+**Endpoint**: `PATCH /api/admin/users/{email}/password`  
+**Path Params**:
+- `email` (string, **required**): User email address.
 
-### Confirmation
-- **Destructive Actions**: Revoking admin status or deactivating a user MUST require a confirmation modal ("Are you sure you want to deactivate user X?").
+#### Request Body (`ChangePasswordRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `password` | `string` | New password (min 8 characters) |
+
+**JSON Example**:
+```json
+{
+  "password": "newSecurePassword123"
+}
+```
+
+#### Response
+`204 No Content` - No response body
+
+### Error Codes
+| Status | Error Code | Description | UI Behavior |
+|---|---|---|---|
+| `400` | `DomainFieldError` | Invalid password format | Show error: "Password must be at least 8 characters" |
+| `401` | `AuthenticationError` | Invalid or expired token | Redirect to login |
+| `403` | `AuthorizationError` | Not admin / Not super admin | Show error: "Admin access required" or "Super admin access required" |
+| `404` | `UserNotFoundByEmailError` | User not found | Show error: "User not found" |
+| `409` | `DomainConflictError` | Cannot revoke super admin | Show error: "Cannot revoke super admin role" |
+| `500` | `Exception` | Internal server error | Show error: "Failed to perform operation" + Retry button |
+| `503` | `DataMapperError` | Service unavailable | Show error: "Service unavailable" + Retry button |
+
+## 3. Implementation Flow
+
+1. **Mount**: Call `useUsers({ limit, offset, sorting_field, sorting_order })` hook which fetches `/api/admin/users/`.
+2. **Display**:
+   - User table: Display `items` array with columns: Email, Status (Active/Inactive badge), Role (Admin/User badge), Joined Date (`created_at`), Actions (kebab menu).
+   - Pagination: Use `total`, `limit`, `offset` to display pagination controls.
+   - Search: Client-side or server-side search by email (implement based on requirements).
+3. **Sorting**: On column header click, update `sorting_field` and `sorting_order`, refetch data.
+4. **User Actions**:
+   - **Activate/Deactivate**: Show confirmation modal, call respective endpoint, invalidate query cache, show success toast.
+   - **Grant/Revoke Admin**: Show confirmation modal with warning (Super Admin only), call respective endpoint, invalidate query cache, show success toast.
+   - **Change Password**: Open password change modal, validate password (min 8 chars), call endpoint, show success toast.
+5. **Error Handling**: Display error messages based on error codes, provide retry option for 500/503 errors.

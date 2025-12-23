@@ -1,122 +1,160 @@
-# Admin Module: Wallet Management
+# Module: Wallet Management
 
-> **Technical Specification**: `FRONTEND_ADMIN_WALLETS_MAIN`
-> **Backend Controllers**: `admin/wallet/get_wallet_details.py`, `admin/wallet/update_wallet.py`
-> **Base URL**: `/api/admin/wallets`
+**Route**: `/admin/wallets`  
+**Auth Required**: Yes (Admin Only)  
+**Package**: `admin/wallets`
 
-## 📖 Overview
-The **Wallet Management** submodule enables administrators to view and manage user wallet configurations. It provides access to wallet details from both the local database and Privy API, allowing admins to update wallet policies, owners, and additional signers.
+## 1. Overview
+Enables administrators to view and manage user wallet configurations. Provides access to wallet details from both the local database and Privy API, allowing admins to update wallet policies, owners, and additional signers.
 
-### Key Capabilities
-1. **Wallet Details**: View comprehensive wallet information including Privy wallet ID, policies, owner, and signers.
-2. **Wallet Configuration**: Update wallet policies, owner, and additional signers.
-3. **Status Monitoring**: View wallet status and configuration state.
+## 2. API Contract
 
----
+### Get Wallet Details
+**Endpoint**: `GET /api/admin/wallets/{privy_wallet_id}`  
+**Path Params**:
+- `privy_wallet_id` (string, **required**): Privy wallet identifier.
 
-## 🔌 API Endpoints
+#### Response Body (`AdminWalletDetailsResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `local_wallet_id` | `number \| null` | Local database wallet ID or null |
+| `privy_wallet_id` | `string` | Privy wallet identifier |
+| `address` | `string` | Wallet address (0x...) |
+| `chain_type` | `string` | Chain type (e.g., "evm") |
+| `user_id` | `number \| null` | Associated user ID or null |
+| `owner_type` | `string \| null` | Owner type or null |
+| `owner_id` | `string \| null` | Owner identifier or null |
+| `policy_ids` | `string[]` | Array of policy IDs |
+| `additional_signers` | `AdditionalSignerResponse[]` | Array of additional signers |
+| `provider` | `string` | Wallet provider |
+| `status` | `string` | Wallet status |
+| `created_at` | `string` | ISO 8601 creation timestamp |
+| `updated_at` | `string` | ISO 8601 update timestamp |
 
-### 1. Get Wallet Details
-**GET** `/api/admin/wallets/{privy_wallet_id}`
-Retrieve detailed wallet information from both local database and Privy API.
+**AdditionalSignerResponse Object**:
+| Field | Type | Description |
+|---|---|---|
+| `signer_id` | `string` | Signer identifier |
+| `override_policy_ids` | `string[] \| null` | Override policy IDs or null |
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `privy_wallet_id` | `str` | **Yes** | Privy wallet identifier (in URL path). |
-
-**Response (`AdminWalletDetailsResponse`)**:
+**JSON Example**:
 ```json
 {
+  "local_wallet_id": 123,
   "privy_wallet_id": "wallet-abc123",
+  "address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+  "chain_type": "evm",
+  "user_id": 456,
+  "owner_type": "user",
+  "owner_id": "user-uuid",
   "policy_ids": ["policy-1", "policy-2"],
-  "owner": {
-    "user_id": "user-uuid",
-    "public_key": "0x..."
-  },
   "additional_signers": [
     {
-      "user_id": "user-uuid-2",
-      "public_key": "0x..."
+      "signer_id": "signer-xyz",
+      "override_policy_ids": ["policy-3"]
     }
   ],
+  "provider": "privy",
+  "status": "active",
   "created_at": "2023-10-01T10:00:00Z",
   "updated_at": "2023-10-15T14:30:00Z"
 }
 ```
 
-### 2. Update Wallet
-**PATCH** `/api/admin/wallets/{privy_wallet_id}`
-Update wallet configuration including policies, owner, and additional signers.
+### Update Wallet
+**Endpoint**: `PATCH /api/admin/wallets/{privy_wallet_id}`  
+**Path Params**:
+- `privy_wallet_id` (string, **required**): Privy wallet identifier.
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `privy_wallet_id` | `str` | **Yes** | Privy wallet identifier (in URL path). |
+#### Request Body (`UpdateWalletRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `policy_ids` | `string[]` | Optional: Array of policy IDs |
+| `owner` | `{ [key: string]: any }` | Optional: Owner object |
+| `owner_id` | `string` | Optional: Owner identifier |
+| `additional_signers` | `AdditionalSignerRequest[]` | Optional: Array of additional signers |
 
-**Request Body (`UpdateWalletRequest`)**:
+**AdditionalSignerRequest Object**:
+| Field | Type | Description |
+|---|---|---|
+| `signer_id` | `string` | Signer identifier |
+| `override_policy_ids` | `string[] \| null` | Optional: Override policy IDs |
+
+**JSON Example**:
 ```json
 {
-  "policy_ids": ["policy-1", "policy-2"],
+  "policy_ids": ["policy-1", "policy-2", "policy-3"],
   "owner": {
     "user_id": "user-uuid",
     "public_key": "0x..."
   },
   "additional_signers": [
     {
-      "user_id": "user-uuid-2",
-      "public_key": "0x..."
+      "signer_id": "signer-xyz",
+      "override_policy_ids": ["policy-4"]
     }
   ]
 }
 ```
 
-**Response (`UpdateWalletResponse`)**:
+#### Response Body (`UpdateWalletResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | Whether update was successful |
+| `changes_applied` | `WalletChanges` | Object describing changes applied |
+| `privy_wallet_id` | `string` | Privy wallet identifier |
+| `updated_at` | `string` | ISO 8601 update timestamp |
+
+**WalletChanges Object**:
+| Field | Type | Description |
+|---|---|---|
+| `policy_ids` | `string[]` | Updated policy IDs (if changed) |
+| `owner` | `{ [key: string]: any }` | Updated owner (if changed) |
+| `additional_signers` | `AdditionalSignerResponse[]` | Updated signers (if changed) |
+
+**JSON Example**:
 ```json
 {
-  "privy_wallet_id": "wallet-abc123",
-  "policy_ids": ["policy-1", "policy-2"],
-  "owner": {
-    "user_id": "user-uuid",
-    "public_key": "0x..."
+  "success": true,
+  "changes_applied": {
+    "policy_ids": ["policy-1", "policy-2", "policy-3"],
+    "additional_signers": [
+      {
+        "signer_id": "signer-xyz",
+        "override_policy_ids": ["policy-4"]
+      }
+    ]
   },
-  "additional_signers": [
-    {
-      "user_id": "user-uuid-2",
-      "public_key": "0x..."
-    }
-  ],
-  "updated_at": "2023-10-15T14:30:00Z"
+  "privy_wallet_id": "wallet-abc123",
+  "updated_at": "2024-01-15T14:35:00Z"
 }
 ```
 
----
+### Error Codes
+| Status | Error Code | Description | UI Behavior |
+|---|---|---|---|
+| `401` | `AuthenticationError` | Invalid or expired token | Redirect to login |
+| `403` | `AuthorizationError` | Not admin | Show error: "Admin access required" |
+| `404` | `NotFoundError` | Wallet not found | Show error: "Wallet not found" |
+| `400` | `DomainFieldError` | Invalid request data | Show error: "Invalid wallet configuration" |
+| `502` | `GatewayError` | Privy API error | Show error: "Unable to connect to Privy" + Retry button |
+| `500` | `Exception` | Internal server error | Show error: "Failed to update wallet" + Retry button |
+| `503` | `DataMapperError` | Service unavailable | Show error: "Service unavailable" + Retry button |
 
-## 🎨 UI/UX Guidelines
+## 3. Implementation Flow
 
-### Wallet Details View
-- **Header**: Display Privy wallet ID prominently.
-- **Sections**:
-  - **Policies**: List of policy IDs with links to policy management.
-  - **Owner**: Display owner user ID and public key.
-  - **Additional Signers**: Table of additional signers with user IDs and public keys.
-  - **Metadata**: Created/Updated timestamps.
-- **Actions**: "Edit Wallet" button to open update form.
-
-### Update Wallet Form
-- **Policy Selection**: Multi-select dropdown or tag input for policy IDs.
-- **Owner Configuration**: User selector or public key input.
-- **Additional Signers**: Dynamic list with add/remove buttons.
-- **Validation**: Ensure owner and signers are valid user IDs or public keys.
-- **Confirmation**: Show confirmation modal before updating wallet configuration.
-
-### Error Handling
-- **404 Not Found**: Display "Wallet not found" message with wallet ID.
-- **502 Bad Gateway**: Show "Unable to connect to Privy" error with retry option.
-- **503 Service Unavailable**: Display service unavailable message.
-
----
-
-## 🔒 Security Considerations
-
-- **Admin Only**: All endpoints require admin authentication.
-- **Sensitive Data**: Wallet IDs and public keys are sensitive; ensure proper access controls.
-- **Audit Trail**: Log all wallet configuration changes for audit purposes.
+1. **Mount**: Call `useWalletDetails(privyWalletId)` hook which fetches `/api/admin/wallets/{privy_wallet_id}`.
+2. **Display**:
+   - Wallet header: Display `privy_wallet_id` and `address` prominently.
+   - Policies section: Display `policy_ids` as tags with links to policy management.
+   - Owner section: Display `owner_type`, `owner_id`, and owner details if available.
+   - Additional signers section: Display `additional_signers` in a table with signer IDs and override policies.
+   - Metadata: Display `created_at` and `updated_at` timestamps.
+3. **Edit Wallet**: On "Edit Wallet" button click, open edit form/modal with current values pre-populated.
+4. **Update Wallet**: On form submit:
+   - Validate form data (ensure policy IDs are valid, signers are valid).
+   - Show confirmation modal: "Are you sure you want to update this wallet configuration?"
+   - Call `PATCH /api/admin/wallets/{privy_wallet_id}` with request body.
+   - On success: Update display, show success toast, invalidate query cache.
+   - On error: Display error message based on error code, provide retry option.
+5. **Error Handling**: Handle Privy API errors (502) with specific messaging and retry option.

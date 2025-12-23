@@ -1,31 +1,52 @@
-# Admin Module: LLM Rankings
+# Module: LLM Rankings
 
-> **Technical Specification**: `FRONTEND_ADMIN_LLM_RANKINGS`
-> **Backend Controller**: `admin/llm/rankings.py`
-> **Base URL**: `/api/admin/llm/rankings`
+**Route**: `/admin/intelligence-ops/rankings`  
+**Auth Required**: Yes (Admin Only)  
+**Package**: `admin/intelligence-ops/rankings`
 
-## 📖 Overview
-The **LLM Rankings** submodule enables administrators to view and manage model rankings for different agent types. Rankings determine which models are selected for specific agents based on performance metrics (success rate, latency, cost).
+## 1. Overview
+Enables administrators to view and manage model rankings for different agent types. Rankings determine which models are selected for specific agents based on performance metrics (success rate, latency, cost). Admins can customize ranking weights, recalculate rankings, and create manual overrides.
 
-### Key Capabilities
-1. **Ranking View**: View current model rankings per agent type.
-2. **Weight Configuration**: Customize ranking weight profiles for agents.
-3. **Ranking Recalculation**: Force recalculation of rankings based on latest performance data.
-4. **Ranking Overrides**: Create manual overrides to force specific models for agents.
+## 2. API Contract
 
----
+### Get Rankings
+**Endpoint**: `GET /api/admin/llm/rankings`  
+**Query Params**:
+- `agent_type` (string, optional): Filter by agent type (e.g., "swap_agent").
 
-## 🔌 API Endpoints
+#### Response Body (`RankingResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | Whether request was successful |
+| `data` | `RankingListData` | Ranking list data |
 
-### 1. Get Rankings
-**GET** `/api/admin/llm/rankings`
-View current rankings per agent type.
+**RankingListData Object**:
+| Field | Type | Description |
+|---|---|---|
+| `rankings` | `AgentRanking[]` | Array of agent rankings |
+| `last_recalculated_at` | `string` | ISO 8601 timestamp of last recalculation |
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `agent_type` | `str` | No | Filter by agent type (e.g., "swap_agent"). |
+**AgentRanking Object**:
+| Field | Type | Description |
+|---|---|---|
+| `agent_type` | `string` | Agent type identifier |
+| `models` | `RankedModel[]` | Array of ranked models |
 
-**Response (`RankingResponse`)**:
+**RankedModel Object**:
+| Field | Type | Description |
+|---|---|---|
+| `rank` | `number` | Ranking position (1 = highest) |
+| `model_id` | `string` | Model UUID |
+| `model_name` | `string` | Model display name |
+| `provider` | `string` | Provider name |
+| `ranking_score` | `number` | Overall ranking score (0-1) |
+| `success_rate` | `number` | Success rate (0-1) |
+| `avg_latency_ms` | `number` | Average latency in milliseconds |
+| `avg_cost_per_request` | `number` | Average cost per request (USD) |
+| `total_requests` | `number` | Total requests |
+| `has_override` | `boolean` | Whether this ranking has a manual override |
+
+**JSON Example**:
 ```json
 {
   "success": true,
@@ -36,7 +57,7 @@ View current rankings per agent type.
         "models": [
           {
             "rank": 1,
-            "model_id": "uuid",
+            "model_id": "550e8400-e29b-41d4-a716-446655440000",
             "model_name": "gemini-1.5-pro",
             "provider": "vertex_ai",
             "ranking_score": 0.8945,
@@ -49,16 +70,30 @@ View current rankings per agent type.
         ]
       }
     ],
-    "last_recalculated_at": "2025-12-01T09:00:00Z"
+    "last_recalculated_at": "2024-01-15T09:00:00Z"
   }
 }
 ```
 
-### 2. Update Ranking Weights
-**PUT** `/api/admin/llm/rankings/weights`
-Update ranking weight profiles for agents.
+### Update Ranking Weights
+**Endpoint**: `PUT /api/admin/llm/rankings/weights`  
+**Query Params**: None
 
-**Request Body (`UpdateWeightsRequest`)**:
+#### Request Body (`UpdateWeightsRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `agent_type` | `string` | Agent type (required) |
+| `weights` | `RankingWeights` | Ranking weight configuration (required) |
+
+**RankingWeights Object**:
+| Field | Type | Description |
+|---|---|---|
+| `success_weight` | `number` | Weight for success rate (should sum to ~1.0) |
+| `latency_weight` | `number` | Weight for latency |
+| `cost_weight` | `number` | Weight for cost |
+| `recency_weight` | `number` | Weight for recency |
+
+**JSON Example**:
 ```json
 {
   "agent_type": "swap_agent",
@@ -71,133 +106,119 @@ Update ranking weight profiles for agents.
 }
 ```
 
-**Response (`RankingResponse`)**:
-```json
-{
-  "success": true,
-  "data": {
-    "agent_type": "swap_agent",
-    "weights_updated": true
-  }
-}
-```
+#### Response Body (`RankingResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | Whether request was successful |
+| `data` | `WeightUpdateData` | Weight update data |
 
-### 3. Recalculate Rankings
-**POST** `/api/admin/llm/rankings/recalculate`
-Force ranking recalculation.
+**WeightUpdateData Object**:
+| Field | Type | Description |
+|---|---|---|
+| `agent_type` | `string` | Agent type |
+| `weights_updated` | `boolean` | Whether weights were updated |
 
-**Request Body (`RecalculateRequest`)**:
+### Recalculate Rankings
+**Endpoint**: `POST /api/admin/llm/rankings/recalculate`  
+**Query Params**: None
+
+#### Request Body (`RecalculateRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `agent_type` | `string` | Optional: Recalculate specific agent, or omit for all agents |
+
+**JSON Example**:
 ```json
 {
   "agent_type": "swap_agent"
 }
 ```
 
-**Response (`RankingResponse`)**:
-```json
-{
-  "success": true,
-  "data": {
-    "recalculated_count": 9,
-    "agent_types_affected": ["swap_agent"],
-    "duration_ms": 150
-  }
-}
-```
+#### Response Body (`RankingResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | Whether request was successful |
+| `data` | `RecalculateData` | Recalculation data |
 
-### 4. Create Ranking Override
-**POST** `/api/admin/llm/rankings/override`
-Manually set model priority for agent.
+**RecalculateData Object**:
+| Field | Type | Description |
+|---|---|---|
+| `recalculated_count` | `number` | Number of rankings recalculated |
+| `agent_types_affected` | `string[]` | Array of affected agent types |
+| `duration_ms` | `number` | Recalculation duration in milliseconds |
 
-**Request Body (`RankingOverrideRequest`)**:
+### Create Ranking Override
+**Endpoint**: `POST /api/admin/llm/rankings/override`  
+**Query Params**: None
+
+#### Request Body (`RankingOverrideRequest`)
+| Field | Type | Description |
+|---|---|---|
+| `agent_type` | `string` | Agent type (required) |
+| `model_id` | `string` | Model UUID (required) |
+| `override_score` | `number` | Override ranking score (required) |
+| `reason` | `string` | Reason for override (required) |
+| `expires_at` | `string` | Optional: ISO 8601 expiration timestamp |
+
+**JSON Example**:
 ```json
 {
   "agent_type": "swap_agent",
-  "model_id": "uuid",
+  "model_id": "550e8400-e29b-41d4-a716-446655440000",
   "override_score": 0.95,
-  "reason": "Testing new model",
-  "expires_at": "2025-12-31T23:59:59Z"
+  "reason": "Emergency: Force this model for critical operations",
+  "expires_at": "2024-01-20T00:00:00Z"
 }
 ```
 
-**Response (`RankingResponse`)**:
-```json
-{
-  "success": true,
-  "data": {
-    "override_id": "uuid",
-    "agent_type": "swap_agent",
-    "model_id": "uuid",
-    "override_score": 0.95,
-    "created": true
-  }
-}
-```
+#### Response Body (`RankingResponse`)
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | Whether request was successful |
+| `data` | `OverrideCreateData` | Override creation data |
 
----
+**OverrideCreateData Object**:
+| Field | Type | Description |
+|---|---|---|
+| `override_id` | `string` | Created override UUID |
+| `agent_type` | `string` | Agent type |
+| `model_id` | `string` | Model UUID |
+| `override_score` | `number` | Override score |
+| `created` | `boolean` | Whether override was created |
 
-## 🎨 UI/UX Guidelines
+### Error Codes
+| Status | Error Code | Description | UI Behavior |
+|---|---|---|---|
+| `401` | `AuthenticationError` | Invalid or expired token | Redirect to login |
+| `403` | `AuthorizationError` | Not admin | Show error: "Admin access required" |
+| `400` | `DomainFieldError` | Invalid weights (don't sum to ~1.0) or invalid request | Show error: "Weights must sum to approximately 1.0" |
+| `404` | `NotFoundError` | Agent type or model not found | Show error: "Agent type or model not found" |
+| `500` | `Exception` | Internal server error | Show error: "Failed to update rankings" + Retry button |
+| `503` | `DataMapperError` | Service unavailable | Show error: "Service unavailable" + Retry button |
 
-### Rankings View
-- **Agent Type Selector**: Dropdown to filter by agent type.
-- **Ranking Table**: Table showing ranked models with:
-  - **Rank**: Position number (1, 2, 3...)
-  - **Model Name**: Model display name
-  - **Provider**: Provider badge
-  - **Ranking Score**: Visual score bar (0-1 scale)
-  - **Metrics**: Success rate, avg latency, avg cost
-  - **Total Requests**: Request count
-  - **Override Badge**: Indicator if model has manual override
-- **Color Coding**: 
-  - Green for high-ranking models (rank 1-3)
-  - Yellow for mid-ranking models (rank 4-6)
-  - Grey for low-ranking models (rank 7+)
-- **Last Recalculated**: Display timestamp of last recalculation.
+## 3. Implementation Flow
 
-### Weight Configuration
-- **Weight Sliders**: Interactive sliders for each weight component:
-  - Success weight
-  - Latency weight
-  - Cost weight
-  - Recency weight
-- **Total Validation**: Ensure weights sum to 1.0 (show warning if not).
-- **Preview**: Show preview of how weights affect ranking scores.
-- **Save Button**: Save button with confirmation.
-
-### Recalculation
-- **Trigger Button**: "Recalculate Rankings" button.
-- **Confirmation Modal**: Confirm before triggering recalculation.
-- **Progress Indicator**: Show progress during recalculation.
-- **Results Display**: Show results after recalculation (affected models, duration).
-
-### Ranking Overrides
-- **Create Override Form**: Form to create new override:
-  - Agent type selector
-  - Model selector
-  - Override score input
-  - Reason textarea
-  - Expiration date picker (optional)
-- **Override List**: List of active overrides with:
-  - Agent type
-  - Model name
-  - Override score
-  - Reason
-  - Expiration date
-  - Remove button
-- **Override Badge**: Visual indicator in rankings table for overridden models.
-
----
-
-## 🔒 Security Considerations
-
-- **Admin Only**: All endpoints require admin authentication.
-- **Weight Changes**: Require confirmation before updating weight profiles.
-- **Override Management**: Log all override creations and removals for audit.
-
----
-
-## 📝 Notes
-
-- Rankings are automatically recalculated periodically based on performance data.
-- Manual overrides take precedence over calculated rankings.
-- Weight profiles can be customized per agent type for fine-tuned model selection.
+1. **Mount**: Call `useRankings(agentType)` hook which fetches `/api/admin/llm/rankings`.
+2. **Display**:
+   - Rankings table: Display `rankings` array grouped by `agent_type`, showing ranked models with columns: Rank, Model Name, Provider, Ranking Score, Success Rate, Latency, Cost, Override Indicator.
+   - Override badge: Show badge if `has_override` is true.
+   - Last recalculated: Display `last_recalculated_at` timestamp.
+3. **Filter by Agent**: On agent type selection, update `agent_type` query param and refetch.
+4. **Update Weights**: On "Edit Weights" button click:
+   - Open weight configuration modal.
+   - Show current weights with sliders/inputs.
+   - Validate that weights sum to ~1.0.
+   - On submit, call `PUT /api/admin/llm/rankings/weights` with request body.
+   - On success: Show success toast, invalidate query cache.
+5. **Recalculate Rankings**: On "Recalculate" button click:
+   - Show confirmation modal: "This will recalculate rankings for all models. This may take a few moments."
+   - Call `POST /api/admin/llm/rankings/recalculate` with optional `agent_type`.
+   - Show loading state during recalculation.
+   - On success: Refresh rankings, show success toast with `duration_ms`.
+6. **Create Override**: On "Create Override" button click:
+   - Open override creation modal.
+   - Select agent type and model.
+   - Enter override score and reason.
+   - Optional: Set expiration date.
+   - On submit, call `POST /api/admin/llm/rankings/override` with request body.
+   - On success: Refresh rankings, show success toast, invalidate query cache.
