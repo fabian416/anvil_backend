@@ -14,8 +14,9 @@
 4. [Axelar Bridge Endpoints](#axelar-bridge-endpoints)
 5. [LayerZero Cross-Chain Endpoints](#layerzero-cross-chain-endpoints)
 6. [Hyperliquid Perpetuals Endpoints](#hyperliquid-perpetuals-endpoints)
-7. [Request/Response Schemas](#requestresponse-schemas)
-8. [Error Handling](#error-handling)
+7. [WebSocket Connections](#websocket-connections)
+8. [Request/Response Schemas](#requestresponse-schemas)
+9. [Error Handling](#error-handling)
 
 ---
 
@@ -907,6 +908,57 @@ interface PositionsSummary {
   total_collateral: string;
 }
 ```
+
+---
+
+## 🔌 WebSocket Connections
+
+### DeFi Core WebSocket
+
+**Status**: ⚠️ **Not Applicable**
+
+The DeFi Core module does not use WebSocket connections. All communication is via REST API:
+- Aave lending operations (GET)
+- Curve swap operations (GET)
+- Morpho lending operations (GET)
+- Axelar bridge operations (GET, POST)
+- LayerZero cross-chain operations (GET)
+- Hyperliquid perpetuals operations (GET)
+
+**Note**: Real-time updates for positions, health factors, and rates can be obtained via polling or through the Dashboard WebSocket (`/api/v1/ws/graph`) for protocol updates.
+
+---
+
+## 🎯 API Design Trade-off Analysis (CTO Methodology)
+
+### Key Design Decisions
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **Read-Only DeFi Operations** | Write operations | Safety vs. Functionality | Read-only prevents accidental transactions, but limits functionality |
+| **Health Factor Prominence** | Generic risk score | Specificity vs. Generality | Health factor is protocol-specific, but more actionable |
+| **Multi-Protocol Support** | Single protocol | Coverage vs. Complexity | Multiple protocols serve diverse users, but require protocol-specific logic |
+| **Simulation Before Execution** | Direct execution | Safety vs. Speed | Simulation prevents errors, but adds latency |
+| **Protocol-Specific Endpoints** | Generic DeFi API | Clarity vs. Duplication | Protocol-specific endpoints are clearer, but duplicate similar logic |
+
+### Risk Assessment
+
+**Cognitive Limitations:**
+- Health factor calculations may vary by protocol version
+- Simulation results may not match actual execution
+- Protocol API changes may break integrations
+
+**Technical Debt:**
+- Each protocol requires separate integration and testing
+- Protocol API rate limits may throttle requests
+- Health factor calculations must stay updated with protocol changes
+
+**Validation Strategy:**
+- ✅ Monitor protocol API response times and error rates
+- ✅ Validate health factor calculations against protocol contracts
+- ✅ Track simulation accuracy vs. actual execution
+- ✅ Alert on protocol API failures
+- ✅ Monitor protocol integration errors
 
 ---
 

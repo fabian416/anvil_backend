@@ -12,8 +12,9 @@
 2. [Arbitrage Endpoints](#arbitrage-endpoints)
 3. [Flash Loans Endpoints](#flash-loans-endpoints)
 4. [MEV Protection Endpoints](#mev-protection-endpoints)
-5. [Request/Response Schemas](#requestresponse-schemas)
-6. [Error Handling](#error-handling)
+5. [WebSocket Connections](#websocket-connections)
+6. [Request/Response Schemas](#requestresponse-schemas)
+7. [Error Handling](#error-handling)
 
 ---
 
@@ -736,6 +737,183 @@ interface MEVProtectionResponse {
   message: string;
 }
 ```
+
+---
+
+## 🔌 WebSocket Connections
+
+### Template Execution WebSocket (Optional)
+
+**Endpoint**: `ws://api.example.com/api/v1/templates/ws/{execution_id}?token={access_token}`  
+**Auth Required**: Yes (JWT Token in Query Parameter)  
+**Purpose**: Real-time updates for template/strategy execution progress (if using template-based strategies)
+
+#### Connection
+
+**URL Format**:
+```
+ws://api.example.com/api/v1/templates/ws/{execution_id}?token={access_token}
+```
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `execution_id` | `string` | **Yes** | Template execution identifier (UUID) |
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `token` | `string` | **Yes** | JWT authentication token |
+
+#### Client-to-Server Messages
+
+##### Pause Execution
+```typescript
+interface PauseMessage {
+  type: "pause";
+}
+```
+
+##### Resume Execution
+```typescript
+interface ResumeMessage {
+  type: "resume";
+}
+```
+
+##### Cancel Execution
+```typescript
+interface CancelMessage {
+  type: "cancel";
+}
+```
+
+##### Heartbeat (Ping)
+```typescript
+interface PingMessage {
+  type: "ping";
+}
+```
+
+#### Server-to-Client Messages
+
+##### Step Started
+```typescript
+interface StepStartedMessage {
+  type: "step_started";
+  step_index: number;
+  agent_name: string;
+  description: string;
+  timestamp: string;          // ISO 8601
+}
+```
+
+##### Step Progress
+```typescript
+interface StepProgressMessage {
+  type: "step_progress";
+  step_index: number;
+  progress: number;           // 0.0 to 1.0
+  message: string;
+  timestamp: string;           // ISO 8601
+}
+```
+
+##### Step Completed
+```typescript
+interface StepCompletedMessage {
+  type: "step_completed";
+  step_result: {
+    step_index: number;
+    agent_name: string;
+    response: string;
+    execution_time_seconds: number;
+    success: boolean;
+    metadata: object;
+  };
+  execution_state: {
+    id: string;
+    status: "in_progress" | "completed" | "failed" | "paused" | "cancelled";
+    current_step_index: number;
+    completion_rate: number;  // 0.0 to 1.0
+  };
+  timestamp: string;          // ISO 8601
+}
+```
+
+##### Execution Completed
+```typescript
+interface ExecutionCompletedMessage {
+  type: "execution_completed";
+  message: string;
+  execution_state: {
+    id: string;
+    status: "completed";
+    completion_rate: 1.0;
+    execution_time_seconds: number;
+    step_results: Array<StepResult>;
+  };
+  timestamp: string;          // ISO 8601
+}
+```
+
+##### Execution Failed
+```typescript
+interface ExecutionFailedMessage {
+  type: "execution_failed";
+  message: string;
+  error_message: string;
+  execution_state: object;
+  timestamp: string;          // ISO 8601
+}
+```
+
+##### Execution Paused/Resumed/Cancelled
+```typescript
+interface ExecutionStateMessage {
+  type: "execution_paused" | "execution_resumed" | "execution_cancelled";
+  message: string;
+  execution_state: object;
+  timestamp: string;          // ISO 8601
+}
+```
+
+**Note**: Template execution WebSocket is optional and may not be used for all DeFi Advanced operations. Most operations use REST API with polling for status updates.
+
+---
+
+## 🎯 API Design Trade-off Analysis (CTO Methodology)
+
+### Key Design Decisions
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **MEV Protection by Default** | Optional protection | Security vs. Cost | MEV protection prevents front-running, but adds transaction costs |
+| **Flash Loan Simulation** | Direct execution | Safety vs. Speed | Simulation prevents failed transactions, but adds latency |
+| **Auto-Executor Pattern** | Manual execution | Automation vs. Control | Auto-executor enables passive strategies, but reduces user control |
+| **Arbitrage Discovery** | Manual search | Automation vs. Accuracy | Automated discovery finds opportunities, but may have false positives |
+| **Bundle Execution** | Individual transactions | Atomicity vs. Complexity | Bundles ensure all-or-nothing execution, but require complex coordination |
+
+### Risk Assessment
+
+**Cognitive Limitations:**
+- MEV protection may not catch all attack vectors
+- Flash loan simulations may not account for all market conditions
+- Auto-executor may execute trades users don't want
+
+**Technical Debt:**
+- MEV protection requires integration with specialized services
+- Flash loan logic must stay updated with protocol changes
+- Auto-executor requires careful risk management
+- Bundle execution requires transaction ordering logic
+
+**Validation Strategy:**
+- ✅ Monitor MEV protection effectiveness (track front-running attempts)
+- ✅ Validate flash loan simulation accuracy
+- ✅ Track auto-executor execution rates and user satisfaction
+- ✅ Monitor arbitrage opportunity accuracy
+- ✅ Alert on bundle execution failures
+- ✅ Track transaction costs and gas optimization
 
 ---
 

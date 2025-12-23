@@ -10,8 +10,11 @@
 
 1. [Wallet Endpoints](#wallet-endpoints)
 2. [Transaction Endpoints](#transaction-endpoints)
-3. [Request/Response Schemas](#requestresponse-schemas)
-4. [Error Handling](#error-handling)
+3. [NFT Endpoints](#nft-endpoints)
+4. [Bitcoin Endpoints](#bitcoin-endpoints)
+5. [WebSocket Connections](#websocket-connections)
+6. [Request/Response Schemas](#requestresponse-schemas)
+7. [Error Handling](#error-handling)
 
 ---
 
@@ -869,6 +872,55 @@ interface GetBitcoinWalletResponse {
 |--------|------------|-------------|-------------|
 | `401` | `AuthenticationError` | Invalid token | Redirect to login |
 | `503` | `DataMapperError` | Service unavailable | Show error + Retry |
+
+---
+
+## 🔌 WebSocket Connections
+
+### Asset Management WebSocket
+
+**Status**: ⚠️ **Not Applicable**
+
+The Asset Management module does not use WebSocket connections. All communication is via REST API:
+- Wallet operations (GET, POST)
+- Transaction logging (POST, GET)
+- NFT portfolio (GET)
+- Bitcoin operations (POST, GET)
+
+**Note**: Real-time updates for transactions and portfolio changes are handled via polling or through the Dashboard WebSocket (`/api/v1/ws/graph`) for portfolio value updates.
+
+---
+
+## 🎯 API Design Trade-off Analysis (CTO Methodology)
+
+### Key Design Decisions
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **Wallet Export with Encryption** | Plain text export | Security vs. Convenience | Encrypted export protects private keys, but requires password management |
+| **Multi-Wallet Support** | Single wallet | Flexibility vs. Complexity | Multiple wallets enable diverse portfolios, but add management complexity |
+| **NFT Portfolio Aggregation** | Per-collection queries | Performance vs. Accuracy | Aggregated portfolio reduces API calls, but may have stale data |
+| **Transaction History Pagination** | Load all | Performance vs. Completeness | Pagination enables large histories, but requires client-side state management |
+| **Bitcoin Module Disabled** | Full BTC support | Focus vs. Coverage | Disabling Bitcoin focuses on EVM chains, but limits user base |
+
+### Risk Assessment
+
+**Cognitive Limitations:**
+- Wallet export security depends on user password strength
+- Multi-wallet management may confuse users
+- NFT valuation may be inaccurate if floor prices change rapidly
+
+**Technical Debt:**
+- Wallet encryption/decryption adds processing overhead
+- NFT data synchronization requires external API reliability
+- Transaction history queries may become slow with large datasets
+
+**Validation Strategy:**
+- ✅ Monitor wallet export operations (security audit)
+- ✅ Track NFT API response times and error rates
+- ✅ Alert on wallet operation failures
+- ✅ Validate transaction history query performance
+- ✅ Monitor external NFT API availability
 
 ---
 

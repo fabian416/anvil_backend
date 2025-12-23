@@ -751,6 +751,38 @@ Some errors may include additional fields:
 
 ---
 
+## 🎯 API Design Trade-off Analysis (CTO Methodology)
+
+### Key Design Decisions
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **JWT Token-Based Auth** | Session-based cookies | Stateless vs. Server-side state | JWT enables horizontal scaling, but requires token refresh mechanism |
+| **Privy Integration** | Custom wallet auth | Third-party dependency vs. Full control | Privy provides secure wallet connection, but adds external dependency |
+| **15-minute Access Token** | Longer-lived tokens | Security vs. User convenience | Short tokens reduce attack window, but require frequent refresh |
+| **Separate Refresh Token** | Single long-lived token | Security vs. Simplicity | Refresh tokens enable secure token rotation without re-authentication |
+| **Email Verification Required** | Optional verification | Security vs. User friction | Required verification prevents fake accounts, but adds onboarding step |
+
+### Risk Assessment
+
+**Cognitive Limitations:**
+- Token expiration may not be handled gracefully by all clients
+- Email delivery failures may block user registration
+- Privy service outages affect all wallet-based logins
+
+**Technical Debt:**
+- Token refresh logic must be implemented in all clients
+- Email verification flow requires email service reliability
+- Password reset tokens have expiration windows that may confuse users
+
+**Validation Strategy:**
+- ✅ Monitor token refresh success rates
+- ✅ Track email delivery success rates
+- ✅ Alert on authentication failure spikes
+- ✅ Log all authentication attempts for security auditing
+
+---
+
 ## 🔗 Related Documentation
 
 - **Backend Controller**: `src/app/presentation/http/controllers/account/`

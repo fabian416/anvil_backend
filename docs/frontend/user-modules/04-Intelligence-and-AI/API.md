@@ -1334,9 +1334,11 @@ interface AffectedProtocol {
 
 ## 🔌 WebSocket Connections
 
-### Chat WebSocket (Real-Time Streaming)
+### 1. Chat WebSocket (Real-Time Streaming)
 
-**Endpoint**: `ws://api.example.com/api/v1/ws/chat?token={access_token}&session_id={optional}`
+**Endpoint**: `ws://api.example.com/api/v1/ws/chat?token={access_token}&session_id={optional}`  
+**Auth Required**: Yes (JWT Token in Query Parameter)  
+**Purpose**: Real-time chat with agent streaming and multi-agent orchestration
 
 #### Connection
 
@@ -1520,6 +1522,247 @@ ws://api.example.com/api/v1/ws/chat?token={access_token}&session_id={optional_se
    - Throttle UI updates during streaming
    - Debounce progress event displays
    - Clean up on component unmount
+
+---
+
+### 2. Conversation-Specific Chat WebSocket
+
+**Endpoint**: `ws://api.example.com/api/v1/user/chat/ws/{conversation_id}?token={access_token}`  
+**Auth Required**: Yes (JWT Token in Query Parameter)  
+**Purpose**: Real-time chat updates for a specific conversation with multi-agent orchestration
+
+#### Connection
+
+**URL Format**:
+```
+ws://api.example.com/api/v1/user/chat/ws/{conversation_id}?token={access_token}
+```
+
+**Path Parameters**:
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `conversation_id` | `UUID` | **Yes** | Conversation UUID for this chat session |
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `token` | `string` | **Yes** | JWT authentication token |
+
+#### Connection Flow
+
+1. **Connect**: Client connects with conversation_id and JWT token
+2. **Authentication**: Server validates JWT token and checks conversation access
+3. **Welcome**: Server sends welcome system message with session_id
+4. **Message Exchange**: Client sends messages, server streams responses
+5. **Intent Detection**: Server detects intent and sends suggestions
+6. **Agent Streaming**: Server streams agent response with progress updates
+7. **Heartbeat**: Client sends "ping", server responds "pong"
+8. **Disconnect**: Either side can close connection
+
+#### Client-to-Server Messages
+
+##### Send Chat Message
+```typescript
+interface ChatMessageRequest {
+  type: "message";
+  content: string;            // Required: Message content
+  conversation_id?: string;   // Optional: Conversation UUID (if not in URL)
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "message",
+  "content": "What's the best yield farming strategy?"
+}
+```
+
+##### Heartbeat (Ping)
+```typescript
+interface PingMessage {
+  type: "ping";
+}
+```
+
+#### Server-to-Client Messages
+
+##### Welcome System Message (on connect)
+```typescript
+interface SystemMessage {
+  type: "system";
+  message: string;
+  data: {
+    user_id: string;
+    session_id: string;
+    conversation_id: string;
+  };
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "system",
+  "message": "Connected to conversation abc-123",
+  "data": {
+    "user_id": "user_123",
+    "session_id": "ws_user_123_abc-123_1234567890",
+    "conversation_id": "abc-123"
+  }
+}
+```
+
+##### Intent Suggestions (after message received)
+```typescript
+interface IntentSuggestionsMessage {
+  type: "intent_suggestions";
+  suggestions: Array<{
+    intent: string;
+    confidence: number;        // 0-1
+    suggested_agent?: string;
+  }>;
+}
+```
+
+##### Progress Event (agent execution)
+```typescript
+interface ProgressMessage {
+  type: "progress";
+  status: "thinking" | "routing" | "tool_call" | "tool_completed" | "processing";
+  message: string;
+  agent?: string;
+  tool?: string;
+  confidence?: number;
+}
+```
+
+**JSON Example**:
+```json
+{
+  "type": "progress",
+  "status": "routing",
+  "message": "Routing to yield_farming agent (confidence: 95%)",
+  "agent": "yield_farming",
+  "confidence": 0.95
+}
+```
+
+##### Streaming Token (token-by-token)
+```typescript
+interface StreamMessage {
+  type: "stream";
+  content: string;            // Partial token
+  message_id: string;
+}
+```
+
+##### Complete Message
+```typescript
+interface MessageCompleteMessage {
+  type: "message_complete";
+  message_id: string;
+  content: string;             // Complete message
+  metadata: {
+    agent: string;
+    confidence: number;
+    execution_time_ms?: number;
+  };
+}
+```
+
+##### Error Message
+```typescript
+interface ErrorMessage {
+  type: "error";
+  error: string;
+  code: string;
+}
+```
+
+##### Heartbeat Response (Pong)
+```typescript
+interface PongMessage {
+  type: "pong";
+}
+```
+
+#### Connection Lifecycle
+
+**States**:
+- `connecting`: Initial connection attempt
+- `authenticating`: Validating JWT token
+- `connected`: Successfully connected and authenticated
+- `disconnected`: Connection closed
+- `error`: Connection error occurred
+
+**Authorization**:
+- User must have access to the conversation
+- Server checks conversation ownership before accepting connection
+- Access denied → Connection closed with code 1008
+
+**Reconnection**:
+- Client should implement exponential backoff
+- Reconnect on unexpected disconnect
+- Re-authenticate with fresh token if needed
+- Maintain conversation_id across reconnections
+
+#### Error Handling
+
+**Connection Errors**:
+- `1008`: Policy violation (invalid token or no access to conversation)
+- `1011`: Internal server error
+- `1006`: Abnormal closure
+
+**Message Errors**:
+- Invalid message format → Server sends error message
+- Empty message content → Server sends error: "Message content is required"
+- Unauthorized → Server closes connection with code 1008
+
+#### Differences from Main Chat WebSocket
+
+| Feature | Main WebSocket (`/ws/chat`) | Conversation WebSocket (`/user/chat/ws/{id}`) |
+|---------|----------------------------|------------------------------------------------|
+| **Conversation Context** | Optional (can create new) | Required (must exist) |
+| **Access Control** | Basic (user auth) | Strict (conversation ownership) |
+| **Use Case** | General chat, new conversations | Existing conversation updates |
+| **Session Management** | Optional session_id | Tied to conversation_id |
+
+---
+
+## 🎯 API Design Trade-off Analysis (CTO Methodology)
+
+### Key Design Decisions
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **WebSocket Streaming** | REST polling | Real-time vs. Complexity | Streaming provides better UX, but requires connection management |
+| **Token-by-Token Streaming** | Complete messages | Perceived performance vs. Bandwidth | Token streaming feels faster, but uses more bandwidth |
+| **Multi-Agent Orchestration** | Single agent | Capability vs. Complexity | Multiple agents provide specialized expertise, but add routing complexity |
+| **GraphRAG Hybrid Search** | Keyword-only | Relevance vs. Infrastructure | Hybrid search improves results, but requires vector database |
+| **Intent Detection** | Manual routing | Automation vs. Accuracy | Automatic intent detection improves UX, but may misroute queries |
+| **Agent Squad Pattern** | Sequential agents | Parallelism vs. Coordination | Parallel agents are faster, but require result aggregation |
+
+### Risk Assessment
+
+**Cognitive Limitations:**
+- WebSocket streaming may overwhelm clients with high token rates
+- Agent routing may fail for ambiguous queries
+- GraphRAG search may return irrelevant results if embeddings are stale
+
+**Technical Debt:**
+- Streaming requires careful buffer management
+- Multi-agent coordination adds failure points
+- GraphRAG requires continuous embedding updates
+- Intent detection accuracy depends on training data quality
+
+**Validation Strategy:**
+- ✅ Monitor WebSocket streaming latency and error rates
+- ✅ Track agent routing accuracy and user satisfaction
+- ✅ Measure GraphRAG search relevance (user feedback)
+- ✅ Monitor intent detection confidence scores
+- ✅ Alert on agent execution failures
+- ✅ Track conversation costs and token usage
 
 ---
 

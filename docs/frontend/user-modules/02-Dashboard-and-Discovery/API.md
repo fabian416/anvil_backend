@@ -1834,6 +1834,39 @@ interface ErrorMessage {
 
 ---
 
+## 🎯 API Design Trade-off Analysis (CTO Methodology)
+
+### Key Design Decisions
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **WebSocket for Real-time Updates** | Polling | Real-time vs. Resource usage | WebSocket reduces server load vs. polling, but requires connection management |
+| **Graph WebSocket Channels** | Single broadcast | Granularity vs. Complexity | Channel-based subscriptions allow targeted updates, but add subscription logic |
+| **Analytics WebSocket Subscriptions** | All-or-nothing | Flexibility vs. Complexity | Subscription types allow users to opt-in to specific updates |
+| **Portfolio Snapshot History** | Real-time only | Historical context vs. Storage | Snapshots enable trend analysis, but require storage management |
+| **GraphRAG Hybrid Search** | Keyword-only | Relevance vs. Performance | Hybrid search improves results, but requires vector database infrastructure |
+
+### Risk Assessment
+
+**Cognitive Limitations:**
+- WebSocket connection management may be complex for frontend developers
+- Graph updates may overwhelm clients with too many messages
+- Analytics subscriptions may not scale with many concurrent users
+
+**Technical Debt:**
+- WebSocket reconnection logic must handle network failures gracefully
+- Graph cache invalidation requires careful coordination
+- Analytics data aggregation may become slow with large datasets
+
+**Validation Strategy:**
+- ✅ Monitor WebSocket connection health and reconnection rates
+- ✅ Track message delivery latency
+- ✅ Alert on WebSocket connection failures
+- ✅ Monitor Graph cache hit rates
+- ✅ Track analytics query performance
+
+---
+
 ## 📊 Error Handling Summary
 
 ### Common Error Patterns

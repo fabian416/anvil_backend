@@ -11,9 +11,14 @@
 1. [Profile Endpoints](#profile-endpoints)
 2. [Password Endpoints](#password-endpoints)
 3. [Subscription Endpoints](#subscription-endpoints)
-4. [Support Endpoints](#support-endpoints)
-5. [Request/Response Schemas](#requestresponse-schemas)
-6. [Error Handling](#error-handling)
+4. [Preferences Endpoints](#preferences-endpoints)
+5. [Alert Endpoints](#alert-endpoints)
+6. [Payment Endpoints](#payment-endpoints)
+7. [User Projects Endpoints](#user-projects-endpoints)
+8. [Support Endpoints](#support-endpoints)
+9. [WebSocket Connections](#websocket-connections)
+10. [Request/Response Schemas](#requestresponse-schemas)
+11. [Error Handling](#error-handling)
 
 ---
 
@@ -700,11 +705,286 @@ interface CreatePaymentTransactionRequest {
 
 ---
 
+## 🔌 User Projects Endpoints
+
+> **Project Selection & Management**  
+> **Purpose**: Allow users to view, select, and join projects (workspaces/environments)
+
+### 27. Get User Projects
+
+**Method**: `GET`  
+**Endpoint**: `/api/v1/user/projects`  
+**Auth Required**: Yes (Bearer Token)
+
+#### Request
+
+No request body or query parameters required.
+
+#### Response
+
+##### Success Response (200 OK)
+```typescript
+interface UserProjectsResponse {
+  assigned_projects: ProjectSummary[];
+  active_project_id: string | null;  // UUID of currently active project
+}
+
+interface ProjectSummary {
+  id: string;                         // UUID
+  slug: string;                       // URL-friendly identifier
+  name: string;                       // Display name
+  description: string;                // Project description
+  icon: string | null;                // Icon URL or emoji
+  color: string | null;               // Theme color (hex)
+  welcome_message: string | null;     // Welcome message for new users
+  is_featured: boolean;               // Featured project flag
+}
+```
+
+**JSON Example**:
+```json
+{
+  "assigned_projects": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "slug": "defi-analytics",
+      "name": "DeFi Analytics",
+      "description": "Advanced DeFi analytics and insights",
+      "icon": "📊",
+      "color": "#3B82F6",
+      "welcome_message": "Welcome to DeFi Analytics!",
+      "is_featured": true
+    }
+  ],
+  "active_project_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+---
+
+### 28. List Available Projects
+
+**Method**: `GET`  
+**Endpoint**: `/api/v1/user/projects/available`  
+**Auth Required**: Yes (Bearer Token)
+
+#### Request
+
+No request body or query parameters required.
+
+#### Response
+
+##### Success Response (200 OK)
+```typescript
+interface AvailableProjectsResponse {
+  projects: ProjectSummary[];
+}
+```
+
+**JSON Example**:
+```json
+{
+  "projects": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "slug": "defi-analytics",
+      "name": "DeFi Analytics",
+      "description": "Advanced DeFi analytics and insights",
+      "icon": "📊",
+      "color": "#3B82F6",
+      "welcome_message": "Welcome to DeFi Analytics!",
+      "is_featured": true
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "slug": "nft-portfolio",
+      "name": "NFT Portfolio",
+      "description": "Manage your NFT collection",
+      "icon": "🖼️",
+      "color": "#8B5CF6",
+      "welcome_message": null,
+      "is_featured": false
+    }
+  ]
+}
+```
+
+**Note**: Returns only publicly available projects that users can join.
+
+---
+
+### 29. Select (Activate) Project
+
+**Method**: `POST`  
+**Endpoint**: `/api/v1/user/projects/{project_id}/select`  
+**Auth Required**: Yes (Bearer Token)
+
+#### Request
+
+##### Path Parameters
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `project_id` | `UUID` | **Yes** | Project UUID to activate |
+
+#### Response
+
+##### Success Response (204 No Content)
+No response body. Project is set as active for the user.
+
+**Behavior**:
+- If user is not assigned to the project but it's public, user is auto-assigned
+- If project is private and user is not assigned, returns 403 Forbidden
+- Sets the project as the user's active project
+
+#### Error Responses
+
+**404 Not Found**:
+```json
+{
+  "detail": "Project not found"
+}
+```
+
+**400 Bad Request**:
+```json
+{
+  "detail": "Project is not active"
+}
+```
+
+**403 Forbidden**:
+```json
+{
+  "detail": "User is not assigned to this project"
+}
+```
+
+---
+
+### 30. Join Public Project
+
+**Method**: `POST`  
+**Endpoint**: `/api/v1/user/projects/{project_id}/join`  
+**Auth Required**: Yes (Bearer Token)
+
+#### Request
+
+##### Path Parameters
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `project_id` | `UUID` | **Yes** | Project UUID to join |
+
+#### Response
+
+##### Success Response (204 No Content)
+No response body. User is assigned to the project and it's set as active.
+
+**Behavior**:
+- Only works for public projects
+- Creates self-assignment for the user
+- Sets the project as active
+- Respects `max_users` limit if set
+
+#### Error Responses
+
+**404 Not Found**:
+```json
+{
+  "detail": "Project not found"
+}
+```
+
+**400 Bad Request**:
+```json
+{
+  "detail": "Project is not active"
+}
+```
+
+or
+
+```json
+{
+  "detail": "User is already assigned to this project"
+}
+```
+
+or
+
+```json
+{
+  "detail": "Project has reached maximum user capacity"
+}
+```
+
+**403 Forbidden**:
+```json
+{
+  "detail": "Project is not publicly available"
+}
+```
+
+---
+
+### 31. Get Project by Slug
+
+**Method**: `GET`  
+**Endpoint**: `/api/v1/user/projects/{project_slug}`  
+**Auth Required**: Yes (Bearer Token)
+
+#### Request
+
+##### Path Parameters
+| Parameter | Type | Required | Description |
+|----------|------|----------|-------------|
+| `project_slug` | `string` | **Yes** | Project slug (URL-friendly identifier) |
+
+#### Response
+
+##### Success Response (200 OK)
+```typescript
+interface ProjectSummaryResponse {
+  id: string;                         // UUID
+  slug: string;                       // URL-friendly identifier
+  name: string;                       // Display name
+  description: string;                // Project description
+  icon: string | null;                // Icon URL or emoji
+  color: string | null;               // Theme color (hex)
+  welcome_message: string | null;     // Welcome message for new users
+  is_featured: boolean;               // Featured project flag
+}
+```
+
+**JSON Example**:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "slug": "defi-analytics",
+  "name": "DeFi Analytics",
+  "description": "Advanced DeFi analytics and insights",
+  "icon": "📊",
+  "color": "#3B82F6",
+  "welcome_message": "Welcome to DeFi Analytics!",
+  "is_featured": true
+}
+```
+
+#### Error Responses
+
+**404 Not Found**:
+```json
+{
+  "detail": "Project not found"
+}
+```
+
+---
+
 ## 🔌 Support Endpoints
 
 > **⚠️ Note**: Support ticket endpoints are **PLANNED** but not yet implemented in the backend. The following documentation is provided for future implementation.
 
-### 24. Create Support Ticket
+### 32. Create Support Ticket
 
 **Method**: `POST`  
 **Endpoint**: `/api/v1/support/tickets`  
@@ -775,7 +1055,7 @@ interface TicketResponse {
 
 ---
 
-### 25. Get Support Tickets
+### 33. Get Support Tickets
 
 **Method**: `GET`  
 **Endpoint**: `/api/v1/support/tickets`  
@@ -803,7 +1083,7 @@ interface TicketListResponse {
 
 ---
 
-### 26. Get Support Ticket
+### 34. Get Support Ticket
 
 **Method**: `GET`  
 **Endpoint**: `/api/v1/support/tickets/{ticket_id}`  
@@ -826,6 +1106,61 @@ interface TicketReply {
   created_at: string;             // ISO 8601
 }
 ```
+
+---
+
+## 🔌 WebSocket Connections
+
+### Settings & Support WebSocket
+
+**Status**: ⚠️ **Not Applicable**
+
+The Settings & Support module does not use WebSocket connections. All communication is via REST API:
+- Profile management (GET, PUT)
+- Password changes (PUT)
+- Subscription management (GET, POST, PUT)
+- Preferences management (GET, PUT, POST, DELETE)
+- Alert management (GET, POST, PUT, DELETE)
+- Payment transactions (GET, POST)
+- Support tickets (POST, GET) - Planned
+
+**Note**: Real-time notifications for alerts and subscription updates can be received via the Dashboard Analytics WebSocket (`/api/v1/analytics/ws/{user_id}`) if subscribed to alerts.
+
+---
+
+## 🎯 API Design Trade-off Analysis (CTO Methodology)
+
+### Key Design Decisions
+
+| Decision | Alternative | Trade-off | Rationale |
+|----------|------------|-----------|-----------|
+| **Stripe Subscription Integration** | Custom billing | Third-party vs. Control | Stripe handles compliance, but adds external dependency |
+| **Preference Persistence** | Session-only | Persistence vs. Privacy | Persistent preferences improve UX, but store user data |
+| **Alert Subscription System** | All-or-nothing | Granularity vs. Complexity | Subscription system allows fine-grained control, but adds management overhead |
+| **Project Selection** | Single workspace | Flexibility vs. Complexity | Multiple projects enable diverse use cases, but add context switching |
+| **Self-Service Project Joining** | Admin-only assignment | User autonomy vs. Control | Self-service reduces admin burden, but may lead to project sprawl |
+
+### Risk Assessment
+
+**Cognitive Limitations:**
+- Stripe webhook failures may cause subscription state inconsistencies
+- Preference changes may not propagate immediately to all services
+- Alert subscriptions may overwhelm users with notifications
+- Project switching may cause context loss
+
+**Technical Debt:**
+- Stripe integration requires webhook reliability
+- Preference synchronization across services
+- Alert delivery requires reliable notification infrastructure
+- Project assignment logic must handle edge cases
+
+**Validation Strategy:**
+- ✅ Monitor Stripe webhook delivery success rates
+- ✅ Track preference persistence and synchronization
+- ✅ Monitor alert delivery rates and user engagement
+- ✅ Track project selection and switching patterns
+- ✅ Alert on subscription billing errors
+- ✅ Monitor project capacity limits
 
 ---
 
