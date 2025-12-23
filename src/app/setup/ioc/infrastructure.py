@@ -15,6 +15,7 @@ from app.application.common.ports.password_reset_repository import (
 )
 from app.application.common.ports.session_recorder import SessionRecorder
 from app.application.common.ports.session_store import SessionStore
+from app.application.common.ports.wallet_query_gateway import WalletQueryGateway
 from app.application.maintenance.ports import (
     AuthSessionRepository,
     PasswordResetRepository,
@@ -97,6 +98,7 @@ from app.infrastructure.adapters.user_data_mapper_sqla import (
     SqlaUserDataMapper,
 )
 from app.infrastructure.adapters.user_reader_sqla import SqlaUserReader
+from app.infrastructure.adapters.wallet_reader_sqla import SqlaWalletReader
 from app.infrastructure.adapters.wallet_repository_sqla import SqlaWalletRepository
 from app.infrastructure.agents.agent_factory import AgentFactory, create_agent_factory
 from app.infrastructure.atlas.handlers.init_cities import InitCitiesHandler
@@ -228,6 +230,10 @@ class InfrastructureProvider(Provider):
     city_query_gateway = provide(
         source=SqlaCityReader,
         provides=CityQueryGateway,
+    )
+    wallet_query_gateway = provide(
+        source=SqlaWalletReader,
+        provides=WalletQueryGateway,
     )
     atlas_country_reader = provide(
         source=AtlasSqlaCountryReader,

@@ -39,6 +39,7 @@ from app.application.common.ports.user_command_gateway import UserCommandGateway
 from app.application.common.ports.user_query_gateway import UserQueryGateway
 from app.application.common.services.current_user import CurrentUserService
 from app.application.queries.list_users import ListUsersQueryService
+from app.application.queries.list_wallets import ListWalletsQueryService
 from app.application.queries.wallet.get_privy_wallet_details import GetPrivyWalletDetails
 from app.application.queries.policy.list_privy_policies import ListPrivyPolicies
 from app.application.atlas.queries import (
@@ -187,6 +188,7 @@ class ApplicationProvider(Provider):
     # Queries
     query_services = provide_all(
         ListUsersQueryService,
+        ListWalletsQueryService,
         SearchCountriesQueryService,
         SearchCitiesQueryService,
         ListStatesByCountryQueryService,
