@@ -277,20 +277,42 @@ This document analyzes the current admin module documentation structure against 
 
 ## 🎯 Recommended Module Structure
 
-### Proposed Complete Structure (10 Modules)
+### Proposed Structure with Submodules (5 Main Modules)
 
-| # | Module | Backend Endpoints | Documentation Status | Priority |
-|---|--------|------------------|---------------------|----------|
-| 01 | **Admin Overview** | `/admin/chat`, `/admin/security` | ✅ Partial | High |
-| 02 | **User Management** | `/admin/users` | ✅ Complete | High |
-| 03 | **Intelligence Ops** | `/admin/llm` | ✅ Partial | High |
-| 04 | **System Health** | `/admin/metrics`, `/admin/stats` | ✅ Partial | High |
-| 05 | **Configuration** | `/admin/projects` | ✅ Complete | High |
-| 06 | **Agent Management** | `/admin/agents` | ❌ Missing | Medium |
-| 07 | **Wallet Management** | `/admin/wallets` | ❌ Missing | Medium |
-| 08 | **Policy Management** | `/admin/policies` | ❌ Missing | Medium |
-| 09 | **Retry System** | `/admin/retry` | ❌ Missing | Low |
-| 10 | **Distillation Management** | `/admin/distillation` | ❌ Missing | Low |
+| # | Module | Submodules | Backend Endpoints | Documentation Status | Priority |
+|---|--------|-----------|------------------|---------------------|----------|
+| 01 | **Admin Overview** | - Chat Dashboard<br>- Security Dashboard | `/admin/chat`, `/admin/security` | ✅ Partial | High |
+| 02 | **User Management** | - User Operations<br>- **Wallet Management** (submodule) | `/admin/users`, `/admin/wallets` | ✅ Complete + ❌ Missing | High |
+| 03 | **Intelligence Ops** | - LLM Config<br>- Budgets<br>- Circuit Breakers<br>- **Agent Management** (submodule)<br>- **Distillation Management** (submodule) | `/admin/llm`, `/admin/agents`, `/admin/distillation` | ✅ Partial + ❌ Missing | High |
+| 04 | **System Health** | - Metrics<br>- Stats<br>- **Retry System** (submodule) | `/admin/metrics`, `/admin/stats`, `/admin/retry` | ✅ Partial + ❌ Missing | High |
+| 05 | **Configuration** | - Projects<br>- **Policy Management** (submodule) | `/admin/projects`, `/admin/policies` | ✅ Complete + ❌ Missing | High |
+
+### Submodule Organization Rationale
+
+**02-User-Management → Wallet Management**:
+- **Rationale**: Wallets belong to users; wallet administration is a user management concern
+- **Endpoints**: `/admin/wallets/{privy_wallet_id}` (get, update)
+- **Fit**: ✅ **Perfect fit** - Wallets are user assets
+
+**03-Intelligence-Ops → Agent Management**:
+- **Rationale**: Agents are part of the AI/LLM system; agent configuration is intelligence operations
+- **Endpoints**: `/admin/agents` (list)
+- **Fit**: ✅ **Perfect fit** - Agents are AI components
+
+**03-Intelligence-Ops → Distillation Management**:
+- **Rationale**: Distillation optimizes AI responses; it's part of intelligence operations
+- **Endpoints**: `/admin/distillation/*` (14 endpoints)
+- **Fit**: ✅ **Perfect fit** - Distillation is AI response optimization
+
+**04-System-Health → Retry System**:
+- **Rationale**: Retry system is about system reliability and health monitoring
+- **Endpoints**: `/admin/retry/*` (7 endpoints)
+- **Fit**: ✅ **Perfect fit** - Retry system is infrastructure health
+
+**05-Configuration → Policy Management**:
+- **Rationale**: Policies are configuration settings that affect platform behavior
+- **Endpoints**: `/admin/policies/*` (6 endpoints)
+- **Fit**: ✅ **Perfect fit** - Policies are configuration
 
 ---
 
@@ -568,7 +590,7 @@ This document analyzes the current admin module documentation structure against 
    - Current: `01-Admin-Overview`, `02-User-Management`, etc.
    - Recommended: Keep pattern, add new modules sequentially
 
-### Proposed Complete Structure
+### Proposed Structure with Submodules
 
 ```
 docs/frontend/admin-modules/
@@ -579,47 +601,39 @@ docs/frontend/admin-modules/
 │
 ├── 02-User-Management/
 │   ├── FRONTEND_ADMIN_USERS_MAIN.md ✅
-│   └── README.md ✅
+│   ├── FRONTEND_ADMIN_WALLETS_MAIN.md ❌ (NEW SUBMODULE)
+│   └── README.md ✅ (UPDATE)
 │
 ├── 03-Intelligence-Ops/
 │   ├── FRONTEND_ADMIN_LLM_CONFIG.md ✅
 │   ├── FRONTEND_ADMIN_LLM_BUDGETS.md ✅
 │   ├── FRONTEND_ADMIN_LLM_CIRCUIT_BREAKERS.md ✅
-│   ├── FRONTEND_ADMIN_LLM_RANKINGS.md ❌ (NEW)
-│   ├── FRONTEND_ADMIN_LLM_TELEMETRY.md ❌ (NEW)
-│   └── README.md ✅
+│   ├── FRONTEND_ADMIN_LLM_RANKINGS.md ❌ (NEW - fill gap)
+│   ├── FRONTEND_ADMIN_LLM_TELEMETRY.md ❌ (NEW - fill gap)
+│   ├── FRONTEND_ADMIN_AGENTS_MAIN.md ❌ (NEW SUBMODULE)
+│   ├── FRONTEND_ADMIN_DISTILLATION_MAIN.md ❌ (NEW SUBMODULE)
+│   ├── FRONTEND_ADMIN_DISTILLATION_VALIDATION.md ❌ (NEW SUBMODULE)
+│   └── README.md ✅ (UPDATE)
 │
 ├── 04-System-Health/
 │   ├── FRONTEND_ADMIN_SYSTEM_METRICS.md ✅
 │   ├── FRONTEND_ADMIN_SYSTEM_STATS.md ❌ (NEW - clarify vs metrics)
-│   └── README.md ✅
+│   ├── FRONTEND_ADMIN_RETRY_MAIN.md ❌ (NEW SUBMODULE)
+│   └── README.md ✅ (UPDATE)
 │
-├── 05-Configuration/
-│   ├── FRONTEND_ADMIN_CONFIG_PROJECTS.md ✅
-│   ├── FRONTEND_ADMIN_CONFIG_KNOWLEDGE.md ❌ (NEW - optional expansion)
-│   └── README.md ✅
-│
-├── 06-Agent-Management/ ❌ (NEW MODULE)
-│   ├── FRONTEND_ADMIN_AGENTS_MAIN.md
-│   └── README.md
-│
-├── 07-Wallet-Management/ ❌ (NEW MODULE)
-│   ├── FRONTEND_ADMIN_WALLETS_MAIN.md
-│   └── README.md
-│
-├── 08-Policy-Management/ ❌ (NEW MODULE)
-│   ├── FRONTEND_ADMIN_POLICIES_MAIN.md
-│   └── README.md
-│
-├── 09-Retry-System/ ❌ (NEW MODULE)
-│   ├── FRONTEND_ADMIN_RETRY_MAIN.md
-│   └── README.md
-│
-└── 10-Distillation-Management/ ❌ (NEW MODULE)
-    ├── FRONTEND_ADMIN_DISTILLATION_MAIN.md
-    ├── FRONTEND_ADMIN_DISTILLATION_VALIDATION.md
-    └── README.md
+└── 05-Configuration/
+    ├── FRONTEND_ADMIN_CONFIG_PROJECTS.md ✅
+    ├── FRONTEND_ADMIN_POLICIES_MAIN.md ❌ (NEW SUBMODULE)
+    └── README.md ✅ (UPDATE)
 ```
+
+### Submodule Benefits
+
+✅ **Better Organization**: Related functionality grouped logically  
+✅ **Cleaner Navigation**: Fewer top-level modules (5 instead of 10)  
+✅ **Logical Grouping**: Submodules belong to their parent modules conceptually  
+✅ **Easier Maintenance**: Related documentation stays together  
+✅ **Scalability**: Easy to add more submodules as features grow
 
 ---
 
@@ -633,13 +647,13 @@ docs/frontend/admin-modules/
 - [x] **04-System-Health**: Metrics ✅
 - [x] **05-Configuration**: Projects ✅
 
-### Missing Modules (5)
+### Missing Submodules (5)
 
-- [ ] **06-Agent-Management**: Not documented
-- [ ] **07-Wallet-Management**: Not documented
-- [ ] **08-Policy-Management**: Not documented
-- [ ] **09-Retry-System**: Not documented
-- [ ] **10-Distillation-Management**: Not documented
+- [ ] **02-User-Management → Wallet Management**: Not documented (submodule)
+- [ ] **03-Intelligence-Ops → Agent Management**: Not documented (submodule)
+- [ ] **03-Intelligence-Ops → Distillation Management**: Not documented (submodule)
+- [ ] **04-System-Health → Retry System**: Not documented (submodule)
+- [ ] **05-Configuration → Policy Management**: Not documented (submodule)
 
 ### Documentation Gaps
 
@@ -654,13 +668,21 @@ docs/frontend/admin-modules/
 
 ## 🎯 Next Steps
 
-1. **Review this analysis** with stakeholders
-2. **Decide on module structure** (keep current 5 + add 5 new, or reorganize)
-3. **Prioritize missing modules** (High: Agent, Wallet, Policy | Low: Retry, Distillation)
-4. **Create missing modules** following same structure as existing modules
-5. **Fill documentation gaps** in existing modules (WebSockets, Rankings, Telemetry)
-6. **Create IMPLEMENTATION.md and API.md** for each module (following user-modules pattern)
-7. **Create UI_UX.md** for each module (following user-modules pattern with CTO methodology)
+1. **✅ Module Structure Decided**: Use submodules within existing 5 modules
+2. **Create missing submodules** following same structure as existing submodules:
+   - `02-User-Management/FRONTEND_ADMIN_WALLETS_MAIN.md`
+   - `03-Intelligence-Ops/FRONTEND_ADMIN_AGENTS_MAIN.md`
+   - `03-Intelligence-Ops/FRONTEND_ADMIN_DISTILLATION_MAIN.md`
+   - `03-Intelligence-Ops/FRONTEND_ADMIN_DISTILLATION_VALIDATION.md`
+   - `04-System-Health/FRONTEND_ADMIN_RETRY_MAIN.md`
+   - `05-Configuration/FRONTEND_ADMIN_POLICIES_MAIN.md`
+3. **Fill documentation gaps** in existing modules:
+   - LLM Rankings (`FRONTEND_ADMIN_LLM_RANKINGS.md`)
+   - LLM Telemetry (`FRONTEND_ADMIN_LLM_TELEMETRY.md`)
+   - System Stats (`FRONTEND_ADMIN_SYSTEM_STATS.md`)
+4. **Update README.md files** in each module to include new submodules
+5. **Create IMPLEMENTATION.md and API.md** for each module (following user-modules pattern)
+6. **Create UI_UX.md** for each module (following user-modules pattern with CTO methodology)
 
 ---
 
