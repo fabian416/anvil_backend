@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.engine import make_url
 
 from app.infrastructure.adapters.types import (
     MainAsyncSession,
@@ -22,6 +23,9 @@ async def get_async_engine(
     dsn: PostgresDsn,
     engine_config: SqlaEngineConfig,
 ) -> AsyncIterator[AsyncEngine]:
+    # SECURITY: Never log credentials. SQLAlchemy URL can hide password safely.
+    url = make_url(str(dsn))
+    safe_dsn = url.render_as_string(hide_password=True)
     async_engine = create_async_engine(
         url=dsn,
         echo=engine_config.echo,
@@ -31,7 +35,15 @@ async def get_async_engine(
         connect_args={"connect_timeout": 5},
         pool_pre_ping=True,
     )
-    log.debug("Async engine created with DSN: %s", dsn)
+    log.debug("Async engine created with DSN: %s", safe_dsn)
+    log.info(
+        "DB connection configured: dialect=%s driver=%s host=%s port=%s db=%s",
+        url.get_dialect().name,
+        url.get_driver_name(),
+        url.host,
+        url.port,
+        url.database,
+    )
     yield async_engine
     log.debug("Disposing async engine...")
     await async_engine.dispose()
