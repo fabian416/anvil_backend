@@ -140,6 +140,7 @@ from app.infrastructure.auth.handlers.send_email_verification import (
 )
 from app.infrastructure.auth.handlers.sign_up import SignUpHandler
 from app.infrastructure.auth.handlers.transaction_log import (
+    GetAdminTransactionHistoryHandler,
     GetTransactionHistoryHandler,
     LogTransactionHandler,
 )
@@ -490,6 +491,7 @@ class InfrastructureProvider(Provider):
         # Transaction handlers
         LogTransactionHandler,
         GetTransactionHistoryHandler,
+        GetAdminTransactionHistoryHandler,
         # Bitcoin transaction handlers
         LogBitcoinTransactionHandler,
         GetBitcoinTransactionHistoryHandler,

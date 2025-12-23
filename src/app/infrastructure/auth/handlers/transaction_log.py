@@ -11,11 +11,13 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 
+from app.application.common.exceptions.authorization import AuthorizationError
 from app.application.common.services.current_user import CurrentUserService
 from app.domain.transactions.entities.transaction import Transaction, TransactionId
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
+from app.domain.enums.user_role import UserRole
 from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.created_at import CreatedAt
@@ -566,6 +568,279 @@ class GetTransactionHistoryHandler:
 
         return TransactionHistoryResult(
             user_id=user.id_.value,
+            transactions=items,
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
+
+
+@dataclass
+class AdminTransactionHistoryResult:
+    """Result of admin transaction history query (scoped by wallet or user)."""
+
+    wallet_address: str | None
+    user_id: int | None
+    transactions: list[TransactionHistoryItem]
+    total: int
+    limit: int
+    offset: int
+
+
+class GetAdminTransactionHistoryHandler:
+    """
+    Handler to get transaction history for any wallet/user (admin-only).
+
+    Supports filtering by chain, status, and transaction type.
+    """
+
+    def __init__(
+        self,
+        current_user_service: CurrentUserService,
+        transaction_repository: TransactionRepository,
+        wallet_repository: WalletRepository,
+    ):
+        self._current_user_service = current_user_service
+        self._transaction_repository = transaction_repository
+        self._wallet_repository = wallet_repository
+
+    async def execute(
+        self,
+        *,
+        wallet_address: str | None = None,
+        user_id: int | None = None,
+        limit: int = 50,
+        offset: int = 0,
+        chain: str | None = None,
+        status: str | None = None,
+        tx_type: str | None = None,
+    ) -> AdminTransactionHistoryResult:
+        """
+        Get transaction history scoped by wallet address or user id.
+
+        Args:
+            wallet_address: Optional wallet address to scope results.
+            user_id: Optional user id to scope results.
+            limit: Maximum number of results.
+            offset: Number of results to skip.
+            chain: Filter by chain (optional).
+            status: Filter by status: pending, success, failed (optional).
+            tx_type: Filter by type: send, swap, approve, etc. (optional).
+
+        Returns:
+            AdminTransactionHistoryResult with paginated transactions.
+
+        Raises:
+            AuthorizationError: If current user is not an admin.
+        """
+        current_user = await self._current_user_service.get_current_user()
+        if current_user.role != UserRole.ADMIN:
+            raise AuthorizationError("Admin access required")
+
+        # Parse filters
+        chain_filter: ChainType | None = None
+        if chain:
+            with contextlib.suppress(ValueError):
+                chain_filter = ChainType(chain.lower())
+
+        status_filter: TransactionStatus | None = None
+        if status:
+            status_map = {
+                "pending": TransactionStatus.PENDING,
+                "success": TransactionStatus.SUCCESS,
+                "failed": TransactionStatus.FAILED,
+            }
+            status_filter = status_map.get(status.lower())
+
+        type_filter: TransactionType | None = None
+        if tx_type:
+            type_filter = TX_TYPE_MAP.get(tx_type.lower())
+
+        normalized_wallet: str | None = wallet_address.lower() if wallet_address else None
+
+        # ============================================================
+        # Global scope (admin dashboard): no wallet/user filter
+        # ============================================================
+        if not normalized_wallet and not user_id:
+            transactions = await self._transaction_repository.get_all(
+                limit=limit,
+                offset=offset,
+                chain=chain_filter,
+                status=status_filter,
+                tx_type=type_filter,
+            )
+            total = await self._transaction_repository.count_all_filtered(
+                chain=chain_filter,
+                status=status_filter,
+                tx_type=type_filter,
+            )
+
+            items: list[TransactionHistoryItem] = []
+            for tx in transactions:
+                is_incoming = bool(tx.tx_metadata and tx.tx_metadata.get("receiver_view"))
+                from_address = (
+                    tx.tx_metadata.get("from_address")
+                    if tx.tx_metadata and is_incoming
+                    else None
+                )
+                items.append(
+                    TransactionHistoryItem(
+                        id=tx.id_.value,
+                        tx_hash=tx.tx_hash,
+                        type=tx.type.name.lower(),
+                        chain=tx.chain.value,
+                        status=tx.status.name.lower(),
+                        to_address=tx.to_address,
+                        asset_in=tx.asset_in,
+                        amount_in=str(tx.amount_in) if tx.amount_in else None,
+                        asset_out=tx.asset_out,
+                        amount_out=str(tx.amount_out) if tx.amount_out else None,
+                        fee_usd=str(tx.fee_usd) if tx.fee_usd else None,
+                        block_number=tx.block_number,
+                        confirmed_at=(
+                            tx.confirmed_at.isoformat() if tx.confirmed_at else None
+                        ),
+                        created_at=tx.created_at.value.isoformat(),
+                        explorer_url=get_explorer_url(tx.chain, tx.tx_hash),
+                        gas_used=tx.gas_used,
+                        gas_price=tx.gas_price,
+                        is_incoming=is_incoming,
+                        from_address=from_address,
+                    )
+                )
+
+            return AdminTransactionHistoryResult(
+                wallet_address=None,
+                user_id=None,
+                transactions=items,
+                total=total,
+                limit=limit,
+                offset=offset,
+            )
+
+        # Scope by wallet (preferred - exact wallet only)
+        if normalized_wallet:
+            wallet = await self._wallet_repository.get_by_address(normalized_wallet)
+            if not wallet:
+                return AdminTransactionHistoryResult(
+                    wallet_address=normalized_wallet,
+                    user_id=None,
+                    transactions=[],
+                    total=0,
+                    limit=limit,
+                    offset=offset,
+                )
+
+            transactions = await self._transaction_repository.get_by_wallet_id(
+                wallet.id_,
+                limit=limit,
+                offset=offset,
+                chain=chain_filter,
+                status=status_filter,
+                tx_type=type_filter,
+            )
+            total = await self._transaction_repository.count_by_wallet_id(
+                wallet.id_,
+                chain=chain_filter,
+                status=status_filter,
+                tx_type=type_filter,
+            )
+
+            items: list[TransactionHistoryItem] = []
+            for tx in transactions:
+                is_incoming = bool(tx.tx_metadata and tx.tx_metadata.get("receiver_view"))
+                from_address = (
+                    tx.tx_metadata.get("from_address")
+                    if tx.tx_metadata and is_incoming
+                    else None
+                )
+                items.append(
+                    TransactionHistoryItem(
+                        id=tx.id_.value,
+                        tx_hash=tx.tx_hash,
+                        type=tx.type.name.lower(),
+                        chain=tx.chain.value,
+                        status=tx.status.name.lower(),
+                        to_address=tx.to_address,
+                        asset_in=tx.asset_in,
+                        amount_in=str(tx.amount_in) if tx.amount_in else None,
+                        asset_out=tx.asset_out,
+                        amount_out=str(tx.amount_out) if tx.amount_out else None,
+                        fee_usd=str(tx.fee_usd) if tx.fee_usd else None,
+                        block_number=tx.block_number,
+                        confirmed_at=(
+                            tx.confirmed_at.isoformat() if tx.confirmed_at else None
+                        ),
+                        created_at=tx.created_at.value.isoformat(),
+                        explorer_url=get_explorer_url(tx.chain, tx.tx_hash),
+                        gas_used=tx.gas_used,
+                        gas_price=tx.gas_price,
+                        is_incoming=is_incoming,
+                        from_address=from_address,
+                    )
+                )
+
+            return AdminTransactionHistoryResult(
+                wallet_address=normalized_wallet,
+                user_id=wallet.user_id.value,
+                transactions=items,
+                total=total,
+                limit=limit,
+                offset=offset,
+            )
+
+        # Scope by user id (aggregates across wallets)
+        user_id_vo = UserId(user_id)
+        transactions = await self._transaction_repository.get_by_user_id(
+            user_id_vo,
+            limit=limit,
+            offset=offset,
+            chain=chain_filter,
+            status=status_filter,
+            tx_type=type_filter,
+        )
+        total = await self._transaction_repository.count_by_user_id(
+            user_id_vo,
+            chain=chain_filter,
+            status=status_filter,
+            tx_type=type_filter,
+        )
+
+        items = []
+        for tx in transactions:
+            is_incoming = bool(tx.tx_metadata and tx.tx_metadata.get("receiver_view"))
+            from_address = (
+                tx.tx_metadata.get("from_address")
+                if tx.tx_metadata and is_incoming
+                else None
+            )
+            items.append(
+                TransactionHistoryItem(
+                    id=tx.id_.value,
+                    tx_hash=tx.tx_hash,
+                    type=tx.type.name.lower(),
+                    chain=tx.chain.value,
+                    status=tx.status.name.lower(),
+                    to_address=tx.to_address,
+                    asset_in=tx.asset_in,
+                    amount_in=str(tx.amount_in) if tx.amount_in else None,
+                    asset_out=tx.asset_out,
+                    amount_out=str(tx.amount_out) if tx.amount_out else None,
+                    fee_usd=str(tx.fee_usd) if tx.fee_usd else None,
+                    block_number=tx.block_number,
+                    confirmed_at=(tx.confirmed_at.isoformat() if tx.confirmed_at else None),
+                    created_at=tx.created_at.value.isoformat(),
+                    explorer_url=get_explorer_url(tx.chain, tx.tx_hash),
+                    gas_used=tx.gas_used,
+                    gas_price=tx.gas_price,
+                    is_incoming=is_incoming,
+                    from_address=from_address,
+                )
+            )
+
+        return AdminTransactionHistoryResult(
+            wallet_address=None,
+            user_id=user_id_vo.value,
             transactions=items,
             total=total,
             limit=limit,
