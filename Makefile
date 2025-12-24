@@ -310,13 +310,13 @@ alembic:
 	. env/bin/activate && alembic init src/app/infrastructure/persistence_sqla/alembic
 
 alembic-revision:
-	. env/bin/activate && alembic -c src/app/infrastructure/persistence_sqla/alembic.ini revision --autogenerate -m "Add new table"
+	. env/bin/activate && alembic -c alembic.ini revision --autogenerate -m "Add new table"
 
 alembic-upgrade:
-	. env/bin/activate && alembic -c src/app/infrastructure/persistence_sqla/alembic.ini upgrade head
+	. env/bin/activate && alembic -c alembic.ini upgrade head
 
 alembic-downgrade:
-	. env/bin/activate && alembic -c src/app/infrastructure/persistence_sqla/alembic.ini downgrade -1
+	. env/bin/activate && alembic -c alembic.ini downgrade -1
 
 create-db:
 	. env/bin/activate && APP_ENV=$(APP_ENV) python3.12 scripts/create_db.py

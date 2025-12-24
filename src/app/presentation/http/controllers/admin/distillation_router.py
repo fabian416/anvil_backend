@@ -88,9 +88,9 @@ async def create_static_response(
 )
 @inject
 async def list_static_responses(
+    repository: FromDishka[DistillationStaticRepositorySqla],
     intent: Optional[str] = Query(None),
     is_active: Optional[bool] = Query(None),
-    repository: FromDishka[DistillationStaticRepositorySqla] = None,
 ) -> List[StaticResponseResponse]:
     """List all static response templates."""
     responses = await repository.list_responses(
@@ -124,7 +124,7 @@ async def list_static_responses(
 async def update_static_response(
     response_id: UUID,
     data: StaticResponseUpdate,
-    repository: FromDishka[DistillationStaticRepositorySqla] = None,
+    repository: FromDishka[DistillationStaticRepositorySqla],
 ) -> StaticResponseResponse:
     """Update a static response template."""
     response = await repository.get_response_by_id(response_id)
@@ -161,7 +161,7 @@ async def update_static_response(
 @inject
 async def delete_static_response(
     response_id: UUID,
-    repository: FromDishka[DistillationStaticRepositorySqla] = None,
+    repository: FromDishka[DistillationStaticRepositorySqla],
 ):
     """Delete a static response template."""
     await repository.delete_response(response_id)
@@ -175,7 +175,7 @@ async def delete_static_response(
 )
 @inject
 async def get_distillation_config(
-    repository: FromDishka[DistillationConfigRepositorySqla] = None,
+    repository: FromDishka[DistillationConfigRepositorySqla],
 ) -> DistillationConfigResponse:
     """Get current distillation configuration."""
     config = await repository.get_config()
@@ -198,7 +198,7 @@ async def get_distillation_config(
 @inject
 async def update_distillation_config(
     data: DistillationConfigUpdate,
-    repository: FromDishka[DistillationConfigRepositorySqla] = None,
+    repository: FromDishka[DistillationConfigRepositorySqla],
 ) -> DistillationConfigResponse:
     """Update distillation configuration."""
     config = await repository.get_config()
@@ -240,7 +240,7 @@ async def update_distillation_config(
 @inject
 async def invalidate_cache(
     data: CacheInvalidateRequest,
-    repository: FromDishka[DistillationCacheRepositorySqla] = None,
+    repository: FromDishka[DistillationCacheRepositorySqla],
 ):
     """Invalidate cache entries."""
     if data.cache_type == "exact":
@@ -258,7 +258,7 @@ async def invalidate_cache(
 )
 @inject
 async def get_cache_stats(
-    repository: FromDishka[DistillationCacheRepositorySqla] = None,
+    repository: FromDishka[DistillationCacheRepositorySqla],
 ) -> CacheStatsResponse:
     """Get cache statistics."""
     exact_stats = await repository.get_exact_cache_stats()
@@ -278,11 +278,11 @@ async def get_cache_stats(
 )
 @inject
 async def get_telemetry_requests(
+    repository: FromDishka[DistillationTelemetryRepositorySqla],
     user_id: Optional[UUID] = Query(None),
     intent: Optional[str] = Query(None),
     route_type: Optional[str] = Query(None),
     limit: int = Query(100, le=1000),
-    repository: FromDishka[DistillationTelemetryRepositorySqla] = None,
 ) -> List[DistillationTelemetryResponse]:
     """Get distillation telemetry requests."""
     requests = await repository.get_requests(
@@ -315,8 +315,8 @@ async def get_telemetry_requests(
 )
 @inject
 async def get_telemetry_summary(
+    repository: FromDishka[DistillationTelemetryRepositorySqla],
     hours: int = Query(24, le=168),
-    repository: FromDishka[DistillationTelemetryRepositorySqla] = None,
 ) -> List[DistillationSummaryResponse]:
     """Get hourly distillation telemetry summary."""
     summary = await repository.get_hourly_summary(hours=hours)

@@ -120,8 +120,8 @@ def convert_tool_result(result: ToolScanResult) -> ToolScanResultSchema:
 )
 @inject
 async def get_security_dashboard(
+    current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> SecurityDashboardSummarySchema:
     """
     Get comprehensive security dashboard summary.
@@ -182,8 +182,8 @@ async def get_security_dashboard(
 )
 @inject
 async def get_latest_scan(
+    current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> SecurityScanResultSchema:
     """
     Get the most recent security scan.
@@ -223,8 +223,8 @@ async def get_latest_scan(
 @inject
 async def get_scan_by_id(
     scan_id: str,
+    current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> SecurityScanResultSchema:
     """
     Get a specific security scan by ID.
@@ -266,9 +266,9 @@ async def get_scan_by_id(
 )
 @inject
 async def get_scan_history(
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of scans to return"),
+    current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    current_user_service: FromDishka[CurrentUserService] = None,
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of scans to return"),
 ) -> ScanHistorySchema:
     """
     Get historical security scans.
@@ -305,8 +305,8 @@ async def get_scan_history(
 @inject
 async def get_scan_tools(
     scan_id: str,
+    current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> ScanToolsSchema:
     """
     Get individual tool results for a scan.
@@ -360,9 +360,9 @@ async def get_scan_tools(
 )
 @inject
 async def get_vulnerability_trends(
-    days: int = Query(30, ge=1, le=90, description="Number of days to include in trends"),
+    current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    current_user_service: FromDishka[CurrentUserService] = None,
+    days: int = Query(30, ge=1, le=90, description="Number of days to include in trends"),
 ) -> VulnerabilityTrendsSchema:
     """
     Get vulnerability trends over time.
@@ -400,8 +400,8 @@ async def get_vulnerability_trends(
 )
 @inject
 async def security_health_check(
+    current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> dict:
     """
     Health check for security scanning system.

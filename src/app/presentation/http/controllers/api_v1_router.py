@@ -38,9 +38,8 @@ from app.presentation.http.controllers.alerts.router import create_alerts_router
 from app.presentation.http.controllers.atlas.router import create_atlas_router
 from app.presentation.http.controllers.auth.router import create_auth_router
 
-# Bitcoin transaction router
-# DISABLED: Bitcoin module deactivated from presentation layer
-# from app.presentation.http.controllers.bitcoin.router import create_bitcoin_router
+# Bitcoin router (transactions + wallet endpoints)
+from app.presentation.http.controllers.bitcoin.router import create_bitcoin_router
 from app.presentation.http.controllers.chat.router import create_chat_router
 from app.presentation.http.controllers.chat.websocket_router import (
     create_chat_websocket_router,
@@ -53,6 +52,9 @@ from app.presentation.http.controllers.chat.analytics_dashboard import (
 )
 from app.presentation.http.controllers.admin.chat_dashboard import (
     router as chat_dashboard_router,
+)
+from app.presentation.http.controllers.admin.transactions_router import (
+    create_admin_transactions_router,
 )
 from app.presentation.http.controllers.admin.security_dashboard_router import (
     router as security_dashboard_router,
@@ -156,6 +158,7 @@ def create_api_v1_router() -> APIRouter:
         # Admin overview routers
         security_dashboard_router,
         chat_dashboard_router,
+        create_admin_transactions_router(),
         create_admin_stats_router(),
         create_admin_agent_router(),
         create_llm_admin_router(),  # Admin LLM orchestration router
@@ -221,8 +224,7 @@ def create_api_v1_router() -> APIRouter:
         # Transaction router (for logging and history)
         create_transaction_router(),
         # Bitcoin transaction router (for BTC-specific operations)
-        # DISABLED: Bitcoin module deactivated from presentation layer
-        # create_bitcoin_router(),
+        create_bitcoin_router(),
     )
 
     for sub_router in sub_routers:

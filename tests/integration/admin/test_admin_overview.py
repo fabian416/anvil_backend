@@ -38,4 +38,12 @@ class TestAdminOverviewDashboards:
         assert security.status_code in (401, 403)
         assert chat.status_code in (401, 403)
 
+    def test_admin_transactions_route_exists(self, client) -> None:
+        """
+        WHEN requesting the admin transactions endpoint
+        THEN the API SHALL respond (200 for configured admin auth, otherwise 401/403).
+        """
+        response = client.get("/api/v1/admin/transactions?limit=5&offset=0")
+        assert response.status_code in (200, 401, 403)
+
 

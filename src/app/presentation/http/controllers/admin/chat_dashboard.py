@@ -82,6 +82,8 @@ async def _ensure_admin(current_user_service: CurrentUserService) -> None:
 )
 @inject
 async def get_chat_dashboard(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(
         None,
         description="Start date for analytics (defaults to 30 days ago)"
@@ -90,8 +92,6 @@ async def get_chat_dashboard(
         None,
         description="End date for analytics (defaults to now)"
     ),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> AdminChatDashboardSummaryResponse:
     """
     Get comprehensive admin dashboard for chat system.
@@ -140,6 +140,8 @@ async def get_chat_dashboard(
 )
 @inject
 async def get_agent_performance(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     agent_type: Optional[str] = Query(None, description="Filter by specific agent type"),
@@ -149,8 +151,6 @@ async def get_agent_performance(
         description="Sort leaderboard by metric"
     ),
     limit: int = Query(10, ge=1, le=50, description="Number of agents to return"),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> AgentPerformanceResponse:
     """
     Get agent performance leaderboard.
@@ -205,10 +205,10 @@ async def get_agent_performance(
 )
 @inject
 async def get_cache_efficiency(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> CacheEfficiencyResponse:
     """
     Get cache efficiency metrics.
@@ -258,6 +258,8 @@ async def get_cache_efficiency(
 )
 @inject
 async def get_cost_tracking(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     group_by: str = Query(
@@ -265,8 +267,6 @@ async def get_cost_tracking(
         pattern="^(agent|model|day|user)$",
         description="Group costs by dimension"
     ),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> CostTrackingResponse:
     """
     Get comprehensive cost tracking.
@@ -318,6 +318,8 @@ async def get_cost_tracking(
 )
 @inject
 async def get_error_monitoring(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     severity: Optional[str] = Query(
@@ -325,8 +327,6 @@ async def get_error_monitoring(
         pattern="^(critical|high|medium|low)$",
         description="Filter by error severity"
     ),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> ErrorMonitoringResponse:
     """
     Get error monitoring metrics.
@@ -378,10 +378,10 @@ async def get_error_monitoring(
 )
 @inject
 async def get_active_users(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> ActiveUsersResponse:
     """
     Get active users metrics.
@@ -432,10 +432,10 @@ async def get_active_users(
 )
 @inject
 async def get_conversation_metrics(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> ConversationMetricsResponse:
     """
     Get conversation metrics.
@@ -485,6 +485,8 @@ async def get_conversation_metrics(
 )
 @inject
 async def export_dashboard_data(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     format: str = Query(
@@ -496,8 +498,6 @@ async def export_dashboard_data(
         None,
         description="Sections to include (agents, costs, errors, users, conversations)"
     ),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
-    current_user_service: FromDishka[CurrentUserService] = None,
 ) -> ExportDataResponse:
     """
     Export dashboard data for external analysis.

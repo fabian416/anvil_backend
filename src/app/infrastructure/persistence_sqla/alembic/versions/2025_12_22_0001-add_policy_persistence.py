@@ -14,7 +14,9 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "pol_20251222"
-down_revision: Union[str, None] = "expand_addr_btc"
+# NOTE: `expand_addr_btc` revision is not present in this repo; link to the last
+# known revision in the chain instead.
+down_revision: Union[str, None] = "g8h9i0j1k2l3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

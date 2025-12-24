@@ -106,12 +106,12 @@ async def create_project(
 )
 @inject
 async def list_projects(
+    interactor: FromDishka[ListProjects],
     status: Optional[str] = Query(None),
     visibility: Optional[str] = Query(None),
     is_featured: Optional[bool] = Query(None),
     limit: int = Query(50, le=100),
     offset: int = Query(0),
-    interactor: FromDishka[ListProjects] = None,
 ) -> List[ProjectResponse]:
     """List projects with filters."""
     projects = await interactor.execute(

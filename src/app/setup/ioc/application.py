@@ -3,12 +3,14 @@ from dishka import Provider, Scope, provide, provide_all
 # Chat interactors
 from app.application.chat.commands.create_conversation import CreateConversation
 from app.application.chat.commands.send_message import SendMessage
+from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
 from app.application.chat.queries.get_conversation import GetConversation
 from app.application.chat.queries.list_conversations import ListConversations
 from app.application.chat.queries.get_messages import GetMessages
 
 # Domain ports for SendMessage
 from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.domain.ports.ai.agent_gateway import AgentGateway
 
 from app.application.commands.user.activate_user import ActivateUserInteractor
@@ -107,6 +109,18 @@ class ApplicationProvider(Provider):
         GetMessages,
         scope=Scope.REQUEST,
     )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_admin_chat_analytics_service(
+        self,
+        conversation_repository: ConversationRepository,
+        analytics_repository: AnalyticsRepository,
+    ) -> AdminChatAnalyticsService:
+        """Provide admin chat analytics service for admin dashboard endpoints."""
+        return AdminChatAnalyticsService(
+            conversation_repository=conversation_repository,
+            analytics_repository=analytics_repository,
+        )
 
     # Services
     services = provide_all(
