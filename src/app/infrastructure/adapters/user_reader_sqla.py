@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.application.common.ports.user_query_gateway import UserQueryGateway
@@ -28,6 +28,16 @@ class SqlaUserReader(UserQueryGateway):
     def __init__(self, session: MainAsyncSession):
         map_users_table()
         self._session = session
+
+    def _build_search_filter(self, users_table, search: str):
+        search_pattern = f"%{search.lower()}%"
+        return or_(
+            func.lower(users_table.c.email).like(search_pattern),
+            func.lower(users_table.c.first_name).like(search_pattern),
+            func.lower(users_table.c.last_name).like(search_pattern),
+            func.lower(users_table.c.privy_user_id).like(search_pattern),
+            func.lower(users_table.c.primary_wallet_address).like(search_pattern),
+        )
 
     async def read_all(
         self,
@@ -64,6 +74,11 @@ class SqlaUserReader(UserQueryGateway):
                 .offset(user_read_all_params.pagination.offset)
             )
 
+            if user_read_all_params.search:
+                select_stmt = select_stmt.where(
+                    self._build_search_filter(users_table, user_read_all_params.search)
+                )
+
             rows = (await self._session.execute(select_stmt)).mappings().all()
 
             return [
@@ -99,7 +114,7 @@ class SqlaUserReader(UserQueryGateway):
         except SQLAlchemyError as error:
             raise ReaderError(DB_QUERY_FAILED) from error
 
-    async def count_all(self) -> int:
+    async def count_all(self, search: str | None = None) -> int:
         """
         Count all users in the system.
 
@@ -108,6 +123,8 @@ class SqlaUserReader(UserQueryGateway):
         try:
             users_table = mapping_registry.metadata.tables["users"]
             stmt = select(func.count()).select_from(users_table)
+            if search:
+                stmt = stmt.where(self._build_search_filter(users_table, search))
             result = await self._session.execute(stmt)
             return result.scalar_one()
         except SQLAlchemyError as error:

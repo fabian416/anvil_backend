@@ -16,7 +16,7 @@ class UserQueryGateway(Protocol):
         """
 
     @abstractmethod
-    async def count_all(self) -> int:
+    async def count_all(self, search: str | None = None) -> int:
         """
         Count all users in the system.
 

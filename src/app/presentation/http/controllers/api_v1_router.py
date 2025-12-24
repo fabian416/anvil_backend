@@ -25,21 +25,12 @@ from app.presentation.http.controllers.admin.projects_router import (
 from app.presentation.http.controllers.admin.stats.router import (
     create_admin_stats_router,
 )
-from app.presentation.http.controllers.admin.transactions_router import (
-    create_admin_transactions_router,
-)
 from app.presentation.http.controllers.admin.user.router import create_users_router
 from app.presentation.http.controllers.admin.wallet.router import (
     create_admin_wallet_router,
 )
 from app.presentation.http.controllers.admin.policies.router import (
     create_admin_policies_router,
-)
-from app.presentation.http.controllers.admin.chat_dashboard import (
-    router as admin_chat_dashboard_router,
-)
-from app.presentation.http.controllers.admin.security_router import (
-    router as admin_security_router,
 )
 
 # Alerts router
@@ -59,6 +50,12 @@ from app.presentation.http.controllers.chat.intent_detection_router import (
 )
 from app.presentation.http.controllers.chat.analytics_dashboard import (
     router as analytics_dashboard_router,
+)
+from app.presentation.http.controllers.admin.chat_dashboard import (
+    router as chat_dashboard_router,
+)
+from app.presentation.http.controllers.admin.security_dashboard_router import (
+    router as security_dashboard_router,
 )
 
 # Comparison router
@@ -156,20 +153,18 @@ def create_api_v1_router() -> APIRouter:
         create_chat_websocket_router(),
         create_intent_detection_router(),
         analytics_dashboard_router,
+        # Admin overview routers
+        security_dashboard_router,
+        chat_dashboard_router,
         create_admin_stats_router(),
         create_admin_agent_router(),
         create_llm_admin_router(),  # Admin LLM orchestration router
         # Admin wallet router (for admin management of Privy wallets)
         create_admin_wallet_router(),
-        # Admin transactions router (admin history per wallet/user)
-        create_admin_transactions_router(),
         # Admin policies router (for managing Privy policies)
         create_admin_policies_router(),
         # Admin metrics router (for analytics and metrics)
         create_admin_metrics_router(),
-        # Admin overview routers (chat analytics + security dashboard)
-        admin_chat_dashboard_router,
-        admin_security_router,
         # Wallet router (for user operations)
         create_wallet_router(),
         # Graph visualization router

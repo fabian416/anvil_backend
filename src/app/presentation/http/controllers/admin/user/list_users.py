@@ -32,10 +32,11 @@ class ListUsersRequestPydantic(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    limit: Annotated[int, Field(ge=1)] = 20
+    limit: Annotated[int, Field(ge=1, le=100)] = 20
     offset: Annotated[int, Field(ge=0)] = 0
     sorting_field: Annotated[str, Field()] = "email"
     sorting_order: Annotated[SortingOrder, Field()] = SortingOrder.ASC
+    search: Annotated[str | None, Field()] = None
 
 
 def create_list_users_router() -> APIRouter:
@@ -74,6 +75,7 @@ def create_list_users_router() -> APIRouter:
             offset=request_data_pydantic.offset,
             sorting_field=request_data_pydantic.sorting_field,
             sorting_order=request_data_pydantic.sorting_order,
+            search=request_data_pydantic.search,
         )
         return await interactor.execute(request_data)
 

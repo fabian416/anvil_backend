@@ -3,8 +3,9 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Body, Path, Security, status
+from fastapi import APIRouter, Path, Security, status
 from fastapi_error_map import ErrorAwareRouter, rule
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.commands.user.change_password import (
     ChangePasswordInteractor,
@@ -20,6 +21,11 @@ from app.presentation.http.errors.callbacks import log_error, log_info
 from app.presentation.http.errors.translators import (
     ServiceUnavailableTranslator,
 )
+
+class ChangePasswordBody(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    password: Annotated[str, Field(min_length=8)]
 
 
 def create_change_password_router() -> APIRouter:
@@ -46,12 +52,12 @@ def create_change_password_router() -> APIRouter:
     @inject
     async def change_password(
         email: Annotated[str, Path()],
-        password: Annotated[str, Body()],
+        body: ChangePasswordBody,
         interactor: FromDishka[ChangePasswordInteractor],
     ) -> None:
         request_data = ChangePasswordRequest(
             email=email,
-            password=password,
+            password=body.password,
         )
         await interactor.execute(request_data)
 

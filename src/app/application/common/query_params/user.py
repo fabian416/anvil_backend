@@ -10,7 +10,8 @@ class UserListSorting:
     sorting_order: SortingOrder
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class UserListParams:
     pagination: Pagination
     sorting: UserListSorting
+    search: str | None = None

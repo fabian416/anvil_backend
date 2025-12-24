@@ -17,7 +17,9 @@ from app.application.common.services.authorization.permissions import (
 from app.application.common.services.current_user import CurrentUserService
 from app.domain.entities.user import User
 from app.domain.enums.user_role import UserRole
+from app.domain.exceptions.user import ActivationChangeNotPermittedError
 from app.domain.exceptions.user import UserNotFoundByEmailError
+from app.domain.services.auth import AuthService
 from app.domain.services.user import UserService
 from app.domain.value_objects.email import Email
 
@@ -42,11 +44,13 @@ class ActivateUserInteractor:
         user_command_gateway: UserCommandGateway,
         user_service: UserService,
         transaction_manager: TransactionManager,
+        auth_service: AuthService,
     ):
         self._current_user_service = current_user_service
         self._user_command_gateway = user_command_gateway
         self._user_service = user_service
         self._transaction_manager = transaction_manager
+        self._auth_service = auth_service
 
     async def execute(self, request_data: ActivateUserRequest) -> None:
         """
@@ -79,6 +83,14 @@ class ActivateUserInteractor:
         )
         if user is None:
             raise UserNotFoundByEmailError(email)
+
+        # Do not allow changing activation for the configured super admin account.
+        if self._auth_service.is_super_admin(user.email):
+            raise ActivationChangeNotPermittedError(user.email, user.role)
+
+        # Prevent self-activation changes (safety / avoid lockout loops).
+        if user.id_ == current_user.id_:
+            raise ActivationChangeNotPermittedError(user.email, user.role)
 
         authorize(
             CanManageSubordinate(),
