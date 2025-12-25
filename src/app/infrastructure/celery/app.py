@@ -33,6 +33,10 @@ def create_celery() -> Celery:
     app.conf.timezone = "UTC"
     app.conf.enable_utc = True
 
+    # Celery 6.0+ compatibility: Explicitly enable broker connection retry on startup
+    # Maintains current behavior and silences CPendingDeprecationWarning
+    app.conf.broker_connection_retry_on_startup = True
+
     # =========================================================================
     # Task Routing Configuration
     # Workers especializados para evitar latencia y mejorar performance
