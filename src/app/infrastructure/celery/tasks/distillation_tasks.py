@@ -50,39 +50,39 @@ def aggregate_distillation_telemetry():
         # Aggregate query
         query = text("""
             INSERT INTO distillation_telemetry_hourly (
-                hour,
+                hour_bucket,
                 total_requests,
-                cache_hits,
-                static_responses,
-                light_llm,
-                full_llm,
-                rejected,
-                avg_classification_ms,
+                cache_hit_count,
+                static_response_count,
+                light_llm_count,
+                full_llm_count,
+                rejected_count,
+                avg_classification_latency_ms,
                 avg_confidence,
                 created_at
             )
             SELECT
-                date_trunc('hour', created_at) as hour,
+                date_trunc('hour', created_at) as hour_bucket,
                 COUNT(*) as total_requests,
-                SUM(CASE WHEN cache_hit = true THEN 1 ELSE 0 END) as cache_hits,
-                SUM(CASE WHEN route_type = 'STATIC' THEN 1 ELSE 0 END) as static_responses,
-                SUM(CASE WHEN route_type = 'LIGHT_LLM' THEN 1 ELSE 0 END) as light_llm,
-                SUM(CASE WHEN route_type = 'FULL_LLM' THEN 1 ELSE 0 END) as full_llm,
-                SUM(CASE WHEN route_type = 'REJECT' THEN 1 ELSE 0 END) as rejected,
-                AVG(classification_latency_ms) as avg_classification_ms,
+                SUM(CASE WHEN cache_hit = true THEN 1 ELSE 0 END) as cache_hit_count,
+                SUM(CASE WHEN route_type = 'STATIC' THEN 1 ELSE 0 END) as static_response_count,
+                SUM(CASE WHEN route_type = 'LIGHT_LLM' THEN 1 ELSE 0 END) as light_llm_count,
+                SUM(CASE WHEN route_type = 'FULL_LLM' THEN 1 ELSE 0 END) as full_llm_count,
+                SUM(CASE WHEN route_type = 'REJECT' THEN 1 ELSE 0 END) as rejected_count,
+                AVG(classification_latency_ms)::INTEGER as avg_classification_latency_ms,
                 AVG(intent_confidence) as avg_confidence,
                 NOW() as created_at
             FROM distillation_requests
             WHERE created_at >= :hour_start AND created_at < :hour_end
             GROUP BY date_trunc('hour', created_at)
-            ON CONFLICT (hour) DO UPDATE SET
+            ON CONFLICT (hour_bucket) DO UPDATE SET
                 total_requests = EXCLUDED.total_requests,
-                cache_hits = EXCLUDED.cache_hits,
-                static_responses = EXCLUDED.static_responses,
-                light_llm = EXCLUDED.light_llm,
-                full_llm = EXCLUDED.full_llm,
-                rejected = EXCLUDED.rejected,
-                avg_classification_ms = EXCLUDED.avg_classification_ms,
+                cache_hit_count = EXCLUDED.cache_hit_count,
+                static_response_count = EXCLUDED.static_response_count,
+                light_llm_count = EXCLUDED.light_llm_count,
+                full_llm_count = EXCLUDED.full_llm_count,
+                rejected_count = EXCLUDED.rejected_count,
+                avg_classification_latency_ms = EXCLUDED.avg_classification_latency_ms,
                 avg_confidence = EXCLUDED.avg_confidence
         """)
         

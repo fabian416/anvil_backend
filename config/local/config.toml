@@ -220,6 +220,44 @@ debug_mode = false
 log_intent_classification = true
 log_agent_selection = true
 
+# ========================================
+# LLM Provider Configuration
+# ========================================
+[llm_provider]
+# Primary provider for agent squad (vertex_ai, deepinfra, openai)
+primary_provider = "vertex_ai"
+
+# Fallback provider if primary fails
+fallback_provider = "deepinfra"
+
+# Enable automatic fallback
+enable_fallback = true
+
+# Provider-specific settings
+[llm_provider.vertex_ai]
+# Uses credentials from [vertex_ai] section in .secrets.toml
+
+# Model mapping: OpenAI model names -> Gemini models
+[llm_provider.vertex_ai.model_mapping]
+"gpt-4o" = "gemini-2.0-flash-exp"
+"gpt-4o-mini" = "gemini-2.0-flash-exp"
+"gpt-4" = "gemini-1.5-pro"
+"gpt-3.5-turbo" = "gemini-2.0-flash-exp"
+
+[llm_provider.deepinfra]
+# Uses credentials from [deepinfra] section in .secrets.toml
+
+# Model mapping: OpenAI model names -> DeepInfra models
+[llm_provider.deepinfra.model_mapping]
+"gpt-4o" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+"gpt-4o-mini" = "meta-llama/Llama-3.2-3B-Instruct"
+"gpt-4" = "meta-llama/Meta-Llama-3.1-405B-Instruct"
+"gpt-3.5-turbo" = "meta-llama/Llama-3.2-3B-Instruct"
+
+[llm_provider.openai]
+# Optional: if you want to use OpenAI as primary or fallback
+# Add OPENAI_API_KEY to .secrets.toml
+
 # Privy Configuration
 [privy]
 # IMPORTANTE: Debe coincidir con VITE_PRIVY_APP_ID del frontend
@@ -267,10 +305,12 @@ rate_limit_per_user = 100  # Per minute
 rate_limit_global = 10000  # Per minute
 
 [distillation.vertex_ai]
-project_id = "anvil-dev"
+project_id = "atlantean-field-480121-i2"  # Project ID
+project_number = "369224500418"  # Project number
 location = "us-central1"
-credentials_path = ""  # Set via VERTEX_AI_CREDENTIALS_PATH
-model = "gemini-1.5-flash"
+credentials_path = ""  # Set via VERTEX_AI_CREDENTIALS_PATH or use API key
+api_key = ""  # Set in .secrets.toml - API Key for simplified auth
+model = "gemini-2.0-flash-exp"  # Latest available: gemini-2.5-flash, gemini-2.0-flash-exp, etc.
 
 [distillation.deepinfra]
 api_key = ""  # Set via DEEPINFRA_API_KEY

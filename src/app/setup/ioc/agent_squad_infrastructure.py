@@ -26,7 +26,11 @@ from app.infrastructure.adapters.agent_squad.feature_flags_config import (
     FeatureFlagsConfig,
 )
 from app.infrastructure.adapters.agent_squad.llm_client_openai import LLMClientOpenAI
+from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClientVertexAI
+from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
+from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
 from app.setup.config.agent_squad import AgentSquadSettings
+from app.setup.config.settings import Settings
 
 # Core user-facing agents (10)
 from app.infrastructure.adapters.agent_squad.agents.chat_agent_openai import (
@@ -95,12 +99,97 @@ class AgentSquadInfrastructureProvider(Provider):
     scope = Scope.REQUEST
 
     @provide
-    def provide_llm_client(self) -> LLMClientGateway:
-        """Provide OpenAI LLM client."""
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable not set")
-        return LLMClientOpenAI(api_key=api_key)
+    def provide_llm_client(self, settings: Settings) -> LLMClientGateway:
+        """
+        Provide LLM client with automatic fallback support.
+
+        Uses configuration from [llm_provider] section to determine:
+        - Primary provider (vertex_ai, deepinfra, or openai)
+        - Fallback provider (optional)
+        - Model mappings for each provider
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # Get LLM provider config (using dict access with defaults)
+        llm_config = settings.raw_config.get("llm_provider", {})
+        primary_provider = llm_config.get("primary_provider", "vertex_ai")
+        fallback_provider = llm_config.get("fallback_provider", "deepinfra")
+        enable_fallback = llm_config.get("enable_fallback", True)
+
+        # Provider configs
+        vertex_config = llm_config.get("vertex_ai", {})
+        deepinfra_config = llm_config.get("deepinfra", {})
+        openai_config = llm_config.get("openai", {})
+
+        # Helper to create client based on provider name
+        def create_client(provider_name: str) -> LLMClientGateway:
+            if provider_name == "vertex_ai":
+                # Get Vertex AI credentials from settings
+                vertex_api_key = settings.raw_config.get("vertex_ai", {}).get("API_KEY")
+                if not vertex_api_key:
+                    raise ValueError("Vertex AI API_KEY not found in .secrets.toml")
+
+                logger.info(f"Creating Vertex AI LLM client")
+                return LLMClientVertexAI(
+                    api_key=vertex_api_key,
+                    model_mapping=vertex_config.get("model_mapping"),
+                )
+
+            elif provider_name == "deepinfra":
+                # Get DeepInfra credentials from settings
+                deepinfra_api_key = settings.raw_config.get("deepinfra", {}).get("API_KEY")
+                deepinfra_base_url = settings.raw_config.get("deepinfra", {}).get(
+                    "BASE_URL", "https://api.deepinfra.com/v1/openai"
+                )
+
+                if not deepinfra_api_key:
+                    raise ValueError("DeepInfra API_KEY not found in .secrets.toml")
+
+                logger.info(f"Creating DeepInfra LLM client")
+                return LLMClientDeepInfra(
+                    api_key=deepinfra_api_key,
+                    base_url=deepinfra_base_url,
+                    model_mapping=deepinfra_config.get("model_mapping"),
+                )
+
+            elif provider_name == "openai":
+                # Get OpenAI API key
+                openai_api_key = os.getenv("OPENAI_API_KEY")
+                if not openai_api_key:
+                    raise ValueError("OPENAI_API_KEY environment variable not set")
+
+                logger.info(f"Creating OpenAI LLM client")
+                return LLMClientOpenAI(api_key=openai_api_key)
+
+            else:
+                raise ValueError(f"Unknown LLM provider: {provider_name}")
+
+        # Create primary client
+        primary_client = create_client(primary_provider)
+
+        # Create fallback client if enabled
+        fallback_client = None
+        if enable_fallback and fallback_provider:
+            try:
+                fallback_client = create_client(fallback_provider)
+            except Exception as e:
+                logger.warning(f"Could not create fallback client ({fallback_provider}): {e}")
+
+        # Wrap with fallback logic
+        if fallback_client:
+            logger.info(
+                f"LLM client configured: primary={primary_provider}, "
+                f"fallback={fallback_provider}"
+            )
+            return LLMClientWithFallback(
+                primary_client=primary_client,
+                fallback_client=fallback_client,
+                enable_fallback=enable_fallback,
+            )
+        else:
+            logger.info(f"LLM client configured: primary={primary_provider} (no fallback)")
+            return primary_client
     
     @provide
     def provide_coingecko_client(self, settings: AgentSquadSettings) -> Any:

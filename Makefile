@@ -24,7 +24,7 @@ start:
 	. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload
 
 # Development environment - Start FastAPI + Celery + Beat + Flower
-.PHONY: start-dev stop-dev
+.PHONY: start-dev stop-dev logs-dev logs-fastapi logs-celery logs-all logs-tail logs-summary logs-errors
 start-dev:
 	@./scripts/start_dev.sh
 
@@ -35,6 +35,31 @@ stop-dev:
 	@pkill -f "celery.*beat" || true
 	@pkill -f "flower" || true
 	@echo "✅ Todos los servicios detenidos"
+
+# View logs from development services
+logs-dev: logs-all
+
+logs-fastapi:
+	@echo "📡 FastAPI Logs (Ctrl+C to exit):"
+	@tail -f logs/fastapi.log
+
+logs-celery:
+	@echo "🐝 Celery Workers Logs (Ctrl+C to exit):"
+	@tail -f logs/celery/*.log
+
+logs-all:
+	@echo "📊 All Development Logs (Ctrl+C to exit):"
+	@tail -f logs/fastapi.log logs/celery/*.log
+
+logs-tail:
+	@./scripts/logs_monitor.sh
+
+logs-summary:
+	@./scripts/logs_summary.sh
+
+logs-errors:
+	@echo "🔍 Searching for errors in all logs..."
+	@grep -i "error\|exception\|traceback\|failed" logs/fastapi.log logs/celery/*.log 2>/dev/null || echo "✅ No errors found"
 
 # Celery
 .PHONY: celery celery.worker celery.beat celery.flower
@@ -257,6 +282,15 @@ init-db: create-db
 
 test-config:
 	. env/bin/activate && APP_ENV=$(APP_ENV) python3.12 scripts/test_config.py
+
+test-vertex-ai:
+	. env/bin/activate && APP_ENV=$(APP_ENV) python3.12 scripts/test_vertex_ai.py
+
+test-deepinfra:
+	. env/bin/activate && APP_ENV=$(APP_ENV) python3.12 scripts/test_deepinfra.py
+
+test-agent-llm:
+	. env/bin/activate && APP_ENV=$(APP_ENV) python3.12 scripts/test_agent_llm_providers.py
 # Docker compose
 DOCKER_COMPOSE := docker compose
 DOCKER_COMPOSE_PRUNE := scripts/makefile/docker_prune.sh

@@ -42,10 +42,14 @@ class DistillationRetrySettings(BaseModel):
 
 class VertexAISettings(BaseModel):
     """Vertex AI provider settings."""
-    
+
     project_id: str = Field(
         default="",
         description="Google Cloud project ID",
+    )
+    project_number: Optional[str] = Field(
+        default=None,
+        description="Google Cloud project number",
     )
     location: str = Field(
         default="us-central1",
@@ -54,6 +58,10 @@ class VertexAISettings(BaseModel):
     credentials_path: Optional[str] = Field(
         default=None,
         description="Path to service account credentials JSON file",
+    )
+    api_key: Optional[str] = Field(
+        default=None,
+        description="Google Cloud API Key (alternative to service account)",
     )
     model: str = Field(
         default="gemini-1.5-flash",

@@ -52,45 +52,61 @@ class VertexAIDistillator:
         self.provider_name = "vertex_ai"
         self.model_name = self.vertex_settings.model
         
-        # Lazy import to avoid requiring google-cloud-aiplatform for all users
+        # Lazy import - prefer new google.genai SDK with API key
         try:
-            from google.cloud import aiplatform
-            from google.oauth2 import service_account
-            import google.auth.exceptions
-            
-            self.aiplatform = aiplatform
-            self.service_account = service_account
-            self.google_auth_exceptions = google.auth.exceptions
+            if self.vertex_settings.api_key:
+                # Use new google.genai SDK (recommended)
+                import google.genai as genai
+
+                self.use_genai_sdk = True
+                self.genai_client = genai.Client(api_key=self.vertex_settings.api_key)
+
+                logger.info(
+                    f"Vertex AI initialized with Google Genai SDK (API Key): "
+                    f"project={self.vertex_settings.project_id}, model={self.model_name}"
+                )
+            else:
+                # Fallback to old Vertex AI SDK (requires service account)
+                from google.cloud import aiplatform
+                from google.oauth2 import service_account
+                import google.auth.exceptions
+
+                self.use_genai_sdk = False
+                self.aiplatform = aiplatform
+                self.service_account = service_account
+                self.google_auth_exceptions = google.auth.exceptions
+
+                # Initialize Vertex AI
+                if self.vertex_settings.credentials_path:
+                    credentials = self.service_account.Credentials.from_service_account_file(
+                        self.vertex_settings.credentials_path
+                    )
+                    self.aiplatform.init(
+                        project=self.vertex_settings.project_id,
+                        location=self.vertex_settings.location,
+                        credentials=credentials,
+                    )
+                    logger.info(
+                        f"Vertex AI initialized with Service Account: project={self.vertex_settings.project_id}, "
+                        f"location={self.vertex_settings.location}, model={self.model_name}"
+                    )
+                else:
+                    self.aiplatform.init(
+                        project=self.vertex_settings.project_id,
+                        location=self.vertex_settings.location,
+                    )
+                    logger.info(
+                        f"Vertex AI initialized with default credentials: project={self.vertex_settings.project_id}, "
+                        f"location={self.vertex_settings.location}, model={self.model_name}"
+                    )
+
         except ImportError as e:
             raise DistillationError(
-                message="google-cloud-aiplatform not installed. Run: pip install google-cloud-aiplatform",
+                message="google-genai or google-cloud-aiplatform not installed. Run: pip install google-genai",
                 provider=self.provider_name,
                 error_code="missing_dependency",
                 retryable=False,
             ) from e
-        
-        # Initialize Vertex AI
-        try:
-            if self.vertex_settings.credentials_path:
-                credentials = self.service_account.Credentials.from_service_account_file(
-                    self.vertex_settings.credentials_path
-                )
-                self.aiplatform.init(
-                    project=self.vertex_settings.project_id,
-                    location=self.vertex_settings.location,
-                    credentials=credentials,
-                )
-            else:
-                self.aiplatform.init(
-                    project=self.vertex_settings.project_id,
-                    location=self.vertex_settings.location,
-                )
-            
-            logger.info(
-                f"Vertex AI initialized: project={self.vertex_settings.project_id}, "
-                f"location={self.vertex_settings.location}, model={self.model_name}"
-            )
-        
         except Exception as e:
             logger.error(f"Failed to initialize Vertex AI: {e}")
             raise DistillationAuthenticationError(provider=self.provider_name) from e
@@ -188,73 +204,97 @@ class VertexAIDistillator:
     async def _call_vertex_ai_with_retry(self, prompt: str) -> tuple[str, int]:
         """
         Call Vertex AI API with retry support.
-        
+
         Args:
             prompt: The prompt to send
-        
+
         Returns:
             Tuple of (response_text, tokens_used)
-        
+
         Raises:
             DistillationError: On API errors
         """
         @self._retry_decorator
         async def _call():
             try:
-                from google.cloud.aiplatform_v1beta1.types import content as gapic_content_types
-                from vertexai.generative_models import GenerativeModel, Part
-                
-                # Initialize model
-                model = GenerativeModel(self.model_name)
-                
-                # Generate content
-                response = model.generate_content(
-                    [Part.from_text(prompt)],
-                    generation_config={
-                        "temperature": self.settings.temperature,
-                        "max_output_tokens": self.settings.max_tokens,
-                    },
-                )
-                
-                # Extract response
-                if not response.candidates:
-                    raise DistillationInvalidResponseError(
-                        provider=self.provider_name,
-                        details="No candidates in response",
+                if self.use_genai_sdk:
+                    # Use new google.genai SDK (simpler, API key based)
+                    response = self.genai_client.models.generate_content(
+                        model=self.model_name,
+                        contents=prompt,
+                        config={
+                            "temperature": self.settings.temperature,
+                            "max_output_tokens": self.settings.max_tokens,
+                        },
                     )
-                
-                response_text = response.text
-                
-                # Estimate tokens (Vertex AI doesn't always return usage)
-                tokens_used = len(prompt) // 4 + len(response_text) // 4
-                if hasattr(response, 'usage_metadata'):
-                    tokens_used = (
-                        response.usage_metadata.prompt_token_count +
-                        response.usage_metadata.candidates_token_count
+
+                    response_text = response.text
+
+                    # Get token usage if available
+                    tokens_used = 0
+                    if hasattr(response, 'usage_metadata'):
+                        tokens_used = (
+                            response.usage_metadata.prompt_token_count +
+                            response.usage_metadata.candidates_token_count
+                        )
+                    else:
+                        # Estimate tokens
+                        tokens_used = len(prompt) // 4 + len(response_text) // 4
+
+                    return response_text, tokens_used
+                else:
+                    # Use old Vertex AI SDK (service account based)
+                    from google.cloud.aiplatform_v1beta1.types import content as gapic_content_types
+                    from vertexai.generative_models import GenerativeModel, Part
+
+                    # Initialize model
+                    model = GenerativeModel(self.model_name)
+
+                    # Generate content
+                    response = model.generate_content(
+                        [Part.from_text(prompt)],
+                        generation_config={
+                            "temperature": self.settings.temperature,
+                            "max_output_tokens": self.settings.max_tokens,
+                        },
                     )
-                
-                return response_text, tokens_used
-            
-            except self.google_auth_exceptions.GoogleAuthError as e:
-                raise DistillationAuthenticationError(provider=self.provider_name) from e
-            
+
+                    # Extract response
+                    if not response.candidates:
+                        raise DistillationInvalidResponseError(
+                            provider=self.provider_name,
+                            details="No candidates in response",
+                        )
+
+                    response_text = response.text
+
+                    # Estimate tokens (Vertex AI doesn't always return usage)
+                    tokens_used = len(prompt) // 4 + len(response_text) // 4
+                    if hasattr(response, 'usage_metadata'):
+                        tokens_used = (
+                            response.usage_metadata.prompt_token_count +
+                            response.usage_metadata.candidates_token_count
+                        )
+
+                    return response_text, tokens_used
+
             except TimeoutError as e:
                 raise DistillationTimeoutError(
                     provider=self.provider_name,
                     timeout_seconds=self.settings.timeout_seconds,
                 ) from e
-            
+
             except Exception as e:
                 error_str = str(e).lower()
-                
+
                 # Check for rate limit
                 if "quota" in error_str or "rate limit" in error_str:
                     raise DistillationRateLimitError(provider=self.provider_name) from e
-                
+
                 # Check for authentication
-                if "auth" in error_str or "permission" in error_str:
+                if "auth" in error_str or "permission" in error_str or "credentials" in error_str:
                     raise DistillationAuthenticationError(provider=self.provider_name) from e
-                
+
                 # Generic error
                 raise DistillationError(
                     message=f"Vertex AI API error: {str(e)}",
@@ -262,7 +302,7 @@ class VertexAIDistillator:
                     error_code="api_error",
                     retryable=True,
                 ) from e
-        
+
         return await _call()
     
     def _parse_response(self, response_text: str) -> Dict[str, Any]:
