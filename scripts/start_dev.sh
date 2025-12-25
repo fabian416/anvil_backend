@@ -1,6 +1,7 @@
 #!/bin/bash
 # Script para iniciar todos los servicios de desarrollo:
 # - FastAPI (uvicorn)
+# - MCP Servers (6 servers on ports 8081-8086)
 # - Celery workers
 # - Celery Beat
 # - Flower monitoring
@@ -27,6 +28,7 @@ mkdir -p "$LOG_DIR"
 
 # Variables para PIDs
 FASTAPI_PID=""
+MCP_PIDS=""
 CELERY_PIDS=""
 
 # Función para limpiar procesos al salir
@@ -38,6 +40,10 @@ cleanup() {
         echo -e "${CYAN}Deteniendo FastAPI...${NC}"
         kill $FASTAPI_PID || true
     fi
+
+    # Detener todos los procesos de MCP
+    echo -e "${CYAN}Deteniendo MCP servers...${NC}"
+    pkill -f "app.infrastructure.mcp.servers" || true
 
     # Detener todos los procesos de Celery
     echo -e "${CYAN}Deteniendo Celery workers...${NC}"
@@ -103,7 +109,19 @@ fi
 
 echo -e "${GREEN}  ✅ FastAPI iniciado correctamente${NC}\n"
 
-# 2. Iniciar Celery workers, Beat y Flower
+# 2. Iniciar MCP Servers
+echo -e "${GREEN}🔌 Iniciando MCP Servers...${NC}"
+bash "$SCRIPT_DIR/start_all_mcp.sh" &
+MCP_SCRIPT_PID=$!
+
+# Esperar a que los MCP servers inicien
+sleep 3
+
+echo -e "${GREEN}  ✅ MCP Servers iniciados correctamente${NC}"
+echo -e "${CYAN}  Ver endpoints: http://localhost:8081-8086/tools${NC}"
+echo -e "${CYAN}  Ver logs MCP: tail -f $LOG_DIR/mcp/*.log${NC}\n"
+
+# 3. Iniciar Celery workers, Beat y Flower
 echo -e "${GREEN}🐝 Iniciando Celery (workers + beat + flower)...${NC}"
 echo -e "${CYAN}   Nota: Los logs de Celery se mostrarán en tiempo real${NC}\n"
 

@@ -23,6 +23,24 @@ alembic revision --autogenerate -m "description"  # Create migration
 **Development Server:**
 ```bash
 make start           # Start FastAPI server with reload
+make start-dev       # Start ALL dev services (FastAPI + MCP + Celery + Flower)
+make stop-dev        # Stop all dev services
+```
+
+**Development Logs:**
+```bash
+make logs-fastapi    # View FastAPI logs
+make logs-mcp        # View MCP server logs
+make logs-celery     # View Celery worker logs
+make logs-all        # View all logs combined
+```
+
+**MCP Servers:**
+```bash
+make mcp.all         # Start all 6 MCP servers (ports 8081-8086)
+make mcp.stop        # Stop all MCP servers
+# Individual servers: mcp.oneinch, mcp.defillama, mcp.thegraph, mcp.coingecko, mcp.aave, mcp.portfolio
+# Note: MCP servers are automatically included in 'make start-dev'
 ```
 
 **Code Quality:**

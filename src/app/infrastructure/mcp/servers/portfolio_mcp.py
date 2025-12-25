@@ -283,8 +283,25 @@ class PortfolioMCPServer(MCPServer):
         }
 
 
-# Example usage (for testing):
-# if __name__ == "__main__":
-#     import uvicorn
-#     server = PortfolioMCPServer()
-#     uvicorn.run(server.app, host="0.0.0.0", port=8081)
+# Main entry point for running server standalone
+if __name__ == "__main__":
+    import uvicorn
+
+    print("""
+╔══════════════════════════════════════════════════════════╗
+║         Portfolio MCP Server Starting...                ║
+╚══════════════════════════════════════════════════════════╝
+
+Port: 8086
+
+Endpoints:
+  GET  /           - Server info
+  GET  /tools      - List all tools
+  POST /tools/{name} - Call a tool
+  GET  /health     - Health check
+
+Starting server...
+    """)
+
+    server = PortfolioMCPServer()
+    uvicorn.run(server.app, host="0.0.0.0", port=8086, log_level="info")

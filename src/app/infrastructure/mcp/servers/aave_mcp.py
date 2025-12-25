@@ -836,7 +836,7 @@ if __name__ == "__main__":
 
 Server: {server.name} v{server.version}
 Tools: {len(server.tools)} registered
-Port: 8082
+Port: 8085
 
 Tools Available:
 """)
@@ -863,6 +863,6 @@ Starting server...
     uvicorn.run(
         server.app,
         host="0.0.0.0",
-        port=8082,
+        port=8085,
         log_level="info",
     )

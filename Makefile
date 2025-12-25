@@ -23,14 +23,15 @@ dotenv:
 start:
 	. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload
 
-# Development environment - Start FastAPI + Celery + Beat + Flower
-.PHONY: start-dev stop-dev logs-dev logs-fastapi logs-celery logs-all logs-tail logs-summary logs-errors
+# Development environment - Start FastAPI + MCP Servers + Celery + Beat + Flower
+.PHONY: start-dev stop-dev logs-dev logs-fastapi logs-celery logs-mcp logs-all logs-tail logs-summary logs-errors
 start-dev:
 	@./scripts/start_dev.sh
 
 stop-dev:
 	@echo "Deteniendo todos los servicios de desarrollo..."
 	@pkill -f "uvicorn app.run:make_app" || true
+	@pkill -f "app.infrastructure.mcp.servers" || true
 	@pkill -f "celery.*worker" || true
 	@pkill -f "celery.*beat" || true
 	@pkill -f "flower" || true
@@ -47,9 +48,13 @@ logs-celery:
 	@echo "🐝 Celery Workers Logs (Ctrl+C to exit):"
 	@tail -f logs/celery/*.log
 
+logs-mcp:
+	@echo "🔌 MCP Servers Logs (Ctrl+C to exit):"
+	@tail -f logs/mcp/*.log
+
 logs-all:
 	@echo "📊 All Development Logs (Ctrl+C to exit):"
-	@tail -f logs/fastapi.log logs/celery/*.log
+	@tail -f logs/fastapi.log logs/mcp/*.log logs/celery/*.log
 
 logs-tail:
 	@./scripts/logs_monitor.sh
@@ -209,7 +214,8 @@ logs.tx-worker: guard-APP_ENV
 	@cd $(CONFIGS_DIG)/$(APP_ENV) && $(DOCKER_COMPOSE) --env-file .env.$(APP_ENV) --profile tx-worker logs -f tx_confirmation_worker
 
 # MCP Servers
-.PHONY: mcp mcp.oneinch mcp.defillama mcp.thegraph mcp.coingecko mcp.all mcp.stop
+# Note: MCP servers are automatically started with 'make start-dev'
+.PHONY: mcp mcp.oneinch mcp.defillama mcp.thegraph mcp.coingecko mcp.aave mcp.portfolio mcp.all mcp.stop
 mcp: mcp.all
 
 mcp.oneinch:
@@ -228,16 +234,17 @@ mcp.coingecko:
 	@echo "Starting CoinGecko MCP Server on port 8084..."
 	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.coingecko_mcp
 
+mcp.aave:
+	@echo "Starting Aave MCP Server on port 8085..."
+	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.aave_mcp
+
+mcp.portfolio:
+	@echo "Starting Portfolio MCP Server on port 8086..."
+	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.portfolio_mcp
+
 mcp.all:
-	@echo "Starting all MCP servers..."
-	@echo "Note: Run each server in a separate terminal or use a process manager."
-	@echo ""
-	@echo "Terminal 1: make mcp.oneinch"
-	@echo "Terminal 2: make mcp.defillama"
-	@echo "Terminal 3: make mcp.thegraph"
-	@echo "Terminal 4: make mcp.coingecko"
-	@echo ""
-	@echo "Or use Docker Compose: make up.mcp"
+	@echo "Starting all MCP servers (6 servers on ports 8081-8086)..."
+	@./scripts/start_all_mcp.sh
 
 mcp.stop:
 	@echo "Stopping all MCP servers..."
