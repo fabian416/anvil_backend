@@ -30,7 +30,7 @@ from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClie
 from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
 from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
 from app.setup.config.agent_squad import AgentSquadSettings
-from app.setup.config.settings import Settings
+from app.setup.config.settings import AppSettings
 
 # Core user-facing agents (10)
 from app.infrastructure.adapters.agent_squad.agents.chat_agent_openai import (
@@ -99,7 +99,7 @@ class AgentSquadInfrastructureProvider(Provider):
     scope = Scope.REQUEST
 
     @provide
-    def provide_llm_client(self, settings: Settings) -> LLMClientGateway:
+    def provide_llm_client(self, settings: AppSettings) -> LLMClientGateway:
         """
         Provide LLM client with automatic fallback support.
 
@@ -109,10 +109,15 @@ class AgentSquadInfrastructureProvider(Provider):
         - Model mappings for each provider
         """
         import logging
+        from app.setup.config.loader import load_full_config, get_current_env
+
         logger = logging.getLogger(__name__)
 
+        # Load raw config to access llm_provider settings
+        raw_config = load_full_config(env=get_current_env())
+
         # Get LLM provider config (using dict access with defaults)
-        llm_config = settings.raw_config.get("llm_provider", {})
+        llm_config = raw_config.get("llm_provider", {})
         primary_provider = llm_config.get("primary_provider", "vertex_ai")
         fallback_provider = llm_config.get("fallback_provider", "deepinfra")
         enable_fallback = llm_config.get("enable_fallback", True)
@@ -125,8 +130,8 @@ class AgentSquadInfrastructureProvider(Provider):
         # Helper to create client based on provider name
         def create_client(provider_name: str) -> LLMClientGateway:
             if provider_name == "vertex_ai":
-                # Get Vertex AI credentials from settings
-                vertex_api_key = settings.raw_config.get("vertex_ai", {}).get("API_KEY")
+                # Get Vertex AI credentials from raw config
+                vertex_api_key = raw_config.get("vertex_ai", {}).get("API_KEY")
                 if not vertex_api_key:
                     raise ValueError("Vertex AI API_KEY not found in .secrets.toml")
 
@@ -137,9 +142,9 @@ class AgentSquadInfrastructureProvider(Provider):
                 )
 
             elif provider_name == "deepinfra":
-                # Get DeepInfra credentials from settings
-                deepinfra_api_key = settings.raw_config.get("deepinfra", {}).get("API_KEY")
-                deepinfra_base_url = settings.raw_config.get("deepinfra", {}).get(
+                # Get DeepInfra credentials from raw config
+                deepinfra_api_key = raw_config.get("deepinfra", {}).get("API_KEY")
+                deepinfra_base_url = raw_config.get("deepinfra", {}).get(
                     "BASE_URL", "https://api.deepinfra.com/v1/openai"
                 )
 
