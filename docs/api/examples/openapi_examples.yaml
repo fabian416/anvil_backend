@@ -1,0 +1,492 @@
+openapi: 3.0.3
+info:
+  title: Anvil Unified Chat API
+  version: 1.0.0
+  description: |
+    Unified chat endpoint supporting 16 different intent types for DeFi operations.
+
+    **Intent Categories:**
+    - GraphRAG (3): protocol_search, risk_assessment, similar_protocols
+    - Hunter AI (6): sentiment, price_prediction, risk_signals, trading_signals, patterns, portfolio
+    - ULTRA (4): arbitrage, flash_loans, mev_protection, auto_executor
+    - Agent Squad (3): specialist_task, complex_workflow, general_conversation
+
+    **Authentication:** Bearer token required for all endpoints
+  contact:
+    name: API Support
+    url: https://docs.anvil.com
+    email: support@anvil.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.anvil.com/api/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    MessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: The user's message content
+
+    MessageResponse:
+      type: object
+      properties:
+        user_message:
+          $ref: '#/components/schemas/Message'
+        agent_message:
+          $ref: '#/components/schemas/Message'
+        routing:
+          $ref: '#/components/schemas/RoutingInfo'
+        enrichment:
+          type: object
+          description: Intent-specific structured data
+          additionalProperties: true
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant]
+        timestamp:
+          type: string
+          format: date-time
+
+    RoutingInfo:
+      type: object
+      properties:
+        intent:
+          type: string
+          enum:
+            - protocol_search
+            - risk_assessment
+            - similar_protocols
+            - hunter_sentiment
+            - hunter_price_prediction
+            - hunter_risk_signals
+            - hunter_trading_signals
+            - hunter_patterns
+            - hunter_portfolio
+            - ultra_arbitrage
+            - ultra_flash_loans
+            - ultra_mev_protection
+            - ultra_auto_executor
+            - specialist_task
+            - complex_workflow
+            - general_conversation
+        confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        handler:
+          type: string
+        reasoning:
+          type: string
+        total_latency_ms:
+          type: number
+          format: integer
+
+    ConversationRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+
+    ConversationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+paths:
+  /user/chat/conversations:
+    post:
+      summary: Create a new conversation
+      tags:
+        - Conversations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationRequest'
+            examples:
+              default:
+                value:
+                  title: "My DeFi Research Session"
+      responses:
+        '201':
+          description: Conversation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+              example:
+                id: "conv_abc123"
+                title: "My DeFi Research Session"
+                created_at: "2025-12-26T10:00:00Z"
+                updated_at: "2025-12-26T10:00:00Z"
+
+  /user/chat/conversations/{conversation_id}/messages:
+    post:
+      summary: Send a message (Unified Chat Endpoint)
+      description: |
+        Single endpoint that routes to appropriate handler based on detected intent.
+        Supports all 16 intent types with automatic detection and routing.
+      tags:
+        - Messages
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+            examples:
+              protocol_search:
+                summary: GraphRAG - Protocol Search
+                value:
+                  content: "Show me high-yield lending protocols on Ethereum"
+
+              risk_assessment:
+                summary: GraphRAG - Risk Assessment
+                value:
+                  content: "Is Aave safe to use? What are the risks?"
+
+              similar_protocols:
+                summary: GraphRAG - Similar Protocols
+                value:
+                  content: "What protocols are similar to Uniswap?"
+
+              hunter_sentiment:
+                summary: Hunter AI - Sentiment Analysis
+                value:
+                  content: "What's the ETH sentiment on Twitter and Reddit?"
+
+              hunter_price_prediction:
+                summary: Hunter AI - Price Prediction
+                value:
+                  content: "Predict BTC price for next 7 days"
+
+              hunter_risk_signals:
+                summary: Hunter AI - Risk Signals
+                value:
+                  content: "Show risk signals for ETH"
+
+              hunter_trading_signals:
+                summary: Hunter AI - Trading Signals
+                value:
+                  content: "Should I buy SOL now? Give me trading signals"
+
+              hunter_patterns:
+                summary: Hunter AI - Pattern Detection
+                value:
+                  content: "What chart patterns do you see for BTC?"
+
+              hunter_portfolio:
+                summary: Hunter AI - Portfolio Optimization
+                value:
+                  content: "Optimize my portfolio with BTC, ETH, and SOL for moderate risk"
+
+              ultra_arbitrage:
+                summary: ULTRA - Arbitrage Discovery
+                value:
+                  content: "Find arbitrage opportunities with $10,000 capital"
+
+              ultra_flash_loans:
+                summary: ULTRA - Flash Loan Selection
+                value:
+                  content: "Best flash loan protocol for 100k USDC"
+
+              ultra_mev_protection:
+                summary: ULTRA - MEV Protection
+                value:
+                  content: "Execute ARB-001 with Flashbots protection"
+
+              ultra_auto_executor_start:
+                summary: ULTRA - Start Auto Executor
+                value:
+                  content: "Start trading bot"
+
+              ultra_auto_executor_status:
+                summary: ULTRA - Bot Status
+                value:
+                  content: "Show bot status"
+
+              ultra_auto_executor_stop:
+                summary: ULTRA - Stop Auto Executor
+                value:
+                  content: "Stop trading bot"
+
+              specialist_task:
+                summary: Agent Squad - Specialist Task
+                value:
+                  content: "Analyze ETH/USDC liquidity depth on Uniswap V3"
+
+              complex_workflow:
+                summary: Agent Squad - Complex Workflow
+                value:
+                  content: "Create a complete DeFi investment strategy for $50k with risk analysis"
+
+              general_conversation:
+                summary: Chat - General Conversation
+                value:
+                  content: "Hello! What can you help me with?"
+
+      responses:
+        '200':
+          description: Message processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              examples:
+                protocol_search:
+                  summary: GraphRAG - Protocol Search Response
+                  value:
+                    user_message:
+                      id: "msg_user_001"
+                      content: "Show me high-yield lending protocols on Ethereum"
+                      role: "user"
+                      timestamp: "2025-12-26T10:00:00Z"
+                    agent_message:
+                      id: "msg_agent_001"
+                      content: "🔍 **Protocol Search Results**\n\nFound 5 high-yield lending protocols on Ethereum:\n\n1. **Aave V3** - 4.2% APY\n2. **Compound** - 3.8% APY\n3. **Maker** - 3.5% APY"
+                      role: "assistant"
+                      agent_type: "graphrag_search"
+                      timestamp: "2025-12-26T10:00:01Z"
+                    routing:
+                      intent: "protocol_search"
+                      confidence: 0.95
+                      handler: "graphrag_search"
+                      reasoning: "User query contains protocol discovery keywords with yield filters"
+                      total_latency_ms: 1245
+                    enrichment:
+                      protocols:
+                        - name: "Aave V3"
+                          apy: 0.042
+                          tvl: 5200000000
+                          risk_score: 0.15
+                        - name: "Compound"
+                          apy: 0.038
+                          tvl: 3100000000
+                          risk_score: 0.18
+                      search_context: "Filtered for high-yield lending protocols on Ethereum"
+                      filters:
+                        category: "lending"
+                        chain: "ethereum"
+                        yield_preference: "high"
+
+                risk_assessment:
+                  summary: GraphRAG - Risk Assessment Response
+                  value:
+                    user_message:
+                      id: "msg_user_002"
+                      content: "Is Aave safe to use? What are the risks?"
+                      role: "user"
+                      timestamp: "2025-12-26T10:01:00Z"
+                    agent_message:
+                      id: "msg_agent_002"
+                      content: "📊 **Aave Risk Assessment**\n\n**Overall Risk Score:** 3.2/10 (Low Risk)\n\n**Smart Contract Risk:** ✅ Low (2/10)\n- Audited by OpenZeppelin, Trail of Bits\n- Bug bounty program active"
+                      role: "assistant"
+                      agent_type: "graphrag_search"
+                      timestamp: "2025-12-26T10:01:01Z"
+                    routing:
+                      intent: "risk_assessment"
+                      confidence: 0.92
+                      handler: "graphrag_search"
+                      reasoning: "User asking about protocol safety and risks"
+                      total_latency_ms: 980
+                    enrichment:
+                      protocol_name: "Aave"
+                      risk_analysis:
+                        overall_risk_score: 3.2
+                        smart_contract_risk: 2.0
+                        economic_risk: 3.5
+                        operational_risk: 4.0
+
+                hunter_sentiment:
+                  summary: Hunter AI - Sentiment Analysis Response
+                  value:
+                    user_message:
+                      id: "msg_user_003"
+                      content: "What's the ETH sentiment on Twitter and Reddit?"
+                      role: "user"
+                      timestamp: "2025-12-26T10:02:00Z"
+                    agent_message:
+                      id: "msg_agent_003"
+                      content: "📈 **ETH Sentiment Analysis**\n\n**Overall Sentiment:** Bullish (72%)\n\n**Twitter:** 68% positive, 22% neutral, 10% negative\n**Reddit:** 76% positive, 18% neutral, 6% negative"
+                      role: "assistant"
+                      agent_type: "hunter_ai"
+                      timestamp: "2025-12-26T10:02:02Z"
+                    routing:
+                      intent: "hunter_sentiment"
+                      confidence: 0.94
+                      handler: "hunter_ai"
+                      reasoning: "User requesting sentiment analysis from social media"
+                      total_latency_ms: 1567
+                    enrichment:
+                      token_symbol: "ETH"
+                      sources: ["twitter", "reddit"]
+                      hunter_tool: "sentiment_analyzer"
+                      sentiment_score: 0.72
+                      breakdown:
+                        twitter:
+                          positive: 0.68
+                          neutral: 0.22
+                          negative: 0.10
+                        reddit:
+                          positive: 0.76
+                          neutral: 0.18
+                          negative: 0.06
+
+                hunter_price_prediction:
+                  summary: Hunter AI - Price Prediction Response
+                  value:
+                    routing:
+                      intent: "hunter_price_prediction"
+                      confidence: 0.91
+                      handler: "hunter_ai"
+                      reasoning: "User requesting price forecast with time horizon"
+                      total_latency_ms: 1823
+                    enrichment:
+                      token_symbol: "BTC"
+                      time_horizon: "7d"
+                      hunter_tool: "lstm_predictor"
+                      predictions:
+                        - day: 1
+                          predicted_price: 42500
+                          confidence: 0.82
+                        - day: 7
+                          predicted_price: 44200
+                          confidence: 0.68
+
+                ultra_arbitrage:
+                  summary: ULTRA - Arbitrage Discovery Response
+                  value:
+                    routing:
+                      intent: "ultra_arbitrage"
+                      confidence: 0.96
+                      handler: "ultra"
+                      reasoning: "User requesting arbitrage opportunities with capital amount"
+                      total_latency_ms: 1432
+                    enrichment:
+                      capital: 10000
+                      arb_type: "dex"
+                      ultra_tool: "arbitrage_scanner"
+                      opportunities:
+                        - id: "ARB-001"
+                          profit_usd: 127.50
+                          profit_percentage: 1.28
+                          path: ["Uniswap", "SushiSwap"]
+                          token: "WETH"
+                        - id: "ARB-002"
+                          profit_usd: 95.30
+                          profit_percentage: 0.95
+                          path: ["Curve", "Balancer"]
+                          token: "USDC"
+
+                ultra_auto_executor:
+                  summary: ULTRA - Auto Executor Control Response
+                  value:
+                    routing:
+                      intent: "ultra_auto_executor"
+                      confidence: 0.98
+                      handler: "ultra"
+                      reasoning: "User controlling auto executor bot"
+                      total_latency_ms: 543
+                    enrichment:
+                      action: "start"
+                      ultra_tool: "auto_executor"
+                      status: "running"
+                      config:
+                        profit_threshold: 0.015
+                        max_capital_per_trade: 5000
+                        enabled_strategies: ["dex_arb", "flash_arb"]
+
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Conversation not found
+        '422':
+          description: Validation error - Invalid request body
+        '429':
+          description: Rate limit exceeded
+
+    get:
+      summary: Get message history
+      tags:
+        - Messages
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Message history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+              example:
+                - id: "msg_user_001"
+                  content: "Show me DeFi protocols"
+                  role: "user"
+                  timestamp: "2025-12-26T10:00:00Z"
+                - id: "msg_agent_001"
+                  content: "Here are the top DeFi protocols..."
+                  role: "assistant"
+                  timestamp: "2025-12-26T10:00:01Z"
+
+tags:
+  - name: Conversations
+    description: Conversation management
+  - name: Messages
+    description: Unified chat endpoint with automatic intent routing

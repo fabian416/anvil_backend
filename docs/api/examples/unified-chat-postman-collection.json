@@ -1,0 +1,632 @@
+{
+  "info": {
+    "name": "Anvil Unified Chat API",
+    "description": "Complete collection for testing all 16 unified chat intent types",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "conversation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Setup",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.collectionVariables.set(\"auth_token\", response.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/account/login",
+              "host": ["{{base_url}}"],
+              "path": ["account", "login"]
+            }
+          }
+        },
+        {
+          "name": "Create Conversation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.collectionVariables.set(\"conversation_id\", response.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Conversation - Unified Chat\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. GraphRAG Intents",
+      "item": [
+        {
+          "name": "Protocol Search",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Show me high-yield staking protocols on Ethereum with low risk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: protocol_search\nFinds DeFi protocols based on criteria"
+          }
+        },
+        {
+          "name": "Risk Assessment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Is Aave safe to use? What are the risks?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: risk_assessment\nAnalyzes protocol safety and risk factors"
+          }
+        },
+        {
+          "name": "Similar Protocols",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"What protocols are similar to Uniswap?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: similar_protocols\nFinds protocol alternatives"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Hunter AI Intents",
+      "item": [
+        {
+          "name": "Sentiment Analysis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"What's the ETH sentiment on Twitter and Reddit?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: hunter_sentiment\nAggregates social media sentiment"
+          }
+        },
+        {
+          "name": "Price Prediction",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Predict BTC price for next 7 days\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: hunter_price_prediction\nML-powered price forecasting"
+          }
+        },
+        {
+          "name": "Risk Signals",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Show risk signals for ETH\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: hunter_risk_signals\nMarket risk warnings and anomalies"
+          }
+        },
+        {
+          "name": "Trading Signals",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Should I buy SOL now? Give me trading signals\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: hunter_trading_signals\nBuy/sell signals with entry/exit prices"
+          }
+        },
+        {
+          "name": "Pattern Detection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"What chart patterns do you see for BTC?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: hunter_patterns\nChart pattern identification"
+          }
+        },
+        {
+          "name": "Portfolio Optimization",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Optimize my portfolio with BTC, ETH, and SOL for moderate risk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: hunter_portfolio\nModern Portfolio Theory optimization"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. ULTRA Intents",
+      "item": [
+        {
+          "name": "Arbitrage Discovery",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Find arbitrage opportunities with $10,000 capital\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: ultra_arbitrage\nCross-DEX arbitrage opportunities"
+          }
+        },
+        {
+          "name": "Flash Loan Selection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Best flash loan protocol for 100k USDC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: ultra_flash_loans\nFlash loan protocol comparison"
+          }
+        },
+        {
+          "name": "MEV Protection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Execute ARB-001 with Flashbots protection\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: ultra_mev_protection\nFlashbots MEV-protected execution"
+          }
+        },
+        {
+          "name": "Auto Executor - Start",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Start trading bot\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: ultra_auto_executor (action: start)\nStart automated trading bot"
+          }
+        },
+        {
+          "name": "Auto Executor - Status",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Show bot status\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: ultra_auto_executor (action: status)\nGet bot performance metrics"
+          }
+        },
+        {
+          "name": "Auto Executor - Stop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Stop trading bot\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: ultra_auto_executor (action: stop)\nStop automated trading bot"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Agent Squad & Chat",
+      "item": [
+        {
+          "name": "Specialist Task",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Analyze ETH/USDC liquidity depth on Uniswap V3\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: specialist_task\nRoutes to specialized AI agents"
+          }
+        },
+        {
+          "name": "Complex Workflow",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Create a complete DeFi investment strategy for $50k with risk analysis and execution plan\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: complex_workflow\nMulti-agent coordination via Supervisor"
+          }
+        },
+        {
+          "name": "General Conversation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hello! What can you help me with?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            },
+            "description": "Intent: general_conversation\nRegular chat and Q&A"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Variations & Edge Cases",
+      "item": [
+        {
+          "name": "Protocol Search - Specific TVL",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Find lending protocols with TVL > $1B\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Sentiment - Multiple Tokens",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Compare sentiment for BTC, ETH, and SOL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Arbitrage - Specific Type",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Find 2-hop arbitrage opportunities with $5000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Portfolio - Conservative",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Optimize BTC, ETH, LINK for conservative risk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Price Prediction - Short Term",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"What will ETH cost tomorrow?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
