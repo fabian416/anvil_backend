@@ -131,6 +131,14 @@ This is a **Hexagonal Architecture** (Clean Architecture) implementation using F
 
 **Background Tasks**: Celery + Redis for async processing (emails, data processing, etc.)
 
+**Agent Squad**: 18 specialized AI agents for DeFi operations using Vertex AI (primary) + DeepInfra (fallback):
+- Core agents (10): Chat, Hunter AI, Research, Execution, Risk Analyzer, Portfolio, Tax Optimizer, DeFi Yield, Security Auditor, Gas Optimizer
+- Enterprise agents (4): Compliance Monitor, Multi-Sig Coordinator, Alert Monitoring, Crisis Manager
+- Advanced agents (4): Bridge Crosschain, Lending Borrowing, NFT Asset Manager, DAO Governance
+- **Cost**: $0.10/1M tokens (Vertex AI) vs $30/1M tokens (OpenAI) = 99% savings
+- **Configuration**: See `docs/AGENT_SQUAD_VERTEX_DEEPINFRA.md` for full setup guide
+- **API Keys**: Add to `config/local/.secrets.toml` under `[vertex_ai]` and `[deepinfra]` sections
+
 **Authentication**: JWT with session storage, custom identity provider abstraction
 
 **Environment Management**: Multi-environment support through TOML configs in `config/{env}/` directories
