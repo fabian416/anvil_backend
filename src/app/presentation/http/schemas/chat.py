@@ -98,6 +98,14 @@ class EnrichmentData(BaseModel):
     tasks_count: Optional[int] = None
     agents_involved: Optional[List[str]] = None
 
+    # For Hunter AI
+    hunter_tool: Optional[str] = None  # sentiment_analysis, price_prediction, risk_signals, trading_signals, pattern_detection, portfolio_optimization
+    token_symbol: Optional[str] = None  # Primary token (BTC, ETH, SOL, etc.)
+    tokens: Optional[List[str]] = None  # Multiple tokens for portfolio optimization
+    time_horizon: Optional[str] = None  # 24h, 7d, 30d
+    sources: Optional[List[str]] = None  # twitter, reddit, discord, news (for sentiment)
+    risk_tolerance: Optional[float] = None  # 0.0-1.0 (for portfolio optimization)
+
 
 class UnifiedChatResponse(BaseModel):
     """Unified response for all chat routing handlers."""

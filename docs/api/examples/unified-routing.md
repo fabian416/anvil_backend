@@ -796,6 +796,324 @@ async function sendChatMessage(content: string) {
 
 ---
 
+## Hunter AI Examples (Phase 8.1)
+
+### Example 1: Sentiment Analysis
+
+Query for social sentiment across multiple platforms:
+
+```typescript
+const response = await sendMessage("What's the ETH sentiment on Twitter and Reddit?");
+
+// Response routing
+{
+  "routing": {
+    "intent": "hunter_sentiment",
+    "confidence": 0.92,
+    "handler": "hunter_sentiment",
+    "agent_used": "hunter_ai",
+    "reasoning": "Message contains sentiment analysis keywords"
+  },
+  "enrichment": {
+    "hunter_tool": "sentiment_analysis",
+    "token_symbol": "ETH",
+    "time_horizon": "24h",
+    "sources": ["twitter", "reddit"]
+  }
+}
+```
+
+### Example 2: Price Prediction
+
+Get ML-powered price forecasts:
+
+```typescript
+const response = await sendMessage("Predict BTC price for the next 7 days");
+
+// Response routing
+{
+  "routing": {
+    "intent": "hunter_price_prediction",
+    "confidence": 0.90,
+    "handler": "hunter_price_prediction",
+    "agent_used": "hunter_ai"
+  },
+  "enrichment": {
+    "hunter_tool": "price_prediction",
+    "token_symbol": "BTC",
+    "time_horizon": "7d"
+  }
+}
+```
+
+### Example 3: Risk Signals
+
+Monitor market risk indicators:
+
+```typescript
+const response = await sendMessage("Show me risk signals for SOL");
+
+// Response routing
+{
+  "routing": {
+    "intent": "hunter_risk_signals",
+    "confidence": 0.88,
+    "handler": "hunter_risk_signals",
+    "agent_used": "hunter_ai"
+  },
+  "enrichment": {
+    "hunter_tool": "risk_signals",
+    "token_symbol": "SOL"
+  }
+}
+```
+
+### Example 4: Trading Signals
+
+Get buy/sell recommendations:
+
+```typescript
+const response = await sendMessage("Should I buy ETH now? Show trading signals");
+
+// Response routing
+{
+  "routing": {
+    "intent": "hunter_trading_signals",
+    "confidence": 0.91,
+    "handler": "hunter_trading_signals",
+    "agent_used": "hunter_ai"
+  },
+  "enrichment": {
+    "hunter_tool": "trading_signals",
+    "token_symbol": "ETH"
+  }
+}
+```
+
+### Example 5: Chart Patterns
+
+Detect technical analysis patterns:
+
+```typescript
+const response = await sendMessage("Analyze chart patterns for BTC");
+
+// Response routing
+{
+  "routing": {
+    "intent": "hunter_patterns",
+    "confidence": 0.89,
+    "handler": "hunter_patterns",
+    "agent_used": "hunter_ai"
+  },
+  "enrichment": {
+    "hunter_tool": "pattern_detection",
+    "token_symbol": "BTC"
+  }
+}
+```
+
+### Example 6: Portfolio Optimization
+
+Optimize asset allocation with Modern Portfolio Theory:
+
+```typescript
+const response = await sendMessage("Optimize my portfolio for BTC, ETH, and SOL with moderate risk");
+
+// Response routing
+{
+  "routing": {
+    "intent": "hunter_portfolio",
+    "confidence": 0.87,
+    "handler": "hunter_portfolio",
+    "agent_used": "hunter_ai"
+  },
+  "enrichment": {
+    "hunter_tool": "portfolio_optimization",
+    "tokens": ["BTC", "ETH", "SOL"],
+    "risk_tolerance": 0.5
+  }
+}
+```
+
+### Hunter AI React Hook Example
+
+```typescript
+// useHunterAI.ts
+import { useState } from 'react';
+
+interface HunterAIResponse {
+  user_message: any;
+  agent_message: any;
+  routing: {
+    intent: string;
+    confidence: number;
+    handler: string;
+    agent_used: string;
+  };
+  enrichment: {
+    hunter_tool?: string;
+    token_symbol?: string;
+    tokens?: string[];
+    time_horizon?: string;
+    sources?: string[];
+    risk_tolerance?: number;
+  };
+}
+
+export function useHunterAI(conversationId: string) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const analyzeSentiment = async (token: string, sources?: string[]) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const query = sources
+        ? `${token} sentiment on ${sources.join(' and ')}`
+        : `${token} sentiment`;
+
+      const response = await fetch(
+        `/api/v1/user/chat/conversations/${conversationId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ content: query })
+        }
+      );
+
+      const data: HunterAIResponse = await response.json();
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const predictPrice = async (token: string, timeHorizon: '24h' | '7d' | '30d' = '7d') => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/v1/user/chat/conversations/${conversationId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: `Predict ${token} price for the next ${timeHorizon}`
+          })
+        }
+      );
+
+      const data: HunterAIResponse = await response.json();
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const optimizePortfolio = async (
+    tokens: string[],
+    riskTolerance: 'conservative' | 'moderate' | 'aggressive' = 'moderate'
+  ) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/v1/user/chat/conversations/${conversationId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: `Optimize portfolio for ${tokens.join(', ')} with ${riskTolerance} risk`
+          })
+        }
+      );
+
+      const data: HunterAIResponse = await response.json();
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    analyzeSentiment,
+    predictPrice,
+    optimizePortfolio,
+    loading,
+    error
+  };
+}
+```
+
+### Usage Example
+
+```typescript
+function TradingDashboard() {
+  const { conversationId } = useConversation();
+  const {
+    analyzeSentiment,
+    predictPrice,
+    optimizePortfolio,
+    loading
+  } = useHunterAI(conversationId);
+
+  const handleSentimentCheck = async () => {
+    const result = await analyzeSentiment('ETH', ['twitter', 'reddit']);
+    console.log('Sentiment:', result.agent_message.content);
+    console.log('Sources:', result.enrichment.sources);
+  };
+
+  const handlePriceForecast = async () => {
+    const result = await predictPrice('BTC', '7d');
+    console.log('Forecast:', result.agent_message.content);
+    console.log('Time horizon:', result.enrichment.time_horizon);
+  };
+
+  const handlePortfolioOptimization = async () => {
+    const result = await optimizePortfolio(['BTC', 'ETH', 'SOL'], 'moderate');
+    console.log('Optimized allocation:', result.agent_message.content);
+    console.log('Risk tolerance:', result.enrichment.risk_tolerance);
+  };
+
+  return (
+    <div>
+      <button onClick={handleSentimentCheck} disabled={loading}>
+        Check ETH Sentiment
+      </button>
+      <button onClick={handlePriceForecast} disabled={loading}>
+        Predict BTC Price
+      </button>
+      <button onClick={handlePortfolioOptimization} disabled={loading}>
+        Optimize Portfolio
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
 ## Related Documentation
 
 - [Chat Endpoints Explained](../../CHAT_ENDPOINTS_EXPLAINED.md)

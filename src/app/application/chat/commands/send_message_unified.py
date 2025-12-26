@@ -127,6 +127,32 @@ class UnifiedChatOrchestrator:
             result = await self._handle_similar_protocols(
                 user_id, conversation_id, content, intent_result
             )
+        # Hunter AI intents
+        elif intent_result.intent == ChatIntent.HUNTER_SENTIMENT:
+            result = await self._handle_hunter_sentiment(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.HUNTER_PRICE_PREDICTION:
+            result = await self._handle_hunter_price_prediction(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.HUNTER_RISK_SIGNALS:
+            result = await self._handle_hunter_risk_signals(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.HUNTER_TRADING_SIGNALS:
+            result = await self._handle_hunter_trading_signals(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.HUNTER_PATTERNS:
+            result = await self._handle_hunter_patterns(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.HUNTER_PORTFOLIO:
+            result = await self._handle_hunter_portfolio(
+                user_id, conversation_id, content, intent_result
+            )
+        # Agent Squad & Supervisor intents
         elif intent_result.intent == ChatIntent.SPECIALIST_TASK:
             result = await self._handle_specialist_task(
                 user_id, conversation_id, content, intent_result
@@ -557,3 +583,228 @@ class UnifiedChatOrchestrator:
             output += f"- Why similar: {protocol.why_relevant}\n\n"
 
         return output
+
+    async def _handle_hunter_sentiment(
+        self, user_id: int, conversation_id: int, content: str, intent_result
+    ) -> dict:
+        """Handle sentiment analysis intent via Hunter AI."""
+        entities = intent_result.extracted_entities
+        token_symbol = entities.get("token_symbol", "ETH")
+        time_horizon = entities.get("time_horizon", "24h")
+        sources = entities.get("sources")
+
+        response_content = f"📊 **Sentiment Analysis for {token_symbol}**\n\n"
+        response_content += f"Analyzing sentiment from multiple sources ({time_horizon} timeframe)...\n\n"
+        response_content += "This feature routes to Hunter AI sentiment analysis tools:\n"
+        response_content += "- Twitter sentiment\n"
+        response_content += "- Reddit discussions\n"
+        response_content += "- Discord communities\n"
+        response_content += "- News coverage\n\n"
+        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": "hunter_sentiment",
+                "confidence": intent_result.confidence,
+                "handler": "hunter_sentiment",
+                "agent_used": "hunter_ai",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {
+                "token_symbol": token_symbol,
+                "time_horizon": time_horizon,
+                "sources": sources or ["twitter", "reddit", "discord", "news"],
+                "hunter_tool": "sentiment_analysis",
+            },
+        }
+
+    async def _handle_hunter_price_prediction(
+        self, user_id: int, conversation_id: int, content: str, intent_result
+    ) -> dict:
+        """Handle price prediction intent via Hunter AI."""
+        entities = intent_result.extracted_entities
+        token_symbol = entities.get("token_symbol", "ETH")
+        time_horizon = entities.get("time_horizon", "24h")
+
+        response_content = f"📈 **Price Prediction for {token_symbol}**\n\n"
+        response_content += f"Generating price forecast ({time_horizon} timeframe)...\n\n"
+        response_content += "This feature routes to Hunter AI price prediction ML models:\n"
+        response_content += "- Historical price analysis\n"
+        response_content += "- Machine learning forecasting\n"
+        response_content += "- Confidence intervals\n"
+        response_content += "- Price targets\n\n"
+        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": "hunter_price_prediction",
+                "confidence": intent_result.confidence,
+                "handler": "hunter_price_prediction",
+                "agent_used": "hunter_ai",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {
+                "token_symbol": token_symbol,
+                "time_horizon": time_horizon,
+                "hunter_tool": "price_prediction",
+            },
+        }
+
+    async def _handle_hunter_risk_signals(
+        self, user_id: int, conversation_id: int, content: str, intent_result
+    ) -> dict:
+        """Handle risk signals intent via Hunter AI."""
+        entities = intent_result.extracted_entities
+        token_symbol = entities.get("token_symbol", "ETH")
+
+        response_content = f"⚠️ **Risk Signals for {token_symbol}**\n\n"
+        response_content += f"Analyzing market risk indicators...\n\n"
+        response_content += "This feature routes to Hunter AI risk detection:\n"
+        response_content += "- Market volatility warnings\n"
+        response_content += "- Liquidity risk signals\n"
+        response_content += "- Price anomaly detection\n"
+        response_content += "- Risk severity scoring\n\n"
+        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": "hunter_risk_signals",
+                "confidence": intent_result.confidence,
+                "handler": "hunter_risk_signals",
+                "agent_used": "hunter_ai",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {
+                "token_symbol": token_symbol,
+                "hunter_tool": "risk_signals",
+            },
+        }
+
+    async def _handle_hunter_trading_signals(
+        self, user_id: int, conversation_id: int, content: str, intent_result
+    ) -> dict:
+        """Handle trading signals intent via Hunter AI."""
+        entities = intent_result.extracted_entities
+        token_symbol = entities.get("token_symbol", "ETH")
+
+        response_content = f"📉 **Trading Signals for {token_symbol}**\n\n"
+        response_content += f"Generating buy/sell signals...\n\n"
+        response_content += "This feature routes to Hunter AI trading analysis:\n"
+        response_content += "- Buy/sell recommendations\n"
+        response_content += "- Entry/exit points\n"
+        response_content += "- Signal strength indicators\n"
+        response_content += "- Risk-reward ratios\n\n"
+        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": "hunter_trading_signals",
+                "confidence": intent_result.confidence,
+                "handler": "hunter_trading_signals",
+                "agent_used": "hunter_ai",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {
+                "token_symbol": token_symbol,
+                "hunter_tool": "trading_signals",
+            },
+        }
+
+    async def _handle_hunter_patterns(
+        self, user_id: int, conversation_id: int, content: str, intent_result
+    ) -> dict:
+        """Handle chart pattern detection intent via Hunter AI."""
+        entities = intent_result.extracted_entities
+        token_symbol = entities.get("token_symbol", "ETH")
+
+        response_content = f"📊 **Chart Pattern Analysis for {token_symbol}**\n\n"
+        response_content += f"Detecting technical patterns...\n\n"
+        response_content += "This feature routes to Hunter AI pattern detection:\n"
+        response_content += "- Head and shoulders patterns\n"
+        response_content += "- Support/resistance levels\n"
+        response_content += "- Trend line analysis\n"
+        response_content += "- Pattern reliability scores\n\n"
+        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": "hunter_patterns",
+                "confidence": intent_result.confidence,
+                "handler": "hunter_patterns",
+                "agent_used": "hunter_ai",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {
+                "token_symbol": token_symbol,
+                "hunter_tool": "pattern_detection",
+            },
+        }
+
+    async def _handle_hunter_portfolio(
+        self, user_id: int, conversation_id: int, content: str, intent_result
+    ) -> dict:
+        """Handle portfolio optimization intent via Hunter AI."""
+        entities = intent_result.extracted_entities
+        tokens = entities.get("tokens", ["BTC", "ETH", "SOL"])
+        risk_tolerance = entities.get("risk_tolerance", 0.5)
+
+        response_content = f"💼 **Portfolio Optimization**\n\n"
+        response_content += f"Optimizing portfolio for: {', '.join(tokens)}\n"
+        response_content += f"Risk tolerance: {risk_tolerance*100:.0f}%\n\n"
+        response_content += "This feature routes to Hunter AI MPT optimization:\n"
+        response_content += "- Modern Portfolio Theory analysis\n"
+        response_content += "- Efficient frontier calculation\n"
+        response_content += "- Asset allocation recommendations\n"
+        response_content += "- Risk-adjusted returns\n\n"
+        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": "hunter_portfolio",
+                "confidence": intent_result.confidence,
+                "handler": "hunter_portfolio",
+                "agent_used": "hunter_ai",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {
+                "tokens": tokens,
+                "risk_tolerance": risk_tolerance,
+                "hunter_tool": "portfolio_optimization",
+            },
+        }

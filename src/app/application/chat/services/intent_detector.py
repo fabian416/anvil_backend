@@ -17,11 +17,24 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 class ChatIntent(Enum):
     """Chat intent types for routing."""
 
+    # GraphRAG intents
     PROTOCOL_SEARCH = "protocol_search"
     RISK_ASSESSMENT = "risk_assessment"
     SIMILAR_PROTOCOLS = "similar_protocols"
+
+    # Hunter AI intents (direct routing to Hunter tools)
+    HUNTER_SENTIMENT = "hunter_sentiment"  # Sentiment analysis (Twitter, Reddit, Discord, News)
+    HUNTER_PRICE_PREDICTION = "hunter_price_prediction"  # Price forecasting
+    HUNTER_RISK_SIGNALS = "hunter_risk_signals"  # Market risk warnings
+    HUNTER_TRADING_SIGNALS = "hunter_trading_signals"  # Buy/sell signals
+    HUNTER_PATTERNS = "hunter_patterns"  # Chart patterns and trends
+    HUNTER_PORTFOLIO = "hunter_portfolio"  # Portfolio optimization
+
+    # Agent Squad & Supervisor intents
     SPECIALIST_TASK = "specialist_task"
     COMPLEX_WORKFLOW = "complex_workflow"
+
+    # Fallback intent
     GENERAL_CONVERSATION = "general_conversation"
 
 
@@ -96,6 +109,8 @@ class IntentDetectorService:
 
 Classify the user's message into ONE of these intents:
 
+## GraphRAG Intents (Protocol Discovery & Analysis)
+
 1. PROTOCOL_SEARCH - User wants to find/search for protocols
    Examples: "find staking protocols", "search for low-risk DEXs", "show me lending protocols on Ethereum"
 
@@ -105,13 +120,35 @@ Classify the user's message into ONE of these intents:
 3. SIMILAR_PROTOCOLS - User wants alternatives to a specific protocol
    Examples: "similar to Uniswap", "alternatives to Aave", "protocols like Curve"
 
-4. SPECIALIST_TASK - User needs specialist agent (yield, gas, security, portfolio, etc.)
-   Examples: "best USDC yield", "optimize gas", "tax implications", "create portfolio"
+## Hunter AI Intents (Market Intelligence & Trading)
 
-5. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
+4. HUNTER_SENTIMENT - User wants sentiment analysis from social/news sources
+   Examples: "ETH sentiment", "what's the market mood for BTC?", "Twitter sentiment for SOL"
+
+5. HUNTER_PRICE_PREDICTION - User wants price forecasts/predictions
+   Examples: "predict ETH price", "where is BTC heading?", "price forecast for SOL"
+
+6. HUNTER_RISK_SIGNALS - User wants market risk warnings/signals
+   Examples: "risk signals for ETH", "any red flags for BTC?", "market warnings"
+
+7. HUNTER_TRADING_SIGNALS - User wants buy/sell signals
+   Examples: "should I buy ETH?", "trading signals for BTC", "entry point for SOL"
+
+8. HUNTER_PATTERNS - User wants chart pattern analysis
+   Examples: "chart patterns for ETH", "technical analysis BTC", "support/resistance levels"
+
+9. HUNTER_PORTFOLIO - User wants portfolio optimization (MPT-based)
+   Examples: "optimize my portfolio", "efficient frontier for BTC,ETH,SOL", "portfolio allocation"
+
+## Agent Squad & Workflow Intents
+
+10. SPECIALIST_TASK - User needs specialist agent (yield, gas, security, etc.)
+   Examples: "best USDC yield", "optimize gas", "tax implications"
+
+11. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
    Examples: "create a balanced portfolio", "comprehensive analysis of DeFi", "migration strategy"
 
-6. GENERAL_CONVERSATION - General questions, education, explanations
+12. GENERAL_CONVERSATION - General questions, education, explanations
    Examples: "what is DeFi?", "explain impermanent loss", "how does staking work?"
 
 Extract entities: protocol names, token symbols, amounts, chains, categories, etc.
@@ -237,6 +274,87 @@ Classify the intent and extract entities."""
                 confidence=0.85,
                 extracted_entities=self._extract_protocol_name(message),
                 reasoning="Message contains similarity/alternative keywords",
+            )
+
+        # Hunter AI: Sentiment Analysis patterns
+        if any(kw in message_lower for kw in [
+            "sentiment", "social sentiment", "market sentiment",
+            "twitter sentiment", "reddit sentiment", "discord sentiment",
+            "news sentiment", "bullish", "bearish", "market mood",
+            "community sentiment", "how people feel", "what people think"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.HUNTER_SENTIMENT,
+                confidence=0.92,
+                extracted_entities=self._extract_hunter_entities(message),
+                reasoning="Message contains sentiment analysis keywords",
+            )
+
+        # Hunter AI: Price Prediction patterns
+        if any(kw in message_lower for kw in [
+            "price prediction", "predict price", "price forecast",
+            "will price", "price go", "price movement", "price target",
+            "future price", "price outlook", "where price", "price heading"
+        ]) or re.search(r'\bprice\s+(for|of|in)\b', message_lower):
+            return IntentDetectionResult(
+                intent=ChatIntent.HUNTER_PRICE_PREDICTION,
+                confidence=0.90,
+                extracted_entities=self._extract_hunter_entities(message),
+                reasoning="Message contains price prediction keywords",
+            )
+
+        # Hunter AI: Risk Signals patterns
+        if any(kw in message_lower for kw in [
+            "risk signal", "market risk", "warning sign", "red flag",
+            "risk indicator", "risk metric", "danger sign", "market warning",
+            "risk level", "risk alert", "liquidation risk"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.HUNTER_RISK_SIGNALS,
+                confidence=0.89,
+                extracted_entities=self._extract_hunter_entities(message),
+                reasoning="Message contains risk signal keywords",
+            )
+
+        # Hunter AI: Trading Signals patterns
+        if any(kw in message_lower for kw in [
+            "trading signal", "buy signal", "sell signal", "trade signal",
+            "entry point", "exit point", "should i buy", "should i sell",
+            "when to buy", "when to sell", "buy now", "sell now",
+            "technical signal", "trade recommendation"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.HUNTER_TRADING_SIGNALS,
+                confidence=0.91,
+                extracted_entities=self._extract_hunter_entities(message),
+                reasoning="Message contains trading signal keywords",
+            )
+
+        # Hunter AI: Pattern Detection patterns
+        if any(kw in message_lower for kw in [
+            "chart pattern", "price pattern", "trading pattern",
+            "technical pattern", "pattern detected", "pattern analysis",
+            "head and shoulders", "double top", "double bottom", "triangle",
+            "support level", "resistance level", "trend line"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.HUNTER_PATTERNS,
+                confidence=0.88,
+                extracted_entities=self._extract_hunter_entities(message),
+                reasoning="Message contains pattern detection keywords",
+            )
+
+        # Hunter AI: Portfolio Optimization patterns
+        if any(kw in message_lower for kw in [
+            "optimize portfolio", "portfolio allocation", "rebalance portfolio",
+            "portfolio weights", "asset mix", "diversify portfolio",
+            "portfolio strategy", "efficient frontier", "sharpe ratio"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.HUNTER_PORTFOLIO,
+                confidence=0.90,
+                extracted_entities=self._extract_hunter_entities(message),
+                reasoning="Message contains portfolio optimization keywords",
             )
 
         # Specialist task patterns (yield optimization)
@@ -462,5 +580,55 @@ Classify the intent and extract entities."""
             entities["task_type"] = "migration_strategy"
         elif "analysis" in message.lower():
             entities["task_type"] = "comprehensive_analysis"
+
+        return entities
+
+    def _extract_hunter_entities(self, message: str) -> dict:
+        """Extract entities for Hunter AI tasks."""
+        entities = {}
+
+        # Extract token symbols (BTC, ETH, SOL, etc.)
+        token_pattern = r'\b([A-Z]{2,10})\b'
+        token_matches = re.findall(token_pattern, message)
+        if token_matches:
+            # Filter out common words that match pattern
+            common_words = {'USD', 'TVL', 'APY', 'DeFi', 'NFT', 'DAO', 'DEX'}
+            tokens = [t for t in token_matches if t not in common_words]
+            if tokens:
+                entities["tokens"] = tokens
+                entities["token_symbol"] = tokens[0]  # Primary token
+
+        # Extract time horizon
+        if any(kw in message.lower() for kw in ['24h', '24 hours', 'today', 'daily']):
+            entities["time_horizon"] = "24h"
+        elif any(kw in message.lower() for kw in ['7d', '7 days', 'week', 'weekly']):
+            entities["time_horizon"] = "7d"
+        elif any(kw in message.lower() for kw in ['30d', '30 days', 'month', 'monthly']):
+            entities["time_horizon"] = "30d"
+        else:
+            entities["time_horizon"] = "24h"  # Default
+
+        # Extract risk tolerance for portfolio optimization
+        if "conservative" in message.lower() or "low risk" in message.lower():
+            entities["risk_tolerance"] = 0.2
+        elif "moderate" in message.lower() or "balanced" in message.lower():
+            entities["risk_tolerance"] = 0.5
+        elif "aggressive" in message.lower() or "high risk" in message.lower():
+            entities["risk_tolerance"] = 0.8
+        else:
+            entities["risk_tolerance"] = 0.5  # Default moderate
+
+        # Extract data sources for sentiment analysis
+        sources = []
+        if "twitter" in message.lower():
+            sources.append("twitter")
+        if "reddit" in message.lower():
+            sources.append("reddit")
+        if "discord" in message.lower():
+            sources.append("discord")
+        if "news" in message.lower():
+            sources.append("news")
+        if sources:
+            entities["sources"] = sources
 
         return entities

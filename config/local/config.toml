@@ -83,6 +83,18 @@ intent_classification_model = "gpt-4o-mini"  # Fast model for routing
 intent_confidence_threshold = 0.85  # Min confidence (0.0-1.0)
 fallback_agent = "chat"  # Fallback if intent unclear
 
+# GraphRAG routing
+enable_graphrag_routing = true  # Route protocol/risk queries to GraphRAG
+
+# Hunter AI routing (Phase 8.1)
+enable_hunter_routing = true  # Route market intelligence queries to Hunter AI
+enable_hunter_sentiment = true  # Sentiment analysis (Twitter, Reddit, Discord, News)
+enable_hunter_price_prediction = true  # Price forecasting with ML models
+enable_hunter_risk_signals = true  # Market risk warnings
+enable_hunter_trading_signals = true  # Buy/sell signals
+enable_hunter_patterns = true  # Chart pattern detection
+enable_hunter_portfolio = true  # Portfolio optimization (MPT)
+
 # Supervisor coordination
 enable_supervisor = true
 supervisor_model = "gpt-4o"

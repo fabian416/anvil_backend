@@ -44,15 +44,33 @@ Routing Decision
 Unified Response Format (all handlers return same structure)
 ```
 
-### Intent Types (6)
+### Intent Types (12)
 
-The system detects 6 types of user intent:
+The system detects 12 types of user intent:
+
+#### GraphRAG Intents (Protocol Discovery & Analysis)
 
 | Intent | Description | Routes To | Example Query |
 |--------|-------------|-----------|---------------|
 | **protocol_search** | Finding protocols | GraphRAG Search | "Show me high-yield staking protocols" |
 | **risk_assessment** | Protocol safety analysis | GraphRAG Risk | "Is Aave safe to use?" |
 | **similar_protocols** | Finding alternatives | GraphRAG Similar | "What's similar to Uniswap?" |
+
+#### Hunter AI Intents (Market Intelligence & Trading)
+
+| Intent | Description | Routes To | Example Query |
+|--------|-------------|-----------|---------------|
+| **hunter_sentiment** | Social/news sentiment | Hunter AI Sentiment | "ETH sentiment on Twitter" |
+| **hunter_price_prediction** | Price forecasting | Hunter AI Price Prediction | "Predict BTC price for next 7 days" |
+| **hunter_risk_signals** | Market risk warnings | Hunter AI Risk Signals | "Show risk signals for ETH" |
+| **hunter_trading_signals** | Buy/sell signals | Hunter AI Trading Signals | "Should I buy SOL now?" |
+| **hunter_patterns** | Chart pattern detection | Hunter AI Patterns | "Chart patterns for BTC" |
+| **hunter_portfolio** | Portfolio optimization | Hunter AI Portfolio | "Optimize portfolio for BTC,ETH,SOL" |
+
+#### Agent Squad & Supervisor Intents
+
+| Intent | Description | Routes To | Example Query |
+|--------|-------------|-----------|---------------|
 | **specialist_task** | Domain-specific tasks | Agent Squad | "Analyze ETH/USDC market depth" |
 | **complex_workflow** | Multi-agent coordination | Supervisor | "Create DeFi portfolio strategy" |
 | **general_conversation** | General Q&A | Regular Chat | "Hello, how are you?" |
@@ -88,12 +106,25 @@ All handlers now return a standardized response:
   },
   enrichment: {
     // Handler-specific additional data
+
+    // GraphRAG fields
     protocols?: []              // For GraphRAG Search
     risk_analysis?: {}          // For GraphRAG Risk
     similar_protocols?: []      // For GraphRAG Similar
+
+    // Agent Squad fields
     tools_used?: []            // For Agent Squad
+
+    // Supervisor fields
     workflow_id?: string       // For Supervisor
-    // ... more fields based on handler
+
+    // Hunter AI fields
+    hunter_tool?: string       // sentiment_analysis, price_prediction, etc.
+    token_symbol?: string      // BTC, ETH, SOL, etc.
+    tokens?: string[]          // Multiple tokens for portfolio
+    time_horizon?: string      // 24h, 7d, 30d
+    sources?: string[]         // twitter, reddit, discord, news
+    risk_tolerance?: number    // 0.0-1.0 (for portfolio)
   }
 }
 ```
