@@ -45,18 +45,19 @@ from app.application.llm.ranking.register_model import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/llm",
+    prefix="/rankings",
     tags=["Admin - LLM Ranking"],
 )
 
 
 # ============================================================================
-# Endpoint 1: GET /rankings/{agent_type} - View rankings
+# Endpoint 1: GET /{agent_type} - View rankings
+# Full path: /api/v1/admin/llm/rankings/{agent_type}
 # ============================================================================
 
 
 @router.get(
-    "/rankings/{agent_type}",
+    "/{agent_type}",
     response_model=AgentRankingsResponse,
     summary="Get Rankings for Agent Type",
     description=(
@@ -109,12 +110,13 @@ async def get_rankings(
 
 
 # ============================================================================
-# Endpoint 2: GET /rankings - All processes overview
+# Endpoint 2: GET / - All processes overview
+# Full path: /api/v1/admin/llm/rankings
 # ============================================================================
 
 
 @router.get(
-    "/rankings",
+    "",
     response_model=AllRankingsOverviewResponse,
     summary="Get All Agent Types Overview",
     description=(
@@ -154,12 +156,13 @@ async def get_all_rankings_overview(
 
 
 # ============================================================================
-# Endpoint 3: POST /rankings/{agent_type}/recalculate - Manual trigger
+# Endpoint 3: POST /{agent_type}/recalculate - Manual trigger
+# Full path: /api/v1/admin/llm/rankings/{agent_type}/recalculate
 # ============================================================================
 
 
 @router.post(
-    "/rankings/{agent_type}/recalculate",
+    "/{agent_type}/recalculate",
     response_model=RecalculateResponse,
     summary="Manually Recalculate Rankings",
     description=(
@@ -198,12 +201,13 @@ async def recalculate_rankings(
 
 
 # ============================================================================
-# Endpoint 4: PUT /rankings/{agent_type}/{model_id}/override - Force position
+# Endpoint 4: PUT /{agent_type}/{model_id}/override - Force position
+# Full path: /api/v1/admin/llm/rankings/{agent_type}/{model_id}/override
 # ============================================================================
 
 
 @router.put(
-    "/rankings/{agent_type}/{model_id}/override",
+    "/{agent_type}/{model_id}/override",
     response_model=OverrideResponse,
     summary="Set Manual Ranking Override",
     description=(
@@ -252,12 +256,13 @@ async def set_ranking_override(
 
 
 # ============================================================================
-# Endpoint 5: DELETE /rankings/{agent_type}/{model_id}/override - Remove override
+# Endpoint 5: DELETE /{agent_type}/{model_id}/override - Remove override
+# Full path: /api/v1/admin/llm/rankings/{agent_type}/{model_id}/override
 # ============================================================================
 
 
 @router.delete(
-    "/rankings/{agent_type}/{model_id}/override",
+    "/{agent_type}/{model_id}/override",
     response_model=OverrideResponse,
     summary="Remove Manual Ranking Override",
     description="Remove a manual ranking override and return to calculated scores.",
