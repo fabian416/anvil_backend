@@ -13,10 +13,6 @@ from app.presentation.http.controllers.admin.distillation_validation_router impo
     router as distillation_validation_router,
 )
 
-# LLM Ranking admin router
-from app.presentation.http.controllers.admin.llm.ranking_router import (
-    router as llm_ranking_router,
-)
 from app.presentation.http.controllers.admin.metrics.router import (
     create_admin_metrics_router,
 )
@@ -185,8 +181,6 @@ def create_api_v1_router() -> APIRouter:
         distillation_validation_router,  # Request validation system
         projects_admin_router,
         projects_user_router,
-        # LLM Ranking admin router
-        llm_ranking_router,
         # Real-time agent chat WebSocket
         agno_chat_ws_router,
         # GraphRAG routers
