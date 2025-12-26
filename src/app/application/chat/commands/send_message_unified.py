@@ -28,6 +28,19 @@ from app.application.agent_squad.commands.execute_supervisor_workflow import (
 )
 from app.application.chat.commands.send_message import SendMessage
 
+# Hunter AI imports
+from app.application.hunter.sentiment_aggregator import SentimentAggregator
+from app.application.hunter.twitter_sentiment import TwitterSentimentAnalyzer, TwitterConfig
+from app.application.hunter.reddit_sentiment import RedditSentimentAnalyzer, RedditConfig
+from app.application.hunter.discord_sentiment import DiscordSentimentAnalyzer, DiscordConfig
+from app.application.hunter.news_sentiment import NewsSentimentAnalyzer, NewsConfig
+from app.application.hunter.lstm_price_predictor import LSTMPricePredictor
+from app.application.hunter.risk_analyzer import RiskAnalyzer
+from app.application.hunter.trading_signal_generator import TradingSignalGenerator, Timeframe
+from app.application.hunter.pattern_recognition import PatternRecognizer
+from app.application.hunter.portfolio_optimizer import PortfolioOptimizer
+from app.domain.value_objects.sentiment import SentimentSource
+
 
 class UnifiedChatOrchestrator:
     """
@@ -593,14 +606,95 @@ class UnifiedChatOrchestrator:
         time_horizon = entities.get("time_horizon", "24h")
         sources = entities.get("sources")
 
-        response_content = f"📊 **Sentiment Analysis for {token_symbol}**\n\n"
-        response_content += f"Analyzing sentiment from multiple sources ({time_horizon} timeframe)...\n\n"
-        response_content += "This feature routes to Hunter AI sentiment analysis tools:\n"
-        response_content += "- Twitter sentiment\n"
-        response_content += "- Reddit discussions\n"
-        response_content += "- Discord communities\n"
-        response_content += "- News coverage\n\n"
-        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+        try:
+            # Parse time horizon to hours
+            hours = 24
+            if time_horizon == "7d":
+                hours = 168
+            elif time_horizon == "30d":
+                hours = 720
+
+            # Parse sources if specified
+            source_list = None
+            if sources:
+                source_list = [
+                    SentimentSource(name.lower())
+                    for name in sources
+                    if name.lower() in [s.value for s in SentimentSource]
+                ]
+
+            # Initialize analyzers
+            twitter_analyzer = TwitterSentimentAnalyzer(TwitterConfig(enabled=True))
+            reddit_analyzer = RedditSentimentAnalyzer(RedditConfig(enabled=True))
+            discord_analyzer = DiscordSentimentAnalyzer(DiscordConfig(enabled=True))
+            news_analyzer = NewsSentimentAnalyzer(NewsConfig(enabled=True))
+            aggregator = SentimentAggregator()
+
+            # Collect sentiment readings
+            readings = []
+
+            # Twitter sentiment
+            if not source_list or SentimentSource.TWITTER in source_list:
+                twitter_reading = await twitter_analyzer.analyze_token_sentiment(
+                    token_symbol, hours
+                )
+                readings.append(twitter_reading)
+
+            # Reddit sentiment
+            if not source_list or SentimentSource.REDDIT in source_list:
+                reddit_reading = await reddit_analyzer.analyze_token_sentiment(
+                    token_symbol, hours
+                )
+                readings.append(reddit_reading)
+
+            # Discord sentiment
+            if not source_list or SentimentSource.DISCORD in source_list:
+                discord_reading = await discord_analyzer.analyze_token_sentiment(
+                    token_symbol, hours
+                )
+                readings.append(discord_reading)
+
+            # News sentiment
+            if not source_list or SentimentSource.NEWS in source_list:
+                news_reading = await news_analyzer.analyze_token_sentiment(
+                    token_symbol, hours
+                )
+                readings.append(news_reading)
+
+            # Aggregate sentiment
+            aggregated = aggregator.aggregate(readings, token_symbol)
+
+            # Get source breakdown
+            source_breakdown = aggregator.get_source_breakdown(aggregated)
+
+            # Identify divergence
+            divergence = aggregator.identify_divergence(aggregated)
+
+            # Format response
+            response_content = f"📊 **Sentiment Analysis for {token_symbol}**\n\n"
+            response_content += f"**Overall Sentiment:** {aggregated.classification.value.title()} ({aggregated.overall_score:.1f}/100)\n"
+            response_content += f"**Confidence:** {aggregated.overall_confidence*100:.0f}%\n"
+            response_content += f"**Signal Strength:** {aggregated.signal_strength}\n"
+            response_content += f"**Consensus:** {divergence['consensus']*100:.0f}%\n\n"
+
+            response_content += "**Source Breakdown:**\n"
+            for source_name, data in source_breakdown.items():
+                response_content += f"- {source_name.title()}: {data['score']:.1f}/100 (weight: {data['weight']*100:.0f}%)\n"
+
+            if divergence["has_divergence"]:
+                response_content += f"\n⚠️ **Divergence Detected:** Sources show conflicting signals. Proceed with caution.\n"
+
+            response_content += f"\n*Analysis based on {hours}h of data from {aggregated.source_count} sources*"
+
+        except Exception as e:
+            # Fallback to placeholder response on error
+            response_content = f"📊 **Sentiment Analysis for {token_symbol}**\n\n"
+            response_content += f"⚠️ Unable to fetch real-time sentiment data: {str(e)}\n\n"
+            response_content += "This feature routes to Hunter AI sentiment analysis tools:\n"
+            response_content += "- Twitter sentiment\n"
+            response_content += "- Reddit discussions\n"
+            response_content += "- Discord communities\n"
+            response_content += "- News coverage\n"
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content
@@ -632,14 +726,45 @@ class UnifiedChatOrchestrator:
         token_symbol = entities.get("token_symbol", "ETH")
         time_horizon = entities.get("time_horizon", "24h")
 
-        response_content = f"📈 **Price Prediction for {token_symbol}**\n\n"
-        response_content += f"Generating price forecast ({time_horizon} timeframe)...\n\n"
-        response_content += "This feature routes to Hunter AI price prediction ML models:\n"
-        response_content += "- Historical price analysis\n"
-        response_content += "- Machine learning forecasting\n"
-        response_content += "- Confidence intervals\n"
-        response_content += "- Price targets\n\n"
-        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+        try:
+            # Parse time horizon to hours
+            hours = 24
+            if time_horizon == "7d":
+                hours = 168
+            elif time_horizon == "30d":
+                hours = 720
+
+            # Get price prediction
+            predictor = LSTMPricePredictor()
+            prediction = await predictor.predict(token_symbol, horizon_hours=hours)
+
+            # Format response
+            response_content = f"📈 **Price Prediction for {token_symbol}**\n\n"
+            response_content += f"**Current Price:** ${prediction.current_price:,.2f}\n"
+            response_content += f"**Predicted Price ({time_horizon}):** ${prediction.predicted_price:,.2f}\n"
+            response_content += f"**Change:** {prediction.change_percent:+.2f}%\n"
+            response_content += f"**Direction:** {prediction.direction.upper()} {'📈' if prediction.direction == 'up' else '📉' if prediction.direction == 'down' else '➡️'}\n"
+            response_content += f"**Confidence:** {prediction.confidence*100:.0f}%\n\n"
+
+            response_content += "**Analysis:**\n"
+            if prediction.direction == "up":
+                response_content += f"- Bullish trend detected with {prediction.change_percent:.1f}% expected upside\n"
+            elif prediction.direction == "down":
+                response_content += f"- Bearish trend detected with {prediction.change_percent:.1f}% expected downside\n"
+            else:
+                response_content += f"- Sideways movement expected with minimal price action\n"
+
+            response_content += f"\n*LSTM forecast based on historical price patterns. Not financial advice.*"
+
+        except Exception as e:
+            # Fallback to placeholder response on error
+            response_content = f"📈 **Price Prediction for {token_symbol}**\n\n"
+            response_content += f"⚠️ Unable to generate price prediction: {str(e)}\n\n"
+            response_content += "This feature routes to Hunter AI LSTM price prediction:\n"
+            response_content += "- Historical price analysis\n"
+            response_content += "- Machine learning forecasting\n"
+            response_content += "- Confidence intervals\n"
+            response_content += "- Price targets\n"
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content
@@ -669,14 +794,32 @@ class UnifiedChatOrchestrator:
         entities = intent_result.extracted_entities
         token_symbol = entities.get("token_symbol", "ETH")
 
-        response_content = f"⚠️ **Risk Signals for {token_symbol}**\n\n"
-        response_content += f"Analyzing market risk indicators...\n\n"
-        response_content += "This feature routes to Hunter AI risk detection:\n"
-        response_content += "- Market volatility warnings\n"
-        response_content += "- Liquidity risk signals\n"
-        response_content += "- Price anomaly detection\n"
-        response_content += "- Risk severity scoring\n\n"
-        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+        try:
+            # Get comprehensive risk analysis
+            analyzer = RiskAnalyzer()
+            assessment = await analyzer.analyze_comprehensive_risk(token_symbol)
+
+            # Format response
+            response_content = f"⚠️ **Risk Analysis for {token_symbol}**\n\n"
+            response_content += f"**Overall Risk:** {assessment.overall_risk_level.upper()} ({assessment.overall_risk_score:.1f}/100)\n\n"
+
+            response_content += "**Risk Factors:**\n"
+            for factor_name, factor in assessment.risk_factors.items():
+                emoji = "🔴" if factor.level == "high" or factor.level == "extreme" else "🟡" if factor.level == "medium" else "🟢"
+                response_content += f"{emoji} **{factor_name.replace('_', ' ').title()}:** {factor.level.upper()} ({factor.score:.1f}/100)\n"
+
+            response_content += f"\n**Recommendation:**\n{assessment.recommendation}\n"
+            response_content += f"\n*ML-based risk analysis across volatility, liquidity, smart contract, and correlation factors*"
+
+        except Exception as e:
+            # Fallback to placeholder response on error
+            response_content = f"⚠️ **Risk Signals for {token_symbol}**\n\n"
+            response_content += f"⚠️ Unable to fetch risk analysis: {str(e)}\n\n"
+            response_content += "This feature routes to Hunter AI risk detection:\n"
+            response_content += "- Market volatility warnings\n"
+            response_content += "- Liquidity risk signals\n"
+            response_content += "- Price anomaly detection\n"
+            response_content += "- Risk severity scoring\n"
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content
@@ -705,14 +848,41 @@ class UnifiedChatOrchestrator:
         entities = intent_result.extracted_entities
         token_symbol = entities.get("token_symbol", "ETH")
 
-        response_content = f"📉 **Trading Signals for {token_symbol}**\n\n"
-        response_content += f"Generating buy/sell signals...\n\n"
-        response_content += "This feature routes to Hunter AI trading analysis:\n"
-        response_content += "- Buy/sell recommendations\n"
-        response_content += "- Entry/exit points\n"
-        response_content += "- Signal strength indicators\n"
-        response_content += "- Risk-reward ratios\n\n"
-        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+        try:
+            # Generate trading signal (default 1d timeframe)
+            generator = TradingSignalGenerator()
+            signal = await generator.generate_signal(token_symbol, Timeframe.DAY_1)
+
+            # Format response
+            signal_emoji = "🟢" if "BUY" in signal.signal_type.value else "🔴" if "SELL" in signal.signal_type.value else "🟡"
+            response_content = f"{signal_emoji} **Trading Signal for {token_symbol}**\n\n"
+            response_content += f"**Signal:** {signal.signal_type.value} (Strength: {signal.signal_strength:.1f}/100)\n"
+            response_content += f"**Confidence:** {signal.confidence*100:.0f}%\n\n"
+
+            if signal.entry_price:
+                response_content += f"**Entry Price:** ${signal.entry_price:,.2f}\n"
+            if signal.stop_loss_price:
+                response_content += f"**Stop Loss:** ${signal.stop_loss_price:,.2f}\n"
+            if signal.take_profit_price:
+                response_content += f"**Take Profit:** ${signal.take_profit_price:,.2f}\n"
+
+            response_content += f"\n**Component Scores:**\n"
+            response_content += f"- Sentiment: {signal.sentiment_score:.1f}/100\n"
+            response_content += f"- Price Prediction: {signal.prediction_score:.1f}/100\n"
+            response_content += f"- Risk-Adjusted: {signal.risk_score:.1f}/100\n"
+
+            response_content += f"\n**Recommendation:**\n{signal.recommendation}\n"
+            response_content += f"\n*AI-powered signal combining sentiment, price prediction, and risk analysis*"
+
+        except Exception as e:
+            # Fallback to placeholder response on error
+            response_content = f"📉 **Trading Signals for {token_symbol}**\n\n"
+            response_content += f"⚠️ Unable to generate trading signal: {str(e)}\n\n"
+            response_content += "This feature routes to Hunter AI trading analysis:\n"
+            response_content += "- Buy/sell recommendations\n"
+            response_content += "- Entry/exit points\n"
+            response_content += "- Signal strength indicators\n"
+            response_content += "- Risk-reward ratios\n"
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content
@@ -741,14 +911,53 @@ class UnifiedChatOrchestrator:
         entities = intent_result.extracted_entities
         token_symbol = entities.get("token_symbol", "ETH")
 
-        response_content = f"📊 **Chart Pattern Analysis for {token_symbol}**\n\n"
-        response_content += f"Detecting technical patterns...\n\n"
-        response_content += "This feature routes to Hunter AI pattern detection:\n"
-        response_content += "- Head and shoulders patterns\n"
-        response_content += "- Support/resistance levels\n"
-        response_content += "- Trend line analysis\n"
-        response_content += "- Pattern reliability scores\n\n"
-        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+        try:
+            # Get pattern analysis
+            recognizer = PatternRecognizer()
+            chart_patterns = await recognizer.detect_chart_patterns(token_symbol.upper())
+            candlestick_patterns = await recognizer.detect_candlestick_patterns(token_symbol.upper())
+            levels = await recognizer.find_support_resistance(token_symbol.upper())
+
+            # Format response
+            response_content = f"📊 **Pattern Analysis for {token_symbol}**\n\n"
+
+            # Chart patterns
+            if chart_patterns:
+                response_content += "**Chart Patterns:**\n"
+                for pattern in chart_patterns[:3]:  # Top 3 patterns
+                    emoji = "🔴" if pattern.signal == "bearish" else "🟢" if pattern.signal == "bullish" else "🟡"
+                    response_content += f"{emoji} {pattern.pattern_type.replace('_', ' ').title()} ({pattern.confidence*100:.0f}% confidence)\n"
+                response_content += "\n"
+
+            # Candlestick patterns
+            if candlestick_patterns:
+                response_content += "**Recent Candlestick Patterns:**\n"
+                for pattern in candlestick_patterns[:3]:  # Top 3 patterns
+                    emoji = "🔴" if pattern.signal == "bearish" else "🟢" if pattern.signal == "bullish" else "🟡"
+                    response_content += f"{emoji} {pattern.pattern.replace('_', ' ').title()} ({pattern.confidence*100:.0f}% confidence)\n"
+                response_content += "\n"
+
+            # Support/Resistance levels
+            if levels:
+                response_content += "**Support Levels:**\n"
+                for level in levels["support"][:2]:  # Top 2
+                    response_content += f"- ${level.level:,.2f} (strength: {level.strength*100:.0f}%, {level.touches} touches)\n"
+
+                response_content += "\n**Resistance Levels:**\n"
+                for level in levels["resistance"][:2]:  # Top 2
+                    response_content += f"- ${level.level:,.2f} (strength: {level.strength*100:.0f}%, {level.touches} touches)\n"
+
+            response_content += f"\n*Technical pattern analysis using historical price data*"
+
+        except Exception as e:
+            # Fallback to placeholder response on error
+            response_content = f"📊 **Chart Pattern Analysis for {token_symbol}**\n\n"
+            response_content += f"⚠️ Unable to detect patterns: {str(e)}\n\n"
+            response_content += "This feature routes to Hunter AI pattern detection:\n"
+            response_content += "- Head and shoulders patterns\n"
+            response_content += "- Support/resistance levels\n"
+            response_content += "- Trend line analysis\n"
+            response_content += "- Pattern reliability scores\n"
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content
@@ -778,15 +987,38 @@ class UnifiedChatOrchestrator:
         tokens = entities.get("tokens", ["BTC", "ETH", "SOL"])
         risk_tolerance = entities.get("risk_tolerance", 0.5)
 
-        response_content = f"💼 **Portfolio Optimization**\n\n"
-        response_content += f"Optimizing portfolio for: {', '.join(tokens)}\n"
-        response_content += f"Risk tolerance: {risk_tolerance*100:.0f}%\n\n"
-        response_content += "This feature routes to Hunter AI MPT optimization:\n"
-        response_content += "- Modern Portfolio Theory analysis\n"
-        response_content += "- Efficient frontier calculation\n"
-        response_content += "- Asset allocation recommendations\n"
-        response_content += "- Risk-adjusted returns\n\n"
-        response_content += f"*This is routed via unified routing to Hunter AI tools.*"
+        try:
+            # Optimize portfolio
+            optimizer = PortfolioOptimizer()
+            portfolio = await optimizer.optimize_portfolio(tokens, risk_tolerance)
+
+            # Format response
+            risk_level = "Conservative" if risk_tolerance < 0.33 else "Balanced" if risk_tolerance < 0.67 else "Aggressive"
+            response_content = f"💼 **Portfolio Optimization ({risk_level})**\n\n"
+
+            response_content += "**Optimal Allocation:**\n"
+            for token, weight in portfolio.weights.items():
+                response_content += f"- {token}: {weight*100:.1f}%\n"
+
+            response_content += f"\n**Performance Metrics:**\n"
+            response_content += f"- Expected Return: {portfolio.metrics.get('expected_return', 0):.1f}%\n"
+            response_content += f"- Volatility (Risk): {portfolio.metrics.get('volatility', 0):.1f}%\n"
+            response_content += f"- Sharpe Ratio: {portfolio.metrics.get('sharpe_ratio', 0):.2f}\n"
+
+            response_content += f"\n**Strategy:** {risk_level} risk profile optimized using Modern Portfolio Theory (MPT)\n"
+            response_content += f"*Allocation maximizes risk-adjusted returns for your risk tolerance*"
+
+        except Exception as e:
+            # Fallback to placeholder response on error
+            response_content = f"💼 **Portfolio Optimization**\n\n"
+            response_content += f"⚠️ Unable to optimize portfolio: {str(e)}\n\n"
+            response_content += f"Tokens: {', '.join(tokens)}\n"
+            response_content += f"Risk tolerance: {risk_tolerance*100:.0f}%\n\n"
+            response_content += "This feature routes to Hunter AI MPT optimization:\n"
+            response_content += "- Modern Portfolio Theory analysis\n"
+            response_content += "- Efficient frontier calculation\n"
+            response_content += "- Asset allocation recommendations\n"
+            response_content += "- Risk-adjusted returns\n"
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content
