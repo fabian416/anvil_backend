@@ -167,9 +167,9 @@ async def reset_circuit_breaker(
 )
 @inject
 async def get_service_metrics(
+    interactor: FromDishka[GetServiceMetrics],
     service_name: str,
     days: int = Query(7, ge=1, le=90, description="Number of days to retrieve"),
-    interactor: FromDishka[GetServiceMetrics],
 ) -> ServiceMetricsResponse:
     """Get aggregated metrics for a service."""
     result = await interactor.execute(service_name, days)

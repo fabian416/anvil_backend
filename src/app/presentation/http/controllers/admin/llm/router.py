@@ -17,7 +17,7 @@ from .circuit_breakers import router as circuit_breakers_router
 
 # Create main admin LLM router
 router = ErrorAwareRouter(
-    prefix="/llm",
+    prefix="/admin/llm",
     tags=["Admin - LLM Orchestration"],
 )
 

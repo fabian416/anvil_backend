@@ -4,6 +4,9 @@ from app.presentation.http.controllers.account.router import create_account_rout
 from app.presentation.http.controllers.admin.agent.router import (
     create_admin_agent_router,
 )
+from app.presentation.http.controllers.admin.llm.router import (
+    create_llm_admin_router,
+)
 
 # New routers for distillation and projects
 from app.presentation.http.controllers.admin.distillation_router import (
@@ -146,6 +149,7 @@ def create_api_v1_router() -> APIRouter:
         analytics_dashboard_router,
         create_admin_stats_router(),
         create_admin_agent_router(),
+        create_llm_admin_router(),  # Admin LLM orchestration router
         # Admin wallet router (for admin management of Privy wallets)
         create_admin_wallet_router(),
         # Admin policies router (for managing Privy policies)
