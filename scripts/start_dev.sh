@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script para iniciar todos los servicios de desarrollo:
 # - FastAPI (uvicorn)
-# - MCP Servers (6 servers on ports 8081-8086)
+# - MCP Servers (11 servers on ports 8081-8091)
 # - Celery workers
 # - Celery Beat
 # - Flower monitoring
@@ -117,8 +117,8 @@ MCP_SCRIPT_PID=$!
 # Esperar a que los MCP servers inicien
 sleep 3
 
-echo -e "${GREEN}  ✅ MCP Servers iniciados correctamente${NC}"
-echo -e "${CYAN}  Ver endpoints: http://localhost:8081-8086/tools${NC}"
+echo -e "${GREEN}  ✅ MCP Servers iniciados correctamente (11 servers)${NC}"
+echo -e "${CYAN}  Ver endpoints: http://localhost:8081-8091/tools${NC}"
 echo -e "${CYAN}  Ver logs MCP: tail -f $LOG_DIR/mcp/*.log${NC}\n"
 
 # 3. Iniciar Celery workers, Beat y Flower

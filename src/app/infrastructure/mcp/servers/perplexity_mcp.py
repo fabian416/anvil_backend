@@ -268,3 +268,37 @@ class PerplexityMCPServer(MCPServer):
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()
+
+
+# Main entry point for running server standalone
+if __name__ == "__main__":
+    import os
+    import uvicorn
+
+    print("""
+╔══════════════════════════════════════════════════════════╗
+║       Perplexity MCP Server Starting...                 ║
+╚══════════════════════════════════════════════════════════╝
+
+Port: 8087
+
+Tools Available:
+  • research: AI-powered research with citations
+  • chat: Conversational AI with Perplexity
+
+Endpoints:
+  GET  /           - Server info
+  GET  /tools      - List all tools
+  POST /tools/{name} - Call a tool
+  GET  /health     - Health check
+
+Starting server...
+    """)
+
+    # Get API key from environment
+    api_key = os.getenv("PERPLEXITY_API_KEY", "")
+
+    # Create server
+    server = PerplexityMCPServer(api_key=api_key)
+
+    uvicorn.run(server.app, host="0.0.0.0", port=8087, log_level="info")

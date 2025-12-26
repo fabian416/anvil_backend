@@ -693,3 +693,38 @@ class HyperliquidMCPServer(MCPServer):
 
         except Exception as e:
             return {"error": str(e), "opportunities": []}
+
+
+# Main entry point for running server standalone
+if __name__ == "__main__":
+    import uvicorn
+
+    print("""
+╔══════════════════════════════════════════════════════════╗
+║       Hyperliquid MCP Server Starting...                ║
+╚══════════════════════════════════════════════════════════╝
+
+Port: 8090
+
+Tools Available:
+  • get_markets: Get all perpetual markets with stats
+  • get_order_book: Get orderbook depth for a market
+  • get_funding_rate: Get current funding rate
+  • get_funding_rates: Get all funding rates
+  • get_liquidations: Get recent liquidations
+  • get_positions: Get user's open positions
+  • calculate_liquidation_price: Calculate liquidation price
+  • calculate_risk_metrics: Calculate position risk metrics
+  • find_funding_arbitrage: Find funding rate arbitrage opportunities
+
+Endpoints:
+  GET  /           - Server info
+  GET  /tools      - List all tools
+  POST /tools/{name} - Call a tool
+  GET  /health     - Health check
+
+Starting server...
+    """)
+
+    server = HyperliquidMCPServer()
+    uvicorn.run(server.app, host="0.0.0.0", port=8090, log_level="info")

@@ -37,10 +37,16 @@ make logs-all        # View all logs combined
 
 **MCP Servers:**
 ```bash
-make mcp.all         # Start all 6 MCP servers (ports 8081-8086)
+make mcp.all         # Start all 11 MCP servers (ports 8081-8091)
 make mcp.stop        # Stop all MCP servers
-# Individual servers: mcp.oneinch, mcp.defillama, mcp.thegraph, mcp.coingecko, mcp.aave, mcp.portfolio
-# Note: MCP servers are automatically included in 'make start-dev'
+
+# Core Data & Market Intelligence (6 servers):
+# mcp.oneinch, mcp.defillama, mcp.thegraph, mcp.coingecko, mcp.aave, mcp.portfolio
+
+# Advanced DeFi & Trading (5 servers):
+# mcp.perplexity, mcp.morpho, mcp.curve, mcp.hyperliquid, mcp.layerzero
+
+# Note: All 11 MCP servers are automatically started with 'make start-dev'
 ```
 
 **Code Quality:**

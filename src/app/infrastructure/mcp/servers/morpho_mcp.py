@@ -571,3 +571,35 @@ class MorphoMCPServer(MCPServer):
 
         except Exception as e:
             return {"error": str(e), "comparisons": []}
+
+
+# Main entry point for running server standalone
+if __name__ == "__main__":
+    import uvicorn
+
+    print("""
+╔══════════════════════════════════════════════════════════╗
+║         Morpho MCP Server Starting...                   ║
+╚══════════════════════════════════════════════════════════╝
+
+Port: 8088
+
+Tools Available:
+  • get_vaults: Get MetaMorpho vaults with yield data
+  • get_vault_details: Get detailed vault information
+  • get_vault_apy: Get APY breakdown with history
+  • get_markets: Get Morpho Blue lending markets
+  • get_user_positions: Get user's vault positions
+  • compare_yields: Compare yields across protocols
+
+Endpoints:
+  GET  /           - Server info
+  GET  /tools      - List all tools
+  POST /tools/{name} - Call a tool
+  GET  /health     - Health check
+
+Starting server...
+    """)
+
+    server = MorphoMCPServer()
+    uvicorn.run(server.app, host="0.0.0.0", port=8088, log_level="info")

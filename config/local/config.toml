@@ -331,12 +331,20 @@ batch_size = 100
 flush_interval_seconds = 60  # Master switch for all MCP servers
 
 [mcp.servers]
+# Core Data & Market Intelligence (6 servers)
 defillama_enabled = true  # DeFiLlama TVL & protocol data (Free tier)
 oneinch_enabled = true  # 1inch DEX aggregation (Paid API)
 thegraph_enabled = true  # The Graph blockchain indexing (Paid API)
 coingecko_enabled = true  # CoinGecko market data (Free tier)
 aave_enabled = true  # Aave lending protocol integration
 portfolio_enabled = true  # Portfolio tracking & analytics
+
+# Advanced DeFi & Trading (5 servers)
+perplexity_enabled = true  # AI-powered research and search
+morpho_enabled = true  # MetaMorpho vaults & yield optimization
+curve_enabled = true  # Curve DEX stable swaps & liquidity pools
+hyperliquid_enabled = true  # Perpetual futures trading
+layerzero_enabled = true  # Cross-chain messaging & OFT transfers
 
 # Agno Agent Feature Flags
 [agno]

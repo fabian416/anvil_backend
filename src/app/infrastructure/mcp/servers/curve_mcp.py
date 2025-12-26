@@ -578,3 +578,43 @@ class CurveMCPServer(MCPServer):
 
         except Exception as e:
             return {"error": str(e), "pools": []}
+
+
+# Main entry point for running server standalone
+if __name__ == "__main__":
+    import uvicorn
+
+    print("""
+╔══════════════════════════════════════════════════════════╗
+║          Curve MCP Server Starting...                   ║
+╚══════════════════════════════════════════════════════════╝
+
+Port: 8089
+
+Tools Available:
+  • get_pools: Get liquidity pools with APY and TVL
+  • get_pool_details: Get detailed pool information
+  • get_pool_apy: Get APY breakdown for a pool
+  • get_swap_quote: Get quote for token swaps
+  • get_gauges: Get gauge reward data
+  • get_tvl: Get total value locked data
+  • find_best_pools: Find pools by token with highest APY
+
+Supported Chains:
+  • Ethereum (1)
+  • Polygon (137)
+  • Arbitrum (42161)
+  • Optimism (10)
+  • Avalanche (43114)
+
+Endpoints:
+  GET  /           - Server info
+  GET  /tools      - List all tools
+  POST /tools/{name} - Call a tool
+  GET  /health     - Health check
+
+Starting server...
+    """)
+
+    server = CurveMCPServer()
+    uvicorn.run(server.app, host="0.0.0.0", port=8089, log_level="info")

@@ -43,12 +43,20 @@ echo -e "${MAGENTA}════════════════════�
 # MCP Server configurations (name:port:module)
 # Based on config/local/config.toml [mcp.servers]
 declare -a MCP_SERVERS=(
+    # Core Data & Market Intelligence (6 servers)
     "1inch:8081:oneinch_mcp"
     "DeFiLlama:8082:defillama_mcp"
     "TheGraph:8083:thegraph_mcp"
     "CoinGecko:8084:coingecko_mcp"
     "Aave:8085:aave_mcp"
     "Portfolio:8086:portfolio_mcp"
+
+    # Advanced DeFi & Trading (5 servers)
+    "Perplexity:8087:perplexity_mcp"
+    "Morpho:8088:morpho_mcp"
+    "Curve:8089:curve_mcp"
+    "Hyperliquid:8090:hyperliquid_mcp"
+    "LayerZero:8091:layerzero_mcp"
 )
 
 echo -e "${GREEN}🚀 Iniciando servidores MCP...${NC}\n"
@@ -73,13 +81,20 @@ echo -e "\n${MAGENTA}═══════════════════�
 echo -e "${GREEN}✅ Todos los servidores MCP iniciados correctamente${NC}"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}\n"
 
-echo -e "${CYAN}📊 Endpoints disponibles:${NC}"
+echo -e "${CYAN}📊 Endpoints disponibles (11 servers):${NC}"
+echo -e "${YELLOW}Core Data & Market Intelligence:${NC}"
 echo -e "  • 1inch:      http://localhost:8081/tools"
 echo -e "  • DeFiLlama:  http://localhost:8082/tools"
 echo -e "  • TheGraph:   http://localhost:8083/tools"
 echo -e "  • CoinGecko:  http://localhost:8084/tools"
 echo -e "  • Aave:       http://localhost:8085/tools"
 echo -e "  • Portfolio:  http://localhost:8086/tools"
+echo -e "${YELLOW}Advanced DeFi & Trading:${NC}"
+echo -e "  • Perplexity: http://localhost:8087/tools"
+echo -e "  • Morpho:     http://localhost:8088/tools"
+echo -e "  • Curve:      http://localhost:8089/tools"
+echo -e "  • Hyperliquid: http://localhost:8090/tools"
+echo -e "  • LayerZero:  http://localhost:8091/tools"
 
 echo -e "\n${CYAN}📝 Logs:${NC}"
 echo -e "  Ver logs: tail -f $MCP_LOG_DIR/*.log"

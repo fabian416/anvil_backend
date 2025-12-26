@@ -483,3 +483,39 @@ class LayerZeroMCPServer(MCPServer):
 
         except Exception as e:
             return {"error": str(e)}
+
+
+# Main entry point for running server standalone
+if __name__ == "__main__":
+    import uvicorn
+
+    print("""
+╔══════════════════════════════════════════════════════════╗
+║        LayerZero MCP Server Starting...                 ║
+╚══════════════════════════════════════════════════════════╝
+
+Port: 8091
+
+Tools Available:
+  • track_message: Track cross-chain message by transaction hash
+  • get_message_history: Get message history for an address
+  • get_chains: Get supported LayerZero chains
+  • estimate_fees: Estimate cross-chain messaging fees
+  • get_oft_transfers: Get OFT token transfers for an address
+  • check_message_status: Check delivery status of a message
+
+Supported Chains:
+  • 40+ EVM and non-EVM chains
+  • Including Ethereum, Arbitrum, Optimism, Polygon, BSC, Avalanche, etc.
+
+Endpoints:
+  GET  /           - Server info
+  GET  /tools      - List all tools
+  POST /tools/{name} - Call a tool
+  GET  /health     - Health check
+
+Starting server...
+    """)
+
+    server = LayerZeroMCPServer()
+    uvicorn.run(server.app, host="0.0.0.0", port=8091, log_level="info")

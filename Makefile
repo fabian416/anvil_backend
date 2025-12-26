@@ -213,9 +213,9 @@ down.tx-worker: guard-APP_ENV
 logs.tx-worker: guard-APP_ENV
 	@cd $(CONFIGS_DIG)/$(APP_ENV) && $(DOCKER_COMPOSE) --env-file .env.$(APP_ENV) --profile tx-worker logs -f tx_confirmation_worker
 
-# MCP Servers
+# MCP Servers (11 total servers on ports 8081-8091)
 # Note: MCP servers are automatically started with 'make start-dev'
-.PHONY: mcp mcp.oneinch mcp.defillama mcp.thegraph mcp.coingecko mcp.aave mcp.portfolio mcp.all mcp.stop
+.PHONY: mcp mcp.oneinch mcp.defillama mcp.thegraph mcp.coingecko mcp.aave mcp.portfolio mcp.perplexity mcp.morpho mcp.curve mcp.hyperliquid mcp.layerzero mcp.all mcp.stop
 mcp: mcp.all
 
 mcp.oneinch:
@@ -242,8 +242,28 @@ mcp.portfolio:
 	@echo "Starting Portfolio MCP Server on port 8086..."
 	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.portfolio_mcp
 
+mcp.perplexity:
+	@echo "Starting Perplexity MCP Server on port 8087..."
+	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.perplexity_mcp
+
+mcp.morpho:
+	@echo "Starting Morpho MCP Server on port 8088..."
+	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.morpho_mcp
+
+mcp.curve:
+	@echo "Starting Curve MCP Server on port 8089..."
+	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.curve_mcp
+
+mcp.hyperliquid:
+	@echo "Starting Hyperliquid MCP Server on port 8090..."
+	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.hyperliquid_mcp
+
+mcp.layerzero:
+	@echo "Starting LayerZero MCP Server on port 8091..."
+	PYTHONPATH=src python3.12 -m app.infrastructure.mcp.servers.layerzero_mcp
+
 mcp.all:
-	@echo "Starting all MCP servers (6 servers on ports 8081-8086)..."
+	@echo "Starting all MCP servers (11 servers on ports 8081-8091)..."
 	@./scripts/start_all_mcp.sh
 
 mcp.stop:
