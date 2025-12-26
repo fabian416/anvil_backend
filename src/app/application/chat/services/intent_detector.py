@@ -30,6 +30,12 @@ class ChatIntent(Enum):
     HUNTER_PATTERNS = "hunter_patterns"  # Chart patterns and trends
     HUNTER_PORTFOLIO = "hunter_portfolio"  # Portfolio optimization
 
+    # ULTRA intents (DeFi automation and MEV)
+    ULTRA_ARBITRAGE = "ultra_arbitrage"  # Arbitrage opportunity discovery
+    ULTRA_FLASH_LOANS = "ultra_flash_loans"  # Flash loan protocol selection
+    ULTRA_MEV_PROTECTION = "ultra_mev_protection"  # MEV-protected execution
+    ULTRA_AUTO_EXECUTOR = "ultra_auto_executor"  # Automated trading bot control
+
     # Agent Squad & Supervisor intents
     SPECIALIST_TASK = "specialist_task"
     COMPLEX_WORKFLOW = "complex_workflow"
@@ -357,6 +363,59 @@ Classify the intent and extract entities."""
                 reasoning="Message contains portfolio optimization keywords",
             )
 
+        # ULTRA: Arbitrage Discovery patterns
+        if any(kw in message_lower for kw in [
+            "arbitrage", "arbitrage opportunity", "find arbitrage",
+            "arb opportunity", "cross-dex", "price difference",
+            "triangular arbitrage", "2-hop", "3-hop",
+            "profitable trade", "arbitrage profit"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.ULTRA_ARBITRAGE,
+                confidence=0.92,
+                extracted_entities=self._extract_ultra_entities(message),
+                reasoning="Message contains arbitrage discovery keywords",
+            )
+
+        # ULTRA: Flash Loans patterns
+        if any(kw in message_lower for kw in [
+            "flash loan", "flash borrow", "uncollateralized loan",
+            "aave flash", "balancer flash", "flash loan protocol",
+            "best flash loan", "flash loan fee", "flash loan liquidity"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.ULTRA_FLASH_LOANS,
+                confidence=0.93,
+                extracted_entities=self._extract_ultra_entities(message),
+                reasoning="Message contains flash loan keywords",
+            )
+
+        # ULTRA: MEV Protection patterns
+        if any(kw in message_lower for kw in [
+            "mev protect", "mev protection", "flashbots",
+            "private relay", "bundle transaction", "mev shield",
+            "frontrun protect", "sandwich protect", "execute arbitrage"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.ULTRA_MEV_PROTECTION,
+                confidence=0.91,
+                extracted_entities=self._extract_ultra_entities(message),
+                reasoning="Message contains MEV protection keywords",
+            )
+
+        # ULTRA: Auto Executor patterns
+        if any(kw in message_lower for kw in [
+            "auto executor", "automated trading", "trading bot",
+            "start bot", "stop bot", "pause bot", "resume bot",
+            "auto trade", "automated execution", "bot status"
+        ]):
+            return IntentDetectionResult(
+                intent=ChatIntent.ULTRA_AUTO_EXECUTOR,
+                confidence=0.94,
+                extracted_entities=self._extract_ultra_entities(message),
+                reasoning="Message contains auto executor keywords",
+            )
+
         # Specialist task patterns (yield optimization)
         if any(kw in message_lower for kw in [
             "best yield", "highest yield", "best apy", "highest apy",
@@ -630,5 +689,65 @@ Classify the intent and extract entities."""
             sources.append("news")
         if sources:
             entities["sources"] = sources
+
+        return entities
+
+    def _extract_ultra_entities(self, message: str) -> dict:
+        """Extract entities for ULTRA tasks."""
+        entities = {}
+
+        # Extract capital/amount for arbitrage
+        amount_pattern = r'\$?\s*(\d{1,3}(?:,\d{3})*|\d+)\s*(?:usd|dollars)?'
+        amount_matches = re.findall(amount_pattern, message.lower())
+        if amount_matches:
+            # Clean and convert to float
+            amount_str = amount_matches[0].replace(',', '')
+            try:
+                entities["capital"] = float(amount_str)
+            except:
+                entities["capital"] = 10000  # Default
+
+        # Extract arbitrage type
+        if "2-hop" in message.lower() or "2hop" in message.lower():
+            entities["arb_type"] = "2hop"
+        elif "3-hop" in message.lower() or "3hop" in message.lower():
+            entities["arb_type"] = "3hop"
+        elif "triangle" in message.lower() or "triangular" in message.lower():
+            entities["arb_type"] = "triangle"
+
+        # Extract flash loan protocol
+        if "aave" in message.lower():
+            entities["flash_loan_protocol"] = "aave_v3"
+        elif "balancer" in message.lower():
+            entities["flash_loan_protocol"] = "balancer"
+        elif "uniswap" in message.lower():
+            entities["flash_loan_protocol"] = "uniswap_v3"
+
+        # Extract token for flash loans
+        token_pattern = r'\b([A-Z]{2,10})\b'
+        token_matches = re.findall(token_pattern, message)
+        if token_matches:
+            common_words = {'USD', 'MEV', 'TVL', 'APY', 'DeFi', 'NFT', 'DAO', 'DEX'}
+            tokens = [t for t in token_matches if t not in common_words]
+            if tokens:
+                entities["token"] = tokens[0]
+
+        # Extract bot action (for auto executor)
+        if "start" in message.lower():
+            entities["action"] = "start"
+        elif "stop" in message.lower():
+            entities["action"] = "stop"
+        elif "pause" in message.lower():
+            entities["action"] = "pause"
+        elif "resume" in message.lower():
+            entities["action"] = "resume"
+        elif "status" in message.lower():
+            entities["action"] = "status"
+
+        # Extract opportunity ID for execution
+        opp_id_pattern = r'(ARB-\d+-\d+)'
+        opp_matches = re.findall(opp_id_pattern, message)
+        if opp_matches:
+            entities["opportunity_id"] = opp_matches[0]
 
         return entities
