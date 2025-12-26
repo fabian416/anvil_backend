@@ -36,17 +36,17 @@ Intent Detection (LLM + keyword fallback)
     ↓
 Routing Decision
     ↓
-┌─────────────┬─────────────┬──────────────┬─────────────┬──────────────┐
-│  GraphRAG   │  GraphRAG   │   GraphRAG   │    Agent    │  Supervisor  │
-│   Search    │    Risk     │   Similar    │    Squad    │   Workflow   │
-└─────────────┴─────────────┴──────────────┴─────────────┴──────────────┘
-    ↓               ↓              ↓              ↓              ↓
+┌─────────────┬─────────────┬──────────────┬──────────────┬─────────────┬──────────────┐
+│  GraphRAG   │  GraphRAG   │   GraphRAG   │   Hunter AI  │    ULTRA    │    Agent     │
+│   Search    │    Risk     │   Similar    │  (6 tools)   │  (4 tools)  │    Squad     │
+└─────────────┴─────────────┴──────────────┴──────────────┴─────────────┴──────────────┘
+    ↓               ↓              ↓              ↓              ↓              ↓
 Unified Response Format (all handlers return same structure)
 ```
 
-### Intent Types (12)
+### Intent Types (16)
 
-The system detects 12 types of user intent:
+The system detects 16 types of user intent:
 
 #### GraphRAG Intents (Protocol Discovery & Analysis)
 
@@ -66,6 +66,15 @@ The system detects 12 types of user intent:
 | **hunter_trading_signals** | Buy/sell signals | Hunter AI Trading Signals | "Should I buy SOL now?" |
 | **hunter_patterns** | Chart pattern detection | Hunter AI Patterns | "Chart patterns for BTC" |
 | **hunter_portfolio** | Portfolio optimization | Hunter AI Portfolio | "Optimize portfolio for BTC,ETH,SOL" |
+
+#### ULTRA Intents (DeFi Automation & MEV)
+
+| Intent | Description | Routes To | Example Query |
+|--------|-------------|-----------|---------------|
+| **ultra_arbitrage** | Arbitrage discovery | ULTRA Arbitrage | "Find arbitrage with $10k" |
+| **ultra_flash_loans** | Flash loan selection | ULTRA Flash Loans | "Best flash loan for USDC" |
+| **ultra_mev_protection** | MEV-protected execution | ULTRA MEV Protection | "Execute with Flashbots" |
+| **ultra_auto_executor** | Trading bot control | ULTRA Auto Executor | "Start trading bot" |
 
 #### Agent Squad & Supervisor Intents
 

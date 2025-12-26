@@ -106,6 +106,15 @@ class EnrichmentData(BaseModel):
     sources: Optional[List[str]] = None  # twitter, reddit, discord, news (for sentiment)
     risk_tolerance: Optional[float] = None  # 0.0-1.0 (for portfolio optimization)
 
+    # For ULTRA (DeFi Automation & MEV)
+    ultra_tool: Optional[str] = None  # arbitrage_discovery, flash_loan_engine, mev_protection, auto_executor
+    capital: Optional[float] = None  # Capital amount for arbitrage discovery
+    arb_type: Optional[str] = None  # 2hop, 3hop, triangle, all
+    amount: Optional[float] = None  # Flash loan amount
+    protocol: Optional[str] = None  # Flash loan protocol (aave, balancer, uniswap)
+    opportunity_id: Optional[str] = None  # Arbitrage opportunity ID for MEV execution
+    action: Optional[str] = None  # Bot action (start, stop, pause, resume, status)
+
 
 class UnifiedChatResponse(BaseModel):
     """Unified response for all chat routing handlers."""

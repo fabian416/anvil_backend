@@ -95,6 +95,13 @@ enable_hunter_trading_signals = true  # Buy/sell signals
 enable_hunter_patterns = true  # Chart pattern detection
 enable_hunter_portfolio = true  # Portfolio optimization (MPT)
 
+# ULTRA routing (Phase 8.2)
+enable_ultra_routing = true  # Route DeFi automation queries to ULTRA
+enable_ultra_arbitrage = true  # Arbitrage opportunity discovery
+enable_ultra_flash_loans = true  # Flash loan protocol selection
+enable_ultra_mev_protection = true  # MEV-protected execution via Flashbots
+enable_ultra_auto_executor = true  # Automated trading bot control
+
 # Supervisor coordination
 enable_supervisor = true
 supervisor_model = "gpt-4o"

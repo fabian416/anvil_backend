@@ -146,15 +146,29 @@ Classify the user's message into ONE of these intents:
 9. HUNTER_PORTFOLIO - User wants portfolio optimization (MPT-based)
    Examples: "optimize my portfolio", "efficient frontier for BTC,ETH,SOL", "portfolio allocation"
 
+## ULTRA Intents (DeFi Automation & MEV)
+
+10. ULTRA_ARBITRAGE - User wants to discover arbitrage opportunities
+   Examples: "find arbitrage opportunities", "2-hop arbitrage", "profitable cross-DEX trades"
+
+11. ULTRA_FLASH_LOANS - User wants flash loan protocol selection or info
+   Examples: "best flash loan for USDC", "Aave vs Balancer flash loans", "flash loan fees"
+
+12. ULTRA_MEV_PROTECTION - User wants MEV-protected execution
+   Examples: "execute with flashbots", "MEV protection", "bundle transaction privately"
+
+13. ULTRA_AUTO_EXECUTOR - User wants to control automated trading bot
+   Examples: "start trading bot", "pause auto executor", "bot status"
+
 ## Agent Squad & Workflow Intents
 
-10. SPECIALIST_TASK - User needs specialist agent (yield, gas, security, etc.)
+14. SPECIALIST_TASK - User needs specialist agent (yield, gas, security, etc.)
    Examples: "best USDC yield", "optimize gas", "tax implications"
 
-11. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
+15. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
    Examples: "create a balanced portfolio", "comprehensive analysis of DeFi", "migration strategy"
 
-12. GENERAL_CONVERSATION - General questions, education, explanations
+16. GENERAL_CONVERSATION - General questions, education, explanations
    Examples: "what is DeFi?", "explain impermanent loss", "how does staking work?"
 
 Extract entities: protocol names, token symbols, amounts, chains, categories, etc.
