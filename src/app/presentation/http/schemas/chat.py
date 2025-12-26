@@ -52,9 +52,60 @@ class MessageResponse(BaseModel):
 
 class SendMessageResponse(BaseModel):
     """Response for send message containing both user and agent messages."""
-    
+
     user_message: MessageResponse
     agent_message: MessageResponse
+
+
+# NEW: Unified Routing Schemas
+
+class RoutingMetadata(BaseModel):
+    """Routing metadata for unified chat responses."""
+
+    intent: str  # Detected intent type
+    confidence: float = Field(..., ge=0.0, le=1.0)  # Classification confidence
+    handler: str  # Which handler processed the message
+    agent_used: Optional[str] = None  # If Agent Squad, which agent
+    reasoning: str  # Why this route was chosen
+    total_latency_ms: Optional[int] = None  # Total processing time
+
+
+class EnrichmentData(BaseModel):
+    """Optional enrichment data based on handler type."""
+
+    # For GraphRAG Search
+    protocols: Optional[List[dict]] = None
+    search_context: Optional[str] = None
+    recommendations: Optional[List[str]] = None
+
+    # For GraphRAG Risk
+    risk_analysis: Optional[dict] = None
+    alternatives_count: Optional[int] = None
+
+    # For GraphRAG Similar
+    base_protocol: Optional[dict] = None
+    similar_protocols: Optional[List[dict]] = None
+
+    # For Agent Squad
+    tools_used: Optional[List[str]] = None
+    tokens_consumed: Optional[int] = None
+    latency_ms: Optional[int] = None
+    intent_classification: Optional[str] = None
+
+    # For Supervisor
+    workflow_id: Optional[str] = None
+    workflow_status: Optional[str] = None
+    tasks_count: Optional[int] = None
+    agents_involved: Optional[List[str]] = None
+
+
+class UnifiedChatResponse(BaseModel):
+    """Unified response for all chat routing handlers."""
+
+    user_message: dict  # User message data
+    agent_message: dict  # Agent response data
+    routing: RoutingMetadata  # Routing information
+    enrichment: Optional[EnrichmentData] = None  # Handler-specific data
 
 
 class ConversationListResponse(BaseModel):

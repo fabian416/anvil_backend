@@ -74,6 +74,10 @@ enable_layerzero = true
 enable_opensea = false      # Requires API key
 enable_snapshot = true
 
+# Unified Chat Routing (Phase 8)
+enable_unified_routing = true  # Enable intelligent intent-based routing
+unified_routing_use_llm = true  # Use LLM for intent classification (fallback to keywords if false)
+
 # Intent classification
 intent_classification_model = "gpt-4o-mini"  # Fast model for routing
 intent_confidence_threshold = 0.85  # Min confidence (0.0-1.0)

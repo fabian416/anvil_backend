@@ -597,6 +597,69 @@ class ChatPhase2Provider(Provider):
             conversation_repository=conversation_repository,
         )
 
+    # ========================================
+    # Unified Chat Routing (Phase 8)
+    # ========================================
+
+    @provide
+    def provide_intent_detector_service(self):
+        """
+        Provide intent detector for unified routing.
+
+        Uses LLM-powered classification with keyword fallback.
+        """
+        from app.application.chat.services.intent_detector import IntentDetectorService
+        from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+        from app.setup.config.loader import load_full_config
+
+        # Load configuration
+        config = load_full_config(env=os.getenv("APP_ENV", "local"))
+        agent_squad_config = config.get("agent_squad", {})
+
+        # Check if LLM should be used for intent classification
+        use_llm = agent_squad_config.get("unified_routing_use_llm", True)
+
+        # Get LLM client if enabled
+        llm_client = None
+        if use_llm:
+            try:
+                # Try to get LLM client from container
+                from dishka import FromDishka
+                llm_client = FromDishka[LLMClientGateway]
+            except Exception:
+                # Fallback to keyword-only classification
+                pass
+
+        return IntentDetectorService(llm_client=llm_client)
+
+    @provide
+    def provide_unified_chat_orchestrator(
+        self,
+        conversation_repository,
+        intent_detector_service,
+        graphrag_search_handler,
+        graphrag_risk_handler,
+        agent_squad_message_command,
+        supervisor_workflow_command,
+        regular_chat_command,
+    ):
+        """
+        Provide unified chat orchestrator.
+
+        Routes messages to appropriate handlers based on detected intent.
+        """
+        from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
+
+        return UnifiedChatOrchestrator(
+            conversation_repo=conversation_repository,
+            intent_detector=intent_detector_service,
+            graphrag_search=graphrag_search_handler,
+            graphrag_risk=graphrag_risk_handler,
+            agent_squad=agent_squad_message_command,
+            supervisor=supervisor_workflow_command,
+            regular_chat=regular_chat_command,
+        )
+
 
 def chat_phase2_provider() -> ChatPhase2Provider:
     """Factory function for Chat Phase 2 provider."""
