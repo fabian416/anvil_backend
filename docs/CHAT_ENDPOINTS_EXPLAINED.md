@@ -2,16 +2,205 @@
 
 This document explains all chat-related API endpoints in the Anvil backend, their differences, use cases, and technical implementation.
 
+> **🚀 NEW: Unified Chat Routing (Phase 8)**
+> As of December 2025, the regular chat endpoint now features **intelligent intent-based routing** that automatically directs your messages to the most appropriate handler (GraphRAG, Agent Squad, Supervisor, or Regular Chat). See [Unified Routing System](#0-unified-routing-system-new) for details.
+
 ---
 
 ## Table of Contents
 
-1. [Regular Chat Endpoint](#1-regular-chat-endpoint)
-2. [Agent Squad Endpoint](#2-agent-squad-endpoint)
-3. [Similar Protocols Endpoint](#3-similar-protocols-endpoint)
-4. [Search Protocols Endpoint](#4-search-protocols-endpoint)
-5. [Risk Analysis Endpoint](#5-risk-analysis-endpoint)
-6. [Comparison Summary](#6-comparison-summary)
+1. [**Unified Routing System (NEW)**](#0-unified-routing-system-new)
+2. [Regular Chat Endpoint](#1-regular-chat-endpoint)
+3. [Agent Squad Endpoint](#2-agent-squad-endpoint)
+4. [Similar Protocols Endpoint](#3-similar-protocols-endpoint)
+5. [Search Protocols Endpoint](#4-search-protocols-endpoint)
+6. [Risk Analysis Endpoint](#5-risk-analysis-endpoint)
+7. [Comparison Summary](#6-comparison-summary)
+
+---
+
+## 0. Unified Routing System (NEW)
+
+### 🎯 Overview
+
+**The game changer**: As of Phase 8, you can send **any type of message** to the regular chat endpoint, and it will intelligently route to the best handler automatically. No need to choose between different endpoints!
+
+**Endpoint**: `POST /api/v1/user/chat/conversations/{conversation_id}/messages`
+
+### How It Works
+
+```
+User Message
+    ↓
+Intent Detection (LLM + keyword fallback)
+    ↓
+Routing Decision
+    ↓
+┌─────────────┬─────────────┬──────────────┬─────────────┬──────────────┐
+│  GraphRAG   │  GraphRAG   │   GraphRAG   │    Agent    │  Supervisor  │
+│   Search    │    Risk     │   Similar    │    Squad    │   Workflow   │
+└─────────────┴─────────────┴──────────────┴─────────────┴──────────────┘
+    ↓               ↓              ↓              ↓              ↓
+Unified Response Format (all handlers return same structure)
+```
+
+### Intent Types (6)
+
+The system detects 6 types of user intent:
+
+| Intent | Description | Routes To | Example Query |
+|--------|-------------|-----------|---------------|
+| **protocol_search** | Finding protocols | GraphRAG Search | "Show me high-yield staking protocols" |
+| **risk_assessment** | Protocol safety analysis | GraphRAG Risk | "Is Aave safe to use?" |
+| **similar_protocols** | Finding alternatives | GraphRAG Similar | "What's similar to Uniswap?" |
+| **specialist_task** | Domain-specific tasks | Agent Squad | "Analyze ETH/USDC market depth" |
+| **complex_workflow** | Multi-agent coordination | Supervisor | "Create DeFi portfolio strategy" |
+| **general_conversation** | General Q&A | Regular Chat | "Hello, how are you?" |
+
+### Unified Response Format
+
+All handlers now return a standardized response:
+
+```typescript
+{
+  user_message: {
+    id: UUID
+    conversation_id: UUID
+    role: "user"
+    content: string
+    created_at: datetime
+  },
+  agent_message: {
+    id: UUID
+    conversation_id: UUID
+    role: "assistant"
+    content: string
+    agent_type: string
+    created_at: datetime
+  },
+  routing: {
+    intent: string              // Detected intent type
+    confidence: number          // 0.0-1.0 classification confidence
+    handler: string             // Which handler processed it
+    agent_used: string | null   // If Agent Squad, which agent
+    reasoning: string           // Why this route was chosen
+    total_latency_ms: number | null
+  },
+  enrichment: {
+    // Handler-specific additional data
+    protocols?: []              // For GraphRAG Search
+    risk_analysis?: {}          // For GraphRAG Risk
+    similar_protocols?: []      // For GraphRAG Similar
+    tools_used?: []            // For Agent Squad
+    workflow_id?: string       // For Supervisor
+    // ... more fields based on handler
+  }
+}
+```
+
+### Example: Automatic Routing
+
+**Input**: Any natural language query to the regular chat endpoint
+
+```bash
+POST /api/v1/user/chat/conversations/{id}/messages
+{
+  "content": "Find me safe lending protocols on Ethereum"
+}
+```
+
+**What happens**:
+1. Intent detector analyzes message → **protocol_search** (confidence: 0.91)
+2. Routes to GraphRAG Search handler
+3. GraphRAG finds matching protocols
+4. Returns unified response with routing metadata
+
+**Response**:
+```json
+{
+  "user_message": { ... },
+  "agent_message": {
+    "content": "I found 5 safe lending protocols on Ethereum:\n\n1. Aave V3 (Risk: LOW)...",
+    "agent_type": "graphrag_search"
+  },
+  "routing": {
+    "intent": "protocol_search",
+    "confidence": 0.91,
+    "handler": "graphrag_search",
+    "reasoning": "User query matches protocol search pattern with risk and chain filters"
+  },
+  "enrichment": {
+    "protocols": [
+      { "protocol_name": "Aave V3", "risk_level": "LOW", ... },
+      { "protocol_name": "Compound V3", "risk_level": "LOW", ... }
+    ],
+    "search_context": "Filtered for low-risk lending protocols on Ethereum",
+    "recommendations": ["Consider diversifying across protocols", ...]
+  }
+}
+```
+
+### Configuration
+
+**Feature Flags** (config/local/config.toml):
+```toml
+[agent_squad]
+enable_unified_routing = true  # Master switch
+unified_routing_use_llm = true  # Use LLM for intent detection
+intent_classification_model = "gpt-4o-mini"  # Fast model
+intent_confidence_threshold = 0.85  # Min confidence
+fallback_agent = "chat"  # Fallback if unclear
+```
+
+### Benefits
+
+✅ **Single Endpoint**: No need to choose which endpoint to use
+✅ **Intelligent Routing**: AI-powered intent detection (LLM + keyword fallback)
+✅ **Cost Optimized**: Routes to cheapest appropriate handler
+✅ **Backward Compatible**: Feature flag controls rollout
+✅ **Consistent Format**: All responses follow same structure
+✅ **Transparent**: Routing metadata shows decision reasoning
+
+### Implementation Details
+
+**Intent Detector**: `src/app/application/chat/services/intent_detector.py`
+- LLM-powered classification using gpt-4o-mini
+- Keyword fallback for reliability
+- Entity extraction (protocols, tokens, chains, amounts)
+
+**Orchestrator**: `src/app/application/chat/commands/send_message_unified.py`
+- Routes to 5 different handlers
+- Saves all responses to conversation history
+- Returns unified response format
+
+**Cost per Request**:
+- Intent classification: ~$0.00001 (100 tokens @ $0.10/1M)
+- Handler execution: varies by handler ($0.0001-$0.005)
+- **Total**: Same or better than direct endpoint calls
+
+### Migration from Old Endpoints
+
+**Before** (multiple endpoints):
+```bash
+# Had to choose the right endpoint
+POST /api/v1/user/chat/search-protocols          # For search
+POST /api/v1/user/chat/analyze-risk              # For risk
+POST /api/v1/user/chat/agent-squad/messages      # For agents
+```
+
+**After** (unified routing):
+```bash
+# One endpoint handles everything
+POST /api/v1/user/chat/conversations/{id}/messages
+{
+  "content": "<any query>"
+}
+# System routes automatically!
+```
+
+**Legacy endpoints**: Still available for direct access if needed.
+
+---
 
 ---
 
@@ -21,9 +210,19 @@ This document explains all chat-related API endpoints in the Anvil backend, thei
 
 **File**: `src/app/presentation/http/controllers/chat/router.py:90-136`
 
+> **🚀 NOW WITH UNIFIED ROUTING**: This endpoint now features intelligent intent-based routing that automatically directs messages to GraphRAG, Agent Squad, Supervisor, or Regular Chat based on detected intent. See [Unified Routing System](#0-unified-routing-system-new) above.
+
 ### Purpose
 
-Traditional chat interface with a **single AI agent** that maintains conversation history, uses tools, and provides general assistance.
+**Smart Universal Endpoint**: Handles **all types of chat messages** with automatic routing to the most appropriate handler:
+- **Protocol search** → GraphRAG Search
+- **Risk analysis** → GraphRAG Risk
+- **Finding alternatives** → GraphRAG Similar
+- **Specialist tasks** → Agent Squad (18 agents)
+- **Complex workflows** → Supervisor (multi-agent)
+- **General conversation** → Traditional chat agent
+
+When unified routing is disabled or fails, falls back to traditional chat interface with a single AI agent.
 
 ### Request Schema
 
@@ -34,6 +233,46 @@ Traditional chat interface with a **single AI agent** that maintains conversatio
 ```
 
 ### Response Schema
+
+**New Unified Format** (with routing enabled):
+
+```typescript
+{
+  user_message: {
+    id: UUID
+    conversation_id: UUID
+    role: "user"
+    content: string
+    created_at: datetime
+  },
+  agent_message: {
+    id: UUID
+    conversation_id: UUID
+    role: "assistant"
+    content: string
+    agent_type: string  // "chat" | "graphrag_search" | "graphrag_risk" | "hunter_ai" | etc.
+    created_at: datetime
+  },
+  routing: {
+    intent: string              // Detected intent type
+    confidence: number          // 0.0-1.0 classification confidence
+    handler: string             // Which handler processed it
+    agent_used: string | null   // If Agent Squad, which specific agent
+    reasoning: string           // Why this route was chosen
+    total_latency_ms: number | null
+  },
+  enrichment: {
+    // Optional handler-specific data
+    protocols?: []              // For GraphRAG Search
+    risk_analysis?: {}          // For GraphRAG Risk
+    similar_protocols?: []      // For GraphRAG Similar
+    tools_used?: []            // For Agent Squad
+    workflow_id?: string       // For Supervisor
+  }
+}
+```
+
+**Legacy Format** (when routing disabled, backward compatibility):
 
 ```typescript
 {
@@ -57,15 +296,56 @@ Traditional chat interface with a **single AI agent** that maintains conversatio
 
 ### Key Features
 
-✅ **Persistent Conversation History**: Messages stored in database with conversation_id
-✅ **Tool Integration**: Can use external tools (web search, calculators, etc.)
-✅ **Single Agent**: Uses one general-purpose chat agent
-✅ **Context Awareness**: Remembers previous messages in conversation
-✅ **Stateful**: Full conversation thread maintained
+✅ **Intelligent Routing**: Automatically routes to best handler (GraphRAG, Agent Squad, Supervisor, Chat)
+✅ **Intent Detection**: LLM-powered + keyword fallback for accuracy and reliability
+✅ **Unified Response Format**: Consistent structure across all handlers with routing metadata
+✅ **Persistent Conversation History**: All messages stored in database regardless of handler
+✅ **Multi-Handler Support**: Access to 5 different processing pipelines from one endpoint
+✅ **Backward Compatible**: Feature flag controls rollout, graceful fallback to regular chat
+✅ **Cost Optimized**: Routes to most cost-effective handler for each query type
+✅ **Context Awareness**: Full conversation history maintained and accessible
+✅ **Transparent**: Routing metadata explains which handler was used and why
 
 ### Implementation
 
-**Flow**:
+**Unified Routing Flow** (enabled by default):
+```
+User Message
+    ↓
+Save User Message to Database
+    ↓
+Load Conversation History
+    ↓
+Intent Detection (IntentDetectorService)
+    ├─ LLM Classification (gpt-4o-mini → gemini-2.0-flash-exp)
+    └─ Keyword Fallback (if LLM fails or low confidence)
+    ↓
+Route to Handler (UnifiedChatOrchestrator)
+    ├─ protocol_search → GraphRAG Search Handler
+    ├─ risk_assessment → GraphRAG Risk Handler
+    ├─ similar_protocols → GraphRAG Similar Handler
+    ├─ specialist_task → Agent Squad Handler (18 agents)
+    ├─ complex_workflow → Supervisor Workflow Handler
+    └─ general_conversation → Regular Chat Agent
+    ↓
+Handler Processing
+    ├─ GraphRAG: Hybrid search (semantic + knowledge graph)
+    ├─ Agent Squad: Specialized agent execution
+    ├─ Supervisor: Multi-agent coordination
+    └─ Regular Chat: LLM with conversation history
+    ↓
+Format Unified Response
+    ├─ user_message (from database)
+    ├─ agent_message (handler response)
+    ├─ routing (metadata: intent, confidence, handler, reasoning)
+    └─ enrichment (handler-specific data)
+    ↓
+Save Agent Message to Database
+    ↓
+Return Unified Response
+```
+
+**Legacy Flow** (when unified routing disabled):
 ```
 User Message → Conversation Repository (save)
             → Chat Agent (with conversation history)
@@ -73,15 +353,30 @@ User Message → Conversation Repository (save)
             → Tool Execution (if needed)
             → Response Generation
             → Save Agent Message
-            → Return both messages
+            → Return both messages (converted to unified format)
 ```
 
-**Interactor**: `SendMessage` (Command pattern)
-**Agent**: `ChatAgentOpenAI` or `ResearchAgentPerplexity`
-**Database**: Stores in `conversations` and `messages` tables
+**Core Components**:
+- **Intent Detector**: `src/app/application/chat/services/intent_detector.py`
+- **Orchestrator**: `src/app/application/chat/commands/send_message_unified.py`
+- **Regular Chat Interactor**: `SendMessage` (Command pattern)
+- **Agents**: `ChatAgentOpenAI`, `ResearchAgentPerplexity`, or Agent Squad specialists
+- **Database**: Stores in `conversations` and `messages` tables
+- **Response Schemas**: `src/app/presentation/http/schemas/chat.py`
 
 ### Use Cases
 
+**With Unified Routing (recommended)**:
+- ✅ **Any query type** - system routes automatically
+- ✅ Finding protocols: "Show me high-yield staking on Arbitrum"
+- ✅ Risk assessment: "Is Curve Finance safe?"
+- ✅ Finding alternatives: "What's similar to Aave?"
+- ✅ Specialist analysis: "Analyze ETH/USDC liquidity depth"
+- ✅ Complex workflows: "Create optimized DeFi portfolio strategy"
+- ✅ General conversation: "Explain impermanent loss to me"
+- ✅ Multi-turn conversations with context from previous messages
+
+**Legacy Use Cases** (when routing disabled):
 - General Q&A about crypto/DeFi
 - Multi-turn conversations requiring context
 - Research queries with web search
@@ -90,8 +385,20 @@ User Message → Conversation Repository (save)
 
 ### Cost
 
-**LLM Tokens**: High (full conversation history sent each time)
-**Provider**: Vertex AI ($0.10-$0.40/1M tokens) or DeepInfra ($0.08/1M tokens)
+**With Unified Routing**:
+- Intent classification: ~$0.00001 per request (100 tokens @ $0.10/1M)
+- Handler execution: varies by detected intent
+  - GraphRAG handlers: $0.0001-$0.0003 (no LLM, graph only)
+  - Agent Squad: $0.001 (stateless, single request)
+  - Regular Chat: $0.005 (full conversation history)
+- **Total**: $0.00011-$0.00501 per request (optimized based on query type)
+
+**Legacy Mode** (routing disabled):
+- **LLM Tokens**: High (full conversation history sent each time)
+- **Provider**: Vertex AI ($0.10-$0.40/1M tokens) or DeepInfra ($0.08/1M tokens)
+- **Cost**: ~$0.005 per request
+
+**Savings**: Unified routing can reduce costs by up to 98% for protocol search/risk queries
 
 ### Example
 

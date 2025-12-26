@@ -78,13 +78,36 @@ See **[Authentication Guide](authentication.md)** for details.
 
 ---
 
+## 🚀 What's New: Unified Chat Routing (Phase 8)
+
+**Game Changer**: The chat endpoint `/api/v1/user/chat/conversations/{id}/messages` now features **intelligent intent-based routing**!
+
+✨ **One endpoint handles everything**:
+- Protocol search queries → GraphRAG Search
+- Risk assessment → GraphRAG Risk Analysis
+- Finding alternatives → GraphRAG Similar Protocols
+- Specialist tasks → Agent Squad (18 AI agents)
+- Complex workflows → Supervisor (multi-agent coordination)
+- General chat → Traditional conversation agent
+
+**Benefits**:
+- 🎯 No need to choose which endpoint to use
+- 🤖 AI-powered intent detection (LLM + keyword fallback)
+- 💰 Cost optimized (routes to cheapest appropriate handler)
+- 📊 Transparent routing metadata in responses
+- ↩️ Backward compatible with feature flags
+
+**See**: [Chat Endpoints Explained](../CHAT_ENDPOINTS_EXPLAINED.md#0-unified-routing-system-new) for full documentation.
+
+---
+
 ## 📋 Endpoint Categories
 
 ### User Endpoints (`/api/v1/user/`)
 
 | Category | Endpoints | Documentation |
 |----------|-----------|---------------|
-| **Chat** | `/user/chat/*` | [Chat API](endpoints/chat.md) |
+| **Chat** | `/user/chat/*` | [Chat API](endpoints/chat.md) ⭐ **NEW: Unified Routing** |
 | **Portfolio** | `/user/portfolio/*` | [Portfolio API](endpoints/portfolio.md) |
 | **Transactions** | `/user/transactions/*` | [Transactions API](endpoints/transactions.md) |
 | **Graph** | `/user/graph/*` | [Graph API](endpoints/graph.md) |
