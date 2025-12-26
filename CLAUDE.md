@@ -25,6 +25,7 @@ alembic revision --autogenerate -m "description"  # Create migration
 make start           # Start FastAPI server with reload
 make start-dev       # Start ALL dev services (FastAPI + MCP + Celery + Flower)
 make stop-dev        # Stop all dev services
+make status-dev      # Check status of all dev services
 ```
 
 **Development Logs:**

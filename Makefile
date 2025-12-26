@@ -24,7 +24,7 @@ start:
 	. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload
 
 # Development environment - Start FastAPI + MCP Servers + Celery + Beat + Flower
-.PHONY: start-dev stop-dev logs-dev logs-fastapi logs-celery logs-mcp logs-all logs-tail logs-summary logs-errors
+.PHONY: start-dev stop-dev status-dev logs-dev logs-fastapi logs-celery logs-mcp logs-all logs-tail logs-summary logs-errors
 start-dev:
 	@./scripts/start_dev.sh
 
@@ -36,6 +36,9 @@ stop-dev:
 	@pkill -f "celery.*beat" || true
 	@pkill -f "flower" || true
 	@echo "✅ Todos los servicios detenidos"
+
+status-dev:
+	@./scripts/dev_status.sh
 
 # View logs from development services
 logs-dev: logs-all

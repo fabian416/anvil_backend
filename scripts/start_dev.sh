@@ -85,6 +85,13 @@ fi
 
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}"
 echo -e "${MAGENTA}🚀 INICIANDO ENTORNO DE DESARROLLO COMPLETO${NC}"
+echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}Servicios a iniciar:${NC}"
+echo -e "  📡 FastAPI Server (puerto 8080)"
+echo -e "  🔌 MCP Servers (11 servers, puertos 8081-8091)"
+echo -e "  🐝 Celery Workers (9 workers especializados)"
+echo -e "  ⏰ Celery Beat (scheduler)"
+echo -e "  🌸 Flower (monitoring UI, puerto 5555)"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}\n"
 
 # 1. Iniciar FastAPI
@@ -115,9 +122,25 @@ bash "$SCRIPT_DIR/start_all_mcp.sh" &
 MCP_SCRIPT_PID=$!
 
 # Esperar a que los MCP servers inicien
-sleep 3
+sleep 5
 
-echo -e "${GREEN}  ✅ MCP Servers iniciados correctamente (11 servers)${NC}"
+# Verificar que los MCP servers estén corriendo
+echo -e "${CYAN}  Verificando MCP servers...${NC}"
+MCP_RUNNING=0
+for port in {8081..8091}; do
+    if curl -s http://localhost:$port/health > /dev/null 2>&1; then
+        ((MCP_RUNNING++))
+    fi
+done
+
+if [ $MCP_RUNNING -eq 11 ]; then
+    echo -e "${GREEN}  ✅ MCP Servers iniciados correctamente (11/11 servers running)${NC}"
+elif [ $MCP_RUNNING -gt 0 ]; then
+    echo -e "${YELLOW}  ⚠️  MCP Servers parcialmente iniciados ($MCP_RUNNING/11 servers running)${NC}"
+else
+    echo -e "${RED}  ❌ MCP Servers no iniciados (verificar logs)${NC}"
+fi
+
 echo -e "${CYAN}  Ver endpoints: http://localhost:8081-8091/tools${NC}"
 echo -e "${CYAN}  Ver logs MCP: tail -f $LOG_DIR/mcp/*.log${NC}\n"
 
@@ -128,6 +151,55 @@ echo -e "${CYAN}   Nota: Los logs de Celery se mostrarán en tiempo real${NC}\n"
 # El script de Celery ya maneja su propio cleanup, pero lo capturamos aquí también
 bash "$SCRIPT_DIR/start_all_celery.sh" &
 CELERY_SCRIPT_PID=$!
+
+# Esperar un momento para que Celery inicie
+sleep 3
+
+# Mostrar resumen completo
+echo -e "\n${MAGENTA}════════════════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}✅ ENTORNO DE DESARROLLO INICIADO${NC}"
+echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}"
+echo -e "${YELLOW}🌐 Endpoints Disponibles:${NC}"
+echo -e "  ${CYAN}FastAPI:${NC}       http://localhost:8080"
+echo -e "  ${CYAN}FastAPI Docs:${NC}  http://localhost:8080/docs"
+echo -e "  ${CYAN}Flower:${NC}        http://localhost:5555"
+echo -e ""
+echo -e "${YELLOW}🔌 MCP Servers (11 servers):${NC}"
+echo -e "  ${CYAN}Core Data & Market Intelligence:${NC}"
+echo -e "    • 1inch:      http://localhost:8081/tools"
+echo -e "    • DeFiLlama:  http://localhost:8082/tools"
+echo -e "    • TheGraph:   http://localhost:8083/tools"
+echo -e "    • CoinGecko:  http://localhost:8084/tools"
+echo -e "    • Aave:       http://localhost:8085/tools"
+echo -e "    • Portfolio:  http://localhost:8086/tools"
+echo -e "  ${CYAN}Advanced DeFi & Trading:${NC}"
+echo -e "    • Perplexity: http://localhost:8087/tools"
+echo -e "    • Morpho:     http://localhost:8088/tools"
+echo -e "    • Curve:      http://localhost:8089/tools"
+echo -e "    • Hyperliquid: http://localhost:8090/tools"
+echo -e "    • LayerZero:  http://localhost:8091/tools"
+echo -e ""
+echo -e "${YELLOW}📊 Celery Workers (9 workers):${NC}"
+echo -e "  • AGENTS       - Procesamiento de agentes IA"
+echo -e "  • RISK         - Monitoreo de riesgo"
+echo -e "  • TRANSACTIONS - Confirmación de transacciones blockchain"
+echo -e "  • LLM          - Ranking y orchestration de LLM"
+echo -e "  • DISTILLATION - Procesamiento de LLM y caché"
+echo -e "  • PROJECTS     - Knowledge base y proyectos"
+echo -e "  • GRAPH        - Mantenimiento de grafo y embeddings"
+echo -e "  • EMAIL        - Envío de emails"
+echo -e "  • MAINTENANCE  - Tareas de limpieza y mantenimiento"
+echo -e ""
+echo -e "${YELLOW}📝 Ver Logs:${NC}"
+echo -e "  ${CYAN}make logs-fastapi${NC}  - FastAPI logs"
+echo -e "  ${CYAN}make logs-mcp${NC}      - MCP servers logs"
+echo -e "  ${CYAN}make logs-celery${NC}   - Celery workers logs"
+echo -e "  ${CYAN}make logs-all${NC}      - All logs combined"
+echo -e ""
+echo -e "${YELLOW}🛑 Detener Todo:${NC}"
+echo -e "  ${CYAN}make stop-dev${NC}      - Detiene todos los servicios"
+echo -e "  ${CYAN}Ctrl+C${NC}             - Detiene este script y todos los servicios"
+echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}\n"
 
 # Esperar indefinidamente (el script de Celery se encarga de mostrar logs)
 wait $CELERY_SCRIPT_PID
