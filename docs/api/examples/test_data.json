@@ -54,6 +54,84 @@
               "yield_preference": "high"
             },
             "protocols_count_min": 3
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Show me high-yield lending protocols on Ethereum",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Here are the top high-yield lending protocols on Ethereum:\n\n1. **Aave V3** - APY: 4.2-8.5%\n   - TVL: $12.5B\n   - Risk Score: Low (0.15)\n   - Audits: 5 major audits\n   - Why: Highest liquidity and best rates for major assets\n\n2. **Compound V3** - APY: 3.8-7.2%\n   - TVL: $8.2B\n   - Risk Score: Low (0.18)\n   - Audits: 4 major audits\n   - Why: Strong governance and proven track record\n\n3. **Morpho Blue** - APY: 5.5-12.0%\n   - TVL: $1.8B\n   - Risk Score: Medium (0.35)\n   - Audits: 2 audits\n   - Why: Optimized capital efficiency, higher yields\n\nAll protocols are audited and have strong security track records. Aave offers the best balance of yield and safety.",
+              "agent_type": "graphrag_search",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "protocol_search",
+              "confidence": 0.92,
+              "handler": "graphrag_search",
+              "agent_used": null,
+              "reasoning": "Message contains protocol search keywords: 'lending protocols', 'Ethereum', 'high-yield'",
+              "total_latency_ms": 850
+            },
+            "enrichment": {
+              "protocols": [
+                {
+                  "protocol_id": "aave_v3",
+                  "protocol_name": "Aave V3",
+                  "similarity_score": 0.95,
+                  "risk_score": 0.15,
+                  "risk_level": "low",
+                  "tvl": 12500000000,
+                  "apy": 6.5,
+                  "audit_count": 5,
+                  "description": "Decentralized lending protocol with high liquidity",
+                  "category": "lending",
+                  "chain": "ethereum",
+                  "why_relevant": "Highest TVL and best rates for major assets"
+                },
+                {
+                  "protocol_id": "compound_v3",
+                  "protocol_name": "Compound V3",
+                  "similarity_score": 0.88,
+                  "risk_score": 0.18,
+                  "risk_level": "low",
+                  "tvl": 8200000000,
+                  "apy": 5.5,
+                  "audit_count": 4,
+                  "description": "Algorithmic money market protocol",
+                  "category": "lending",
+                  "chain": "ethereum",
+                  "why_relevant": "Strong governance and proven track record"
+                },
+                {
+                  "protocol_id": "morpho_blue",
+                  "protocol_name": "Morpho Blue",
+                  "similarity_score": 0.82,
+                  "risk_score": 0.35,
+                  "risk_level": "medium",
+                  "tvl": 1800000000,
+                  "apy": 8.5,
+                  "audit_count": 2,
+                  "description": "Capital-efficient lending protocol",
+                  "category": "lending",
+                  "chain": "ethereum",
+                  "why_relevant": "Optimized capital efficiency, higher yields"
+                }
+              ],
+              "search_context": "Found 5 high-yield lending protocols on Ethereum matching your criteria. Filtered by: category=lending, chain=ethereum, yield_preference=high",
+              "recommendations": [
+                "Consider Aave V3 for the best balance of yield and safety",
+                "Morpho Blue offers higher yields but with increased risk",
+                "Diversify across multiple protocols to reduce risk"
+              ]
+            }
           }
         },
         {
@@ -64,13 +142,66 @@
           },
           "expected_routing": {
             "intent": "protocol_search",
-            "confidence_min": 0.80
+            "confidence_min": 0.8
           },
           "expected_enrichment": {
             "search_type": "protocols",
             "filters": {
               "category": "staking",
               "risk_level": "low"
+            }
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_graphrag_ps_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Find DeFi staking protocols with low risk",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_graphrag_ps_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "I found several protocols matching your search:\n\n1. **Protocol 1** - Details...\n2. **Protocol 2** - Details...\n3. **Protocol 3** - Details...\n\nThese protocols match your criteria and have been verified for security.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "protocol_search",
+              "confidence": 0.85,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: protocol_search with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "search_type": "protocols",
+              "filters": {
+                "category": "staking",
+                "risk_level": "low"
+              },
+              "protocols": [
+                {
+                  "protocol_id": "aave_v3",
+                  "protocol_name": "Aave V3",
+                  "similarity_score": 0.95,
+                  "risk_score": 0.15,
+                  "risk_level": "low",
+                  "tvl": 12500000000,
+                  "apy": 6.5,
+                  "audit_count": 5,
+                  "description": "Decentralized lending protocol",
+                  "category": "lending",
+                  "chain": "ethereum",
+                  "why_relevant": "Matches your criteria"
+                }
+              ],
+              "search_context": "Found protocols matching your search criteria",
+              "recommendations": [
+                "Consider diversifying across protocols"
+              ]
             }
           }
         },
@@ -87,7 +218,65 @@
           "expected_enrichment": {
             "filters": {
               "category": "dex",
-              "chains": ["polygon", "arbitrum"]
+              "chains": [
+                "polygon",
+                "arbitrum"
+              ]
+            }
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_graphrag_ps_003",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "List DEX protocols on Polygon and Arbitrum",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_graphrag_ps_003",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "I found several protocols matching your search:\n\n1. **Protocol 1** - Details...\n2. **Protocol 2** - Details...\n3. **Protocol 3** - Details...\n\nThese protocols match your criteria and have been verified for security.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "protocol_search",
+              "confidence": 0.9,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: protocol_search with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "filters": {
+                "category": "dex",
+                "chains": [
+                  "polygon",
+                  "arbitrum"
+                ]
+              },
+              "protocols": [
+                {
+                  "protocol_id": "aave_v3",
+                  "protocol_name": "Aave V3",
+                  "similarity_score": 0.95,
+                  "risk_score": 0.15,
+                  "risk_level": "low",
+                  "tvl": 12500000000,
+                  "apy": 6.5,
+                  "audit_count": 5,
+                  "description": "Decentralized lending protocol",
+                  "category": "lending",
+                  "chain": "ethereum",
+                  "why_relevant": "Matches your criteria"
+                }
+              ],
+              "search_context": "Found protocols matching your search criteria",
+              "recommendations": [
+                "Consider diversifying across protocols"
+              ]
             }
           }
         }
@@ -107,7 +296,46 @@
           "expected_enrichment": {
             "protocol_name": "Aave",
             "has_risk_analysis": true,
-            "risk_categories": ["smart_contract", "economic", "operational"]
+            "risk_categories": [
+              "smart_contract",
+              "economic",
+              "operational"
+            ]
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_graphrag_ra_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Is Aave safe to use? What are the risks?",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_graphrag_ra_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Here's a comprehensive risk assessment for Aave:\n\n**Smart Contract Risk**: Low\n**Economic Risk**: Medium\n**Operational Risk**: Low\n\nOverall, Aave has a strong security track record with multiple audits.",
+              "agent_type": "graphrag_search",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "risk_assessment",
+              "confidence": 0.9,
+              "handler": "graphrag_search",
+              "agent_used": null,
+              "reasoning": "Detected intent: risk_assessment with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "protocol_name": "Aave",
+              "has_risk_analysis": true,
+              "risk_categories": [
+                "smart_contract",
+                "economic",
+                "operational"
+              ]
+            }
           }
         },
         {
@@ -118,11 +346,47 @@
           },
           "expected_routing": {
             "intent": "risk_assessment",
-            "confidence_min": 0.80
+            "confidence_min": 0.8
           },
           "expected_enrichment": {
             "comparison": true,
-            "protocols": ["Uniswap", "Curve"]
+            "protocols": [
+              "Uniswap",
+              "Curve"
+            ]
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_graphrag_ra_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Compare security risks between Uniswap and Curve",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_graphrag_ra_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Here's a comprehensive risk assessment for the protocol:\n\n**Smart Contract Risk**: Low\n**Economic Risk**: Medium\n**Operational Risk**: Low\n\nOverall, the protocol has a strong security track record with multiple audits.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "risk_assessment",
+              "confidence": 0.85,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: risk_assessment with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "comparison": true,
+              "protocols": [
+                "Uniswap",
+                "Curve"
+              ]
+            }
           }
         }
       ],
@@ -142,6 +406,37 @@
             "reference_protocol": "Uniswap",
             "similar_protocols_count_min": 3,
             "has_similarity_scores": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_graphrag_sp_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "What protocols are similar to Uniswap?",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_graphrag_sp_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Here are protocols similar to Uniswap:\n\n1. **Similar Protocol 1** - Similarity: 0.85\n2. **Similar Protocol 2** - Similarity: 0.78\n3. **Similar Protocol 3** - Similarity: 0.72\n\nThese protocols share similar features and use cases.",
+              "agent_type": "graphrag_search",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "similar_protocols",
+              "confidence": 0.9,
+              "handler": "graphrag_search",
+              "agent_used": null,
+              "reasoning": "Detected intent: similar_protocols with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "reference_protocol": "Uniswap",
+              "similar_protocols_count_min": 3,
+              "has_similarity_scores": true
+            }
           }
         },
         {
@@ -152,11 +447,41 @@
           },
           "expected_routing": {
             "intent": "similar_protocols",
-            "confidence_min": 0.80
+            "confidence_min": 0.8
           },
           "expected_enrichment": {
             "reference_protocol": "Compound",
             "category": "lending"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_graphrag_sp_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Find lending platforms like Compound",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_graphrag_sp_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Here are protocols similar to Compound:\n\n1. **Similar Protocol 1** - Similarity: 0.85\n2. **Similar Protocol 2** - Similarity: 0.78\n3. **Similar Protocol 3** - Similarity: 0.72\n\nThese protocols share similar features and use cases.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "similar_protocols",
+              "confidence": 0.85,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: similar_protocols with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "reference_protocol": "Compound",
+              "category": "lending"
+            }
           }
         }
       ]
@@ -176,9 +501,53 @@
           },
           "expected_enrichment": {
             "token_symbol": "ETH",
-            "sources": ["twitter", "reddit"],
+            "sources": [
+              "twitter",
+              "reddit"
+            ],
             "hunter_tool": "sentiment_analyzer",
             "has_sentiment_score": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_sent_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "What's the ETH sentiment on Twitter and Reddit?",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_sent_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Sentiment analysis for ETH:\n\n**Overall Score**: 72.5/100 (Bullish)\n**Confidence**: 0.85\n**Signal Strength**: Strong\n\n**Source Breakdown**:\n- Twitter: 75/100 (Bullish)\n- Reddit: 68/100 (Neutral-Bullish)\n\nOverall sentiment is positive with strong consensus across sources.",
+              "agent_type": "hunter_ai",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_sentiment",
+              "confidence": 0.9,
+              "handler": "hunter_ai",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_sentiment with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "ETH",
+              "sources": {
+                "twitter": {
+                  "score": 75,
+                  "confidence": 0.88
+                },
+                "reddit": {
+                  "score": 68,
+                  "confidence": 0.82
+                }
+              },
+              "hunter_tool": "sentiment_analyzer",
+              "has_sentiment_score": true
+            }
           }
         },
         {
@@ -189,11 +558,51 @@
           },
           "expected_routing": {
             "intent": "hunter_sentiment",
-            "confidence_min": 0.80
+            "confidence_min": 0.8
           },
           "expected_enrichment": {
             "token_symbol": "BTC",
             "time_range": "7d"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_sent_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Show me BTC social media sentiment from last 7 days",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_sent_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Sentiment analysis for BTC:\n\n**Overall Score**: 72.5/100 (Bullish)\n**Confidence**: 0.85\n**Signal Strength**: Strong\n\n**Source Breakdown**:\n- Twitter: 75/100 (Bullish)\n- Reddit: 68/100 (Neutral-Bullish)\n\nOverall sentiment is positive with strong consensus across sources.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_sentiment",
+              "confidence": 0.85,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_sentiment with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "BTC",
+              "time_range": "7d",
+              "sources": {
+                "twitter": {
+                  "score": 75,
+                  "confidence": 0.88
+                },
+                "reddit": {
+                  "score": 68,
+                  "confidence": 0.82
+                }
+              }
+            }
           }
         }
       ],
@@ -214,6 +623,38 @@
             "time_horizon": "7d",
             "hunter_tool": "lstm_predictor",
             "has_predictions": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_pp_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Predict BTC price for next 7 days",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_pp_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Price prediction for BTC over the next 7d:\n\n**Current Price**: $X,XXX\n**Predicted Price**: $X,XXX (+X%)\n**Confidence**: 0.82\n\nBased on LSTM model analysis, BTC shows bullish momentum.",
+              "agent_type": "hunter_ai",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_price_prediction",
+              "confidence": 0.9,
+              "handler": "hunter_ai",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_price_prediction with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "BTC",
+              "time_horizon": "7d",
+              "hunter_tool": "lstm_predictor",
+              "has_predictions": true
+            }
           }
         },
         {
@@ -224,11 +665,41 @@
           },
           "expected_routing": {
             "intent": "hunter_price_prediction",
-            "confidence_min": 0.80
+            "confidence_min": 0.8
           },
           "expected_enrichment": {
             "token_symbol": "ETH",
             "time_horizon": "30d"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_pp_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Forecast ETH price for next 30 days",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_pp_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Price prediction for ETH over the next 30d:\n\n**Current Price**: $X,XXX\n**Predicted Price**: $X,XXX (+X%)\n**Confidence**: 0.82\n\nBased on LSTM model analysis, ETH shows bullish momentum.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_price_prediction",
+              "confidence": 0.85,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_price_prediction with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "ETH",
+              "time_horizon": "30d"
+            }
           }
         }
       ],
@@ -248,6 +719,37 @@
             "token_symbol": "ETH",
             "hunter_tool": "risk_detector",
             "has_risk_signals": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_rs_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Show risk signals for ETH",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_rs_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Response to: Show risk signals for ETH",
+              "agent_type": "hunter_ai",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_risk_signals",
+              "confidence": 0.9,
+              "handler": "hunter_ai",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_risk_signals with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "ETH",
+              "hunter_tool": "risk_detector",
+              "has_risk_signals": true
+            }
           }
         }
       ],
@@ -268,6 +770,38 @@
             "hunter_tool": "signal_generator",
             "has_signals": true,
             "has_recommendation": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_ts_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Should I buy SOL now? Give me trading signals",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_ts_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Trading signals for SOL:\n\n**Recommendation**: BUY\n**Entry Signal**: Strong\n**Exit Target**: $X,XXX\n**Stop Loss**: $X,XXX\n\nMultiple indicators suggest a buying opportunity.",
+              "agent_type": "hunter_ai",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_trading_signals",
+              "confidence": 0.9,
+              "handler": "hunter_ai",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_trading_signals with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "SOL",
+              "hunter_tool": "signal_generator",
+              "has_signals": true,
+              "has_recommendation": true
+            }
           }
         },
         {
@@ -278,11 +812,47 @@
           },
           "expected_routing": {
             "intent": "hunter_trading_signals",
-            "confidence_min": 0.80
+            "confidence_min": 0.8
           },
           "expected_enrichment": {
             "token_symbol": "BTC",
-            "signal_types": ["entry", "exit"]
+            "signal_types": [
+              "entry",
+              "exit"
+            ]
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_ts_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "What are the entry and exit signals for BTC?",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_ts_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Trading signals for BTC:\n\n**Recommendation**: BUY\n**Entry Signal**: Strong\n**Exit Target**: $X,XXX\n**Stop Loss**: $X,XXX\n\nMultiple indicators suggest a buying opportunity.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_trading_signals",
+              "confidence": 0.85,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_trading_signals with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "BTC",
+              "signal_types": [
+                "entry",
+                "exit"
+              ]
+            }
           }
         }
       ],
@@ -302,6 +872,37 @@
             "token_symbol": "BTC",
             "hunter_tool": "pattern_detector",
             "has_patterns": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_pat_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "What chart patterns do you see for BTC?",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_pat_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Response to: What chart patterns do you see for BTC?",
+              "agent_type": "hunter_ai",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_patterns",
+              "confidence": 0.9,
+              "handler": "hunter_ai",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_patterns with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "BTC",
+              "hunter_tool": "pattern_detector",
+              "has_patterns": true
+            }
           }
         },
         {
@@ -312,10 +913,39 @@
           },
           "expected_routing": {
             "intent": "hunter_patterns",
-            "confidence_min": 0.80
+            "confidence_min": 0.8
           },
           "expected_enrichment": {
             "token_symbol": "ETH"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_pat_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Detect technical formations for ETH",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_pat_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Response to: Detect technical formations for ETH",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_patterns",
+              "confidence": 0.85,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_patterns with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "ETH"
+            }
           }
         }
       ],
@@ -332,10 +962,50 @@
             "handler": "hunter_ai"
           },
           "expected_enrichment": {
-            "tokens": ["BTC", "ETH", "SOL"],
+            "tokens": [
+              "BTC",
+              "ETH",
+              "SOL"
+            ],
             "risk_tolerance": "moderate",
             "hunter_tool": "mpt_optimizer",
             "has_allocation": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_port_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Optimize my portfolio with BTC, ETH, and SOL for moderate risk",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_port_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Optimized portfolio for moderate risk:\n\n**Allocation**:\n- BTC: 40%\n- ETH: 35%\n- SOL: 25%\n\nThis allocation maximizes returns while maintaining your risk tolerance.",
+              "agent_type": "hunter_ai",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_portfolio",
+              "confidence": 0.9,
+              "handler": "hunter_ai",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_portfolio with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "tokens": [
+                "BTC",
+                "ETH",
+                "SOL"
+              ],
+              "risk_tolerance": "moderate",
+              "hunter_tool": "mpt_optimizer",
+              "has_allocation": true
+            }
           }
         },
         {
@@ -350,6 +1020,35 @@
           },
           "expected_enrichment": {
             "risk_tolerance": "conservative"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_port_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Create a conservative crypto portfolio for me",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_port_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Optimized portfolio for conservative risk:\n\n**Allocation**:\n- BTC: 40%\n- ETH: 35%\n- SOL: 25%\n\nThis allocation maximizes returns while maintaining your risk tolerance.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_portfolio",
+              "confidence": 0.8,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_portfolio with 80% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "risk_tolerance": "conservative"
+            }
           }
         },
         {
@@ -364,6 +1063,35 @@
           },
           "expected_enrichment": {
             "risk_tolerance": "aggressive"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_hunter_port_003",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Build an aggressive high-risk portfolio",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_hunter_port_003",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Optimized portfolio for aggressive risk:\n\n**Allocation**:\n- BTC: 40%\n- ETH: 35%\n- SOL: 25%\n\nThis allocation maximizes returns while maintaining your risk tolerance.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "hunter_portfolio",
+              "confidence": 0.8,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: hunter_portfolio with 80% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "risk_tolerance": "aggressive"
+            }
           }
         }
       ]
@@ -386,6 +1114,46 @@
             "arb_type": "dex",
             "ultra_tool": "arbitrage_scanner",
             "has_opportunities": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_arb_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Find arbitrage opportunities with $10,000 capital",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_arb_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Found 3 arbitrage opportunities with $10,000 capital:\n\n1. **ARB-001** - Profit: $95.50 (0.96%)\n   - Type: 2-hop\n   - Confidence: 0.85\n\n2. **ARB-002** - Profit: $78.20 (0.78%)\n   - Type: Triangle\n   - Confidence: 0.82\n\n3. **ARB-003** - Profit: $65.40 (0.65%)\n   - Type: 3-hop\n   - Confidence: 0.79",
+              "agent_type": "ultra",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_arbitrage",
+              "confidence": 0.9,
+              "handler": "ultra",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_arbitrage with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "capital": 10000,
+              "arb_type": "dex",
+              "ultra_tool": "arbitrage_scanner",
+              "has_opportunities": true,
+              "opportunities": [
+                {
+                  "opportunity_id": "ARB-001",
+                  "type": "2hop",
+                  "expected_profit_usd": "95.50",
+                  "confidence_score": 0.85
+                }
+              ]
+            }
           }
         },
         {
@@ -396,11 +1164,49 @@
           },
           "expected_routing": {
             "intent": "ultra_arbitrage",
-            "confidence_min": 0.80
+            "confidence_min": 0.8
           },
           "expected_enrichment": {
             "capital": 5000,
             "arb_type": "cross-chain"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_arb_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Search for cross-chain arbitrage with $5k",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_arb_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Found 3 arbitrage opportunities with $5,000 capital:\n\n1. **ARB-001** - Profit: $95.50 (0.96%)\n   - Type: 2-hop\n   - Confidence: 0.85\n\n2. **ARB-002** - Profit: $78.20 (0.78%)\n   - Type: Triangle\n   - Confidence: 0.82\n\n3. **ARB-003** - Profit: $65.40 (0.65%)\n   - Type: 3-hop\n   - Confidence: 0.79",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_arbitrage",
+              "confidence": 0.85,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_arbitrage with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "capital": 5000,
+              "arb_type": "cross-chain",
+              "opportunities": [
+                {
+                  "opportunity_id": "ARB-001",
+                  "type": "2hop",
+                  "expected_profit_usd": "95.50",
+                  "confidence_score": 0.85
+                }
+              ]
+            }
           }
         },
         {
@@ -415,6 +1221,43 @@
           },
           "expected_enrichment": {
             "arb_type": "dex"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_arb_003",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Find DEX arbitrage opportunities",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_arb_003",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Found 3 arbitrage opportunities with $10,000 capital:\n\n1. **ARB-001** - Profit: $95.50 (0.96%)\n   - Type: 2-hop\n   - Confidence: 0.85\n\n2. **ARB-002** - Profit: $78.20 (0.78%)\n   - Type: Triangle\n   - Confidence: 0.82\n\n3. **ARB-003** - Profit: $65.40 (0.65%)\n   - Type: 3-hop\n   - Confidence: 0.79",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_arbitrage",
+              "confidence": 0.8,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_arbitrage with 80% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "arb_type": "dex",
+              "opportunities": [
+                {
+                  "opportunity_id": "ARB-001",
+                  "type": "2hop",
+                  "expected_profit_usd": "95.50",
+                  "confidence_score": 0.85
+                }
+              ]
+            }
           }
         }
       ],
@@ -435,6 +1278,38 @@
             "amount": 100000,
             "ultra_tool": "flash_loan_selector",
             "has_protocol_recommendation": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_fl_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Best flash loan protocol for 100k USDC",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_fl_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Best flash loan protocol for 100,000 USDC:\n\n**Recommended**: Balancer\n**Fee**: 0% (gas only)\n**Estimated Total Cost**: $5.00\n\nBalancer offers the lowest fees for this amount.",
+              "agent_type": "ultra",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_flash_loans",
+              "confidence": 0.9,
+              "handler": "ultra",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_flash_loans with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "token_symbol": "USDC",
+              "amount": 100000,
+              "ultra_tool": "flash_loan_selector",
+              "has_protocol_recommendation": true
+            }
           }
         },
         {
@@ -449,6 +1324,35 @@
           },
           "expected_enrichment": {
             "use_case": "leverage"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_fl_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "I need a flash loan for leveraged trading",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_fl_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Best flash loan protocol for 100,000 USDC:\n\n**Recommended**: Balancer\n**Fee**: 0% (gas only)\n**Estimated Total Cost**: $5.00\n\nBalancer offers the lowest fees for this amount.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_flash_loans",
+              "confidence": 0.8,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_flash_loans with 80% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "use_case": "leverage"
+            }
           }
         }
       ],
@@ -468,6 +1372,37 @@
             "opportunity_id": "ARB-001",
             "protection_method": "flashbots",
             "ultra_tool": "mev_protector"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_mev_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Execute ARB-001 with Flashbots protection",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_mev_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Response to: Execute ARB-001 with Flashbots protection",
+              "agent_type": "ultra",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_mev_protection",
+              "confidence": 0.9,
+              "handler": "ultra",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_mev_protection with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "opportunity_id": "ARB-001",
+              "protection_method": "flashbots",
+              "ultra_tool": "mev_protector"
+            }
           }
         },
         {
@@ -482,6 +1417,35 @@
           },
           "expected_enrichment": {
             "protection_method": "private"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_mev_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Send this transaction privately to avoid MEV",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_mev_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Response to: Send this transaction privately to avoid MEV",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_mev_protection",
+              "confidence": 0.8,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_mev_protection with 80% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "protection_method": "private"
+            }
           }
         }
       ],
@@ -494,12 +1458,42 @@
           },
           "expected_routing": {
             "intent": "ultra_auto_executor",
-            "confidence_min": 0.90,
+            "confidence_min": 0.9,
             "handler": "ultra"
           },
           "expected_enrichment": {
             "action": "start",
             "ultra_tool": "auto_executor"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_ae_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Start trading bot",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_ae_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Auto-executor started successfully. The bot will now scan for arbitrage opportunities every 10 seconds and execute profitable trades automatically.",
+              "agent_type": "ultra",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_auto_executor",
+              "confidence": 0.95,
+              "handler": "ultra",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_auto_executor with 95% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "action": "start",
+              "ultra_tool": "auto_executor"
+            }
           }
         },
         {
@@ -510,10 +1504,39 @@
           },
           "expected_routing": {
             "intent": "ultra_auto_executor",
-            "confidence_min": 0.90
+            "confidence_min": 0.9
           },
           "expected_enrichment": {
             "action": "stop"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_ae_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Stop trading bot",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_ae_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Auto-executor stopped. All active scans and executions have been halted.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_auto_executor",
+              "confidence": 0.95,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_auto_executor with 95% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "action": "stop"
+            }
           }
         },
         {
@@ -528,6 +1551,35 @@
           },
           "expected_enrichment": {
             "action": "status"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_ae_003",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Show bot status",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_ae_003",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "**Status**: Running\n**Active Opportunities**: 2\n**Total Profit Today**: $245.50\n**Last Execution**: 2 minutes ago",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_auto_executor",
+              "confidence": 0.9,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_auto_executor with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "action": "status"
+            }
           }
         },
         {
@@ -545,6 +1597,38 @@
             "config": {
               "profit_threshold": 0.02
             }
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_ultra_ae_004",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Configure bot with 2% profit threshold",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_ultra_ae_004",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Response to: Configure bot with 2% profit threshold",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "ultra_auto_executor",
+              "confidence": 0.8,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: ultra_auto_executor with 80% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "action": "configure",
+              "config": {
+                "profit_threshold": 0.02
+              }
+            }
           }
         }
       ]
@@ -559,12 +1643,42 @@
           },
           "expected_routing": {
             "intent": "specialist_task",
-            "confidence_min": 0.80,
+            "confidence_min": 0.8,
             "handler": "agent_orchestrator"
           },
           "expected_enrichment": {
             "task_type": "analysis",
             "has_tools_used": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_squad_spec_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Analyze ETH/USDC liquidity depth on Uniswap V3",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_squad_spec_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Analysis complete:\n\n**Liquidity Depth**: $12.5M\n**Price Impact**: 0.15%\n**Recommended Action**: Proceed with swap\n\nThe liquidity is sufficient for your trade size.",
+              "agent_type": "agent_orchestrator",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "specialist_task",
+              "confidence": 0.85,
+              "handler": "agent_orchestrator",
+              "agent_used": null,
+              "reasoning": "Detected intent: specialist_task with 85% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "task_type": "analysis",
+              "has_tools_used": true
+            }
           }
         },
         {
@@ -579,6 +1693,35 @@
           },
           "expected_enrichment": {
             "task_type": "research"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_squad_spec_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Research the best yield farming strategies on Arbitrum",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_squad_spec_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Analysis complete:\n\n**Liquidity Depth**: $12.5M\n**Price Impact**: 0.15%\n**Recommended Action**: Proceed with swap\n\nThe liquidity is sufficient for your trade size.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "specialist_task",
+              "confidence": 0.8,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: specialist_task with 80% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "task_type": "research"
+            }
           }
         }
       ],
@@ -599,6 +1742,38 @@
             "capital": 50000,
             "has_workflow_id": true,
             "agents_count_min": 2
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_squad_work_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Create a complete DeFi investment strategy for $50k with risk analysis",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_squad_work_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Complete DeFi strategy created:\n\n**Workflow ID**: WF-001\n**Agents Involved**: 3\n**Tasks Completed**: 5\n\nYour strategy includes risk analysis, yield optimization, and execution plan.",
+              "agent_type": "agent_orchestrator",
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "complex_workflow",
+              "confidence": 0.9,
+              "handler": "agent_orchestrator",
+              "agent_used": null,
+              "reasoning": "Detected intent: complex_workflow with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "workflow_type": "investment_strategy",
+              "capital": 50000,
+              "has_workflow_id": true,
+              "agents_count_min": 2
+            }
           }
         },
         {
@@ -613,6 +1788,35 @@
           },
           "expected_enrichment": {
             "workflow_type": "yield_farming_plan"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_squad_work_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Plan a complete yield farming operation from start to finish",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_squad_work_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Complete DeFi strategy created:\n\n**Workflow ID**: WF-001\n**Agents Involved**: 3\n**Tasks Completed**: 5\n\nYour strategy includes risk analysis, yield optimization, and execution plan.",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "complex_workflow",
+              "confidence": 0.8,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: complex_workflow with 80% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "workflow_type": "yield_farming_plan"
+            }
           }
         }
       ]
@@ -632,6 +1836,35 @@
           },
           "expected_enrichment": {
             "conversation_type": "greeting"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_chat_gen_001",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Hello! What can you help me with?",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_chat_gen_001",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Hello! I'm Anvil, your DeFi assistant. I can help you with:\n\n- Finding and analyzing DeFi protocols\n- Market sentiment and price predictions\n- Arbitrage opportunities and flash loans\n- Portfolio optimization\n- Risk assessment\n\nWhat would you like to explore today?",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "general_conversation",
+              "confidence": 1.0,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: general_conversation with 100% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "conversation_type": "greeting"
+            }
           }
         },
         {
@@ -646,6 +1879,35 @@
           },
           "expected_enrichment": {
             "conversation_type": "help"
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_chat_gen_002",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "What features do you offer?",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_chat_gen_002",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Anvil offers comprehensive DeFi intelligence:\n\n**GraphRAG**: Protocol search, risk analysis, similarity matching\n**Hunter AI**: Sentiment, predictions, trading signals, patterns\n**ULTRA**: Arbitrage discovery, flash loans, MEV protection\n**Agent Squad**: Specialized tasks and complex workflows\n\nAsk me anything about DeFi!",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "general_conversation",
+              "confidence": 0.9,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: general_conversation with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "conversation_type": "help"
+            }
           }
         },
         {
@@ -656,11 +1918,40 @@
           },
           "expected_routing": {
             "intent": "general_conversation",
-            "confidence_max": 0.70,
+            "confidence_max": 0.7,
             "handler": "general_chat"
           },
           "expected_enrichment": {
             "fallback": true
+          },
+          "expected_output": {
+            "user_message": {
+              "id": "msg_user_chat_gen_003",
+              "conversation_id": "conv_abc123",
+              "role": "user",
+              "content": "Random unclear message xyz",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:00Z"
+            },
+            "agent_message": {
+              "id": "msg_agent_chat_gen_003",
+              "conversation_id": "conv_abc123",
+              "role": "assistant",
+              "content": "Response to: Random unclear message xyz",
+              "agent_type": null,
+              "created_at": "2025-12-26T10:00:01Z"
+            },
+            "routing": {
+              "intent": "general_conversation",
+              "confidence": 0.9,
+              "handler": "general_chat",
+              "agent_used": null,
+              "reasoning": "Detected intent: general_conversation with 90% confidence",
+              "total_latency_ms": 1000
+            },
+            "enrichment": {
+              "fallback": true
+            }
           }
         }
       ]
@@ -682,7 +1973,7 @@
       "id": "edge_002",
       "description": "Very long message",
       "input": {
-        "content": "A".repeat(10000)
+        "content": "[Very long message with 10000 characters - truncated for test data]"
       },
       "expected_error": {
         "status_code": 422,
@@ -742,9 +2033,9 @@
     },
     "confidence_thresholds": {
       "high_confidence": 0.85,
-      "medium_confidence": 0.70,
-      "low_confidence": 0.50,
-      "fallback_threshold": 0.70
+      "medium_confidence": 0.7,
+      "low_confidence": 0.5,
+      "fallback_threshold": 0.7
     }
   }
 }
