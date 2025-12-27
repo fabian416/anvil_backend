@@ -639,4 +639,6 @@ class AuditLogModel:
         Index("ix_audit_logs_ip_created", "ip_address", "created_at"),
         # Index for resource activity
         Index("ix_audit_logs_resource", "resource_id", "resource_type"),
+        # Allow table redefinition in tests
+        {"extend_existing": True},
     )

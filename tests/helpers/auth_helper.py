@@ -88,14 +88,69 @@ class AuthHelper:
     and managing test sessions.
     """
 
-    # Default test secret for JWT signing (test only)
-    _test_secret: str = "test_jwt_secret_key_for_testing_only"
+    # Default test secret for JWT signing - matches config/local/.secrets.toml
+    _test_secret: str = "your-super-secret-jwt-key-change-in-production"
     _test_sessions: dict[str, dict] = {}
 
     @classmethod
     def set_secret(cls, secret: str) -> None:
         """Set the JWT secret for token generation."""
         cls._test_secret = secret
+
+    @classmethod
+    def create_jwt_token_with_session(
+        cls,
+        session_id: str,
+        user_id_int: int,
+        email: str,
+        role: str,
+        token_type: str = "access",
+        expires_in_hours: int = 1,
+    ) -> str:
+        """
+        Create a JWT token with session ID for database-backed authentication.
+
+        Args:
+            session_id: Auth session identifier
+            user_id_int: User integer ID from database
+            email: User email
+            role: User role
+            token_type: Token type (access or refresh)
+            expires_in_hours: Token expiration in hours
+
+        Returns:
+            JWT token string with auth_session_id field
+        """
+        now = datetime.utcnow()
+        payload = {
+            "auth_session_id": session_id,  # Required field for auth validation
+            "exp": int((now + timedelta(hours=expires_in_hours)).timestamp()),
+            "sub": str(user_id_int),  # Fallback field
+            "email": email,
+            "role": role.upper(),
+            "type": token_type,
+            "iat": int(now.timestamp()),
+        }
+
+        # Create JWT structure
+        header = {"alg": "HS256", "typ": "JWT"}
+        header_b64 = base64.urlsafe_b64encode(
+            json.dumps(header).encode()
+        ).rstrip(b"=").decode()
+        payload_b64 = base64.urlsafe_b64encode(
+            json.dumps(payload).encode()
+        ).rstrip(b"=").decode()
+
+        # Sign the token
+        message = f"{header_b64}.{payload_b64}"
+        signature = hmac.new(
+            cls._test_secret.encode(),
+            message.encode(),
+            hashlib.sha256
+        ).digest()
+        signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode()
+
+        return f"{header_b64}.{payload_b64}.{signature_b64}"
 
     @classmethod
     def create_jwt_token(
@@ -107,7 +162,7 @@ class AuthHelper:
         expires_in_hours: int = 1,
     ) -> str:
         """
-        Create a JWT token for testing.
+        Create a JWT token for testing (in-memory only).
 
         Args:
             user_id: User identifier
@@ -200,6 +255,127 @@ class AuthHelper:
         return f"{header_b64}.{payload_b64}.{signature_b64}"
 
     @classmethod
+    async def create_test_user_in_db(
+        cls,
+        db_session,
+        role: UserRole = "user",
+        email: str | None = None,
+        password: str = "TestPassword123!",
+        is_active: bool = True,
+        is_verified: bool = True,
+        first_name: str = "Test",
+        last_name: str = "User",
+    ) -> tuple[TestUser, str]:
+        """
+        Create a test user with authentication token in the database.
+
+        Args:
+            db_session: SQLAlchemy async session
+            role: User role (user, admin, super_admin)
+            email: User email (auto-generated if not provided)
+            password: User password
+            is_active: Whether user is active
+            is_verified: Whether user email is verified
+            first_name: User first name
+            last_name: User last name
+
+        Returns:
+            Tuple of (TestUser, access_token)
+        """
+        from sqlalchemy import text
+        from datetime import datetime, timedelta
+
+        # Generate user ID and email
+        user_id_int = abs(hash(str(uuid4()))) % (10 ** 9)  # Convert UUID to integer
+        if email is None:
+            email = f"test_{uuid4().hex[:8]}@example.com"
+
+        # Hash password
+        import bcrypt
+        password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+        # Insert user into database
+        insert_user_sql = text("""
+            INSERT INTO users (id, email, first_name, last_name, role, is_active, is_verified, password, created_at, updated_at)
+            VALUES (:id, :email, :first_name, :last_name, :role, :is_active, :is_verified, :password, :created_at, :updated_at)
+            RETURNING id
+        """)
+
+        result = await db_session.execute(
+            insert_user_sql,
+            {
+                "id": user_id_int,
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "role": role,
+                "is_active": is_active,
+                "is_verified": is_verified,
+                "password": password_hash,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            }
+        )
+        created_user_id = result.scalar_one()
+
+        # Create session ID and expiration
+        session_id = uuid4().hex
+        expiration = datetime.utcnow() + timedelta(hours=24)
+
+        # Insert auth session into database
+        insert_session_sql = text("""
+            INSERT INTO auth_sessions (id, user_id, expiration)
+            VALUES (:id, :user_id, :expiration)
+        """)
+
+        await db_session.execute(
+            insert_session_sql,
+            {
+                "id": session_id,
+                "user_id": created_user_id,
+                "expiration": expiration,
+            }
+        )
+
+        await db_session.commit()
+
+        # Create access token with session ID
+        access_token = cls.create_jwt_token_with_session(
+            session_id=session_id,
+            user_id_int=created_user_id,
+            email=email,
+            role=role,
+            token_type="access",
+            expires_in_hours=1,
+        )
+
+        # Create refresh token
+        refresh_token = cls.create_jwt_token_with_session(
+            session_id=session_id,
+            user_id_int=created_user_id,
+            email=email,
+            role=role,
+            token_type="refresh",
+            expires_in_hours=24,
+        )
+
+        user = TestUser(
+            id=UUID(int=created_user_id),  # Convert back to UUID
+            email=email,
+            password=password,
+            role=role,
+            is_active=is_active,
+            is_verified=is_verified,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            session_id=session_id,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        return user, access_token
+
+    @classmethod
     def create_test_user(
         cls,
         role: UserRole = "user",
@@ -211,7 +387,9 @@ class AuthHelper:
         last_name: str = "User",
     ) -> tuple[TestUser, str]:
         """
-        Create a test user with authentication token.
+        Create a test user with authentication token (in-memory only, for backwards compatibility).
+
+        Note: This does NOT create database records. Use create_test_user_in_db for integration tests.
 
         Args:
             role: User role (user, admin, super_admin)

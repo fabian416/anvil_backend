@@ -11,6 +11,7 @@ with all test cases from test_data.json, validating:
 
 import json
 import pytest
+import pytest_asyncio
 from pathlib import Path
 from typing import Dict, Any, List
 from uuid import UUID
@@ -70,23 +71,36 @@ def all_test_cases():
     return get_all_test_cases()
 
 
-@pytest.fixture
-def authenticated_client(test_app):
-    """Create authenticated client for API requests."""
+@pytest_asyncio.fixture
+async def authenticated_client(test_app, async_db_session):
+    """Create authenticated client for API requests with database-backed user."""
+    from tests.helpers.auth_helper import AuthHelper
+    import asyncio
+
+    # Create user in database
+    user, token = await AuthHelper.create_test_user_in_db(
+        db_session=async_db_session,
+        role="user",
+    )
+
+    # Create authenticated client with real token
     client = AuthenticatedClient()
     client.set_app(test_app)
-    client.login()  # Creates test user and logs in
+    client._access_token = token
+    client._current_user = user
+    client._update_headers()
+
     return client
 
 
-@pytest.fixture
-def test_conversation(authenticated_client):
+@pytest_asyncio.fixture
+async def test_conversation(authenticated_client):
     """Create a test conversation for message testing."""
     response = authenticated_client.post(
         "/api/v1/user/chat/conversations",
         json={"title": "Test Conversation"},
     )
-    
+
     assert response.status_code == 201, f"Failed to create conversation: {response.text}"
     conversation_data = response.json()
     return conversation_data["id"]
