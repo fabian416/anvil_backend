@@ -742,7 +742,7 @@ class UnifiedChatOrchestrator:
                 "token_symbol": token_symbol,
                 "time_horizon": time_horizon,
                 "sources": sources or ["twitter", "reddit", "discord", "news"],
-                "hunter_tool": "sentiment_analysis",
+                "hunter_tool": "sentiment_analyzer",
             },
         }
 
@@ -811,7 +811,7 @@ class UnifiedChatOrchestrator:
             "enrichment": {
                 "token_symbol": token_symbol,
                 "time_horizon": time_horizon,
-                "hunter_tool": "price_prediction",
+                "hunter_tool": "lstm_predictor",
             },
         }
 
@@ -865,7 +865,7 @@ class UnifiedChatOrchestrator:
             },
             "enrichment": {
                 "token_symbol": token_symbol,
-                "hunter_tool": "risk_signals",
+                "hunter_tool": "risk_detector",
             },
         }
 
@@ -928,7 +928,7 @@ class UnifiedChatOrchestrator:
             },
             "enrichment": {
                 "token_symbol": token_symbol,
-                "hunter_tool": "trading_signals",
+                "hunter_tool": "signal_generator",
             },
         }
 
@@ -1003,7 +1003,7 @@ class UnifiedChatOrchestrator:
             },
             "enrichment": {
                 "token_symbol": token_symbol,
-                "hunter_tool": "pattern_detection",
+                "hunter_tool": "pattern_detector",
             },
         }
 
@@ -1065,7 +1065,7 @@ class UnifiedChatOrchestrator:
             "enrichment": {
                 "tokens": tokens,
                 "risk_tolerance": risk_tolerance,
-                "hunter_tool": "portfolio_optimization",
+                "hunter_tool": "mpt_optimizer",
             },
         }
 
@@ -1149,7 +1149,7 @@ class UnifiedChatOrchestrator:
             "enrichment": {
                 "capital": float(capital),
                 "arb_type": arb_type or "all",
-                "ultra_tool": "arbitrage_discovery",
+                "ultra_tool": "arbitrage_scanner",
             },
         }
 
@@ -1231,7 +1231,7 @@ class UnifiedChatOrchestrator:
                 "token_symbol": token_symbol,
                 "amount": float(amount),
                 "protocol": protocol,
-                "ultra_tool": "flash_loan_engine",
+                "ultra_tool": "flash_loan_selector",
             },
         }
 
@@ -1311,7 +1311,7 @@ class UnifiedChatOrchestrator:
             },
             "enrichment": {
                 "opportunity_id": opportunity_id,
-                "ultra_tool": "mev_protection",
+                "ultra_tool": "mev_protector",
             },
         }
 
