@@ -304,7 +304,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "graphrag_search",
+                "handler": "graphrag_risk",
                 "reasoning": intent_result.reasoning,
             },
             "enrichment": {
@@ -351,7 +351,7 @@ class UnifiedChatOrchestrator:
                 "routing": {
                     "intent": intent_result.intent.value,
                     "confidence": intent_result.confidence,
-                    "handler": "graphrag_search",
+                    "handler": "graphrag_similar",
                     "reasoning": "Protocol not found, fallback response",
                 },
             }
@@ -386,7 +386,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "graphrag_search",
+                "handler": "graphrag_similar",
                 "reasoning": intent_result.reasoning,
             },
             "enrichment": {
@@ -435,7 +435,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "agent_orchestrator",
+                "handler": "agent_squad",
                 "agent_used": result["agent_type"],
                 "reasoning": intent_result.reasoning,
             },
@@ -471,7 +471,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "agent_orchestrator",
+                "handler": "supervisor",
                 "reasoning": intent_result.reasoning,
             },
             "enrichment": {
@@ -500,7 +500,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "general_chat",
+                "handler": "regular_chat",
                 "reasoning": intent_result.reasoning,
             },
         }
@@ -734,7 +734,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_ai",
+                "handler": "hunter_sentiment",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -804,7 +804,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_ai",
+                "handler": "hunter_price_prediction",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -859,7 +859,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_ai",
+                "handler": "hunter_risk_signals",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -922,7 +922,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_ai",
+                "handler": "hunter_trading_signals",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -997,7 +997,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_ai",
+                "handler": "hunter_patterns",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -1058,7 +1058,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_ai",
+                "handler": "hunter_portfolio",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -1142,7 +1142,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "ultra",
+                "handler": "ultra_arbitrage",
                 "agent_used": "ultra_discovery",
                 "reasoning": intent_result.reasoning,
             },
@@ -1223,7 +1223,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "ultra",
+                "handler": "ultra_flash_loans",
                 "agent_used": "ultra_flash_loan_engine",
                 "reasoning": intent_result.reasoning,
             },
@@ -1305,7 +1305,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "ultra",
+                "handler": "ultra_mev_protection",
                 "agent_used": "ultra_mev_engine",
                 "reasoning": intent_result.reasoning,
             },
@@ -1396,7 +1396,7 @@ class UnifiedChatOrchestrator:
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "ultra",
+                "handler": "ultra_auto_executor",
                 "agent_used": "ultra_auto_executor",
                 "reasoning": intent_result.reasoning,
             },

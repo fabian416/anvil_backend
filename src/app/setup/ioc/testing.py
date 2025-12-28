@@ -264,7 +264,6 @@ class MockLLMClientGateway(LLMClientGateway):
             if end > start:
                 message_lower = message_lower[start:end].strip()
 
-
         # ===================================================================
         # PRIMARY: Test Data-Driven Lookup (Deterministic)
         # ===================================================================
@@ -430,10 +429,56 @@ class MockLLMClientGateway(LLMClientGateway):
 
         handler, reasoning = intent_to_handler.get(intent, ("general_chat", "General conversation"))
 
+        # ===================================================================
+        # Entity Extraction for Application Logic
+        # ===================================================================
+        entities = {}
+
+        # Extract protocol_name for risk_assessment intents
+        if intent == "risk_assessment":
+            # Simple entity extraction: look for known protocol names
+            protocol_keywords = {"aave": "Aave", "uniswap": "Uniswap", "curve": "Curve", "compound": "Compound"}
+            for keyword, protocol_name in protocol_keywords.items():
+                if keyword in message_lower:
+                    entities["protocol_name"] = protocol_name
+                    break
+
+        # Extract token_symbol for Hunter intents
+        if intent and intent.startswith("hunter_"):
+            token_keywords = {"eth": "ETH", "btc": "BTC", "sol": "SOL", "usdc": "USDC", "dai": "DAI"}
+            for keyword, token_symbol in token_keywords.items():
+                if keyword in message_lower:
+                    entities["token_symbol"] = token_symbol
+                    break
+
+        # Extract capital for Ultra arbitrage intents
+        if intent == "ultra_arbitrage":
+            import re
+            # Look for amounts like "$10,000", "$10k", "10000"
+            amount_match = re.search(r'\$?([\d,]+)k?', message_lower)
+            if amount_match:
+                amount_str = amount_match.group(1).replace(',', '')
+                if 'k' in message_lower:
+                    entities["capital"] = int(amount_str) * 1000
+                else:
+                    entities["capital"] = int(amount_str)
+
+        # Set confidence based on intent type and message clarity
+        if intent == "general_conversation":
+            # High confidence for clear greetings/feature questions
+            greeting_keywords = ["hello", "hi", "hey", "what can you", "what features", "help me"]
+            if any(keyword in message_lower for keyword in greeting_keywords):
+                confidence = 0.95
+            else:
+                # Low confidence for unclear/random messages
+                confidence = 0.65
+        else:
+            confidence = 0.92
+
         response = {
             "intent": intent,
-            "confidence": 0.92,
-            "entities": {},
+            "confidence": confidence,
+            "entities": entities,
             "reasoning": reasoning,
             "handler": handler,  # Handler category for routing
             "suggested_agent": handler  # Keep for backward compatibility
