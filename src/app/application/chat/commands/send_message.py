@@ -28,29 +28,31 @@ from app.domain.value_objects.agent_tools.ultra_tools import (
     get_ultra_tool_by_name,
 )
 from app.setup.config.integrations import IntegrationSettings
+from app.application.common.ports.transaction_manager import TransactionManager
 
 
 class SendMessage:
     """
     Send a message in a conversation and get agent response.
-    
+
     This orchestrates:
     1. Save user message
     2. Process with agent gateway
     3. Detect and execute Hunter AI tools (if requested)
     4. Save agent response (with tool results)
     5. Update conversation timestamp
-    
+
     Hunter AI Integration:
     - Detects when user asks about sentiment, price, risk, etc.
     - Automatically executes appropriate Hunter AI tools
     - Formats results for natural chat display
     """
-    
+
     def __init__(
         self,
         repository: ConversationRepository,
         agent_gateway: AgentGateway,
+        transaction_manager: TransactionManager,
         project_repository: Optional[ProjectRepository] = None,
         hunter_executor: Optional[HunterToolExecutor] = None,
         ultra_executor: Optional[ULTRAToolExecutor] = None,
@@ -58,16 +60,18 @@ class SendMessage:
     ):
         """
         Initialize interactor.
-        
+
         Args:
             repository: Conversation repository
             agent_gateway: Agent gateway for processing messages
+            transaction_manager: Transaction manager for committing changes
             project_repository: Project repository (for project-scoped conversations)
             hunter_executor: Hunter AI tool executor (optional)
             ultra_executor: ULTRA Arbitrage tool executor (optional)
             integration_settings: Integration feature flags (optional)
         """
         self._repository = repository
+        self._tx = transaction_manager
         self._agent_gateway = agent_gateway
         self._project_repository = project_repository
         self._hunter_executor = hunter_executor or HunterToolExecutor()
@@ -144,14 +148,17 @@ class SendMessage:
             content=final_response,
         )
         await self._repository.add_message(agent_message)
-        
+
         # Update conversation timestamp
         conversation.touch()
-        await self._repository.add_conversation(conversation)  # Update
-        
+        await self._repository.update_conversation(conversation)
+
+        # Commit transaction to persist all changes
+        await self._tx.commit()
+
         # Broadcast agent message via WebSocket (fire and forget)
         asyncio.create_task(self._broadcast_message(conversation_id, agent_message))
-        
+
         return user_message, agent_message
     
     async def _execute_tools(

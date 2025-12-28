@@ -8,11 +8,7 @@ from datetime import datetime
 
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.chat.entities.message import Message
-from app.domain.value_objects.message_id import MessageId
-from app.domain.value_objects.conversation_id import ConversationId
-from app.domain.value_objects.message_content import MessageContent
-from app.domain.enums.message_role import MessageRole
-from app.domain.enums.agent_type import AgentType
+from app.domain.value_objects.message_role import MessageRole
 
 
 class AnvilSquadStorage:
@@ -67,27 +63,18 @@ class AnvilSquadStorage:
         }
         message_role = role_map.get(role.lower(), MessageRole.USER)
         
-        # Map agent_type string to enum if provided
-        agent_type_enum = None
-        if agent_type:
-            try:
-                agent_type_enum = AgentType(agent_type.lower())
-            except ValueError:
-                # If not a valid enum, leave as None
-                pass
-        
-        # Create message entity
+        # Create message entity (using plain types, not value objects)
         message = Message.create(
-            conversation_id=ConversationId(conversation_id),
-            role=message_role,
-            content=MessageContent(content),
-            agent_type=agent_type_enum
+            conversation_id=conversation_id,  # UUID, not ConversationId value object
+            role=message_role,  # MessageRole enum
+            content=content,  # str, not MessageContent value object
+            agent_type=agent_type  # Optional[str], not AgentType enum
         )
-        
+
         # Save to repository
         await self._repo.add_message(message)
-        
-        return str(message.id_.value)
+
+        return str(message.id)  # message.id is UUID, not value object
     
     async def get_chat_history(
         self, 
@@ -122,15 +109,15 @@ class AnvilSquadStorage:
             role_str = "user" if msg.role == MessageRole.USER else "assistant"
             if msg.role == MessageRole.SYSTEM:
                 role_str = "system"
-            
+
             history.append({
-                "id": str(msg.id_.value),
+                "id": str(msg.id),  # msg.id is UUID, not value object
                 "role": role_str,
-                "content": msg.content.value,
-                "agent_type": msg.agent_type.value if msg.agent_type else None,
-                "created_at": msg.created_at.value.isoformat() if msg.created_at else None,
+                "content": msg.content,  # msg.content is str, not value object
+                "agent_type": msg.agent_type if msg.agent_type else None,  # Optional[str]
+                "created_at": msg.created_at.isoformat() if msg.created_at else None,  # datetime
             })
-        
+
         return history
     
     async def get_conversation_context(

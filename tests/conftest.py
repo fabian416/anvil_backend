@@ -44,8 +44,14 @@ def pytest_configure(config):
 
 @pytest.fixture(scope="session")
 def event_loop() -> Generator:
-    """Create event loop for async tests."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    """Create event loop for async tests.
+
+    Session-scoped to ensure all async fixtures and tests
+    use the same event loop, preventing loop attachment errors.
+    """
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    asyncio.set_event_loop(loop)
     yield loop
     loop.close()
 
@@ -68,33 +74,110 @@ def test_settings():
 
 
 @pytest_asyncio.fixture
-async def test_container():
-    """Create test DI container with mock providers."""
-    from app.setup.ioc.testing import create_test_container
-    container = create_test_container()
-    yield container
-    await container.close()
+async def test_app(test_settings, monkeypatch):
+    """
+    Create test FastAPI application with real database for integration testing.
 
+    Uses:
+    - Real PostgreSQL database (anvil_test)
+    - Real Redis connection (db 15)
+    - All production providers from provider_registry
+    - Test database provider for AsyncSession
+    - Mock LLM providers (overrides OpenAI/Anthropic)
 
-@pytest.fixture
-def test_app(test_settings):
-    """Create test FastAPI application (requires httpx)."""
+    This enables full end-to-end integration testing.
+
+    Returns raw app (not TestClient) for use with httpx AsyncClient.
+    """
     try:
-        from app.run import make_app
-        app = make_app()
-        return app
+        import os
+        from app.setup.config.settings import load_settings, AppSettings
+        from app.setup.config.database import PostgresSettings
+        from app.setup.ioc.provider_registry import get_providers
+        from app.setup.ioc.testing import get_integration_test_providers
+        from dishka import make_async_container
+        from dishka.integrations.fastapi import setup_dishka
+        from app.setup.app_factory import create_app, configure_app
+        from app.presentation.http.controllers.root_router import create_root_router
+
+        # Set dummy API keys to allow provider initialization
+        # (Mock providers will be used instead via DI override)
+        # System uses Vertex AI (primary) + DeepInfra (fallback)
+        monkeypatch.setenv("VERTEX_AI_API_KEY", "test_vertex_key_not_used")
+        monkeypatch.setenv("DEEPINFRA_API_KEY", "test_deepinfra_key_not_used")
+        monkeypatch.setenv("OPENAI_API_KEY", "test_openai_key_not_used")  # Some legacy code still checks
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test_anthropic_key_not_used")
+
+        # Load original settings
+        original_settings = load_settings()
+
+        # Create new PostgresSettings with test database
+        test_postgres = PostgresSettings(
+            USER=original_settings.postgres.user,
+            PASSWORD=original_settings.postgres.password,
+            DB="anvil_test",  # Override database name
+            HOST=original_settings.postgres.host,
+            PORT=original_settings.postgres.port,
+            DRIVER=original_settings.postgres.driver,
+        )
+
+        # Create new AppSettings with modified postgres config
+        test_app_settings = AppSettings(
+            postgres=test_postgres,
+            sqla=original_settings.sqla,
+            security=original_settings.security,
+            logs=original_settings.logs,
+            admin=original_settings.admin,
+            mailgun=original_settings.mailgun,
+            stripe=original_settings.stripe,
+            privy=original_settings.privy,
+            integrations=original_settings.integrations,
+            mcp=original_settings.mcp,
+            agno=original_settings.agno,
+            projects=original_settings.projects,
+            distillation=original_settings.distillation,
+            agent_squad=original_settings.agent_squad,
+            transaction_confirmation=original_settings.transaction_confirmation,
+            translation=original_settings.translation,
+        )
+
+        # Create FastAPI app
+        app = create_app()
+        configure_app(app=app, root_router=create_root_router())
+
+        # Create DI container with:
+        # 1. All production providers (repositories, services, etc.)
+        # 2. Integration test providers (override with mocks)
+        # Note: Test providers come LAST to override production providers
+        async_ioc_container = make_async_container(
+            *get_providers(),  # All production providers
+            *get_integration_test_providers(),  # Test overrides (DB + Mock LLM)
+            context={AppSettings: test_app_settings},
+        )
+
+        setup_dishka(container=async_ioc_container, app=app)
+
+        yield app
+
+        # Cleanup
+        await async_ioc_container.close()
     except Exception as e:
         pytest.skip(f"FastAPI app creation failed: {e}")
 
 
-@pytest.fixture
-def client(test_app):
-    """Create test client (requires httpx)."""
+@pytest_asyncio.fixture
+async def client(test_app):
+    """Create async test client using httpx.
+
+    Uses AsyncClient instead of TestClient to avoid event loop conflicts.
+    This allows proper async/await patterns in tests.
+    """
     try:
-        from fastapi.testclient import TestClient
-        return TestClient(test_app)
+        from httpx import AsyncClient, ASGITransport
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            yield ac
     except ImportError as e:
-        pytest.skip(f"TestClient not available - install httpx for integration tests: {e}")
+        pytest.skip(f"AsyncClient not available - install httpx for integration tests: {e}")
 
 
 @pytest.fixture
@@ -157,6 +240,55 @@ def test_db_session(test_db_engine) -> Generator[Session, None, None]:
 def db_session(test_db_session):
     """Alias for test_db_session for backward compatibility."""
     return test_db_session
+
+
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def cleanup_database(test_db_engine):
+    """Clean up database tables before each test function.
+
+    This ensures test isolation by truncating all tables BEFORE each test.
+    Uses TRUNCATE for speed and CASCADE to handle foreign keys.
+
+    Uses async to properly synchronize with async test sessions.
+    """
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy import text
+
+    # Create async engine for proper async cleanup
+    async_engine = create_async_engine(
+        "postgresql+asyncpg://postgres:changethis@localhost:5432/anvil_test",
+        pool_pre_ping=True,
+        echo=False
+    )
+
+    # Tables to clean (except alembic_version)
+    tables = [
+        "messages",
+        "conversations",
+        "sessions",
+        "users",  # Also clean users table
+    ]
+
+    # Clean up BEFORE test to prevent data pollution from previous tests
+    async with async_engine.begin() as connection:
+        for table in tables:
+            try:
+                await connection.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
+            except Exception:
+                # Table might not exist, ignore
+                pass
+
+    yield  # Run the test
+
+    # Clean up after test as well for good measure
+    async with async_engine.begin() as connection:
+        for table in tables:
+            try:
+                await connection.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
+            except Exception:
+                pass
+
+    await async_engine.dispose()
 
 
 @pytest_asyncio.fixture

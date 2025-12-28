@@ -15,7 +15,7 @@ from uuid import UUID, uuid4
 from app.domain.chat.entities.message import Message
 from app.domain.entities.agent_squad.agent_telemetry import AgentTelemetry
 from app.domain.enums.agent_type import AgentType
-from app.domain.enums.message_role import MessageRole
+from app.domain.value_objects.message_role import MessageRole
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway
 from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageGateway
 from app.domain.ports.agent_squad.feature_flags_gateway import FeatureFlagsGateway

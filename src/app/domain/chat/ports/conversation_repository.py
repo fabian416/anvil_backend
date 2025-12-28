@@ -20,12 +20,21 @@ class ConversationRepository(Protocol):
     async def add_conversation(self, conversation: Conversation) -> None:
         """
         Add a new conversation.
-        
+
         Args:
             conversation: Conversation entity to persist
         """
         ...
-    
+
+    async def update_conversation(self, conversation: Conversation) -> None:
+        """
+        Update an existing conversation.
+
+        Args:
+            conversation: Conversation entity to update
+        """
+        ...
+
     async def get_conversation(self, conversation_id: UUID) -> Optional[Conversation]:
         """
         Get a conversation by ID.

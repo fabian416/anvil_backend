@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 async def get_wallet_balance_tool(
     address: str,
-    network: str = "ethereum",
     wallet_provider: WalletProvider,
     coingecko_client: CoinGeckoClient,
+    network: str = "ethereum",
 ) -> str:
     """
     Get wallet balances for an address.
@@ -149,8 +149,8 @@ async def get_protocol_info_tool(
 
 
 async def get_top_protocols_tool(
-    limit: int = 10,
     defillama_client: DeFiLlamaClient,
+    limit: int = 10,
 ) -> str:
     """
     Get top DeFi protocols by TVL.
@@ -283,9 +283,9 @@ async def get_market_overview_tool(
 
 
 async def get_yield_opportunities_tool(
+    defillama_client: DeFiLlamaClient,
     protocol: Optional[str] = None,
     chain: Optional[str] = None,
-    defillama_client: DeFiLlamaClient,
 ) -> str:
     """
     Get top yield farming opportunities.

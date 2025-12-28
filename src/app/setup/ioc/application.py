@@ -89,6 +89,7 @@ class ApplicationProvider(Provider):
         self,
         repository: ConversationRepository,
         agent_gateway: AgentGateway,
+        transaction_manager: TransactionManager,
     ) -> SendMessage:
         """
         Provide SendMessage with only required dependencies.
@@ -97,6 +98,7 @@ class ApplicationProvider(Provider):
         return SendMessage(
             repository=repository,
             agent_gateway=agent_gateway,
+            transaction_manager=transaction_manager,
         )
     
     chat_query_interactors = provide_all(

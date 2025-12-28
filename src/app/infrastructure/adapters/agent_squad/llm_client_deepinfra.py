@@ -175,6 +175,29 @@ class LLMClientDeepInfra:
             "model": response.model,
         }
 
+    async def generate(
+        self,
+        model: str,
+        messages: list[dict],
+        temperature: float = 0.7,
+        max_tokens: int = 1000,
+    ) -> str:
+        """
+        Generate text completion (simple string response).
+
+        Returns generated text content directly.
+        """
+        deepinfra_model = self._map_model(model)
+
+        response = await self._client.chat.completions.create(
+            model=deepinfra_model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+        return response.choices[0].message.content
+
     def _parse_json(self, content: str) -> dict[str, Any]:
         """Parse JSON response, handle errors."""
         try:

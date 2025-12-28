@@ -111,3 +111,22 @@ class LLMClientWithFallback:
                 )
                 return await self._fallback.chat(messages, model, temperature, max_tokens)
             raise
+
+    async def generate(
+        self,
+        model: str,
+        messages: list[dict],
+        temperature: float = 0.7,
+        max_tokens: int = 1000,
+    ) -> str:
+        """Generate text completion with fallback support."""
+        try:
+            return await self._primary.generate(model, messages, temperature, max_tokens)
+        except Exception as e:
+            if self._enable_fallback:
+                logger.warning(
+                    f"Primary provider failed for generate: {e}. "
+                    f"Falling back to secondary provider."
+                )
+                return await self._fallback.generate(model, messages, temperature, max_tokens)
+            raise

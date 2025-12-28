@@ -221,7 +221,7 @@ async def get_my_cost_breakdown(
     date_to: Optional[datetime] = Query(None, description="End date"),
     group_by: str = Query(
         "agent",
-        regex="^(agent|model|day|conversation)$",
+        pattern="^(agent|model|day|conversation)$",
         description="Group costs by dimension"
     ),
     user_id: int = Depends(get_current_user_id),
@@ -337,7 +337,7 @@ async def get_historical_trends(
     date_to: Optional[datetime] = Query(None, description="End date"),
     granularity: str = Query(
         "daily",
-        regex="^(hourly|daily|weekly)$",
+        pattern="^(hourly|daily|weekly)$",
         description="Time granularity for trends"
     ),
     user_id: int = Depends(get_current_user_id),
@@ -452,7 +452,7 @@ async def export_my_analytics(
     date_to: Optional[datetime] = Query(None, description="End date"),
     format: str = Query(
         "json",
-        regex="^(json|csv)$",
+        pattern="^(json|csv)$",
         description="Export format"
     ),
     include_conversations: bool = Query(

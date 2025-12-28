@@ -113,7 +113,7 @@ async def get_agent_performance(
     agent_type: Optional[str] = Query(None, description="Filter by specific agent type"),
     sort_by: str = Query(
         "invocations",
-        regex="^(invocations|success_rate|avg_response_time|total_cost)$",
+        pattern="^(invocations|success_rate|avg_response_time|total_cost)$",
         description="Sort leaderboard by metric"
     ),
     limit: int = Query(10, ge=1, le=50, description="Number of agents to return"),
@@ -224,7 +224,7 @@ async def get_cost_tracking(
     date_to: Optional[datetime] = Query(None, description="End date"),
     group_by: str = Query(
         "agent",
-        regex="^(agent|model|day|user)$",
+        pattern="^(agent|model|day|user)$",
         description="Group costs by dimension"
     ),
     analytics_service: FromDishka[AdminChatAnalyticsService] = None,
@@ -281,7 +281,7 @@ async def get_error_monitoring(
     date_to: Optional[datetime] = Query(None, description="End date"),
     severity: Optional[str] = Query(
         None,
-        regex="^(critical|high|medium|low)$",
+        pattern="^(critical|high|medium|low)$",
         description="Filter by error severity"
     ),
     analytics_service: FromDishka[AdminChatAnalyticsService] = None,
@@ -439,7 +439,7 @@ async def export_dashboard_data(
     date_to: Optional[datetime] = Query(None, description="End date"),
     format: str = Query(
         "json",
-        regex="^(json|csv)$",
+        pattern="^(json|csv)$",
         description="Export format"
     ),
     include_sections: Optional[List[str]] = Query(

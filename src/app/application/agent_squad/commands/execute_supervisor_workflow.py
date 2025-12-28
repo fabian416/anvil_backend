@@ -12,7 +12,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.domain.enums.agent_type import AgentType
-from app.domain.enums.message_role import MessageRole
+from app.domain.value_objects.message_role import MessageRole
 from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageGateway
 from app.domain.chat.ports.message_repository import MessageRepository
 from app.domain.services.agent_squad.context_manager import ContextManager

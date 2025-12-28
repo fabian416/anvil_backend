@@ -38,6 +38,7 @@ from app.presentation.http.schemas.chat import (
 )
 from app.application.chat.commands.create_conversation import CreateConversation
 from app.application.chat.commands.send_message import SendMessage
+from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
 from app.application.chat.queries.get_conversation import GetConversation
 from app.application.chat.queries.list_conversations import ListConversations
 from app.application.chat.queries.get_messages import GetMessages
@@ -73,7 +74,7 @@ def create_chat_router() -> APIRouter:
         """
         user = await current_user.get_current_user()
         conversation = await interactor.execute(
-            user_id=user.id,
+            user_id=user.id_.value,
             title=request.title,
         )
         
@@ -99,7 +100,7 @@ def create_chat_router() -> APIRouter:
         """
         user = await current_user.get_current_user()
         conversations = await interactor.execute(
-            user_id=user.id,
+            user_id=user.id_.value,
             limit=limit,
             offset=offset,
         )
@@ -130,7 +131,7 @@ def create_chat_router() -> APIRouter:
         """
         user = await current_user.get_current_user()
         conversation = await interactor.execute(
-            user_id=user.id,
+            user_id=user.id_.value,
             conversation_id=conversation_id,
         )
         
@@ -154,6 +155,7 @@ def create_chat_router() -> APIRouter:
         request: SendMessageRequest,
         current_user: FromDishka[CurrentUserService],
         interactor: FromDishka[SendMessage],
+        unified_orchestrator: FromDishka[UnifiedChatOrchestrator] = None,
     ) -> UnifiedChatResponse:
         """
         Send a message with intelligent routing.
@@ -223,16 +225,12 @@ def create_chat_router() -> APIRouter:
 
         user = await current_user.get_current_user()
 
-        # Use unified routing if enabled
-        if use_unified_routing:
+        # Use unified routing if enabled and orchestrator is available
+        if use_unified_routing and unified_orchestrator is not None:
             try:
-                # Try to get unified orchestrator from DI container
-                from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
-                orchestrator = FromDishka[UnifiedChatOrchestrator]
-
                 # Execute unified routing
-                result = await orchestrator.execute(
-                    user_id=user.id,
+                result = await unified_orchestrator.execute(
+                    user_id=user.id_.value,
                     conversation_id=conversation_id,
                     content=request.content,
                 )
@@ -247,7 +245,7 @@ def create_chat_router() -> APIRouter:
 
         # Fallback: Use regular chat (backward compatible)
         user_message, agent_message = await interactor.execute(
-            user_id=user.id,
+            user_id=user.id_.value,
             conversation_id=conversation_id,
             content=request.content,
         )
@@ -255,11 +253,16 @@ def create_chat_router() -> APIRouter:
         # Convert to unified response format (backward compatible)
         from app.presentation.http.schemas.chat import RoutingMetadata
 
+        # Map internal role to API standard (agent -> assistant for OpenAI compatibility)
+        def map_role_to_api(role_value: str) -> str:
+            """Map internal role enum to OpenAI/ChatGPT standard."""
+            return "assistant" if role_value == "agent" else role_value
+
         return UnifiedChatResponse(
             user_message={
                 "id": str(user_message.id),
                 "conversation_id": str(user_message.conversation_id),
-                "role": user_message.role.value,
+                "role": map_role_to_api(user_message.role.value),
                 "content": user_message.content,
                 "agent_type": user_message.agent_type,
                 "created_at": user_message.created_at.isoformat(),
@@ -267,7 +270,7 @@ def create_chat_router() -> APIRouter:
             agent_message={
                 "id": str(agent_message.id),
                 "conversation_id": str(agent_message.conversation_id),
-                "role": agent_message.role.value,
+                "role": map_role_to_api(agent_message.role.value),
                 "content": agent_message.content,
                 "agent_type": agent_message.agent_type,
                 "created_at": agent_message.created_at.isoformat(),
@@ -300,7 +303,7 @@ def create_chat_router() -> APIRouter:
         """
         user = await current_user.get_current_user()
         messages = await interactor.execute(
-            user_id=user.id,
+            user_id=user.id_.value,
             conversation_id=conversation_id,
             limit=limit,
         )
@@ -532,7 +535,7 @@ def create_chat_router() -> APIRouter:
         # Execute command
         result = await interactor.execute(
             conversation_id=conversation_id,
-            user_id=user.id,
+            user_id=user.id_.value,
             content=request.content,
             force_agent=request.force_agent,
         )
@@ -573,7 +576,7 @@ def create_chat_router() -> APIRouter:
         # Execute command
         result = await interactor.execute(
             conversation_id=conversation_id,
-            user_id=user.id,
+            user_id=user.id_.value,
             complex_task=request.complex_task,
             max_agents=request.max_agents or 5,
         )

@@ -4,19 +4,18 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.domain.enums.message_role import MessageRole
-from app.domain.enums.agent_type import AgentType
+from app.domain.value_objects.message_role import MessageRole
 
 class MessageCreate(BaseModel):
     content: str
-    agent_type: Optional[AgentType] = None
+    agent_type: Optional[str] = None
 
 class MessageRead(BaseModel):
     id: UUID
     conversation_id: UUID
     role: MessageRole
     content: str
-    agent_type: Optional[AgentType]
+    agent_type: Optional[str]
     created_at: datetime
 
     class Config:

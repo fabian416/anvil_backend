@@ -38,6 +38,8 @@ class AuthenticatedClient:
 
     Provides methods for making authenticated HTTP requests with
     automatic token management and role switching.
+
+    Now supports async operations with httpx.AsyncClient.
     """
 
     def __init__(
@@ -54,7 +56,7 @@ class AuthenticatedClient:
         """
         self._app = app
         self._base_url = base_url
-        self._client: TestClient | None = None
+        self._client = None  # Will be AsyncClient
         self._current_user: TestUser | None = None
         self._access_token: str | None = None
         self._refresh_token: str | None = None
@@ -62,19 +64,16 @@ class AuthenticatedClient:
         self._headers: dict[str, str] = {"Content-Type": "application/json"}
 
     def set_app(self, app: FastAPI) -> "AuthenticatedClient":
-        """Set the FastAPI application and create test client."""
+        """Set the FastAPI application for async client."""
         self._app = app
-        self._client = TestClient(app, base_url=self._base_url)
         return self
 
     @property
-    def client(self) -> TestClient:
-        """Get the underlying TestClient instance."""
-        if self._client is None:
-            if self._app is None:
-                raise ValueError("No FastAPI app set. Call set_app() first.")
-            self._client = TestClient(self._app, base_url=self._base_url)
-        return self._client
+    def client(self):
+        """Get the FastAPI app for AsyncClient initialization."""
+        if self._app is None:
+            raise ValueError("No FastAPI app set. Call set_app() first.")
+        return self._app
 
     @property
     def current_user(self) -> TestUser | None:
@@ -325,9 +324,9 @@ class AuthenticatedClient:
         return None
 
     # HTTP method wrappers
-    def get(self, path: str, **kwargs) -> Any:
+    async def get(self, path: str, **kwargs) -> Any:
         """
-        Make GET request with authentication.
+        Make async GET request with authentication.
 
         Args:
             path: Request path
@@ -336,36 +335,18 @@ class AuthenticatedClient:
         Returns:
             Response object
         """
-        return self.client.get(
-            path,
-            headers={**self._headers, **kwargs.pop("headers", {})},
-            cookies=self._get_cookies(),
-            **kwargs,
-        )
+        from httpx import AsyncClient, ASGITransport
+        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+            return await ac.get(
+                path,
+                headers={**self._headers, **kwargs.pop("headers", {})},
+                cookies=self._get_cookies(),
+                **kwargs,
+            )
 
-    def post(self, path: str, json: dict | None = None, **kwargs) -> Any:
+    async def post(self, path: str, json: dict | None = None, **kwargs) -> Any:
         """
-        Make POST request with authentication.
-
-        Args:
-            path: Request path
-            json: JSON body
-            **kwargs: Additional request arguments
-
-        Returns:
-            Response object
-        """
-        return self.client.post(
-            path,
-            json=json,
-            headers={**self._headers, **kwargs.pop("headers", {})},
-            cookies=self._get_cookies(),
-            **kwargs,
-        )
-
-    def put(self, path: str, json: dict | None = None, **kwargs) -> Any:
-        """
-        Make PUT request with authentication.
+        Make async POST request with authentication.
 
         Args:
             path: Request path
@@ -375,17 +356,19 @@ class AuthenticatedClient:
         Returns:
             Response object
         """
-        return self.client.put(
-            path,
-            json=json,
-            headers={**self._headers, **kwargs.pop("headers", {})},
-            cookies=self._get_cookies(),
-            **kwargs,
-        )
+        from httpx import AsyncClient, ASGITransport
+        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+            return await ac.post(
+                path,
+                json=json,
+                headers={**self._headers, **kwargs.pop("headers", {})},
+                cookies=self._get_cookies(),
+                **kwargs,
+            )
 
-    def patch(self, path: str, json: dict | None = None, **kwargs) -> Any:
+    async def put(self, path: str, json: dict | None = None, **kwargs) -> Any:
         """
-        Make PATCH request with authentication.
+        Make async PUT request with authentication.
 
         Args:
             path: Request path
@@ -395,17 +378,41 @@ class AuthenticatedClient:
         Returns:
             Response object
         """
-        return self.client.patch(
-            path,
-            json=json,
-            headers={**self._headers, **kwargs.pop("headers", {})},
-            cookies=self._get_cookies(),
-            **kwargs,
-        )
+        from httpx import AsyncClient, ASGITransport
+        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+            return await ac.put(
+                path,
+                json=json,
+                headers={**self._headers, **kwargs.pop("headers", {})},
+                cookies=self._get_cookies(),
+                **kwargs,
+            )
 
-    def delete(self, path: str, **kwargs) -> Any:
+    async def patch(self, path: str, json: dict | None = None, **kwargs) -> Any:
         """
-        Make DELETE request with authentication.
+        Make async PATCH request with authentication.
+
+        Args:
+            path: Request path
+            json: JSON body
+            **kwargs: Additional request arguments
+
+        Returns:
+            Response object
+        """
+        from httpx import AsyncClient, ASGITransport
+        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+            return await ac.patch(
+                path,
+                json=json,
+                headers={**self._headers, **kwargs.pop("headers", {})},
+                cookies=self._get_cookies(),
+                **kwargs,
+            )
+
+    async def delete(self, path: str, **kwargs) -> Any:
+        """
+        Make async DELETE request with authentication.
 
         Args:
             path: Request path
@@ -414,12 +421,14 @@ class AuthenticatedClient:
         Returns:
             Response object
         """
-        return self.client.delete(
-            path,
-            headers={**self._headers, **kwargs.pop("headers", {})},
-            cookies=self._get_cookies(),
-            **kwargs,
-        )
+        from httpx import AsyncClient, ASGITransport
+        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+            return await ac.delete(
+                path,
+                headers={**self._headers, **kwargs.pop("headers", {})},
+                cookies=self._get_cookies(),
+                **kwargs,
+            )
 
     def websocket_connect(self, path: str, **kwargs) -> Any:
         """

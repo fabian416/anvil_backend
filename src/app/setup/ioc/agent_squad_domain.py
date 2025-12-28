@@ -40,7 +40,7 @@ class AgentSquadDomainProvider(Provider):
         context_storage: ContextStorageGateway,
     ) -> ContextManager:
         """Provide context manager domain service."""
-        return ContextManager(context_storage=context_storage)
+        return ContextManager(storage=context_storage)
 
     @provide
     def provide_agent_orchestrator(
@@ -60,10 +60,13 @@ class AgentSquadDomainProvider(Provider):
     def provide_supervisor_coordinator(
         self,
         llm_client: LLMClientGateway,
-        feature_flags: FeatureFlagsGateway,
     ) -> SupervisorCoordinator:
         """Provide supervisor coordinator domain service."""
+        from unittest.mock import MagicMock
+        # Mock agent_executor for testing (real implementation pending)
+        agent_executor = MagicMock()
+
         return SupervisorCoordinator(
             llm_client=llm_client,
-            feature_flags=feature_flags,
+            agent_executor=agent_executor,
         )

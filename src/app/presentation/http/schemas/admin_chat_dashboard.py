@@ -5,7 +5,7 @@ Pydantic models for admin analytics endpoints.
 """
 
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, Field
 
 
@@ -60,7 +60,7 @@ class ErrorStatistics(BaseModel):
     error_type: str
     count: int
     percentage: float = Field(..., ge=0, le=100)
-    severity: str = Field(..., regex="^(critical|high|medium|low)$")
+    severity: str = Field(..., pattern="^(critical|high|medium|low)$")
     most_common_message: Optional[str] = None
     affected_agents: List[str]
     first_occurrence: datetime
@@ -237,7 +237,7 @@ class ActiveUsersResponse(BaseModel):
     )
 
     # Top users
-    most_active_users: List[Dict[str, any]] = Field(
+    most_active_users: List[Dict[str, Any]] = Field(
         ...,
         max_items=10,
         description="Top users by message count (anonymized)"
@@ -258,7 +258,7 @@ class ConversationMetricsResponse(BaseModel):
     conversation_stats: ConversationStats
 
     # Topic distribution
-    top_topics: List[Dict[str, any]] = Field(
+    top_topics: List[Dict[str, Any]] = Field(
         ...,
         max_items=10,
         description="Most discussed topics with counts"
@@ -282,13 +282,13 @@ class ConversationMetricsResponse(BaseModel):
 class ExportDataResponse(BaseModel):
     """Export data response."""
 
-    export_format: str = Field(..., regex="^(json|csv)$")
+    export_format: str = Field(..., pattern="^(json|csv)$")
     date_from: datetime
     date_to: datetime
     sections_included: List[str]
 
     # Export data
-    data: Dict[str, any] = Field(
+    data: Dict[str, Any] = Field(
         ...,
         description="Exported data in requested format"
     )

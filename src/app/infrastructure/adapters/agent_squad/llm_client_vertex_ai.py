@@ -188,6 +188,34 @@ class LLMClientVertexAI:
             "model": gemini_model,
         }
 
+    async def generate(
+        self,
+        model: str,
+        messages: list[dict],
+        temperature: float = 0.7,
+        max_tokens: int = 1000,
+    ) -> str:
+        """
+        Generate text completion (simple string response).
+
+        Returns generated text content directly.
+        """
+        gemini_model = self._map_model(model)
+
+        # Convert OpenAI-style messages to Gemini format
+        prompt = self._convert_messages_to_prompt(messages)
+
+        response = self._client.models.generate_content(
+            model=gemini_model,
+            contents=prompt,
+            config={
+                "temperature": temperature,
+                "max_output_tokens": max_tokens,
+            },
+        )
+
+        return response.text
+
     def _convert_messages_to_prompt(self, messages: list[dict]) -> str:
         """Convert OpenAI-style messages to a single prompt for Gemini."""
         prompt_parts = []

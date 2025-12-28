@@ -39,6 +39,9 @@ from app.domain.exceptions.auth import InvalidAuthorizationHeaderError
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# Alias for backward compatibility
+manager = connection_manager
+
 
 # TODO: Replace with actual JWT authentication
 async def get_current_user_from_token(token: str) -> Optional[Dict[str, Any]]:

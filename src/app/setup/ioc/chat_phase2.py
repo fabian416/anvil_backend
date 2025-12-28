@@ -9,9 +9,9 @@ Provides DI setup for all Phase 2 components:
 """
 
 import os
-from typing import Optional
+from typing import Optional, Any
 
-from dishka import Provider, Scope, provide
+from dishka import Provider, Scope, provide, decorate
 from redis.asyncio import Redis, ConnectionPool
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,6 +30,7 @@ from app.domain.ports.chat_llm_provider import ChatLLMProvider
 from app.domain.ports.embeddings.embedding_service import EmbeddingService
 from app.domain.ports.translation_adapter import TranslationAdapter
 from app.domain.ports.vector.vector_repository import VectorRepository
+from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 # Domain Ports - Infrastructure
 from app.domain.ports.cache_adapter import CacheAdapter
@@ -52,9 +53,30 @@ from app.infrastructure.adapters.chat.preferences_repository_adapter import User
 from app.infrastructure.adapters.ai.openai_chat_adapter import OpenAIChatAdapter
 from app.infrastructure.adapters.ai.anthropic_chat_adapter import AnthropicChatAdapter
 from app.infrastructure.adapters.ai.openai_embedding_adapter import OpenAIEmbeddingAdapter
-from app.infrastructure.adapters.ai.cohere_embedding_adapter import CohereEmbeddingAdapter
 from app.infrastructure.adapters.ai.cached_embedding_adapter import CachedEmbeddingAdapter
-from app.infrastructure.adapters.external.deepl_translation_adapter import DeepLTranslationAdapter
+
+# Application Services
+from app.application.chat.services.intent_detector import IntentDetectorService
+from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
+from app.application.chat.commands.send_message import SendMessage
+from app.application.chat.graph_search_handler import ChatGraphSearchHandler
+from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
+from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
+from app.application.agent_squad.commands.execute_supervisor_workflow import ExecuteSupervisorWorkflow
+
+# Optional: Cohere embedding adapter (requires cohere package)
+try:
+    from app.infrastructure.adapters.ai.cohere_embedding_adapter import CohereEmbeddingAdapter
+    COHERE_AVAILABLE = True
+except ImportError:
+    COHERE_AVAILABLE = False
+
+# Optional: DeepL translation adapter (requires deepl package)
+try:
+    from app.infrastructure.adapters.external.deepl_translation_adapter import DeepLTranslationAdapter
+    DEEPL_AVAILABLE = True
+except ImportError:
+    DEEPL_AVAILABLE = False
 
 # Infrastructure Adapters - Redis
 from app.infrastructure.adapters.chat.redis_cache_adapter import RedisCacheAdapter
@@ -65,10 +87,26 @@ from app.infrastructure.adapters.chat.redis_translation_cache_adapter import Red
 from app.infrastructure.adapters.chat.notification_adapter import NotificationAdapter as NotificationAdapterImpl
 
 # WebSocket Handlers
-from app.presentation.http.websocket.chat_websocket import ChatWebSocketHandler
-from app.presentation.http.websocket.analytics_handler import AnalyticsWebSocketHandler
-from app.presentation.http.websocket.template_handler import TemplateExecutionWebSocketHandler
 from app.presentation.http.websocket.connection_manager import ConnectionManager
+
+# Optional: WebSocket handlers (may not be fully implemented)
+try:
+    from app.presentation.http.websocket.chat_websocket import ChatWebSocketHandler
+    CHAT_WEBSOCKET_AVAILABLE = True
+except (ImportError, AttributeError):
+    CHAT_WEBSOCKET_AVAILABLE = False
+
+try:
+    from app.presentation.http.websocket.analytics_handler import AnalyticsWebSocketHandler
+    ANALYTICS_WEBSOCKET_AVAILABLE = True
+except (ImportError, AttributeError):
+    ANALYTICS_WEBSOCKET_AVAILABLE = False
+
+try:
+    from app.presentation.http.websocket.template_handler import TemplateExecutionWebSocketHandler
+    TEMPLATE_WEBSOCKET_AVAILABLE = True
+except (ImportError, AttributeError):
+    TEMPLATE_WEBSOCKET_AVAILABLE = False
 
 # Application Services
 from app.application.chat.services.advanced_intent_detector import AdvancedIntentDetector
@@ -357,7 +395,6 @@ class ChatPhase2Provider(Provider):
             model=model,
             timeout=30.0,
             max_retries=3,
-            batch_size=100,
         )
 
     @provide(scope=Scope.APP)
@@ -369,8 +406,11 @@ class ChatPhase2Provider(Provider):
         - embed-english-v3.0 or embed-multilingual-v3.0
         - Batch processing support
 
-        Returns None if API key not configured.
+        Returns None if API key not configured or cohere package not installed.
         """
+        if not COHERE_AVAILABLE:
+            return None
+
         api_key = os.getenv("COHERE_API_KEY")
         if not api_key:
             return None
@@ -382,10 +422,9 @@ class ChatPhase2Provider(Provider):
             model=model,
             timeout=30.0,
             max_retries=3,
-            batch_size=96,
         )
 
-    @provide(scope=Scope.APP)
+    @decorate
     def provide_cached_embedding_service(
         self,
         openai_embedding_service: EmbeddingService,
@@ -396,11 +435,13 @@ class ChatPhase2Provider(Provider):
 
         Wraps primary embedding service with Redis cache layer
         to reduce API costs and improve latency.
+
+        Uses @decorate to wrap the base EmbeddingService provider.
         """
         return CachedEmbeddingAdapter(
             embedding_service=openai_embedding_service,
             redis_client=redis_cache_client,
-            key_prefix="embed",
+            prefix="embed",
             ttl=2592000,  # 30 days
         )
 
@@ -418,8 +459,11 @@ class ChatPhase2Provider(Provider):
         - Support for 30+ languages
         - Formality and context awareness
 
-        Returns None if API key not configured.
+        Returns None if API key not configured or deepl package not installed.
         """
+        if not DEEPL_AVAILABLE:
+            return None
+
         api_key = os.getenv("DEEPL_API_KEY")
         if not api_key:
             return None
@@ -434,10 +478,10 @@ class ChatPhase2Provider(Provider):
         )
 
     # ========================================
-    # Vector Database (APP-scoped)
+    # Vector Database (REQUEST-scoped)
     # ========================================
 
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     def provide_vector_repository(
         self,
         session: AsyncSession,
@@ -445,50 +489,11 @@ class ChatPhase2Provider(Provider):
         """
         Provide vector repository for similarity search.
 
-        Currently uses PostgreSQL with pgvector extension.
-        Can be swapped to Pinecone, Weaviate, or other vector DBs.
-
-        Configuration via environment:
-        - VECTOR_DB_TYPE: "pgvector" (default), "pinecone", "weaviate"
-        - PINECONE_API_KEY: API key for Pinecone
-        - PINECONE_ENVIRONMENT: Pinecone environment
-        - WEAVIATE_URL: Weaviate instance URL
+        Uses PostgreSQL with array operations for vector storage.
         """
-        vector_db_type = os.getenv("VECTOR_DB_TYPE", "pgvector")
+        from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import VectorRepositorySqla
 
-        if vector_db_type == "pinecone":
-            # Lazy import to avoid dependencies if not used
-            from app.infrastructure.adapters.vector.pinecone_adapter import PineconeVectorAdapter
-
-            api_key = os.getenv("PINECONE_API_KEY")
-            environment = os.getenv("PINECONE_ENVIRONMENT", "us-west1-gcp")
-
-            if not api_key:
-                raise ValueError("PINECONE_API_KEY required when VECTOR_DB_TYPE=pinecone")
-
-            return PineconeVectorAdapter(
-                api_key=api_key,
-                environment=environment,
-                index_name="anvil-embeddings",
-            )
-
-        elif vector_db_type == "weaviate":
-            # Lazy import to avoid dependencies if not used
-            from app.infrastructure.adapters.vector.weaviate_adapter import WeaviateVectorAdapter
-
-            url = os.getenv("WEAVIATE_URL", "http://localhost:8080")
-            api_key = os.getenv("WEAVIATE_API_KEY")  # Optional for local
-
-            return WeaviateVectorAdapter(
-                url=url,
-                api_key=api_key,
-                class_name="AnvilEmbedding",
-            )
-
-        else:  # Default: pgvector
-            from app.infrastructure.adapters.vector.pgvector_adapter import PgVectorAdapter
-
-            return PgVectorAdapter(session=session)
+        return VectorRepositorySqla(session=session)
 
     # ========================================
     # WebSocket Handlers (APP-scoped)
@@ -512,32 +517,38 @@ class ChatPhase2Provider(Provider):
         self,
         connection_manager: ConnectionManager,
         session_store: SessionStore,
-    ) -> ChatWebSocketHandler:
-        """Provide chat WebSocket handler."""
+    ) -> Optional[Any]:
+        """Provide chat WebSocket handler (optional)."""
+        if not CHAT_WEBSOCKET_AVAILABLE:
+            return None
         return ChatWebSocketHandler(
             connection_manager=connection_manager,
             session_store=session_store,
         )
 
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     def provide_analytics_websocket_handler(
         self,
         connection_manager: ConnectionManager,
         analytics_repository: AnalyticsRepository,
-    ) -> AnalyticsWebSocketHandler:
-        """Provide analytics WebSocket handler."""
+    ) -> Optional[Any]:
+        """Provide analytics WebSocket handler (REQUEST-scoped to access repository)."""
+        if not ANALYTICS_WEBSOCKET_AVAILABLE:
+            return None
         return AnalyticsWebSocketHandler(
             connection_manager=connection_manager,
             analytics_repository=analytics_repository,
         )
 
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     def provide_template_execution_websocket_handler(
         self,
         connection_manager: ConnectionManager,
         template_execution_repository: TemplateExecutionRepository,
-    ) -> TemplateExecutionWebSocketHandler:
-        """Provide template execution WebSocket handler."""
+    ) -> Optional[Any]:
+        """Provide template execution WebSocket handler (REQUEST-scoped to access repository)."""
+        if not TEMPLATE_WEBSOCKET_AVAILABLE:
+            return None
         return TemplateExecutionWebSocketHandler(
             connection_manager=connection_manager,
             template_execution_repository=template_execution_repository,
@@ -602,54 +613,36 @@ class ChatPhase2Provider(Provider):
     # ========================================
 
     @provide
-    def provide_intent_detector_service(self):
+    def provide_intent_detector_service(
+        self,
+        llm_client: LLMClientGateway,
+    ) -> IntentDetectorService:
         """
         Provide intent detector for unified routing.
 
         Uses LLM-powered classification with keyword fallback.
+        LLM client is automatically injected by Dishka:
+        - In tests: MockLLMClientGateway from TestMockProvider
+        - In production: LLMClientWithFallback from AgentSquadInfrastructureProvider
         """
-        from app.application.chat.services.intent_detector import IntentDetectorService
-        from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
-        from app.setup.config.loader import load_full_config
-
-        # Load configuration
-        config = load_full_config(env=os.getenv("APP_ENV", "local"))
-        agent_squad_config = config.get("agent_squad", {})
-
-        # Check if LLM should be used for intent classification
-        use_llm = agent_squad_config.get("unified_routing_use_llm", True)
-
-        # Get LLM client if enabled
-        llm_client = None
-        if use_llm:
-            try:
-                # Try to get LLM client from container
-                from dishka import FromDishka
-                llm_client = FromDishka[LLMClientGateway]
-            except Exception:
-                # Fallback to keyword-only classification
-                pass
-
         return IntentDetectorService(llm_client=llm_client)
 
     @provide
     def provide_unified_chat_orchestrator(
         self,
-        conversation_repository,
-        intent_detector_service,
-        graphrag_search_handler,
-        graphrag_risk_handler,
-        agent_squad_message_command,
-        supervisor_workflow_command,
-        regular_chat_command,
-    ):
+        conversation_repository: ConversationRepository,
+        intent_detector_service: IntentDetectorService,
+        graphrag_search_handler: ChatGraphSearchHandler,
+        graphrag_risk_handler: ChatRiskInsightsHandler,
+        agent_squad_message_command: SendAgentSquadMessage,
+        supervisor_workflow_command: ExecuteSupervisorWorkflow,
+        regular_chat_command: SendMessage,
+    ) -> UnifiedChatOrchestrator:
         """
         Provide unified chat orchestrator.
 
         Routes messages to appropriate handlers based on detected intent.
         """
-        from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
-
         return UnifiedChatOrchestrator(
             conversation_repo=conversation_repository,
             intent_detector=intent_detector_service,

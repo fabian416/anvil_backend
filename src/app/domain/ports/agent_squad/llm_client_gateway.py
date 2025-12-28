@@ -75,14 +75,35 @@ class LLMClientGateway(Protocol):
     ) -> dict:
         """
         Chat completion.
-        
+
         Args:
             messages: Conversation messages
             model: Model to use
             temperature: Sampling temperature
             max_tokens: Maximum response tokens
-            
+
         Returns:
             dict with content, tokens_used, etc.
+        """
+        ...
+
+    async def generate(
+        self,
+        model: str,
+        messages: list[dict],
+        temperature: float = 0.7,
+        max_tokens: int = 1000,
+    ) -> str:
+        """
+        Generate text completion (simple string response).
+
+        Args:
+            model: Model to use (e.g., "gpt-4o-mini")
+            messages: Conversation messages
+            temperature: Sampling temperature
+            max_tokens: Maximum response tokens
+
+        Returns:
+            Generated text response
         """
         ...

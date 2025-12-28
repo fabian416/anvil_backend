@@ -125,7 +125,7 @@ def create_intent_detection_router() -> APIRouter:
         # Get autocomplete suggestions
         suggestions = await intent_detector.suggest_completions(
             partial_message=request.partial_message,
-            user_id=user.id,
+            user_id=user.id_.value,
             limit=request.limit,
         )
 
@@ -174,7 +174,7 @@ def create_intent_detection_router() -> APIRouter:
         # Find similar conversations
         matches = await intent_detector.find_similar_conversations(
             current_message=request.message,
-            user_id=user.id,
+            user_id=user.id_.value,
             limit=request.limit,
             similarity_threshold=request.similarity_threshold,
         )

@@ -8,7 +8,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
-from app.domain.enums.message_role import MessageRole
+from app.domain.value_objects.message_role import MessageRole
 from app.domain.enums.agent_type import AgentType
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 

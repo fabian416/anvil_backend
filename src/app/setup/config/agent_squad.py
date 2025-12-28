@@ -70,9 +70,13 @@ class AgentSquadSettings(BaseModel):
     enabled: bool = True
 
     # Intent classification
+    enable_intent_classification: bool = True
+    log_intent_classification: bool = False
+    log_agent_selection: bool = False  # Log agent selection decisions
     intent_classification_model: str = "gpt-4o-mini"
     intent_confidence_threshold: float = 0.85
     fallback_agent: str = "chat"
+    max_context_messages: int = 10
 
     # Supervisor coordination
     enable_supervisor: bool = True

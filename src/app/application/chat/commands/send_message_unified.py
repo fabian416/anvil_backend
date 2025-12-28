@@ -246,7 +246,7 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "PROTOCOL_SEARCH",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
                 "handler": "graphrag_search",
                 "reasoning": intent_result.reasoning,
@@ -302,7 +302,7 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "RISK_ASSESSMENT",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
                 "handler": "graphrag_risk",
                 "reasoning": intent_result.reasoning,
@@ -349,7 +349,7 @@ class UnifiedChatOrchestrator:
                 "user_message": self._message_to_dict(user_msg),
                 "agent_message": self._message_to_dict(agent_msg),
                 "routing": {
-                    "intent": "SIMILAR_PROTOCOLS",
+                    "intent": intent_result.intent.value,
                     "confidence": intent_result.confidence,
                     "handler": "graphrag_similar",
                     "reasoning": "Protocol not found, fallback response",
@@ -384,7 +384,7 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "SIMILAR_PROTOCOLS",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
                 "handler": "graphrag_similar",
                 "reasoning": intent_result.reasoning,
@@ -433,9 +433,9 @@ class UnifiedChatOrchestrator:
                 "agent_type": result["agent_type"],
             },
             "routing": {
-                "intent": "SPECIALIST_TASK",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "agent_squad",
+                "handler": "agent_orchestrator",
                 "agent_used": result["agent_type"],
                 "reasoning": intent_result.reasoning,
             },
@@ -469,9 +469,9 @@ class UnifiedChatOrchestrator:
                 "role": "assistant",
             },
             "routing": {
-                "intent": "COMPLEX_WORKFLOW",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "supervisor",
+                "handler": "agent_orchestrator",
                 "reasoning": intent_result.reasoning,
             },
             "enrichment": {
@@ -498,9 +498,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "GENERAL_CONVERSATION",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "regular_chat",
+                "handler": "general_chat",
                 "reasoning": intent_result.reasoning,
             },
         }
@@ -527,16 +527,19 @@ class UnifiedChatOrchestrator:
         conversation = await self._conversation_repo.get_conversation(conversation_id)
         if conversation:
             conversation.touch()
-            await self._conversation_repo.add_conversation(conversation)
+            await self._conversation_repo.update_conversation(conversation)
 
         return user_message, agent_message
 
     def _message_to_dict(self, message: Message) -> dict:
         """Convert Message entity to dict for response."""
+        # Map 'agent' role to 'assistant' for OpenAI API compatibility
+        role = "assistant" if message.role.value == "agent" else message.role.value
+
         return {
             "id": str(message.id),
             "conversation_id": str(message.conversation_id),
-            "role": message.role.value,
+            "role": role,
             "content": message.content,
             "agent_type": message.agent_type,
             "created_at": message.created_at.isoformat(),
@@ -729,9 +732,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "hunter_sentiment",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_sentiment",
+                "handler": "hunter_ai",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -799,9 +802,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "hunter_price_prediction",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_price_prediction",
+                "handler": "hunter_ai",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -854,9 +857,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "hunter_risk_signals",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_risk_signals",
+                "handler": "hunter_ai",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -917,9 +920,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "hunter_trading_signals",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_trading_signals",
+                "handler": "hunter_ai",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -992,9 +995,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "hunter_patterns",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_patterns",
+                "handler": "hunter_ai",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -1053,9 +1056,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "hunter_portfolio",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "hunter_portfolio",
+                "handler": "hunter_ai",
                 "agent_used": "hunter_ai",
                 "reasoning": intent_result.reasoning,
             },
@@ -1137,9 +1140,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "ultra_arbitrage",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "ultra_arbitrage",
+                "handler": "ultra",
                 "agent_used": "ultra_discovery",
                 "reasoning": intent_result.reasoning,
             },
@@ -1218,9 +1221,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "ultra_flash_loans",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "ultra_flash_loans",
+                "handler": "ultra",
                 "agent_used": "ultra_flash_loan_engine",
                 "reasoning": intent_result.reasoning,
             },
@@ -1300,9 +1303,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "ultra_mev_protection",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "ultra_mev_protection",
+                "handler": "ultra",
                 "agent_used": "ultra_mev_engine",
                 "reasoning": intent_result.reasoning,
             },
@@ -1391,9 +1394,9 @@ class UnifiedChatOrchestrator:
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": "ultra_auto_executor",
+                "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
-                "handler": "ultra_auto_executor",
+                "handler": "ultra",
                 "agent_used": "ultra_auto_executor",
                 "reasoning": intent_result.reasoning,
             },

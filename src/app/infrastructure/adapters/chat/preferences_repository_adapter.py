@@ -9,16 +9,30 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-
+from app.infrastructure.adapters.types import MainAsyncSession
 from app.domain.preferences.ports.user_preferences_repository import UserPreferencesRepository
-from app.domain.value_objects.chat.preferences import (
-    UserChatPreferences,
-    VerbosityLevel,
-    ToneStyle,
-    ResponseFormat,
-    NotificationPreferences,
-    DisplayPreferences,
-)
+from app.domain.chat.entities.chat.user_chat_preferences import UserChatPreferences
+
+# TODO: These value objects don't exist yet, stubbing for now
+class VerbosityLevel(int):
+    pass
+
+class ToneStyle(str):
+    pass
+
+class ResponseFormat(str):
+    pass
+
+class NotificationPreferences:
+    def __init__(self, enabled=True, email=True, push=False):
+        self.enabled = enabled
+        self.email = email
+        self.push = push
+
+class DisplayPreferences:
+    def __init__(self, theme="light", compact=False):
+        self.theme = theme
+        self.compact = compact
 
 
 class UserPreferencesRepositoryAdapter(UserPreferencesRepository):
@@ -252,7 +266,6 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.persistence_sqla.registry import mapping_registry
-from app.infrastructure.adapters.types import MainAsyncSession
 
 
 @mapping_registry.mapped

@@ -161,8 +161,9 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
         """
         for intent in intents:
             self._agents[intent] = agent
-        
-        if self.config.debug_mode:
+
+        # Log agent registration (debug mode check removed as field doesn't exist in config)
+        if hasattr(self.config, 'debug_mode') and self.config.debug_mode:
             print(f"Registered agent '{agent_name}' for intents: {intents}")
     
     async def _generate_fallback_response(

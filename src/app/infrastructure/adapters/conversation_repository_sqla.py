@@ -10,15 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.chat.entities.conversation import Conversation
 from app.domain.chat.entities.message import Message
-from app.domain.value_objects.conversation_id import ConversationId
-from app.domain.value_objects.message_id import MessageId
-from app.domain.value_objects.user_id import UserId
-from app.domain.value_objects.conversation_title import ConversationTitle
-from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.created_at import CreatedAt
-from app.domain.value_objects.updated_at import UpdatedAt
-from app.domain.enums.message_role import MessageRole
-from app.domain.enums.agent_type import AgentType
+from app.domain.value_objects.message_role import MessageRole
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 
@@ -44,25 +36,47 @@ class SqlaConversationRepository(ConversationRepository):
         """Add a new conversation to the database."""
         # Get the mapped table
         conversations_table = mapping_registry.metadata.tables.get("conversations")
-        if not conversations_table:
+        if conversations_table is None:
             raise RuntimeError("conversations table not found in metadata")
-        
+
         # Insert conversation data
         stmt = conversations_table.insert().values(
-            id=conversation.id_.value,
-            user_id=conversation.user_id.value,
-            title=conversation.title.value if conversation.title else None,
-            created_at=conversation.created_at.value,
-            updated_at=conversation.updated_at.value
+            id=conversation.id,
+            user_id=conversation.user_id,
+            title=conversation.title if conversation.title else None,
+            project_id=conversation.project_id if conversation.project_id else None,
+            created_at=conversation.created_at,
+            updated_at=conversation.updated_at
         )
-        
+
+        await self._session.execute(stmt)
+        await self._session.flush()
+
+    async def update_conversation(self, conversation: Conversation) -> None:
+        """Update an existing conversation in the database."""
+        # Get the mapped table
+        conversations_table = mapping_registry.metadata.tables.get("conversations")
+        if conversations_table is None:
+            raise RuntimeError("conversations table not found in metadata")
+
+        # Update conversation data
+        stmt = (
+            conversations_table.update()
+            .where(conversations_table.c.id == conversation.id)
+            .values(
+                title=conversation.title if conversation.title else None,
+                project_id=conversation.project_id if conversation.project_id else None,
+                updated_at=conversation.updated_at
+            )
+        )
+
         await self._session.execute(stmt)
         await self._session.flush()
     
     async def get_conversation(self, conversation_id: UUID) -> Optional[Conversation]:
         """Get a conversation by ID."""
         conversations_table = mapping_registry.metadata.tables.get("conversations")
-        if not conversations_table:
+        if conversations_table is None:
             raise RuntimeError("conversations table not found in metadata")
         
         stmt = select(conversations_table).where(
@@ -77,11 +91,12 @@ class SqlaConversationRepository(ConversationRepository):
         
         # Map row to entity
         return Conversation(
-            id_=ConversationId(row.id),
-            user_id=UserId(row.user_id),
-            title=ConversationTitle(row.title) if row.title else None,
-            created_at=CreatedAt(row.created_at),
-            updated_at=UpdatedAt(row.updated_at)
+            id=row.id,
+            user_id=row.user_id,
+            title=row.title,
+            project_id=row.project_id if hasattr(row, 'project_id') else None,
+            created_at=row.created_at,
+            updated_at=row.updated_at
         )
     
     async def list_conversations(
@@ -92,7 +107,7 @@ class SqlaConversationRepository(ConversationRepository):
     ) -> List[Conversation]:
         """List conversations for a user."""
         conversations_table = mapping_registry.metadata.tables.get("conversations")
-        if not conversations_table:
+        if conversations_table is None:
             raise RuntimeError("conversations table not found in metadata")
         
         stmt = (
@@ -110,11 +125,12 @@ class SqlaConversationRepository(ConversationRepository):
         conversations = []
         for row in rows:
             conversation = Conversation(
-                id_=ConversationId(row.id),
-                user_id=UserId(row.user_id),
-                title=ConversationTitle(row.title) if row.title else None,
-                created_at=CreatedAt(row.created_at),
-                updated_at=UpdatedAt(row.updated_at)
+                id=row.id,
+                user_id=row.user_id,
+                title=row.title,
+                project_id=row.project_id if hasattr(row, 'project_id') else None,
+                created_at=row.created_at,
+                updated_at=row.updated_at
             )
             conversations.append(conversation)
         
@@ -123,17 +139,17 @@ class SqlaConversationRepository(ConversationRepository):
     async def add_message(self, message: Message) -> None:
         """Add a message to a conversation."""
         messages_table = mapping_registry.metadata.tables.get("messages")
-        if not messages_table:
+        if messages_table is None:
             raise RuntimeError("messages table not found in metadata")
         
         # Insert message data
         stmt = messages_table.insert().values(
-            id=message.id_.value,
-            conversation_id=message.conversation_id.value,
+            id=message.id,
+            conversation_id=message.conversation_id,
             role=message.role.value,
-            content=message.content.value,
-            agent_type=message.agent_type.value if message.agent_type else None,
-            created_at=message.created_at.value
+            content=message.content,
+            agent_type=message.agent_type if message.agent_type else None,
+            created_at=message.created_at
         )
         
         await self._session.execute(stmt)
@@ -142,7 +158,7 @@ class SqlaConversationRepository(ConversationRepository):
     async def get_message(self, message_id: UUID) -> Optional[Message]:
         """Get a message by ID."""
         messages_table = mapping_registry.metadata.tables.get("messages")
-        if not messages_table:
+        if messages_table is None:
             raise RuntimeError("messages table not found in metadata")
         
         stmt = select(messages_table).where(
@@ -157,12 +173,12 @@ class SqlaConversationRepository(ConversationRepository):
         
         # Map row to entity
         return Message(
-            id_=MessageId(row.id),
-            conversation_id=ConversationId(row.conversation_id),
+            id=row.id,
+            conversation_id=row.conversation_id,
             role=MessageRole(row.role),
-            content=MessageContent(row.content),
-            agent_type=AgentType(row.agent_type) if row.agent_type else None,
-            created_at=CreatedAt(row.created_at)
+            content=row.content,
+            agent_type=row.agent_type,
+            created_at=row.created_at
         )
     
     async def get_messages(
@@ -172,7 +188,7 @@ class SqlaConversationRepository(ConversationRepository):
     ) -> List[Message]:
         """Get messages for a conversation."""
         messages_table = mapping_registry.metadata.tables.get("messages")
-        if not messages_table:
+        if messages_table is None:
             raise RuntimeError("messages table not found in metadata")
         
         stmt = (
@@ -189,12 +205,12 @@ class SqlaConversationRepository(ConversationRepository):
         messages = []
         for row in rows:
             message = Message(
-                id_=MessageId(row.id),
-                conversation_id=ConversationId(row.conversation_id),
+                id=row.id,
+                conversation_id=row.conversation_id,
                 role=MessageRole(row.role),
-                content=MessageContent(row.content),
-                agent_type=AgentType(row.agent_type) if row.agent_type else None,
-                created_at=CreatedAt(row.created_at)
+                content=row.content,
+                agent_type=row.agent_type,
+                created_at=row.created_at
             )
             messages.append(message)
         

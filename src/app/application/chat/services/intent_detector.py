@@ -255,12 +255,14 @@ Classify the intent and extract entities."""
         message_lower = message.lower()
 
         # Protocol search patterns (highest priority)
+        # Match flexible patterns: "show me protocols", "find protocols", "safe protocols on ethereum", etc.
         if any(kw in message_lower for kw in [
             "find protocol", "search protocol", "show protocol",
             "list protocol", "what protocols", "which protocol",
             "protocol for", "protocols that", "protocols with",
-            "recommend protocol", "suggest protocol"
-        ]):
+            "recommend protocol", "suggest protocol",
+            "show me protocol", "give me protocol", "find me protocol",
+        ]) or re.search(r'\b(show|find|list|give|suggest|recommend)\b.*\bprotocols?\b', message_lower):
             return IntentDetectionResult(
                 intent=ChatIntent.PROTOCOL_SEARCH,
                 confidence=0.90,

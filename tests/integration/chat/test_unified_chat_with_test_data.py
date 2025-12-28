@@ -96,7 +96,7 @@ async def authenticated_client(test_app, async_db_session):
 @pytest_asyncio.fixture
 async def test_conversation(authenticated_client):
     """Create a test conversation for message testing."""
-    response = authenticated_client.post(
+    response = await authenticated_client.post(
         "/api/v1/user/chat/conversations",
         json={"title": "Test Conversation"},
     )
@@ -125,7 +125,8 @@ class TestUnifiedChatWithTestData:
         assert "expected_response" in conv_data
     
     @pytest.mark.parametrize("test_case", get_all_test_cases(), ids=lambda tc: tc["id"])
-    def test_send_message_with_test_case(
+    @pytest.mark.asyncio
+    async def test_send_message_with_test_case(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
@@ -147,23 +148,29 @@ class TestUnifiedChatWithTestData:
         expected_routing = test_case.get("expected_routing", {})
         expected_enrichment = test_case.get("expected_enrichment", {})
         expected_output = test_case.get("expected_output")
-        
-        # Skip if no expected output (edge cases)
-        if not expected_output:
-            pytest.skip(f"Test case {test_id} has no expected_output")
-        
+        expected_error = test_case.get("expected_error")
+
         # Send message
-        response = authenticated_client.post(
+        response = await authenticated_client.post(
             f"/api/v1/user/chat/conversations/{test_conversation}/messages",
             json={"content": input_content},
         )
-        
-        # Validate response status
+
+        # Handle expected error cases
+        if expected_error:
+            assert response.status_code == expected_error.get("status_code", 400), (
+                f"Expected {expected_error.get('status_code')} for {test_id}, "
+                f"got {response.status_code}. Response: {response.text}"
+            )
+            # Error case validated, skip further checks
+            return
+
+        # Validate success response status
         assert response.status_code == 201, (
             f"Expected 201, got {response.status_code} for test case {test_id}. "
             f"Response: {response.text}"
         )
-        
+
         # Parse response
         response_data = response.json()
         
@@ -280,7 +287,8 @@ class TestUnifiedChatWithTestData:
             assert routing["total_latency_ms"] > 0, f"Latency should be positive for {test_id}"
             assert routing["total_latency_ms"] < 30000, f"Latency too high for {test_id}"
     
-    def test_graphrag_protocol_search_cases(
+    @pytest.mark.asyncio
+    async def test_graphrag_protocol_search_cases(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
@@ -288,9 +296,9 @@ class TestUnifiedChatWithTestData:
     ):
         """Test all GraphRAG protocol search test cases."""
         graphrag_cases = test_data["test_cases"]["graphrag"]["protocol_search"]
-        
+
         for test_case in graphrag_cases:
-            response = authenticated_client.post(
+            response = await authenticated_client.post(
                 f"/api/v1/user/chat/conversations/{test_conversation}/messages",
                 json={"content": test_case["input"]["content"]},
             )
@@ -304,7 +312,8 @@ class TestUnifiedChatWithTestData:
             assert data.get("enrichment", {}).get("protocols") is not None or \
                    data.get("enrichment", {}).get("search_context") is not None
     
-    def test_hunter_ai_sentiment_cases(
+    @pytest.mark.asyncio
+    async def test_hunter_ai_sentiment_cases(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
@@ -312,9 +321,9 @@ class TestUnifiedChatWithTestData:
     ):
         """Test all Hunter AI sentiment test cases."""
         sentiment_cases = test_data["test_cases"]["hunter_ai"]["sentiment"]
-        
+
         for test_case in sentiment_cases:
-            response = authenticated_client.post(
+            response = await authenticated_client.post(
                 f"/api/v1/user/chat/conversations/{test_conversation}/messages",
                 json={"content": test_case["input"]["content"]},
             )
@@ -328,7 +337,8 @@ class TestUnifiedChatWithTestData:
             assert enrichment.get("token_symbol") is not None
             assert enrichment.get("hunter_tool") == "sentiment_analyzer"
     
-    def test_ultra_arbitrage_cases(
+    @pytest.mark.asyncio
+    async def test_ultra_arbitrage_cases(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
@@ -336,9 +346,9 @@ class TestUnifiedChatWithTestData:
     ):
         """Test all ULTRA arbitrage test cases."""
         arbitrage_cases = test_data["test_cases"]["ultra"]["arbitrage"]
-        
+
         for test_case in arbitrage_cases:
-            response = authenticated_client.post(
+            response = await authenticated_client.post(
                 f"/api/v1/user/chat/conversations/{test_conversation}/messages",
                 json={"content": test_case["input"]["content"]},
             )
@@ -509,58 +519,62 @@ class TestUnifiedChatResponseStructure:
 class TestUnifiedChatErrorHandling:
     """Test error handling for unified chat endpoint."""
     
-    def test_empty_message_returns_error(
+    @pytest.mark.asyncio
+    async def test_empty_message_returns_error(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
     ):
         """Test that empty message returns validation error."""
-        response = authenticated_client.post(
+        response = await authenticated_client.post(
             f"/api/v1/user/chat/conversations/{test_conversation}/messages",
             json={"content": ""},
         )
-        
+
         assert response.status_code == 422, "Empty message should return 422"
     
-    def test_missing_content_returns_error(
+    @pytest.mark.asyncio
+    async def test_missing_content_returns_error(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
     ):
         """Test that missing content field returns error."""
-        response = authenticated_client.post(
+        response = await authenticated_client.post(
             f"/api/v1/user/chat/conversations/{test_conversation}/messages",
             json={},
         )
-        
+
         assert response.status_code == 422, "Missing content should return 422"
     
-    def test_nonexistent_conversation_returns_error(
+    @pytest.mark.asyncio
+    async def test_nonexistent_conversation_returns_error(
         self,
         authenticated_client: AuthenticatedClient,
     ):
         """Test that nonexistent conversation returns 404."""
         fake_conversation_id = "00000000-0000-0000-0000-000000000000"
-        
-        response = authenticated_client.post(
+
+        response = await authenticated_client.post(
             f"/api/v1/user/chat/conversations/{fake_conversation_id}/messages",
             json={"content": "Hello"},
         )
-        
+
         assert response.status_code == 404, "Nonexistent conversation should return 404"
     
-    def test_unauthenticated_request_fails(
+    @pytest.mark.asyncio
+    async def test_unauthenticated_request_fails(
         self,
         test_app,
         test_conversation: UUID,
     ):
         """Test that unauthenticated request returns 401."""
-        from fastapi.testclient import TestClient
-        
-        client = TestClient(test_app)
-        response = client.post(
-            f"/api/v1/user/chat/conversations/{test_conversation}/messages",
-            json={"content": "Hello"},
-        )
-        
-        assert response.status_code == 401, "Unauthenticated request should return 401"
+        from httpx import AsyncClient, ASGITransport
+
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as client:
+            response = await client.post(
+                f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+                json={"content": "Hello"},
+            )
+
+            assert response.status_code == 401, "Unauthenticated request should return 401"

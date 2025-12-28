@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from app.domain.chat.ports.message_repository import MessageRepository
 from app.domain.chat.entities.message import Message
-from app.domain.enums.message_role import MessageRole
+from app.domain.value_objects.message_role import MessageRole
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 

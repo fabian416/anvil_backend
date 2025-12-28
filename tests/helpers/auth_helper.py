@@ -24,10 +24,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Literal
 from uuid import UUID, uuid4
-import hashlib
-import hmac
-import base64
-import json
+import jwt
 
 from tests.builders.user_builder import UserBuilder
 
@@ -125,32 +122,11 @@ class AuthHelper:
         payload = {
             "auth_session_id": session_id,  # Required field for auth validation
             "exp": int((now + timedelta(hours=expires_in_hours)).timestamp()),
-            "sub": str(user_id_int),  # Fallback field
-            "email": email,
-            "role": role.upper(),
-            "type": token_type,
-            "iat": int(now.timestamp()),
         }
 
-        # Create JWT structure
-        header = {"alg": "HS256", "typ": "JWT"}
-        header_b64 = base64.urlsafe_b64encode(
-            json.dumps(header).encode()
-        ).rstrip(b"=").decode()
-        payload_b64 = base64.urlsafe_b64encode(
-            json.dumps(payload).encode()
-        ).rstrip(b"=").decode()
-
-        # Sign the token
-        message = f"{header_b64}.{payload_b64}"
-        signature = hmac.new(
-            cls._test_secret.encode(),
-            message.encode(),
-            hashlib.sha256
-        ).digest()
-        signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode()
-
-        return f"{header_b64}.{payload_b64}.{signature_b64}"
+        # Use PyJWT library to ensure 100% compatibility with app's JWT validation
+        token = jwt.encode(payload, cls._test_secret, algorithm="HS256")
+        return token
 
     @classmethod
     def create_jwt_token(
@@ -185,25 +161,9 @@ class AuthHelper:
             "jti": uuid4().hex,
         }
 
-        # Create JWT structure
-        header = {"alg": "HS256", "typ": "JWT"}
-        header_b64 = base64.urlsafe_b64encode(
-            json.dumps(header).encode()
-        ).rstrip(b"=").decode()
-        payload_b64 = base64.urlsafe_b64encode(
-            json.dumps(payload).encode()
-        ).rstrip(b"=").decode()
-
-        # Sign the token
-        message = f"{header_b64}.{payload_b64}"
-        signature = hmac.new(
-            cls._test_secret.encode(),
-            message.encode(),
-            hashlib.sha256
-        ).digest()
-        signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode()
-
-        return f"{header_b64}.{payload_b64}.{signature_b64}"
+        # Use PyJWT library
+        token = jwt.encode(payload, cls._test_secret, algorithm="HS256")
+        return token
 
     @classmethod
     def create_expired_token(
@@ -236,23 +196,9 @@ class AuthHelper:
             "jti": uuid4().hex,
         }
 
-        header = {"alg": "HS256", "typ": "JWT"}
-        header_b64 = base64.urlsafe_b64encode(
-            json.dumps(header).encode()
-        ).rstrip(b"=").decode()
-        payload_b64 = base64.urlsafe_b64encode(
-            json.dumps(payload).encode()
-        ).rstrip(b"=").decode()
-
-        message = f"{header_b64}.{payload_b64}"
-        signature = hmac.new(
-            cls._test_secret.encode(),
-            message.encode(),
-            hashlib.sha256
-        ).digest()
-        signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode()
-
-        return f"{header_b64}.{payload_b64}.{signature_b64}"
+        # Use PyJWT library
+        token = jwt.encode(payload, cls._test_secret, algorithm="HS256")
+        return token
 
     @classmethod
     async def create_test_user_in_db(

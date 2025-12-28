@@ -17,6 +17,7 @@ from app.setup.ioc.agent_squad_domain import AgentSquadDomainProvider
 from app.setup.ioc.agent_squad_infrastructure import AgentSquadInfrastructureProvider
 from app.setup.ioc.agent_squad_application import AgentSquadApplicationProvider
 from app.setup.ioc.cache import CacheProvider
+from app.setup.ioc.chat_phase2 import ChatPhase2Provider
 
 # TODO: These providers are pending implementation - uncomment when ready
 # from app.setup.ioc.curve import CurveProvider
@@ -43,6 +44,7 @@ def get_providers() -> Iterable[Provider]:
         AgentSquadInfrastructureProvider(),  # Agent Squad infrastructure adapters
         AgentSquadApplicationProvider(),  # Agent Squad application interactors
         CacheProvider(),  # Cache infrastructure (Redis, ExternalAPICache)
+        ChatPhase2Provider(),  # Chat Phase 2 components (WebSocket, Analytics, etc.)
         AaveProvider(),  # Aave V3 lending protocol integration
         # TODO: Uncomment when implementations are ready
         # CurveProvider(),  # Curve Finance DeFi integration
