@@ -1,5 +1,8 @@
 """
-Integration tests for intent classification.
+Component tests for intent classification.
+
+Tests the IntentClassifier domain service in isolation using mock LLM client.
+Performance target: <50ms per test (vs 500-2000ms for integration tests with real API).
 """
 
 import pytest
@@ -132,10 +135,3 @@ class TestIntentClassification:
 
         assert result.agent_type == AgentType.RISK_ANALYZER
         assert result.confidence >= 0.85  # High confidence due to context
-
-
-@pytest.fixture
-def mock_llm_client(mocker):
-    """Mock LLM client."""
-    client = mocker.AsyncMock()
-    return client
