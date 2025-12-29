@@ -254,18 +254,25 @@ def mock_handler_router():
 
     # Map intents to handler names
     intent_to_handler = {
+        # GraphRAG intents
         "protocol_search": "graphrag_handler",
         "protocol_risk_assessment": "graphrag_handler",
         "similar_protocols": "graphrag_handler",
+        # Hunter AI intents
         "hunter_sentiment": "hunter_handler",
-        "hunter_prediction": "hunter_handler",
-        "hunter_risk_analysis": "hunter_handler",
+        "hunter_price_prediction": "hunter_handler",
         "hunter_trading_signals": "hunter_handler",
+        "hunter_patterns": "hunter_handler",
+        "hunter_portfolio": "hunter_handler",
+        "hunter_risk_signals": "hunter_handler",
+        # ULTRA intents
         "ultra_arbitrage": "ultra_handler",
         "ultra_risk_analysis": "ultra_handler",
         "ultra_liquidity": "ultra_handler",
+        # Agent Squad intents
         "squad_spec_generation": "squad_handler",
         "squad_workflow": "squad_handler",
+        # Chat intent
         "general_chat": "chat_handler",
     }
 
