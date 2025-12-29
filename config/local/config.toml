@@ -259,7 +259,7 @@ enable_fallback = true
 # Use unified LLM gateway for agent squad (experimental)
 # When true: Uses AgentLLMGateway wrapping unified LLMGateway
 # When false: Uses existing LLMClientWithFallback (default)
-use_unified_gateway = false
+use_unified_gateway = true
 
 # Provider-specific settings
 [llm_provider.vertex_ai]
