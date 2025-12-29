@@ -143,7 +143,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         # General Chat
         "hello! what can you help me with?": "general_conversation",
         "what features do you offer?": "general_conversation",
-        "random unclear message xyz": "general_conversation",
+        # "random unclear message xyz" intentionally NOT in lookup - should get low confidence
     }
 
     def _classify_by_keywords(

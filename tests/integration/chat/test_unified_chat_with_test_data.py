@@ -453,13 +453,14 @@ class TestUnifiedChatWithTestData:
 class TestUnifiedChatResponseStructure:
     """Test that UnifiedChatResponse structure matches expected format."""
     
-    def test_response_has_all_required_fields(
+    @pytest.mark.asyncio
+    async def test_response_has_all_required_fields(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
     ):
         """Test that response includes all required UnifiedChatResponse fields."""
-        response = authenticated_client.post(
+        response = await authenticated_client.post(
             f"/api/v1/user/chat/conversations/{test_conversation}/messages",
             json={"content": "Hello! What can you help me with?"},
         )
@@ -495,13 +496,14 @@ class TestUnifiedChatResponseStructure:
         assert "handler" in routing
         assert "reasoning" in routing
     
-    def test_enrichment_is_optional(
+    @pytest.mark.asyncio
+    async def test_enrichment_is_optional(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
     ):
         """Test that enrichment field is optional in response."""
-        response = authenticated_client.post(
+        response = await authenticated_client.post(
             f"/api/v1/user/chat/conversations/{test_conversation}/messages",
             json={"content": "Hello"},
         )
@@ -509,8 +511,8 @@ class TestUnifiedChatResponseStructure:
         assert response.status_code == 201
         data = response.json()
         
-        # Enrichment may or may not be present
-        if "enrichment" in data:
+        # Enrichment may or may not be present (can be None or dict)
+        if "enrichment" in data and data["enrichment"] is not None:
             assert isinstance(data["enrichment"], dict)
 
 
