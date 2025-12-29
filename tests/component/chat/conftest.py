@@ -267,8 +267,9 @@ def mock_handler_router():
         "hunter_risk_signals": "hunter_handler",
         # ULTRA intents
         "ultra_arbitrage": "ultra_handler",
-        "ultra_risk_analysis": "ultra_handler",
-        "ultra_liquidity": "ultra_handler",
+        "ultra_auto_executor": "ultra_handler",
+        "ultra_flash_loans": "ultra_handler",
+        "ultra_mev_protection": "ultra_handler",
         # Agent Squad intents
         "squad_spec_generation": "squad_handler",
         "squad_workflow": "squad_handler",
