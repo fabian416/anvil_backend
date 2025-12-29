@@ -39,6 +39,7 @@ class InMemoryConversationRepository:
     def __init__(self):
         """Initialize empty storage."""
         self._storage: Dict[UUID, Conversation] = {}
+        self._messages: Dict[UUID, List[Message]] = {}
 
     async def add_conversation(self, conversation: Conversation) -> None:
         """
@@ -121,13 +122,13 @@ class InMemoryConversationRepository:
 
         Args:
             message: Message entity to persist
-
-        Note: This is a convenience method for the combined repository interface.
-              Messages are actually stored in InMemoryMessageRepository.
         """
-        # This method exists for interface compatibility
-        # Actual message storage happens in InMemoryMessageRepository
-        pass
+        # Initialize message list for conversation if needed
+        if message.conversation_id not in self._messages:
+            self._messages[message.conversation_id] = []
+
+        # Add message with deep copy for safety
+        self._messages[message.conversation_id].append(deepcopy(message))
 
     async def get_message(self, message_id: UUID) -> Optional[Message]:
         """
@@ -138,11 +139,12 @@ class InMemoryConversationRepository:
 
         Returns:
             Message entity or None if not found
-
-        Note: This is a convenience method. Use InMemoryMessageRepository instead.
         """
-        # This method exists for interface compatibility
-        # Actual message retrieval happens in InMemoryMessageRepository
+        # Search all conversations for the message
+        for messages in self._messages.values():
+            for msg in messages:
+                if msg.id == message_id:
+                    return deepcopy(msg)
         return None
 
     async def get_messages(
@@ -158,22 +160,29 @@ class InMemoryConversationRepository:
             limit: Maximum number of messages to return
 
         Returns:
-            List of message entities
-
-        Note: This is a convenience method. Use InMemoryMessageRepository instead.
+            List of message entities, ordered by created_at ascending
         """
-        # This method exists for interface compatibility
-        # Actual message listing happens in InMemoryMessageRepository
-        return []
+        # Get messages for this conversation
+        messages = self._messages.get(conversation_id, [])
+
+        # Sort by created_at ascending (chronological order)
+        sorted_messages = sorted(messages, key=lambda m: m.created_at)
+
+        # Apply limit
+        limited_messages = sorted_messages[:limit] if limit else sorted_messages
+
+        # Return deep copies
+        return [deepcopy(m) for m in limited_messages]
 
     def clear(self):
         """
-        Clear all stored conversations.
+        Clear all stored conversations and messages.
 
         Utility method for test cleanup between tests.
         Not part of production interface.
         """
         self._storage.clear()
+        self._messages.clear()
 
     def count(self) -> int:
         """

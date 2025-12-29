@@ -16,7 +16,7 @@ Usage:
     >>> messages = factory.create_batch(count=5, user_id=123)
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional, List
 from uuid import UUID, uuid4
 
@@ -65,8 +65,8 @@ class ConversationFactory:
             user_id=user_id,
             title=title,
             project_id=project_id,
-            created_at=created_at or datetime.now(timezone.utc),
-            updated_at=updated_at or datetime.now(timezone.utc),
+            created_at=created_at or datetime.utcnow(),
+            updated_at=updated_at or datetime.utcnow(),
         )
 
     def create_batch(
@@ -159,7 +159,7 @@ class MessageFactory:
             role=MessageRole(role),
             content=content,
             agent_type=agent_type,
-            created_at=created_at or datetime.now(timezone.utc),
+            created_at=created_at or datetime.utcnow(),
             metadata=metadata or {},
         )
 
