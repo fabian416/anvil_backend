@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Dict, Optional, Any
 from uuid import UUID, uuid4
 
+from app.domain.common.datetime_utils import utc_now
 from app.domain.value_objects.message_role import MessageRole
 
 
@@ -43,7 +44,7 @@ class Message:
         self.role = role
         self.content = content
         self.agent_type = agent_type
-        self.created_at = created_at or datetime.utcnow()
+        self.created_at = created_at or utc_now()
         self.metadata = metadata or {}
     
     @classmethod

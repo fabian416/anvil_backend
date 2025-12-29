@@ -7,6 +7,7 @@ Based on Hunter AI Bot's LSTM architecture.
 from typing import Dict, Optional, Tuple, List
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from app.domain.common.datetime_utils import utc_now
 import numpy as np
 
 # PyTorch imports
@@ -268,8 +269,8 @@ class LSTMPricePredictor:
                 predicted_price=current_price * (1 + predicted_change),
                 change_percent=predicted_change * 100,
                 confidence=0.75,
-                prediction_time=datetime.utcnow(),
-                forecast_time=datetime.utcnow() + timedelta(hours=horizon_hours),
+                prediction_time=utc_now(),
+                forecast_time=utc_now() + timedelta(hours=horizon_hours),
                 horizon_hours=horizon_hours,
                 direction="up" if predicted_change > 0 else "down",
             )
@@ -321,8 +322,8 @@ class LSTMPricePredictor:
             current_price=current_price,
             predicted_price=predicted_price,
             confidence=confidence,
-            prediction_time=datetime.utcnow(),
-            forecast_time=datetime.utcnow() + timedelta(hours=horizon_hours),
+            prediction_time=utc_now(),
+            forecast_time=utc_now() + timedelta(hours=horizon_hours),
             horizon_hours=horizon_hours,
             change_percent=change_percent,
             direction=direction,

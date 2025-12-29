@@ -7,6 +7,7 @@ Based on Hunter AI Bot's sentiment analysis module.
 import re
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+from app.domain.common.datetime_utils import utc_now
 from dataclasses import dataclass
 
 from app.domain.value_objects.sentiment import (
@@ -161,7 +162,7 @@ class TwitterSentimentAnalyzer:
             source=SentimentSource.TWITTER,
             score=weighted_score,
             confidence=confidence,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={
                 "tweet_count": len(tweets),
@@ -200,35 +201,35 @@ class TwitterSentimentAnalyzer:
                 "likes": 150,
                 "retweets": 45,
                 "verified": True,
-                "timestamp": datetime.utcnow() - timedelta(hours=1),
+                "timestamp": utc_now() - timedelta(hours=1),
             },
             {
                 "text": f"Bearish on ${token_symbol} right now. Selling my bags.",
                 "likes": 30,
                 "retweets": 8,
                 "verified": False,
-                "timestamp": datetime.utcnow() - timedelta(hours=3),
+                "timestamp": utc_now() - timedelta(hours=3),
             },
             {
                 "text": f"${token_symbol} looking strong! Accumulating more. 💎🙌",
                 "likes": 200,
                 "retweets": 67,
                 "verified": True,
-                "timestamp": datetime.utcnow() - timedelta(hours=5),
+                "timestamp": utc_now() - timedelta(hours=5),
             },
             {
                 "text": f"Just bought more ${token_symbol}. HODL! 🚀",
                 "likes": 95,
                 "retweets": 22,
                 "verified": False,
-                "timestamp": datetime.utcnow() - timedelta(hours=8),
+                "timestamp": utc_now() - timedelta(hours=8),
             },
             {
                 "text": f"${token_symbol} dump incoming. Be careful.",
                 "likes": 45,
                 "retweets": 12,
                 "verified": False,
-                "timestamp": datetime.utcnow() - timedelta(hours=12),
+                "timestamp": utc_now() - timedelta(hours=12),
             },
         ]
 
@@ -364,7 +365,7 @@ class TwitterSentimentAnalyzer:
             source=SentimentSource.TWITTER,
             score=50.0,
             confidence=0.0,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={
                 "tweet_count": 0,

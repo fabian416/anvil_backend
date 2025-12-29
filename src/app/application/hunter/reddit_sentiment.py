@@ -7,6 +7,7 @@ Based on Hunter AI Bot's Reddit integration.
 import re
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+from app.domain.common.datetime_utils import utc_now
 from dataclasses import dataclass
 
 from app.domain.value_objects.sentiment import (
@@ -197,7 +198,7 @@ class RedditSentimentAnalyzer:
             source=SentimentSource.REDDIT,
             score=weighted_score,
             confidence=confidence,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={
                 "post_count": len(posts),
@@ -241,7 +242,7 @@ class RedditSentimentAnalyzer:
                 "upvote_ratio": 0.85,
                 "comments": 67,
                 "subreddit": "cryptocurrency",
-                "timestamp": datetime.utcnow() - timedelta(hours=2),
+                "timestamp": utc_now() - timedelta(hours=2),
             },
             {
                 "title": f"${token_symbol} breaking support - bearish",
@@ -250,7 +251,7 @@ class RedditSentimentAnalyzer:
                 "upvote_ratio": 0.65,
                 "comments": 34,
                 "subreddit": "cryptomarkets",
-                "timestamp": datetime.utcnow() - timedelta(hours=5),
+                "timestamp": utc_now() - timedelta(hours=5),
             },
             {
                 "title": f"${token_symbol} analysis - strong buy signal",
@@ -259,7 +260,7 @@ class RedditSentimentAnalyzer:
                 "upvote_ratio": 0.92,
                 "comments": 123,
                 "subreddit": "ethtrader",
-                "timestamp": datetime.utcnow() - timedelta(hours=8),
+                "timestamp": utc_now() - timedelta(hours=8),
             },
             {
                 "title": f"Discussion: ${token_symbol} future prospects",
@@ -268,7 +269,7 @@ class RedditSentimentAnalyzer:
                 "upvote_ratio": 0.78,
                 "comments": 89,
                 "subreddit": "defi",
-                "timestamp": datetime.utcnow() - timedelta(hours=12),
+                "timestamp": utc_now() - timedelta(hours=12),
             },
             {
                 "title": f"${token_symbol} partnership announcement!",
@@ -277,7 +278,7 @@ class RedditSentimentAnalyzer:
                 "upvote_ratio": 0.95,
                 "comments": 201,
                 "subreddit": "cryptocurrency",
-                "timestamp": datetime.utcnow() - timedelta(hours=18),
+                "timestamp": utc_now() - timedelta(hours=18),
             },
         ]
 
@@ -431,7 +432,7 @@ class RedditSentimentAnalyzer:
             source=SentimentSource.REDDIT,
             score=50.0,
             confidence=0.0,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={
                 "post_count": 0,

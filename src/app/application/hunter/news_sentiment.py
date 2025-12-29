@@ -7,6 +7,7 @@ Based on Hunter AI Bot's news aggregation module.
 import re
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+from app.domain.common.datetime_utils import utc_now
 from dataclasses import dataclass
 
 from app.domain.value_objects.sentiment import (
@@ -223,7 +224,7 @@ class NewsSentimentAnalyzer:
             source=SentimentSource.NEWS,
             score=weighted_score,
             confidence=confidence,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={
                 "article_count": len(articles),
@@ -267,31 +268,31 @@ class NewsSentimentAnalyzer:
                 "title": f"{token_symbol} Sees Major Institutional Adoption",
                 "content": f"Leading financial institutions announce {token_symbol} integration. Positive outlook for cryptocurrency markets.",
                 "source": "coindesk.com",
-                "published": datetime.utcnow() - timedelta(hours=2),
+                "published": utc_now() - timedelta(hours=2),
             },
             {
                 "title": f"{token_symbol} Network Upgrade Successful",
                 "content": f"The {token_symbol} network upgrade was deployed successfully. Strong momentum expected.",
                 "source": "cointelegraph.com",
-                "published": datetime.utcnow() - timedelta(hours=5),
+                "published": utc_now() - timedelta(hours=5),
             },
             {
                 "title": f"Regulatory Concerns Around {token_symbol}",
                 "content": f"Regulators express concern about {token_symbol}. Market uncertainty rising.",
                 "source": "bloomberg.com",
-                "published": datetime.utcnow() - timedelta(hours=8),
+                "published": utc_now() - timedelta(hours=8),
             },
             {
                 "title": f"{token_symbol} Price Analysis: Bullish Trend",
                 "content": f"Technical analysis shows {token_symbol} in strong bullish trend. Positive outlook.",
                 "source": "theblock.co",
-                "published": datetime.utcnow() - timedelta(hours=12),
+                "published": utc_now() - timedelta(hours=12),
             },
             {
                 "title": f"{token_symbol} Partnership Announced",
                 "content": f"Major partnership announced for {token_symbol}. Innovation and growth expected.",
                 "source": "decrypt.co",
-                "published": datetime.utcnow() - timedelta(hours=18),
+                "published": utc_now() - timedelta(hours=18),
             },
         ]
 
@@ -428,7 +429,7 @@ class NewsSentimentAnalyzer:
             source=SentimentSource.NEWS,
             score=50.0,
             confidence=0.0,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={
                 "article_count": 0,
@@ -458,19 +459,19 @@ class NewsSentimentAnalyzer:
                 "title": "Bitcoin Reaches New All-Time High",
                 "source": "coindesk.com",
                 "sentiment": 85.0,
-                "published": datetime.utcnow() - timedelta(hours=1),
+                "published": utc_now() - timedelta(hours=1),
             },
             {
                 "title": "Ethereum Network Sees Record Activity",
                 "source": "cointelegraph.com",
                 "sentiment": 78.5,
-                "published": datetime.utcnow() - timedelta(hours=2),
+                "published": utc_now() - timedelta(hours=2),
             },
             {
                 "title": "Regulatory Concerns Impact Crypto Markets",
                 "source": "bloomberg.com",
                 "sentiment": 35.0,
-                "published": datetime.utcnow() - timedelta(hours=3),
+                "published": utc_now() - timedelta(hours=3),
             },
         ]
 

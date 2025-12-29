@@ -17,7 +17,7 @@ class CompareProtocolsRequest(BaseModel):
     """Request to compare protocols."""
 
     protocol_ids: List[str] = Field(
-        ..., min_items=2, max_items=5, description="2-5 protocol IDs to compare"
+        ..., min_length=2, max_length=5, description="2-5 protocol IDs to compare"
     )
     dimensions: Optional[List[str]] = Field(
         None, description="Dimensions to compare: risk, yield, security, network"

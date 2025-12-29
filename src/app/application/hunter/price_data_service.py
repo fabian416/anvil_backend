@@ -6,6 +6,7 @@ Based on Hunter AI Bot's data collection module.
 
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime, timedelta
+from app.domain.common.datetime_utils import utc_now
 from dataclasses import dataclass
 import numpy as np
 
@@ -144,7 +145,7 @@ class PriceDataService:
 
         # Generate OHLC data
         price_points = []
-        current_time = datetime.utcnow() - timedelta(days=days)
+        current_time = utc_now() - timedelta(days=days)
         interval_minutes = {
             "1m": 1,
             "5m": 5,

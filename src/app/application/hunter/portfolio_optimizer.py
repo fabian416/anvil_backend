@@ -9,6 +9,7 @@ Based on Hunter AI Bot's portfolio optimization module.
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
+from app.domain.common.datetime_utils import utc_now
 import numpy as np
 from scipy.optimize import minimize
 import warnings
@@ -216,7 +217,7 @@ class PortfolioOptimizer:
         return OptimizedPortfolio(
             weights=weight_dict,
             metrics=metrics,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
     async def calculate_efficient_frontier(
@@ -358,7 +359,7 @@ class PortfolioOptimizer:
             changes=changes,
             trades=trades,
             estimated_cost=estimated_cost,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
     async def _get_returns_and_covariance(

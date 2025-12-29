@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # Project Schemas
@@ -60,8 +60,7 @@ class ProjectResponse(ProjectBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Knowledge Document Schemas
@@ -90,8 +89,7 @@ class KnowledgeDocumentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Assignment Rule Schemas
@@ -126,8 +124,7 @@ class AssignmentRuleResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # User Assignment Schemas
@@ -148,8 +145,7 @@ class UserAssignmentResponse(BaseModel):
     assigned_at: datetime
     last_active_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # User-facing Schemas
@@ -164,8 +160,7 @@ class ProjectSummaryResponse(BaseModel):
     welcome_message: Optional[str]
     is_featured: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserProjectsResponse(BaseModel):

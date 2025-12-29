@@ -24,17 +24,31 @@ start:
 	. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload
 
 # Development environment - Start FastAPI + MCP Servers + Celery + Beat + Flower
-.PHONY: start-dev stop-dev status-dev logs-dev logs-fastapi logs-celery logs-mcp logs-all logs-tail logs-summary logs-errors
+# Use CELERY_DEV_MODE=full for specialized workers (slower startup)
+# Default: light mode with single general-purpose worker (fast startup)
+.PHONY: start-dev start-dev-full stop-dev status-dev logs-dev logs-fastapi logs-celery logs-mcp logs-all logs-tail logs-summary logs-errors
 start-dev:
 	@./scripts/start_dev.sh
 
+start-dev-full:
+	@CELERY_DEV_MODE=full ./scripts/start_dev.sh
+
 stop-dev:
 	@echo "Deteniendo todos los servicios de desarrollo..."
-	@pkill -f "uvicorn app.run:make_app" || true
-	@pkill -f "app.infrastructure.mcp.servers" || true
-	@pkill -f "celery.*worker" || true
-	@pkill -f "celery.*beat" || true
-	@pkill -f "flower" || true
+	@pkill -f "uvicorn app.run:make_app" 2>/dev/null || true
+	@pkill -f "app.infrastructure.mcp.servers" 2>/dev/null || true
+	@pkill -f "celery.*worker" 2>/dev/null || true
+	@pkill -f "celery.*beat" 2>/dev/null || true
+	@pkill -f "flower" 2>/dev/null || true
+	@pkill -f "tail -f.*logs/" 2>/dev/null || true
+	@sleep 1
+	@# Force kill any remaining processes
+	@pkill -9 -f "uvicorn app.run:make_app" 2>/dev/null || true
+	@pkill -9 -f "app.infrastructure.mcp.servers" 2>/dev/null || true
+	@pkill -9 -f "celery.*worker" 2>/dev/null || true
+	@pkill -9 -f "celery.*beat" 2>/dev/null || true
+	@pkill -9 -f "flower" 2>/dev/null || true
+	@rm -f logs/.dev_pids 2>/dev/null || true
 	@echo "✅ Todos los servicios detenidos"
 
 status-dev:

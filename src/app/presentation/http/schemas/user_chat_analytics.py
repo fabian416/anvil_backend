@@ -134,7 +134,7 @@ class UserAnalyticsDashboardResponse(BaseModel):
     )
 
     # Top agents (condensed)
-    top_agents: List[AgentPreferenceEntry] = Field(..., max_items=5)
+    top_agents: List[AgentPreferenceEntry] = Field(..., max_length=5)
 
     # Activity summary
     most_active_day: str
@@ -145,7 +145,7 @@ class UserAnalyticsDashboardResponse(BaseModel):
     cost_change_percentage: float
 
     # Recent activity
-    recent_conversations: List[ConversationSummary] = Field(..., max_items=5)
+    recent_conversations: List[ConversationSummary] = Field(..., max_length=5)
 
 
 class PersonalUsageStatsResponse(BaseModel):
@@ -304,7 +304,7 @@ class ConversationHistoryResponse(BaseModel):
     # Insights
     most_productive_conversations: List[ConversationSummary] = Field(
         ...,
-        max_items=5,
+        max_length=5,
         description="Your most productive conversations"
     )
 

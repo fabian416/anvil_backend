@@ -437,14 +437,14 @@ class UnifiedChatOrchestrator:
             agent_message_dict = self._message_to_dict(agent_msg)
         else:
             # Test/Mock: construct message dicts manually with all required fields
-            from datetime import datetime
+            from app.domain.common.datetime_utils import utc_now
             user_message_dict = {
                 "id": str(result["user_message_id"]),
                 "conversation_id": str(conversation_id),
                 "role": "user",
                 "content": content,
                 "agent_type": None,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": utc_now().isoformat(),
             }
             agent_message_dict = {
                 "id": str(result["agent_message_id"]),
@@ -452,7 +452,7 @@ class UnifiedChatOrchestrator:
                 "role": "assistant",
                 "content": result["content"],
                 "agent_type": result["agent_type"],
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": utc_now().isoformat(),
             }
 
         return {

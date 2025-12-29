@@ -21,12 +21,17 @@ Usage:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 from uuid import UUID, uuid4
 import jwt
 
 from tests.builders.user_builder import UserBuilder
+
+
+def _utc_now() -> datetime:
+    """Return current UTC time as timezone-aware datetime."""
+    return datetime.now(timezone.utc)
 
 
 # Type alias for user roles
@@ -61,7 +66,7 @@ class TestUser:
     session_id: str | None = None
     first_name: str = "Test"
     last_name: str = "User"
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=_utc_now)
 
     def to_dict(self) -> dict:
         """Convert to dictionary representation."""
@@ -118,7 +123,7 @@ class AuthHelper:
         Returns:
             JWT token string with auth_session_id field
         """
-        now = datetime.utcnow()
+        now = _utc_now()
         payload = {
             "auth_session_id": session_id,  # Required field for auth validation
             "exp": int((now + timedelta(hours=expires_in_hours)).timestamp()),
@@ -150,7 +155,7 @@ class AuthHelper:
         Returns:
             JWT token string
         """
-        now = datetime.utcnow()
+        now = _utc_now()
         payload = {
             "sub": str(user_id),
             "email": email,
@@ -185,7 +190,7 @@ class AuthHelper:
         Returns:
             Expired JWT token string
         """
-        now = datetime.utcnow()
+        now = _utc_now()
         payload = {
             "sub": str(user_id),
             "email": email,
@@ -258,15 +263,15 @@ class AuthHelper:
                 "is_active": is_active,
                 "is_verified": is_verified,
                 "password": password_hash,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": _utc_now(),
+                "updated_at": _utc_now(),
             }
         )
         created_user_id = result.scalar_one()
 
         # Create session ID and expiration
         session_id = uuid4().hex
-        expiration = datetime.utcnow() + timedelta(hours=24)
+        expiration = _utc_now() + timedelta(hours=24)
 
         # Insert auth session into database
         insert_session_sql = text("""
@@ -377,7 +382,7 @@ class AuthHelper:
             "user_id": str(user_id),
             "email": email,
             "role": role,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": _utc_now().isoformat(),
         }
 
         user = TestUser(

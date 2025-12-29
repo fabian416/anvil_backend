@@ -6,6 +6,8 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID, uuid4
 
+from app.domain.common.datetime_utils import utc_now
+
 
 class Conversation:
     """
@@ -39,8 +41,8 @@ class Conversation:
         self.user_id = user_id
         self.title = title
         self.project_id = project_id
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or utc_now()
+        self.updated_at = updated_at or utc_now()
     
     @classmethod
     def create(
@@ -75,11 +77,11 @@ class Conversation:
             title: New title
         """
         self.title = title
-        self.updated_at = datetime.utcnow()
+        self.updated_at = utc_now()
     
     def touch(self) -> None:
         """Update the updated_at timestamp."""
-        self.updated_at = datetime.utcnow()
+        self.updated_at = utc_now()
     
     @property
     def is_project_scoped(self) -> bool:

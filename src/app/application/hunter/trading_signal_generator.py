@@ -9,6 +9,7 @@ Based on Hunter AI Bot's signal generation module.
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
+from app.domain.common.datetime_utils import utc_now
 from enum import Enum
 import numpy as np
 
@@ -92,7 +93,7 @@ class TradingSignal:
 
     def __post_init__(self):
         if self.generated_at is None:
-            self.generated_at = datetime.utcnow()
+            self.generated_at = utc_now()
 
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
@@ -126,7 +127,7 @@ class MultiTimeframeAnalysis:
 
     def __post_init__(self):
         if self.generated_at is None:
-            self.generated_at = datetime.utcnow()
+            self.generated_at = utc_now()
 
     def to_dict(self) -> Dict:
         """Convert to dictionary."""

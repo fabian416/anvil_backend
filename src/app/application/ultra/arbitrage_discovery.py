@@ -11,6 +11,7 @@ Based on ULTRA Arbitrage Bot's discovery module.
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from app.domain.common.datetime_utils import utc_now
 from enum import Enum
 from decimal import Decimal
 import asyncio
@@ -169,7 +170,7 @@ class ArbitrageDiscovery:
     def _generate_opportunity_id(self) -> str:
         """Generate unique opportunity ID."""
         self._opportunity_counter += 1
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(utc_now().timestamp())
         return f"ARB-{timestamp}-{self._opportunity_counter:04d}"
 
     async def _get_price_quote(
@@ -194,7 +195,7 @@ class ArbitrageDiscovery:
         # Check cache
         if cache_key in self._price_cache:
             cached = self._price_cache[cache_key]
-            age = (datetime.utcnow() - cached.timestamp).total_seconds()
+            age = (utc_now() - cached.timestamp).total_seconds()
             if age < self.config.cache_ttl_seconds:
                 return cached
 
@@ -236,7 +237,7 @@ class ArbitrageDiscovery:
             amount_out=amount_out,
             price=price,
             liquidity=liquidity,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
         # Cache quote
@@ -378,7 +379,7 @@ class ArbitrageDiscovery:
                                 estimated_gas_cost=gas_cost,
                                 slippage_tolerance=self.config.max_slippage,
                                 confidence_score=0.85,
-                                timestamp=datetime.utcnow(),
+                                timestamp=utc_now(),
                                 metadata={
                                     "dex1": dex1.value,
                                     "dex2": dex2.value,
@@ -488,7 +489,7 @@ class ArbitrageDiscovery:
                             estimated_gas_cost=gas_cost,
                             slippage_tolerance=self.config.max_slippage,
                             confidence_score=0.75,  # Lower confidence (more hops)
-                            timestamp=datetime.utcnow(),
+                            timestamp=utc_now(),
                             metadata={
                                 "token_a": token_a,
                                 "token_b": token_b,
@@ -593,7 +594,7 @@ class ArbitrageDiscovery:
                             estimated_gas_cost=gas_cost,
                             slippage_tolerance=self.config.max_slippage,
                             confidence_score=0.80,
-                            timestamp=datetime.utcnow(),
+                            timestamp=utc_now(),
                             metadata={
                                 "dex": dex.value,
                                 "token_a": token_a,

@@ -1,6 +1,9 @@
 #!/bin/bash
 # Script to start all enabled MCP servers
 # Each server runs on its own port and logs to separate files
+#
+# Note: This script is primarily for standalone use.
+# When using 'make start-dev', MCP servers are started inline.
 
 set -e
 
@@ -22,26 +25,38 @@ cd "$PROJECT_DIR"
 MCP_LOG_DIR="$PROJECT_DIR/logs/mcp"
 mkdir -p "$MCP_LOG_DIR"
 
+# Track all PIDs
+declare -a MCP_PIDS=()
+
 # Cleanup function
 cleanup() {
     echo -e "\n${YELLOW}Deteniendo todos los servidores MCP...${NC}"
-    pkill -f "app.infrastructure.mcp.servers" || true
-    sleep 2
+    
+    # Kill tracked PIDs first
+    for pid in "${MCP_PIDS[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+            kill "$pid" 2>/dev/null || true
+        fi
+    done
+    
+    # Backup: pkill any remaining
+    pkill -f "app.infrastructure.mcp.servers" 2>/dev/null || true
+    
+    sleep 1
     echo -e "${GREEN}✅ Todos los servidores MCP detenidos${NC}"
     exit 0
 }
 
-trap cleanup SIGINT SIGTERM
+trap cleanup SIGINT SIGTERM EXIT
 
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}"
 echo -e "${MAGENTA}🔌 INICIANDO SERVIDORES MCP${NC}"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}\n"
 
 # Activate virtualenv
-. env/bin/activate
+source env/bin/activate
 
 # MCP Server configurations (name:port:module)
-# Based on config/local/config.toml [mcp.servers]
 declare -a MCP_SERVERS=(
     # Core Data & Market Intelligence (6 servers)
     "1inch:8081:oneinch_mcp"
@@ -71,6 +86,7 @@ for server_config in "${MCP_SERVERS[@]}"; do
         > "$MCP_LOG_DIR/${module}.log" 2>&1 &
 
     SERVER_PID=$!
+    MCP_PIDS+=("$SERVER_PID")
     echo -e "${GREEN}    ✅ ${name} MCP Server (PID: $SERVER_PID) - http://0.0.0.0:${port}${NC}"
 
     # Brief pause between server starts
@@ -102,8 +118,20 @@ echo -e "  Logs individuales: ls -la $MCP_LOG_DIR/"
 
 echo -e "\n${YELLOW}Presiona Ctrl+C para detener todos los servidores MCP...${NC}\n"
 
-# Wait for any process to exit
-wait -n
-
-# If any process exits, cleanup all
-cleanup
+# Wait indefinitely, but check if processes are still alive
+while true; do
+    # Check if at least one MCP server is running
+    running=0
+    for pid in "${MCP_PIDS[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+            ((running++))
+        fi
+    done
+    
+    if [ $running -eq 0 ]; then
+        echo -e "${RED}All MCP servers have exited${NC}"
+        break
+    fi
+    
+    sleep 5
+done

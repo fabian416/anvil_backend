@@ -6,6 +6,7 @@ into a weighted aggregate score.
 
 from typing import List, Dict
 from datetime import datetime
+from app.domain.common.datetime_utils import utc_now
 
 from app.domain.value_objects.sentiment import (
     SentimentReading,
@@ -82,7 +83,7 @@ class SentimentAggregator:
             token_symbol=token_symbol,
             overall_score=weighted_score,
             overall_confidence=avg_confidence,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             readings=tuple(readings),  # Immutable
             weights=self.weights.copy(),
         )
@@ -129,7 +130,7 @@ class SentimentAggregator:
             source=SentimentSource.AGGREGATED,
             score=50.0,
             confidence=0.0,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={"reason": "no_data"},
         )
@@ -138,7 +139,7 @@ class SentimentAggregator:
             token_symbol=token_symbol,
             overall_score=50.0,
             overall_confidence=0.0,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             readings=(neutral_reading,),
             weights=self.weights.copy(),
         )

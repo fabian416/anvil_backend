@@ -12,6 +12,7 @@ Based on Hunter AI Bot's risk assessment module.
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from app.domain.common.datetime_utils import utc_now
 import numpy as np
 
 from app.application.hunter.price_data_service import PriceDataService
@@ -164,7 +165,7 @@ class RiskAnalyzer:
                 "correlation": correlation_risk,
             },
             recommendation=recommendation,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
     async def analyze_volatility_risk(self, token_symbol: str) -> RiskScore:
@@ -222,7 +223,7 @@ class RiskAnalyzer:
                 "sharp_movements": int(sharp_moves),
                 "analysis_period_days": self.config.volatility_window,
             },
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
     async def analyze_liquidity_risk(self, token_symbol: str) -> RiskScore:
@@ -276,7 +277,7 @@ class RiskAnalyzer:
                 "estimated_spread_pct": 0.20,
                 "analysis_period_days": self.config.liquidity_window,
             },
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
     async def analyze_smart_contract_risk(self, token_symbol: str) -> RiskScore:
@@ -343,7 +344,7 @@ class RiskAnalyzer:
                 if token_symbol.upper() in major_tokens
                 else "medium",
             },
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
     async def analyze_market_correlation_risk(self, token_symbol: str) -> RiskScore:
@@ -394,7 +395,7 @@ class RiskAnalyzer:
                 "systemic_risk_exposure": "high" if abs(correlation) > 0.7 else "moderate" if abs(correlation) > 0.4 else "low",
                 "analysis_period_days": self.config.correlation_window,
             },
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
         )
 
     def _calculate_max_drawdown(self, prices: np.ndarray) -> float:

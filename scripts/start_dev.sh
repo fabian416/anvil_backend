@@ -6,7 +6,8 @@
 # - Celery Beat
 # - Flower monitoring
 
-set -e
+# Enable job control for proper signal handling
+set -m
 
 # Colores para logs
 RED='\033[0;31m'
@@ -25,38 +26,60 @@ cd "$PROJECT_DIR"
 # Directorio para logs
 LOG_DIR="$PROJECT_DIR/logs"
 mkdir -p "$LOG_DIR"
+mkdir -p "$LOG_DIR/mcp"
+mkdir -p "$LOG_DIR/celery"
 
-# Variables para PIDs
-FASTAPI_PID=""
-MCP_PIDS=""
-CELERY_PIDS=""
+# File to store PIDs for cleanup
+PID_FILE="$LOG_DIR/.dev_pids"
+> "$PID_FILE"  # Clear the file
+
+# Track all background process PIDs
+declare -a ALL_PIDS=()
 
 # Función para limpiar procesos al salir
 cleanup() {
-    echo -e "\n${YELLOW}Deteniendo todos los servicios...${NC}"
+    echo -e "\n${YELLOW}════════════════════════════════════════════════════════════${NC}"
+    echo -e "${YELLOW}🛑 Deteniendo todos los servicios de desarrollo...${NC}"
+    echo -e "${YELLOW}════════════════════════════════════════════════════════════${NC}"
 
-    # Detener FastAPI
-    if [ -n "$FASTAPI_PID" ] && kill -0 "$FASTAPI_PID" 2>/dev/null; then
-        echo -e "${CYAN}Deteniendo FastAPI...${NC}"
-        kill $FASTAPI_PID || true
+    # Kill all tracked PIDs
+    if [ -f "$PID_FILE" ]; then
+        while read -r pid; do
+            if kill -0 "$pid" 2>/dev/null; then
+                echo -e "${CYAN}  Deteniendo PID $pid...${NC}"
+                kill "$pid" 2>/dev/null || true
+            fi
+        done < "$PID_FILE"
     fi
 
-    # Detener todos los procesos de MCP
-    echo -e "${CYAN}Deteniendo MCP servers...${NC}"
-    pkill -f "app.infrastructure.mcp.servers" || true
+    # Also use pkill as backup to ensure all processes are stopped
+    echo -e "${CYAN}  Limpiando procesos restantes...${NC}"
+    pkill -f "uvicorn app.run:make_app" 2>/dev/null || true
+    pkill -f "app.infrastructure.mcp.servers" 2>/dev/null || true
+    pkill -f "celery.*worker" 2>/dev/null || true
+    pkill -f "celery.*beat" 2>/dev/null || true
+    pkill -f "flower" 2>/dev/null || true
+    
+    # Kill any tail processes from log viewing
+    pkill -f "tail -f.*logs/" 2>/dev/null || true
 
-    # Detener todos los procesos de Celery
-    echo -e "${CYAN}Deteniendo Celery workers...${NC}"
-    pkill -f "celery.*worker" || true
-    pkill -f "celery.*beat" || true
-    pkill -f "flower" || true
-
-    sleep 2
+    sleep 1
+    
+    # Clean up PID file
+    rm -f "$PID_FILE"
+    
     echo -e "${GREEN}✅ Todos los servicios detenidos${NC}"
     exit 0
 }
 
-trap cleanup SIGINT SIGTERM
+# Trap multiple signals for proper cleanup
+trap cleanup SIGINT SIGTERM EXIT
+
+# Helper function to track PIDs
+track_pid() {
+    echo "$1" >> "$PID_FILE"
+    ALL_PIDS+=("$1")
+}
 
 # Verificar que el virtualenv existe
 if [ ! -d "env" ]; then
@@ -89,73 +112,179 @@ echo -e "${MAGENTA}════════════════════�
 echo -e "${CYAN}Servicios a iniciar:${NC}"
 echo -e "  📡 FastAPI Server (puerto 8080)"
 echo -e "  🔌 MCP Servers (11 servers, puertos 8081-8091)"
-echo -e "  🐝 Celery Workers (9 workers especializados)"
+if [ "${CELERY_DEV_MODE:-light}" = "full" ]; then
+    echo -e "  🐝 Celery Workers (9 workers especializados)"
+else
+    echo -e "  🐝 Celery Worker (1 worker general para desarrollo)"
+fi
 echo -e "  ⏰ Celery Beat (scheduler)"
 echo -e "  🌸 Flower (monitoring UI, puerto 5555)"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}\n"
 
-# 1. Iniciar FastAPI
+# Activate virtualenv
+source env/bin/activate
+
+# ============================================
+# 1. Start FastAPI
+# ============================================
 echo -e "${GREEN}📡 Iniciando FastAPI Server...${NC}"
-. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app \
+PYTHONPATH=src python3.12 -m uvicorn app.run:make_app \
     --factory \
     --host 0.0.0.0 \
     --port 8080 \
     --reload \
     > "$LOG_DIR/fastapi.log" 2>&1 &
 FASTAPI_PID=$!
+track_pid $FASTAPI_PID
 echo -e "${GREEN}  ✅ FastAPI (PID: $FASTAPI_PID) - http://0.0.0.0:8080${NC}"
 
-# Esperar a que FastAPI inicie
+# Wait for FastAPI to start
 sleep 3
 
-# Verificar que FastAPI está corriendo
+# Verify FastAPI is running
 if ! kill -0 $FASTAPI_PID 2>/dev/null; then
     echo -e "${RED}  ❌ FastAPI no pudo iniciar. Revisa logs: tail -f $LOG_DIR/fastapi.log${NC}"
     exit 1
 fi
-
 echo -e "${GREEN}  ✅ FastAPI iniciado correctamente${NC}\n"
 
-# 2. Iniciar MCP Servers
+# ============================================
+# 2. Start MCP Servers (inline, not as subprocess)
+# ============================================
 echo -e "${GREEN}🔌 Iniciando MCP Servers...${NC}"
-bash "$SCRIPT_DIR/start_all_mcp.sh" &
-MCP_SCRIPT_PID=$!
 
-# Esperar a que los MCP servers inicien
-sleep 5
+# MCP Server configurations (name:port:module)
+declare -a MCP_SERVERS=(
+    "1inch:8081:oneinch_mcp"
+    "DeFiLlama:8082:defillama_mcp"
+    "TheGraph:8083:thegraph_mcp"
+    "CoinGecko:8084:coingecko_mcp"
+    "Aave:8085:aave_mcp"
+    "Portfolio:8086:portfolio_mcp"
+    "Perplexity:8087:perplexity_mcp"
+    "Morpho:8088:morpho_mcp"
+    "Curve:8089:curve_mcp"
+    "Hyperliquid:8090:hyperliquid_mcp"
+    "LayerZero:8091:layerzero_mcp"
+)
 
-# Verificar que los MCP servers estén corriendo
-echo -e "${CYAN}  Verificando MCP servers...${NC}"
+for server_config in "${MCP_SERVERS[@]}"; do
+    IFS=':' read -r name port module <<< "$server_config"
+    
+    PYTHONPATH=src python3.12 -m "app.infrastructure.mcp.servers.${module}" \
+        > "$LOG_DIR/mcp/${module}.log" 2>&1 &
+    
+    MCP_PID=$!
+    track_pid $MCP_PID
+    echo -e "${CYAN}  ✅ ${name} (PID: $MCP_PID) - port ${port}${NC}"
+    sleep 0.3
+done
+
+# Wait for MCP servers to initialize
+sleep 3
+
+# Verify MCP servers
 MCP_RUNNING=0
 for port in {8081..8091}; do
-    if curl -s http://localhost:$port/health > /dev/null 2>&1; then
+    if curl -s --max-time 1 http://localhost:$port/health > /dev/null 2>&1; then
         ((MCP_RUNNING++))
     fi
 done
 
 if [ $MCP_RUNNING -eq 11 ]; then
-    echo -e "${GREEN}  ✅ MCP Servers iniciados correctamente (11/11 servers running)${NC}"
+    echo -e "${GREEN}  ✅ MCP Servers: 11/11 running${NC}"
 elif [ $MCP_RUNNING -gt 0 ]; then
-    echo -e "${YELLOW}  ⚠️  MCP Servers parcialmente iniciados ($MCP_RUNNING/11 servers running)${NC}"
+    echo -e "${YELLOW}  ⚠️  MCP Servers: $MCP_RUNNING/11 running${NC}"
 else
-    echo -e "${RED}  ❌ MCP Servers no iniciados (verificar logs)${NC}"
+    echo -e "${YELLOW}  ⚠️  MCP Servers: starting (check logs)${NC}"
+fi
+echo ""
+
+# ============================================
+# 3. Start Celery Workers (inline, not as subprocess)
+# ============================================
+echo -e "${GREEN}🐝 Iniciando Celery Workers...${NC}"
+
+# Celery Worker configurations (name:queue:concurrency:max_tasks)
+# For development: single worker handling all queues (faster startup, less resource usage)
+# For production: use specialized workers with 'make celery' instead
+#
+# Set CELERY_DEV_MODE=full to use specialized workers (slower startup, more resources)
+if [ "${CELERY_DEV_MODE:-light}" = "full" ]; then
+    # Full mode: Specialized workers (requires more CPU/RAM)
+    # Reduced concurrency for 4-core systems
+    declare -a CELERY_WORKERS=(
+        "maintenance:maintenance:1:500"
+        "agents:agents:2:200"
+        "graph:graph:1:100"
+        "distillation:distillation:1:300"
+        "projects:projects:1:200"
+        "llm:llm:1:250"
+        "transactions:transactions:2:500"
+        "risk:risk:1:300"
+        "email:email:1:1000"
+    )
+else
+    # Light mode (default): Single worker for all queues
+    declare -a CELERY_WORKERS=(
+        "default:maintenance,agents,graph,distillation,projects,llm,transactions,risk,email:4:500"
+    )
 fi
 
-echo -e "${CYAN}  Ver endpoints: http://localhost:8081-8091/tools${NC}"
-echo -e "${CYAN}  Ver logs MCP: tail -f $LOG_DIR/mcp/*.log${NC}\n"
+for worker_config in "${CELERY_WORKERS[@]}"; do
+    IFS=':' read -r name queue concurrency max_tasks <<< "$worker_config"
+    
+    PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+        --loglevel=INFO \
+        -Q "$queue" \
+        -n "${name}@%h" \
+        --concurrency="$concurrency" \
+        --max-tasks-per-child="$max_tasks" \
+        > "$LOG_DIR/celery/${name}.log" 2>&1 &
+    
+    WORKER_PID=$!
+    track_pid $WORKER_PID
+    echo -e "${CYAN}  ✅ ${name} worker (PID: $WORKER_PID)${NC}"
+    sleep 0.2
+done
 
-# 3. Iniciar Celery workers, Beat y Flower
-echo -e "${GREEN}🐝 Iniciando Celery (workers + beat + flower)...${NC}"
-echo -e "${CYAN}   Nota: Los logs de Celery se mostrarán en tiempo real${NC}\n"
+# Start Celery Beat
+echo -e "${GREEN}⏰ Iniciando Celery Beat...${NC}"
+PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app beat \
+    --loglevel=INFO \
+    > "$LOG_DIR/celery/beat.log" 2>&1 &
+BEAT_PID=$!
+track_pid $BEAT_PID
+echo -e "${CYAN}  ✅ Celery Beat (PID: $BEAT_PID)${NC}"
 
-# El script de Celery ya maneja su propio cleanup, pero lo capturamos aquí también
-bash "$SCRIPT_DIR/start_all_celery.sh" &
-CELERY_SCRIPT_PID=$!
+# Start Flower
+echo -e "${GREEN}🌸 Iniciando Flower...${NC}"
+PYTHONPATH=src ./env/bin/python -m flower \
+    -A app.infrastructure.celery.app.celery_app \
+    --broker=redis://localhost:6379/0 \
+    flower \
+    --address=0.0.0.0 \
+    --port=5555 \
+    > "$LOG_DIR/celery/flower.log" 2>&1 &
+FLOWER_PID=$!
+track_pid $FLOWER_PID
+echo -e "${CYAN}  ✅ Flower (PID: $FLOWER_PID) - http://localhost:5555${NC}"
 
-# Esperar un momento para que Celery inicie
+# Wait for Celery to initialize
 sleep 3
 
-# Mostrar resumen completo
+# Verify Celery workers
+CELERY_RUNNING=$(pgrep -f "celery.*worker" | wc -l)
+EXPECTED_WORKERS=${#CELERY_WORKERS[@]}
+if [ $CELERY_RUNNING -ge $EXPECTED_WORKERS ]; then
+    echo -e "${GREEN}  ✅ Celery Workers: $CELERY_RUNNING running${NC}"
+else
+    echo -e "${YELLOW}  ⚠️  Celery Workers: $CELERY_RUNNING running (expected $EXPECTED_WORKERS)${NC}"
+fi
+
+# ============================================
+# Show Summary
+# ============================================
 echo -e "\n${MAGENTA}════════════════════════════════════════════════════════════${NC}"
 echo -e "${GREEN}✅ ENTORNO DE DESARROLLO INICIADO${NC}"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}"
@@ -164,31 +293,7 @@ echo -e "  ${CYAN}FastAPI:${NC}       http://localhost:8080"
 echo -e "  ${CYAN}FastAPI Docs:${NC}  http://localhost:8080/docs"
 echo -e "  ${CYAN}Flower:${NC}        http://localhost:5555"
 echo -e ""
-echo -e "${YELLOW}🔌 MCP Servers (11 servers):${NC}"
-echo -e "  ${CYAN}Core Data & Market Intelligence:${NC}"
-echo -e "    • 1inch:      http://localhost:8081/tools"
-echo -e "    • DeFiLlama:  http://localhost:8082/tools"
-echo -e "    • TheGraph:   http://localhost:8083/tools"
-echo -e "    • CoinGecko:  http://localhost:8084/tools"
-echo -e "    • Aave:       http://localhost:8085/tools"
-echo -e "    • Portfolio:  http://localhost:8086/tools"
-echo -e "  ${CYAN}Advanced DeFi & Trading:${NC}"
-echo -e "    • Perplexity: http://localhost:8087/tools"
-echo -e "    • Morpho:     http://localhost:8088/tools"
-echo -e "    • Curve:      http://localhost:8089/tools"
-echo -e "    • Hyperliquid: http://localhost:8090/tools"
-echo -e "    • LayerZero:  http://localhost:8091/tools"
-echo -e ""
-echo -e "${YELLOW}📊 Celery Workers (9 workers):${NC}"
-echo -e "  • AGENTS       - Procesamiento de agentes IA"
-echo -e "  • RISK         - Monitoreo de riesgo"
-echo -e "  • TRANSACTIONS - Confirmación de transacciones blockchain"
-echo -e "  • LLM          - Ranking y orchestration de LLM"
-echo -e "  • DISTILLATION - Procesamiento de LLM y caché"
-echo -e "  • PROJECTS     - Knowledge base y proyectos"
-echo -e "  • GRAPH        - Mantenimiento de grafo y embeddings"
-echo -e "  • EMAIL        - Envío de emails"
-echo -e "  • MAINTENANCE  - Tareas de limpieza y mantenimiento"
+echo -e "${YELLOW}🔌 MCP Servers:${NC}  http://localhost:8081-8091/tools"
 echo -e ""
 echo -e "${YELLOW}📝 Ver Logs:${NC}"
 echo -e "  ${CYAN}make logs-fastapi${NC}  - FastAPI logs"
@@ -201,8 +306,17 @@ echo -e "  ${CYAN}make stop-dev${NC}      - Detiene todos los servicios"
 echo -e "  ${CYAN}Ctrl+C${NC}             - Detiene este script y todos los servicios"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}\n"
 
-# Esperar indefinidamente (el script de Celery se encarga de mostrar logs)
-wait $CELERY_SCRIPT_PID
+echo -e "${CYAN}Esperando... Presiona Ctrl+C para detener todos los servicios.${NC}\n"
 
-# Si el script de Celery termina, hacer cleanup
-cleanup
+# Wait indefinitely - this keeps the script running and responsive to Ctrl+C
+# We wait for any of the tracked processes to exit
+while true; do
+    # Check if key processes are still running
+    if ! kill -0 $FASTAPI_PID 2>/dev/null; then
+        echo -e "${RED}FastAPI exited unexpectedly${NC}"
+        break
+    fi
+    sleep 5
+done
+
+# If we get here, something exited - cleanup will be called by EXIT trap

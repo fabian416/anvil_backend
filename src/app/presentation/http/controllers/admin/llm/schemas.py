@@ -9,7 +9,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ============================================================================
@@ -36,11 +36,7 @@ class ModelRankingResponse(BaseModel):
     has_override: bool = False
     override_reason: Optional[str] = None
 
-    class Config:
-        json_encoders = {
-            Decimal: lambda v: float(v),
-            UUID: lambda v: str(v),
-        }
+    model_config = ConfigDict(ser_json_inf_nan="constants")
 
 
 class AgentRankingsResponse(BaseModel):
@@ -61,10 +57,7 @@ class AgentTypeOverview(BaseModel):
     top_model_score: Optional[Decimal] = None
     last_recalculated_at: Optional[datetime] = None
 
-    class Config:
-        json_encoders = {
-            Decimal: lambda v: float(v),
-        }
+    model_config = ConfigDict(ser_json_inf_nan="constants")
 
 
 class AllRankingsOverviewResponse(BaseModel):
@@ -98,11 +91,7 @@ class OverrideResponse(BaseModel):
     success: bool = True
     message: str
 
-    class Config:
-        json_encoders = {
-            Decimal: lambda v: float(v),
-            UUID: lambda v: str(v),
-        }
+    model_config = ConfigDict(ser_json_inf_nan="constants")
 
 
 class RegisterModelResponse(BaseModel):
@@ -118,11 +107,7 @@ class RegisterModelResponse(BaseModel):
     success: bool = True
     message: str
 
-    class Config:
-        json_encoders = {
-            Decimal: lambda v: float(v),
-            UUID: lambda v: str(v),
-        }
+    model_config = ConfigDict(ser_json_inf_nan="constants")
 
 
 # ============================================================================
@@ -151,8 +136,9 @@ class SetOverrideRequest(BaseModel):
         description="Override expiry in hours (null = permanent)",
     )
 
-    @validator("override_score")
-    def validate_score(cls, v):
+    @field_validator("override_score")
+    @classmethod
+    def validate_score(cls, v: Decimal) -> Decimal:
         """Ensure score is within valid range."""
         if not (0 <= v <= 1):
             raise ValueError("Score must be between 0.0 and 1.0")
@@ -208,8 +194,9 @@ class RegisterVertexAIModelRequest(BaseModel):
         description="Agent types to enable for (null = all)",
     )
 
-    @validator("model_id")
-    def validate_model_id(cls, v):
+    @field_validator("model_id")
+    @classmethod
+    def validate_model_id(cls, v: str) -> str:
         """Ensure model_id is clean."""
         if not v.strip():
             raise ValueError("model_id cannot be empty")
@@ -265,8 +252,9 @@ class RegisterDeepInfraModelRequest(BaseModel):
         description="Agent types to enable for (null = all)",
     )
 
-    @validator("model_id")
-    def validate_model_id(cls, v):
+    @field_validator("model_id")
+    @classmethod
+    def validate_model_id(cls, v: str) -> str:
         """Ensure model_id is clean."""
         if not v.strip():
             raise ValueError("model_id cannot be empty")

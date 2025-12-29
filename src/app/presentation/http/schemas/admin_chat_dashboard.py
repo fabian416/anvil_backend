@@ -116,7 +116,7 @@ class AdminChatDashboardSummaryResponse(BaseModel):
     cache_hit_rate: float = Field(..., ge=0, le=1)
 
     # Top agents (condensed leaderboard)
-    top_agents: List[AgentLeaderboardEntry] = Field(..., max_items=5)
+    top_agents: List[AgentLeaderboardEntry] = Field(..., max_length=5)
 
     # Trends
     conversation_trend: List[TimeSeriesDataPoint]
@@ -239,7 +239,7 @@ class ActiveUsersResponse(BaseModel):
     # Top users
     most_active_users: List[Dict[str, Any]] = Field(
         ...,
-        max_items=10,
+        max_length=10,
         description="Top users by message count (anonymized)"
     )
 
@@ -260,7 +260,7 @@ class ConversationMetricsResponse(BaseModel):
     # Topic distribution
     top_topics: List[Dict[str, Any]] = Field(
         ...,
-        max_items=10,
+        max_length=10,
         description="Most discussed topics with counts"
     )
 

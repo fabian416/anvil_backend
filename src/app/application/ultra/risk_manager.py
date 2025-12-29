@@ -10,6 +10,7 @@ Implements comprehensive risk management:
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from app.domain.common.datetime_utils import utc_now
 from decimal import Decimal
 
 
@@ -199,7 +200,7 @@ class RiskManager:
             profit=profit,
             gas_cost=gas_cost,
             capital_used=capital,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             success=success,
         )
 
@@ -254,7 +255,7 @@ class RiskManager:
 
     def _get_daily_exposure(self) -> Decimal:
         """Get today's total exposure."""
-        today = datetime.utcnow().date()
+        today = utc_now().date()
         exposure = Decimal("0")
 
         for trade in self._trade_history:
@@ -265,7 +266,7 @@ class RiskManager:
 
     def _get_daily_loss(self) -> Decimal:
         """Get today's total loss."""
-        today = datetime.utcnow().date()
+        today = utc_now().date()
         loss = Decimal("0")
 
         for trade in self._trade_history:

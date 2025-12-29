@@ -140,7 +140,9 @@ def configure_app(
     )
     # https://github.com/encode/starlette/discussions/2451
 
-    # Good place to register global exception handlers
+    # Register global exception handlers for standardized error responses
+    from app.presentation.http.errors.handlers import register_exception_handlers
+    register_exception_handlers(app)
 
 
 def create_async_ioc_container(

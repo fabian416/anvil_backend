@@ -7,6 +7,7 @@ Based on Hunter AI Bot's Discord integration.
 import re
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+from app.domain.common.datetime_utils import utc_now
 from dataclasses import dataclass
 
 from app.domain.value_objects.sentiment import (
@@ -160,7 +161,7 @@ class DiscordSentimentAnalyzer:
             source=SentimentSource.DISCORD,
             score=weighted_score,
             confidence=confidence,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={
                 "message_count": len(messages),
@@ -202,7 +203,7 @@ class DiscordSentimentAnalyzer:
                 "reaction_breakdown": {"🚀": 8, "👍": 4},
                 "server": "ethereum",
                 "channel": "general",
-                "timestamp": datetime.utcnow() - timedelta(minutes=30),
+                "timestamp": utc_now() - timedelta(minutes=30),
             },
             {
                 "content": f"Is ${token_symbol} dumping? Not looking good...",
@@ -210,7 +211,7 @@ class DiscordSentimentAnalyzer:
                 "reaction_breakdown": {"👎": 3, "📉": 2},
                 "server": "defi",
                 "channel": "trading",
-                "timestamp": datetime.utcnow() - timedelta(hours=2),
+                "timestamp": utc_now() - timedelta(hours=2),
             },
             {
                 "content": f"${token_symbol} breakout imminent. LFG! 💎🙌",
@@ -218,7 +219,7 @@ class DiscordSentimentAnalyzer:
                 "reaction_breakdown": {"🚀": 10, "💎": 5, "👍": 3},
                 "server": "uniswap",
                 "channel": "alpha",
-                "timestamp": datetime.utcnow() - timedelta(hours=4),
+                "timestamp": utc_now() - timedelta(hours=4),
             },
             {
                 "content": f"WAGMI ${token_symbol} holders! Bullish AF 🔥",
@@ -226,7 +227,7 @@ class DiscordSentimentAnalyzer:
                 "reaction_breakdown": {"🔥": 8, "🚀": 4, "👍": 3},
                 "server": "ethereum",
                 "channel": "price-talk",
-                "timestamp": datetime.utcnow() - timedelta(hours=6),
+                "timestamp": utc_now() - timedelta(hours=6),
             },
             {
                 "content": f"Just bought more ${token_symbol}. Accumulation phase.",
@@ -234,7 +235,7 @@ class DiscordSentimentAnalyzer:
                 "reaction_breakdown": {"👍": 6, "💰": 3},
                 "server": "aave",
                 "channel": "general",
-                "timestamp": datetime.utcnow() - timedelta(hours=8),
+                "timestamp": utc_now() - timedelta(hours=8),
             },
             {
                 "content": f"${token_symbol} FUD spreading. Don't panic sell.",
@@ -242,7 +243,7 @@ class DiscordSentimentAnalyzer:
                 "reaction_breakdown": {"👍": 4, "💎": 3},
                 "server": "compound",
                 "channel": "discussion",
-                "timestamp": datetime.utcnow() - timedelta(hours=10),
+                "timestamp": utc_now() - timedelta(hours=10),
             },
         ]
 
@@ -386,7 +387,7 @@ class DiscordSentimentAnalyzer:
             source=SentimentSource.DISCORD,
             score=50.0,
             confidence=0.0,
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             token_symbol=token_symbol,
             metadata={
                 "message_count": 0,

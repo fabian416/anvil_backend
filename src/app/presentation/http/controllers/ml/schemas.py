@@ -27,7 +27,7 @@ class RiskPredictionResponse(BaseModel):
 
 class BatchRiskPredictionRequest(BaseModel):
     """Batch risk prediction request"""
-    protocol_ids: List[str] = Field(..., min_items=1, max_items=50)
+    protocol_ids: List[str] = Field(..., min_length=1, max_length=50)
 
 
 class BatchRiskPredictionResponse(BaseModel):

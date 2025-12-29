@@ -66,7 +66,7 @@ class UpdateRiskToleranceRequest(BaseModel):
 class UpdateChainPreferencesRequest(BaseModel):
     """Update chain preferences request."""
 
-    preferred_chains: List[str] = Field(..., min_items=1, max_items=10)
+    preferred_chains: List[str] = Field(..., min_length=1, max_length=10)
 
 
 class UpdateNotificationPreferencesRequest(BaseModel):
