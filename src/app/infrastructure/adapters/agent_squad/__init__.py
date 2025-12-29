@@ -7,19 +7,30 @@ Following Hexagonal Architecture (Ports & Adapters pattern).
 Adapters:
 - FeatureFlagsConfig: Feature flags from TOML configuration
 - LLMClientOpenAI: OpenAI API client
+- LLMClientVertexAI: Google Vertex AI client
+- LLMClientDeepInfra: DeepInfra API client
+- LLMClientWithFallback: Multi-provider fallback wrapper
+- LLMClientGatewayAdapter: Adapter bridging LLMGateway to LLMClientGateway
 - ContextStorageRedis: Redis-based conversation storage
 - IntentClassifierOpenAI: OpenAI-powered intent classification
-- AgentExecutorFactory: Creates agent instances
 """
 
 from .feature_flags_config import FeatureFlagsConfig
 from .llm_client_openai import LLMClientOpenAI
+from .llm_client_vertex_ai import LLMClientVertexAI
+from .llm_client_deepinfra import LLMClientDeepInfra
+from .llm_client_with_fallback import LLMClientWithFallback
+from .llm_client_gateway_adapter import LLMClientGatewayAdapter
 from .context_storage_redis import ContextStorageRedis
 from .intent_classifier_openai import IntentClassifierOpenAI
 
 __all__ = [
     "FeatureFlagsConfig",
     "LLMClientOpenAI",
+    "LLMClientVertexAI",
+    "LLMClientDeepInfra",
+    "LLMClientWithFallback",
+    "LLMClientGatewayAdapter",
     "ContextStorageRedis",
     "IntentClassifierOpenAI",
 ]
