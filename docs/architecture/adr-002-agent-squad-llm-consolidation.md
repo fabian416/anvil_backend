@@ -107,26 +107,13 @@ We will:
 - Added to package exports
 - Translates specialized calls to `generate()` calls
 
-### Phase 2: DI Registration (Future)
-```python
-# In agent_squad_infrastructure.py
-@provide
-def provide_llm_client_gateway_adapter(
-    self, llm_gateway: LLMGateway
-) -> LLMClientGateway:
-    """
-    Alternative: Use adapter for LLMClientGateway.
-    
-    Enables unified LLM implementation while maintaining
-    LLMClientGateway interface for agents.
-    """
-    from app.infrastructure.adapters.agent_squad.llm_client_gateway_adapter import (
-        LLMClientGatewayAdapter
-    )
-    return LLMClientGatewayAdapter(llm_gateway=llm_gateway)
-```
+### Phase 2: AgentLLMGateway ✅ COMPLETE
+- Created `AgentLLMGateway` adapter for agent-specific needs
+- Wraps `LLMGateway` to provide `chat()` method returning dict format
+- Registered in DI via `provide_agent_llm_gateway` method
+- Enables gradual migration without changing agent code
 
-### Phase 3: Gradual Migration (Future)
+### Phase 4: Production Activation (Future)
 1. Feature flag to toggle between implementations
 2. A/B testing in staging
 3. Roll out to production

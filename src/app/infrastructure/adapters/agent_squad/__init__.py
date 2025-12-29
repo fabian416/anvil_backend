@@ -21,6 +21,7 @@ from .llm_client_vertex_ai import LLMClientVertexAI
 from .llm_client_deepinfra import LLMClientDeepInfra
 from .llm_client_with_fallback import LLMClientWithFallback
 from .llm_client_gateway_adapter import LLMClientGatewayAdapter
+from .agent_llm_gateway import AgentLLMGateway
 from .context_storage_redis import ContextStorageRedis
 from .intent_classifier_openai import IntentClassifierOpenAI
 
@@ -31,6 +32,7 @@ __all__ = [
     "LLMClientDeepInfra",
     "LLMClientWithFallback",
     "LLMClientGatewayAdapter",
+    "AgentLLMGateway",
     "ContextStorageRedis",
     "IntentClassifierOpenAI",
 ]

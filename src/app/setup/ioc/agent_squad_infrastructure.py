@@ -15,6 +15,8 @@ from app.domain.ports.agent_squad.agent_gateway import AgentGateway
 from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageGateway
 from app.domain.ports.agent_squad.feature_flags_gateway import FeatureFlagsGateway
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+from app.domain.ports.ai.llm_gateway import LLMGateway
+from app.infrastructure.adapters.agent_squad.agent_llm_gateway import AgentLLMGateway
 from app.domain.value_objects.agent_squad.agent_squad_config import (
     AgentSquadConfig,
     AgentConfig,
@@ -195,7 +197,22 @@ class AgentSquadInfrastructureProvider(Provider):
         else:
             logger.info(f"LLM client configured: primary={primary_provider} (no fallback)")
             return primary_client
-    
+
+    @provide
+    def provide_agent_llm_gateway(
+        self, llm_gateway: LLMGateway
+    ) -> AgentLLMGateway:
+        """
+        Provide AgentLLMGateway for unified LLM access.
+        
+        This adapter wraps the unified LLMGateway to provide the dict-based
+        response format expected by agents. Use this for gradual migration
+        from LLMClientGateway to unified LLMGateway.
+        
+        Future: Replace LLMClientGateway provider with this one.
+        """
+        return AgentLLMGateway(llm_gateway=llm_gateway)
+
     @provide
     def provide_coingecko_client(self, settings: AgentSquadSettings) -> Any:
         """Provide CoinGecko API client if enabled."""
