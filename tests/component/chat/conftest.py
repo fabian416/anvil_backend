@@ -273,7 +273,8 @@ def mock_handler_router():
         # Agent Squad intents
         "specialist_task": "squad_handler",
         "complex_workflow": "squad_handler",
-        # Chat intent
+        # Chat intents
+        "general_conversation": "chat_handler",
         "general_chat": "chat_handler",
     }
 
