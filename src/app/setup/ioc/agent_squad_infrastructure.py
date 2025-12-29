@@ -101,7 +101,9 @@ class AgentSquadInfrastructureProvider(Provider):
     scope = Scope.REQUEST
 
     @provide
-    def provide_llm_client(self, settings: AppSettings) -> LLMClientGateway:
+    def provide_llm_client(
+        self, settings: AppSettings, llm_gateway: LLMGateway
+    ) -> LLMClientGateway:
         """
         Provide LLM client with automatic fallback support.
 
@@ -109,6 +111,7 @@ class AgentSquadInfrastructureProvider(Provider):
         - Primary provider (vertex_ai, deepinfra, or openai)
         - Fallback provider (optional)
         - Model mappings for each provider
+        - use_unified_gateway: If true, uses AgentLLMGateway wrapping unified LLMGateway
         """
         import logging
         from app.setup.config.loader import load_full_config, get_current_env
@@ -120,6 +123,18 @@ class AgentSquadInfrastructureProvider(Provider):
 
         # Get LLM provider config (using dict access with defaults)
         llm_config = raw_config.get("llm_provider", {})
+        
+        # Check for unified gateway feature flag
+        use_unified_gateway = llm_config.get("use_unified_gateway", False)
+        
+        if use_unified_gateway:
+            logger.info(
+                "LLM client configured: using unified AgentLLMGateway "
+                "(use_unified_gateway=true)"
+            )
+            return AgentLLMGateway(llm_gateway=llm_gateway)
+        
+        # Legacy path: use provider-specific clients
         primary_provider = llm_config.get("primary_provider", "vertex_ai")
         fallback_provider = llm_config.get("fallback_provider", "deepinfra")
         enable_fallback = llm_config.get("enable_fallback", True)
@@ -206,10 +221,8 @@ class AgentSquadInfrastructureProvider(Provider):
         Provide AgentLLMGateway for unified LLM access.
         
         This adapter wraps the unified LLMGateway to provide the dict-based
-        response format expected by agents. Use this for gradual migration
-        from LLMClientGateway to unified LLMGateway.
-        
-        Future: Replace LLMClientGateway provider with this one.
+        response format expected by agents. Can be used directly or via
+        the feature flag in provide_llm_client.
         """
         return AgentLLMGateway(llm_gateway=llm_gateway)
 

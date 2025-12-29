@@ -256,6 +256,11 @@ fallback_provider = "deepinfra"
 # Enable automatic fallback
 enable_fallback = true
 
+# Use unified LLM gateway for agent squad (experimental)
+# When true: Uses AgentLLMGateway wrapping unified LLMGateway
+# When false: Uses existing LLMClientWithFallback (default)
+use_unified_gateway = false
+
 # Provider-specific settings
 [llm_provider.vertex_ai]
 # Uses credentials from [vertex_ai] section in .secrets.toml
