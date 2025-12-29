@@ -139,23 +139,23 @@ def get_critical_integration_test_ids() -> List[str]:
     Returns sample test cases from each category for end-to-end validation.
     """
     return [
-        # GraphRAG samples
+        # GraphRAG samples (2 tests)
         "graphrag_ps_001",      # Protocol search
         "graphrag_ra_001",      # Risk assessment
 
-        # Hunter AI samples
+        # Hunter AI samples (2 tests)
         "hunter_sent_001",      # Sentiment
-        "hunter_pred_001",      # Prediction
+        "hunter_pp_001",        # Price prediction
 
-        # ULTRA samples
+        # ULTRA samples (2 tests)
         "ultra_arb_001",        # Arbitrage
-        "ultra_risk_001",       # Risk analysis
+        "ultra_fl_001",         # Flash loans
 
-        # Agent Squad samples
-        "squad_spec_001",       # Spec generation
-        "squad_work_001",       # Workflow
+        # Agent Squad samples (2 tests)
+        "squad_spec_001",       # Specialist task
+        "squad_work_001",       # Complex workflow
 
-        # Chat samples
+        # Chat samples (2 tests)
         "chat_gen_001",         # General chat
-        "chat_gen_003",         # General chat variation
+        "chat_gen_003",         # General chat variation (if exists)
     ]
