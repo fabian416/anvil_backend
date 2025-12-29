@@ -362,7 +362,8 @@ class TestUnifiedChatWithTestData:
             assert enrichment.get("ultra_tool") == "arbitrage_scanner"
             assert enrichment.get("capital") is not None or enrichment.get("arb_type") is not None
     
-    def test_edge_cases(
+    @pytest.mark.asyncio
+    async def test_edge_cases(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
@@ -370,13 +371,13 @@ class TestUnifiedChatWithTestData:
     ):
         """Test edge cases from test_data.json."""
         edge_cases = test_data.get("edge_cases", [])
-        
+
         for edge_case in edge_cases:
             test_id = edge_case["id"]
             content = edge_case["input"]["content"]
             expected_error = edge_case.get("expected_error")
-            
-            response = authenticated_client.post(
+
+            response = await authenticated_client.post(
                 f"/api/v1/user/chat/conversations/{test_conversation}/messages",
                 json={"content": content},
             )
@@ -393,7 +394,8 @@ class TestUnifiedChatWithTestData:
                     f"Unexpected status {response.status_code} for {test_id}"
                 )
     
-    def test_performance_benchmarks(
+    @pytest.mark.asyncio
+    async def test_performance_benchmarks(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: UUID,
@@ -402,7 +404,7 @@ class TestUnifiedChatWithTestData:
         """Test that responses meet performance benchmarks."""
         benchmarks = test_data.get("performance_benchmarks", {})
         latency_targets = benchmarks.get("latency_targets", {})
-        
+
         # Test a sample from each category
         sample_cases = [
             ("graphrag", "protocol_search", "graphrag_ps_001"),
@@ -410,7 +412,7 @@ class TestUnifiedChatWithTestData:
             ("ultra", "arbitrage", "ultra_arb_001"),
             ("chat", "general_conversation", "chat_gen_001"),
         ]
-        
+
         for category, subcategory, test_id in sample_cases:
             # Find test case
             test_case = None
@@ -418,15 +420,15 @@ class TestUnifiedChatWithTestData:
                 if tc["id"] == test_id:
                     test_case = tc
                     break
-            
+
             if not test_case:
                 continue
-            
+
             # Send request and measure latency
             import time
             start_time = time.time()
-            
-            response = authenticated_client.post(
+
+            response = await authenticated_client.post(
                 f"/api/v1/user/chat/conversations/{test_conversation}/messages",
                 json={"content": test_case["input"]["content"]},
             )

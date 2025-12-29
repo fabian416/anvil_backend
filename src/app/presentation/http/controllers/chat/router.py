@@ -8,6 +8,8 @@ from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, status, Security
 from fastapi.exceptions import HTTPException
 
+from app.application.common.exceptions.base import ApplicationError
+from app.domain.exceptions.base import DomainError
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.application.common.services.current_user import CurrentUserService
 from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
@@ -237,10 +239,13 @@ def create_chat_router() -> APIRouter:
 
                 return UnifiedChatResponse(**result)
 
+            except (ApplicationError, DomainError) as e:
+                # Let domain/application errors propagate (they have proper HTTP mappings)
+                raise
             except Exception as e:
-                # Log error and fallback to regular chat
+                # Log unexpected errors and fallback to regular chat
                 import logging
-                logging.warning(f"Unified routing failed: {e}, falling back to regular chat")
+                logging.warning(f"Unified routing failed with unexpected error: {e}, falling back to regular chat")
                 # Fall through to regular chat
 
         # Fallback: Use regular chat (backward compatible)

@@ -12,6 +12,10 @@ from app.domain.chat.entities.conversation import Conversation
 from app.domain.projects.entities.project import Project
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.projects.ports.project_repository import ProjectRepository
+from app.domain.exceptions.chat import (
+    ConversationNotFoundError,
+    ConversationAccessDeniedError,
+)
 from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.application.chat.services.hunter_tool_executor import HunterToolExecutor
 from app.application.chat.services.ultra_tool_executor import ULTRAToolExecutor
@@ -86,26 +90,27 @@ class SendMessage:
     ) -> tuple[Message, Message]:
         """
         Execute the command.
-        
+
         Args:
             user_id: User identifier (for verification)
             conversation_id: Conversation identifier
             content: Message content
-        
+
         Returns:
             Tuple of (user_message, agent_message)
-        
+
         Raises:
-            ValueError: If conversation not found or not owned by user
+            ConversationNotFoundError: If conversation not found
+            ConversationAccessDeniedError: If conversation not owned by user
         """
         # Get conversation
         conversation = await self._repository.get_conversation(conversation_id)
-        
+
         if conversation is None:
-            raise ValueError(f"Conversation {conversation_id} not found")
-        
+            raise ConversationNotFoundError(conversation_id)
+
         if conversation.user_id != user_id:
-            raise ValueError("Conversation does not belong to user")
+            raise ConversationAccessDeniedError(conversation_id, user_id)
         
         # Create and save user message
         user_message = Message.create_user_message(

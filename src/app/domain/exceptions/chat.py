@@ -11,7 +11,7 @@ This module provides all exceptions related to:
 from typing import Any
 from uuid import UUID
 
-from app.application.common.exceptions.base import ApplicationError
+from app.domain.exceptions.base import ApplicationError
 from app.domain.exceptions.error_codes import ErrorCode
 
 

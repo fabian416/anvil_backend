@@ -21,6 +21,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.domain.exceptions.base import ApplicationError, DomainError, DomainFieldError
 from app.domain.exceptions.error_codes import ErrorCode
+from app.infrastructure.auth.exceptions import AuthenticationError
+from app.application.common.exceptions.authorization import AuthorizationError
 
 logger = logging.getLogger(__name__)
 
@@ -268,6 +270,58 @@ async def http_exception_handler(
     )
 
 
+async def authentication_error_handler(
+    request: Request,
+    exc: AuthenticationError,
+) -> JSONResponse:
+    """
+    Handle AuthenticationError exceptions (user not authenticated).
+    """
+    logger.info(
+        "AuthenticationError: %s (path=%s)",
+        str(exc),
+        request.url.path,
+    )
+
+    definition = ErrorCode.AUTH_TOKEN_MISSING.value
+
+    return JSONResponse(
+        status_code=401,
+        content=create_error_response(
+            code=definition.code,
+            message=str(exc) if str(exc) else definition.default_message,
+            i18n_key=definition.i18n_key,
+            http_status=401,
+        ),
+    )
+
+
+async def authorization_error_handler(
+    request: Request,
+    exc: AuthorizationError,
+) -> JSONResponse:
+    """
+    Handle AuthorizationError exceptions (user not authorized).
+    """
+    logger.info(
+        "AuthorizationError: %s (path=%s)",
+        str(exc),
+        request.url.path,
+    )
+
+    definition = ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS.value
+
+    return JSONResponse(
+        status_code=403,
+        content=create_error_response(
+            code=definition.code,
+            message=str(exc) if str(exc) else definition.default_message,
+            i18n_key=definition.i18n_key,
+            http_status=403,
+        ),
+    )
+
+
 async def unhandled_exception_handler(
     request: Request,
     exc: Exception,
@@ -316,6 +370,12 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     # DomainError (legacy domain errors)
     app.add_exception_handler(DomainError, domain_error_handler)
+
+    # AuthenticationError (HTTP 401)
+    app.add_exception_handler(AuthenticationError, authentication_error_handler)
+
+    # AuthorizationError (HTTP 403)
+    app.add_exception_handler(AuthorizationError, authorization_error_handler)
 
     # Pydantic validation errors
     app.add_exception_handler(RequestValidationError, validation_error_handler)

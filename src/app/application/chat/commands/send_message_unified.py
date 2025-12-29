@@ -14,6 +14,10 @@ import time
 
 from app.domain.chat.entities.message import Message
 from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.exceptions.chat import (
+    ConversationNotFoundError,
+    ConversationAccessDeniedError,
+)
 from app.application.chat.services.intent_detector import (
     IntentDetectorService,
     ChatIntent,
@@ -111,17 +115,18 @@ class UnifiedChatOrchestrator:
             Unified response with routing metadata and enrichment
 
         Raises:
-            ValueError: If conversation not found or not owned by user
+            ConversationNotFoundError: If conversation not found
+            ConversationAccessDeniedError: If conversation not owned by user
         """
         start_time = time.time()
 
         # Get conversation for verification
         conversation = await self._conversation_repo.get_conversation(conversation_id)
         if not conversation:
-            raise ValueError("Conversation not found")
+            raise ConversationNotFoundError(conversation_id)
 
         if conversation.user_id != user_id:
-            raise ValueError("Conversation does not belong to user")
+            raise ConversationAccessDeniedError(conversation_id, user_id)
 
         # Get conversation history for context (last 10 messages)
         messages = await self._conversation_repo.get_messages(
