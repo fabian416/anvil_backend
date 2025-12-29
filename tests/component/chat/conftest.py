@@ -175,10 +175,10 @@ def get_messages_query(conversation_repository):
 def test_user():
     """
     Test user context.
-    
+
     Returns:
         Dictionary with user ID and email
-    
+
     Example:
         user_id = test_user["id"]  # 123
     """
@@ -188,3 +188,186 @@ def test_user():
         "first_name": "Test",
         "last_name": "User",
     }
+
+
+# ============================================================================
+# Unified Chat Component Test Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_intent_classifier():
+    """
+    Mock intent classifier for component tests.
+
+    Returns:
+        Mock with configurable intent classification responses
+
+    Example:
+        from dataclasses import dataclass
+
+        @dataclass
+        class IntentResult:
+            intent: str
+            confidence: float
+            reasoning: str
+
+        mock_intent_classifier.classify.return_value = IntentResult(
+            intent="protocol_search",
+            confidence=0.95,
+            reasoning="Test classification"
+        )
+    """
+    from dataclasses import dataclass
+
+    @dataclass
+    class IntentResult:
+        """Simple intent classification result for tests."""
+        intent: str
+        confidence: float
+        reasoning: str
+
+    classifier = AsyncMock()
+    # Default: general_chat intent
+    classifier.classify.return_value = IntentResult(
+        intent="general_chat",
+        confidence=0.85,
+        reasoning="Default test classification",
+    )
+    # Store IntentResult class for test access
+    classifier.IntentResult = IntentResult
+    return classifier
+
+
+@pytest.fixture
+def mock_handler_router():
+    """
+    Mock handler router for component tests.
+
+    Returns:
+        Mock that maps intents to handler names
+
+    Example:
+        handler_name = mock_handler_router.get_handler("protocol_search")
+        # Returns: "graphrag_handler"
+    """
+    router = MagicMock()
+
+    # Map intents to handler names
+    intent_to_handler = {
+        "protocol_search": "graphrag_handler",
+        "protocol_risk_assessment": "graphrag_handler",
+        "similar_protocols": "graphrag_handler",
+        "hunter_sentiment": "hunter_handler",
+        "hunter_prediction": "hunter_handler",
+        "hunter_risk_analysis": "hunter_handler",
+        "hunter_trading_signals": "hunter_handler",
+        "ultra_arbitrage": "ultra_handler",
+        "ultra_risk_analysis": "ultra_handler",
+        "ultra_liquidity": "ultra_handler",
+        "squad_spec_generation": "squad_handler",
+        "squad_workflow": "squad_handler",
+        "general_chat": "chat_handler",
+    }
+
+    router.get_handler.side_effect = lambda intent: intent_to_handler.get(intent, "chat_handler")
+    return router
+
+
+@pytest.fixture
+def mock_graphrag_handler():
+    """
+    Mock GraphRAG handler for component tests.
+
+    Returns:
+        Mock GraphRAG handler with configurable responses
+    """
+    handler = AsyncMock()
+    handler.execute.return_value = {
+        "content": "Mock GraphRAG response",
+        "enrichment": {
+            "protocols": [
+                {
+                    "protocol_id": "test_protocol",
+                    "protocol_name": "Test Protocol",
+                    "similarity_score": 0.95,
+                }
+            ],
+        },
+    }
+    return handler
+
+
+@pytest.fixture
+def mock_hunter_handler():
+    """
+    Mock Hunter AI handler for component tests.
+
+    Returns:
+        Mock Hunter AI handler with configurable responses
+    """
+    handler = AsyncMock()
+    handler.execute.return_value = {
+        "content": "Mock Hunter AI response",
+        "enrichment": {
+            "token_symbol": "ETH",
+            "hunter_tool": "sentiment_analyzer",
+            "sentiment_score": 0.75,
+        },
+    }
+    return handler
+
+
+@pytest.fixture
+def mock_ultra_handler():
+    """
+    Mock ULTRA handler for component tests.
+
+    Returns:
+        Mock ULTRA handler with configurable responses
+    """
+    handler = AsyncMock()
+    handler.execute.return_value = {
+        "content": "Mock ULTRA response",
+        "enrichment": {
+            "ultra_tool": "arbitrage_scanner",
+            "arb_opportunities": 3,
+            "capital": 10000,
+        },
+    }
+    return handler
+
+
+@pytest.fixture
+def mock_squad_handler():
+    """
+    Mock Agent Squad handler for component tests.
+
+    Returns:
+        Mock Agent Squad handler with configurable responses
+    """
+    handler = AsyncMock()
+    handler.execute.return_value = {
+        "content": "Mock Agent Squad response",
+        "enrichment": {
+            "task_type": "spec_generation",
+            "workflow_type": "sequential",
+            "agents_used": ["architect", "developer"],
+        },
+    }
+    return handler
+
+
+@pytest.fixture
+def mock_chat_handler():
+    """
+    Mock general chat handler for component tests.
+
+    Returns:
+        Mock chat handler with configurable responses
+    """
+    handler = AsyncMock()
+    handler.execute.return_value = {
+        "content": "Mock chat response",
+        "enrichment": None,
+    }
+    return handler
