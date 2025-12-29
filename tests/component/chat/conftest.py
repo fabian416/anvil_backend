@@ -271,8 +271,8 @@ def mock_handler_router():
         "ultra_flash_loans": "ultra_handler",
         "ultra_mev_protection": "ultra_handler",
         # Agent Squad intents
-        "squad_spec_generation": "squad_handler",
-        "squad_workflow": "squad_handler",
+        "specialist_task": "squad_handler",
+        "complex_workflow": "squad_handler",
         # Chat intent
         "general_chat": "chat_handler",
     }
