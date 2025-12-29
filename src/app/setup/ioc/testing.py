@@ -23,6 +23,12 @@ from redis.asyncio import Redis, ConnectionPool
 from app.domain.ports.chat_llm_provider import ChatLLMProvider
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
+from app.domain.ports.chat.intent_detection_port import IntentDetectionPort
+
+# Intent Detection Adapters
+from app.infrastructure.adapters.chat.keyword_intent_detection_adapter import (
+    KeywordIntentDetectionAdapter,
+)
 
 # GraphRAG Handlers (for mocking)
 from app.application.chat.graph_search_handler import (
@@ -1173,6 +1179,17 @@ class TestMockProvider(Provider):
         multi-agent workflows and making external API calls during tests.
         """
         return MockExecuteSupervisorWorkflow()
+
+    @provide(scope=Scope.REQUEST)
+    def provide_mock_intent_detection_port(self) -> IntentDetectionPort:
+        """
+        Provide mock intent detection port for tests.
+
+        Uses keyword adapter (fast, deterministic) instead of LLM.
+        This provides consistent, predictable intent classification
+        without making real API calls.
+        """
+        return KeywordIntentDetectionAdapter()
 
 
 class TestDatabaseProvider(Provider):

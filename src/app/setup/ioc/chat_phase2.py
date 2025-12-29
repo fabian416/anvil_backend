@@ -64,6 +64,18 @@ from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
 from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
 from app.application.agent_squad.commands.execute_supervisor_workflow import ExecuteSupervisorWorkflow
 
+# Intent Detection Port & Adapters (Hexagonal Architecture)
+from app.domain.ports.chat.intent_detection_port import IntentDetectionPort
+from app.infrastructure.adapters.chat.keyword_intent_detection_adapter import (
+    KeywordIntentDetectionAdapter,
+)
+from app.infrastructure.adapters.chat.llm_intent_detection_adapter import (
+    LLMIntentDetectionAdapter,
+)
+from app.infrastructure.adapters.chat.hybrid_intent_detection_adapter import (
+    HybridIntentDetectionAdapter,
+)
+
 # Optional: Cohere embedding adapter (requires cohere package)
 try:
     from app.infrastructure.adapters.ai.cohere_embedding_adapter import CohereEmbeddingAdapter
@@ -612,6 +624,48 @@ class ChatPhase2Provider(Provider):
     # Unified Chat Routing (Phase 8)
     # ========================================
 
+    # ========================================
+    # Intent Detection Port & Adapters (Hexagonal Architecture)
+    # ========================================
+
+    @provide
+    def provide_keyword_intent_adapter(self) -> KeywordIntentDetectionAdapter:
+        """
+        Provide keyword-based intent detection adapter.
+
+        Fast, deterministic, no LLM costs. Used as fallback.
+        """
+        return KeywordIntentDetectionAdapter()
+
+    @provide
+    def provide_llm_intent_adapter(
+        self,
+        llm_gateway: LLMGateway,
+    ) -> LLMIntentDetectionAdapter:
+        """
+        Provide LLM-based intent detection adapter.
+
+        High accuracy, uses LLM gateway for classification.
+        """
+        return LLMIntentDetectionAdapter(llm_gateway=llm_gateway)
+
+    @provide
+    def provide_intent_detection_port(
+        self,
+        llm_adapter: LLMIntentDetectionAdapter,
+        keyword_adapter: KeywordIntentDetectionAdapter,
+    ) -> IntentDetectionPort:
+        """
+        Provide hybrid intent detection (production).
+
+        Uses LLM for accuracy with keyword fallback for reliability.
+        """
+        return HybridIntentDetectionAdapter(
+            llm_adapter=llm_adapter,
+            keyword_adapter=keyword_adapter,
+            min_llm_confidence=0.7,
+        )
+
     @provide
     def provide_intent_detector_service(
         self,
@@ -624,6 +678,9 @@ class ChatPhase2Provider(Provider):
         LLM gateway is automatically injected by Dishka:
         - In tests: MockLLMGateway from TestMockProvider
         - In production: LLMGatewayImpl or InstrumentedLLMGateway
+
+        NOTE: This maintains backward compatibility.
+        The IntentDetectionPort is also available for new code.
         """
         return IntentDetectorService(llm_gateway=llm_gateway)
 
