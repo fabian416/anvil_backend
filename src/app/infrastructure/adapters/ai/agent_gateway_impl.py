@@ -15,6 +15,7 @@ from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.infrastructure.adapters.ai.squad_storage import AnvilSquadStorage
 from app.infrastructure.agents.classifiers import DeFiIntentClassifier
 from app.setup.config.agent_squad import AgentSquadConfig
+from app.domain.enums.agent_type import AgentType
 
 
 class AgentGatewayImpl(AgentGateway):
@@ -51,7 +52,33 @@ class AgentGatewayImpl(AgentGateway):
         
         # Initialize simple keyword-based intent detection
         self._intent_patterns = self._build_intent_patterns()
-    
+
+        # Initialize intent to agent type mapping
+        self._intent_to_agent_type = self._build_intent_to_agent_type_map()
+
+    def _build_intent_to_agent_type_map(self) -> Dict[str, str]:
+        """
+        Map intents to valid AgentType enum values.
+
+        Returns:
+            Dictionary mapping intent names to agent type values
+        """
+        return {
+            "trade_swap": AgentType.EXECUTION.value,
+            "trade_perp_open": AgentType.EXECUTION.value,
+            "trade_perp_close": AgentType.EXECUTION.value,
+            "lend_supply": AgentType.LENDING_BORROWING.value,
+            "lend_borrow": AgentType.LENDING_BORROWING.value,
+            "earn_stake": AgentType.DEFI_YIELD.value,
+            "portfolio_view": AgentType.PORTFOLIO.value,
+            "market_info": AgentType.HUNTER_AI.value,
+            "risk_analysis": AgentType.RISK_ANALYZER.value,
+            "save_schedule": AgentType.EXECUTION.value,
+            "general_question": AgentType.CHAT.value,
+            # Complex workflow should map to CHAT for now (orchestrator not in enum)
+            "complex_workflow": AgentType.CHAT.value,
+        }
+
     def _build_intent_patterns(self) -> Dict[str, List[str]]:
         """
         Build keyword patterns for simple intent detection.
@@ -131,12 +158,15 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
         # Get classification from LLM
         try:
             response = await self.llm_gateway.generate(
-                prompt=prompt,
-                system_message="You are an intent classifier. Respond only with the intent name.",
+                model="gpt-4o-mini",  # Fast, cheap model for classification
+                messages=[
+                    {"role": "system", "content": "You are an intent classifier. Respond only with the intent name."},
+                    {"role": "user", "content": prompt},
+                ],
                 max_tokens=50,
                 temperature=0.0
             )
-            
+
             intent = response.strip().lower()
             
             # Validate intent is in our list
@@ -219,12 +249,15 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
         
         # Generate response using LLM
         response = await self.llm_gateway.generate(
-            prompt=full_prompt,
-            system_message=system_message,
+            model="gpt-4o-mini",  # Default model for fallback responses
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": full_prompt},
+            ],
             max_tokens=500,
             temperature=0.7
         )
-        
+
         return response
     
     async def process_message(
@@ -284,11 +317,14 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
                 response = await self._generate_fallback_response(message, intent, context)
             
             # Step 4: Save response to storage
+            # Map intent to valid AgentType enum value
+            agent_type = self._intent_to_agent_type.get(intent, AgentType.CHAT.value)
+
             await self.storage.save_message(
                 session_id=session_id,
                 role="agent",
                 content=response,
-                agent_type=intent
+                agent_type=agent_type
             )
             
             return response

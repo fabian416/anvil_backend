@@ -97,6 +97,8 @@ class EnrichmentData(BaseModel):
     workflow_status: Optional[str] = None
     tasks_count: Optional[int] = None
     agents_involved: Optional[List[str]] = None
+    workflow_type: Optional[str] = None
+    total_latency_ms: Optional[int] = None
 
     # For Hunter AI
     hunter_tool: Optional[str] = None  # sentiment_analysis, price_prediction, risk_signals, trading_signals, pattern_detection, portfolio_optimization

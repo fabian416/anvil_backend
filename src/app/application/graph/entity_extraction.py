@@ -82,8 +82,8 @@ class EntityExtractor:
 
         prompt = self._build_extraction_prompt(text)
         messages = [{"role": "user", "content": prompt}]
-        response = await self._llm.generate_response(
-            model_name="meta-llama/Meta-Llama-3.1-70B-Instruct",
+        response = await self._llm.generate(
+            model="meta-llama/Meta-Llama-3.1-70B-Instruct",
             messages=messages,
             temperature=0.3,
             max_tokens=1000,
@@ -301,8 +301,8 @@ Extract entities now:"""
         entity_names = [e.name for e in entities]
         prompt = self._build_relationship_prompt(text, entity_names)
         messages = [{"role": "user", "content": prompt}]
-        response = await self._llm.generate_response(
-            model_name="meta-llama/Meta-Llama-3.1-70B-Instruct",
+        response = await self._llm.generate(
+            model="meta-llama/Meta-Llama-3.1-70B-Instruct",
             messages=messages,
             temperature=0.3,
             max_tokens=800,

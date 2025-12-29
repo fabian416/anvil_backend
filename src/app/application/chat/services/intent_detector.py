@@ -11,7 +11,7 @@ import re
 import json
 
 from app.domain.chat.entities.message import Message
-from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+from app.domain.ports.ai.llm_gateway import LLMGateway
 
 
 class ChatIntent(Enum):
@@ -62,14 +62,14 @@ class IntentDetectorService:
     Uses LLM-powered classification with keyword fallbacks for reliability.
     """
 
-    def __init__(self, llm_client: Optional[LLMClientGateway] = None):
+    def __init__(self, llm_gateway: Optional[LLMGateway] = None):
         """
         Initialize intent detector.
 
         Args:
-            llm_client: Optional LLM client for AI-powered classification
+            llm_gateway: Optional LLM gateway for AI-powered classification
         """
-        self._llm_client = llm_client
+        self._llm_gateway = llm_gateway
 
     async def detect_intent(
         self,
@@ -87,7 +87,7 @@ class IntentDetectorService:
             Intent detection result with confidence and entities
         """
         # Try LLM-powered classification first (if available)
-        if self._llm_client:
+        if self._llm_gateway:
             try:
                 result = await self._llm_classify_intent(message, conversation_history)
                 if result.confidence > 0.7:
@@ -217,7 +217,7 @@ Current message: {message}
 Classify the intent and extract entities."""
 
         # Call LLM
-        response = await self._llm_client.generate(
+        response = await self._llm_gateway.generate(
             model="gpt-4o-mini",  # Fast, cheap for classification
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -514,7 +514,7 @@ Classify the intent and extract entities."""
         # Default: General conversation
         return IntentDetectionResult(
             intent=ChatIntent.GENERAL_CONVERSATION,
-            confidence=0.75,
+            confidence=0.65,  # Low confidence for unclear messages
             extracted_entities={},
             reasoning="No specific intent detected, defaulting to general chat",
         )

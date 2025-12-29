@@ -1,34 +1,82 @@
-from typing import Protocol, List, Dict, Any, Optional
-from app.domain.entities.ai.llm_conversation import LLMConversation
-from app.domain.enums.ai.llm_provider import LLMProvider
+from typing import Protocol, Optional
 
 class LLMGateway(Protocol):
     """
-    Port for interacting with LLM providers.
-    This defines the contract for our multi-model gateway.
+    Unified LLM gateway for all AI interactions.
+
+    Consolidates previous LLMGateway and LLMClientGateway interfaces.
+    This defines the contract for multi-model LLM operations.
+
+    Implementations:
+    - LLMGatewayImpl: Production adapter with Vertex AI, DeepInfra, OpenAI
+    - MockLLMGateway: Test mock for deterministic responses
     """
-    async def generate_response(
-        self, 
-        model_name: str, 
-        messages: List[Dict[str, str]], 
+
+    async def generate(
+        self,
+        model: str,
+        messages: list[dict],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
-        tools: Optional[List[Dict[str, Any]]] = None
+        max_tokens: int = 1000,
+        tools: Optional[list[dict]] = None,
     ) -> str:
         """
-        Generates a text response from the LLM.
+        Generate text completion.
+
+        Args:
+            model: Model identifier (e.g., "gpt-4o-mini", "claude-sonnet-4")
+            messages: Conversation messages [{"role": "user", "content": "..."}]
+            temperature: Sampling temperature (0.0-1.0)
+            max_tokens: Maximum response tokens
+            tools: Optional tool definitions for function calling
+
+        Returns:
+            Generated text response
+
+        Example:
+            >>> response = await gateway.generate(
+            ...     model="gpt-4o-mini",
+            ...     messages=[
+            ...         {"role": "system", "content": "You are a helpful assistant"},
+            ...         {"role": "user", "content": "Hello"},
+            ...     ],
+            ...     temperature=0.7,
+            ... )
         """
         ...
 
-    async def generate_response_with_metadata(
-        self, 
-        model_name: str, 
-        messages: List[Dict[str, str]], 
+    async def generate_with_metadata(
+        self,
+        model: str,
+        messages: list[dict],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
-        tools: Optional[List[Dict[str, Any]]] = None
-    ) -> Dict[str, Any]:
+        max_tokens: int = 1000,
+        tools: Optional[list[dict]] = None,
+    ) -> tuple[str, dict]:
         """
-        Generates response and returns metadata (tokens, cost, latency).
+        Generate with usage metadata.
+
+        Args:
+            model: Model identifier (e.g., "gpt-4o-mini", "claude-sonnet-4")
+            messages: Conversation messages [{"role": "user", "content": "..."}]
+            temperature: Sampling temperature (0.0-1.0)
+            max_tokens: Maximum response tokens
+            tools: Optional tool definitions for function calling
+
+        Returns:
+            Tuple of (response_text, metadata)
+            metadata = {
+                "tokens_used": int,
+                "model": str,
+                "latency_ms": int,
+                "finish_reason": str,
+            }
+
+        Example:
+            >>> response, metadata = await gateway.generate_with_metadata(
+            ...     model="gpt-4o-mini",
+            ...     messages=[{"role": "user", "content": "Hello"}],
+            ... )
+            >>> print(f"Used {metadata['tokens_used']} tokens")
         """
         ...

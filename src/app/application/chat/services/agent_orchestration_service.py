@@ -166,9 +166,14 @@ class AgentOrchestrationService:
 
         try:
             # Get response from LLM with agent-specific prompt
-            response = await self._llm.chat(
-                messages=[{"role": "user", "content": query}],
-                system_prompt=f"You are {agent_name}, a specialized DeFi agent.",
+            response = await self._llm.generate(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": f"You are {agent_name}, a specialized DeFi agent."},
+                    {"role": "user", "content": query},
+                ],
+                temperature=0.7,
+                max_tokens=1000,
             )
 
             # Extract confidence from response metadata or estimate

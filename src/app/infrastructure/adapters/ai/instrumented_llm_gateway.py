@@ -13,22 +13,22 @@ Usage:
     from app.infrastructure.adapters.ai.instrumented_llm_gateway import (
         InstrumentedLLMGateway,
     )
-    
+
     # Wrap existing gateway
     instrumented = InstrumentedLLMGateway(
         gateway=existing_gateway,
         telemetry=llm_telemetry,
         tracing=tracing_service,
     )
-    
+
     # Use normally - all calls are instrumented
-    response = await instrumented.generate_response(
-        model_name="gemini-1.5-pro",
+    response = await instrumented.generate(
+        model="gemini-1.5-pro",
         messages=[{"role": "user", "content": "Hello"}],
     )
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.infrastructure.telemetry.llm_telemetry import (
@@ -123,66 +123,66 @@ class InstrumentedLLMGateway:
         
         return LLMCallStatus.ERROR
     
-    async def generate_response(
+    async def generate(
         self,
-        model_name: str,
-        messages: List[Dict[str, str]],
+        model: str,
+        messages: list[dict],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        max_tokens: int = 1000,
+        tools: Optional[list[dict]] = None,
     ) -> str:
         """
         Generate response with telemetry.
-        
+
         Returns only the text response.
         """
-        provider = self._detect_provider(model_name)
-        
+        provider = self._detect_provider(model)
+
         ctx = self._telemetry.start_call(
             provider=provider,
-            model=model_name,
+            model=model,
             operation="generate",
             temperature=temperature,
             max_tokens=max_tokens,
             has_tools=tools is not None,
         )
-        
+
         with self._tracing.start_span(
             name=f"llm.{provider}.generate",
             kind=SpanKind.CLIENT,
             attributes={
                 "llm.provider": provider,
-                "llm.model": model_name,
+                "llm.model": model,
                 "llm.operation": "generate",
                 "llm.temperature": temperature,
                 "llm.message_count": len(messages),
             },
         ) as span:
             try:
-                response = await self._gateway.generate_response(
-                    model_name=model_name,
+                response = await self._gateway.generate(
+                    model=model,
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
                     tools=tools,
                 )
-                
+
                 # Estimate tokens from response (approximation)
                 input_tokens = sum(len(m.get("content", "")) // 4 for m in messages)
                 output_tokens = len(response) // 4
-                
+
                 ctx.complete(
                     status=LLMCallStatus.SUCCESS,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                 )
-                
+
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("llm.input_tokens_est", input_tokens)
                 span.set_attribute("llm.output_tokens_est", output_tokens)
-                
+
                 return response
-                
+
             except Exception as e:
                 error_status = self._classify_error(e)
                 ctx.complete(
@@ -192,83 +192,73 @@ class InstrumentedLLMGateway:
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
     
-    async def generate_response_with_metadata(
+    async def generate_with_metadata(
         self,
-        model_name: str,
-        messages: List[Dict[str, str]],
+        model: str,
+        messages: list[dict],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        max_tokens: int = 1000,
+        tools: Optional[list[dict]] = None,
+    ) -> tuple[str, dict]:
         """
         Generate response with metadata and telemetry.
-        
+
         Returns response text and metadata including tokens and cost.
         """
-        provider = self._detect_provider(model_name)
-        
+        provider = self._detect_provider(model)
+
         ctx = self._telemetry.start_call(
             provider=provider,
-            model=model_name,
+            model=model,
             operation="generate_with_metadata",
             temperature=temperature,
             max_tokens=max_tokens,
             has_tools=tools is not None,
         )
-        
+
         with self._tracing.start_span(
             name=f"llm.{provider}.generate_with_metadata",
             kind=SpanKind.CLIENT,
             attributes={
                 "llm.provider": provider,
-                "llm.model": model_name,
+                "llm.model": model,
                 "llm.operation": "generate_with_metadata",
                 "llm.temperature": temperature,
                 "llm.message_count": len(messages),
             },
         ) as span:
             try:
-                result = await self._gateway.generate_response_with_metadata(
-                    model_name=model_name,
+                response_text, metadata = await self._gateway.generate_with_metadata(
+                    model=model,
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
                     tools=tools,
                 )
-                
-                # Extract metadata (format depends on implementation)
-                if isinstance(result, tuple) and len(result) == 2:
-                    response_text, metadata = result
-                elif isinstance(result, dict):
-                    response_text = result.get("text", result.get("response", ""))
-                    metadata = result
-                else:
-                    response_text = str(result)
-                    metadata = {}
-                
-                input_tokens = metadata.get("input_tokens", 0)
+
+                input_tokens = metadata.get("input_tokens", metadata.get("tokens_used", 0))
                 output_tokens = metadata.get("output_tokens", 0)
                 cost_usd = metadata.get("cost_usd", 0.0)
-                
+
                 ctx.complete(
                     status=LLMCallStatus.SUCCESS,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     cost_usd=cost_usd,
                 )
-                
+
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("llm.input_tokens", input_tokens)
                 span.set_attribute("llm.output_tokens", output_tokens)
                 span.set_attribute("llm.cost_usd", cost_usd)
                 span.set_attribute("llm.latency_ms", ctx.duration_ms)
-                
-                return result
-                
+
+                return response_text, metadata
+
             except Exception as e:
                 error_status = self._classify_error(e)
                 ctx.complete(
@@ -278,7 +268,7 @@ class InstrumentedLLMGateway:
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
 

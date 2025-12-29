@@ -459,15 +459,15 @@ class UnifiedChatOrchestrator:
             max_agents=5,
         )
 
+        # Save messages to conversation history
+        response_content = result.get("final_response", "")
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
         return {
-            "user_message": {
-                "content": content,
-                "role": "user",
-            },
-            "agent_message": {
-                "content": result.get("final_response", ""),
-                "role": "assistant",
-            },
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
@@ -480,6 +480,8 @@ class UnifiedChatOrchestrator:
                 "tasks_count": len(result.get("tasks", [])),
                 "agents_involved": result.get("agents_used", []),
                 "total_latency_ms": result.get("total_latency_ms"),
+                "workflow_type": result.get("workflow_type"),
+                "capital": result.get("capital"),
             }
         }
 

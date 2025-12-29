@@ -30,7 +30,7 @@ from app.domain.ports.chat_llm_provider import ChatLLMProvider
 from app.domain.ports.embeddings.embedding_service import EmbeddingService
 from app.domain.ports.translation_adapter import TranslationAdapter
 from app.domain.ports.vector.vector_repository import VectorRepository
-from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+from app.domain.ports.ai.llm_gateway import LLMGateway
 
 # Domain Ports - Infrastructure
 from app.domain.ports.cache_adapter import CacheAdapter
@@ -615,17 +615,17 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_intent_detector_service(
         self,
-        llm_client: LLMClientGateway,
+        llm_gateway: LLMGateway,
     ) -> IntentDetectorService:
         """
         Provide intent detector for unified routing.
 
         Uses LLM-powered classification with keyword fallback.
-        LLM client is automatically injected by Dishka:
-        - In tests: MockLLMClientGateway from TestMockProvider
-        - In production: LLMClientWithFallback from AgentSquadInfrastructureProvider
+        LLM gateway is automatically injected by Dishka:
+        - In tests: MockLLMGateway from TestMockProvider
+        - In production: LLMGatewayImpl or InstrumentedLLMGateway
         """
-        return IntentDetectorService(llm_client=llm_client)
+        return IntentDetectorService(llm_gateway=llm_gateway)
 
     @provide
     def provide_unified_chat_orchestrator(
