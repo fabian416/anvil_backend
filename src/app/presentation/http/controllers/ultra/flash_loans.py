@@ -4,7 +4,7 @@ REST API for flash loan operations and management.
 """
 
 from fastapi import APIRouter, HTTPException, status, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, List, Optional
 from decimal import Decimal
 
@@ -26,17 +26,16 @@ class ProtocolInfoResponse(BaseModel):
     supported_tokens: List[str] = Field(..., description="Supported tokens")
     requires_collateral: bool = Field(..., description="Requires collateral")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "protocol": "aave_v3",
-                "name": "Aave V3",
-                "fee_percentage": 0.09,
-                "max_loan_usd": "10000000",
-                "supported_tokens": ["USDC", "USDT", "DAI"],
-                "requires_collateral": False,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "protocol": "aave_v3",
+            "name": "Aave V3",
+            "fee_percentage": 0.09,
+            "max_loan_usd": "10000000",
+            "supported_tokens": ["USDC", "USDT", "DAI"],
+            "requires_collateral": False,
         }
+    })
 
 
 class FlashLoanSimulateRequest(BaseModel):
@@ -47,15 +46,14 @@ class FlashLoanSimulateRequest(BaseModel):
     amount: str = Field(..., description="Loan amount (in token units)")
     receiver_address: str = Field(..., description="Receiver contract address")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "protocol": "balancer",
-                "token_address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-                "amount": "100000",
-                "receiver_address": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "protocol": "balancer",
+            "token_address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            "amount": "100000",
+            "receiver_address": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
         }
+    })
 
 
 class FlashLoanResultResponse(BaseModel):
@@ -69,18 +67,17 @@ class FlashLoanResultResponse(BaseModel):
     fees_paid: str = Field(..., description="Fees paid USD")
     error_message: Optional[str] = Field(None, description="Error message if failed")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "status": "success",
-                "tx_hash": "0x1234567890abcdef...",
-                "gas_used": 300000,
-                "gas_price_gwei": 30,
-                "profit_usd": "450.50",
-                "fees_paid": "5.00",
-                "error_message": None,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "status": "success",
+            "tx_hash": "0x1234567890abcdef...",
+            "gas_used": 300000,
+            "gas_price_gwei": 30,
+            "profit_usd": "450.50",
+            "fees_paid": "5.00",
+            "error_message": None,
         }
+    })
 
 
 class ProtocolLiquidityResponse(BaseModel):

@@ -4,7 +4,7 @@ REST API for LSTM price predictions.
 """
 
 from fastapi import APIRouter, Query, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Dict
 
 from app.application.hunter.lstm_price_predictor import (
@@ -27,8 +27,7 @@ class PricePredictionResponse(BaseModel):
     change_percent: float = Field(..., description="Predicted price change percentage")
     direction: str = Field(..., description="Price direction: up, down, or neutral")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "token_symbol": "ETH",
                 "current_price": 2450.50,
@@ -40,7 +39,7 @@ class PricePredictionResponse(BaseModel):
                 "change_percent": 5.32,
                 "direction": "up",
             }
-        }
+        })
 
 
 class MultiHorizonPredictionResponse(BaseModel):

@@ -4,7 +4,7 @@ REST API for ML-based risk assessment.
 """
 
 from fastapi import APIRouter, Query, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, Optional
 
 from app.application.hunter.risk_analyzer import (
@@ -33,8 +33,7 @@ class CompositeRiskResponse(BaseModel):
     recommendation: str = Field(..., description="Trading recommendation")
     timestamp: str = Field(..., description="Analysis timestamp")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "token_symbol": "ETH",
                 "overall_risk_score": 32.5,
@@ -54,7 +53,7 @@ class CompositeRiskResponse(BaseModel):
                 "recommendation": "Moderate risk profile. Suitable for balanced portfolios.",
                 "timestamp": "2025-12-03T17:00:00Z",
             }
-        }
+        })
 
 
 def create_risk_analysis_router() -> APIRouter:

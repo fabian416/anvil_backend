@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DistillationValidationRequest(BaseModel):
@@ -49,16 +49,15 @@ class DistillationValidationResponse(BaseModel):
         description="Detected language code (ISO 639-1)",
     )
     
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "success": True,
-                "message": "Request validated successfully",
-                "reason": "validation_passed",
-                "confidence": 0.95,
-                "detected_language": "en",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "success": True,
+            "message": "Request validated successfully",
+            "reason": "validation_passed",
+            "confidence": 0.95,
+            "detected_language": "en",
         }
+    })
 
 
 class DistillationMetricsResponse(BaseModel):
@@ -125,23 +124,22 @@ class DistillationMetricsResponse(BaseModel):
         ge=0,
     )
     
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "date": "2025-12-01T00:00:00Z",
-                "provider": "vertex_ai",
-                "total_requests": 1000,
-                "successful_requests": 850,
-                "failed_requests": 150,
-                "success_rate": 0.85,
-                "avg_latency_ms": 287.5,
-                "p95_latency_ms": 450.0,
-                "avg_confidence": 0.92,
-                "total_tokens": 50000,
-                "total_cost_usd": 0.005,
-                "fallback_used_count": 12,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "date": "2025-12-01T00:00:00Z",
+            "provider": "vertex_ai",
+            "total_requests": 1000,
+            "successful_requests": 850,
+            "failed_requests": 150,
+            "success_rate": 0.85,
+            "avg_latency_ms": 287.5,
+            "p95_latency_ms": 450.0,
+            "avg_confidence": 0.92,
+            "total_tokens": 50000,
+            "total_cost_usd": 0.005,
+            "fallback_used_count": 12,
         }
+    })
 
 
 class ProviderStatusResponse(BaseModel):
@@ -171,16 +169,15 @@ class ProviderStatusResponse(BaseModel):
         description="Last health check timestamp",
     )
     
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "provider": "vertex_ai",
-                "healthy": True,
-                "latency_ms": 287.5,
-                "error_rate": 0.02,
-                "last_check": "2025-12-01T12:34:56Z",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "provider": "vertex_ai",
+            "healthy": True,
+            "latency_ms": 287.5,
+            "error_rate": 0.02,
+            "last_check": "2025-12-01T12:34:56Z",
         }
+    })
 
 
 class DistillationConfigResponse(BaseModel):
@@ -219,18 +216,17 @@ class DistillationConfigResponse(BaseModel):
         description="Whether to allow requests on provider failure",
     )
     
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "enabled": True,
-                "provider": "vertex_ai",
-                "fallback_provider": "deepinfra",
-                "temperature": 0.3,
-                "max_tokens": 200,
-                "timeout_seconds": 5.0,
-                "fail_open": True,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "enabled": True,
+            "provider": "vertex_ai",
+            "fallback_provider": "deepinfra",
+            "temperature": 0.3,
+            "max_tokens": 200,
+            "timeout_seconds": 5.0,
+            "fail_open": True,
         }
+    })
 
 
 class DistillationConfigUpdateRequest(BaseModel):
@@ -292,27 +288,26 @@ class DistillationHealthResponse(BaseModel):
         description="Whether telemetry is enabled",
     )
     
-    class Config:
-        json_schema_extra = {
-            "example": {
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "healthy": True,
+            "primary_provider": {
+                "provider": "vertex_ai",
                 "healthy": True,
-                "primary_provider": {
-                    "provider": "vertex_ai",
-                    "healthy": True,
-                    "latency_ms": 287.5,
-                    "error_rate": 0.02,
-                    "last_check": "2025-12-01T12:34:56Z",
-                },
-                "fallback_provider": {
-                    "provider": "deepinfra",
-                    "healthy": True,
-                    "latency_ms": 412.3,
-                    "error_rate": 0.03,
-                    "last_check": "2025-12-01T12:34:56Z",
-                },
-                "telemetry_enabled": True,
-            }
+                "latency_ms": 287.5,
+                "error_rate": 0.02,
+                "last_check": "2025-12-01T12:34:56Z",
+            },
+            "fallback_provider": {
+                "provider": "deepinfra",
+                "healthy": True,
+                "latency_ms": 412.3,
+                "error_rate": 0.03,
+                "last_check": "2025-12-01T12:34:56Z",
+            },
+            "telemetry_enabled": True,
         }
+    })
 
 
 # ============================================

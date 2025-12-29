@@ -8,7 +8,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import Request, Security, status
 from fastapi_error_map import rule
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.application.common.services.current_user import CurrentUserService
 from app.application.metrics.ports import UserMetricsRepository
@@ -32,8 +32,7 @@ class TrackEventRequest(BaseModel):
     app_version: str | None = Field(None, description="App version")
     session_id: str | None = Field(None, description="Session identifier")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "event_type": "swap_completed",
                 "event_category": "trading",
@@ -48,7 +47,7 @@ class TrackEventRequest(BaseModel):
                 "app_version": "1.0.0",
                 "session_id": "sess_abc123"
             }
-        }
+        })
 
 
 class TrackEventResponse(BaseModel):

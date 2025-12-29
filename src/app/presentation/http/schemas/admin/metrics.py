@@ -6,7 +6,7 @@ Pydantic models for admin analytics/metrics API responses.
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # ============================================================
 # Time Series Data Points
@@ -76,8 +76,7 @@ class AdminMetricsOverview(BaseModel):
     users: UserOverviewMetrics = Field(..., description="User activity metrics")
     generated_at: datetime = Field(..., description="When these metrics were generated")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "wallets": {
                     "total_wallets": 1500,
@@ -101,7 +100,7 @@ class AdminMetricsOverview(BaseModel):
                 },
                 "generated_at": "2024-01-15T10:30:00Z",
             }
-        }
+        })
 
 
 # ============================================================

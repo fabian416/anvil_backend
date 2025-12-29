@@ -4,7 +4,7 @@ REST API for AI-powered trading signal generation.
 """
 
 from fastapi import APIRouter, Query, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, Optional
 
 from app.application.hunter.trading_signal_generator import (
@@ -35,8 +35,7 @@ class TradingSignalResponse(BaseModel):
     generated_at: str = Field(..., description="Signal generation timestamp")
     recommendation: str = Field(..., description="Human-readable recommendation")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "token_symbol": "ETH",
                 "signal_type": "BUY",
@@ -52,7 +51,7 @@ class TradingSignalResponse(BaseModel):
                 "generated_at": "2025-12-03T18:00:00Z",
                 "recommendation": "BUY signal (strength: 72.5/100)...",
             }
-        }
+        })
 
 
 class MultiTimeframeAnalysisResponse(BaseModel):
@@ -65,8 +64,7 @@ class MultiTimeframeAnalysisResponse(BaseModel):
     trend_direction: str = Field(..., description="Overall trend: bullish, bearish, neutral")
     generated_at: str = Field(..., description="Analysis timestamp")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "token_symbol": "ETH",
                 "signals": {
@@ -79,7 +77,7 @@ class MultiTimeframeAnalysisResponse(BaseModel):
                 "trend_direction": "bullish",
                 "generated_at": "2025-12-03T18:00:00Z",
             }
-        }
+        })
 
 
 def create_trading_signals_router() -> APIRouter:

@@ -12,7 +12,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Security, status
 from fastapi_error_map import ErrorAwareRouter, rule
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.infrastructure.auth.handlers.wallet_me import (
     GetMyWalletsHandler,
@@ -53,8 +53,7 @@ class MyWalletsResponseModel(BaseModel):
     privy_connected: bool = Field(..., description="Whether Privy data was fetched")
     message: Optional[str] = Field(None, description="Optional status message")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "user_id": 123,
                 "privy_user_id": "did:privy:abc123",
@@ -73,7 +72,7 @@ class MyWalletsResponseModel(BaseModel):
                 "privy_connected": True,
                 "message": None,
             }
-        }
+        })
 
 
 class SyncWalletItem(BaseModel):

@@ -4,7 +4,7 @@ REST API for automated arbitrage execution.
 """
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Dict, Optional
 
 from app.application.ultra.auto_executor import AutoExecutor
@@ -17,14 +17,13 @@ class ConfigUpdateRequest(BaseModel):
     scan_interval_seconds: Optional[int] = Field(None, description="Scan interval seconds")
     max_gas_price_gwei: Optional[int] = Field(None, description="Max gas price gwei")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "min_profit_usd": 75.0,
-                "scan_interval_seconds": 10,
-                "max_gas_price_gwei": 120,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "min_profit_usd": 75.0,
+            "scan_interval_seconds": 10,
+            "max_gas_price_gwei": 120,
         }
+    })
 
 
 def create_auto_executor_router() -> APIRouter:

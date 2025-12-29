@@ -4,7 +4,7 @@ Pydantic schemas for Security Dashboard API endpoints.
 
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class VulnerabilitySummarySchema(BaseModel):
@@ -28,26 +28,25 @@ class SecurityScanResultSchema(BaseModel):
     duration_seconds: Optional[float] = Field(None, description="Scan duration in seconds")
     errors: List[str] = Field(default_factory=list, description="Any errors encountered during scan")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "scan_id": "20241213_120000",
-                "scan_date": "2024-12-13T12:00:00",
-                "status": "pass",
-                "tools_executed": ["Bandit", "Safety", "Helios", "LLMExploiter", "Nettacker"],
-                "vulnerabilities": {
-                    "critical": 0,
-                    "high": 2,
-                    "medium": 5,
-                    "low": 10,
-                    "info": 3,
-                    "total": 20
-                },
-                "reports_path": "/security/reports/20241213_120000",
-                "duration_seconds": 145.3,
-                "errors": []
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "scan_id": "20241213_120000",
+            "scan_date": "2024-12-13T12:00:00",
+            "status": "pass",
+            "tools_executed": ["Bandit", "Safety", "Helios", "LLMExploiter", "Nettacker"],
+            "vulnerabilities": {
+                "critical": 0,
+                "high": 2,
+                "medium": 5,
+                "low": 10,
+                "info": 3,
+                "total": 20
+            },
+            "reports_path": "/security/reports/20241213_120000",
+            "duration_seconds": 145.3,
+            "errors": []
         }
+    })
 
 
 class ToolScanResultSchema(BaseModel):
@@ -59,22 +58,21 @@ class ToolScanResultSchema(BaseModel):
     report_path: str = Field(description="Path to the tool's detailed report")
     details: Dict[str, Any] = Field(description="Additional tool-specific details")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "tool_name": "Bandit",
-                "scan_date": "2024-12-13T12:00:00",
-                "status": "completed",
-                "vulnerabilities_found": 5,
-                "report_path": "/security/reports/20241213_120000/bandit-report.json",
-                "details": {
-                    "critical": 0,
-                    "high": 1,
-                    "medium": 3,
-                    "low": 1
-                }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "tool_name": "Bandit",
+            "scan_date": "2024-12-13T12:00:00",
+            "status": "completed",
+            "vulnerabilities_found": 5,
+            "report_path": "/security/reports/20241213_120000/bandit-report.json",
+            "details": {
+                "critical": 0,
+                "high": 1,
+                "medium": 3,
+                "low": 1
             }
         }
+    })
 
 
 class ScanHistorySchema(BaseModel):
@@ -82,31 +80,30 @@ class ScanHistorySchema(BaseModel):
     scans: List[SecurityScanResultSchema] = Field(description="List of historical scans")
     total_scans: int = Field(ge=0, description="Total number of scans available")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "scans": [
-                    {
-                        "scan_id": "20241213_120000",
-                        "scan_date": "2024-12-13T12:00:00",
-                        "status": "pass",
-                        "tools_executed": ["Bandit", "Safety"],
-                        "vulnerabilities": {
-                            "critical": 0,
-                            "high": 0,
-                            "medium": 2,
-                            "low": 5,
-                            "info": 1,
-                            "total": 8
-                        },
-                        "reports_path": "/security/reports/20241213_120000",
-                        "duration_seconds": 120.0,
-                        "errors": []
-                    }
-                ],
-                "total_scans": 10
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "scans": [
+                {
+                    "scan_id": "20241213_120000",
+                    "scan_date": "2024-12-13T12:00:00",
+                    "status": "pass",
+                    "tools_executed": ["Bandit", "Safety"],
+                    "vulnerabilities": {
+                        "critical": 0,
+                        "high": 0,
+                        "medium": 2,
+                        "low": 5,
+                        "info": 1,
+                        "total": 8
+                    },
+                    "reports_path": "/security/reports/20241213_120000",
+                    "duration_seconds": 120.0,
+                    "errors": []
+                }
+            ],
+            "total_scans": 10
         }
+    })
 
 
 class VulnerabilityTrendsSchema(BaseModel):
@@ -117,16 +114,15 @@ class VulnerabilityTrendsSchema(BaseModel):
     medium: List[int] = Field(description="Medium severity vulnerability counts")
     low: List[int] = Field(description="Low severity vulnerability counts")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "dates": ["2024-12-01", "2024-12-08", "2024-12-13"],
-                "critical": [0, 0, 0],
-                "high": [3, 2, 1],
-                "medium": [5, 4, 3],
-                "low": [10, 8, 5]
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "dates": ["2024-12-01", "2024-12-08", "2024-12-13"],
+            "critical": [0, 0, 0],
+            "high": [3, 2, 1],
+            "medium": [5, 4, 3],
+            "low": [10, 8, 5]
         }
+    })
 
 
 class SecurityDashboardSummarySchema(BaseModel):
@@ -136,30 +132,29 @@ class SecurityDashboardSummarySchema(BaseModel):
     active_tools: List[str] = Field(description="List of active security tools")
     overall_status: str = Field(description="Overall security posture (healthy/warning/critical)")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "latest_scan": {
-                    "scan_id": "20241213_120000",
-                    "scan_date": "2024-12-13T12:00:00",
-                    "status": "pass",
-                    "tools_executed": ["Bandit", "Safety", "Helios"],
-                    "vulnerabilities": {
-                        "critical": 0,
-                        "high": 0,
-                        "medium": 2,
-                        "low": 5,
-                        "info": 1,
-                        "total": 8
-                    },
-                    "reports_path": "/security/reports/20241213_120000",
-                    "errors": []
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "latest_scan": {
+                "scan_id": "20241213_120000",
+                "scan_date": "2024-12-13T12:00:00",
+                "status": "pass",
+                "tools_executed": ["Bandit", "Safety", "Helios"],
+                "vulnerabilities": {
+                    "critical": 0,
+                    "high": 0,
+                    "medium": 2,
+                    "low": 5,
+                    "info": 1,
+                    "total": 8
                 },
-                "total_scans": 45,
-                "active_tools": ["Bandit", "Safety", "Helios", "LLMExploiter", "Nettacker"],
-                "overall_status": "healthy"
-            }
+                "reports_path": "/security/reports/20241213_120000",
+                "errors": []
+            },
+            "total_scans": 45,
+            "active_tools": ["Bandit", "Safety", "Helios", "LLMExploiter", "Nettacker"],
+            "overall_status": "healthy"
         }
+    })
 
 
 class ScanToolsSchema(BaseModel):
@@ -167,30 +162,29 @@ class ScanToolsSchema(BaseModel):
     scan_id: str = Field(description="Scan identifier")
     tools: List[ToolScanResultSchema] = Field(description="Results from each tool")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "scan_id": "20241213_120000",
-                "tools": [
-                    {
-                        "tool_name": "Bandit",
-                        "scan_date": "2024-12-13T12:00:00",
-                        "status": "completed",
-                        "vulnerabilities_found": 5,
-                        "report_path": "/security/reports/20241213_120000/bandit-report.json",
-                        "details": {"critical": 0, "high": 1, "medium": 3, "low": 1}
-                    },
-                    {
-                        "tool_name": "Safety",
-                        "scan_date": "2024-12-13T12:05:00",
-                        "status": "completed",
-                        "vulnerabilities_found": 2,
-                        "report_path": "/security/reports/20241213_120000/safety-report.json",
-                        "details": {"critical": 0, "high": 0, "medium": 1, "low": 1}
-                    }
-                ]
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "scan_id": "20241213_120000",
+            "tools": [
+                {
+                    "tool_name": "Bandit",
+                    "scan_date": "2024-12-13T12:00:00",
+                    "status": "completed",
+                    "vulnerabilities_found": 5,
+                    "report_path": "/security/reports/20241213_120000/bandit-report.json",
+                    "details": {"critical": 0, "high": 1, "medium": 3, "low": 1}
+                },
+                {
+                    "tool_name": "Safety",
+                    "scan_date": "2024-12-13T12:05:00",
+                    "status": "completed",
+                    "vulnerabilities_found": 2,
+                    "report_path": "/security/reports/20241213_120000/safety-report.json",
+                    "details": {"critical": 0, "high": 0, "medium": 1, "low": 1}
+                }
+            ]
         }
+    })
 
 
 class ErrorResponse(BaseModel):
@@ -198,10 +192,9 @@ class ErrorResponse(BaseModel):
     error: str = Field(description="Error message")
     detail: Optional[str] = Field(None, description="Detailed error information")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "error": "Scan not found",
-                "detail": "No scan results found for scan_id: 20241213_120000"
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "error": "Scan not found",
+            "detail": "No scan results found for scan_id: 20241213_120000"
         }
+    })

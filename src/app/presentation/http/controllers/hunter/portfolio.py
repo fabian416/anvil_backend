@@ -4,7 +4,7 @@ REST API for Modern Portfolio Theory (MPT) portfolio optimization.
 """
 
 from fastapi import APIRouter, Body, Query, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, List, Optional
 
 from app.application.hunter.portfolio_optimizer import (
@@ -20,8 +20,7 @@ class OptimizedPortfolioResponse(BaseModel):
     metrics: Dict = Field(..., description="Portfolio performance metrics")
     timestamp: str = Field(..., description="Optimization timestamp")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "weights": {"BTC": 40.0, "ETH": 35.0, "SOL": 25.0},
                 "metrics": {
@@ -31,7 +30,7 @@ class OptimizedPortfolioResponse(BaseModel):
                 },
                 "timestamp": "2025-12-03T20:00:00Z",
             }
-        }
+        })
 
 
 class EfficientFrontierResponse(BaseModel):
@@ -43,8 +42,7 @@ class EfficientFrontierResponse(BaseModel):
     max_sharpe_portfolio: Dict = Field(..., description="Maximum Sharpe ratio portfolio")
     min_volatility_portfolio: Dict = Field(..., description="Minimum volatility portfolio")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "returns": [25.0, 30.0, 35.0],
                 "risks": [20.0, 25.0, 30.0],
@@ -52,7 +50,7 @@ class EfficientFrontierResponse(BaseModel):
                 "max_sharpe_portfolio": {"return": 30.0, "risk": 25.0, "sharpe": 1.15},
                 "min_volatility_portfolio": {"return": 25.0, "risk": 20.0, "sharpe": 1.1},
             }
-        }
+        })
 
 
 class RebalancingPlanResponse(BaseModel):

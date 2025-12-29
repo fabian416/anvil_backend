@@ -4,7 +4,7 @@ REST API for technical pattern detection and analysis.
 """
 
 from fastapi import APIRouter, Query, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, List
 
 from app.application.hunter.pattern_recognition import PatternRecognizer
@@ -21,8 +21,7 @@ class DetectedPatternResponse(BaseModel):
     key_levels: Dict[str, float] = Field(..., description="Key price levels")
     description: str = Field(..., description="Pattern description")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "pattern_type": "head_and_shoulders",
                 "signal": "bearish",
@@ -38,7 +37,7 @@ class DetectedPatternResponse(BaseModel):
                 },
                 "description": "Head and shoulders pattern indicates bearish reversal",
             }
-        }
+        })
 
 
 class CandlestickSignalResponse(BaseModel):
@@ -51,8 +50,7 @@ class CandlestickSignalResponse(BaseModel):
     price: float = Field(..., description="Price at pattern")
     description: str = Field(..., description="Pattern description")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "pattern": "bullish_engulfing",
                 "signal": "bullish",
@@ -61,7 +59,7 @@ class CandlestickSignalResponse(BaseModel):
                 "price": 2000.0,
                 "description": "Bullish engulfing indicates strong buying pressure",
             }
-        }
+        })
 
 
 class SupportResistanceLevelResponse(BaseModel):

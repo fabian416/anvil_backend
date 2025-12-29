@@ -8,7 +8,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request, status
 from fastapi_error_map import ErrorAwareRouter, rule
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.commands.auth.privy_login import (
     PrivyLogin,
@@ -32,17 +32,16 @@ class PrivyLoginRequestSchema(BaseModel):
     first_name: Optional[str] = Field(None, description="User first name")
     last_name: Optional[str] = Field(None, description="User last name")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "privy_user_id": "did:privy:abc123xyz",
-                "email": "user@example.com",
-                "wallet_address": "0x1234567890abcdef1234567890abcdef12345678",
-                "auth_provider": "wallet",
-                "first_name": "John",
-                "last_name": "Doe"
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "privy_user_id": "did:privy:abc123xyz",
+            "email": "user@example.com",
+            "wallet_address": "0x1234567890abcdef1234567890abcdef12345678",
+            "auth_provider": "wallet",
+            "first_name": "John",
+            "last_name": "Doe"
         }
+    })
 
 
 class PrivyLoginResponseSchema(BaseModel):
