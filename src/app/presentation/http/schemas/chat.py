@@ -87,6 +87,8 @@ class EnrichmentData(BaseModel):
     similar_protocols: Optional[List[dict]] = None
 
     # For Agent Squad
+    task_type: Optional[str] = None  # analysis, research, general
+    has_tools_used: Optional[bool] = None  # Boolean indicating if tools were used
     tools_used: Optional[List[str]] = None
     tokens_consumed: Optional[int] = None
     latency_ms: Optional[int] = None

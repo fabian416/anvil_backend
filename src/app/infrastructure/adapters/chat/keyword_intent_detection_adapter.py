@@ -410,8 +410,8 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         """Extract entities based on intent and message."""
         entities: dict = {}
 
-        # Protocol name extraction for risk assessment
-        if intent == ChatIntent.RISK_ASSESSMENT:
+        # Protocol name extraction for risk assessment and similar protocols
+        if intent in (ChatIntent.RISK_ASSESSMENT, ChatIntent.SIMILAR_PROTOCOLS):
             protocols = {
                 "aave": "Aave",
                 "uniswap": "Uniswap",

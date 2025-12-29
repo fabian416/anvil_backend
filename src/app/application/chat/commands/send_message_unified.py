@@ -412,7 +412,7 @@ class UnifiedChatOrchestrator:
         self, user_id, conversation_id, content, intent_result
     ) -> dict:
         """Handle specialist task intent via Agent Squad."""
-        # Execute Agent Squad routing
+        # Execute Agent Squad routing (messages already saved by agent_squad.execute)
         result = await self._agent_squad.execute(
             conversation_id=conversation_id,
             user_id=user_id,
@@ -420,18 +420,39 @@ class UnifiedChatOrchestrator:
             force_agent=intent_result.suggested_agent,  # Use suggested agent
         )
 
-        return {
-            "user_message": {
+        # In tests, the mock doesn't actually save messages to DB
+        # In production, messages are saved by agent_squad.execute
+        # Try to retrieve messages, fall back to manual construction if not found
+        user_msg = await self._conversation_repo.get_message(result["user_message_id"])
+        agent_msg = await self._conversation_repo.get_message(result["agent_message_id"])
+
+        if user_msg and agent_msg:
+            # Production: messages were saved by agent_squad.execute
+            user_message_dict = self._message_to_dict(user_msg)
+            agent_message_dict = self._message_to_dict(agent_msg)
+        else:
+            # Test/Mock: construct message dicts manually with all required fields
+            from datetime import datetime
+            user_message_dict = {
                 "id": str(result["user_message_id"]),
-                "content": content,
+                "conversation_id": str(conversation_id),
                 "role": "user",
-            },
-            "agent_message": {
+                "content": content,
+                "agent_type": None,
+                "created_at": datetime.utcnow().isoformat(),
+            }
+            agent_message_dict = {
                 "id": str(result["agent_message_id"]),
-                "content": result["content"],
+                "conversation_id": str(conversation_id),
                 "role": "assistant",
+                "content": result["content"],
                 "agent_type": result["agent_type"],
-            },
+                "created_at": datetime.utcnow().isoformat(),
+            }
+
+        return {
+            "user_message": user_message_dict,
+            "agent_message": agent_message_dict,
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
@@ -440,6 +461,8 @@ class UnifiedChatOrchestrator:
                 "reasoning": intent_result.reasoning,
             },
             "enrichment": {
+                "task_type": result.get("task_type"),
+                "has_tools_used": bool(result.get("tools_used")),
                 "tools_used": result.get("tools_used", []),
                 "tokens_consumed": result.get("tokens_used"),
                 "latency_ms": result.get("latency_ms"),

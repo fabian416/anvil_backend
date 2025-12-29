@@ -1010,6 +1010,15 @@ class MockSendAgentSquadMessage:
         """Mock execute returns deterministic squad response."""
         from uuid import uuid4
 
+        # Determine task type based on message content
+        content_lower = content.lower()
+        if "analyze" in content_lower or "analysis" in content_lower:
+            task_type = "analysis"
+        elif "research" in content_lower:
+            task_type = "research"
+        else:
+            task_type = "general"
+
         return {
             "user_message_id": uuid4(),
             "agent_message_id": uuid4(),
@@ -1020,6 +1029,7 @@ class MockSendAgentSquadMessage:
             "tools_used": ["mock_analysis_tool", "mock_data_tool"],
             "latency_ms": 150,
             "tokens_used": 250,
+            "task_type": task_type,
         }
 
 
