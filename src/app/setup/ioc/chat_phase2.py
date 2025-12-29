@@ -669,20 +669,18 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_intent_detector_service(
         self,
-        llm_gateway: LLMGateway,
+        intent_port: IntentDetectionPort,
     ) -> IntentDetectorService:
         """
         Provide intent detector for unified routing.
 
-        Uses LLM-powered classification with keyword fallback.
-        LLM gateway is automatically injected by Dishka:
-        - In tests: MockLLMGateway from TestMockProvider
-        - In production: LLMGatewayImpl or InstrumentedLLMGateway
+        Now uses IntentDetectionPort for classification:
+        - In production: HybridIntentDetectionAdapter (LLM + keyword fallback)
+        - In tests: KeywordIntentDetectionAdapter (fast, deterministic)
 
-        NOTE: This maintains backward compatibility.
-        The IntentDetectionPort is also available for new code.
+        The service delegates to the port, maintaining clean architecture.
         """
-        return IntentDetectorService(llm_gateway=llm_gateway)
+        return IntentDetectorService(intent_port=intent_port)
 
     @provide
     def provide_unified_chat_orchestrator(
