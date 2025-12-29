@@ -13,7 +13,9 @@ from typing import Optional, Any
 
 from dishka import Provider, Scope, provide, decorate
 from redis.asyncio import Redis, ConnectionPool
-from sqlalchemy.ext.asyncio import AsyncSession
+
+# Infrastructure Types
+from app.infrastructure.adapters.types import MainAsyncSession
 
 # Domain Ports - Repositories
 from app.domain.chat.ports.analytics_repository import AnalyticsRepository
@@ -190,7 +192,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_analytics_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> AnalyticsRepository:
         """Provide conversation analytics repository."""
         return AnalyticsRepositoryAdapter(session=session)
@@ -198,7 +200,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_agent_orchestration_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> AgentOrchestrationRepository:
         """Provide agent orchestration repository."""
         return AgentOrchestrationRepositoryAdapter(session=session)
@@ -206,7 +208,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_audit_log_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> AuditLogRepository:
         """Provide audit log repository."""
         return AuditLogRepositoryAdapter(session=session)
@@ -214,7 +216,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_export_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> ExportRepository:
         """Provide conversation export repository."""
         return ExportRepositoryAdapter(session=session)
@@ -228,7 +230,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_template_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> TemplateRepository:
         """Provide conversation template repository."""
         return TemplateRepositoryAdapter(session=session)
@@ -236,7 +238,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_template_execution_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> TemplateExecutionRepository:
         """Provide template execution repository."""
         return TemplateExecutionRepositoryAdapter(session=session)
@@ -244,7 +246,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_user_preferences_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> UserPreferencesRepository:
         """Provide user chat preferences repository."""
         return UserPreferencesRepositoryAdapter(session=session)
@@ -496,7 +498,7 @@ class ChatPhase2Provider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_vector_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> VectorRepository:
         """
         Provide vector repository for similarity search.
