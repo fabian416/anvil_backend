@@ -26,6 +26,23 @@
               "category": "lending",
               "chain": "ethereum"
             }
+          },
+          "output": {
+            "content": "Here are some high-yield lending protocols on Ethereum:",
+            "data": [
+              {
+                "name": "Aave V3",
+                "category": "Lending",
+                "chain": "Ethereum",
+                "apy": "Variable"
+              },
+              {
+                "name": "Compound V3",
+                "category": "Lending",
+                "chain": "Ethereum",
+                "apy": "Variable"
+              }
+            ]
           }
         },
         {
@@ -37,6 +54,21 @@
           "expected_routing": {
             "intent": "protocol_search",
             "confidence_min": 0.8
+          },
+          "output": {
+            "content": "I found these low-risk DeFi staking protocols:",
+            "data": [
+              {
+                "name": "Lido",
+                "category": "Liquid Staking",
+                "risk_score": "Low"
+              },
+              {
+                "name": "Rocket Pool",
+                "category": "Liquid Staking",
+                "risk_score": "Low"
+              }
+            ]
           }
         },
         {
@@ -48,6 +80,30 @@
           "expected_routing": {
             "intent": "protocol_search",
             "confidence_min": 0.85
+          },
+          "output": {
+            "content": "Here are the top DEX protocols on Polygon and Arbitrum:",
+            "data": [
+              {
+                "name": "Uniswap V3",
+                "chains": [
+                  "Polygon",
+                  "Arbitrum"
+                ]
+              },
+              {
+                "name": "QuickSwap",
+                "chains": [
+                  "Polygon"
+                ]
+              },
+              {
+                "name": "Camelot",
+                "chains": [
+                  "Arbitrum"
+                ]
+              }
+            ]
           }
         }
       ],
@@ -62,6 +118,14 @@
             "intent": "risk_assessment",
             "confidence_min": 0.85,
             "handler": "graphrag_search"
+          },
+          "output": {
+            "content": "Aave is generally considered safe with a high security score. Key risks include smart contract bugs and market volatility.",
+            "risk_analysis": {
+              "score": 95,
+              "audits": "Multiple",
+              "incident_history": "None critical"
+            }
           }
         },
         {
@@ -73,6 +137,13 @@
           "expected_routing": {
             "intent": "risk_assessment",
             "confidence_min": 0.8
+          },
+          "output": {
+            "content": "Both Uniswap and Curve are highly secure. Uniswap has a simpler architecture, while Curve's complexity is higher but well-tested.",
+            "comparison": {
+              "uniswap_score": 98,
+              "curve_score": 96
+            }
           }
         }
       ],
@@ -87,6 +158,15 @@
             "intent": "similar_protocols",
             "confidence_min": 0.85,
             "handler": "graphrag_search"
+          },
+          "output": {
+            "content": "Protocols similar to Uniswap (AMM/DEX) include:",
+            "similar_entities": [
+              "SushiSwap",
+              "PancakeSwap",
+              "Curve Finance",
+              "Balancer"
+            ]
           }
         },
         {
@@ -98,6 +178,14 @@
           "expected_routing": {
             "intent": "similar_protocols",
             "confidence_min": 0.8
+          },
+          "output": {
+            "content": "Lending platforms similar to Compound include:",
+            "similar_entities": [
+              "Aave",
+              "Spark Protocol",
+              "Morpho"
+            ]
           }
         }
       ]
@@ -114,6 +202,9 @@
             "intent": "general_conversation",
             "confidence_min": 0.95,
             "handler": "general_chat"
+          },
+          "output": {
+            "content": "Hello! I am Anvil, your advanced AI DeFi companion. I can help you with protocol analysis, risk assessment, trading executions, and market intelligence. How can I assist you today?"
           }
         },
         {
@@ -125,6 +216,9 @@
           "expected_routing": {
             "intent": "general_conversation",
             "confidence_min": 0.85
+          },
+          "output": {
+            "content": "I offer a range of DeFi capabilities including:\n1. **Protocol Search**: finding and analyzing protocols.\n2. **Risk Assessment**: evaluating safety scores.\n3. **Yield Hunting**: finding best APY.\n4. **Agent Squads**: autonomous multi-agent tasks."
           }
         },
         {
@@ -137,6 +231,9 @@
             "intent": "general_conversation",
             "confidence_max": 0.7,
             "handler": "general_chat"
+          },
+          "output": {
+            "content": "I'm not sure I understand. Could you please clarify? You can ask me to find yields, analyze tokens, or explain protocols."
           }
         }
       ]

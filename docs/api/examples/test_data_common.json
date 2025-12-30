@@ -35,6 +35,9 @@
       "expected_error": {
         "status_code": 422,
         "error_type": "validation_error"
+      },
+      "output": {
+        "content": "Message content cannot be empty or whitespace only."
       }
     },
     {
@@ -46,6 +49,9 @@
       "expected_error": {
         "status_code": 422,
         "error_type": "validation_error"
+      },
+      "output": {
+        "content": "Message content exceeds maximum allowed length."
       }
     },
     {
@@ -57,6 +63,9 @@
       "expected_routing": {
         "intent": "protocol_search",
         "content_sanitized": true
+      },
+      "output": {
+        "content": "Searching for protocols. Note: Unsafe characters were removed from your request."
       }
     },
     {
@@ -68,6 +77,9 @@
       "expected_routing": {
         "intent": "protocol_search",
         "note": "First intent detected takes precedence"
+      },
+      "output": {
+        "content": "I'll Search for DeFi protocols as requested."
       }
     }
   ],

@@ -24,7 +24,10 @@
             "intent": "general_conversation",
             "confidence_min": 0.85
           },
-          "agent_type": "chat"
+          "agent_type": "chat",
+          "output": {
+            "content": "Hello! I am Anvil, your advanced AI DeFi companion. I can help you with protocol analysis, risk assessment, trading executions, and market intelligence."
+          }
         },
         {
           "id": "squad_chat_002",
@@ -36,7 +39,10 @@
             "intent": "general_conversation",
             "confidence_min": 0.8
           },
-          "agent_type": "chat"
+          "agent_type": "chat",
+          "output": {
+            "content": "I offer a range of DeFi capabilities including:\n1. **Protocol Search**: finding and analyzing protocols.\n2. **Risk Assessment**: evaluating safety scores.\n3. **Yield Hunting**: finding best APY.\n4. **Agent Squads**: autonomous multi-agent tasks."
+          }
         },
         {
           "id": "squad_hunter_001",
@@ -48,7 +54,23 @@
             "intent": "hunter_sentiment",
             "confidence_min": 0.8
           },
-          "agent_type": "hunter_ai"
+          "agent_type": "hunter_ai",
+          "output": {
+            "content": "Ethereum market sentiment is currently **Bullish**.",
+            "sentiment_analysis": {
+              "score": 0.75,
+              "sources": [
+                "Twitter",
+                "Reddit",
+                "News"
+              ],
+              "metrics": {
+                "positive": "60%",
+                "neutral": "30%",
+                "negative": "10%"
+              }
+            }
+          }
         },
         {
           "id": "squad_hunter_002",
@@ -60,7 +82,22 @@
             "intent": "hunter_price_prediction",
             "confidence_min": 0.8
           },
-          "agent_type": "hunter_ai"
+          "agent_type": "hunter_ai",
+          "output": {
+            "content": "Based on current trends and on-chain data, Bitcoin price prediction for the next week suggests a range of $68,000 - $72,000.",
+            "prediction_data": {
+              "forecast": "Bullish",
+              "confidence": 0.82,
+              "support_levels": [
+                68000,
+                66500
+              ],
+              "resistance_levels": [
+                72000,
+                75000
+              ]
+            }
+          }
         },
         {
           "id": "squad_research_001",
@@ -72,7 +109,23 @@
             "intent": "specialist_task",
             "confidence_min": 0.75
           },
-          "agent_type": "research"
+          "agent_type": "research",
+          "output": {
+            "content": "Here is a deep dive analysis of the Aave V3 protocol.",
+            "research_report": {
+              "protocol": "Aave V3",
+              "tvl": "$12.5B",
+              "key_innovations": [
+                "Portals",
+                "Efficiency Mode",
+                "Isolation Mode"
+              ],
+              "risk_factors": [
+                "Smart Contract Risk",
+                "Market Risk"
+              ]
+            }
+          }
         },
         {
           "id": "squad_research_002",
@@ -84,7 +137,21 @@
             "intent": "specialist_task",
             "confidence_min": 0.75
           },
-          "agent_type": "research"
+          "agent_type": "research",
+          "output": {
+            "content": "Analysis of Uniswap (UNI) tokenomics.",
+            "tokenomics": {
+              "token": "UNI",
+              "total_supply": "1,000,000,000",
+              "circulating_supply": "753,000,000",
+              "distribution": {
+                "community_treasury": "60%",
+                "team": "21.266%",
+                "investors": "18.044%",
+                "advisors": "0.69%"
+              }
+            }
+          }
         },
         {
           "id": "squad_exec_001",
@@ -96,7 +163,17 @@
             "intent": "specialist_task",
             "confidence_min": 0.75
           },
-          "agent_type": "execution"
+          "agent_type": "execution",
+          "output": {
+            "content": "Transaction execution plan prepared for 1 ETH to USDC swap on Uniswap.",
+            "execution_plan": {
+              "action": "swap",
+              "protocol": "Uniswap V3",
+              "input": "1 ETH",
+              "output_estimate": "3500 USDC",
+              "slippage": "0.5%"
+            }
+          }
         },
         {
           "id": "squad_risk_001",
@@ -108,7 +185,20 @@
             "intent": "hunter_risk_signals",
             "confidence_min": 0.75
           },
-          "agent_type": "risk_analyzer"
+          "agent_type": "risk_analyzer",
+          "output": {
+            "content": "Portfolio risk analysis complete. Overall risk level is MODERATE.",
+            "risk_metrics": {
+              "sharpe_ratio": 1.5,
+              "volatility": "High",
+              "diversification_score": 75,
+              "exposure": {
+                "L1s": "60%",
+                "DeFi": "30%",
+                "Stablecoins": "10%"
+              }
+            }
+          }
         },
         {
           "id": "squad_risk_002",
@@ -120,7 +210,17 @@
             "intent": "risk_assessment",
             "confidence_min": 0.75
           },
-          "agent_type": "risk_analyzer"
+          "agent_type": "risk_analyzer",
+          "output": {
+            "content": "Risk assessment for Curve Finance.",
+            "protocol_risk": {
+              "protocol": "Curve Finance",
+              "safety_score": 92,
+              "audit_status": "Audited",
+              "vulnerabilities": "None detected",
+              "last_incident": "July 2023 (Resolved)"
+            }
+          }
         },
         {
           "id": "squad_portfolio_001",
@@ -132,7 +232,19 @@
             "intent": "hunter_portfolio",
             "confidence_min": 0.75
           },
-          "agent_type": "portfolio"
+          "agent_type": "portfolio",
+          "output": {
+            "content": "Here are optimization suggestions to improve your portfolio's Sharpe ratio.",
+            "optimization_plan": {
+              "current_sharpe": 1.2,
+              "projected_sharpe": 1.8,
+              "rebalancing_actions": [
+                "Decrease exposure to memecoins by 10%",
+                "Increase stablecoin yields allocation by 15%",
+                "Add exposure to RWA protocols"
+              ]
+            }
+          }
         },
         {
           "id": "squad_tax_001",
@@ -144,7 +256,22 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "tax_optimizer"
+          "agent_type": "tax_optimizer",
+          "output": {
+            "content": "Found 3 potential tax loss harvesting opportunities.",
+            "opportunities": [
+              {
+                "asset": "TOKEN_A",
+                "loss": "$500",
+                "strategy": "Sell and re-buy after 30 days (check local laws)"
+              },
+              {
+                "asset": "TOKEN_B",
+                "loss": "$1200",
+                "strategy": "Swap for correlated asset"
+              }
+            ]
+          }
         },
         {
           "id": "squad_tax_002",
@@ -156,7 +283,16 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "tax_optimizer"
+          "agent_type": "tax_optimizer",
+          "output": {
+            "content": "Tax report for 2024 generated successfully.",
+            "report_link": "https://anvil.fi/reports/tax_2024_uuid.pdf",
+            "summary": {
+              "total_gains": "$15,000",
+              "total_losses": "$4,000",
+              "net_taxable": "$11,000"
+            }
+          }
         },
         {
           "id": "squad_yield_001",
@@ -168,7 +304,24 @@
             "intent": "protocol_search",
             "confidence_min": 0.75
           },
-          "agent_type": "defi_yield"
+          "agent_type": "defi_yield",
+          "output": {
+            "content": "Top yield farming opportunities on Ethereum identified.",
+            "opportunities": [
+              {
+                "protocol": "Curve",
+                "pool": "3pool",
+                "apy": "4.5%",
+                "tvl": "$200M"
+              },
+              {
+                "protocol": "Convex",
+                "pool": "cvxCRV",
+                "apy": "18%",
+                "tvl": "$80M"
+              }
+            ]
+          }
         },
         {
           "id": "squad_yield_002",
@@ -180,7 +333,27 @@
             "intent": "protocol_search",
             "confidence_min": 0.75
           },
-          "agent_type": "defi_yield"
+          "agent_type": "defi_yield",
+          "output": {
+            "content": "Comparison of staking rewards for major protocols.",
+            "staking_comparison": [
+              {
+                "protocol": "Lido",
+                "asset": "ETH",
+                "apr": "3.5%"
+              },
+              {
+                "protocol": "Rocket Pool",
+                "asset": "ETH",
+                "apr": "3.2%"
+              },
+              {
+                "protocol": "Frax Ether",
+                "asset": "ETH",
+                "apr": "4.1%"
+              }
+            ]
+          }
         },
         {
           "id": "squad_security_001",
@@ -192,7 +365,20 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "security_auditor"
+          "agent_type": "security_auditor",
+          "output": {
+            "content": "Preliminary vulnerability scan complete.",
+            "audit_report": {
+              "status": "Pass",
+              "critical_issues": 0,
+              "medium_issues": 1,
+              "low_issues": 2,
+              "recommendations": [
+                "Optimize gas usage in loop",
+                "Add reentrancy guard to withdraw function"
+              ]
+            }
+          }
         },
         {
           "id": "squad_security_002",
@@ -204,7 +390,16 @@
             "intent": "risk_assessment",
             "confidence_min": 0.7
           },
-          "agent_type": "security_auditor"
+          "agent_type": "security_auditor",
+          "output": {
+            "content": "Security status check for Compound Protocol.",
+            "security_status": {
+              "protocol": "Compound V3",
+              "audit_coverage": "100%",
+              "bug_bounty": "Active ($2.5M)",
+              "security_incidents": "None recent"
+            }
+          }
         },
         {
           "id": "squad_gas_001",
@@ -216,7 +411,17 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "gas_optimizer"
+          "agent_type": "gas_optimizer",
+          "output": {
+            "content": "Gas optimization suggestions for transaction.",
+            "optimization": {
+              "estimated_savings": "15%",
+              "suggestions": [
+                "Use EIP-1559 type 2 transaction",
+                "Set maxPriorityFeePerGas to 1.5 gwei"
+              ]
+            }
+          }
         },
         {
           "id": "squad_gas_002",
@@ -228,7 +433,15 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "gas_optimizer"
+          "agent_type": "gas_optimizer",
+          "output": {
+            "content": "Gas price analysis and best time windows.",
+            "analysis": {
+              "current_gas": "25 gwei",
+              "best_window": "Sunday 08:00 UTC",
+              "forecast": "Gas expected to drop to <20 gwei in 4 hours"
+            }
+          }
         }
       ],
       "advanced_agents": [
@@ -242,7 +455,18 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "bridge_crosschain"
+          "agent_type": "bridge_crosschain",
+          "output": {
+            "content": "Initiating bridge of 100 USDC from Ethereum to Arbitrum.",
+            "bridge_data": {
+              "source_chain": "Ethereum",
+              "dest_chain": "Arbitrum",
+              "asset": "USDC",
+              "amount": 100,
+              "estimated_fees": "$5.20",
+              "eta": "15 mins"
+            }
+          }
         },
         {
           "id": "squad_bridge_002",
@@ -254,7 +478,15 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "bridge_crosschain"
+          "agent_type": "bridge_crosschain",
+          "output": {
+            "content": "Comparison of bridge routes from Polygon to Optimism.",
+            "route_analysis": {
+              "cheapest": "Hop Protocol ($1.50)",
+              "fastest": "Across Protocol (2 mins)",
+              "recommended": "Hop Protocol"
+            }
+          }
         },
         {
           "id": "squad_lending_001",
@@ -266,7 +498,18 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "lending_borrowing"
+          "agent_type": "lending_borrowing",
+          "output": {
+            "content": "Leverage position setup plan on Aave.",
+            "position_details": {
+              "strategy": "Long ETH 2x",
+              "protocol": "Aave V3",
+              "collateral": "ETH",
+              "borrow": "USDC",
+              "health_factor_initial": 1.5,
+              "liquidation_price": "$1500"
+            }
+          }
         },
         {
           "id": "squad_lending_002",
@@ -278,7 +521,15 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "lending_borrowing"
+          "agent_type": "lending_borrowing",
+          "output": {
+            "content": "Compound collateral optimization strategy.",
+            "optimization": {
+              "current_utilization": "80%",
+              "recommended_action": "Repay 10% of debt to improve health factor to > 1.25",
+              "risk_level": "High"
+            }
+          }
         },
         {
           "id": "squad_nft_001",
@@ -290,7 +541,26 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "nft_asset_manager"
+          "agent_type": "nft_asset_manager",
+          "output": {
+            "content": "NFT portfolio valuation complete.",
+            "valuation": {
+              "total_value_eth": "15.4 ETH",
+              "total_value_usd": "$45,000",
+              "holdings": [
+                {
+                  "collection": "Pudgy Penguins",
+                  "value": "12 ETH",
+                  "recommendation": "Hold"
+                },
+                {
+                  "collection": "Otherdeed",
+                  "value": "1.5 ETH",
+                  "recommendation": "Sell"
+                }
+              ]
+            }
+          }
         },
         {
           "id": "squad_nft_002",
@@ -302,7 +572,17 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "nft_asset_manager"
+          "agent_type": "nft_asset_manager",
+          "output": {
+            "content": "Floor price analysis for BAYC.",
+            "collection_analysis": {
+              "collection": "Bored Ape Yacht Club",
+              "current_floor": "12.5 ETH",
+              "trend_7d": "-5%",
+              "volume_24h": "150 ETH",
+              "sentiment": "Bearish short-term"
+            }
+          }
         },
         {
           "id": "squad_dao_001",
@@ -314,7 +594,22 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "dao_governance"
+          "agent_type": "dao_governance",
+          "output": {
+            "content": "Active governance proposals on Uniswap.",
+            "proposals": [
+              {
+                "id": "25",
+                "title": "Deploy Uniswap V3 on Scroll",
+                "status": "Active",
+                "ends_in": "2 days",
+                "current_votes": {
+                  "for": "98%",
+                  "against": "2%"
+                }
+              }
+            ]
+          }
         },
         {
           "id": "squad_dao_002",
@@ -326,7 +621,15 @@
             "intent": "specialist_task",
             "confidence_min": 0.7
           },
-          "agent_type": "dao_governance"
+          "agent_type": "dao_governance",
+          "output": {
+            "content": "Vote recommendation for Aave Proposal #42.",
+            "recommendation": {
+              "vote": "YES",
+              "reasoning": "This proposal aligns with the protocol's long-term growth strategy and has community support.",
+              "risk_analysis": "Low implementation risk"
+            }
+          }
         }
       ],
       "enterprise_agents": [
