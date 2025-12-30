@@ -1,0 +1,325 @@
+{
+  "metadata": {
+    "version": "2.0.0",
+    "description": "Hunter AI test data for Anvil Unified Chat API - sentiment, price prediction, risk signals, trading signals, patterns, portfolio",
+    "last_updated": "2025-12-29",
+    "data_type": "hunter",
+    "test_case_count": 24
+  },
+  "test_cases": {
+    "hunter_ai": {
+      "sentiment": [
+        {
+          "id": "hunter_sent_001",
+          "description": "Basic sentiment analysis - ETH",
+          "input": {
+            "content": "What's the ETH sentiment on Twitter and Reddit?"
+          },
+          "expected_routing": {
+            "intent": "hunter_sentiment",
+            "confidence_min": 0.85,
+            "handler": "hunter_ai"
+          },
+          "expected_enrichment": {
+            "token_symbol": "ETH",
+            "hunter_tool": "sentiment_analyzer"
+          }
+        },
+        {
+          "id": "hunter_sent_002",
+          "description": "Sentiment with time range",
+          "input": {
+            "content": "Show me BTC social media sentiment from last 7 days"
+          },
+          "expected_routing": {
+            "intent": "hunter_sentiment",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_sent_003",
+          "description": "Multi-token sentiment comparison",
+          "input": {
+            "content": "Compare sentiment between ETH, SOL, and AVAX"
+          },
+          "expected_routing": {
+            "intent": "hunter_sentiment",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_sent_004",
+          "description": "Discord sentiment",
+          "input": {
+            "content": "What's the Discord sentiment for Solana?"
+          },
+          "expected_routing": {
+            "intent": "hunter_sentiment",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_sent_005",
+          "description": "News sentiment analysis",
+          "input": {
+            "content": "Analyze crypto news sentiment for Bitcoin"
+          },
+          "expected_routing": {
+            "intent": "hunter_sentiment",
+            "confidence_min": 0.8
+          }
+        }
+      ],
+      "price_prediction": [
+        {
+          "id": "hunter_pp_001",
+          "description": "Basic price prediction - BTC 7 days",
+          "input": {
+            "content": "Predict BTC price for next 7 days"
+          },
+          "expected_routing": {
+            "intent": "hunter_price_prediction",
+            "confidence_min": 0.85,
+            "handler": "hunter_ai"
+          },
+          "expected_enrichment": {
+            "token_symbol": "BTC",
+            "time_horizon": "7d",
+            "hunter_tool": "lstm_predictor"
+          }
+        },
+        {
+          "id": "hunter_pp_002",
+          "description": "Long-term price forecast - ETH 30 days",
+          "input": {
+            "content": "Forecast ETH price for next 30 days"
+          },
+          "expected_routing": {
+            "intent": "hunter_price_prediction",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_pp_003",
+          "description": "SOL price prediction",
+          "input": {
+            "content": "What will SOL price be next week?"
+          },
+          "expected_routing": {
+            "intent": "hunter_price_prediction",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_pp_004",
+          "description": "Price range prediction",
+          "input": {
+            "content": "Give me a price range prediction for BTC"
+          },
+          "expected_routing": {
+            "intent": "hunter_price_prediction",
+            "confidence_min": 0.75
+          }
+        }
+      ],
+      "risk_signals": [
+        {
+          "id": "hunter_rs_001",
+          "description": "Basic risk signals - ETH",
+          "input": {
+            "content": "Show risk signals for ETH"
+          },
+          "expected_routing": {
+            "intent": "hunter_risk_signals",
+            "confidence_min": 0.85,
+            "handler": "hunter_ai"
+          },
+          "expected_enrichment": {
+            "token_symbol": "ETH",
+            "hunter_tool": "risk_detector"
+          }
+        },
+        {
+          "id": "hunter_rs_002",
+          "description": "BTC risk indicators",
+          "input": {
+            "content": "What are the current risk indicators for Bitcoin?"
+          },
+          "expected_routing": {
+            "intent": "hunter_risk_signals",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_rs_003",
+          "description": "Market-wide risk signals",
+          "input": {
+            "content": "Show me overall crypto market risk signals"
+          },
+          "expected_routing": {
+            "intent": "hunter_risk_signals",
+            "confidence_min": 0.75
+          }
+        }
+      ],
+      "trading_signals": [
+        {
+          "id": "hunter_ts_001",
+          "description": "Basic trading signals - SOL",
+          "input": {
+            "content": "Should I buy SOL now? Give me trading signals"
+          },
+          "expected_routing": {
+            "intent": "hunter_trading_signals",
+            "confidence_min": 0.85,
+            "handler": "hunter_ai"
+          },
+          "expected_enrichment": {
+            "token_symbol": "SOL",
+            "hunter_tool": "signal_generator"
+          }
+        },
+        {
+          "id": "hunter_ts_002",
+          "description": "Entry/exit signals - BTC",
+          "input": {
+            "content": "What are the entry and exit signals for BTC?"
+          },
+          "expected_routing": {
+            "intent": "hunter_trading_signals",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_ts_003",
+          "description": "Swing trading signals",
+          "input": {
+            "content": "Give me swing trading signals for ETH"
+          },
+          "expected_routing": {
+            "intent": "hunter_trading_signals",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_ts_004",
+          "description": "Scalping signals",
+          "input": {
+            "content": "Show scalping opportunities for BTC in the next hour"
+          },
+          "expected_routing": {
+            "intent": "hunter_trading_signals",
+            "confidence_min": 0.75
+          }
+        }
+      ],
+      "patterns": [
+        {
+          "id": "hunter_pat_001",
+          "description": "Chart pattern detection - BTC",
+          "input": {
+            "content": "What chart patterns do you see for BTC?"
+          },
+          "expected_routing": {
+            "intent": "hunter_patterns",
+            "confidence_min": 0.85,
+            "handler": "hunter_ai"
+          },
+          "expected_enrichment": {
+            "token_symbol": "BTC",
+            "hunter_tool": "pattern_detector"
+          }
+        },
+        {
+          "id": "hunter_pat_002",
+          "description": "Technical formations - ETH",
+          "input": {
+            "content": "Detect technical formations for ETH"
+          },
+          "expected_routing": {
+            "intent": "hunter_patterns",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_pat_003",
+          "description": "Head and shoulders pattern",
+          "input": {
+            "content": "Is there a head and shoulders pattern on BTC?"
+          },
+          "expected_routing": {
+            "intent": "hunter_patterns",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "hunter_pat_004",
+          "description": "Support resistance levels",
+          "input": {
+            "content": "Show me support and resistance levels for ETH"
+          },
+          "expected_routing": {
+            "intent": "hunter_patterns",
+            "confidence_min": 0.75
+          }
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "hunter_port_001",
+          "description": "Basic portfolio optimization - moderate risk",
+          "input": {
+            "content": "Optimize my portfolio with BTC, ETH, and SOL for moderate risk"
+          },
+          "expected_routing": {
+            "intent": "hunter_portfolio",
+            "confidence_min": 0.85,
+            "handler": "hunter_ai"
+          },
+          "expected_enrichment": {
+            "tokens": [
+              "BTC",
+              "ETH",
+              "SOL"
+            ],
+            "risk_tolerance": "moderate",
+            "hunter_tool": "mpt_optimizer"
+          }
+        },
+        {
+          "id": "hunter_port_002",
+          "description": "Conservative portfolio",
+          "input": {
+            "content": "Create a conservative crypto portfolio for me"
+          },
+          "expected_routing": {
+            "intent": "hunter_portfolio",
+            "confidence_min": 0.75
+          }
+        },
+        {
+          "id": "hunter_port_003",
+          "description": "Aggressive portfolio",
+          "input": {
+            "content": "Build an aggressive high-risk portfolio"
+          },
+          "expected_routing": {
+            "intent": "hunter_portfolio",
+            "confidence_min": 0.75
+          }
+        },
+        {
+          "id": "hunter_port_004",
+          "description": "Portfolio rebalancing",
+          "input": {
+            "content": "Suggest rebalancing for my BTC, ETH, SOL holdings"
+          },
+          "expected_routing": {
+            "intent": "hunter_portfolio",
+            "confidence_min": 0.75
+          }
+        }
+      ]
+    }
+  }
+}

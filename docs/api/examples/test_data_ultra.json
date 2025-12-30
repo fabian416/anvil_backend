@@ -1,0 +1,251 @@
+{
+  "metadata": {
+    "version": "2.0.0",
+    "description": "Ultra test data for Anvil Unified Chat API - arbitrage, flash loans, MEV protection, auto executor",
+    "last_updated": "2025-12-29",
+    "data_type": "ultra",
+    "test_case_count": 19
+  },
+  "test_cases": {
+    "ultra": {
+      "arbitrage": [
+        {
+          "id": "ultra_arb_001",
+          "description": "Basic arbitrage discovery",
+          "input": {
+            "content": "Find arbitrage opportunities with $10,000 capital"
+          },
+          "expected_routing": {
+            "intent": "ultra_arbitrage",
+            "confidence_min": 0.85,
+            "handler": "ultra"
+          },
+          "expected_enrichment": {
+            "capital": 10000,
+            "ultra_tool": "arbitrage_scanner"
+          }
+        },
+        {
+          "id": "ultra_arb_002",
+          "description": "Cross-chain arbitrage",
+          "input": {
+            "content": "Search for cross-chain arbitrage with $5k"
+          },
+          "expected_routing": {
+            "intent": "ultra_arbitrage",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "ultra_arb_003",
+          "description": "DEX arbitrage specific",
+          "input": {
+            "content": "Find DEX arbitrage opportunities"
+          },
+          "expected_routing": {
+            "intent": "ultra_arbitrage",
+            "confidence_min": 0.75
+          }
+        },
+        {
+          "id": "ultra_arb_004",
+          "description": "2-hop arbitrage",
+          "input": {
+            "content": "Search for 2-hop arbitrage between Uniswap and SushiSwap"
+          },
+          "expected_routing": {
+            "intent": "ultra_arbitrage",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "ultra_arb_005",
+          "description": "Triangle arbitrage",
+          "input": {
+            "content": "Find triangle arbitrage opportunities on ETH/USDC/WBTC"
+          },
+          "expected_routing": {
+            "intent": "ultra_arbitrage",
+            "confidence_min": 0.75
+          }
+        }
+      ],
+      "flash_loans": [
+        {
+          "id": "ultra_fl_001",
+          "description": "Flash loan protocol selection",
+          "input": {
+            "content": "Best flash loan protocol for 100k USDC"
+          },
+          "expected_routing": {
+            "intent": "ultra_flash_loans",
+            "confidence_min": 0.85,
+            "handler": "ultra"
+          },
+          "expected_enrichment": {
+            "token_symbol": "USDC",
+            "amount": 100000,
+            "ultra_tool": "flash_loan_selector"
+          }
+        },
+        {
+          "id": "ultra_fl_002",
+          "description": "Flash loan for leverage",
+          "input": {
+            "content": "I need a flash loan for leveraged trading"
+          },
+          "expected_routing": {
+            "intent": "ultra_flash_loans",
+            "confidence_min": 0.75
+          }
+        },
+        {
+          "id": "ultra_fl_003",
+          "description": "Aave flash loan",
+          "input": {
+            "content": "Get a flash loan from Aave for 50 ETH"
+          },
+          "expected_routing": {
+            "intent": "ultra_flash_loans",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "ultra_fl_004",
+          "description": "Balancer flash loan",
+          "input": {
+            "content": "Execute flash loan on Balancer for WBTC"
+          },
+          "expected_routing": {
+            "intent": "ultra_flash_loans",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "ultra_fl_005",
+          "description": "Flash loan fee comparison",
+          "input": {
+            "content": "Compare flash loan fees across all providers"
+          },
+          "expected_routing": {
+            "intent": "ultra_flash_loans",
+            "confidence_min": 0.75
+          }
+        }
+      ],
+      "mev_protection": [
+        {
+          "id": "ultra_mev_001",
+          "description": "Execute with MEV protection",
+          "input": {
+            "content": "Execute ARB-001 with Flashbots protection"
+          },
+          "expected_routing": {
+            "intent": "ultra_mev_protection",
+            "confidence_min": 0.85,
+            "handler": "ultra"
+          },
+          "expected_enrichment": {
+            "protection_method": "flashbots",
+            "ultra_tool": "mev_protector"
+          }
+        },
+        {
+          "id": "ultra_mev_002",
+          "description": "Private transaction request",
+          "input": {
+            "content": "Send this transaction privately to avoid MEV"
+          },
+          "expected_routing": {
+            "intent": "ultra_mev_protection",
+            "confidence_min": 0.75
+          }
+        },
+        {
+          "id": "ultra_mev_003",
+          "description": "Sandwich attack protection",
+          "input": {
+            "content": "Protect my large swap from sandwich attacks"
+          },
+          "expected_routing": {
+            "intent": "ultra_mev_protection",
+            "confidence_min": 0.75
+          }
+        },
+        {
+          "id": "ultra_mev_004",
+          "description": "Transaction bundle",
+          "input": {
+            "content": "Bundle my transactions to avoid MEV extraction"
+          },
+          "expected_routing": {
+            "intent": "ultra_mev_protection",
+            "confidence_min": 0.75
+          }
+        }
+      ],
+      "auto_executor": [
+        {
+          "id": "ultra_ae_001",
+          "description": "Start auto executor",
+          "input": {
+            "content": "Start trading bot"
+          },
+          "expected_routing": {
+            "intent": "ultra_auto_executor",
+            "confidence_min": 0.9,
+            "handler": "ultra"
+          },
+          "expected_enrichment": {
+            "action": "start",
+            "ultra_tool": "auto_executor"
+          }
+        },
+        {
+          "id": "ultra_ae_002",
+          "description": "Stop auto executor",
+          "input": {
+            "content": "Stop trading bot"
+          },
+          "expected_routing": {
+            "intent": "ultra_auto_executor",
+            "confidence_min": 0.9
+          }
+        },
+        {
+          "id": "ultra_ae_003",
+          "description": "Check bot status",
+          "input": {
+            "content": "Show bot status"
+          },
+          "expected_routing": {
+            "intent": "ultra_auto_executor",
+            "confidence_min": 0.85
+          }
+        },
+        {
+          "id": "ultra_ae_004",
+          "description": "Configure auto executor",
+          "input": {
+            "content": "Configure bot with 2% profit threshold"
+          },
+          "expected_routing": {
+            "intent": "ultra_auto_executor",
+            "confidence_min": 0.75
+          }
+        },
+        {
+          "id": "ultra_ae_005",
+          "description": "Pause auto executor",
+          "input": {
+            "content": "Pause the bot for 30 minutes"
+          },
+          "expected_routing": {
+            "intent": "ultra_auto_executor",
+            "confidence_min": 0.75
+          }
+        }
+      ]
+    }
+  }
+}

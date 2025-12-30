@@ -1,0 +1,495 @@
+{
+  "metadata": {
+    "version": "2.0.0",
+    "description": "Agent Squad test data for Anvil Unified Chat API - core agents (10), advanced agents (4), enterprise agents (4), specialist tasks, complex workflows",
+    "last_updated": "2025-12-29",
+    "data_type": "agent_squad",
+    "test_case_count": 42,
+    "agent_coverage": {
+      "core_agents": 10,
+      "advanced_agents": 4,
+      "enterprise_agents": 4
+    }
+  },
+  "test_cases": {
+    "agent_squad": {
+      "core_agents": [
+        {
+          "id": "squad_chat_001",
+          "description": "Chat agent - greeting",
+          "input": {
+            "content": "Hello! What can you help me with?"
+          },
+          "expected_routing": {
+            "intent": "general_conversation",
+            "confidence_min": 0.85
+          },
+          "agent_type": "chat"
+        },
+        {
+          "id": "squad_chat_002",
+          "description": "Chat agent - feature inquiry",
+          "input": {
+            "content": "What features do you offer?"
+          },
+          "expected_routing": {
+            "intent": "general_conversation",
+            "confidence_min": 0.8
+          },
+          "agent_type": "chat"
+        },
+        {
+          "id": "squad_hunter_001",
+          "description": "Hunter AI agent - sentiment analysis",
+          "input": {
+            "content": "What's the current market sentiment for Ethereum?"
+          },
+          "expected_routing": {
+            "intent": "hunter_sentiment",
+            "confidence_min": 0.8
+          },
+          "agent_type": "hunter_ai"
+        },
+        {
+          "id": "squad_hunter_002",
+          "description": "Hunter AI agent - price prediction",
+          "input": {
+            "content": "Predict Bitcoin price for the next week"
+          },
+          "expected_routing": {
+            "intent": "hunter_price_prediction",
+            "confidence_min": 0.8
+          },
+          "agent_type": "hunter_ai"
+        },
+        {
+          "id": "squad_research_001",
+          "description": "Research agent - protocol deep dive",
+          "input": {
+            "content": "Do a deep research analysis on Aave V3 protocol"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.75
+          },
+          "agent_type": "research"
+        },
+        {
+          "id": "squad_research_002",
+          "description": "Research agent - tokenomics analysis",
+          "input": {
+            "content": "Research the tokenomics of Uniswap UNI token"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.75
+          },
+          "agent_type": "research"
+        },
+        {
+          "id": "squad_exec_001",
+          "description": "Execution agent - swap request",
+          "input": {
+            "content": "Execute a swap of 1 ETH for USDC on Uniswap"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.75
+          },
+          "agent_type": "execution"
+        },
+        {
+          "id": "squad_risk_001",
+          "description": "Risk analyzer agent - portfolio risk",
+          "input": {
+            "content": "Analyze the risk of my current DeFi positions"
+          },
+          "expected_routing": {
+            "intent": "hunter_risk_signals",
+            "confidence_min": 0.75
+          },
+          "agent_type": "risk_analyzer"
+        },
+        {
+          "id": "squad_risk_002",
+          "description": "Risk analyzer agent - protocol risk",
+          "input": {
+            "content": "What are the risks of using Curve Finance?"
+          },
+          "expected_routing": {
+            "intent": "risk_assessment",
+            "confidence_min": 0.75
+          },
+          "agent_type": "risk_analyzer"
+        },
+        {
+          "id": "squad_portfolio_001",
+          "description": "Portfolio agent - optimization",
+          "input": {
+            "content": "Optimize my crypto portfolio for maximum Sharpe ratio"
+          },
+          "expected_routing": {
+            "intent": "hunter_portfolio",
+            "confidence_min": 0.75
+          },
+          "agent_type": "portfolio"
+        },
+        {
+          "id": "squad_tax_001",
+          "description": "Tax optimizer agent - tax loss harvesting",
+          "input": {
+            "content": "Find tax loss harvesting opportunities in my portfolio"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "tax_optimizer"
+        },
+        {
+          "id": "squad_tax_002",
+          "description": "Tax optimizer agent - tax report",
+          "input": {
+            "content": "Generate a tax report for my 2024 crypto transactions"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "tax_optimizer"
+        },
+        {
+          "id": "squad_yield_001",
+          "description": "DeFi yield agent - best yields",
+          "input": {
+            "content": "Find the best yield farming opportunities on Ethereum"
+          },
+          "expected_routing": {
+            "intent": "protocol_search",
+            "confidence_min": 0.75
+          },
+          "agent_type": "defi_yield"
+        },
+        {
+          "id": "squad_yield_002",
+          "description": "DeFi yield agent - staking rewards",
+          "input": {
+            "content": "Compare staking rewards across different protocols"
+          },
+          "expected_routing": {
+            "intent": "protocol_search",
+            "confidence_min": 0.75
+          },
+          "agent_type": "defi_yield"
+        },
+        {
+          "id": "squad_security_001",
+          "description": "Security auditor agent - contract audit",
+          "input": {
+            "content": "Audit this smart contract for vulnerabilities"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "security_auditor"
+        },
+        {
+          "id": "squad_security_002",
+          "description": "Security auditor agent - protocol security",
+          "input": {
+            "content": "Check if Compound protocol has any known security issues"
+          },
+          "expected_routing": {
+            "intent": "risk_assessment",
+            "confidence_min": 0.7
+          },
+          "agent_type": "security_auditor"
+        },
+        {
+          "id": "squad_gas_001",
+          "description": "Gas optimizer agent - optimize transaction",
+          "input": {
+            "content": "Optimize gas for my pending swap transaction"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "gas_optimizer"
+        },
+        {
+          "id": "squad_gas_002",
+          "description": "Gas optimizer agent - gas price analysis",
+          "input": {
+            "content": "When is the best time to send transactions for low gas?"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "gas_optimizer"
+        }
+      ],
+      "advanced_agents": [
+        {
+          "id": "squad_bridge_001",
+          "description": "Bridge agent - cross-chain transfer",
+          "input": {
+            "content": "Bridge 100 USDC from Ethereum to Arbitrum"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "bridge_crosschain"
+        },
+        {
+          "id": "squad_bridge_002",
+          "description": "Bridge agent - best bridge route",
+          "input": {
+            "content": "Find the cheapest bridge route from Polygon to Optimism"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "bridge_crosschain"
+        },
+        {
+          "id": "squad_lending_001",
+          "description": "Lending agent - leverage position",
+          "input": {
+            "content": "Create a 2x leveraged position on ETH using Aave"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "lending_borrowing"
+        },
+        {
+          "id": "squad_lending_002",
+          "description": "Lending agent - collateral optimization",
+          "input": {
+            "content": "Optimize my collateral ratio on Compound"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "lending_borrowing"
+        },
+        {
+          "id": "squad_nft_001",
+          "description": "NFT agent - portfolio valuation",
+          "input": {
+            "content": "Value my NFT portfolio and suggest which to hold or sell"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "nft_asset_manager"
+        },
+        {
+          "id": "squad_nft_002",
+          "description": "NFT agent - collection analysis",
+          "input": {
+            "content": "Analyze the Bored Ape Yacht Club collection floor price trends"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "nft_asset_manager"
+        },
+        {
+          "id": "squad_dao_001",
+          "description": "DAO agent - active proposals",
+          "input": {
+            "content": "Show me active governance proposals on Uniswap DAO"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "dao_governance"
+        },
+        {
+          "id": "squad_dao_002",
+          "description": "DAO agent - vote recommendation",
+          "input": {
+            "content": "Should I vote yes or no on Aave proposal #42?"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "dao_governance"
+        }
+      ],
+      "enterprise_agents": [
+        {
+          "id": "squad_compliance_001",
+          "description": "Compliance agent - wallet screening",
+          "input": {
+            "content": "Screen wallet 0xabc123 for AML compliance"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "compliance_monitor"
+        },
+        {
+          "id": "squad_compliance_002",
+          "description": "Compliance agent - transaction check",
+          "input": {
+            "content": "Check if this transaction is compliant with regulations"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "compliance_monitor"
+        },
+        {
+          "id": "squad_multisig_001",
+          "description": "Multi-sig agent - create proposal",
+          "input": {
+            "content": "Create a multi-sig proposal to transfer 10 ETH from treasury"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "multisig_coordinator"
+        },
+        {
+          "id": "squad_multisig_002",
+          "description": "Multi-sig agent - pending approvals",
+          "input": {
+            "content": "Show pending multi-sig approvals for our Gnosis Safe"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "multisig_coordinator"
+        },
+        {
+          "id": "squad_alert_001",
+          "description": "Alert agent - set price alert",
+          "input": {
+            "content": "Set an alert when ETH drops below $2000"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "alert_monitoring"
+        },
+        {
+          "id": "squad_alert_002",
+          "description": "Alert agent - security alerts",
+          "input": {
+            "content": "Monitor my wallet for suspicious activity"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "alert_monitoring"
+        },
+        {
+          "id": "squad_crisis_001",
+          "description": "Crisis agent - emergency response",
+          "input": {
+            "content": "There's a potential exploit on the protocol I'm using, what should I do?"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.7
+          },
+          "agent_type": "crisis_manager"
+        },
+        {
+          "id": "squad_crisis_002",
+          "description": "Crisis agent - incident analysis",
+          "input": {
+            "content": "Analyze the recent flash loan attack on XYZ protocol"
+          },
+          "expected_routing": {
+            "intent": "risk_assessment",
+            "confidence_min": 0.7
+          },
+          "agent_type": "crisis_manager"
+        }
+      ],
+      "specialist_task": [
+        {
+          "id": "squad_spec_001",
+          "description": "Liquidity analysis task",
+          "input": {
+            "content": "Analyze ETH/USDC liquidity depth on Uniswap V3"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.8,
+            "handler": "agent_orchestrator"
+          },
+          "expected_enrichment": {
+            "task_type": "analysis"
+          }
+        },
+        {
+          "id": "squad_spec_002",
+          "description": "Research task",
+          "input": {
+            "content": "Research the best yield farming strategies on Arbitrum"
+          },
+          "expected_routing": {
+            "intent": "specialist_task",
+            "confidence_min": 0.75
+          },
+          "expected_enrichment": {
+            "task_type": "research"
+          }
+        }
+      ],
+      "complex_workflow": [
+        {
+          "id": "squad_work_001",
+          "description": "Complete DeFi strategy",
+          "input": {
+            "content": "Create a complete DeFi investment strategy for $50k with risk analysis"
+          },
+          "expected_routing": {
+            "intent": "complex_workflow",
+            "confidence_min": 0.85,
+            "handler": "agent_orchestrator"
+          },
+          "expected_enrichment": {
+            "workflow_type": "investment_strategy",
+            "capital": 50000
+          }
+        },
+        {
+          "id": "squad_work_002",
+          "description": "Multi-step plan",
+          "input": {
+            "content": "Plan a complete yield farming operation from start to finish"
+          },
+          "expected_routing": {
+            "intent": "complex_workflow",
+            "confidence_min": 0.75
+          },
+          "expected_enrichment": {
+            "workflow_type": "yield_farming_plan"
+          }
+        }
+      ]
+    }
+  }
+}

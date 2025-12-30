@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "version": "2.0.0",
+    "description": "Chat and GraphRAG test data for Anvil Unified Chat API",
+    "last_updated": "2025-12-29",
+    "data_type": "chat",
+    "test_case_count": 10
+  },
+  "test_cases": {
+    "graphrag": {
+      "protocol_search": [
+        {
+          "id": "graphrag_ps_001",
+          "description": "Basic protocol search - lending protocols",
+          "input": {
+            "content": "Show me high-yield lending protocols on Ethereum"
+          },
+          "expected_routing": {
+            "intent": "protocol_search",
+            "confidence_min": 0.85,
+            "handler": "graphrag_search"
+          },
+          "expected_enrichment": {
+            "search_type": "protocols",
+            "filters": {
+              "category": "lending",
+              "chain": "ethereum"
+            }
+          }
+        },
+        {
+          "id": "graphrag_ps_002",
+          "description": "Protocol search with risk filter",
+          "input": {
+            "content": "Find DeFi staking protocols with low risk"
+          },
+          "expected_routing": {
+            "intent": "protocol_search",
+            "confidence_min": 0.8
+          }
+        },
+        {
+          "id": "graphrag_ps_003",
+          "description": "Multi-chain protocol search",
+          "input": {
+            "content": "List DEX protocols on Polygon and Arbitrum"
+          },
+          "expected_routing": {
+            "intent": "protocol_search",
+            "confidence_min": 0.85
+          }
+        }
+      ],
+      "risk_assessment": [
+        {
+          "id": "graphrag_ra_001",
+          "description": "Basic risk assessment",
+          "input": {
+            "content": "Is Aave safe to use? What are the risks?"
+          },
+          "expected_routing": {
+            "intent": "risk_assessment",
+            "confidence_min": 0.85,
+            "handler": "graphrag_search"
+          }
+        },
+        {
+          "id": "graphrag_ra_002",
+          "description": "Comparative risk assessment",
+          "input": {
+            "content": "Compare security risks between Uniswap and Curve"
+          },
+          "expected_routing": {
+            "intent": "risk_assessment",
+            "confidence_min": 0.8
+          }
+        }
+      ],
+      "similar_protocols": [
+        {
+          "id": "graphrag_sp_001",
+          "description": "Find similar protocols",
+          "input": {
+            "content": "What protocols are similar to Uniswap?"
+          },
+          "expected_routing": {
+            "intent": "similar_protocols",
+            "confidence_min": 0.85,
+            "handler": "graphrag_search"
+          }
+        },
+        {
+          "id": "graphrag_sp_002",
+          "description": "Similar protocols with category filter",
+          "input": {
+            "content": "Find lending platforms like Compound"
+          },
+          "expected_routing": {
+            "intent": "similar_protocols",
+            "confidence_min": 0.8
+          }
+        }
+      ]
+    },
+    "chat": {
+      "general_conversation": [
+        {
+          "id": "chat_gen_001",
+          "description": "Greeting",
+          "input": {
+            "content": "Hello! What can you help me with?"
+          },
+          "expected_routing": {
+            "intent": "general_conversation",
+            "confidence_min": 0.95,
+            "handler": "general_chat"
+          }
+        },
+        {
+          "id": "chat_gen_002",
+          "description": "Help request",
+          "input": {
+            "content": "What features do you offer?"
+          },
+          "expected_routing": {
+            "intent": "general_conversation",
+            "confidence_min": 0.85
+          }
+        },
+        {
+          "id": "chat_gen_003",
+          "description": "Low confidence fallback",
+          "input": {
+            "content": "Random unclear message xyz"
+          },
+          "expected_routing": {
+            "intent": "general_conversation",
+            "confidence_max": 0.7,
+            "handler": "general_chat"
+          }
+        }
+      ]
+    }
+  }
+}
