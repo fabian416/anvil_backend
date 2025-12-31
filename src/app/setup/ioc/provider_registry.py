@@ -18,11 +18,11 @@ from app.setup.ioc.agent_squad_infrastructure import AgentSquadInfrastructurePro
 from app.setup.ioc.agent_squad_application import AgentSquadApplicationProvider
 from app.setup.ioc.cache import CacheProvider
 from app.setup.ioc.chat_phase2 import ChatPhase2Provider
+from app.setup.ioc.morpho import MorphoProvider
 
 # TODO: These providers are pending implementation - uncomment when ready
 # from app.setup.ioc.curve import CurveProvider
 # from app.setup.ioc.hyperliquid import HyperliquidProvider
-# from app.setup.ioc.morpho import MorphoProvider
 # from app.setup.ioc.layerzero import LayerZeroProvider
 # from app.setup.ioc.axelar import AxelarProvider
 # from app.setup.ioc.opensea import OpenSeaProvider
@@ -46,10 +46,10 @@ def get_providers() -> Iterable[Provider]:
         CacheProvider(),  # Cache infrastructure (Redis, ExternalAPICache)
         ChatPhase2Provider(),  # Chat Phase 2 components (WebSocket, Analytics, etc.)
         AaveProvider(),  # Aave V3 lending protocol integration
+        MorphoProvider(),  # Morpho Protocol lending vaults integration
         # TODO: Uncomment when implementations are ready
         # CurveProvider(),  # Curve Finance DeFi integration
         # HyperliquidProvider(),  # Hyperliquid perpetual futures integration
-        # MorphoProvider(),  # Morpho Protocol lending vaults integration
         # LayerZeroProvider(),  # LayerZero cross-chain messaging integration
         # AxelarProvider(),  # Axelar cross-chain bridging integration
         # OpenSeaProvider(),  # OpenSea NFT marketplace integration
