@@ -68,8 +68,8 @@ router = APIRouter(
 @inject
 async def get_rankings(
     agent_type: str,
+    interactor: FromDishka[GetRankingsForAgent],
     authorization: str = Security(bearer_scheme),
-    interactor: FromDishka[GetRankingsForAgent] = None,
 ):
     """Get rankings for specific agent type."""
     try:
@@ -126,8 +126,8 @@ async def get_rankings(
 )
 @inject
 async def get_all_rankings_overview(
+    interactor: FromDishka[GetAllRankingsOverview],
     authorization: str = Security(bearer_scheme),
-    interactor: FromDishka[GetAllRankingsOverview] = None,
 ):
     """Get overview of all agent types."""
     try:
@@ -173,8 +173,8 @@ async def get_all_rankings_overview(
 @inject
 async def recalculate_rankings(
     agent_type: str,
+    interactor: FromDishka[RecalculateAgentRankings],
     authorization: str = Security(bearer_scheme),
-    interactor: FromDishka[RecalculateAgentRankings] = None,
 ):
     """Manually trigger ranking recalculation."""
     try:
@@ -220,8 +220,8 @@ async def set_ranking_override(
     agent_type: str,
     model_id: UUID,
     request: SetOverrideRequest,
+    interactor: FromDishka[SetRankingOverride],
     authorization: str = Security(bearer_scheme),
-    interactor: FromDishka[SetRankingOverride] = None,
 ):
     """Set manual ranking override."""
     try:
@@ -271,8 +271,8 @@ async def set_ranking_override(
 async def remove_ranking_override(
     agent_type: str,
     model_id: UUID,
+    interactor: FromDishka[RemoveRankingOverride],
     authorization: str = Security(bearer_scheme),
-    interactor: FromDishka[RemoveRankingOverride] = None,
 ):
     """Remove manual ranking override."""
     try:
@@ -318,8 +318,8 @@ async def remove_ranking_override(
 @inject
 async def register_vertex_ai_model(
     request: RegisterVertexAIModelRequest,
+    interactor: FromDishka[RegisterVertexAIModel],
     authorization: str = Security(bearer_scheme),
-    interactor: FromDishka[RegisterVertexAIModel] = None,
 ):
     """Register new Vertex AI model."""
     try:
@@ -376,8 +376,8 @@ async def register_vertex_ai_model(
 @inject
 async def register_deepinfra_model(
     request: RegisterDeepInfraModelRequest,
+    interactor: FromDishka[RegisterDeepInfraModel],
     authorization: str = Security(bearer_scheme),
-    interactor: FromDishka[RegisterDeepInfraModel] = None,
 ):
     """Register new DeepInfra model."""
     try:

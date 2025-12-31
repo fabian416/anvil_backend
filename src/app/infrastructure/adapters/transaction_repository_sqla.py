@@ -232,15 +232,21 @@ class SqlaTransactionRepository(TransactionRepository):
         *,
         limit: int = 50,
         offset: int = 0,
+        chain: ChainType | None = None,
         status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
     ) -> list[Transaction]:
         """Get transactions for a specific wallet."""
         try:
             table = self._get_table()
             conditions = [table.c.wallet_id == wallet_id.value]
 
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
             if status is not None:
                 conditions.append(table.c.status == status.value)
+            if tx_type is not None:
+                conditions.append(table.c.type == tx_type.value)
 
             stmt: Select = (
                 select(table)
@@ -295,6 +301,90 @@ class SqlaTransactionRepository(TransactionRepository):
         try:
             table = self._get_table()
             conditions = [table.c.user_id == user_id.value]
+
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
+            if status is not None:
+                conditions.append(table.c.status == status.value)
+            if tx_type is not None:
+                conditions.append(table.c.type == tx_type.value)
+
+            stmt = select(func.count()).select_from(table).where(and_(*conditions))
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def count_by_wallet_id(
+        self,
+        wallet_id: WalletId,
+        *,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> int:
+        """Count transactions for a wallet with optional filters."""
+        try:
+            table = self._get_table()
+            conditions = [table.c.wallet_id == wallet_id.value]
+
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
+            if status is not None:
+                conditions.append(table.c.status == status.value)
+            if tx_type is not None:
+                conditions.append(table.c.type == tx_type.value)
+
+            stmt = select(func.count()).select_from(table).where(and_(*conditions))
+            result = await self._session.execute(stmt)
+            return result.scalar() or 0
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_all(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> list[Transaction]:
+        """Get transactions across all users with optional filters."""
+        try:
+            table = self._get_table()
+            conditions: list[Any] = []
+
+            if chain is not None:
+                conditions.append(table.c.chain == chain.value)
+            if status is not None:
+                conditions.append(table.c.status == status.value)
+            if tx_type is not None:
+                conditions.append(table.c.type == tx_type.value)
+
+            stmt: Select = (
+                select(table)
+                .where(and_(*conditions))  # empty AND() is a no-op in SQLAlchemy
+                .order_by(table.c.created_at.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+            rows = (await self._session.execute(stmt)).mappings().all()
+            return [self._row_to_transaction(dict(row)) for row in rows]
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def count_all_filtered(
+        self,
+        *,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> int:
+        """Count all transactions with optional filters."""
+        try:
+            table = self._get_table()
+            conditions: list[Any] = []
 
             if chain is not None:
                 conditions.append(table.c.chain == chain.value)

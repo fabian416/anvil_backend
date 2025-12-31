@@ -109,7 +109,9 @@ class TransactionRepository(Protocol):
         *,
         limit: int = 50,
         offset: int = 0,
+        chain: ChainType | None = None,
         status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
     ) -> list[Transaction]:
         """
         Get transactions for a specific wallet.
@@ -118,10 +120,78 @@ class TransactionRepository(Protocol):
             wallet_id: The wallet's database ID.
             limit: Maximum number of results (default 50).
             offset: Number of results to skip (default 0).
+            chain: Filter by blockchain (optional).
             status: Filter by status (optional).
+            tx_type: Filter by transaction type (optional).
 
         Returns:
             List of transactions for the wallet, ordered by created_at desc.
+        """
+        ...
+
+    async def count_by_wallet_id(
+        self,
+        wallet_id: WalletId,
+        *,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> int:
+        """
+        Count transactions for a wallet with optional filters.
+
+        Args:
+            wallet_id: The wallet's database ID.
+            chain: Filter by blockchain (optional).
+            status: Filter by status (optional).
+            tx_type: Filter by transaction type (optional).
+
+        Returns:
+            Total count of matching transactions.
+        """
+        ...
+
+    async def get_all(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> list[Transaction]:
+        """
+        Get transactions across all users (admin usage).
+
+        Args:
+            limit: Maximum number of results (default 50).
+            offset: Number of results to skip (default 0).
+            chain: Filter by blockchain (optional).
+            status: Filter by status (optional).
+            tx_type: Filter by transaction type (optional).
+
+        Returns:
+            List of transactions matching the criteria, ordered by created_at desc.
+        """
+        ...
+
+    async def count_all_filtered(
+        self,
+        *,
+        chain: ChainType | None = None,
+        status: TransactionStatus | None = None,
+        tx_type: TransactionType | None = None,
+    ) -> int:
+        """
+        Count all transactions with optional filters (admin usage).
+
+        Args:
+            chain: Filter by blockchain (optional).
+            status: Filter by status (optional).
+            tx_type: Filter by transaction type (optional).
+
+        Returns:
+            Total count of matching transactions.
         """
         ...
 

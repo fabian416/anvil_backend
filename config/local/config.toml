@@ -8,7 +8,7 @@ DRIVER = "psycopg"
 # Uvicorn
 [uvicorn]
 HOST = "0.0.0.0"
-PORT = 9999
+PORT = 8080
 
 # SQLAlchemy
 [sqla]

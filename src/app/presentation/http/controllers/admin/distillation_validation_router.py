@@ -34,9 +34,9 @@ router = APIRouter(
 )
 @inject
 async def get_distillation_metrics(
+    interactor: FromDishka[GetDistillationMetrics],
     days: int = Query(7, ge=1, le=90, description="Number of days to retrieve"),
     provider: Optional[str] = Query(None, description="Filter by provider"),
-    interactor: FromDishka[GetDistillationMetrics] = None,
 ) -> List[DistillationMetricsResponse]:
     """
     Get distillation metrics.
@@ -79,7 +79,7 @@ async def get_distillation_metrics(
 )
 @inject
 async def get_provider_status(
-    interactor: FromDishka[GetProviderStatus] = None,
+    interactor: FromDishka[GetProviderStatus],
 ) -> List[ProviderStatusResponse]:
     """
     Get provider health status.
@@ -114,7 +114,7 @@ async def get_provider_status(
 )
 @inject
 async def get_distillation_config(
-    interactor: FromDishka[GetProviderStatus] = None,
+    interactor: FromDishka[GetProviderStatus],
 ) -> DistillationConfigResponse:
     """
     Get current distillation configuration.
@@ -156,7 +156,7 @@ async def get_distillation_config(
 @inject
 async def update_distillation_config(
     request: DistillationConfigUpdateRequest,
-    interactor: FromDishka[UpdateDistillationConfig] = None,
+    interactor: FromDishka[UpdateDistillationConfig],
 ) -> DistillationConfigResponse:
     """
     Update distillation configuration.
@@ -201,7 +201,7 @@ async def update_distillation_config(
 )
 @inject
 async def get_distillation_health(
-    interactor: FromDishka[GetDistillationHealth] = None,
+    interactor: FromDishka[GetDistillationHealth],
 ) -> DistillationHealthResponse:
     """
     Get overall distillation system health.

@@ -14,7 +14,7 @@ from typing import Optional, Any
 from dishka import Provider, Scope, provide, decorate
 from redis.asyncio import Redis, ConnectionPool
 
-# Infrastructure types
+# Infrastructure Types
 from app.infrastructure.adapters.types import MainAsyncSession
 
 # Domain Ports - Repositories

@@ -12,7 +12,8 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "g8h9i0j1k2l3"
-down_revision: Union[str, None] = None  # Set this when running in production
+# Link this migration into the main chain so Alembic has a consistent graph.
+down_revision: Union[str, None] = "btc_20251211"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

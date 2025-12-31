@@ -9,14 +9,24 @@ Admin-only endpoints for monitoring security posture.
 
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, Depends
-from dishka.integrations.fastapi import FromDishka
 
-from src.app.infrastructure.security.scan_result_aggregator import (
+from dishka import FromDishka
+from dishka.integrations.fastapi import inject
+from fastapi import Depends, HTTPException, Query, Security, status
+from fastapi_error_map import ErrorAwareRouter
+
+from app.application.common.exceptions.authorization import AuthorizationError
+from app.application.common.services.current_user import CurrentUserService
+from app.domain.enums.user_role import UserRole
+from app.domain.exceptions.auth import InsufficientPermissionsError
+from app.infrastructure.auth.exceptions import AuthenticationError
+from app.infrastructure.security.scan_result_aggregator import (
     ScanResultAggregator,
     SecurityScanResult,
     ToolScanResult
 )
+from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
+from app.presentation.http.errors.callbacks import log_info
 from .security_dashboard_schemas import (
     SecurityScanResultSchema,
     ScanHistorySchema,
@@ -30,13 +40,9 @@ from .security_dashboard_schemas import (
 
 
 # Initialize router
-router = APIRouter(
-    prefix="/api/admin/security",
+router = ErrorAwareRouter(
+    prefix="/admin/security",
     tags=["admin", "security"],
-    responses={
-        404: {"model": ErrorResponse, "description": "Resource not found"},
-        500: {"model": ErrorResponse, "description": "Internal server error"}
-    }
 )
 
 
@@ -50,6 +56,19 @@ def get_scan_aggregator() -> ScanResultAggregator:
     # TODO: Inject via Dishka container with proper configuration
     reports_dir = Path(__file__).parent.parent.parent.parent.parent.parent / "security" / "reports"
     return ScanResultAggregator(reports_dir)
+
+
+async def _ensure_admin(current_user_service: CurrentUserService) -> None:
+    """
+    Ensure the current user is an admin.
+
+    Raises:
+        AuthenticationError: if unauthenticated
+        InsufficientPermissionsError: if authenticated but not admin
+    """
+    user = await current_user_service.get_current_user()
+    if user.role != UserRole.ADMIN:
+        raise InsufficientPermissionsError("Admin access required")
 
 
 def convert_scan_result(result: SecurityScanResult) -> SecurityScanResultSchema:
@@ -89,10 +108,20 @@ def convert_tool_result(result: ToolScanResult) -> ToolScanResultSchema:
     "/dashboard",
     response_model=SecurityDashboardSummarySchema,
     summary="Get security dashboard summary",
-    description="Get overall security dashboard summary including latest scan and active tools"
+    description="Get overall security dashboard summary including latest scan and active tools",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
+@inject
 async def get_security_dashboard(
-    aggregator: ScanResultAggregator = Depends(get_scan_aggregator)
+    current_user_service: FromDishka[CurrentUserService],
+    aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
 ) -> SecurityDashboardSummarySchema:
     """
     Get comprehensive security dashboard summary.
@@ -100,6 +129,7 @@ async def get_security_dashboard(
     Returns:
         Security dashboard with latest scan, total scans, and overall status
     """
+    await _ensure_admin(current_user_service)
     try:
         latest_scan = aggregator.get_latest_scan()
         scan_history = aggregator.get_scan_history(limit=100)
@@ -129,10 +159,10 @@ async def get_security_dashboard(
             overall_status=overall_status
         )
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=f"Error retrieving dashboard summary: {str(e)}"
+            detail="Error retrieving dashboard summary",
         )
 
 
@@ -140,10 +170,20 @@ async def get_security_dashboard(
     "/scans/latest",
     response_model=SecurityScanResultSchema,
     summary="Get latest security scan",
-    description="Retrieve the most recent security scan results"
+    description="Retrieve the most recent security scan results",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
+@inject
 async def get_latest_scan(
-    aggregator: ScanResultAggregator = Depends(get_scan_aggregator)
+    current_user_service: FromDishka[CurrentUserService],
+    aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
 ) -> SecurityScanResultSchema:
     """
     Get the most recent security scan.
@@ -154,6 +194,7 @@ async def get_latest_scan(
     Raises:
         404: If no scans are found
     """
+    await _ensure_admin(current_user_service)
     latest_scan = aggregator.get_latest_scan()
 
     if not latest_scan:
@@ -169,11 +210,21 @@ async def get_latest_scan(
     "/scans/{scan_id}",
     response_model=SecurityScanResultSchema,
     summary="Get specific security scan",
-    description="Retrieve security scan results by scan ID"
+    description="Retrieve security scan results by scan ID",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
+@inject
 async def get_scan_by_id(
     scan_id: str,
-    aggregator: ScanResultAggregator = Depends(get_scan_aggregator)
+    current_user_service: FromDishka[CurrentUserService],
+    aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
 ) -> SecurityScanResultSchema:
     """
     Get a specific security scan by ID.
@@ -187,6 +238,7 @@ async def get_scan_by_id(
     Raises:
         404: If scan with the given ID is not found
     """
+    await _ensure_admin(current_user_service)
     scan_result = aggregator.get_scan_by_id(scan_id)
 
     if not scan_result:
@@ -202,11 +254,21 @@ async def get_scan_by_id(
     "/scans",
     response_model=ScanHistorySchema,
     summary="Get scan history",
-    description="Retrieve historical security scan results with pagination"
+    description="Retrieve historical security scan results with pagination",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
+@inject
 async def get_scan_history(
+    current_user_service: FromDishka[CurrentUserService],
+    aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
     limit: int = Query(10, ge=1, le=100, description="Maximum number of scans to return"),
-    aggregator: ScanResultAggregator = Depends(get_scan_aggregator)
 ) -> ScanHistorySchema:
     """
     Get historical security scans.
@@ -217,6 +279,7 @@ async def get_scan_history(
     Returns:
         List of historical scans with pagination info
     """
+    await _ensure_admin(current_user_service)
     scan_history = aggregator.get_scan_history(limit=limit)
 
     return ScanHistorySchema(
@@ -229,11 +292,21 @@ async def get_scan_history(
     "/scans/{scan_id}/tools",
     response_model=ScanToolsSchema,
     summary="Get tool results for a scan",
-    description="Retrieve individual tool results for a specific security scan"
+    description="Retrieve individual tool results for a specific security scan",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
+@inject
 async def get_scan_tools(
     scan_id: str,
-    aggregator: ScanResultAggregator = Depends(get_scan_aggregator)
+    current_user_service: FromDishka[CurrentUserService],
+    aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
 ) -> ScanToolsSchema:
     """
     Get individual tool results for a scan.
@@ -247,6 +320,7 @@ async def get_scan_tools(
     Raises:
         404: If scan with the given ID is not found
     """
+    await _ensure_admin(current_user_service)
     tool_results = aggregator.get_tool_results(scan_id)
 
     if not tool_results:
@@ -274,11 +348,21 @@ async def get_scan_tools(
     "/trends",
     response_model=VulnerabilityTrendsSchema,
     summary="Get vulnerability trends",
-    description="Retrieve vulnerability count trends over time"
+    description="Retrieve vulnerability count trends over time",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
+@inject
 async def get_vulnerability_trends(
+    current_user_service: FromDishka[CurrentUserService],
+    aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
     days: int = Query(30, ge=1, le=90, description="Number of days to include in trends"),
-    aggregator: ScanResultAggregator = Depends(get_scan_aggregator)
 ) -> VulnerabilityTrendsSchema:
     """
     Get vulnerability trends over time.
@@ -289,6 +373,7 @@ async def get_vulnerability_trends(
     Returns:
         Time-series data of vulnerability counts by severity
     """
+    await _ensure_admin(current_user_service)
     trends = aggregator.get_vulnerability_trends(days=days)
 
     return VulnerabilityTrendsSchema(
@@ -303,10 +388,20 @@ async def get_vulnerability_trends(
 @router.get(
     "/health",
     summary="Security system health check",
-    description="Check if security scanning infrastructure is operational"
+    description="Check if security scanning infrastructure is operational",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
+@inject
 async def security_health_check(
-    aggregator: ScanResultAggregator = Depends(get_scan_aggregator)
+    current_user_service: FromDishka[CurrentUserService],
+    aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
 ) -> dict:
     """
     Health check for security scanning system.
@@ -314,6 +409,7 @@ async def security_health_check(
     Returns:
         Health status and basic metrics
     """
+    await _ensure_admin(current_user_service)
     try:
         latest_scan = aggregator.get_latest_scan()
 
@@ -324,8 +420,8 @@ async def security_health_check(
             "latest_scan_date": latest_scan.scan_date.isoformat() if latest_scan else None
         }
 
-    except Exception as e:
+    except Exception:
         return {
             "status": "unhealthy",
-            "error": str(e)
+            "error": "Error checking security system health",
         }

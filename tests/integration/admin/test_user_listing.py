@@ -21,22 +21,26 @@ class TestUserListing:
         WHEN admin requests user list
         THEN system SHALL return users (or 401 if not authenticated)
         """
-        response = client.get("/api/v1/admin/users")
+        # Backend route is mounted as GET /api/v1/admin/users/ (with trailing slash)
+        response = client.get("/api/v1/admin/users/")
 
         # Without admin auth, expect 401/403
         assert response.status_code in (200, 401, 403)
 
         if response.status_code == 200:
             data = response.json()
-            # Response should be a list or have a 'users' key
-            assert isinstance(data, list) or "users" in data or "data" in data
+            assert isinstance(data, dict)
+            assert "items" in data
+            assert "total" in data
+            assert "limit" in data
+            assert "offset" in data
 
     def test_non_admin_cannot_list_users(self, client):
         """
         WHEN non-admin requests user list
         THEN system SHALL return 401 or 403 error
         """
-        response = client.get("/api/v1/admin/users")
+        response = client.get("/api/v1/admin/users/")
 
         # Without admin auth, should return 401 or 403
         assert response.status_code in (401, 403)
@@ -46,7 +50,7 @@ class TestUserListing:
         WHEN unauthenticated user requests user list
         THEN system SHALL return 401 unauthorized
         """
-        response = client.get("/api/v1/admin/users")
+        response = client.get("/api/v1/admin/users/")
 
         assert response.status_code == 401
 
@@ -61,7 +65,7 @@ class TestUserListingPagination:
         WHEN admin requests users with limit
         THEN system SHALL return limited results
         """
-        response = client.get("/api/v1/admin/users", params={"limit": 10})
+        response = client.get("/api/v1/admin/users/", params={"limit": 10})
 
         assert response.status_code in (200, 401, 403)
 
@@ -70,7 +74,7 @@ class TestUserListingPagination:
         WHEN admin requests users with offset
         THEN system SHALL skip specified items
         """
-        response = client.get("/api/v1/admin/users", params={"offset": 5})
+        response = client.get("/api/v1/admin/users/", params={"offset": 5})
 
         assert response.status_code in (200, 401, 403)
 
@@ -79,10 +83,7 @@ class TestUserListingPagination:
         WHEN admin requests users with pagination params
         THEN system SHALL return paginated results
         """
-        response = client.get(
-            "/api/v1/admin/users",
-            params={"limit": 10, "offset": 0}
-        )
+        response = client.get("/api/v1/admin/users/", params={"limit": 10, "offset": 0})
 
         assert response.status_code in (200, 401, 403)
 
@@ -98,8 +99,8 @@ class TestUserListingSorting:
         THEN system SHALL return sorted results
         """
         response = client.get(
-            "/api/v1/admin/users",
-            params={"sort_by": "email", "sort_order": "asc"}
+            "/api/v1/admin/users/",
+            params={"sorting_field": "email", "sorting_order": "ASC"},
         )
 
         assert response.status_code in (200, 401, 403, 422)
@@ -110,8 +111,8 @@ class TestUserListingSorting:
         THEN system SHALL return sorted results
         """
         response = client.get(
-            "/api/v1/admin/users",
-            params={"sort_by": "created_at", "sort_order": "desc"}
+            "/api/v1/admin/users/",
+            params={"sorting_field": "created_at", "sorting_order": "DESC"},
         )
 
         assert response.status_code in (200, 401, 403, 422)
@@ -122,8 +123,8 @@ class TestUserListingSorting:
         THEN system SHALL return error or ignore invalid field
         """
         response = client.get(
-            "/api/v1/admin/users",
-            params={"sort_by": "invalid_field"}
+            "/api/v1/admin/users/",
+            params={"sorting_field": "invalid_field"},
         )
 
         # Could be 200 (ignored), 400/422 (validation error), or 401/403 (not authenticated)
@@ -140,10 +141,8 @@ class TestUserListingFiltering:
         WHEN admin filters users by active status
         THEN system SHALL return filtered results
         """
-        response = client.get(
-            "/api/v1/admin/users",
-            params={"is_active": True}
-        )
+        # Not implemented in backend (yet). Keep as a smoke call to ensure it doesn't 500.
+        response = client.get("/api/v1/admin/users/", params={"is_active": True})
 
         assert response.status_code in (200, 401, 403)
 
@@ -152,9 +151,7 @@ class TestUserListingFiltering:
         WHEN admin filters users by role
         THEN system SHALL return filtered results
         """
-        response = client.get(
-            "/api/v1/admin/users",
-            params={"role": "admin"}
-        )
+        # Not implemented in backend (yet). Keep as a smoke call to ensure it doesn't 500.
+        response = client.get("/api/v1/admin/users/", params={"role": "admin"})
 
         assert response.status_code in (200, 401, 403, 422)

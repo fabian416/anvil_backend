@@ -30,10 +30,14 @@ class ListUsersRequest:
     offset: int
     sorting_field: str
     sorting_order: SortingOrder
+    search: str | None = None
 
 
 class ListUsersResponse(TypedDict):
-    users: list[UserQueryModel]
+    items: list[UserQueryModel]
+    total: int
+    limit: int
+    offset: int
 
 
 class ListUsersQueryService:
@@ -81,6 +85,7 @@ class ListUsersQueryService:
                 sorting_field=request_data.sorting_field,
                 sorting_order=request_data.sorting_order,
             ),
+            search=request_data.search,
         )
 
         users: list[UserQueryModel] | None = await self._user_query_gateway.read_all(
@@ -93,7 +98,14 @@ class ListUsersQueryService:
             )
             raise SortingError("Invalid sorting field.")
 
-        response = ListUsersResponse(users=users)
+        total = await self._user_query_gateway.count_all(search=request_data.search)
+
+        response = ListUsersResponse(
+            items=users,
+            total=total,
+            limit=request_data.limit,
+            offset=request_data.offset,
+        )
 
         log.info("List users: done.")
         return response

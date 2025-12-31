@@ -17,11 +17,12 @@ Admin-only endpoints for monitoring chat system health and performance.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, List
-from uuid import UUID
+from typing import List, Optional
 
-from fastapi import APIRouter, Query, HTTPException, Depends
-from dishka.integrations.fastapi import FromDishka, inject
+from dishka import FromDishka
+from dishka.integrations.fastapi import inject
+from fastapi import Query, Security, status
+from fastapi_error_map import ErrorAwareRouter
 
 from app.presentation.http.schemas.admin_chat_dashboard import (
     AdminChatDashboardSummaryResponse,
@@ -37,22 +38,52 @@ from app.presentation.http.schemas.admin_chat_dashboard import (
     CostBreakdownEntry,
 )
 from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
+from app.application.common.exceptions.authorization import AuthorizationError
+from app.domain.enums.user_role import UserRole
+from app.domain.exceptions.auth import InsufficientPermissionsError
+from app.infrastructure.auth.exceptions import AuthenticationError
+from app.application.common.services.current_user import CurrentUserService
+from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
+from app.presentation.http.errors.callbacks import log_info
 
 
-router = APIRouter(
-    prefix="/chat",
+router = ErrorAwareRouter(
+    prefix="/admin/chat",
     tags=["admin", "chat", "analytics"],
 )
+
+
+async def _ensure_admin(current_user_service: CurrentUserService) -> None:
+    """
+    Ensure the current user is an admin.
+
+    Raises:
+        AuthenticationError: if unauthenticated
+        InsufficientPermissionsError: if authenticated but not admin
+    """
+    user = await current_user_service.get_current_user()
+    if user.role != UserRole.ADMIN:
+        raise InsufficientPermissionsError("Admin access required")
 
 
 @router.get(
     "/dashboard",
     response_model=AdminChatDashboardSummaryResponse,
     summary="Get admin chat dashboard summary",
-    description="Get comprehensive overview of chat system performance and usage"
+    description="Get comprehensive overview of chat system performance and usage",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_chat_dashboard(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(
         None,
         description="Start date for analytics (defaults to 30 days ago)"
@@ -61,7 +92,6 @@ async def get_chat_dashboard(
         None,
         description="End date for analytics (defaults to now)"
     ),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
 ) -> AdminChatDashboardSummaryResponse:
     """
     Get comprehensive admin dashboard for chat system.
@@ -87,27 +117,31 @@ async def get_chat_dashboard(
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
-    try:
-        dashboard_data = await analytics_service.get_dashboard_summary(
-            date_from=date_from,
-            date_to=date_to
-        )
-        return dashboard_data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving dashboard summary: {str(e)}"
-        )
+    await _ensure_admin(current_user_service)
+    return await analytics_service.get_dashboard_summary(
+        date_from=date_from,
+        date_to=date_to,
+    )
 
 
 @router.get(
     "/dashboard/agents/performance",
     response_model=AgentPerformanceResponse,
     summary="Get agent performance metrics",
-    description="Get detailed performance metrics for all agents with leaderboard rankings"
+    description="Get detailed performance metrics for all agents with leaderboard rankings",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_agent_performance(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     agent_type: Optional[str] = Query(None, description="Filter by specific agent type"),
@@ -117,7 +151,6 @@ async def get_agent_performance(
         description="Sort leaderboard by metric"
     ),
     limit: int = Query(10, ge=1, le=50, description="Number of agents to return"),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
 ) -> AgentPerformanceResponse:
     """
     Get agent performance leaderboard.
@@ -141,38 +174,41 @@ async def get_agent_performance(
     Returns:
         Agent performance metrics with leaderboard rankings
     """
+    await _ensure_admin(current_user_service)
     if not date_to:
         date_to = datetime.utcnow()
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
-    try:
-        performance_data = await analytics_service.get_agent_performance(
-            date_from=date_from,
-            date_to=date_to,
-            agent_type=agent_type,
-            sort_by=sort_by,
-            limit=limit
-        )
-        return performance_data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving agent performance: {str(e)}"
-        )
+    return await analytics_service.get_agent_performance(
+        date_from=date_from,
+        date_to=date_to,
+        agent_type=agent_type,
+        sort_by=sort_by,
+        limit=limit,
+    )
 
 
 @router.get(
     "/dashboard/cache/efficiency",
     response_model=CacheEfficiencyResponse,
     summary="Get cache efficiency metrics",
-    description="Monitor cache performance including hit rates and memory usage"
+    description="Monitor cache performance including hit rates and memory usage",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_cache_efficiency(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
 ) -> CacheEfficiencyResponse:
     """
     Get cache efficiency metrics.
@@ -194,32 +230,36 @@ async def get_cache_efficiency(
     Returns:
         Cache efficiency metrics and statistics
     """
+    await _ensure_admin(current_user_service)
     if not date_to:
         date_to = datetime.utcnow()
     if not date_from:
         date_from = date_to - timedelta(days=7)
 
-    try:
-        cache_data = await analytics_service.get_cache_efficiency(
-            date_from=date_from,
-            date_to=date_to
-        )
-        return cache_data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving cache metrics: {str(e)}"
-        )
+    return await analytics_service.get_cache_efficiency(
+        date_from=date_from,
+        date_to=date_to,
+    )
 
 
 @router.get(
     "/dashboard/costs",
     response_model=CostTrackingResponse,
     summary="Get cost tracking metrics",
-    description="Monitor LLM API costs with breakdowns by agent, model, and time period"
+    description="Monitor LLM API costs with breakdowns by agent, model, and time period",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_cost_tracking(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     group_by: str = Query(
@@ -227,7 +267,6 @@ async def get_cost_tracking(
         pattern="^(agent|model|day|user)$",
         description="Group costs by dimension"
     ),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
 ) -> CostTrackingResponse:
     """
     Get comprehensive cost tracking.
@@ -250,33 +289,37 @@ async def get_cost_tracking(
     Returns:
         Detailed cost tracking and analysis
     """
+    await _ensure_admin(current_user_service)
     if not date_to:
         date_to = datetime.utcnow()
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
-    try:
-        cost_data = await analytics_service.get_cost_tracking(
-            date_from=date_from,
-            date_to=date_to,
-            group_by=group_by
-        )
-        return cost_data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving cost data: {str(e)}"
-        )
+    return await analytics_service.get_cost_tracking(
+        date_from=date_from,
+        date_to=date_to,
+        group_by=group_by,
+    )
 
 
 @router.get(
     "/dashboard/errors",
     response_model=ErrorMonitoringResponse,
     summary="Get error monitoring metrics",
-    description="Monitor error rates, types, and trends across the chat system"
+    description="Monitor error rates, types, and trends across the chat system",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_error_monitoring(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     severity: Optional[str] = Query(
@@ -284,7 +327,6 @@ async def get_error_monitoring(
         pattern="^(critical|high|medium|low)$",
         description="Filter by error severity"
     ),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
 ) -> ErrorMonitoringResponse:
     """
     Get error monitoring metrics.
@@ -307,36 +349,39 @@ async def get_error_monitoring(
     Returns:
         Error monitoring metrics and analysis
     """
+    await _ensure_admin(current_user_service)
     if not date_to:
         date_to = datetime.utcnow()
     if not date_from:
         date_from = date_to - timedelta(days=7)
 
-    try:
-        error_data = await analytics_service.get_error_monitoring(
-            date_from=date_from,
-            date_to=date_to,
-            severity=severity
-        )
-        return error_data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving error metrics: {str(e)}"
-        )
+    return await analytics_service.get_error_monitoring(
+        date_from=date_from,
+        date_to=date_to,
+        severity=severity,
+    )
 
 
 @router.get(
     "/dashboard/users/active",
     response_model=ActiveUsersResponse,
     summary="Get active users metrics",
-    description="Monitor active users and conversation statistics"
+    description="Monitor active users and conversation statistics",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_active_users(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
 ) -> ActiveUsersResponse:
     """
     Get active users metrics.
@@ -359,35 +404,38 @@ async def get_active_users(
     Returns:
         Active users metrics and engagement data
     """
+    await _ensure_admin(current_user_service)
     if not date_to:
         date_to = datetime.utcnow()
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
-    try:
-        users_data = await analytics_service.get_active_users(
-            date_from=date_from,
-            date_to=date_to
-        )
-        return users_data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving user metrics: {str(e)}"
-        )
+    return await analytics_service.get_active_users(
+        date_from=date_from,
+        date_to=date_to,
+    )
 
 
 @router.get(
     "/dashboard/conversations/metrics",
     response_model=ConversationMetricsResponse,
     summary="Get conversation metrics",
-    description="Monitor conversation statistics and engagement patterns"
+    description="Monitor conversation statistics and engagement patterns",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def get_conversation_metrics(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
 ) -> ConversationMetricsResponse:
     """
     Get conversation metrics.
@@ -409,32 +457,36 @@ async def get_conversation_metrics(
     Returns:
         Conversation metrics and engagement patterns
     """
+    await _ensure_admin(current_user_service)
     if not date_to:
         date_to = datetime.utcnow()
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
-    try:
-        conversation_data = await analytics_service.get_conversation_metrics(
-            date_from=date_from,
-            date_to=date_to
-        )
-        return conversation_data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving conversation metrics: {str(e)}"
-        )
+    return await analytics_service.get_conversation_metrics(
+        date_from=date_from,
+        date_to=date_to,
+    )
 
 
 @router.get(
     "/dashboard/export",
     response_model=ExportDataResponse,
     summary="Export dashboard data",
-    description="Export analytics data in various formats (JSON, CSV)"
+    description="Export analytics data in various formats (JSON, CSV)",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(bearer_scheme)],
+    error_map={
+        AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        AuthorizationError: status.HTTP_403_FORBIDDEN,
+        InsufficientPermissionsError: status.HTTP_403_FORBIDDEN,
+    },
+    default_on_error=log_info,
 )
 @inject
 async def export_dashboard_data(
+    analytics_service: FromDishka[AdminChatAnalyticsService],
+    current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
     format: str = Query(
@@ -446,7 +498,6 @@ async def export_dashboard_data(
         None,
         description="Sections to include (agents, costs, errors, users, conversations)"
     ),
-    analytics_service: FromDishka[AdminChatAnalyticsService] = None,
 ) -> ExportDataResponse:
     """
     Export dashboard data for external analysis.
@@ -468,21 +519,15 @@ async def export_dashboard_data(
     Returns:
         Exported data in requested format
     """
+    await _ensure_admin(current_user_service)
     if not date_to:
         date_to = datetime.utcnow()
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
-    try:
-        export_data = await analytics_service.export_dashboard_data(
-            date_from=date_from,
-            date_to=date_to,
-            export_format=format,
-            include_sections=include_sections
-        )
-        return export_data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error exporting dashboard data: {str(e)}"
-        )
+    return await analytics_service.export_dashboard_data(
+        date_from=date_from,
+        date_to=date_to,
+        export_format=format,
+        include_sections=include_sections,
+    )

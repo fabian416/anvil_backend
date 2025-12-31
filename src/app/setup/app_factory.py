@@ -134,6 +134,9 @@ def configure_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
+        # Be flexible for local development (e.g. Vite preview/dev can use
+        # different ports) while keeping the scope restricted to localhost.
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

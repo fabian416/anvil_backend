@@ -105,7 +105,7 @@ class TestAdminPasswordChange:
         """
         response = client.patch(
             "/api/v1/admin/users/test@example.com/password",
-            json={"new_password": "NewSecurePassword123!"}
+            json={"password": "NewSecurePassword123!"}
         )
 
         # Without admin auth, expect 401/403
@@ -118,7 +118,7 @@ class TestAdminPasswordChange:
         """
         response = client.patch(
             "/api/v1/admin/users/test@example.com/password",
-            json={"new_password": "NewSecurePassword123!"}
+            json={"password": "NewSecurePassword123!"}
         )
 
         # Without admin auth, should return 401 or 403
@@ -131,7 +131,7 @@ class TestAdminPasswordChange:
         """
         response = client.patch(
             f"/api/v1/admin/users/nonexistent_{uuid4().hex[:8]}@example.com/password",
-            json={"new_password": "NewSecurePassword123!"}
+            json={"password": "NewSecurePassword123!"}
         )
 
         assert response.status_code in (401, 403, 404)
@@ -143,7 +143,7 @@ class TestAdminPasswordChange:
         """
         response = client.patch(
             "/api/v1/admin/users/test@example.com/password",
-            json={"new_password": "weak"}
+            json={"password": "weak"}
         )
 
         # Should return 400/422 for weak password, or 401/403 if not authenticated
