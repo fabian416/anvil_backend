@@ -108,16 +108,46 @@ class TestMorphoClientStructure:
             asset_address="0x5678",
             asset_symbol="USDC",
             asset_decimals=6,
-            total_assets=1000000,
-            total_supply=1000000,
-            performance_fee=Decimal("0.1"),
+            total_assets="1000000",
+            total_supply="1000000",
+            performance_fee="0.1",
             curator="0xcurator",
             guardian="0xguardian",
             allocations=[],
+            chain_id=1,
+            whitelisted=False,
+            net_apy="0.05",
+            daily_apy="0.05",
         )
         
         assert vault.id == "0x1234"
         assert vault.name == "USDC Vault"
+        assert vault.chain_id == 1
+        
+    def test_vault_data_base_chain(self):
+        """Test MorphoVaultData for Base chain."""
+        from app.infrastructure.adapters.external.morpho_client import MorphoVaultData, BASE_USDC_ADDRESS
+        
+        vault = MorphoVaultData(
+            id="0xabcd",
+            name="Base USDC Vault",
+            symbol="mvUSDC",
+            asset_address=BASE_USDC_ADDRESS,
+            asset_symbol="USDC",
+            asset_decimals=6,
+            total_assets="1000000",
+            total_supply="1000000",
+            performance_fee="0.05",
+            curator=None,
+            guardian=None,
+            chain_id=8453,  # Base
+            whitelisted=True,
+            net_apy="0.12",
+        )
+        
+        assert vault.chain_id == 8453
+        assert vault.whitelisted is True
+        assert vault.asset_address == BASE_USDC_ADDRESS
 
 
 @pytest.mark.unit

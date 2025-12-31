@@ -3,6 +3,10 @@ Morpho Gateway Adapter.
 
 Implements the MorphoGateway port using the MorphoClient
 with caching for vault and position data.
+
+Supports multiple chains:
+- Ethereum (chain_id: 1)
+- Base (chain_id: 8453)
 """
 
 import logging
@@ -22,6 +26,7 @@ from app.domain.value_objects.lending.market_allocation import MarketAllocation
 from app.domain.value_objects.lending.risk_tier import RiskTier
 from app.domain.value_objects.lending.vault_apy import VaultAPY
 from app.infrastructure.adapters.external.morpho_client import (
+    CHAIN_IDS,
     MorphoClient,
     MorphoMarketData,
     MorphoPositionData,
@@ -33,6 +38,11 @@ logger = logging.getLogger(__name__)
 
 # Ethereum address pattern
 ETH_ADDRESS_PATTERN = re.compile(r"^0x[a-fA-F0-9]{40}$")
+
+
+def _get_chain_id(chain: str) -> int:
+    """Convert chain name to chain ID."""
+    return CHAIN_IDS.get(chain.lower(), 1)
 
 
 class MorphoAdapter(MorphoGateway):
@@ -76,16 +86,27 @@ class MorphoAdapter(MorphoGateway):
         asset: str | None = None,
         chain: str = "ethereum",
     ) -> list[MorphoVault]:
-        """Get MetaMorpho vaults with caching."""
+        """
+        Get MetaMorpho vaults with caching.
+        
+        Args:
+            asset: Filter by underlying asset symbol (e.g., "USDC")
+            chain: Blockchain ("ethereum" or "base")
+
+        Returns:
+            List of MorphoVault entities
+        """
+        chain_id = _get_chain_id(chain)
         cache_key_params = {"chain": chain}
 
         cached = await self._cache.get("morpho", "vaults", **cache_key_params)
         if cached:
-            logger.debug("Cache hit for Morpho vaults")
+            logger.debug(f"Cache hit for Morpho vaults on {chain}")
             vaults = [MorphoVault.from_dict(v) for v in cached]
         else:
             try:
-                raw_vaults = await self._client.get_vaults()
+                # Pass chain_id to the client
+                raw_vaults = await self._client.get_vaults(chain_id=chain_id)
                 vaults = [self._transform_vault(v) for v in raw_vaults]
 
                 await self._cache.set(
@@ -95,10 +116,10 @@ class MorphoAdapter(MorphoGateway):
                     ttl=self._vault_cache_ttl,
                     **cache_key_params,
                 )
-                logger.debug(f"Fetched {len(vaults)} Morpho vaults")
+                logger.debug(f"Fetched {len(vaults)} Morpho vaults on {chain}")
 
             except Exception as e:
-                logger.error(f"Error fetching Morpho vaults: {e}")
+                logger.error(f"Error fetching Morpho vaults on {chain}: {e}")
                 raise MorphoAPIError(str(e)) from e
 
         # Filter by asset if specified
@@ -119,6 +140,7 @@ class MorphoAdapter(MorphoGateway):
         if not ETH_ADDRESS_PATTERN.match(vault_address):
             raise InvalidVaultAddressError(vault_address)
 
+        chain_id = _get_chain_id(chain)
         cache_key_params = {"chain": chain, "address": vault_address.lower()}
 
         cached = await self._cache.get("morpho", "vault_details", **cache_key_params)
@@ -126,7 +148,7 @@ class MorphoAdapter(MorphoGateway):
             return MorphoVault.from_dict(cached)
 
         try:
-            raw_vault = await self._client.get_vault(vault_address)
+            raw_vault = await self._client.get_vault(vault_address, chain_id=chain_id)
             if not raw_vault:
                 raise VaultNotFoundError(vault_address, chain)
 
@@ -145,7 +167,7 @@ class MorphoAdapter(MorphoGateway):
         except VaultNotFoundError:
             raise
         except Exception as e:
-            logger.error(f"Error fetching vault {vault_address}: {e}")
+            logger.error(f"Error fetching vault {vault_address} on {chain}: {e}")
             raise MorphoAPIError(str(e)) from e
 
     async def get_vault_apy(
@@ -157,6 +179,7 @@ class MorphoAdapter(MorphoGateway):
         if not ETH_ADDRESS_PATTERN.match(vault_address):
             raise InvalidVaultAddressError(vault_address)
 
+        chain_id = _get_chain_id(chain)
         cache_key_params = {"chain": chain, "address": vault_address.lower()}
 
         cached = await self._cache.get("morpho", "apy", **cache_key_params)
@@ -164,7 +187,7 @@ class MorphoAdapter(MorphoGateway):
             return VaultAPY.from_dict(cached)
 
         try:
-            raw_apy = await self._client.get_vault_apy(vault_address)
+            raw_apy = await self._client.get_vault_apy(vault_address, chain_id=chain_id)
             apy = self._transform_apy(vault_address, raw_apy)
 
             await self._cache.set(
@@ -178,7 +201,7 @@ class MorphoAdapter(MorphoGateway):
             return apy
 
         except Exception as e:
-            logger.error(f"Error fetching APY for {vault_address}: {e}")
+            logger.error(f"Error fetching APY for {vault_address} on {chain}: {e}")
             raise MorphoAPIError(str(e)) from e
 
     async def get_markets(
@@ -186,6 +209,7 @@ class MorphoAdapter(MorphoGateway):
         chain: str = "ethereum",
     ) -> list[MorphoMarket]:
         """Get Morpho Blue markets."""
+        chain_id = _get_chain_id(chain)
         cache_key_params = {"chain": chain}
 
         cached = await self._cache.get("morpho", "markets", **cache_key_params)
@@ -193,7 +217,7 @@ class MorphoAdapter(MorphoGateway):
             return [MorphoMarket.from_dict(m) for m in cached]
 
         try:
-            raw_markets = await self._client.get_markets()
+            raw_markets = await self._client.get_markets(chain_id=chain_id)
             markets = [self._transform_market(m) for m in raw_markets]
 
             await self._cache.set(
@@ -207,7 +231,7 @@ class MorphoAdapter(MorphoGateway):
             return markets
 
         except Exception as e:
-            logger.error(f"Error fetching Morpho markets: {e}")
+            logger.error(f"Error fetching Morpho markets on {chain}: {e}")
             raise MorphoAPIError(str(e)) from e
 
     async def get_user_positions(
@@ -219,6 +243,7 @@ class MorphoAdapter(MorphoGateway):
         if not ETH_ADDRESS_PATTERN.match(address):
             raise InvalidVaultAddressError(address, "Invalid wallet address format")
 
+        chain_id = _get_chain_id(chain)
         cache_key_params = {"chain": chain, "address": address.lower()}
 
         cached = await self._cache.get("morpho", "positions", **cache_key_params)
@@ -226,7 +251,9 @@ class MorphoAdapter(MorphoGateway):
             return [MorphoPosition.from_dict(p) for p in cached]
 
         try:
-            raw_positions = await self._client.get_user_positions(address)
+            raw_positions = await self._client.get_user_positions(
+                address, chain_id=chain_id
+            )
             positions = [
                 self._transform_position(p, address)
                 for p in raw_positions
@@ -243,7 +270,7 @@ class MorphoAdapter(MorphoGateway):
             return positions
 
         except Exception as e:
-            logger.error(f"Error fetching positions for {address}: {e}")
+            logger.error(f"Error fetching positions for {address} on {chain}: {e}")
             raise MorphoAPIError(str(e)) from e
 
     async def get_user_deposits(
@@ -279,13 +306,32 @@ class MorphoAdapter(MorphoGateway):
     def _transform_vault(self, raw: MorphoVaultData) -> MorphoVault:
         """Transform client vault data to domain entity."""
         # Parse total assets with decimal handling
-        total_assets = Decimal(raw.total_assets) / Decimal(10 ** raw.asset_decimals)
-        total_shares = Decimal(raw.total_supply) / Decimal(10 ** raw.asset_decimals)
+        try:
+            total_assets_raw = Decimal(str(raw.total_assets))
+            # Handle already-scaled values from new API (no 1e18 scaling needed)
+            if total_assets_raw > Decimal("1e12"):
+                total_assets = total_assets_raw / Decimal(10 ** raw.asset_decimals)
+            else:
+                total_assets = total_assets_raw
+        except (ValueError, TypeError):
+            total_assets = Decimal("0")
+            
+        try:
+            total_shares_raw = Decimal(str(raw.total_supply))
+            if total_shares_raw > Decimal("1e12"):
+                total_shares = total_shares_raw / Decimal(10 ** raw.asset_decimals)
+            else:
+                total_shares = total_shares_raw
+        except (ValueError, TypeError):
+            total_shares = Decimal("0")
         
-        # Fee is typically in basis points (1e4)
-        fee = Decimal(raw.performance_fee)
-        if fee > 1:
-            fee = fee / Decimal("10000")  # Convert from basis points
+        # Fee is typically in basis points (1e4) or decimal (0.05)
+        try:
+            fee = Decimal(str(raw.performance_fee))
+            if fee > 1:
+                fee = fee / Decimal("10000")  # Convert from basis points
+        except (ValueError, TypeError):
+            fee = Decimal("0")
 
         # Transform allocations
         allocations = [
@@ -299,7 +345,19 @@ class MorphoAdapter(MorphoGateway):
             if alloc.lltv > max_lltv:
                 max_lltv = alloc.lltv
 
-        risk_tier = self._calculate_risk_tier(max_lltv, Decimal("0.5"))  # Default util
+        risk_tier = self._calculate_risk_tier(max_lltv, Decimal("0.5"))
+        
+        # Parse APY from new API (already a decimal like 0.0452 = 4.52%)
+        try:
+            apy = Decimal(str(raw.net_apy))
+            # If APY looks like percentage (e.g., 4.52), convert to decimal
+            if apy > Decimal("1"):
+                apy = apy / Decimal("100")
+        except (ValueError, TypeError):
+            apy = Decimal("0")
+
+        # Map chain_id to chain name
+        chain_name = "base" if raw.chain_id == 8453 else "ethereum"
 
         return MorphoVault(
             address=raw.id,
@@ -310,12 +368,14 @@ class MorphoAdapter(MorphoGateway):
             asset_decimals=raw.asset_decimals,
             total_assets=total_assets,
             total_shares=total_shares,
-            apy=Decimal("0"),  # Will be enriched later
+            apy=apy,
             fee_percentage=fee,
             curator_address=raw.curator,
             guardian_address=raw.guardian,
             risk_tier=risk_tier,
             market_allocations=allocations,
+            chain=chain_name,
+            whitelisted=raw.whitelisted,
         )
 
     def _transform_allocation(self, raw: dict) -> MarketAllocation:

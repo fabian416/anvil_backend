@@ -20,6 +20,10 @@ class MorphoVault:
 
     Represents a lending vault that allocates funds
     across multiple Morpho Blue markets.
+    
+    Supports multiple chains:
+    - Ethereum (chain_id: 1)
+    - Base (chain_id: 8453)
     """
 
     address: str
@@ -37,6 +41,8 @@ class MorphoVault:
     risk_tier: RiskTier = RiskTier.MEDIUM
     market_allocations: list[MarketAllocation] = field(default_factory=list)
     created_at: datetime | None = None
+    chain: str = "ethereum"  # blockchain network
+    whitelisted: bool = False  # curated/whitelisted vault
 
     @property
     def tvl_raw(self) -> Decimal:
@@ -73,6 +79,8 @@ class MorphoVault:
             "risk_tier": self.risk_tier.value,
             "market_allocations": [a.to_dict() for a in self.market_allocations],
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            "chain": self.chain,
+            "whitelisted": self.whitelisted,
         }
 
     @classmethod
@@ -103,4 +111,6 @@ class MorphoVault:
             risk_tier=RiskTier(data.get("risk_tier", "medium")),
             market_allocations=allocations,
             created_at=created_at,
+            chain=data.get("chain", "ethereum"),
+            whitelisted=data.get("whitelisted", False),
         )
