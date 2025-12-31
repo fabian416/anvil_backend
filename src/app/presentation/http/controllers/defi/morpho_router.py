@@ -2,6 +2,12 @@
 Morpho HTTP Router.
 
 Provides REST API endpoints for Morpho lending vault operations.
+
+Supports multiple chains:
+- Ethereum (default)
+- Base (chain=base)
+
+Base USDC Address: 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
 """
 
 from typing import Literal
@@ -101,7 +107,7 @@ def create_morpho_router() -> APIRouter:
         sort_by: Literal["apy", "tvl", "risk"] = Query(
             default="apy", description="Sort field"
         ),
-        chain: str = Query(default="ethereum", description="Blockchain"),
+        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
         limit: int = Query(default=50, ge=1, le=100, description="Max results"),
     ) -> VaultsResponse:
         """Get MetaMorpho vaults."""
@@ -143,7 +149,7 @@ def create_morpho_router() -> APIRouter:
     async def get_vault_details(
         vault_address: str,
         query: FromDishka[GetVaultDetails],
-        chain: str = Query(default="ethereum", description="Blockchain"),
+        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
     ) -> VaultResponse:
         """Get vault details."""
         request = GetVaultDetailsRequest(vault_address=vault_address, chain=chain)
@@ -163,7 +169,7 @@ def create_morpho_router() -> APIRouter:
     async def get_vault_apy(
         vault_address: str,
         query: FromDishka[GetVaultAPY],
-        chain: str = Query(default="ethereum", description="Blockchain"),
+        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
     ) -> VaultAPYResponse:
         """Get vault APY breakdown."""
         request = GetVaultAPYRequest(vault_address=vault_address, chain=chain)
@@ -191,7 +197,7 @@ def create_morpho_router() -> APIRouter:
         sort_by: Literal["supply_apy", "tvl", "utilization"] = Query(
             default="supply_apy", description="Sort field"
         ),
-        chain: str = Query(default="ethereum", description="Blockchain"),
+        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
         limit: int = Query(default=50, ge=1, le=100, description="Max results"),
     ) -> MarketsResponse:
         """Get Morpho Blue markets."""
@@ -222,7 +228,7 @@ def create_morpho_router() -> APIRouter:
     async def get_positions(
         user_address: str,
         query: FromDishka[GetUserPositions],
-        chain: str = Query(default="ethereum", description="Blockchain"),
+        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
     ) -> UserPositionsResponse:
         """Get user positions."""
         request = GetUserPositionsRequest(user_address=user_address, chain=chain)
@@ -252,7 +258,7 @@ def create_morpho_router() -> APIRouter:
     async def compare_yields(
         asset: str,
         query: FromDishka[CompareYields],
-        chain: str = Query(default="ethereum", description="Blockchain"),
+        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
     ) -> YieldComparisonListResponse:
         """Compare yields across protocols."""
         request = CompareYieldsRequest(

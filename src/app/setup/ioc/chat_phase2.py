@@ -128,6 +128,19 @@ from app.application.chat.services.user_analytics_service import UserChatAnalyti
 from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 
+# DeFi Shortcut Handlers
+from app.application.chat.handlers.lending_handler import LendingHandler
+from app.application.chat.handlers.portfolio_handler import PortfolioHandler
+from app.application.chat.handlers.swap_handler import SwapHandler
+from app.application.chat.handlers.activity_handler import ActivityHandler
+from app.application.chat.handlers.receive_handler import ReceiveHandler
+from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
+from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.aave_gateway import AaveGateway
+from app.application.portfolio.portfolio_service import PortfolioService
+from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.ports.wallet.wallet_repository import WalletRepository
+
 
 class ChatPhase2Provider(Provider):
     """
@@ -684,6 +697,95 @@ class ChatPhase2Provider(Provider):
         """
         return IntentDetectorService(intent_port=intent_port)
 
+    # ========================================
+    # DeFi Shortcut Handlers (Morpho, Swap, etc.)
+    # ========================================
+
+    @provide
+    def provide_lending_handler(
+        self,
+        morpho_gateway: MorphoGateway,
+    ) -> LendingHandler:
+        """
+        Provide lending handler for Morpho vault operations.
+
+        Uses real data from Morpho GraphQL API:
+        - Ethereum mainnet vaults
+        - Base L2 vaults (USDC, ETH, etc.)
+        - APY comparison
+        - Whitelisted vault recommendations
+        """
+        return LendingHandler(morpho_gateway=morpho_gateway)
+
+    @provide
+    def provide_portfolio_handler(
+        self,
+        portfolio_service: PortfolioService,
+    ) -> PortfolioHandler:
+        """
+        Provide portfolio handler for balance and portfolio queries.
+
+        Uses real on-chain data via RPC:
+        - Native token balances
+        - ERC-20 token balances
+        - USD pricing from DeFiLlama
+        """
+        return PortfolioHandler(portfolio_service=portfolio_service)
+
+    @provide
+    def provide_swap_handler(self) -> SwapHandler:
+        """
+        Provide swap handler for token exchange quotes.
+
+        Note: 1inch client is optional - falls back to info response.
+        To enable real quotes, inject OneInchClient.
+        """
+        # TODO: Inject OneInchClient when available
+        return SwapHandler(oneinch_client=None)
+
+    @provide
+    def provide_activity_handler(
+        self,
+        transaction_repository: TransactionRepository,
+    ) -> ActivityHandler:
+        """
+        Provide activity handler for transaction history.
+
+        Uses database records for transaction history.
+        """
+        return ActivityHandler(transaction_repository=transaction_repository)
+
+    @provide
+    def provide_receive_handler(
+        self,
+        wallet_repository: WalletRepository,
+    ) -> ReceiveHandler:
+        """
+        Provide receive handler for wallet address display.
+
+        Uses wallet repository to fetch user's primary address.
+        """
+        return ReceiveHandler(wallet_repository=wallet_repository)
+
+    @provide
+    def provide_money_market_handler(
+        self,
+        morpho_gateway: MorphoGateway,
+        aave_gateway: AaveGateway,
+    ) -> MoneyMarketHandler:
+        """
+        Provide money market handler for rate comparison.
+
+        Uses real data from:
+        - Morpho: GraphQL API for vault APYs
+        - Aave: AaveGateway for market rates
+        - Compound/Spark: Estimated rates (TODO: integrate APIs)
+        """
+        return MoneyMarketHandler(
+            morpho_gateway=morpho_gateway,
+            aave_gateway=aave_gateway,
+        )
+
     @provide
     def provide_unified_chat_orchestrator(
         self,
@@ -694,11 +796,23 @@ class ChatPhase2Provider(Provider):
         agent_squad_message_command: SendAgentSquadMessage,
         supervisor_workflow_command: ExecuteSupervisorWorkflow,
         regular_chat_command: SendMessage,
+        lending_handler: LendingHandler,
+        portfolio_handler: PortfolioHandler,
+        swap_handler: SwapHandler,
+        activity_handler: ActivityHandler,
+        receive_handler: ReceiveHandler,
+        money_market_handler: MoneyMarketHandler,
+        wallet_repository: WalletRepository,
     ) -> UnifiedChatOrchestrator:
         """
         Provide unified chat orchestrator.
 
-        Routes messages to appropriate handlers based on detected intent.
+        Routes messages to appropriate handlers based on detected intent:
+        - GraphRAG (search, risk, similar)
+        - Hunter AI (sentiment, predictions, patterns)
+        - ULTRA (arbitrage, flash loans, MEV)
+        - DeFi Shortcuts (lending, swap, balance, portfolio)
+        - Agent Squad (specialist tasks, complex workflows)
         """
         return UnifiedChatOrchestrator(
             conversation_repo=conversation_repository,
@@ -708,6 +822,13 @@ class ChatPhase2Provider(Provider):
             agent_squad=agent_squad_message_command,
             supervisor=supervisor_workflow_command,
             regular_chat=regular_chat_command,
+            lending_handler=lending_handler,
+            portfolio_handler=portfolio_handler,
+            swap_handler=swap_handler,
+            activity_handler=activity_handler,
+            receive_handler=receive_handler,
+            money_market_handler=money_market_handler,
+            wallet_repository=wallet_repository,
         )
 
 

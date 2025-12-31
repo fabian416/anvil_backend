@@ -53,6 +53,18 @@ from app.application.ultra.arbitrage_executor import ArbitrageExecutor
 from app.application.ultra.auto_executor import AutoExecutor
 from decimal import Decimal
 
+# DeFi Shortcut imports (Morpho, Swaps, Portfolio, etc.)
+from app.application.chat.handlers.lending_handler import LendingHandler
+from app.application.chat.handlers.portfolio_handler import PortfolioHandler
+from app.application.chat.handlers.swap_handler import SwapHandler
+from app.application.chat.handlers.activity_handler import ActivityHandler
+from app.application.chat.handlers.receive_handler import ReceiveHandler
+from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
+
+# Wallet repository for user wallet lookup
+from app.domain.ports.wallet.wallet_repository import WalletRepository
+from app.domain.value_objects.user_id import UserId
+
 
 class UnifiedChatOrchestrator:
     """
@@ -76,6 +88,13 @@ class UnifiedChatOrchestrator:
         agent_squad: SendAgentSquadMessage,
         supervisor: ExecuteSupervisorWorkflow,
         regular_chat: SendMessage,
+        lending_handler: Optional[LendingHandler] = None,
+        portfolio_handler: Optional[PortfolioHandler] = None,
+        swap_handler: Optional[SwapHandler] = None,
+        activity_handler: Optional[ActivityHandler] = None,
+        receive_handler: Optional[ReceiveHandler] = None,
+        money_market_handler: Optional[MoneyMarketHandler] = None,
+        wallet_repository: Optional[WalletRepository] = None,
     ):
         """
         Initialize orchestrator with all handlers.
@@ -88,6 +107,13 @@ class UnifiedChatOrchestrator:
             agent_squad: Agent Squad message handler
             supervisor: Supervisor workflow handler
             regular_chat: Regular chat handler
+            lending_handler: Handler for lending/Morpho vault operations
+            portfolio_handler: Handler for portfolio queries
+            swap_handler: Handler for token swaps
+            activity_handler: Handler for transaction history
+            receive_handler: Handler for wallet address/QR
+            money_market_handler: Handler for rate comparison
+            wallet_repository: Repository for wallet lookups (Privy)
         """
         self._conversation_repo = conversation_repo
         self._intent_detector = intent_detector
@@ -96,6 +122,13 @@ class UnifiedChatOrchestrator:
         self._agent_squad = agent_squad
         self._supervisor = supervisor
         self._regular_chat = regular_chat
+        self._lending_handler = lending_handler
+        self._portfolio_handler = portfolio_handler
+        self._swap_handler = swap_handler
+        self._activity_handler = activity_handler
+        self._receive_handler = receive_handler
+        self._money_market_handler = money_market_handler
+        self._wallet_repository = wallet_repository
 
     async def execute(
         self,
@@ -193,6 +226,35 @@ class UnifiedChatOrchestrator:
             )
         elif intent_result.intent == ChatIntent.ULTRA_AUTO_EXECUTOR:
             result = await self._handle_ultra_auto_executor(
+                user_id, conversation_id, content, intent_result
+            )
+        # DeFi Shortcut intents
+        elif intent_result.intent == ChatIntent.LENDING:
+            result = await self._handle_lending(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.MONEY_MARKET:
+            result = await self._handle_money_market(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.SWAP:
+            result = await self._handle_swap(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.BALANCE:
+            result = await self._handle_balance(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.PORTFOLIO:
+            result = await self._handle_portfolio(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.ACTIVITY:
+            result = await self._handle_activity(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.RECEIVE:
+            result = await self._handle_receive(
                 user_id, conversation_id, content, intent_result
             )
         # Agent Squad & Supervisor intents
@@ -1435,3 +1497,583 @@ class UnifiedChatOrchestrator:
                 "ultra_tool": "auto_executor",
             },
         }
+
+    # ============================================================================
+    # DeFi SHORTCUT HANDLERS (Lending, Swap, Balance, Portfolio, Activity, Receive)
+    # ============================================================================
+
+    async def _handle_lending(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """
+        Handle lending intent - Morpho vault deposits and yield earning.
+        
+        Uses real data from Morpho GraphQL API (supports Ethereum + Base).
+        """
+        entities = intent_result.extracted_entities
+        
+        # Extract chain and asset from message or entities
+        chain = entities.get("chain", "base").lower()
+        asset = entities.get("token_symbol", "USDC").upper()
+        
+        # Auto-detect from message content
+        message_lower = content.lower()
+        if "base" in message_lower:
+            chain = "base"
+        elif "ethereum" in message_lower or "mainnet" in message_lower:
+            chain = "ethereum"
+        
+        if "eth" in message_lower and "ether" in message_lower:
+            asset = "ETH"
+        elif "usdt" in message_lower:
+            asset = "USDT"
+        elif "dai" in message_lower:
+            asset = "DAI"
+        
+        try:
+            if self._lending_handler:
+                # Use real Morpho data
+                result = await self._lending_handler.execute(
+                    message=content,
+                    chain=chain,
+                    asset=asset,
+                    whitelisted_only=True,
+                )
+                response_content = result.content
+                enrichment = {
+                    "vaults": result.vaults,
+                    "chain": result.chain,
+                    "asset": result.asset,
+                    "best_apy": result.best_apy,
+                    "latency_ms": result.latency_ms,
+                }
+            else:
+                # Fallback response if handler not available
+                response_content = self._get_lending_fallback_response(chain, asset)
+                enrichment = {"chain": chain, "asset": asset, "fallback": True}
+        except Exception as e:
+            response_content = f"⚠️ Error fetching vault data: {str(e)}\n\nPlease try again later."
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "lending_handler",
+                "agent_used": "morpho",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _get_lending_fallback_response(self, chain: str, asset: str) -> str:
+        """Generate fallback response when lending handler is unavailable."""
+        return f"""🏦 **Lending Vaults on {chain.upper()}**
+
+I can help you find the best {asset} lending opportunities on Morpho.
+
+**Available Features:**
+• View top vaults by APY
+• Compare curated (whitelisted) vaults
+• Get deposit instructions (ERC-4626)
+
+**Supported Chains:**
+• Ethereum (mainnet)
+• Base (L2)
+
+**Popular Assets:**
+• USDC, ETH, USDT, DAI
+
+Try asking: "Show me Morpho USDC vaults on Base"
+"""
+
+    async def _handle_money_market(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle money market comparison intent."""
+        entities = intent_result.extracted_entities
+        asset = entities.get("token_symbol", "USDC").upper()
+        chain = entities.get("chain", "base").lower()
+        
+        try:
+            if self._money_market_handler:
+                result = await self._money_market_handler.compare_rates(
+                    asset=asset,
+                    chain=chain,
+                )
+                response_content = result.content
+                enrichment = {
+                    "asset": asset,
+                    "rates": result.rates,
+                    "best_supply_protocol": result.best_supply_protocol,
+                    "best_supply_apy": result.best_supply_apy,
+                    "latency_ms": result.latency_ms,
+                }
+            else:
+                response_content = self._get_money_market_fallback_response(asset)
+                enrichment = {"asset": asset, "fallback": True}
+        except Exception as e:
+            response_content = f"⚠️ Error comparing rates: {str(e)}"
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "money_market_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _get_money_market_fallback_response(self, asset: str) -> str:
+        """Generate fallback response when money market handler unavailable."""
+        return f"""📊 **Money Market Comparison - {asset}**
+
+Comparing lending rates requires the money market handler to be configured.
+
+**Available Protocols:**
+• Morpho (Ethereum, Base)
+• Aave V3 (multi-chain)
+• Compound V3 (multi-chain)
+• Spark (Ethereum)
+
+Try: "deposit USDC on Morpho" for direct vault access.
+"""
+
+    async def _handle_swap(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle swap/exchange intent."""
+        entities = intent_result.extracted_entities
+        
+        try:
+            if self._swap_handler:
+                # Parse swap details from message
+                amount, from_token, to_token, chain = self._swap_handler.parse_swap_from_message(content)
+                
+                # Override with entities if available
+                if entities.get("token_symbol"):
+                    from_token = entities["token_symbol"]
+                if entities.get("chain"):
+                    chain = entities["chain"].lower()
+                
+                result = await self._swap_handler.get_swap_quote(
+                    from_token=from_token,
+                    to_token=to_token,
+                    amount=amount,
+                    chain=chain,
+                )
+                response_content = result.content
+                enrichment = {
+                    "quote": result.quote,
+                    "from_token": result.from_token,
+                    "to_token": result.to_token,
+                    "from_amount": result.from_amount,
+                    "to_amount": result.to_amount,
+                    "price_impact": result.price_impact,
+                    "chain": result.chain,
+                    "latency_ms": result.latency_ms,
+                }
+            else:
+                response_content = self._get_swap_fallback_response()
+                enrichment = {"fallback": True}
+        except Exception as e:
+            response_content = f"⚠️ Error getting swap quote: {str(e)}"
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "swap_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _get_swap_fallback_response(self) -> str:
+        """Generate fallback response when swap handler unavailable."""
+        return """🔄 **Token Swap**
+
+I can help you swap tokens using the best routes.
+
+**Available DEX Aggregators:**
+• 1inch (best rates for most swaps)
+• Hyperliquid (perpetuals & spot)
+• UniswapX (gasless swaps)
+
+**Example:**
+"Swap 1 ETH for USDC on Base"
+
+Please specify:
+1. Amount and token to swap FROM
+2. Token to swap TO
+3. Chain (optional, default: Base)
+"""
+
+    async def _handle_balance(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle balance check intent."""
+        entities = intent_result.extracted_entities
+        chain = entities.get("chain", "base").lower()
+        
+        try:
+            if self._portfolio_handler:
+                # Get user's wallet address from conversation context
+                # For now, we need the wallet address - this would come from user session
+                wallet_address = await self._get_user_wallet_address(user_id)
+                
+                if wallet_address:
+                    result = await self._portfolio_handler.get_balance(
+                        wallet_address=wallet_address,
+                        chain=chain,
+                    )
+                    response_content = result.content
+                    enrichment = {
+                        "total_usd": result.total_usd,
+                        "tokens": result.tokens,
+                        "native_balance": result.native_balance,
+                        "native_symbol": result.native_symbol,
+                        "chain": result.chain,
+                        "latency_ms": result.latency_ms,
+                    }
+                else:
+                    response_content = self._get_balance_no_wallet_response()
+                    enrichment = {"no_wallet": True}
+            else:
+                response_content = self._get_balance_fallback_response()
+                enrichment = {"fallback": True}
+        except Exception as e:
+            response_content = f"⚠️ Error fetching balance: {str(e)}"
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "balance_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _get_balance_fallback_response(self) -> str:
+        """Generate fallback response when portfolio handler unavailable."""
+        return """💰 **Balance**
+
+To check your balance, I need the portfolio service configured.
+
+**Supported Chains:**
+• Ethereum, Base, Arbitrum, Polygon, Optimism
+
+Try connecting your wallet to see real-time balances.
+"""
+
+    def _get_balance_no_wallet_response(self) -> str:
+        """Generate response when user has no wallet."""
+        return """💰 **No Wallet Connected**
+
+I couldn't find a wallet associated with your account.
+
+**To see your balance:**
+1. Connect your wallet via the app
+2. Or create an embedded wallet
+
+Once connected, I can show you real-time balances across all chains.
+"""
+
+    async def _handle_portfolio(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle portfolio enumeration intent."""
+        entities = intent_result.extracted_entities
+        chain = entities.get("chain", "base").lower()
+        
+        try:
+            if self._portfolio_handler:
+                wallet_address = await self._get_user_wallet_address(user_id)
+                
+                if wallet_address:
+                    result = await self._portfolio_handler.get_portfolio(
+                        wallet_address=wallet_address,
+                        chain=chain,
+                    )
+                    response_content = result.content
+                    enrichment = {
+                        "portfolio": result.portfolio,
+                        "total_usd": result.total_usd,
+                        "chain": result.chain,
+                        "latency_ms": result.latency_ms,
+                    }
+                else:
+                    response_content = self._get_portfolio_no_wallet_response()
+                    enrichment = {"no_wallet": True}
+            else:
+                response_content = self._get_portfolio_fallback_response()
+                enrichment = {"fallback": True}
+        except Exception as e:
+            response_content = f"⚠️ Error fetching portfolio: {str(e)}"
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "portfolio_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _get_portfolio_fallback_response(self) -> str:
+        """Generate fallback response when portfolio handler unavailable."""
+        return """📈 **Portfolio**
+
+To view your portfolio, I need the portfolio service configured.
+
+**Features Available:**
+• Real-time token balances
+• USD value calculation
+• Multi-chain support
+
+Connect your wallet to get started.
+"""
+
+    def _get_portfolio_no_wallet_response(self) -> str:
+        """Generate response when user has no wallet."""
+        return """📈 **No Wallet Connected**
+
+I couldn't find a wallet associated with your account.
+
+**To see your portfolio:**
+1. Connect your wallet via the app
+2. Or create an embedded wallet
+
+Once connected, I can show you:
+• All your tokens and balances
+• USD values and percentages
+• DeFi positions
+"""
+
+    async def _handle_activity(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle transaction history/activity intent."""
+        entities = intent_result.extracted_entities
+        chain = entities.get("chain")  # Optional filter
+        
+        try:
+            if self._activity_handler:
+                result = await self._activity_handler.get_activity(
+                    user_id=user_id,
+                    chain=chain,
+                    limit=10,
+                )
+                response_content = result.content
+                enrichment = {
+                    "transactions": result.transactions,
+                    "total_count": result.total_count,
+                    "gas_spent_usd": result.gas_spent_usd,
+                    "chain": result.chain,
+                    "latency_ms": result.latency_ms,
+                }
+            else:
+                response_content = self._get_activity_fallback_response()
+                enrichment = {"fallback": True}
+        except Exception as e:
+            response_content = f"⚠️ Error fetching activity: {str(e)}"
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "activity_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _get_activity_fallback_response(self) -> str:
+        """Generate fallback response when activity handler unavailable."""
+        return """📜 **Transaction History**
+
+To view your transaction history, I need the activity service configured.
+
+**Features Available:**
+• Recent transactions
+• Swap/Send/Receive history
+• Gas cost summary
+
+Your transactions are recorded when you use the app.
+"""
+
+    async def _handle_receive(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle receive funds intent - show address, QR, handle."""
+        entities = intent_result.extracted_entities
+        chain = entities.get("chain", "base").lower()
+        
+        try:
+            if self._receive_handler:
+                result = await self._receive_handler.get_receive_info(
+                    user_id=user_id,
+                    chain=chain,
+                )
+                response_content = result.content
+                enrichment = {
+                    "wallet_address": result.wallet_address,
+                    "ens_handle": result.ens_handle,
+                    "supported_networks": result.supported_networks,
+                    "chain": result.chain,
+                    "latency_ms": result.latency_ms,
+                }
+            else:
+                # Fallback - try to get wallet address directly
+                wallet_address = await self._get_user_wallet_address(user_id)
+                if wallet_address:
+                    response_content = self._format_receive_response(wallet_address, chain)
+                    enrichment = {
+                        "wallet_address": wallet_address,
+                        "supported_networks": ["ethereum", "base", "arbitrum", "polygon"],
+                    }
+                else:
+                    response_content = self._get_receive_no_wallet_response()
+                    enrichment = {"no_wallet": True}
+        except Exception as e:
+            response_content = f"⚠️ Error fetching wallet: {str(e)}"
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "receive_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _format_receive_response(self, wallet_address: str, chain: str) -> str:
+        """Format receive response with wallet address."""
+        return f"""📥 **Receive Funds**
+
+**Your Wallet Address:**
+`{wallet_address}`
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📱 **QR Code:** [Scan to deposit]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Supported Networks:**
+• Ethereum (ETH, ERC-20 tokens)
+• Base (ETH, USDC, etc.)
+• Arbitrum (ETH, ARB, etc.)
+• Polygon (MATIC, etc.)
+
+⚠️ **Important:** Only send tokens on the correct network to avoid loss.
+
+📋 *Tap address to copy*
+"""
+
+    def _get_receive_no_wallet_response(self) -> str:
+        """Generate response when user has no wallet."""
+        return """📥 **No Wallet Found**
+
+I couldn't find a wallet associated with your account.
+
+**To receive funds:**
+1. Connect your wallet via the app
+2. Or create an embedded wallet
+
+Once connected, you'll get:
+• Your deposit address
+• QR code for easy sharing
+• Multi-chain support
+"""
+
+    async def _get_user_wallet_address(self, user_id: int) -> Optional[str]:
+        """
+        Get user's primary wallet address from Privy/WalletRepository.
+        
+        Looks up the user's wallet from the database (synced from Privy).
+        Returns the first available wallet address, preferring embedded wallets.
+        
+        Args:
+            user_id: User's database ID
+            
+        Returns:
+            Wallet address (0x...) or None if no wallet found
+        """
+        if not self._wallet_repository:
+            return None
+            
+        try:
+            # Get all wallets for user
+            wallets = await self._wallet_repository.get_by_user_id(UserId(user_id))
+            
+            if not wallets:
+                return None
+            
+            # Prefer embedded wallets (managed by Privy)
+            embedded_wallets = [
+                w for w in wallets 
+                if hasattr(w, 'wallet_type') and str(w.wallet_type).lower() == 'embedded'
+            ]
+            
+            if embedded_wallets:
+                return embedded_wallets[0].address
+            
+            # Return first available wallet
+            return wallets[0].address
+            
+        except Exception:
+            # Log would be helpful here but don't fail the chat
+            return None
