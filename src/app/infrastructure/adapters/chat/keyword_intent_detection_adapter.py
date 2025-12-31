@@ -47,6 +47,14 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         ChatIntent.ULTRA_FLASH_LOANS: "ultra",
         ChatIntent.ULTRA_MEV_PROTECTION: "ultra",
         ChatIntent.ULTRA_AUTO_EXECUTOR: "ultra",
+        # DeFi Shortcut intents
+        ChatIntent.LENDING: "lending_handler",
+        ChatIntent.MONEY_MARKET: "money_market_handler",
+        ChatIntent.SWAP: "swap_handler",
+        ChatIntent.BALANCE: "balance_handler",
+        ChatIntent.PORTFOLIO: "portfolio_handler",
+        ChatIntent.ACTIVITY: "activity_handler",
+        ChatIntent.RECEIVE: "receive_handler",
         # Squad intents
         ChatIntent.SPECIALIST_TASK: "agent_orchestrator",
         ChatIntent.COMPLEX_WORKFLOW: "agent_orchestrator",
@@ -143,6 +151,50 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         # General Chat
         "hello! what can you help me with?": "general_conversation",
         "what features do you offer?": "general_conversation",
+        # DeFi Shortcuts - Lending (Morpho)
+        "earn usdc on morpho": "lending",
+        "deposit usdc into morpho vault": "lending",
+        "i want to earn yield on my usdc": "lending",
+        "deposit 1000 usdc on base morpho": "lending",
+        "show me morpho vaults on base": "lending",
+        "what's the best apy on morpho": "lending",
+        "lend my usdc on aave": "lending",
+        "supply eth to aave": "lending",
+        "deposit into a lending vault": "lending",
+        # DeFi Shortcuts - Money Market
+        "compare lending rates": "money_market",
+        "compare aave vs compound vs morpho": "money_market",
+        "which protocol has the best supply apy": "money_market",
+        "money market comparison": "money_market",
+        # DeFi Shortcuts - Swap
+        "swap eth for usdc": "swap",
+        "exchange 1 eth to usdc": "swap",
+        "trade btc for eth": "swap",
+        "i want to swap my tokens": "swap",
+        "convert usdc to eth": "swap",
+        # DeFi Shortcuts - Balance
+        "show my balance": "balance",
+        "what's my balance": "balance",
+        "how much usdc do i have": "balance",
+        "check my wallet balance": "balance",
+        # DeFi Shortcuts - Portfolio
+        "show my portfolio": "portfolio",
+        "what's in my portfolio": "portfolio",
+        "list all my assets": "portfolio",
+        "enumerate my holdings": "portfolio",
+        # DeFi Shortcuts - Activity
+        "show my activity": "activity",
+        "transaction history": "activity",
+        "show my transactions": "activity",
+        "what transactions have i made": "activity",
+        "recent activity": "activity",
+        # DeFi Shortcuts - Receive
+        "receive crypto": "receive",
+        "show my address": "receive",
+        "i want to receive funds": "receive",
+        "show qr code": "receive",
+        "deposit address": "receive",
+        "how do i receive tokens": "receive",
         # "random unclear message xyz" intentionally NOT in lookup - should get low confidence
     }
 
@@ -165,7 +217,161 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 self._determine_specialist_agent(message) if intent_str == "specialist_task" else None,
             )
 
-        # STEP 2: Complex workflow patterns (check FIRST - most specific)
+        # STEP 2: DeFi Shortcuts (check FIRST - user convenience shortcuts)
+        
+        # Lending intent (Morpho, Aave supply/deposit)
+        if any(
+            word in message
+            for word in [
+                "morpho",
+                "deposit usdc",
+                "deposit eth",
+                "deposit into",
+                "deposit on",
+                "earn usdc",
+                "earn yield",
+                "earn on",
+                "supply to aave",
+                "supply to compound",
+                "supply eth",
+                "supply usdc",
+                "lend my",
+                "deposit into vault",
+                "lending vault",
+                "vault on base",
+                "aave deposit",
+                "compound deposit",
+            ]
+        ):
+            return (
+                ChatIntent.LENDING,
+                0.92,
+                "Message contains lending/deposit keywords",
+                None,
+            )
+        
+        # Money Market comparison intent
+        if any(
+            word in message
+            for word in [
+                "compare lending",
+                "compare rates",
+                "compare aave",
+                "compare compound",
+                "money market",
+                "best supply apy",
+                "best lending rate",
+                "which protocol has",
+                "aave vs compound",
+                "aave vs morpho",
+            ]
+        ):
+            return (
+                ChatIntent.MONEY_MARKET,
+                0.90,
+                "Message contains money market comparison keywords",
+                None,
+            )
+        
+        # Swap intent
+        if any(
+            word in message
+            for word in [
+                "swap",
+                "exchange",
+                "trade",
+                "convert",
+                "eth for usdc",
+                "usdc for eth",
+                "btc for eth",
+            ]
+        ):
+            return (
+                ChatIntent.SWAP,
+                0.93,
+                "Message contains swap/exchange keywords",
+                None,
+            )
+        
+        # Balance intent
+        if any(
+            word in message
+            for word in [
+                "my balance",
+                "show balance",
+                "check balance",
+                "how much usdc",
+                "how much eth",
+                "wallet balance",
+            ]
+        ):
+            return (
+                ChatIntent.BALANCE,
+                0.94,
+                "Message contains balance check keywords",
+                None,
+            )
+        
+        # Portfolio intent
+        if any(
+            word in message
+            for word in [
+                "my portfolio",
+                "show portfolio",
+                "list my assets",
+                "my holdings",
+                "enumerate my",
+                "all my tokens",
+            ]
+        ):
+            return (
+                ChatIntent.PORTFOLIO,
+                0.93,
+                "Message contains portfolio keywords",
+                None,
+            )
+        
+        # Activity/History intent
+        if any(
+            word in message
+            for word in [
+                "activity",
+                "transaction history",
+                "my transactions",
+                "recent transactions",
+                "tx history",
+                "what transactions",
+            ]
+        ):
+            return (
+                ChatIntent.ACTIVITY,
+                0.92,
+                "Message contains activity/history keywords",
+                None,
+            )
+        
+        # Receive intent
+        if any(
+            word in message
+            for word in [
+                "receive crypto",
+                "receive funds",
+                "receive tokens",
+                "show my address",
+                "deposit address",
+                "qr code",
+                "my wallet address",
+                "how do i receive",
+            ]
+        ):
+            return (
+                ChatIntent.RECEIVE,
+                0.94,
+                "Message contains receive/address keywords",
+                None,
+            )
+
+        # STEP 3: Complex workflow patterns (check FIRST - most specific)
         if any(
             word in message
             for word in [

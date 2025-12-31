@@ -13,7 +13,9 @@ from typing import Optional, Any
 
 from dishka import Provider, Scope, provide, decorate
 from redis.asyncio import Redis, ConnectionPool
-from sqlalchemy.ext.asyncio import AsyncSession
+
+# Infrastructure types
+from app.infrastructure.adapters.types import MainAsyncSession
 
 # Domain Ports - Repositories
 from app.domain.chat.ports.analytics_repository import AnalyticsRepository
@@ -126,6 +128,10 @@ from app.application.chat.services.user_analytics_service import UserChatAnalyti
 from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 
+# DeFi Shortcut Handlers
+from app.application.chat.handlers.lending_handler import LendingHandler
+from app.domain.ports.morpho_gateway import MorphoGateway
+
 
 class ChatPhase2Provider(Provider):
     """
@@ -190,7 +196,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_analytics_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> AnalyticsRepository:
         """Provide conversation analytics repository."""
         return AnalyticsRepositoryAdapter(session=session)
@@ -198,7 +204,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_agent_orchestration_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> AgentOrchestrationRepository:
         """Provide agent orchestration repository."""
         return AgentOrchestrationRepositoryAdapter(session=session)
@@ -206,7 +212,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_audit_log_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> AuditLogRepository:
         """Provide audit log repository."""
         return AuditLogRepositoryAdapter(session=session)
@@ -214,7 +220,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_export_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> ExportRepository:
         """Provide conversation export repository."""
         return ExportRepositoryAdapter(session=session)
@@ -228,7 +234,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_template_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> TemplateRepository:
         """Provide conversation template repository."""
         return TemplateRepositoryAdapter(session=session)
@@ -236,7 +242,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_template_execution_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> TemplateExecutionRepository:
         """Provide template execution repository."""
         return TemplateExecutionRepositoryAdapter(session=session)
@@ -244,7 +250,7 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_user_preferences_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> UserPreferencesRepository:
         """Provide user chat preferences repository."""
         return UserPreferencesRepositoryAdapter(session=session)
@@ -496,7 +502,7 @@ class ChatPhase2Provider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_vector_repository(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> VectorRepository:
         """
         Provide vector repository for similarity search.
@@ -682,6 +688,26 @@ class ChatPhase2Provider(Provider):
         """
         return IntentDetectorService(intent_port=intent_port)
 
+    # ========================================
+    # DeFi Shortcut Handlers (Morpho, Swap, etc.)
+    # ========================================
+
+    @provide
+    def provide_lending_handler(
+        self,
+        morpho_gateway: MorphoGateway,
+    ) -> LendingHandler:
+        """
+        Provide lending handler for Morpho vault operations.
+
+        Uses real data from Morpho GraphQL API:
+        - Ethereum mainnet vaults
+        - Base L2 vaults (USDC, ETH, etc.)
+        - APY comparison
+        - Whitelisted vault recommendations
+        """
+        return LendingHandler(morpho_gateway=morpho_gateway)
+
     @provide
     def provide_unified_chat_orchestrator(
         self,
@@ -692,11 +718,17 @@ class ChatPhase2Provider(Provider):
         agent_squad_message_command: SendAgentSquadMessage,
         supervisor_workflow_command: ExecuteSupervisorWorkflow,
         regular_chat_command: SendMessage,
+        lending_handler: LendingHandler,
     ) -> UnifiedChatOrchestrator:
         """
         Provide unified chat orchestrator.
 
-        Routes messages to appropriate handlers based on detected intent.
+        Routes messages to appropriate handlers based on detected intent:
+        - GraphRAG (search, risk, similar)
+        - Hunter AI (sentiment, predictions, patterns)
+        - ULTRA (arbitrage, flash loans, MEV)
+        - DeFi Shortcuts (lending, swap, balance, portfolio)
+        - Agent Squad (specialist tasks, complex workflows)
         """
         return UnifiedChatOrchestrator(
             conversation_repo=conversation_repository,
@@ -706,6 +738,7 @@ class ChatPhase2Provider(Provider):
             agent_squad=agent_squad_message_command,
             supervisor=supervisor_workflow_command,
             regular_chat=regular_chat_command,
+            lending_handler=lending_handler,
         )
 
 

@@ -54,6 +54,14 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
         "ultra_flash_loans": "ultra",
         "ultra_mev_protection": "ultra",
         "ultra_auto_executor": "ultra",
+        # DeFi Shortcut intents
+        "lending": "lending_handler",
+        "money_market": "money_market_handler",
+        "swap": "swap_handler",
+        "balance": "balance_handler",
+        "portfolio": "portfolio_handler",
+        "activity": "activity_handler",
+        "receive": "receive_handler",
         # Squad intents
         "specialist_task": "agent_orchestrator",
         "complex_workflow": "agent_orchestrator",
@@ -172,15 +180,38 @@ Classify the user's message into ONE of these intents:
 13. ULTRA_AUTO_EXECUTOR - User wants to control automated trading bot
    Examples: "start trading bot", "pause auto executor", "bot status"
 
+## DeFi Shortcut Intents (Quick Actions)
+
+14. LENDING - User wants to deposit/earn/supply into lending protocols (Morpho, Aave, Compound)
+    Examples: "deposit USDC on Morpho", "earn yield on my USDC", "supply ETH to Aave", "best Morpho vault on Base"
+
+15. MONEY_MARKET - User wants to compare lending/supply rates across protocols
+    Examples: "compare lending rates", "Aave vs Compound vs Morpho", "which has best supply APY"
+
+16. SWAP - User wants to swap/exchange tokens
+    Examples: "swap ETH for USDC", "exchange my tokens", "trade BTC for ETH"
+
+17. BALANCE - User wants to check their balance (shows value in USDC)
+    Examples: "show my balance", "how much do I have", "check wallet balance"
+
+18. PORTFOLIO - User wants to see their full portfolio
+    Examples: "show my portfolio", "list my assets", "what's in my wallet"
+
+19. ACTIVITY - User wants transaction history
+    Examples: "show my activity", "transaction history", "recent transactions"
+
+20. RECEIVE - User wants to receive funds (show QR, address, handle)
+    Examples: "receive crypto", "show my address", "deposit address", "QR code"
+
 ## Agent Squad & Workflow Intents
 
-14. SPECIALIST_TASK - User needs specialist agent (yield, gas, security, etc.)
+21. SPECIALIST_TASK - User needs specialist agent (yield, gas, security, etc.)
    Examples: "best USDC yield", "optimize gas", "tax implications"
 
-15. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
+22. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
    Examples: "create a balanced portfolio", "comprehensive analysis of DeFi", "migration strategy"
 
-16. GENERAL_CONVERSATION - General questions, education, explanations
+23. GENERAL_CONVERSATION - General questions, education, explanations
    Examples: "what is DeFi?", "explain impermanent loss", "how does staking work?"
 
 Extract entities: protocol names, token symbols, amounts, chains, categories, etc.

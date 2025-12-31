@@ -43,6 +43,15 @@ class ChatIntent(Enum):
     ULTRA_MEV_PROTECTION = "ultra_mev_protection"  # MEV-protected execution
     ULTRA_AUTO_EXECUTOR = "ultra_auto_executor"  # Automated trading bot control
 
+    # DeFi Shortcut intents (direct routing to specialized handlers)
+    LENDING = "lending"  # Morpho vaults, Aave, Compound - deposit/earn/supply
+    MONEY_MARKET = "money_market"  # Compare lending rates across protocols
+    SWAP = "swap"  # Token swaps via 1inch, Hyperliquid, UniswapX
+    BALANCE = "balance"  # Show user balance in USDC
+    PORTFOLIO = "portfolio"  # Full portfolio enumeration
+    ACTIVITY = "activity"  # Transaction history
+    RECEIVE = "receive"  # Show QR code, handle, and copy address
+
     # Agent Squad & Supervisor intents
     SPECIALIST_TASK = "specialist_task"
     COMPLEX_WORKFLOW = "complex_workflow"

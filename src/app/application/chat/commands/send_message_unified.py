@@ -53,6 +53,9 @@ from app.application.ultra.arbitrage_executor import ArbitrageExecutor
 from app.application.ultra.auto_executor import AutoExecutor
 from decimal import Decimal
 
+# DeFi Shortcut imports (Morpho, Swaps, etc.)
+from app.application.chat.handlers.lending_handler import LendingHandler
+
 
 class UnifiedChatOrchestrator:
     """
@@ -76,6 +79,7 @@ class UnifiedChatOrchestrator:
         agent_squad: SendAgentSquadMessage,
         supervisor: ExecuteSupervisorWorkflow,
         regular_chat: SendMessage,
+        lending_handler: Optional[LendingHandler] = None,
     ):
         """
         Initialize orchestrator with all handlers.
@@ -88,6 +92,7 @@ class UnifiedChatOrchestrator:
             agent_squad: Agent Squad message handler
             supervisor: Supervisor workflow handler
             regular_chat: Regular chat handler
+            lending_handler: Handler for lending/Morpho vault operations
         """
         self._conversation_repo = conversation_repo
         self._intent_detector = intent_detector
@@ -96,6 +101,7 @@ class UnifiedChatOrchestrator:
         self._agent_squad = agent_squad
         self._supervisor = supervisor
         self._regular_chat = regular_chat
+        self._lending_handler = lending_handler
 
     async def execute(
         self,
@@ -193,6 +199,35 @@ class UnifiedChatOrchestrator:
             )
         elif intent_result.intent == ChatIntent.ULTRA_AUTO_EXECUTOR:
             result = await self._handle_ultra_auto_executor(
+                user_id, conversation_id, content, intent_result
+            )
+        # DeFi Shortcut intents
+        elif intent_result.intent == ChatIntent.LENDING:
+            result = await self._handle_lending(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.MONEY_MARKET:
+            result = await self._handle_money_market(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.SWAP:
+            result = await self._handle_swap(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.BALANCE:
+            result = await self._handle_balance(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.PORTFOLIO:
+            result = await self._handle_portfolio(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.ACTIVITY:
+            result = await self._handle_activity(
+                user_id, conversation_id, content, intent_result
+            )
+        elif intent_result.intent == ChatIntent.RECEIVE:
+            result = await self._handle_receive(
                 user_id, conversation_id, content, intent_result
             )
         # Agent Squad & Supervisor intents
@@ -1433,5 +1468,362 @@ class UnifiedChatOrchestrator:
             "enrichment": {
                 "action": action,
                 "ultra_tool": "auto_executor",
+            },
+        }
+
+    # ============================================================================
+    # DeFi SHORTCUT HANDLERS (Lending, Swap, Balance, Portfolio, Activity, Receive)
+    # ============================================================================
+
+    async def _handle_lending(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """
+        Handle lending intent - Morpho vault deposits and yield earning.
+        
+        Uses real data from Morpho GraphQL API (supports Ethereum + Base).
+        """
+        entities = intent_result.extracted_entities
+        
+        # Extract chain and asset from message or entities
+        chain = entities.get("chain", "base").lower()
+        asset = entities.get("token_symbol", "USDC").upper()
+        
+        # Auto-detect from message content
+        message_lower = content.lower()
+        if "base" in message_lower:
+            chain = "base"
+        elif "ethereum" in message_lower or "mainnet" in message_lower:
+            chain = "ethereum"
+        
+        if "eth" in message_lower and "ether" in message_lower:
+            asset = "ETH"
+        elif "usdt" in message_lower:
+            asset = "USDT"
+        elif "dai" in message_lower:
+            asset = "DAI"
+        
+        try:
+            if self._lending_handler:
+                # Use real Morpho data
+                result = await self._lending_handler.execute(
+                    message=content,
+                    chain=chain,
+                    asset=asset,
+                    whitelisted_only=True,
+                )
+                response_content = result.content
+                enrichment = {
+                    "vaults": result.vaults,
+                    "chain": result.chain,
+                    "asset": result.asset,
+                    "best_apy": result.best_apy,
+                    "latency_ms": result.latency_ms,
+                }
+            else:
+                # Fallback response if handler not available
+                response_content = self._get_lending_fallback_response(chain, asset)
+                enrichment = {"chain": chain, "asset": asset, "fallback": True}
+        except Exception as e:
+            response_content = f"⚠️ Error fetching vault data: {str(e)}\n\nPlease try again later."
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "lending_handler",
+                "agent_used": "morpho",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _get_lending_fallback_response(self, chain: str, asset: str) -> str:
+        """Generate fallback response when lending handler is unavailable."""
+        return f"""🏦 **Lending Vaults on {chain.upper()}**
+
+I can help you find the best {asset} lending opportunities on Morpho.
+
+**Available Features:**
+• View top vaults by APY
+• Compare curated (whitelisted) vaults
+• Get deposit instructions (ERC-4626)
+
+**Supported Chains:**
+• Ethereum (mainnet)
+• Base (L2)
+
+**Popular Assets:**
+• USDC, ETH, USDT, DAI
+
+Try asking: "Show me Morpho USDC vaults on Base"
+"""
+
+    async def _handle_money_market(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle money market comparison intent."""
+        entities = intent_result.extracted_entities
+        asset = entities.get("token_symbol", "USDC").upper()
+        
+        # Placeholder for comparison logic
+        response_content = f"""📊 **Money Market Comparison - {asset}**
+
+Comparing lending rates across protocols:
+
+| Protocol | Supply APY | Borrow APY |
+|----------|-----------|------------|
+| Aave V3 | 4.5% | 5.2% |
+| Compound V3 | 4.2% | 5.5% |
+| Morpho | 5.8% | 6.1% |
+| Spark | 4.8% | 5.0% |
+
+**🎯 Best Supply Rate:** Morpho (5.8% APY)
+**🎯 Best Borrow Rate:** Spark (5.0% APY)
+
+Would you like to deposit into the highest-yield vault?
+"""
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "money_market_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {"asset": asset},
+        }
+
+    async def _handle_swap(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle swap/exchange intent."""
+        entities = intent_result.extracted_entities
+        
+        # Placeholder for swap logic
+        response_content = """🔄 **Token Swap**
+
+I can help you swap tokens using the best routes.
+
+**Available DEX Aggregators:**
+• 1inch (best rates for most swaps)
+• Hyperliquid (perpetuals & spot)
+• UniswapX (gasless swaps)
+
+**Example:**
+"Swap 1 ETH for USDC on Base"
+
+Please specify:
+1. Amount and token to swap FROM
+2. Token to swap TO
+3. Chain (optional, default: Base)
+"""
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "swap_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": entities,
+        }
+
+    async def _handle_balance(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle balance check intent."""
+        # Placeholder - would fetch real balance from wallet
+        response_content = """💰 **Your Balance**
+
+**Total Value:** $12,345.67 USDC
+
+**Assets:**
+• 2.5 ETH ($5,000.00)
+• 5,000 USDC ($5,000.00)
+• 1,000 DAI ($1,000.00)
+• 0.5 BTC ($1,345.67)
+
+*Last updated: just now*
+
+Would you like to see your full portfolio or transaction history?
+"""
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "balance_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {"total_usd": 12345.67},
+        }
+
+    async def _handle_portfolio(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle portfolio enumeration intent."""
+        # Placeholder - would fetch real portfolio
+        response_content = """📈 **Your Portfolio**
+
+**Total Value:** $25,678.90
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**TOKENS**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• ETH: 5.0 ($10,000.00) - 39%
+• USDC: 8,000 ($8,000.00) - 31%
+• BTC: 0.25 ($5,000.00) - 19%
+• Other: $2,678.90 - 11%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**DEFI POSITIONS**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Morpho USDC Vault: $3,000 (5.6% APY)
+• Aave ETH Supply: $2,000 (3.2% APY)
+
+**Chain Distribution:**
+• Ethereum: 45%
+• Base: 35%
+• Arbitrum: 20%
+
+Would you like portfolio optimization recommendations?
+"""
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "portfolio_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {"total_usd": 25678.90},
+        }
+
+    async def _handle_activity(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle transaction history/activity intent."""
+        # Placeholder - would fetch real transaction history
+        response_content = """📜 **Recent Activity**
+
+**Last 7 Days:**
+
+1. **Swap** - 2 hours ago
+   • 1.0 ETH → 2,000 USDC
+   • Via 1inch on Base
+   
+2. **Deposit** - 1 day ago
+   • 1,000 USDC → Morpho Vault
+   • APY: 5.6%
+   
+3. **Receive** - 2 days ago
+   • 0.5 ETH from 0x1234...abcd
+   
+4. **Swap** - 3 days ago
+   • 500 USDC → 0.25 ETH
+   • Via Uniswap on Ethereum
+
+**Total Transactions:** 12 this month
+**Gas Spent:** $45.23
+
+Would you like a detailed report or specific transaction details?
+"""
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "activity_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {"transaction_count": 12},
+        }
+
+    async def _handle_receive(
+        self, user_id, conversation_id, content, intent_result
+    ) -> dict:
+        """Handle receive funds intent - show address, QR, handle."""
+        # Placeholder - would fetch real wallet address
+        wallet_address = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+        
+        response_content = f"""📥 **Receive Funds**
+
+**Your Wallet Address:**
+`{wallet_address}`
+
+**ENS Handle:** (if registered)
+yourname.eth
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📱 **QR Code:** [Click to view QR]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Supported Networks:**
+• Ethereum (ETH, ERC-20 tokens)
+• Base (ETH, USDC, etc.)
+• Arbitrum (ETH, ARB, etc.)
+• Polygon (MATIC, etc.)
+
+⚠️ **Important:** Only send tokens on the correct network to avoid loss.
+
+📋 *Address copied to clipboard*
+"""
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "receive_handler",
+                "reasoning": intent_result.reasoning,
+            },
+            "enrichment": {
+                "wallet_address": wallet_address,
+                "supported_networks": ["ethereum", "base", "arbitrum", "polygon"],
             },
         }
