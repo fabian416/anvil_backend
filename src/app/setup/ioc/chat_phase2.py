@@ -136,6 +136,7 @@ from app.application.chat.handlers.activity_handler import ActivityHandler
 from app.application.chat.handlers.receive_handler import ReceiveHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.aave_gateway import AaveGateway
 from app.application.portfolio.portfolio_service import PortfolioService
 from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
@@ -770,14 +771,20 @@ class ChatPhase2Provider(Provider):
     def provide_money_market_handler(
         self,
         morpho_gateway: MorphoGateway,
+        aave_gateway: AaveGateway,
     ) -> MoneyMarketHandler:
         """
         Provide money market handler for rate comparison.
 
-        Uses Morpho for real rates, with static fallback for Aave/Compound.
-        TODO: Add Aave and Compound API integrations.
+        Uses real data from:
+        - Morpho: GraphQL API for vault APYs
+        - Aave: AaveGateway for market rates
+        - Compound/Spark: Estimated rates (TODO: integrate APIs)
         """
-        return MoneyMarketHandler(morpho_gateway=morpho_gateway)
+        return MoneyMarketHandler(
+            morpho_gateway=morpho_gateway,
+            aave_gateway=aave_gateway,
+        )
 
     @provide
     def provide_unified_chat_orchestrator(
@@ -795,6 +802,7 @@ class ChatPhase2Provider(Provider):
         activity_handler: ActivityHandler,
         receive_handler: ReceiveHandler,
         money_market_handler: MoneyMarketHandler,
+        wallet_repository: WalletRepository,
     ) -> UnifiedChatOrchestrator:
         """
         Provide unified chat orchestrator.
@@ -820,6 +828,7 @@ class ChatPhase2Provider(Provider):
             activity_handler=activity_handler,
             receive_handler=receive_handler,
             money_market_handler=money_market_handler,
+            wallet_repository=wallet_repository,
         )
 
 

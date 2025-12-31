@@ -61,6 +61,10 @@ from app.application.chat.handlers.activity_handler import ActivityHandler
 from app.application.chat.handlers.receive_handler import ReceiveHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 
+# Wallet repository for user wallet lookup
+from app.domain.ports.wallet.wallet_repository import WalletRepository
+from app.domain.value_objects.user_id import UserId
+
 
 class UnifiedChatOrchestrator:
     """
@@ -90,6 +94,7 @@ class UnifiedChatOrchestrator:
         activity_handler: Optional[ActivityHandler] = None,
         receive_handler: Optional[ReceiveHandler] = None,
         money_market_handler: Optional[MoneyMarketHandler] = None,
+        wallet_repository: Optional[WalletRepository] = None,
     ):
         """
         Initialize orchestrator with all handlers.
@@ -108,6 +113,7 @@ class UnifiedChatOrchestrator:
             activity_handler: Handler for transaction history
             receive_handler: Handler for wallet address/QR
             money_market_handler: Handler for rate comparison
+            wallet_repository: Repository for wallet lookups (Privy)
         """
         self._conversation_repo = conversation_repo
         self._intent_detector = intent_detector
@@ -122,6 +128,7 @@ class UnifiedChatOrchestrator:
         self._activity_handler = activity_handler
         self._receive_handler = receive_handler
         self._money_market_handler = money_market_handler
+        self._wallet_repository = wallet_repository
 
     async def execute(
         self,
@@ -2034,13 +2041,39 @@ Once connected, you'll get:
 
     async def _get_user_wallet_address(self, user_id: int) -> Optional[str]:
         """
-        Get user's primary wallet address.
+        Get user's primary wallet address from Privy/WalletRepository.
         
-        This method looks up the user's wallet from the database.
-        Returns None if no wallet is found.
+        Looks up the user's wallet from the database (synced from Privy).
+        Returns the first available wallet address, preferring embedded wallets.
+        
+        Args:
+            user_id: User's database ID
+            
+        Returns:
+            Wallet address (0x...) or None if no wallet found
         """
-        # Try to get wallet from conversation repository (if it has user info)
-        # or from a separate wallet lookup
-        # For now, return None to trigger fallback behavior
-        # TODO: Implement proper wallet lookup from WalletRepository
-        return None
+        if not self._wallet_repository:
+            return None
+            
+        try:
+            # Get all wallets for user
+            wallets = await self._wallet_repository.get_by_user_id(UserId(user_id))
+            
+            if not wallets:
+                return None
+            
+            # Prefer embedded wallets (managed by Privy)
+            embedded_wallets = [
+                w for w in wallets 
+                if hasattr(w, 'wallet_type') and str(w.wallet_type).lower() == 'embedded'
+            ]
+            
+            if embedded_wallets:
+                return embedded_wallets[0].address
+            
+            # Return first available wallet
+            return wallets[0].address
+            
+        except Exception:
+            # Log would be helpful here but don't fail the chat
+            return None
