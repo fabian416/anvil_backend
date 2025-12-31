@@ -168,3 +168,7 @@ config/prod/*
 
 # IgnoreToDo
 todo/
+
+# Local runtime artifacts (do not commit)
+celerybeat-schedule.db
+dump.rdb
