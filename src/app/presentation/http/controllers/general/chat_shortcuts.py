@@ -465,7 +465,7 @@ def create_chat_shortcuts_router() -> APIRouter:
         lang: Optional[str] = Query(
             default="en",
             description="Language code: en, es, fr, zh, pt",
-            regex="^(en|es|fr|zh|pt)$",
+            pattern="^(en|es|fr|zh|pt)$",
         ),
     ) -> ChatShortcutsResponse:
         """

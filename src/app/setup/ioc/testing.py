@@ -1291,7 +1291,7 @@ class TestDatabaseProvider(Provider):
 
         # Cleanup after tests
         await redis.flushdb()
-        await redis.close()
+        await redis.aclose()
         await pool.disconnect()
 
 
