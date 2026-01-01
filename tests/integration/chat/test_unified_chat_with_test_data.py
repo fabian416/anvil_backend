@@ -35,6 +35,7 @@ TEST_DATA_FILES = {
     "hunter": TEST_DATA_DIR / "test_data_hunter.json",
     "ultra": TEST_DATA_DIR / "test_data_ultra.json",
     "agent_squad": TEST_DATA_DIR / "test_data_agent_squad.json",
+    "defi_shortcuts": TEST_DATA_DIR / "test_data_defi_shortcuts.json",
 }
 
 
@@ -65,7 +66,7 @@ def load_all_test_data() -> Dict[str, Any]:
     merged["performance_benchmarks"] = common_data.get("performance_benchmarks", {})
     
     # Load and merge test cases from each domain file
-    for file_type in ["chat", "hunter", "ultra", "agent_squad"]:
+    for file_type in ["chat", "hunter", "ultra", "agent_squad", "defi_shortcuts"]:
         data = load_test_data_file(file_type)
         if "test_cases" in data:
             merged["test_cases"].update(data["test_cases"])
@@ -164,6 +165,12 @@ def ultra_test_data():
 def agent_squad_test_data():
     """Load Agent Squad test data."""
     return load_test_data_file("agent_squad")
+
+
+@pytest.fixture(scope="module")
+def defi_shortcuts_test_data():
+    """Load DeFi shortcuts test data (LENDING, MONEY_MARKET, SWAP, etc.)."""
+    return load_test_data_file("defi_shortcuts")
 
 
 @pytest.fixture(scope="module")
@@ -816,6 +823,181 @@ class TestAgentSquadTestCases:
         workflow_cases = agent_squad_test_data["test_cases"]["agent_squad"]["complex_workflow"]
 
         for test_case in workflow_cases:
+            response = await authenticated_client.post(
+                f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+                json={"content": test_case["input"]["content"]},
+            )
+            
+            assert response.status_code == 201, f"Failed for {test_case['id']}: {response.text}"
+            data = response.json()
+            
+            assert "routing" in data
+            assert "agent_message" in data
+            assert len(data["agent_message"]["content"]) > 0
+            assert data["routing"]["confidence"] >= 0.5
+
+
+@pytest.mark.integration
+@pytest.mark.chat
+@pytest.mark.defi_shortcuts
+class TestDefiShortcutsTestCases:
+    """Tests for DeFi shortcut intents (from test_data_defi_shortcuts.json)."""
+    
+    @pytest.mark.asyncio
+    async def test_lending_cases(
+        self,
+        authenticated_client: AuthenticatedClient,
+        test_conversation: UUID,
+        defi_shortcuts_test_data: Dict[str, Any],
+    ):
+        """Test all LENDING intent test cases (Morpho vaults)."""
+        lending_cases = defi_shortcuts_test_data["test_cases"]["defi_shortcuts"]["lending"]
+
+        for test_case in lending_cases:
+            response = await authenticated_client.post(
+                f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+                json={"content": test_case["input"]["content"]},
+            )
+            
+            assert response.status_code == 201, f"Failed for {test_case['id']}: {response.text}"
+            data = response.json()
+            
+            assert "routing" in data
+            assert "agent_message" in data
+            assert len(data["agent_message"]["content"]) > 0
+            assert data["routing"]["confidence"] >= 0.5
+    
+    @pytest.mark.asyncio
+    async def test_money_market_cases(
+        self,
+        authenticated_client: AuthenticatedClient,
+        test_conversation: UUID,
+        defi_shortcuts_test_data: Dict[str, Any],
+    ):
+        """Test all MONEY_MARKET intent test cases (Aave + Compound)."""
+        money_market_cases = defi_shortcuts_test_data["test_cases"]["defi_shortcuts"]["money_market"]
+
+        for test_case in money_market_cases:
+            response = await authenticated_client.post(
+                f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+                json={"content": test_case["input"]["content"]},
+            )
+            
+            assert response.status_code == 201, f"Failed for {test_case['id']}: {response.text}"
+            data = response.json()
+            
+            assert "routing" in data
+            assert "agent_message" in data
+            assert len(data["agent_message"]["content"]) > 0
+            assert data["routing"]["confidence"] >= 0.5
+    
+    @pytest.mark.asyncio
+    async def test_swap_cases(
+        self,
+        authenticated_client: AuthenticatedClient,
+        test_conversation: UUID,
+        defi_shortcuts_test_data: Dict[str, Any],
+    ):
+        """Test all SWAP intent test cases (1inch + LiFi + Hyperliquid)."""
+        swap_cases = defi_shortcuts_test_data["test_cases"]["defi_shortcuts"]["swap"]
+
+        for test_case in swap_cases:
+            response = await authenticated_client.post(
+                f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+                json={"content": test_case["input"]["content"]},
+            )
+            
+            assert response.status_code == 201, f"Failed for {test_case['id']}: {response.text}"
+            data = response.json()
+            
+            assert "routing" in data
+            assert "agent_message" in data
+            assert len(data["agent_message"]["content"]) > 0
+            assert data["routing"]["confidence"] >= 0.5
+    
+    @pytest.mark.asyncio
+    async def test_portfolio_cases(
+        self,
+        authenticated_client: AuthenticatedClient,
+        test_conversation: UUID,
+        defi_shortcuts_test_data: Dict[str, Any],
+    ):
+        """Test all PORTFOLIO intent test cases."""
+        portfolio_cases = defi_shortcuts_test_data["test_cases"]["defi_shortcuts"]["portfolio"]
+
+        for test_case in portfolio_cases:
+            response = await authenticated_client.post(
+                f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+                json={"content": test_case["input"]["content"]},
+            )
+            
+            assert response.status_code == 201, f"Failed for {test_case['id']}: {response.text}"
+            data = response.json()
+            
+            assert "routing" in data
+            assert "agent_message" in data
+            assert len(data["agent_message"]["content"]) > 0
+            assert data["routing"]["confidence"] >= 0.5
+    
+    @pytest.mark.asyncio
+    async def test_balance_cases(
+        self,
+        authenticated_client: AuthenticatedClient,
+        test_conversation: UUID,
+        defi_shortcuts_test_data: Dict[str, Any],
+    ):
+        """Test all BALANCE intent test cases."""
+        balance_cases = defi_shortcuts_test_data["test_cases"]["defi_shortcuts"]["balance"]
+
+        for test_case in balance_cases:
+            response = await authenticated_client.post(
+                f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+                json={"content": test_case["input"]["content"]},
+            )
+            
+            assert response.status_code == 201, f"Failed for {test_case['id']}: {response.text}"
+            data = response.json()
+            
+            assert "routing" in data
+            assert "agent_message" in data
+            assert len(data["agent_message"]["content"]) > 0
+            assert data["routing"]["confidence"] >= 0.5
+    
+    @pytest.mark.asyncio
+    async def test_activity_cases(
+        self,
+        authenticated_client: AuthenticatedClient,
+        test_conversation: UUID,
+        defi_shortcuts_test_data: Dict[str, Any],
+    ):
+        """Test all ACTIVITY intent test cases."""
+        activity_cases = defi_shortcuts_test_data["test_cases"]["defi_shortcuts"]["activity"]
+
+        for test_case in activity_cases:
+            response = await authenticated_client.post(
+                f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+                json={"content": test_case["input"]["content"]},
+            )
+            
+            assert response.status_code == 201, f"Failed for {test_case['id']}: {response.text}"
+            data = response.json()
+            
+            assert "routing" in data
+            assert "agent_message" in data
+            assert len(data["agent_message"]["content"]) > 0
+            assert data["routing"]["confidence"] >= 0.5
+    
+    @pytest.mark.asyncio
+    async def test_receive_cases(
+        self,
+        authenticated_client: AuthenticatedClient,
+        test_conversation: UUID,
+        defi_shortcuts_test_data: Dict[str, Any],
+    ):
+        """Test all RECEIVE intent test cases."""
+        receive_cases = defi_shortcuts_test_data["test_cases"]["defi_shortcuts"]["receive"]
+
+        for test_case in receive_cases:
             response = await authenticated_client.post(
                 f"/api/v1/user/chat/conversations/{test_conversation}/messages",
                 json={"content": test_case["input"]["content"]},

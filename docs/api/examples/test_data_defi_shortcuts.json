@@ -1,0 +1,805 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Test data for DeFi shortcut intents: LENDING, MONEY_MARKET, SWAP, PORTFOLIO, BALANCE, ACTIVITY, RECEIVE",
+    "created": "2024-12-29",
+    "author": "Anvil Team"
+  },
+  "test_cases": {
+    "defi_shortcuts": {
+      "lending": [
+        {
+          "id": "defi_lending_001",
+          "description": "Basic Morpho deposit request",
+          "input": {
+            "content": "I want to deposit USDC on Morpho"
+          },
+          "expected_routing": {
+            "intent": "lending",
+            "handler": "lending_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "asset": "USDC",
+            "protocol": "morpho"
+          }
+        },
+        {
+          "id": "defi_lending_002",
+          "description": "Morpho vault search on Base",
+          "input": {
+            "content": "Show me the best Morpho vaults on Base for USDC"
+          },
+          "expected_routing": {
+            "intent": "lending",
+            "handler": "lending_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "asset": "USDC",
+            "chain": "base"
+          }
+        },
+        {
+          "id": "defi_lending_003",
+          "description": "Morpho lending rates query",
+          "input": {
+            "content": "What are the best lending rates on Morpho?"
+          },
+          "expected_routing": {
+            "intent": "lending",
+            "handler": "lending_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_lending_004",
+          "description": "Earn yield on ETH via Morpho",
+          "input": {
+            "content": "How can I earn yield on my ETH using Morpho vaults?"
+          },
+          "expected_routing": {
+            "intent": "lending",
+            "handler": "lending_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "asset": "ETH"
+          }
+        },
+        {
+          "id": "defi_lending_005",
+          "description": "Morpho vault comparison Ethereum",
+          "input": {
+            "content": "Compare Morpho vaults for USDC on Ethereum mainnet"
+          },
+          "expected_routing": {
+            "intent": "lending",
+            "handler": "lending_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "chain": "ethereum"
+          }
+        },
+        {
+          "id": "defi_lending_006",
+          "description": "High APY Morpho vault",
+          "input": {
+            "content": "Find the highest APY Morpho vault"
+          },
+          "expected_routing": {
+            "intent": "lending",
+            "handler": "lending_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_lending_007",
+          "description": "Deposit into specific vault",
+          "input": {
+            "content": "Deposit 1000 USDC into a curated Morpho vault"
+          },
+          "expected_routing": {
+            "intent": "lending",
+            "handler": "lending_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "asset": "USDC"
+          }
+        },
+        {
+          "id": "defi_lending_008",
+          "description": "Morpho Base L2 vaults",
+          "input": {
+            "content": "Show Morpho lending opportunities on Base L2"
+          },
+          "expected_routing": {
+            "intent": "lending",
+            "handler": "lending_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "chain": "base"
+          }
+        }
+      ],
+      "money_market": [
+        {
+          "id": "defi_mm_001",
+          "description": "Compare Aave and Compound rates",
+          "input": {
+            "content": "Compare lending rates between Aave and Compound for USDC"
+          },
+          "expected_routing": {
+            "intent": "money_market",
+            "handler": "money_market_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "asset": "USDC"
+          }
+        },
+        {
+          "id": "defi_mm_002",
+          "description": "Best money market rates",
+          "input": {
+            "content": "Where can I get the best money market rates?"
+          },
+          "expected_routing": {
+            "intent": "money_market",
+            "handler": "money_market_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_mm_003",
+          "description": "Aave supply APY",
+          "input": {
+            "content": "What's the current Aave supply APY for ETH?"
+          },
+          "expected_routing": {
+            "intent": "money_market",
+            "handler": "money_market_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "asset": "ETH",
+            "protocol": "aave"
+          }
+        },
+        {
+          "id": "defi_mm_004",
+          "description": "Compound borrow rates",
+          "input": {
+            "content": "Show me Compound borrowing rates for USDC"
+          },
+          "expected_routing": {
+            "intent": "money_market",
+            "handler": "money_market_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "protocol": "compound"
+          }
+        },
+        {
+          "id": "defi_mm_005",
+          "description": "Money market comparison on Base",
+          "input": {
+            "content": "Compare Aave vs Compound on Base chain"
+          },
+          "expected_routing": {
+            "intent": "money_market",
+            "handler": "money_market_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "chain": "base"
+          }
+        },
+        {
+          "id": "defi_mm_006",
+          "description": "Best yield for stablecoins",
+          "input": {
+            "content": "Best protocol for stablecoin lending - Aave or Compound?"
+          },
+          "expected_routing": {
+            "intent": "money_market",
+            "handler": "money_market_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_mm_007",
+          "description": "Supply USDC comparison",
+          "input": {
+            "content": "I want to supply USDC, should I use Aave or Compound?"
+          },
+          "expected_routing": {
+            "intent": "money_market",
+            "handler": "money_market_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_mm_008",
+          "description": "Borrow ETH comparison",
+          "input": {
+            "content": "Where should I borrow ETH - Aave or Compound V3?"
+          },
+          "expected_routing": {
+            "intent": "money_market",
+            "handler": "money_market_handler",
+            "confidence_min": 0.7
+          }
+        }
+      ],
+      "swap": [
+        {
+          "id": "defi_swap_001",
+          "description": "Basic token swap request",
+          "input": {
+            "content": "Swap 100 USDC for ETH"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "from_token": "USDC",
+            "to_token": "ETH"
+          }
+        },
+        {
+          "id": "defi_swap_002",
+          "description": "Swap quote request",
+          "input": {
+            "content": "Get me a swap quote for 1 ETH to USDC on Base"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "chain": "base"
+          }
+        },
+        {
+          "id": "defi_swap_003",
+          "description": "Cross-chain bridge request",
+          "input": {
+            "content": "Bridge 500 USDC from Ethereum to Base"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "from_chain": "ethereum",
+            "to_chain": "base"
+          }
+        },
+        {
+          "id": "defi_swap_004",
+          "description": "1inch swap request",
+          "input": {
+            "content": "Use 1inch to swap my ETH for WBTC"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "aggregator": "1inch"
+          }
+        },
+        {
+          "id": "defi_swap_005",
+          "description": "LiFi cross-chain swap",
+          "input": {
+            "content": "Cross-chain swap 1000 USDC from Arbitrum to Polygon using LiFi"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "aggregator": "lifi"
+          }
+        },
+        {
+          "id": "defi_swap_006",
+          "description": "Best swap rate query",
+          "input": {
+            "content": "What's the best rate to swap 10 ETH for USDC?"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_swap_007",
+          "description": "Exchange tokens",
+          "input": {
+            "content": "Exchange 50 USDT for DAI"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_swap_008",
+          "description": "Trade with slippage",
+          "input": {
+            "content": "Trade 2 ETH for USDC with 0.5% slippage"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_swap_009",
+          "description": "Hyperliquid perpetual swap",
+          "input": {
+            "content": "Open a long position on ETH using Hyperliquid"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.6
+          }
+        },
+        {
+          "id": "defi_swap_010",
+          "description": "Multi-chain token transfer",
+          "input": {
+            "content": "Move my USDC from Ethereum to Base chain"
+          },
+          "expected_routing": {
+            "intent": "swap",
+            "handler": "swap_handler",
+            "confidence_min": 0.6
+          }
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "defi_portfolio_001",
+          "description": "View full portfolio",
+          "input": {
+            "content": "Show me my portfolio"
+          },
+          "expected_routing": {
+            "intent": "portfolio",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_portfolio_002",
+          "description": "Portfolio breakdown",
+          "input": {
+            "content": "What's in my wallet? Show all tokens"
+          },
+          "expected_routing": {
+            "intent": "portfolio",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_portfolio_003",
+          "description": "Multi-chain portfolio",
+          "input": {
+            "content": "Show my holdings across all chains"
+          },
+          "expected_routing": {
+            "intent": "portfolio",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_portfolio_004",
+          "description": "Token holdings list",
+          "input": {
+            "content": "List all my token holdings"
+          },
+          "expected_routing": {
+            "intent": "portfolio",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_portfolio_005",
+          "description": "Portfolio value breakdown",
+          "input": {
+            "content": "Break down my portfolio by token"
+          },
+          "expected_routing": {
+            "intent": "portfolio",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_portfolio_006",
+          "description": "Assets summary",
+          "input": {
+            "content": "Show me a summary of my assets"
+          },
+          "expected_routing": {
+            "intent": "portfolio",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_portfolio_007",
+          "description": "DeFi positions",
+          "input": {
+            "content": "What are my current DeFi positions?"
+          },
+          "expected_routing": {
+            "intent": "portfolio",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.6
+          }
+        },
+        {
+          "id": "defi_portfolio_008",
+          "description": "Wallet contents",
+          "input": {
+            "content": "What tokens do I have in my wallet?"
+          },
+          "expected_routing": {
+            "intent": "portfolio",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        }
+      ],
+      "balance": [
+        {
+          "id": "defi_balance_001",
+          "description": "Check total balance",
+          "input": {
+            "content": "What's my balance?"
+          },
+          "expected_routing": {
+            "intent": "balance",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_balance_002",
+          "description": "Balance in USD",
+          "input": {
+            "content": "Show my total balance in USD"
+          },
+          "expected_routing": {
+            "intent": "balance",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_balance_003",
+          "description": "Specific token balance",
+          "input": {
+            "content": "How much ETH do I have?"
+          },
+          "expected_routing": {
+            "intent": "balance",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "asset": "ETH"
+          }
+        },
+        {
+          "id": "defi_balance_004",
+          "description": "USDC balance check",
+          "input": {
+            "content": "What's my USDC balance?"
+          },
+          "expected_routing": {
+            "intent": "balance",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "asset": "USDC"
+          }
+        },
+        {
+          "id": "defi_balance_005",
+          "description": "Total value query",
+          "input": {
+            "content": "How much is my wallet worth?"
+          },
+          "expected_routing": {
+            "intent": "balance",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_balance_006",
+          "description": "Net worth check",
+          "input": {
+            "content": "What's my total net worth in crypto?"
+          },
+          "expected_routing": {
+            "intent": "balance",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_balance_007",
+          "description": "Available funds",
+          "input": {
+            "content": "How much do I have available to spend?"
+          },
+          "expected_routing": {
+            "intent": "balance",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.6
+          }
+        },
+        {
+          "id": "defi_balance_008",
+          "description": "Chain-specific balance",
+          "input": {
+            "content": "What's my balance on Base?"
+          },
+          "expected_routing": {
+            "intent": "balance",
+            "handler": "portfolio_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "chain": "base"
+          }
+        }
+      ],
+      "activity": [
+        {
+          "id": "defi_activity_001",
+          "description": "View transaction history",
+          "input": {
+            "content": "Show my transaction history"
+          },
+          "expected_routing": {
+            "intent": "activity",
+            "handler": "activity_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_activity_002",
+          "description": "Recent transactions",
+          "input": {
+            "content": "What are my recent transactions?"
+          },
+          "expected_routing": {
+            "intent": "activity",
+            "handler": "activity_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_activity_003",
+          "description": "Activity log",
+          "input": {
+            "content": "Show my activity log"
+          },
+          "expected_routing": {
+            "intent": "activity",
+            "handler": "activity_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_activity_004",
+          "description": "Last 10 transactions",
+          "input": {
+            "content": "Show my last 10 transactions"
+          },
+          "expected_routing": {
+            "intent": "activity",
+            "handler": "activity_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_activity_005",
+          "description": "Transaction details",
+          "input": {
+            "content": "What transactions have I made today?"
+          },
+          "expected_routing": {
+            "intent": "activity",
+            "handler": "activity_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_activity_006",
+          "description": "Swap history",
+          "input": {
+            "content": "Show my swap history"
+          },
+          "expected_routing": {
+            "intent": "activity",
+            "handler": "activity_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_activity_007",
+          "description": "Deposit/withdrawal history",
+          "input": {
+            "content": "List my deposits and withdrawals"
+          },
+          "expected_routing": {
+            "intent": "activity",
+            "handler": "activity_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_activity_008",
+          "description": "Pending transactions",
+          "input": {
+            "content": "Do I have any pending transactions?"
+          },
+          "expected_routing": {
+            "intent": "activity",
+            "handler": "activity_handler",
+            "confidence_min": 0.6
+          }
+        }
+      ],
+      "receive": [
+        {
+          "id": "defi_receive_001",
+          "description": "Show wallet address",
+          "input": {
+            "content": "What's my wallet address?"
+          },
+          "expected_routing": {
+            "intent": "receive",
+            "handler": "receive_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_receive_002",
+          "description": "Receive crypto request",
+          "input": {
+            "content": "I want to receive crypto"
+          },
+          "expected_routing": {
+            "intent": "receive",
+            "handler": "receive_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_receive_003",
+          "description": "Show QR code for receiving",
+          "input": {
+            "content": "Show me my QR code to receive funds"
+          },
+          "expected_routing": {
+            "intent": "receive",
+            "handler": "receive_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_receive_004",
+          "description": "Deposit address request",
+          "input": {
+            "content": "Give me my deposit address"
+          },
+          "expected_routing": {
+            "intent": "receive",
+            "handler": "receive_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_receive_005",
+          "description": "Copy address to receive",
+          "input": {
+            "content": "I need to copy my address to receive ETH"
+          },
+          "expected_routing": {
+            "intent": "receive",
+            "handler": "receive_handler",
+            "confidence_min": 0.7
+          }
+        },
+        {
+          "id": "defi_receive_006",
+          "description": "ENS handle request",
+          "input": {
+            "content": "What's my ENS name or handle?"
+          },
+          "expected_routing": {
+            "intent": "receive",
+            "handler": "receive_handler",
+            "confidence_min": 0.6
+          }
+        },
+        {
+          "id": "defi_receive_007",
+          "description": "Receive on specific chain",
+          "input": {
+            "content": "Show my address on Base to receive tokens"
+          },
+          "expected_routing": {
+            "intent": "receive",
+            "handler": "receive_handler",
+            "confidence_min": 0.7
+          },
+          "expected_enrichment": {
+            "chain": "base"
+          }
+        },
+        {
+          "id": "defi_receive_008",
+          "description": "Friend wants to send crypto",
+          "input": {
+            "content": "My friend wants to send me USDC, what address should I give them?"
+          },
+          "expected_routing": {
+            "intent": "receive",
+            "handler": "receive_handler",
+            "confidence_min": 0.7
+          }
+        }
+      ]
+    }
+  },
+  "validation_rules": {
+    "response_structure": {
+      "required_fields": ["user_message", "agent_message", "routing"],
+      "routing_fields": ["intent", "confidence", "handler", "reasoning"],
+      "message_fields": ["id", "conversation_id", "role", "content", "created_at"]
+    },
+    "handler_mapping": {
+      "lending": "lending_handler",
+      "money_market": "money_market_handler",
+      "swap": "swap_handler",
+      "portfolio": "portfolio_handler",
+      "balance": "portfolio_handler",
+      "activity": "activity_handler",
+      "receive": "receive_handler"
+    },
+    "confidence_thresholds": {
+      "high": 0.9,
+      "medium": 0.7,
+      "low": 0.5
+    }
+  }
+}
