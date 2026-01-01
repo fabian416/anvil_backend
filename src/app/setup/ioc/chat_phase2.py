@@ -770,21 +770,16 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_money_market_handler(
         self,
-        morpho_gateway: MorphoGateway,
         aave_gateway: AaveGateway,
     ) -> MoneyMarketHandler:
         """
         Provide money market handler for rate comparison.
 
         Uses real data from:
-        - Morpho: GraphQL API for vault APYs
-        - Aave: AaveGateway for market rates
+        - Aave: AaveGateway for market rates (primary)
         - Compound/Spark: Estimated rates (TODO: integrate APIs)
         """
-        return MoneyMarketHandler(
-            morpho_gateway=morpho_gateway,
-            aave_gateway=aave_gateway,
-        )
+        return MoneyMarketHandler(aave_gateway=aave_gateway)
 
     @provide
     def provide_unified_chat_orchestrator(
