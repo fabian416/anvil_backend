@@ -1603,6 +1603,7 @@ class UnifiedChatOrchestrator:
                 "handler": "lending_handler",
                 "agent_used": "morpho",
                 "reasoning": intent_result.reasoning,
+                "language": language,
             },
             "enrichment": enrichment,
         }
@@ -1670,6 +1671,7 @@ Try asking: "Show me Morpho USDC vaults on Base"
                 "confidence": intent_result.confidence,
                 "handler": "money_market_handler",
                 "reasoning": intent_result.reasoning,
+                "language": language,
             },
             "enrichment": enrichment,
         }
@@ -1742,6 +1744,7 @@ Try: "deposit USDC on Morpho" for direct vault access.
                 "confidence": intent_result.confidence,
                 "handler": "swap_handler",
                 "reasoning": intent_result.reasoning,
+                "language": language,
             },
             "enrichment": enrichment,
         }
@@ -1815,6 +1818,7 @@ Please specify:
                 "confidence": intent_result.confidence,
                 "handler": "balance_handler",
                 "reasoning": intent_result.reasoning,
+                "language": language,
             },
             "enrichment": enrichment,
         }
@@ -1889,6 +1893,7 @@ Once connected, I can show you real-time balances across all chains.
                 "confidence": intent_result.confidence,
                 "handler": "portfolio_handler",
                 "reasoning": intent_result.reasoning,
+                "language": language,
             },
             "enrichment": enrichment,
         }
@@ -1964,6 +1969,7 @@ Once connected, I can show you:
                 "confidence": intent_result.confidence,
                 "handler": "activity_handler",
                 "reasoning": intent_result.reasoning,
+                "language": language,
             },
             "enrichment": enrichment,
         }
@@ -2031,6 +2037,7 @@ Your transactions are recorded when you use the app.
                 "confidence": intent_result.confidence,
                 "handler": "receive_handler",
                 "reasoning": intent_result.reasoning,
+                "language": language,
             },
             "enrichment": enrichment,
         }
