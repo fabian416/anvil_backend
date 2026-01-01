@@ -3,7 +3,7 @@ Money Market Handler for Chat - Compare lending rates across protocols.
 
 Compares lending/supply rates across:
 - Aave V3 (via AaveGateway)
-- Compound V3 (via CompoundGateway - TODO)
+- Compound V3 (via CompoundGateway)
 
 Per CEO spec: Money Market = Aave + Compound only
 (Morpho is handled separately by LendingHandler for vault deposits)
@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from app.domain.ports.aave_gateway import AaveGateway
+from app.domain.ports.compound_gateway import CompoundGateway
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ class MoneyMarketHandler:
 
     Uses:
     - AaveGateway: Real-time Aave V3 rates
-    - Compound: Estimated rates (TODO: integrate CompoundGateway)
+    - CompoundGateway: Real-time Compound V3 rates
 
     Features:
     - Supply APY comparison
@@ -55,15 +56,17 @@ class MoneyMarketHandler:
     def __init__(
         self,
         aave_gateway: Optional[AaveGateway] = None,
-        # TODO: compound_gateway: Optional[CompoundGateway] = None,
+        compound_gateway: Optional[CompoundGateway] = None,
     ):
         """
         Initialize money market handler.
 
         Args:
             aave_gateway: Gateway for Aave V3 data
+            compound_gateway: Gateway for Compound V3 data
         """
         self._aave = aave_gateway
+        self._compound = compound_gateway
 
     async def compare_rates(
         self,
@@ -94,30 +97,60 @@ class MoneyMarketHandler:
                     asset=asset,
                     chain=target_chain,
                 )
-                rates.append({
-                    "protocol": "Aave V3",
-                    "type": "lending_pool",
-                    "supply_apy": float(aave_market.supply_apy) * 100,
-                    "borrow_apy": float(aave_market.borrow_apy_variable) * 100,
-                    "chain": target_chain,
-                    "tvl_usd": float(aave_market.total_supplied_usd) if hasattr(aave_market, 'total_supplied_usd') else None,
-                    "utilization": float(aave_market.utilization_rate) if hasattr(aave_market, 'utilization_rate') else None,
-                    "source": "real",
-                })
-                logger.info(f"Fetched Aave rates for {asset} on {target_chain}")
+                if aave_market:
+                    rates.append({
+                        "protocol": "Aave V3",
+                        "type": "lending_pool",
+                        "supply_apy": float(aave_market.supply_apy) * 100,
+                        "borrow_apy": float(aave_market.borrow_apy_variable) * 100,
+                        "chain": target_chain,
+                        "tvl_usd": float(aave_market.total_supplied_usd) if hasattr(aave_market, 'total_supplied_usd') else None,
+                        "utilization": float(aave_market.utilization_rate) if hasattr(aave_market, 'utilization_rate') else None,
+                        "source": "real",
+                    })
+                    logger.info(f"Fetched Aave rates for {asset} on {target_chain}")
+                else:
+                    rates.append(self._get_aave_fallback(asset, chain))
             except Exception as e:
                 logger.warning(f"Error fetching Aave rates: {e}")
-                # Add fallback Aave rates
                 rates.append(self._get_aave_fallback(asset, chain))
         else:
-            # No Aave gateway - use fallback
             rates.append(self._get_aave_fallback(asset, chain))
 
-        # Get Compound V3 rates
-        # TODO: Integrate CompoundGateway when available
-        compound_rate = self._get_compound_rate(asset, chain)
-        if compound_rate:
-            rates.append(compound_rate)
+        # Get Compound V3 rates (real data)
+        if self._compound:
+            try:
+                compound_market = await self._compound.get_market_details(
+                    asset=asset,
+                    chain=chain,
+                )
+                if compound_market:
+                    rates.append({
+                        "protocol": "Compound V3",
+                        "type": "lending_pool",
+                        "supply_apy": compound_market.supply_apy,
+                        "borrow_apy": compound_market.borrow_apy,
+                        "chain": compound_market.chain,
+                        "tvl_usd": compound_market.total_supply_usd,
+                        "utilization": compound_market.utilization,
+                        "source": "real",
+                    })
+                    logger.info(f"Fetched Compound rates for {asset} on {chain}")
+                else:
+                    # Asset not supported on this chain
+                    fallback = self._get_compound_fallback(asset, chain)
+                    if fallback:
+                        rates.append(fallback)
+            except Exception as e:
+                logger.warning(f"Error fetching Compound rates: {e}")
+                fallback = self._get_compound_fallback(asset, chain)
+                if fallback:
+                    rates.append(fallback)
+        else:
+            # No Compound gateway - use fallback
+            fallback = self._get_compound_fallback(asset, chain)
+            if fallback:
+                rates.append(fallback)
 
         # Find best rates
         supply_rates = [r for r in rates if r.get("supply_apy")]
@@ -150,7 +183,6 @@ class MoneyMarketHandler:
 
     def _get_aave_fallback(self, asset: str, chain: str) -> dict:
         """Get fallback Aave rates when gateway unavailable."""
-        # Approximate rates based on typical market conditions
         rates_map = {
             "USDC": {"supply": 4.5, "borrow": 5.2},
             "USDT": {"supply": 4.3, "borrow": 5.0},
@@ -171,17 +203,14 @@ class MoneyMarketHandler:
             "source": "estimated",
         }
 
-    def _get_compound_rate(self, asset: str, chain: str) -> Optional[dict]:
+    def _get_compound_fallback(self, asset: str, chain: str) -> Optional[dict]:
         """
-        Get Compound V3 rates.
-        
-        TODO: Integrate real CompoundGateway.
-        For now, returns estimated rates based on market data.
+        Get fallback Compound V3 rates when gateway unavailable.
         
         Compound V3 (Comet) is available on:
         - Ethereum: USDC, WETH markets
         - Base: USDC, WETH markets
-        - Arbitrum: USDC markets
+        - Arbitrum: USDC, WETH markets
         - Polygon: USDC markets
         """
         # Compound V3 only supports certain assets
@@ -189,7 +218,6 @@ class MoneyMarketHandler:
         if asset.upper() not in supported_assets:
             return None
             
-        # Estimated rates based on typical Compound V3 conditions
         rates_map = {
             "USDC": {"supply": 4.2, "borrow": 5.5},
             "WETH": {"supply": 1.8, "borrow": 3.2},
@@ -204,7 +232,7 @@ class MoneyMarketHandler:
             "supply_apy": asset_rates["supply"],
             "borrow_apy": asset_rates["borrow"],
             "chain": chain,
-            "source": "estimated",  # TODO: Change to "real" when CompoundGateway integrated
+            "source": "estimated",
         }
 
     def _format_comparison_response(
@@ -244,7 +272,7 @@ Comparing Aave & Compound rates on {chain.upper()}:
             supply = f"{rate['supply_apy']:.2f}%"
             borrow = f"{rate['borrow_apy']:.2f}%" if rate.get("borrow_apy") else "N/A"
             protocol = rate["protocol"]
-            source = "🔴" if rate.get("source") == "real" else "🟡"
+            source = "🟢" if rate.get("source") == "real" else "🟡"
 
             # Mark best supply rate
             if rate == best_supply:
@@ -253,7 +281,7 @@ Comparing Aave & Compound rates on {chain.upper()}:
             response += f"| {protocol} | {supply} | {borrow} | {source} |\n"
 
         # Legend
-        response += "\n*🔴 Real-time | 🟡 Estimated*\n"
+        response += "\n*🟢 Real-time | 🟡 Estimated*\n"
 
         # Best rate recommendations
         if best_supply:

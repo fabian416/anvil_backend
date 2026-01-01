@@ -137,6 +137,9 @@ from app.application.chat.handlers.receive_handler import ReceiveHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.domain.ports.aave_gateway import AaveGateway
+from app.domain.ports.compound_gateway import CompoundGateway
+from app.infrastructure.adapters.external.compound_client import CompoundClient
+from app.infrastructure.adapters.external.compound_adapter import CompoundAdapter
 from app.application.portfolio.portfolio_service import PortfolioService
 from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
@@ -778,9 +781,23 @@ class ChatPhase2Provider(Provider):
         return ReceiveHandler(wallet_repository=wallet_repository)
 
     @provide
+    def provide_compound_client(self) -> CompoundClient:
+        """Provide Compound V3 API client."""
+        return CompoundClient(timeout=30)
+
+    @provide
+    def provide_compound_gateway(
+        self,
+        compound_client: CompoundClient,
+    ) -> CompoundGateway:
+        """Provide Compound V3 gateway adapter."""
+        return CompoundAdapter(client=compound_client)
+
+    @provide
     def provide_money_market_handler(
         self,
         aave_gateway: AaveGateway,
+        compound_gateway: CompoundGateway,
     ) -> MoneyMarketHandler:
         """
         Provide money market handler for rate comparison.
@@ -790,9 +807,12 @@ class ChatPhase2Provider(Provider):
         
         Uses real data from:
         - Aave: AaveGateway for market rates
-        - Compound: Estimated rates (TODO: integrate CompoundGateway)
+        - Compound: CompoundGateway for market rates
         """
-        return MoneyMarketHandler(aave_gateway=aave_gateway)
+        return MoneyMarketHandler(
+            aave_gateway=aave_gateway,
+            compound_gateway=compound_gateway,
+        )
 
     @provide
     def provide_unified_chat_orchestrator(
