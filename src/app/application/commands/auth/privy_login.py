@@ -31,6 +31,7 @@ from app.domain.value_objects.user_id import UserId
 from app.domain.value_objects.user_password_hash import UserPasswordHash
 from app.domain.value_objects.user_status import UserActive, UserBlocked, UserVerified
 from app.domain.value_objects.wallet_address import WalletAddress
+from app.domain.value_objects.ip_address import IpAddress
 from app.infrastructure.auth.session.service import AuthSessionService
 from app.infrastructure.exceptions.gateway import DataMapperError
 from app.setup.config.admin import AdminSettings
@@ -152,6 +153,11 @@ class PrivyLogin:
                 user = await self._create_privy_user(request)
                 is_new_user = True
             else:
+                # Existing user login - update last_ip
+                if request.ip_address:
+                    user.last_ip = IpAddress.from_optional(request.ip_address)
+                    await self._user_gateway.update(user)
+                
                 # Check if existing user should be promoted to admin
                 await self._maybe_upgrade_to_admin(user)
 
@@ -231,6 +237,11 @@ class PrivyLogin:
         if request.wallet_address:
             user.primary_wallet_address = WalletAddress(request.wallet_address)
         user.auth_provider = AuthProvider(request.auth_provider)
+        
+        # Update last_ip on login (existing user)
+        if request.ip_address:
+            user.last_ip = IpAddress.from_optional(request.ip_address)
+        
         await self._user_gateway.update(user)
         # No commit here - transaction is managed by the caller
 
@@ -279,6 +290,9 @@ class PrivyLogin:
             )
             role = UserRole.ADMIN
 
+        # Set IP tracking fields on registration
+        ip = IpAddress.from_optional(request.ip_address)
+        
         user = User(
             id_=UserId(0),  # Will be set by database
             email=Email(email),
@@ -304,6 +318,9 @@ class PrivyLogin:
             privy_user_id=PrivyUserId(request.privy_user_id),
             primary_wallet_address=WalletAddress(request.wallet_address) if request.wallet_address else None,
             auth_provider=AuthProvider(request.auth_provider),
+            # IP tracking
+            registration_ip=ip,
+            last_ip=ip,
         )
 
         await self._user_gateway.add(user)

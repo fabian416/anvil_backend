@@ -27,6 +27,7 @@ from app.infrastructure.auth.handlers.constants import (
 from app.infrastructure.auth.session.service import AuthSessionService
 from app.application.common.ports.session_recorder import SessionRecorder
 from app.application.common.ports.country_query_gateway import CountryQueryGateway
+from app.domain.value_objects.ip_address import IpAddress
 from app.application.common.ports.city_query_gateway import CityQueryGateway
 from app.application.common.ports.email_verification_repository import EmailVerificationRepository
 from app.infrastructure.celery.app import celery_app
@@ -136,6 +137,12 @@ class SignUpHandler:
             country_id=CountryId(country_id) if country_id is not None else None,
             city_id=CityId(city_id) if city_id is not None else None,
         )
+        
+        # Set IP tracking fields on registration
+        if request_data.ip_address:
+            ip = IpAddress.from_optional(request_data.ip_address)
+            user.registration_ip = ip
+            user.last_ip = ip
 
         await self._user_command_gateway.add(user)
 

@@ -58,6 +58,10 @@ def map_users_table() -> None:
         privy_user_id = mapped_column(String(255), unique=True, index=True, nullable=True)
         primary_wallet_address = mapped_column(String(255), index=True, nullable=True)
         auth_provider = mapped_column(String(50), default="email", nullable=True)
+        
+        # IP tracking fields
+        last_ip = mapped_column(String(45), nullable=True)  # Max IPv6 length
+        registration_ip = mapped_column(String(45), nullable=True)
     
     # Note: We intentionally do not map the domain `User` entity here.
     # The purpose of this module during init_db is to define table metadata

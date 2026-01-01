@@ -24,6 +24,7 @@ from app.domain.value_objects.subscription import Subscription
 from app.domain.value_objects.privy_user_id import PrivyUserId
 from app.domain.value_objects.wallet_address import WalletAddress
 from app.domain.value_objects.auth_provider import AuthProvider
+from app.domain.value_objects.ip_address import IpAddress
 from app.domain.enums.user_role import UserRole
 from app.infrastructure.adapters.constants import DB_QUERY_FAILED, DB_CONSTRAINT_VIOLATION
 from app.infrastructure.adapters.types import MainAsyncSession
@@ -72,6 +73,9 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "privy_user_id": user.privy_user_id.value if user.privy_user_id else None,
                 "primary_wallet_address": user.primary_wallet_address.value if user.primary_wallet_address else None,
                 "auth_provider": user.auth_provider.value if user.auth_provider else "email",
+                # IP tracking fields
+                "last_ip": user.last_ip.value if user.last_ip else None,
+                "registration_ip": user.registration_ip.value if user.registration_ip else None,
             }
             insert_stmt = UsersTable.insert().values(**values).returning(UsersTable.c.id)
             result = await self._session.execute(insert_stmt)
@@ -113,6 +117,8 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "privy_user_id": user.privy_user_id.value if user.privy_user_id else None,
                 "primary_wallet_address": user.primary_wallet_address.value if user.primary_wallet_address else None,
                 "auth_provider": user.auth_provider.value if user.auth_provider else None,
+                # IP tracking - only update last_ip (registration_ip is immutable)
+                "last_ip": user.last_ip.value if user.last_ip else None,
             }
             
             # Only update password if it's a valid bcrypt hash (starts with $2)
@@ -239,4 +245,7 @@ class SqlaUserDataMapper(UserCommandGateway):
             privy_user_id=PrivyUserId(row["privy_user_id"]) if row.get("privy_user_id") else None,
             primary_wallet_address=WalletAddress(row["primary_wallet_address"]) if row.get("primary_wallet_address") else None,
             auth_provider=AuthProvider(row["auth_provider"]) if row.get("auth_provider") else None,
+            # IP tracking fields
+            last_ip=IpAddress.from_optional(row.get("last_ip")),
+            registration_ip=IpAddress.from_optional(row.get("registration_ip")),
         )

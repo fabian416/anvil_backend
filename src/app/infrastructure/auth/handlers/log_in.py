@@ -21,6 +21,7 @@ from app.infrastructure.auth.handlers.constants import (
 from app.infrastructure.auth.session.constants import AUTH_INVALID_PASSWORD
 from app.infrastructure.auth.session.service import AuthSessionService
 from app.application.common.ports.session_recorder import SessionRecorder
+from app.domain.value_objects.ip_address import IpAddress
 from datetime import datetime
 
 log = logging.getLogger(__name__)
@@ -117,7 +118,12 @@ class LogInHandler:
             raise AuthenticationError(AUTH_ACCOUNT_BLOCKED)
 
         self._user_service.record_successful_login(user)
-        # Persist last_login/updated_at to DB
+        
+        # Update last_ip on login
+        if request_data.ip_address:
+            user.last_ip = IpAddress.from_optional(request_data.ip_address)
+        
+        # Persist last_login/updated_at/last_ip to DB
         await self._user_command_gateway.update(user)
         await self._transaction_manager.commit()
 
