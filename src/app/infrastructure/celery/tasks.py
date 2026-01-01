@@ -222,6 +222,30 @@ def check_user_risk_alerts():
     asyncio.run(_run_task(runner))
 
 
+@celery_app.task(name="archive_guest_conversations")
+def archive_guest_conversations():
+    """
+    Archive inactive guest conversations.
+    
+    Runs every hour at :00 to archive conversations that have been
+    inactive for more than 1 hour. This keeps the guest_conversations
+    table clean and ensures new sessions get fresh conversations.
+    """
+    async def runner(container):
+        from datetime import datetime, timedelta
+        from app.domain.guest.ports.guest_repository import GuestRepository
+        
+        repository = await container.get(GuestRepository)
+        
+        # Archive conversations older than 1 hour
+        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        archived_count = await repository.archive_inactive_conversations(one_hour_ago)
+        
+        print(f"Guest conversation archival complete: {archived_count} conversations archived")
+    
+    asyncio.run(_run_task(runner))
+
+
 celery_app.conf.beat_schedule = {
     # Existing maintenance tasks
     "cleanup-expired-sessions": {
@@ -280,5 +304,10 @@ celery_app.conf.beat_schedule = {
     "recalculate-llm-rankings": {
         "task": "llm_ranking.recalculate_all_rankings",
         "schedule": crontab(hour=2, minute=0),  # Daily at 02:00 UTC
+    },
+    # Guest conversation archival
+    "archive-guest-conversations": {
+        "task": "archive_guest_conversations",
+        "schedule": crontab(minute=0),  # Every hour at :00
     },
 }
