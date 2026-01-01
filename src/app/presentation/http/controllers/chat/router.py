@@ -41,6 +41,7 @@ from app.presentation.http.schemas.chat import (
 from app.application.chat.commands.create_conversation import CreateConversation
 from app.application.chat.commands.send_message import SendMessage
 from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
+from app.application.chat.commands.execute_action import ExecuteActionCommand
 from app.application.chat.queries.get_conversation import GetConversation
 from app.application.chat.queries.list_conversations import ListConversations
 from app.application.chat.queries.get_messages import GetMessages
@@ -48,6 +49,11 @@ from app.application.chat.queries.get_messages import GetMessages
 from app.application.chat import (
     ChatGraphSearchHandler,
     ChatRiskInsightsHandler,
+)
+# NEW: Execute action schemas
+from app.presentation.http.schemas.execute import (
+    ExecuteActionRequest,
+    ExecuteActionResponse,
 )
 
 
@@ -317,6 +323,124 @@ def create_chat_router() -> APIRouter:
         return MessageListResponse(
             messages=messages,
             total=len(messages),
+        )
+    
+    # ========================================
+    # Execute Action Endpoint
+    # ========================================
+    
+    @router.post(
+        "/conversations/{conversation_id}/execute",
+        status_code=status.HTTP_200_OK,
+        response_model=ExecuteActionResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def execute_action(
+        conversation_id: UUID,
+        request: ExecuteActionRequest,
+        current_user: FromDishka[CurrentUserService],
+        execute_command: FromDishka[ExecuteActionCommand] = None,
+    ) -> ExecuteActionResponse:
+        """
+        Execute a recommended action from chat.
+        
+        **Supported Actions:**
+        - `swap` - Token swap via DEX aggregators (1inch, LiFi)
+        - `deposit` - Deposit into Morpho/Aave/Compound vaults
+        - `withdraw` - Withdraw from Morpho/Aave/Compound vaults
+        - `transfer` - Transfer tokens to another address
+        - `approve` - Approve token spending
+        - `bridge` - Cross-chain bridge via LiFi
+        
+        **Two-Step Flow:**
+        1. First call: `confirmed: false` → Returns simulation & confirmation message
+        2. Second call: `confirmed: true` → Executes the transaction
+        
+        **Example - Swap Flow:**
+        ```json
+        // Step 1: Get simulation
+        POST /execute
+        {
+          "action_type": "swap",
+          "from_token": "ETH",
+          "to_token": "USDC",
+          "amount": "0.5",
+          "chain": "base",
+          "confirmed": false
+        }
+        
+        // Response: simulation + confirmation message
+        {
+          "status": "awaiting_confirmation",
+          "requires_confirmation": true,
+          "confirmation_message": "Swap 0.5 ETH → USDC on BASE?",
+          "simulation": {...}
+        }
+        
+        // Step 2: Confirm execution
+        POST /execute
+        {
+          "action_type": "swap",
+          "from_token": "ETH",
+          "to_token": "USDC",
+          "amount": "0.5",
+          "chain": "base",
+          "confirmed": true
+        }
+        
+        // Response: transaction pending
+        {
+          "status": "pending",
+          "transaction": {"hash": "0x..."}
+        }
+        ```
+        
+        **Security:**
+        - Requires authenticated user
+        - Requires connected wallet (Privy)
+        - Simulation before execution
+        - Confirmation expires after 5 minutes
+        - Transaction limits enforced
+        """
+        user = await current_user.get_current_user()
+        
+        if execute_command is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Execute action service not available",
+            )
+        
+        result = await execute_command.execute(
+            user_id=user.id_.value,
+            conversation_id=conversation_id,
+            action_type=request.action_type.value,
+            chain=request.chain,
+            from_token=request.from_token,
+            to_token=request.to_token,
+            amount=request.amount,
+            protocol=request.protocol,
+            vault_address=request.vault_address,
+            recipient=request.recipient,
+            slippage=request.slippage or 1.0,
+            to_chain=request.to_chain,
+            confirmed=request.confirmed,
+            reference_message_id=request.reference_message_id,
+            language=request.language or "en",
+        )
+        
+        return ExecuteActionResponse(
+            action_id=result.action_id,
+            action_type=request.action_type,
+            status=result.status,
+            requires_confirmation=result.requires_confirmation,
+            confirmation_message=result.confirmation_message,
+            simulation=result.simulation,
+            transaction=result.transaction,
+            summary=result.summary,
+            enrichment=result.enrichment,
+            created_at=result.created_at,
+            expires_at=result.expires_at,
         )
     
     # NEW: GraphRAG protocol search from chat

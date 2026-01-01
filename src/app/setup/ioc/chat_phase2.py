@@ -61,6 +61,7 @@ from app.infrastructure.adapters.ai.cached_embedding_adapter import CachedEmbedd
 from app.application.chat.services.intent_detector import IntentDetectorService
 from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
 from app.application.chat.commands.send_message import SendMessage
+from app.application.chat.commands.execute_action import ExecuteActionCommand
 from app.application.chat.graph_search_handler import ChatGraphSearchHandler
 from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
 from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
@@ -857,6 +858,36 @@ class ChatPhase2Provider(Provider):
             receive_handler=receive_handler,
             money_market_handler=money_market_handler,
             wallet_repository=wallet_repository,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_execute_action_command(
+        self,
+        conversation_repository: ConversationRepository,
+        wallet_repository: WalletRepository,
+        oneinch_client: Optional[OneInchClient] = None,
+        lifi_client: Optional[LiFiClient] = None,
+        morpho_gateway: Optional[MorphoGateway] = None,
+        aave_gateway: Optional[AaveGateway] = None,
+    ) -> ExecuteActionCommand:
+        """
+        Provide execute action command for transaction execution.
+        
+        Supports:
+        - Token swaps (1inch, LiFi)
+        - Deposits (Morpho, Aave)
+        - Withdrawals (Morpho, Aave)
+        - Transfers
+        - Approvals
+        - Cross-chain bridges
+        """
+        return ExecuteActionCommand(
+            conversation_repo=conversation_repository,
+            wallet_repository=wallet_repository,
+            oneinch_client=oneinch_client,
+            lifi_client=lifi_client,
+            morpho_gateway=morpho_gateway,
+            aave_gateway=aave_gateway,
         )
 
 
