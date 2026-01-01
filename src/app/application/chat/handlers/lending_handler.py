@@ -31,6 +31,7 @@ class LendingHandlerResult:
     asset: str
     best_apy: float
     latency_ms: int
+    language: str = "en"
     handler: str = "lending_handler"
 
 
@@ -69,6 +70,7 @@ class LendingHandler:
         chain: str = "base",
         asset: str = "USDC",
         whitelisted_only: bool = True,
+        language: str = "en",
     ) -> LendingHandlerResult:
         """
         Handle lending intent and return vault recommendations.
@@ -78,6 +80,7 @@ class LendingHandler:
             chain: Blockchain (ethereum, base)
             asset: Asset symbol (USDC, ETH, etc.)
             whitelisted_only: Only return curated vaults
+            language: Response language (en, es, fr, zh, pt)
         
         Returns:
             LendingHandlerResult with formatted content and vault data
@@ -97,12 +100,13 @@ class LendingHandler:
         # Sort by APY (highest first)
         vaults = sorted(vaults, key=lambda v: v.apy, reverse=True)
         
-        # Generate response content - TOP 3 per CEO spec
+        # Generate response content - TOP 3 per CEO spec with i18n
         content = self._format_vault_response(
             vaults=vaults[:self.MAX_VAULTS_TO_SHOW],
             chain=chain,
             asset=asset,
             message=message,
+            language=language,
         )
         
         # Prepare vault data for response - TOP 3 per CEO spec
@@ -118,6 +122,7 @@ class LendingHandler:
             asset=asset,
             best_apy=best_apy,
             latency_ms=latency_ms,
+            language=language,
         )
     
     async def get_vault_details(
@@ -176,19 +181,24 @@ class LendingHandler:
         chain: str,
         asset: str,
         message: str,
+        language: str = "en",
     ) -> str:
-        """Format vault data as chat response."""
+        """Format vault data as chat response with i18n support."""
+        from app.application.chat.i18n import t
+        
         if not vaults:
-            return f"""🔍 **No {asset} Vaults Found on {chain.capitalize()}**
+            no_vaults_msg = t("lending", "no_vaults", language, asset=asset, chain=chain.capitalize())
+            try_msgs = {
+                "en": "Try:\n- Different asset (ETH, USDT, DAI)\n- Different chain (ethereum, base)\n- Checking back later",
+                "es": "Intenta:\n- Otro activo (ETH, USDT, DAI)\n- Otra cadena (ethereum, base)\n- Verificar más tarde",
+                "fr": "Essayez:\n- Un autre actif (ETH, USDT, DAI)\n- Une autre chaîne (ethereum, base)\n- Vérifier plus tard",
+                "zh": "尝试:\n- 其他资产 (ETH, USDT, DAI)\n- 其他链 (ethereum, base)\n- 稍后再试",
+                "pt": "Tente:\n- Outro ativo (ETH, USDT, DAI)\n- Outra rede (ethereum, base)\n- Verificar mais tarde",
+            }
+            return f"""🔍 **{no_vaults_msg}**
 
-I couldn't find any {asset} lending vaults on {chain.capitalize()}.
-
-**Try:**
-- Different asset (ETH, USDT, DAI)
-- Different chain (ethereum, base)
-- Checking back later
-
-Would you like me to search on a different chain?"""
+{try_msgs.get(language, try_msgs["en"])}
+"""
         
         chain_emoji = "🔵" if chain == "base" else "⟠"
         

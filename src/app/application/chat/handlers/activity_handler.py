@@ -30,6 +30,7 @@ class ActivityHandlerResult:
     gas_spent_usd: float
     chain: Optional[str]
     latency_ms: int
+    language: str = "en"
     handler: str = "activity_handler"
 
 

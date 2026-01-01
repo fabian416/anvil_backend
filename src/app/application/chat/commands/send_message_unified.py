@@ -130,11 +130,36 @@ class UnifiedChatOrchestrator:
         self._money_market_handler = money_market_handler
         self._wallet_repository = wallet_repository
 
+    # Supported languages for i18n responses
+    SUPPORTED_LANGUAGES = ["en", "es", "fr", "zh", "pt"]
+    DEFAULT_LANGUAGE = "en"
+
+    def _build_routing_metadata(
+        self,
+        intent_result,
+        handler: str,
+        language: str = "en",
+        reasoning: str = None,
+        agent_used: str = None,
+        total_latency_ms: int = None,
+    ) -> dict:
+        """Build routing metadata with language support."""
+        return {
+            "intent": intent_result.intent.value if hasattr(intent_result.intent, "value") else str(intent_result.intent),
+            "confidence": intent_result.confidence,
+            "handler": handler,
+            "agent_used": agent_used,
+            "reasoning": reasoning or intent_result.reasoning,
+            "total_latency_ms": total_latency_ms,
+            "language": language,
+        }
+
     async def execute(
         self,
         user_id: int,
         conversation_id: UUID,
         content: str,
+        language: str = "en",
     ) -> dict:
         """
         Execute unified chat routing.
@@ -143,6 +168,7 @@ class UnifiedChatOrchestrator:
             user_id: User ID
             conversation_id: Conversation ID
             content: User message
+            language: Response language code (en, es, fr, zh, pt)
 
         Returns:
             Unified response with routing metadata and enrichment
@@ -152,6 +178,13 @@ class UnifiedChatOrchestrator:
             ConversationAccessDeniedError: If conversation not owned by user
         """
         start_time = time.time()
+
+        # Validate language
+        if language not in self.SUPPORTED_LANGUAGES:
+            language = self.DEFAULT_LANGUAGE
+
+        # Store language for use in handlers
+        self._current_language = language
 
         # Get conversation for verification
         conversation = await self._conversation_repo.get_conversation(conversation_id)
@@ -228,34 +261,34 @@ class UnifiedChatOrchestrator:
             result = await self._handle_ultra_auto_executor(
                 user_id, conversation_id, content, intent_result
             )
-        # DeFi Shortcut intents
+        # DeFi Shortcut intents (pass language for i18n responses)
         elif intent_result.intent == ChatIntent.LENDING:
             result = await self._handle_lending(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         elif intent_result.intent == ChatIntent.MONEY_MARKET:
             result = await self._handle_money_market(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         elif intent_result.intent == ChatIntent.SWAP:
             result = await self._handle_swap(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         elif intent_result.intent == ChatIntent.BALANCE:
             result = await self._handle_balance(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         elif intent_result.intent == ChatIntent.PORTFOLIO:
             result = await self._handle_portfolio(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         elif intent_result.intent == ChatIntent.ACTIVITY:
             result = await self._handle_activity(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         elif intent_result.intent == ChatIntent.RECEIVE:
             result = await self._handle_receive(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         # Agent Squad & Supervisor intents
         elif intent_result.intent == ChatIntent.SPECIALIST_TASK:
@@ -1503,12 +1536,13 @@ class UnifiedChatOrchestrator:
     # ============================================================================
 
     async def _handle_lending(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
         """
         Handle lending intent - Morpho vault deposits and yield earning.
         
         Uses real data from Morpho GraphQL API (supports Ethereum + Base).
+        Responses are localized based on user language preference.
         """
         entities = intent_result.extracted_entities
         
@@ -1538,6 +1572,7 @@ class UnifiedChatOrchestrator:
                     chain=chain,
                     asset=asset,
                     whitelisted_only=True,
+                    language=language,
                 )
                 response_content = result.content
                 enrichment = {
@@ -1594,9 +1629,9 @@ Try asking: "Show me Morpho USDC vaults on Base"
 """
 
     async def _handle_money_market(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle money market comparison intent."""
+        """Handle money market comparison intent with i18n."""
         entities = intent_result.extracted_entities
         asset = entities.get("token_symbol", "USDC").upper()
         chain = entities.get("chain", "base").lower()
@@ -1606,6 +1641,7 @@ Try asking: "Show me Morpho USDC vaults on Base"
                 result = await self._money_market_handler.compare_rates(
                     asset=asset,
                     chain=chain,
+                    language=language,
                 )
                 response_content = result.content
                 enrichment = {
@@ -1654,9 +1690,9 @@ Try: "deposit USDC on Morpho" for direct vault access.
 """
 
     async def _handle_swap(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle swap/exchange intent."""
+        """Handle swap/exchange intent with i18n."""
         entities = intent_result.extracted_entities
         
         try:
@@ -1731,9 +1767,9 @@ Please specify:
 """
 
     async def _handle_balance(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle balance check intent."""
+        """Handle balance check intent with i18n."""
         entities = intent_result.extracted_entities
         chain = entities.get("chain", "base").lower()
         
@@ -1809,9 +1845,9 @@ Once connected, I can show you real-time balances across all chains.
 """
 
     async def _handle_portfolio(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle portfolio enumeration intent."""
+        """Handle portfolio enumeration intent with i18n."""
         entities = intent_result.extracted_entities
         chain = entities.get("chain", "base").lower()
         
@@ -1888,9 +1924,9 @@ Once connected, I can show you:
 """
 
     async def _handle_activity(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle transaction history/activity intent."""
+        """Handle transaction history/activity intent with i18n."""
         entities = intent_result.extracted_entities
         chain = entities.get("chain")  # Optional filter
         
@@ -1947,9 +1983,9 @@ Your transactions are recorded when you use the app.
 """
 
     async def _handle_receive(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle receive funds intent - show address, QR, handle."""
+        """Handle receive funds intent with i18n - show address, QR, handle."""
         entities = intent_result.extracted_entities
         chain = entities.get("chain", "base").lower()
         

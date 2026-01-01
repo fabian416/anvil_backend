@@ -230,11 +230,12 @@ def create_chat_router() -> APIRouter:
         # Use unified routing if enabled and orchestrator is available
         if use_unified_routing and unified_orchestrator is not None:
             try:
-                # Execute unified routing
+                # Execute unified routing with language support
                 result = await unified_orchestrator.execute(
                     user_id=user.id_.value,
                     conversation_id=conversation_id,
                     content=request.content,
+                    language=request.language or "en",
                 )
 
                 return UnifiedChatResponse(**result)

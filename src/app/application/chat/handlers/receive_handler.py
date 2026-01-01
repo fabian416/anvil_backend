@@ -26,6 +26,7 @@ class ReceiveHandlerResult:
     supported_networks: list[str]
     chain: str
     latency_ms: int
+    language: str = "en"
     handler: str = "receive_handler"
 
 

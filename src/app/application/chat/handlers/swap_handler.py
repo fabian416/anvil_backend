@@ -35,6 +35,7 @@ class SwapHandlerResult:
     chain: str
     aggregator: str  # Which DEX aggregator was used
     latency_ms: int
+    language: str = "en"
     handler: str = "swap_handler"
 
 

@@ -32,6 +32,7 @@ class MoneyMarketHandlerResult:
     best_borrow_apy: float
     asset: str
     latency_ms: int
+    language: str = "en"
     handler: str = "money_market_handler"
 
 
@@ -72,6 +73,7 @@ class MoneyMarketHandler:
         self,
         asset: str = "USDC",
         chain: str = "base",
+        language: str = "en",
     ) -> MoneyMarketHandlerResult:
         """
         Compare lending rates across Aave and Compound.
@@ -159,13 +161,14 @@ class MoneyMarketHandler:
         best_supply = max(supply_rates, key=lambda r: r["supply_apy"]) if supply_rates else None
         best_borrow = min(borrow_rates, key=lambda r: r["borrow_apy"]) if borrow_rates else None
 
-        # Format response
+        # Format response with i18n
         content = self._format_comparison_response(
             rates=rates,
             best_supply=best_supply,
             best_borrow=best_borrow,
             asset=asset,
             chain=chain,
+            language=language,
         )
 
         latency_ms = int((time.time() - start_time) * 1000)
@@ -179,6 +182,7 @@ class MoneyMarketHandler:
             best_borrow_apy=best_borrow["borrow_apy"] if best_borrow else 0.0,
             asset=asset,
             latency_ms=latency_ms,
+            language=language,
         )
 
     def _get_aave_fallback(self, asset: str, chain: str) -> dict:
@@ -242,16 +246,23 @@ class MoneyMarketHandler:
         best_borrow: Optional[dict],
         asset: str,
         chain: str,
+        language: str = "en",
     ) -> str:
-        """Format comparison data as chat response."""
+        """Format comparison data as chat response with i18n support."""
+        from app.application.chat.i18n import t
+        
         if not rates:
-            return f"""📊 **No Rates Found for {asset}**
+            # Localized "no rates found" message
+            no_rates_msgs = {
+                "en": f"I couldn't find lending rates for {asset} on {chain.upper()}.",
+                "es": f"No pude encontrar tasas de préstamo para {asset} en {chain.upper()}.",
+                "fr": f"Je n'ai pas pu trouver de taux de prêt pour {asset} sur {chain.upper()}.",
+                "zh": f"在 {chain.upper()} 上找不到 {asset} 的借贷利率。",
+                "pt": f"Não consegui encontrar taxas de empréstimo para {asset} em {chain.upper()}.",
+            }
+            return f"""📊 **{t("money_market", "title", language, asset=asset)}**
 
-I couldn't find lending rates for {asset} on {chain.upper()}.
-
-Try:
-• Different asset (USDC, ETH, DAI)
-• Different chain (ethereum, base, arbitrum)
+{no_rates_msgs.get(language, no_rates_msgs["en"])}
 """
 
         # Sort by supply APY
@@ -261,11 +272,12 @@ Try:
             reverse=True,
         )
 
-        response = f"""📊 **Money Market Comparison - {asset}**
+        # Localized header
+        response = f"""📊 **{t("money_market", "title", language, asset=asset)}**
 
-Comparing Aave & Compound rates on {chain.upper()}:
+{t("money_market", "comparing", language, chain=chain.upper())}
 
-| Protocol | Supply APY | Borrow APY | Source |
+| {t("money_market", "protocol", language)} | {t("money_market", "supply_apy", language)} | {t("money_market", "borrow_apy", language)} | |
 |----------|-----------|------------|--------|
 """
         for rate in sorted_rates:
@@ -281,23 +293,27 @@ Comparing Aave & Compound rates on {chain.upper()}:
             response += f"| {protocol} | {supply} | {borrow} | {source} |\n"
 
         # Legend
-        response += "\n*🟢 Real-time | 🟡 Estimated*\n"
+        real_time = t("money_market", "real_time", language)
+        estimated = t("money_market", "estimated", language)
+        response += f"\n*🟢 {real_time} | 🟡 {estimated}*\n"
 
         # Best rate recommendations
         if best_supply:
+            best_supply_label = t("money_market", "best_supply", language)
             response += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**🎯 Best Supply Rate:** {best_supply['protocol']} ({best_supply['supply_apy']:.2f}% APY)
+**🎯 {best_supply_label}:** {best_supply['protocol']} ({best_supply['supply_apy']:.2f}% APY)
 """
 
         if best_borrow:
-            response += f"""**🎯 Best Borrow Rate:** {best_borrow['protocol']} ({best_borrow['borrow_apy']:.2f}% APY)
+            best_borrow_label = t("money_market", "best_borrow", language)
+            response += f"""**🎯 {best_borrow_label}:** {best_borrow['protocol']} ({best_borrow['borrow_apy']:.2f}% APY)
 """
 
-        response += """
+        response += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💡 *For higher yields on stablecoins, try: "deposit USDC on Morpho"*
+💡 *{t("money_market", "tip_morpho", language)}*
 """
         return response

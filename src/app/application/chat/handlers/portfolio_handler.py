@@ -24,6 +24,7 @@ class PortfolioHandlerResult:
     total_usd: float
     chain: str
     latency_ms: int
+    language: str = "en"
     handler: str = "portfolio_handler"
 
 
@@ -38,6 +39,7 @@ class BalanceHandlerResult:
     native_symbol: str
     chain: str
     latency_ms: int
+    language: str = "en"
     handler: str = "balance_handler"
 
 

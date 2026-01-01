@@ -20,6 +20,11 @@ class SendMessageRequest(BaseModel):
     """Request to send a message."""
     
     content: str = Field(..., min_length=1, max_length=10000)
+    language: Optional[str] = Field(
+        default="en",
+        description="Response language code: en, es, fr, zh, pt",
+        pattern="^(en|es|fr|zh|pt)$",
+    )
 
 
 # Response schemas
@@ -66,6 +71,10 @@ class RoutingMetadata(BaseModel):
     agent_used: Optional[str] = None  # If Agent Squad, which agent
     reasoning: str  # Why this route was chosen
     total_latency_ms: Optional[int] = None  # Total processing time
+    language: Optional[str] = Field(
+        default="en",
+        description="Response language code used: en, es, fr, zh, pt",
+    )
 
 
 class EnrichmentData(BaseModel):
