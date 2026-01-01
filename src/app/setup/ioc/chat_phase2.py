@@ -737,11 +737,21 @@ class ChatPhase2Provider(Provider):
         """
         Provide swap handler for token exchange quotes.
 
-        Note: 1inch client is optional - falls back to info response.
-        To enable real quotes, inject OneInchClient.
+        Per CEO spec: Hyperliquid + LiFi + 1inch for swaps.
+        
+        Currently returns handler with no clients configured.
+        To enable real quotes, configure API keys in settings and
+        inject OneInchClient, LiFiClient, HyperliquidClient.
         """
-        # TODO: Inject OneInchClient when available
-        return SwapHandler(oneinch_client=None)
+        # TODO: Inject clients when API keys are configured
+        # - oneinch_client: OneInchClient for single-chain swaps
+        # - lifi_client: LiFiClient for cross-chain bridges
+        # - hyperliquid_client: HyperliquidClient for perpetuals
+        return SwapHandler(
+            oneinch_client=None,
+            lifi_client=None,
+            hyperliquid_client=None,
+        )
 
     @provide
     def provide_activity_handler(
@@ -775,9 +785,12 @@ class ChatPhase2Provider(Provider):
         """
         Provide money market handler for rate comparison.
 
+        Per CEO spec: Aave + Compound only for money market.
+        (Morpho is handled by LendingHandler for vault deposits)
+        
         Uses real data from:
-        - Aave: AaveGateway for market rates (primary)
-        - Compound/Spark: Estimated rates (TODO: integrate APIs)
+        - Aave: AaveGateway for market rates
+        - Compound: Estimated rates (TODO: integrate CompoundGateway)
         """
         return MoneyMarketHandler(aave_gateway=aave_gateway)
 

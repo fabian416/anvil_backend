@@ -2,9 +2,11 @@
 Money Market Handler for Chat - Compare lending rates across protocols.
 
 Compares lending/supply rates across:
-- Aave V3 (via AaveGateway) - Primary
-- Compound V3 (estimated)
-- Spark (estimated)
+- Aave V3 (via AaveGateway)
+- Compound V3 (via CompoundGateway - TODO)
+
+Per CEO spec: Money Market = Aave + Compound only
+(Morpho is handled separately by LendingHandler for vault deposits)
 """
 
 import logging
@@ -36,9 +38,12 @@ class MoneyMarketHandler:
     """
     Handler for money market comparison chat intents.
 
-    Uses real data from:
-    - AaveGateway: Real-time Aave V3 rates (primary)
-    - Compound/Spark: Estimated rates (TODO: integrate APIs)
+    Per CEO spec: Aave + Compound only for money market comparison.
+    Morpho vaults are handled separately by LendingHandler.
+
+    Uses:
+    - AaveGateway: Real-time Aave V3 rates
+    - Compound: Estimated rates (TODO: integrate CompoundGateway)
 
     Features:
     - Supply APY comparison
@@ -50,6 +55,7 @@ class MoneyMarketHandler:
     def __init__(
         self,
         aave_gateway: Optional[AaveGateway] = None,
+        # TODO: compound_gateway: Optional[CompoundGateway] = None,
     ):
         """
         Initialize money market handler.
@@ -65,11 +71,11 @@ class MoneyMarketHandler:
         chain: str = "base",
     ) -> MoneyMarketHandlerResult:
         """
-        Compare lending rates across protocols.
+        Compare lending rates across Aave and Compound.
 
         Args:
             asset: Asset to compare rates for
-            chain: Blockchain (ethereum, base)
+            chain: Blockchain (ethereum, base, polygon, etc.)
 
         Returns:
             MoneyMarketHandlerResult with comparison data
@@ -78,31 +84,40 @@ class MoneyMarketHandler:
 
         rates = []
 
-        # Get Aave rates (real data - primary source)
+        # Get Aave V3 rates (real data)
         if self._aave:
             try:
+                supported_chains = ["ethereum", "polygon", "arbitrum", "optimism", "base", "avalanche"]
+                target_chain = chain if chain.lower() in supported_chains else "ethereum"
+                
                 aave_market = await self._aave.get_market_details(
                     asset=asset,
-                    chain=chain if chain in ["ethereum", "polygon", "arbitrum", "optimism", "base"] else "ethereum",
+                    chain=target_chain,
                 )
                 rates.append({
                     "protocol": "Aave V3",
                     "type": "lending_pool",
                     "supply_apy": float(aave_market.supply_apy) * 100,
                     "borrow_apy": float(aave_market.borrow_apy_variable) * 100,
-                    "chain": chain,
+                    "chain": target_chain,
+                    "tvl_usd": float(aave_market.total_supplied_usd) if hasattr(aave_market, 'total_supplied_usd') else None,
+                    "utilization": float(aave_market.utilization_rate) if hasattr(aave_market, 'utilization_rate') else None,
                     "source": "real",
                 })
+                logger.info(f"Fetched Aave rates for {asset} on {target_chain}")
             except Exception as e:
                 logger.warning(f"Error fetching Aave rates: {e}")
-                # Fallback to estimated rates for Aave
-                rates.extend(self._get_aave_fallback_rates(asset))
+                # Add fallback Aave rates
+                rates.append(self._get_aave_fallback(asset, chain))
         else:
-            # No Aave gateway, use fallback rates
-            rates.extend(self._get_aave_fallback_rates(asset))
+            # No Aave gateway - use fallback
+            rates.append(self._get_aave_fallback(asset, chain))
 
-        # Add Compound and Spark (estimated - TODO: integrate APIs)
-        rates.extend(self._get_compound_spark_rates(asset))
+        # Get Compound V3 rates
+        # TODO: Integrate CompoundGateway when available
+        compound_rate = self._get_compound_rate(asset, chain)
+        if compound_rate:
+            rates.append(compound_rate)
 
         # Find best rates
         supply_rates = [r for r in rates if r.get("supply_apy")]
@@ -133,77 +148,64 @@ class MoneyMarketHandler:
             latency_ms=latency_ms,
         )
 
-    def _get_aave_fallback_rates(self, asset: str) -> list[dict]:
-        """
-        Get fallback rates for Aave when gateway is unavailable.
+    def _get_aave_fallback(self, asset: str, chain: str) -> dict:
+        """Get fallback Aave rates when gateway unavailable."""
+        # Approximate rates based on typical market conditions
+        rates_map = {
+            "USDC": {"supply": 4.5, "borrow": 5.2},
+            "USDT": {"supply": 4.3, "borrow": 5.0},
+            "DAI": {"supply": 4.8, "borrow": 5.5},
+            "ETH": {"supply": 2.1, "borrow": 3.5},
+            "WETH": {"supply": 2.1, "borrow": 3.5},
+            "WBTC": {"supply": 0.5, "borrow": 2.0},
+        }
         
-        Note: These are approximate rates based on typical market conditions.
-        In production, prefer using AaveGateway for real-time data.
-        """
-        if asset.upper() == "USDC":
-            return [{
-                "protocol": "Aave V3",
-                "type": "lending_pool",
-                "supply_apy": 4.5,
-                "borrow_apy": 5.2,
-                "chain": "multi",
-                "source": "fallback",
-            }]
-        elif asset.upper() in ["ETH", "WETH"]:
-            return [{
-                "protocol": "Aave V3",
-                "type": "lending_pool",
-                "supply_apy": 2.1,
-                "borrow_apy": 3.5,
-                "chain": "multi",
-                "source": "fallback",
-            }]
-        return []
+        asset_rates = rates_map.get(asset.upper(), {"supply": 3.0, "borrow": 4.0})
+        
+        return {
+            "protocol": "Aave V3",
+            "type": "lending_pool",
+            "supply_apy": asset_rates["supply"],
+            "borrow_apy": asset_rates["borrow"],
+            "chain": chain,
+            "source": "estimated",
+        }
 
-    def _get_compound_spark_rates(self, asset: str) -> list[dict]:
+    def _get_compound_rate(self, asset: str, chain: str) -> Optional[dict]:
         """
-        Get rates for Compound V3 and Spark.
+        Get Compound V3 rates.
         
-        TODO: Integrate with real APIs:
-        - Compound V3: Use their GraphQL API
-        - Spark: Use MakerDAO API
+        TODO: Integrate real CompoundGateway.
+        For now, returns estimated rates based on market data.
         
-        For now, returns approximate market rates.
+        Compound V3 (Comet) is available on:
+        - Ethereum: USDC, WETH markets
+        - Base: USDC, WETH markets
+        - Arbitrum: USDC markets
+        - Polygon: USDC markets
         """
-        rates = []
+        # Compound V3 only supports certain assets
+        supported_assets = ["USDC", "WETH", "ETH"]
+        if asset.upper() not in supported_assets:
+            return None
+            
+        # Estimated rates based on typical Compound V3 conditions
+        rates_map = {
+            "USDC": {"supply": 4.2, "borrow": 5.5},
+            "WETH": {"supply": 1.8, "borrow": 3.2},
+            "ETH": {"supply": 1.8, "borrow": 3.2},
+        }
         
-        if asset.upper() == "USDC":
-            rates.extend([
-                {
-                    "protocol": "Compound V3",
-                    "type": "lending_pool",
-                    "supply_apy": 4.2,
-                    "borrow_apy": 5.5,
-                    "chain": "multi",
-                    "source": "estimated",
-                },
-                {
-                    "protocol": "Spark",
-                    "type": "savings",
-                    "supply_apy": 4.8,
-                    "borrow_apy": 5.0,
-                    "chain": "ethereum",
-                    "source": "estimated",
-                },
-            ])
-        elif asset.upper() in ["ETH", "WETH"]:
-            rates.extend([
-                {
-                    "protocol": "Compound V3",
-                    "type": "lending_pool",
-                    "supply_apy": 1.8,
-                    "borrow_apy": 3.2,
-                    "chain": "multi",
-                    "source": "estimated",
-                },
-            ])
+        asset_rates = rates_map.get(asset.upper(), {"supply": 3.0, "borrow": 4.0})
         
-        return rates
+        return {
+            "protocol": "Compound V3",
+            "type": "lending_pool",
+            "supply_apy": asset_rates["supply"],
+            "borrow_apy": asset_rates["borrow"],
+            "chain": chain,
+            "source": "estimated",  # TODO: Change to "real" when CompoundGateway integrated
+        }
 
     def _format_comparison_response(
         self,
@@ -217,13 +219,11 @@ class MoneyMarketHandler:
         if not rates:
             return f"""📊 **No Rates Found for {asset}**
 
-I couldn't find any lending rates for {asset} on {chain.upper()}.
+I couldn't find lending rates for {asset} on {chain.upper()}.
 
 Try:
 • Different asset (USDC, ETH, DAI)
-• Different chain (ethereum, base)
-
-Would you like to check a different asset?
+• Different chain (ethereum, base, arbitrum)
 """
 
         # Sort by supply APY
@@ -235,21 +235,25 @@ Would you like to check a different asset?
 
         response = f"""📊 **Money Market Comparison - {asset}**
 
-Comparing lending rates across protocols on {chain.upper()}:
+Comparing Aave & Compound rates on {chain.upper()}:
 
-| Protocol | Supply APY | Borrow APY |
-|----------|-----------|------------|
+| Protocol | Supply APY | Borrow APY | Source |
+|----------|-----------|------------|--------|
 """
         for rate in sorted_rates:
-            supply = f"{rate['supply_apy']:.2f}%" if rate.get("supply_apy") else "N/A"
+            supply = f"{rate['supply_apy']:.2f}%"
             borrow = f"{rate['borrow_apy']:.2f}%" if rate.get("borrow_apy") else "N/A"
             protocol = rate["protocol"]
+            source = "🔴" if rate.get("source") == "real" else "🟡"
 
-            # Add indicator for best rates
+            # Mark best supply rate
             if rate == best_supply:
                 protocol = f"**{protocol}** 🏆"
 
-            response += f"| {protocol} | {supply} | {borrow} |\n"
+            response += f"| {protocol} | {supply} | {borrow} | {source} |\n"
+
+        # Legend
+        response += "\n*🔴 Real-time | 🟡 Estimated*\n"
 
         # Best rate recommendations
         if best_supply:
@@ -258,8 +262,6 @@ Comparing lending rates across protocols on {chain.upper()}:
 
 **🎯 Best Supply Rate:** {best_supply['protocol']} ({best_supply['supply_apy']:.2f}% APY)
 """
-            if best_supply.get("vault_name"):
-                response += f"   Vault: {best_supply['vault_name']}\n"
 
         if best_borrow:
             response += f"""**🎯 Best Borrow Rate:** {best_borrow['protocol']} ({best_borrow['borrow_apy']:.2f}% APY)
@@ -268,7 +270,6 @@ Comparing lending rates across protocols on {chain.upper()}:
         response += """
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Would you like to deposit into the highest-yield vault?
-Say "deposit USDC on Morpho" to get started.
+💡 *For higher yields on stablecoins, try: "deposit USDC on Morpho"*
 """
         return response

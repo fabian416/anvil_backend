@@ -1,16 +1,16 @@
 """
-Lending Handler for Chat - Morpho and Aave vault operations.
+Lending Handler for Chat - Morpho vault operations.
+
+Per CEO spec: Lending = Morpho only (top 3 vaults by APY)
+Uses filters from product stack document.
 
 Provides real-time lending vault data via Morpho GraphQL API:
+- Top 3 vaults by APY (per CEO spec)
 - Vault discovery on Ethereum and Base
-- APY comparison across protocols
 - Whitelisted (curated) vault recommendations
 - ERC-4626 deposit guidance
 
-Supports:
-- Morpho Vaults (Ethereum, Base L2)
-- Aave V3 (future)
-- Compound V3 (future)
+Note: Money Market (Aave/Compound) is handled separately.
 """
 
 import time
@@ -38,15 +38,21 @@ class LendingHandler:
     """
     Handler for lending-related chat intents.
     
+    Per CEO spec: Morpho only for lending, top 3 vaults by APY.
+    Uses filters from product stack document.
+    
     Uses MorphoGateway to fetch real vault data from
     the Morpho GraphQL API (supports Ethereum + Base).
     
     Features:
-    - Best APY vault recommendations
+    - Top 3 vaults by APY (per CEO spec)
     - Whitelisted vault filtering
     - Multi-chain support (Ethereum, Base)
     - ERC-4626 deposit flow guidance
     """
+    
+    # Per CEO spec: Show top 3 vaults
+    MAX_VAULTS_TO_SHOW = 3
     
     def __init__(self, morpho_gateway: MorphoGateway):
         """
@@ -91,16 +97,16 @@ class LendingHandler:
         # Sort by APY (highest first)
         vaults = sorted(vaults, key=lambda v: v.apy, reverse=True)
         
-        # Generate response content
+        # Generate response content - TOP 3 per CEO spec
         content = self._format_vault_response(
-            vaults=vaults[:10],  # Top 10
+            vaults=vaults[:self.MAX_VAULTS_TO_SHOW],
             chain=chain,
             asset=asset,
             message=message,
         )
         
-        # Prepare vault data for response
-        vault_data = [self._vault_to_dict(v) for v in vaults[:10]]
+        # Prepare vault data for response - TOP 3 per CEO spec
+        vault_data = [self._vault_to_dict(v) for v in vaults[:self.MAX_VAULTS_TO_SHOW]]
         
         best_apy = vaults[0].apy if vaults else 0.0
         latency_ms = int((time.time() - start_time) * 1000)
@@ -186,17 +192,17 @@ Would you like me to search on a different chain?"""
         
         chain_emoji = "🔵" if chain == "base" else "⟠"
         
-        response = f"""{chain_emoji} **{asset} LENDING VAULTS ON {chain.upper()}**
+        response = f"""{chain_emoji} **{asset} MORPHO VAULTS ON {chain.upper()}**
 
-Here are the top vaults for earning yield on your {asset}:
+Top {len(vaults)} vaults by APY (Morpho Protocol):
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**TOP OPPORTUNITIES** (by APY)
+**TOP {len(vaults)} VAULTS** (by APY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
         
-        for i, vault in enumerate(vaults[:5], 1):
+        for i, vault in enumerate(vaults[:self.MAX_VAULTS_TO_SHOW], 1):
             apy_pct = vault.apy * 100
             curated = "⭐" if vault.whitelisted else ""
             tvl = self._format_tvl(vault.total_assets)

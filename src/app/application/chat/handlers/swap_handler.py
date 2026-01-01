@@ -2,19 +2,23 @@
 Swap Handler for Chat - Token swap operations via DEX aggregators.
 
 Provides swap quotes and transaction data using:
-- 1inch API for best routing and execution
-- Multi-chain support (Ethereum, Base, Arbitrum, etc.)
-- Slippage protection
+- 1inch: Best routing for single-chain swaps
+- LiFi: Cross-chain swaps and bridges
+- Hyperliquid: Perpetuals and spot trading
+
+Per CEO spec: Hyperliquid/LiFi + 1inch for swaps
 """
 
+import logging
 import time
 from dataclasses import dataclass
 from typing import Optional
 
-from app.infrastructure.adapters.external.oneinch_client import (
-    OneInchClient,
-    SwapQuote,
-)
+from app.infrastructure.adapters.external.oneinch_client import OneInchClient
+from app.infrastructure.adapters.external.lifi_client import LiFiClient
+from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -29,6 +33,7 @@ class SwapHandlerResult:
     to_amount: str
     price_impact: float
     chain: str
+    aggregator: str  # Which DEX aggregator was used
     latency_ms: int
     handler: str = "swap_handler"
 
@@ -62,127 +67,153 @@ class SwapHandler:
     """
     Handler for swap-related chat intents.
 
-    Uses 1inch API for:
-    - Swap quotes across DEXes
-    - Best price routing
-    - Transaction data for execution
+    Uses multiple aggregators per CEO spec:
+    - 1inch: Best rates for single-chain swaps
+    - LiFi: Cross-chain bridges and swaps
+    - Hyperliquid: Perpetuals and spot trading
 
     Features:
     - Multi-chain support
+    - Cross-chain bridging
+    - Best route selection
     - Price impact calculation
-    - Gas estimation
     """
 
-    def __init__(self, oneinch_client: Optional[OneInchClient] = None):
+    def __init__(
+        self,
+        oneinch_client: Optional[OneInchClient] = None,
+        lifi_client: Optional[LiFiClient] = None,
+        hyperliquid_client: Optional[HyperliquidClient] = None,
+    ):
         """
         Initialize swap handler.
 
         Args:
-            oneinch_client: 1inch API client (optional)
+            oneinch_client: 1inch API client for single-chain swaps
+            lifi_client: LiFi API client for cross-chain swaps
+            hyperliquid_client: Hyperliquid client for perpetuals
         """
         self._oneinch = oneinch_client
+        self._lifi = lifi_client
+        self._hyperliquid = hyperliquid_client
 
     async def get_swap_quote(
         self,
         from_token: str,
         to_token: str,
         amount: str,
-        chain: str = "base",
+        from_chain: str = "base",
+        to_chain: Optional[str] = None,
         slippage: float = 1.0,
     ) -> SwapHandlerResult:
         """
         Get swap quote for token exchange.
 
+        Automatically selects best aggregator:
+        - Cross-chain: Uses LiFi
+        - Same-chain: Uses 1inch (or LiFi fallback)
+
         Args:
             from_token: Source token symbol or address
             to_token: Destination token symbol or address
             amount: Amount to swap (human readable)
-            chain: Blockchain (ethereum, base, arbitrum)
+            from_chain: Source blockchain
+            to_chain: Destination chain (if cross-chain)
             slippage: Slippage tolerance (percent)
 
         Returns:
             SwapHandlerResult with quote and formatted content
         """
         start_time = time.time()
+        to_chain = to_chain or from_chain  # Default to same chain
 
-        # Resolve token addresses
+        # Determine if cross-chain swap
+        is_cross_chain = from_chain.lower() != to_chain.lower()
+
+        # Try aggregators in order of preference
+        if is_cross_chain and self._lifi:
+            return await self._get_lifi_quote(
+                from_token, to_token, amount, from_chain, to_chain, slippage, start_time
+            )
+        elif self._oneinch:
+            return await self._get_oneinch_quote(
+                from_token, to_token, amount, from_chain, slippage, start_time
+            )
+        elif self._lifi:
+            # Fallback to LiFi for same-chain
+            return await self._get_lifi_quote(
+                from_token, to_token, amount, from_chain, from_chain, slippage, start_time
+            )
+        else:
+            # No aggregators configured - return informational response
+            return self._get_fallback_response(
+                from_token, to_token, amount, from_chain, start_time
+            )
+
+    async def _get_oneinch_quote(
+        self,
+        from_token: str,
+        to_token: str,
+        amount: str,
+        chain: str,
+        slippage: float,
+        start_time: float,
+    ) -> SwapHandlerResult:
+        """Get quote from 1inch."""
         from_address = self._resolve_token_address(from_token, chain)
         to_address = self._resolve_token_address(to_token, chain)
-
-        # Convert amount to wei (assuming 18 decimals for simplicity)
         amount_wei = self._to_wei(amount, from_token)
 
         try:
-            if self._oneinch:
-                # Get real quote from 1inch
-                quote = await self._oneinch.get_swap_quote(
-                    from_token=from_address,
-                    to_token=to_address,
-                    amount=amount_wei,
-                    slippage=slippage,
-                )
+            quote = await self._oneinch.get_swap_quote(
+                from_token=from_address,
+                to_token=to_address,
+                amount=amount_wei,
+                slippage=slippage,
+            )
 
-                to_amount = self._from_wei(quote.to_amount, to_token)
-                price_impact = quote.price_impact
+            to_amount = self._from_wei(quote.to_amount, to_token)
+            price_impact = quote.price_impact
 
-                content = self._format_quote_response(
-                    from_token=from_token,
-                    to_token=to_token,
-                    from_amount=amount,
-                    to_amount=to_amount,
-                    price_impact=price_impact,
-                    chain=chain,
-                    gas_estimate=quote.estimated_gas,
-                )
+            content = self._format_quote_response(
+                from_token=from_token,
+                to_token=to_token,
+                from_amount=amount,
+                to_amount=to_amount,
+                price_impact=price_impact,
+                chain=chain,
+                aggregator="1inch",
+                gas_estimate=quote.estimated_gas,
+            )
 
-                latency_ms = int((time.time() - start_time) * 1000)
-
-                return SwapHandlerResult(
-                    content=content,
-                    quote={
-                        "from_token": from_address,
-                        "to_token": to_address,
-                        "from_amount": amount_wei,
-                        "to_amount": quote.to_amount,
-                        "estimated_gas": quote.estimated_gas,
-                        "protocols": quote.protocols,
-                    },
-                    from_token=from_token,
-                    to_token=to_token,
-                    from_amount=amount,
-                    to_amount=to_amount,
-                    price_impact=price_impact,
-                    chain=chain,
-                    latency_ms=latency_ms,
-                )
-            else:
-                # Fallback: Return informational response
-                content = self._format_fallback_response(
-                    from_token=from_token,
-                    to_token=to_token,
-                    amount=amount,
-                    chain=chain,
-                )
-
-                latency_ms = int((time.time() - start_time) * 1000)
-
-                return SwapHandlerResult(
-                    content=content,
-                    quote=None,
-                    from_token=from_token,
-                    to_token=to_token,
-                    from_amount=amount,
-                    to_amount="0",
-                    price_impact=0.0,
-                    chain=chain,
-                    latency_ms=latency_ms,
-                )
-
-        except Exception as e:
             latency_ms = int((time.time() - start_time) * 1000)
 
             return SwapHandlerResult(
-                content=f"⚠️ **Error Getting Swap Quote**\n\n{str(e)}\n\nPlease try again later.",
+                content=content,
+                quote={
+                    "from_token": from_address,
+                    "to_token": to_address,
+                    "from_amount": amount_wei,
+                    "to_amount": quote.to_amount,
+                    "estimated_gas": quote.estimated_gas,
+                    "protocols": quote.protocols,
+                    "aggregator": "1inch",
+                },
+                from_token=from_token,
+                to_token=to_token,
+                from_amount=amount,
+                to_amount=to_amount,
+                price_impact=price_impact,
+                chain=chain,
+                aggregator="1inch",
+                latency_ms=latency_ms,
+            )
+
+        except Exception as e:
+            logger.warning(f"1inch quote failed: {e}")
+            latency_ms = int((time.time() - start_time) * 1000)
+            return SwapHandlerResult(
+                content=f"⚠️ **Error Getting 1inch Quote**\n\n{str(e)}\n\nTrying alternative routes...",
                 quote=None,
                 from_token=from_token,
                 to_token=to_token,
@@ -190,22 +221,232 @@ class SwapHandler:
                 to_amount="0",
                 price_impact=0.0,
                 chain=chain,
+                aggregator="1inch",
                 latency_ms=latency_ms,
             )
 
+    async def _get_lifi_quote(
+        self,
+        from_token: str,
+        to_token: str,
+        amount: str,
+        from_chain: str,
+        to_chain: str,
+        slippage: float,
+        start_time: float,
+    ) -> SwapHandlerResult:
+        """Get quote from LiFi (supports cross-chain)."""
+        amount_wei = self._to_wei(amount, from_token)
+
+        try:
+            quote = await self._lifi.get_quote(
+                from_chain=from_chain,
+                to_chain=to_chain,
+                from_token=from_token,
+                to_token=to_token,
+                from_amount=amount_wei,
+                slippage=slippage,
+            )
+
+            to_amount = self._from_wei(quote.to_amount, to_token)
+            is_cross_chain = from_chain.lower() != to_chain.lower()
+
+            content = self._format_lifi_response(
+                from_token=from_token,
+                to_token=to_token,
+                from_amount=amount,
+                to_amount=to_amount,
+                from_chain=from_chain,
+                to_chain=to_chain,
+                bridge=quote.bridge_name,
+                duration=quote.execution_duration,
+                is_cross_chain=is_cross_chain,
+            )
+
+            latency_ms = int((time.time() - start_time) * 1000)
+
+            return SwapHandlerResult(
+                content=content,
+                quote={
+                    "from_chain": from_chain,
+                    "to_chain": to_chain,
+                    "from_token": from_token,
+                    "to_token": to_token,
+                    "from_amount": amount_wei,
+                    "to_amount": quote.to_amount,
+                    "to_amount_min": quote.to_amount_min,
+                    "bridge": quote.bridge_name,
+                    "duration_seconds": quote.execution_duration,
+                    "aggregator": "lifi",
+                },
+                from_token=from_token,
+                to_token=to_token,
+                from_amount=amount,
+                to_amount=to_amount,
+                price_impact=0.0,  # LiFi doesn't provide this directly
+                chain=from_chain,
+                aggregator="lifi",
+                latency_ms=latency_ms,
+            )
+
+        except Exception as e:
+            logger.warning(f"LiFi quote failed: {e}")
+            latency_ms = int((time.time() - start_time) * 1000)
+            return SwapHandlerResult(
+                content=f"⚠️ **Error Getting LiFi Quote**\n\n{str(e)}\n\nPlease try again.",
+                quote=None,
+                from_token=from_token,
+                to_token=to_token,
+                from_amount=amount,
+                to_amount="0",
+                price_impact=0.0,
+                chain=from_chain,
+                aggregator="lifi",
+                latency_ms=latency_ms,
+            )
+
+    def _get_fallback_response(
+        self,
+        from_token: str,
+        to_token: str,
+        amount: str,
+        chain: str,
+        start_time: float,
+    ) -> SwapHandlerResult:
+        """Generate fallback response when no aggregators configured."""
+        content = f"""🔄 **Token Swap**
+
+You want to swap:
+• **{amount} {from_token.upper()}** → **{to_token.upper()}**
+• Chain: {chain.upper()}
+
+**Available DEX Aggregators:**
+• **1inch** - Best rates for single-chain swaps
+• **LiFi** - Cross-chain bridges and swaps
+• **Hyperliquid** - Perpetuals and spot trading
+
+To get live quotes, configure the aggregator API keys.
+
+**Manual swap options:**
+• [1inch.io](https://1inch.io)
+• [LiFi](https://li.fi)
+• [Hyperliquid](https://hyperliquid.xyz)
+"""
+        latency_ms = int((time.time() - start_time) * 1000)
+
+        return SwapHandlerResult(
+            content=content,
+            quote=None,
+            from_token=from_token,
+            to_token=to_token,
+            from_amount=amount,
+            to_amount="0",
+            price_impact=0.0,
+            chain=chain,
+            aggregator="none",
+            latency_ms=latency_ms,
+        )
+
+    def _format_quote_response(
+        self,
+        from_token: str,
+        to_token: str,
+        from_amount: str,
+        to_amount: str,
+        price_impact: float,
+        chain: str,
+        aggregator: str,
+        gas_estimate: int,
+    ) -> str:
+        """Format swap quote as chat response."""
+        chain_emoji = "🔵" if chain == "base" else "⟠"
+
+        # Estimate gas cost in USD
+        gas_usd = gas_estimate * 0.00000001 * 2000  # Rough ETH price
+
+        # Price impact warning
+        impact_warning = ""
+        if price_impact > 1.0:
+            impact_warning = "\n⚠️ **High price impact!** Consider a smaller amount."
+        elif price_impact > 0.5:
+            impact_warning = "\n⚡ Moderate price impact."
+
+        try:
+            rate = float(to_amount) / float(from_amount)
+        except (ValueError, ZeroDivisionError):
+            rate = 0
+
+        return f"""{chain_emoji} **Swap Quote on {chain.upper()}**
+
+**{from_amount} {from_token.upper()}** → **{to_amount} {to_token.upper()}**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**DETAILS**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• **Rate:** 1 {from_token.upper()} = {rate:.4f} {to_token.upper()}
+• **Price Impact:** {price_impact:.2f}%
+• **Estimated Gas:** ~${gas_usd:.2f}
+• **Aggregator:** {aggregator.upper()}{impact_warning}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?** Reply "confirm swap" to proceed.
+
+💡 *Slippage: 1% | Quote valid for 30 seconds*
+"""
+
+    def _format_lifi_response(
+        self,
+        from_token: str,
+        to_token: str,
+        from_amount: str,
+        to_amount: str,
+        from_chain: str,
+        to_chain: str,
+        bridge: Optional[str],
+        duration: int,
+        is_cross_chain: bool,
+    ) -> str:
+        """Format LiFi quote response."""
+        if is_cross_chain:
+            title = f"🌉 **Cross-Chain Swap**"
+            route_info = f"• **Route:** {from_chain.upper()} → {to_chain.upper()}"
+            if bridge:
+                route_info += f" via {bridge.capitalize()}"
+        else:
+            title = f"🔄 **Swap Quote on {from_chain.upper()}**"
+            route_info = f"• **Chain:** {from_chain.upper()}"
+
+        duration_str = f"{duration // 60}m {duration % 60}s" if duration > 60 else f"{duration}s"
+
+        return f"""{title}
+
+**{from_amount} {from_token.upper()}** → **{to_amount} {to_token.upper()}**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**DETAILS**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{route_info}
+• **Estimated Time:** ~{duration_str}
+• **Aggregator:** LiFi
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?** Reply "confirm swap" to proceed.
+
+💡 *Cross-chain swaps may take longer than single-chain*
+"""
+
     def _resolve_token_address(self, token: str, chain: str) -> str:
         """Resolve token symbol to address."""
-        # If already an address, return as-is
         if token.startswith("0x"):
             return token
 
-        # Look up in token addresses
         chain_tokens = TOKEN_ADDRESSES.get(chain.lower(), {})
         return chain_tokens.get(token.upper(), token)
 
     def _to_wei(self, amount: str, token: str) -> str:
         """Convert human readable amount to wei."""
-        # Determine decimals based on token
         decimals = 18
         if token.upper() in ["USDC", "USDT"]:
             decimals = 6
@@ -232,95 +473,29 @@ class SwapHandler:
         except (ValueError, ZeroDivisionError):
             return "0"
 
-    def _format_quote_response(
-        self,
-        from_token: str,
-        to_token: str,
-        from_amount: str,
-        to_amount: str,
-        price_impact: float,
-        chain: str,
-        gas_estimate: int,
-    ) -> str:
-        """Format swap quote as chat response."""
-        chain_emoji = "🔵" if chain == "base" else "⟠"
-
-        # Estimate gas cost in USD (rough estimate)
-        gas_usd = gas_estimate * 0.00000001 * 2000  # Rough ETH price
-
-        # Price impact warning
-        impact_warning = ""
-        if price_impact > 1.0:
-            impact_warning = "\n⚠️ **High price impact!** Consider swapping a smaller amount."
-        elif price_impact > 0.5:
-            impact_warning = "\n⚡ Moderate price impact."
-
-        return f"""{chain_emoji} **Swap Quote on {chain.upper()}**
-
-**{from_amount} {from_token.upper()}** → **{to_amount} {to_token.upper()}**
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**DETAILS**
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• **Rate:** 1 {from_token.upper()} = {float(to_amount)/float(from_amount):.4f} {to_token.upper()}
-• **Price Impact:** {price_impact:.2f}%
-• **Estimated Gas:** ~${gas_usd:.2f}
-• **Aggregator:** 1inch{impact_warning}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**Ready to swap?** Reply "confirm swap" to proceed.
-
-💡 *Slippage: 1% | Quote valid for 30 seconds*
-"""
-
-    def _format_fallback_response(
-        self,
-        from_token: str,
-        to_token: str,
-        amount: str,
-        chain: str,
-    ) -> str:
-        """Format fallback response when 1inch not available."""
-        return f"""🔄 **Token Swap on {chain.upper()}**
-
-You want to swap:
-• **{amount} {from_token.upper()}** → **{to_token.upper()}**
-
-**Available DEX Aggregators:**
-• 1inch (best rates for most swaps)
-• Hyperliquid (perpetuals & spot)
-• UniswapX (gasless swaps)
-
-To get a quote, I need the 1inch API configured.
-
-**Alternative:** You can swap directly on:
-• [1inch.io](https://1inch.io)
-• [Uniswap](https://app.uniswap.org)
-
-Would you like to try a different operation?
-"""
-
-    def parse_swap_from_message(self, message: str) -> tuple[str, str, str, str]:
+    def parse_swap_from_message(self, message: str) -> tuple[str, str, str, str, Optional[str]]:
         """
         Parse swap details from user message.
 
         Args:
             message: User message like "swap 1 ETH for USDC on base"
+                     or "bridge 100 USDC from ethereum to base"
 
         Returns:
-            Tuple of (amount, from_token, to_token, chain)
+            Tuple of (amount, from_token, to_token, from_chain, to_chain)
         """
+        import re
+
         message_lower = message.lower()
 
         # Default values
         amount = "1"
         from_token = "ETH"
         to_token = "USDC"
-        chain = "base"
+        from_chain = "base"
+        to_chain: Optional[str] = None
 
-        # Extract amount (first number found)
-        import re
+        # Extract amount
         amount_match = re.search(r"(\d+\.?\d*)", message)
         if amount_match:
             amount = amount_match.group(1)
@@ -338,12 +513,20 @@ Would you like to try a different operation?
         elif len(found_tokens) == 1:
             from_token = found_tokens[0]
 
-        # Extract chain
-        if "ethereum" in message_lower or "mainnet" in message_lower:
-            chain = "ethereum"
-        elif "arbitrum" in message_lower:
-            chain = "arbitrum"
-        elif "polygon" in message_lower:
-            chain = "polygon"
+        # Extract chains
+        chains = ["ethereum", "base", "arbitrum", "polygon", "optimism"]
+        found_chains = []
+        for chain in chains:
+            if chain in message_lower:
+                found_chains.append(chain)
 
-        return amount, from_token, to_token, chain
+        # Check for cross-chain keywords
+        is_bridge = any(word in message_lower for word in ["bridge", "cross-chain", "from", "to"])
+
+        if len(found_chains) >= 2 and is_bridge:
+            from_chain = found_chains[0]
+            to_chain = found_chains[1]
+        elif len(found_chains) == 1:
+            from_chain = found_chains[0]
+
+        return amount, from_token, to_token, from_chain, to_chain
