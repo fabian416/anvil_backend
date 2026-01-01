@@ -32,11 +32,14 @@ from app.domain.exceptions.chat import (
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.user_id import UserId
 
-# DeFi integrations
-from app.infrastructure.adapters.external.oneinch_client import OneInchClient
-from app.infrastructure.adapters.external.lifi_client import LiFiClient
-from app.domain.ports.morpho_gateway import MorphoGateway
-from app.domain.ports.aave_gateway import AaveGateway
+# DeFi integrations - use TYPE_CHECKING to avoid Dishka issues
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.infrastructure.adapters.external.oneinch_client import OneInchClient
+    from app.infrastructure.adapters.external.lifi_client import LiFiClient
+    from app.domain.ports.morpho_gateway import MorphoGateway
+    from app.domain.ports.aave_gateway import AaveGateway
 
 # i18n
 from app.application.chat.i18n import t
@@ -86,10 +89,10 @@ class ExecuteActionCommand:
         self,
         conversation_repo: ConversationRepository,
         wallet_repository: Optional[WalletRepository] = None,
-        oneinch_client: Optional[OneInchClient] = None,
-        lifi_client: Optional[LiFiClient] = None,
-        morpho_gateway: Optional[MorphoGateway] = None,
-        aave_gateway: Optional[AaveGateway] = None,
+        oneinch_client: Optional["OneInchClient"] = None,
+        lifi_client: Optional["LiFiClient"] = None,
+        morpho_gateway: Optional["MorphoGateway"] = None,
+        aave_gateway: Optional["AaveGateway"] = None,
     ):
         """
         Initialize execute action command.

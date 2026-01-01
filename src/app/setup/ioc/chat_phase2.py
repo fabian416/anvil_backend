@@ -141,6 +141,8 @@ from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.ports.compound_gateway import CompoundGateway
 from app.infrastructure.adapters.external.compound_client import CompoundClient
 from app.infrastructure.adapters.external.compound_adapter import CompoundAdapter
+from app.infrastructure.adapters.external.oneinch_client import OneInchClient
+from app.infrastructure.adapters.external.lifi_client import LiFiClient
 from app.application.portfolio.portfolio_service import PortfolioService
 from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
@@ -865,10 +867,6 @@ class ChatPhase2Provider(Provider):
         self,
         conversation_repository: ConversationRepository,
         wallet_repository: WalletRepository,
-        oneinch_client: Optional[OneInchClient] = None,
-        lifi_client: Optional[LiFiClient] = None,
-        morpho_gateway: Optional[MorphoGateway] = None,
-        aave_gateway: Optional[AaveGateway] = None,
     ) -> ExecuteActionCommand:
         """
         Provide execute action command for transaction execution.
@@ -880,14 +878,18 @@ class ChatPhase2Provider(Provider):
         - Transfers
         - Approvals
         - Cross-chain bridges
+        
+        Note: All external clients/gateways are set to None here and
+        should be resolved lazily within the command when needed.
+        This avoids DI resolution issues with optional dependencies.
         """
         return ExecuteActionCommand(
             conversation_repo=conversation_repository,
             wallet_repository=wallet_repository,
-            oneinch_client=oneinch_client,
-            lifi_client=lifi_client,
-            morpho_gateway=morpho_gateway,
-            aave_gateway=aave_gateway,
+            oneinch_client=None,
+            lifi_client=None,
+            morpho_gateway=None,
+            aave_gateway=None,
         )
 
 

@@ -8,7 +8,6 @@ Provides DI setup for guest chat components:
 
 from dishka import Provider, Scope, provide
 
-from app.application.chat.services.intent_detector import IntentDetectorService
 from app.application.guest.commands.send_guest_message import SendGuestMessage
 from app.domain.guest.ports.guest_repository import GuestRepository
 from app.infrastructure.adapters.guest_repository_sqla import GuestRepositorySqla
@@ -30,12 +29,17 @@ class GuestProvider(Provider):
     def provide_send_guest_message(
         self,
         guest_repository: GuestRepository,
-        intent_detector: IntentDetectorService | None = None,
     ) -> SendGuestMessage:
-        """Provide SendGuestMessage command."""
+        """
+        Provide SendGuestMessage command.
+        
+        Note: IntentDetectorService is not injected here to avoid
+        Dishka resolution issues with optional dependencies.
+        The command handles None intent_detector gracefully.
+        """
         return SendGuestMessage(
             guest_repository=guest_repository,
-            intent_detector=intent_detector,
+            intent_detector=None,
         )
 
 
