@@ -22,6 +22,7 @@ def create_celery() -> Celery:
         broker=broker or "redis://localhost:6379/0",
         backend=backend or "redis://localhost:6379/1",
         include=[
+            "app.infrastructure.celery.main_tasks",
             "app.infrastructure.celery.tasks",
             "app.infrastructure.celery.compat_tasks",
             "app.infrastructure.celery.tasks.transaction_confirmation_tasks",
