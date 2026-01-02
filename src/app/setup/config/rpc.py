@@ -14,6 +14,8 @@ class RPCSettings(BaseModel):
     alchemy_api_key: str = ""
     alchemy_ethereum_url: str = ""
     alchemy_arbitrum_url: str = ""
+    alchemy_optimism_url: str = ""
+    alchemy_polygon_zkevm_url: str = ""
     alchemy_base_url: str = ""
 
     # Infura (Backup)
@@ -21,6 +23,37 @@ class RPCSettings(BaseModel):
 
     # Default chain
     default_chain: str = "ethereum"
+
+
+class WalletSettings(BaseModel):
+    """Wallet configuration for transaction signing."""
+
+    # Private key (64 hex chars, no 0x prefix)
+    private_key: str = ""
+
+    # Public address
+    address: str = ""
+
+    # Deployed receiver contracts
+    aave_receiver_ethereum: str = ""
+    aave_receiver_arbitrum: str = ""
+    balancer_receiver_ethereum: str = ""
+    balancer_receiver_arbitrum: str = ""
+
+    @property
+    def is_configured(self) -> bool:
+        """Check if wallet is configured."""
+        return bool(self.private_key and self.address)
+
+    @property
+    def has_receivers(self) -> bool:
+        """Check if any receiver contracts are deployed."""
+        return bool(
+            self.aave_receiver_ethereum
+            or self.aave_receiver_arbitrum
+            or self.balancer_receiver_ethereum
+            or self.balancer_receiver_arbitrum
+        )
 
     @property
     def has_alchemy(self) -> bool:

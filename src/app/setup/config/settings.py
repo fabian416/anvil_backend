@@ -12,7 +12,7 @@ from app.setup.config.mailgun import MailgunSettings
 from app.setup.config.mcp import MCPSettings
 from app.setup.config.privy import PrivySettings
 from app.setup.config.projects import ProjectSettings
-from app.setup.config.rpc import RPCSettings
+from app.setup.config.rpc import RPCSettings, WalletSettings
 from app.setup.config.security import SecuritySettings
 from app.setup.config.stripe import StripeSettings
 from app.setup.config.transaction_confirmation import TransactionConfirmationSettings
@@ -37,6 +37,7 @@ class AppSettings(BaseModel):
     transaction_confirmation: TransactionConfirmationSettings = TransactionConfirmationSettings()
     translation: TranslationSettings = TranslationSettings()
     rpc: RPCSettings = RPCSettings()
+    wallet: WalletSettings = WalletSettings()
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:
