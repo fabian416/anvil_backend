@@ -139,6 +139,23 @@ This is a **Hexagonal Architecture** (Clean Architecture) implementation using F
 - **Configuration**: See `docs/AGENT_SQUAD_VERTEX_DEEPINFRA.md` for full setup guide
 - **API Keys**: Add to `config/local/.secrets.toml` under `[vertex_ai]` and `[deepinfra]` sections
 
+**Hunter AI Data Sources** (see `docs/HUNTER_AI_DATA_SOURCES.md`):
+- CoinGecko: ✅ Real prices and OHLCV data (free)
+- RSS News: ✅ Real news from CoinDesk, CoinTelegraph, etc. (free)
+- Reddit: ⚠️ Fallback mode (requires OAuth2)
+- Twitter/Discord: 🟡 Simulated (paid APIs)
+
+**Guest Chat System** (see `docs/GUEST_CHAT_SYSTEM.md`):
+- Endpoint: `POST /api/v1/guest/chat`
+- IP-based tracking, rate limiting (20 msgs/hour)
+- Real Hunter AI and ULTRA data for guests
+- Multi-language support (en, es, pt, zh)
+
+**Chat Execution** (see `docs/api/examples/`):
+- User Chat: `POST /api/v1/user/chat/conversations/{id}/messages`
+- Execute Actions: `POST /api/v1/user/chat/conversations/{id}/execute`
+- Shortcuts: `GET /api/v1/public/chat/shortcuts`
+
 **Authentication**: JWT with session storage, custom identity provider abstraction
 
 **Environment Management**: Multi-environment support through TOML configs in `config/{env}/` directories

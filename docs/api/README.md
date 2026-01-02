@@ -131,13 +131,36 @@ See **[Authentication Guide](authentication.md)** for details.
 | **Metrics** | `/admin/metrics/*` | [Admin Metrics API](endpoints/admin-metrics.md) |
 | **System** | `/admin/system/*` | [Admin System API](endpoints/admin-system.md) |
 
-### Public Endpoints (`/api/v1/guest/`)
+### Public Endpoints (`/api/v1/guest/` and `/api/v1/public/`)
 
 | Endpoint | Documentation |
 |----------|---------------|
 | `/guest/health` | Health check |
+| `/guest/chat` | **Guest Chat** ⭐ NEW - AI chat for unauthenticated users |
+| `/public/chat/shortcuts` | **Chat Shortcuts** - Localized command hints |
 | `/account/signup` | User registration |
 | `/account/login` | User login |
+
+### Guest Chat System ⭐ NEW
+
+The Guest Chat allows unauthenticated users to experience Anvil's AI capabilities:
+
+```http
+POST /api/v1/guest/chat
+{
+  "content": "What is the sentiment for ETH?",
+  "language": "en"
+}
+```
+
+**Features**:
+- Real Hunter AI data (sentiment, predictions, signals)
+- Real ULTRA data (arbitrage, flash loans, MEV)
+- Rate limited: 20 messages/hour
+- Multi-language: en, es, pt, zh
+- IP-based session tracking
+
+See **[Guest Chat System](../GUEST_CHAT_SYSTEM.md)** for full documentation.
 
 ---
 
@@ -230,4 +253,19 @@ Visit `http://localhost:8000/docs` for full API exploration.
 
 ---
 
-**Last Updated**: December 19, 2025
+---
+
+## 🆕 Recent Updates
+
+### January 2025
+
+- **Guest Chat System**: AI chat for unauthenticated users with real Hunter AI/ULTRA data
+- **Chat Execution Endpoint**: Execute swap, deposit, withdraw actions via chat
+- **Chat Shortcuts**: Localized command hints in 5 languages
+- **Hunter AI Real Data**: CoinGecko prices, RSS news sentiment (free APIs)
+- **Multi-Language Support**: en, es, pt, zh for all chat endpoints
+- **User IP Tracking**: Track registration and login IPs
+
+---
+
+**Last Updated**: January 2, 2025
