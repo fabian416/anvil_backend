@@ -60,8 +60,18 @@ Discovers arbitrage opportunities across multiple DEXes:
 - **2-hop Arbitrage**: Buy on DEX A, sell on DEX B
 - **3-hop Arbitrage**: Multi-token path across DEXes
 - **Triangle Arbitrage**: Circular path on same DEX
+- **Cross-DEX Arbitrage**: Real-time price comparison via 1inch
 
-**Usage**:
+#### Data Sources
+
+| Source | Type | Status | Notes |
+|--------|------|--------|-------|
+| **1inch API** | Real prices | 🟢 Ready | Requires API key |
+| **CoinGecko** | Price reference | 🟢 Working | Rate limited (free) |
+| **DeFiLlama** | TVL/Liquidity | 🟢 Working | No rate limits |
+| **Simulated** | Demo data | 🟡 Fallback | Realistic variations |
+
+#### Usage (Simulated Data):
 ```python
 from app.application.ultra.arbitrage_discovery import ArbitrageDiscovery
 from decimal import Decimal
@@ -73,11 +83,60 @@ for opp in opportunities:
     print(f"{opp.type.value}: ${opp.expected_profit_usd} profit")
 ```
 
+#### Usage (Real Data with 1inch):
+```python
+from app.application.ultra.arbitrage_discovery import ArbitrageDiscovery
+from decimal import Decimal
+
+discovery = ArbitrageDiscovery()
+
+# Real-time prices via 1inch API
+opportunities = await discovery.discover_with_real_data(
+    capital=Decimal("10000"),
+    oneinch_api_key="your-1inch-api-key",
+    chain="ethereum"  # or "arbitrum", "base"
+)
+
+for opp in opportunities:
+    is_real = opp.metadata.get("is_real_data", False)
+    print(f"{opp.type.value}: ${opp.expected_profit_usd} (real={is_real})")
+```
+
+#### DEX Price Fetcher
+
+**Location**: `src/app/application/ultra/dex_price_fetcher.py`
+
+Standalone module for fetching real DEX prices:
+
+```python
+from app.application.ultra.dex_price_fetcher import DEXPriceFetcher
+from decimal import Decimal
+
+fetcher = DEXPriceFetcher(oneinch_api_key="...")
+
+# Get real-time price
+price = await fetcher.get_token_price("ETH")
+print(f"ETH: ${price.price_usd} (source: {price.source})")
+
+# Get quotes from multiple DEXes
+quotes = await fetcher.get_multi_dex_quotes("WETH", "USDC", Decimal("1"))
+for q in quotes:
+    print(f"{q.dex}: {q.to_amount} USDC")
+
+# Find arbitrage opportunity
+arb = await fetcher.find_arbitrage_opportunity("WETH", "USDC", Decimal("10000"))
+if arb:
+    print(f"Profit: ${arb['net_profit_usd']}")
+
+await fetcher.close()
+```
+
 **Supported DEXes**:
 - Uniswap V2/V3
 - SushiSwap
 - Curve
 - Balancer
+- 1inch Aggregator (best price across all DEXes)
 
 ---
 

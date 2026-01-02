@@ -8,13 +8,13 @@ Implements multi-hop arbitrage opportunity discovery:
 Based on ULTRA Arbitrage Bot's discovery module.
 """
 
-from typing import Dict, List, Optional, Tuple
+import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from app.domain.common.datetime_utils import utc_now
-from enum import Enum
 from decimal import Decimal
-import asyncio
+from enum import Enum
+
+from app.domain.common.datetime_utils import utc_now
 
 
 class ArbitrageType(str, Enum):
@@ -54,7 +54,7 @@ class TradingPair:
         if self.price == 0 and self.amount_in > 0:
             self.price = self.amount_out / self.amount_in
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
             "dex": self.dex.value,
@@ -74,7 +74,7 @@ class ArbitrageOpportunity:
 
     opportunity_id: str
     type: ArbitrageType
-    path: List[TradingPair]
+    path: list[TradingPair]
     expected_profit_usd: Decimal
     profit_percentage: Decimal
     required_capital: Decimal
@@ -82,9 +82,9 @@ class ArbitrageOpportunity:
     slippage_tolerance: Decimal
     confidence_score: float
     timestamp: datetime
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
             "opportunity_id": self.opportunity_id,
@@ -116,7 +116,7 @@ class ArbitrageConfig:
     max_gas_price_gwei: int = 100  # Max 100 gwei
 
     # Discovery settings
-    enabled_dexes: List[DEX] = field(
+    enabled_dexes: list[DEX] = field(
         default_factory=lambda: [
             DEX.UNISWAP_V2,
             DEX.UNISWAP_V3,
@@ -125,7 +125,7 @@ class ArbitrageConfig:
             DEX.BALANCER,
         ]
     )
-    enabled_tokens: List[str] = field(
+    enabled_tokens: list[str] = field(
         default_factory=lambda: ["WETH", "USDC", "USDT", "DAI", "WBTC"]
     )
 
@@ -165,7 +165,7 @@ class ArbitrageDiscovery:
         """
         self.config = config or ArbitrageConfig()
         self._opportunity_counter = 0
-        self._price_cache: Dict[str, PriceQuote] = {}
+        self._price_cache: dict[str, PriceQuote] = {}
 
     def _generate_opportunity_id(self) -> str:
         """Generate unique opportunity ID."""
@@ -246,8 +246,8 @@ class ArbitrageDiscovery:
         return quote
 
     async def _calculate_profit(
-        self, path: List[TradingPair], initial_capital: Decimal
-    ) -> Tuple[Decimal, Decimal]:
+        self, path: list[TradingPair], initial_capital: Decimal
+    ) -> tuple[Decimal, Decimal]:
         """Calculate profit for arbitrage path.
 
         Args:
@@ -295,7 +295,7 @@ class ArbitrageDiscovery:
 
     async def discover_2hop_arbitrage(
         self, capital: Decimal = Decimal("10000")
-    ) -> List[ArbitrageOpportunity]:
+    ) -> list[ArbitrageOpportunity]:
         """Discover 2-hop arbitrage opportunities.
 
         2-hop: Token A → Token B → Token A (different DEXes)
@@ -393,7 +393,7 @@ class ArbitrageDiscovery:
 
     async def discover_3hop_arbitrage(
         self, capital: Decimal = Decimal("10000")
-    ) -> List[ArbitrageOpportunity]:
+    ) -> list[ArbitrageOpportunity]:
         """Discover 3-hop arbitrage opportunities.
 
         3-hop: Token A → Token B → Token C → Token A
@@ -502,7 +502,7 @@ class ArbitrageDiscovery:
 
     async def discover_triangle_arbitrage(
         self, dex: DEX = DEX.UNISWAP_V2, capital: Decimal = Decimal("10000")
-    ) -> List[ArbitrageOpportunity]:
+    ) -> list[ArbitrageOpportunity]:
         """Discover triangle arbitrage on single DEX.
 
         Triangle: Token A → Token B → Token C → Token A (same DEX)
@@ -608,7 +608,7 @@ class ArbitrageDiscovery:
 
     async def discover_all_opportunities(
         self, capital: Decimal = Decimal("10000")
-    ) -> List[ArbitrageOpportunity]:
+    ) -> list[ArbitrageOpportunity]:
         """Discover all arbitrage opportunities.
 
         Args:
@@ -641,8 +641,8 @@ class ArbitrageDiscovery:
         return all_opportunities
 
     async def get_opportunity_by_id(
-        self, opportunity_id: str, opportunities: List[ArbitrageOpportunity]
-    ) -> Optional[ArbitrageOpportunity]:
+        self, opportunity_id: str, opportunities: list[ArbitrageOpportunity]
+    ) -> ArbitrageOpportunity | None:
         """Get opportunity by ID.
 
         Args:
@@ -659,7 +659,7 @@ class ArbitrageDiscovery:
 
     async def simulate_opportunity(
         self, opportunity: ArbitrageOpportunity
-    ) -> Dict:
+    ) -> dict:
         """Simulate opportunity execution.
 
         Args:
@@ -683,3 +683,114 @@ class ArbitrageDiscovery:
                 "Execute" if simulated_profit > self.config.min_profit_usd else "Skip"
             ),
         }
+
+    async def discover_with_real_data(
+        self,
+        capital: Decimal = Decimal("10000"),
+        oneinch_api_key: str | None = None,
+        chain: str = "ethereum",
+    ) -> list[ArbitrageOpportunity]:
+        """Discover arbitrage using real DEX data via 1inch API.
+
+        This method uses the DEXPriceFetcher to get real-time prices
+        from 1inch aggregator and other sources.
+
+        Args:
+            capital: Starting capital in USD
+            oneinch_api_key: 1inch API key (required for real data)
+            chain: Blockchain to scan (ethereum, arbitrum, base)
+
+        Returns:
+            List of real arbitrage opportunities
+
+        Example:
+            >>> discovery = ArbitrageDiscovery()
+            >>> opps = await discovery.discover_with_real_data(
+            ...     capital=Decimal("10000"),
+            ...     oneinch_api_key="your-api-key"
+            ... )
+            >>> for opp in opps:
+            ...     print(f"{opp.type}: ${opp.expected_profit_usd} profit")
+
+        Note:
+            Without an API key, falls back to simulated data.
+        """
+        from app.application.ultra.dex_price_fetcher import DEXPriceFetcher
+
+        fetcher = DEXPriceFetcher(
+            oneinch_api_key=oneinch_api_key,
+            chain=chain,
+        )
+
+        opportunities = []
+
+        try:
+            # Token pairs to check
+            token_pairs = [
+                ("WETH", "USDC"),
+                ("WETH", "USDT"),
+                ("WETH", "DAI"),
+                ("USDC", "USDT"),
+                ("USDC", "DAI"),
+                ("WBTC", "WETH"),
+            ]
+
+            for token_a, token_b in token_pairs:
+                # Find arbitrage between token pair
+                arb = await fetcher.find_arbitrage_opportunity(
+                    token_a=token_a,
+                    token_b=token_b,
+                    capital=capital,
+                )
+
+                if arb and arb["net_profit_usd"] > float(self.config.min_profit_usd):
+                    # Convert to ArbitrageOpportunity
+                    path = [
+                        TradingPair(
+                            dex=DEX.UNISWAP_V3,  # Simplified
+                            token_in=token_a,
+                            token_out=token_b,
+                            amount_in=capital,
+                            amount_out=Decimal(str(arb["final_amount"])),
+                            price=Decimal(str(arb["final_amount"])) / capital,
+                            liquidity=Decimal("1000000"),
+                        ),
+                        TradingPair(
+                            dex=DEX.SUSHISWAP,  # Simplified
+                            token_in=token_b,
+                            token_out=token_a,
+                            amount_in=Decimal(str(arb["final_amount"])),
+                            amount_out=Decimal(str(arb["final_amount"])),
+                            price=Decimal("1"),
+                            liquidity=Decimal("1000000"),
+                        ),
+                    ]
+
+                    opportunity = ArbitrageOpportunity(
+                        opportunity_id=self._generate_opportunity_id(),
+                        type=ArbitrageType.CROSS_DEX,
+                        path=path,
+                        expected_profit_usd=Decimal(str(arb["net_profit_usd"])),
+                        profit_percentage=Decimal(str(arb["profit_pct"])) / 100,
+                        required_capital=capital,
+                        estimated_gas_cost=Decimal(str(arb["gas_cost_usd"])),
+                        slippage_tolerance=self.config.max_slippage,
+                        confidence_score=0.9 if arb["is_real_data"] else 0.6,
+                        timestamp=utc_now(),
+                        metadata={
+                            "buy_dex": arb["buy_dex"],
+                            "sell_dex": arb["sell_dex"],
+                            "protocols_used": arb["protocols_used"],
+                            "is_real_data": arb["is_real_data"],
+                            "chain": chain,
+                        },
+                    )
+                    opportunities.append(opportunity)
+
+        finally:
+            await fetcher.close()
+
+        # Sort by profit
+        opportunities.sort(key=lambda x: x.expected_profit_usd, reverse=True)
+
+        return opportunities
