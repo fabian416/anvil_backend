@@ -372,25 +372,25 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
             )
 
         # STEP 3: Complex workflow patterns (check FIRST - most specific)
-        if any(
-            word in message
-            for word in [
-                "complete defi",
-                "complete yield",
-                "from start to finish",
-                "investment strategy for",
-                "operation from start",
-                "create a complete",
-                "create portfolio",
-                "build portfolio",
-                "create strategy",
-                "comprehensive analysis",
-                "full analysis",
-                "plan migration",
-                "migration strategy",
-                "multi-step",
-            ]
-        ):
+        # These are multi-agent workflows that require supervisor coordination
+        complex_workflow_keywords = [
+            # Multi-step operations
+            "complete defi", "complete yield", "from start to finish",
+            "operation from start", "multi-step", "step by step",
+            # Full portfolio operations
+            "full portfolio rebalancing", "portfolio rebalancing with",
+            "create portfolio", "build portfolio", "rebalance my portfolio",
+            # Investment strategies
+            "investment strategy for", "create a complete", "create strategy",
+            # Analysis workflows
+            "comprehensive analysis", "full analysis", "complete analysis",
+            # Migration/planning
+            "plan migration", "migration strategy", "migrate my",
+            # Combined operations (multiple agents needed)
+            "with tax optimization", "and risk analysis", "and execution plan",
+            "rebalance my portfolio", "optimize my portfolio",
+        ]
+        if any(kw in message for kw in complex_workflow_keywords):
             return (
                 ChatIntent.COMPLEX_WORKFLOW,
                 0.85,
@@ -398,16 +398,33 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 None,
             )
 
-        # STEP 3: Specialist task patterns
-        if any(
-            word in message
-            for word in [
-                "analyze",
-                "research",
-                "liquidity depth",
-                "yield farming strategies",
-            ]
-        ):
+        # STEP 3: Specialist task patterns (Agent Squad routing)
+        specialist_keywords = [
+            # Research & Analysis
+            "analyze", "research", "evaluate", "assess", "investigate",
+            "deep dive", "liquidity depth", "yield farming strategies",
+            # Security
+            "smart contract security", "security audit", "vulnerability",
+            "contract audit", "code review", "slither", "audit contract",
+            # Gas & Optimization
+            "gas optimization", "optimize gas", "reduce gas", "gas usage",
+            # Tax
+            "tax optimization", "capital gains", "tax strategy", "tax report",
+            # Cross-chain
+            "bridge tokens", "cross-chain transfer", "bridging",
+            # Compliance
+            "compliance check", "aml check", "kyc", "regulatory",
+            # Multi-sig
+            "multisig", "multi-sig", "gnosis safe", "safe wallet",
+            # Governance
+            "dao governance", "snapshot vote", "governance proposal",
+            # NFT
+            "nft portfolio", "nft management", "opensea",
+            # Lending/Borrowing
+            "borrow position", "lending position", "loan position",
+            "check my borrow", "my collateral", "liquidation risk",
+        ]
+        if any(kw in message for kw in specialist_keywords):
             suggested_agent = self._determine_specialist_agent(message)
             return (
                 ChatIntent.SPECIALIST_TASK,
@@ -610,21 +627,72 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         )
 
     def _determine_specialist_agent(self, message: str) -> str:
-        """Determine which specialist agent to use."""
-        if any(word in message for word in ["yield", "apy", "earn"]):
-            return "defi_yield"
-        elif any(word in message for word in ["gas", "fees"]):
-            return "gas_optimizer"
-        elif any(word in message for word in ["security", "audit", "vulnerability"]):
+        """Determine which specialist agent to use based on message content."""
+        # Security Auditor
+        if any(kw in message for kw in [
+            "security", "audit", "vulnerability", "slither", 
+            "contract audit", "code review", "smart contract security"
+        ]):
             return "security_auditor"
-        elif any(word in message for word in ["portfolio", "allocation"]):
-            return "portfolio"
-        elif any(word in message for word in ["tax", "capital gains"]):
+        # Gas Optimizer
+        elif any(kw in message for kw in [
+            "gas", "fees", "optimize gas", "reduce gas", "gas usage"
+        ]):
+            return "gas_optimizer"
+        # Tax Optimizer
+        elif any(kw in message for kw in [
+            "tax", "capital gains", "tax strategy", "tax report", "tax optimization"
+        ]):
             return "tax_optimizer"
-        elif any(word in message for word in ["research", "deep dive"]):
-            return "research"
+        # Bridge/Cross-chain
+        elif any(kw in message for kw in [
+            "bridge", "cross-chain", "bridging", "axelar", "layerzero"
+        ]):
+            return "bridge_crosschain"
+        # Compliance Monitor
+        elif any(kw in message for kw in [
+            "compliance", "aml", "kyc", "regulatory", "chainalysis"
+        ]):
+            return "compliance_monitor"
+        # Multi-sig Coordinator
+        elif any(kw in message for kw in [
+            "multisig", "multi-sig", "gnosis", "safe wallet", "treasury"
+        ]):
+            return "multisig_coordinator"
+        # DAO Governance
+        elif any(kw in message for kw in [
+            "dao", "governance", "snapshot", "vote", "proposal"
+        ]):
+            return "dao_governance"
+        # NFT Asset Manager
+        elif any(kw in message for kw in [
+            "nft", "opensea", "nft portfolio", "collectibles"
+        ]):
+            return "nft_asset_manager"
+            # Lending/Borrowing
+        elif any(kw in message for kw in [
+            "borrow", "leverage", "collateral", "liquidation",
+            "borrow position", "lending position", "loan position"
+        ]):
+            return "lending_borrowing"
+        # DeFi Yield
+        elif any(kw in message for kw in [
+            "yield", "apy", "earn", "farming", "staking"
+        ]):
+            return "defi_yield"
+        # Portfolio Agent
+        elif any(kw in message for kw in [
+            "portfolio", "allocation", "rebalance", "diversify"
+        ]):
+            return "portfolio"
+        # Risk Analyzer
+        elif any(kw in message for kw in [
+            "risk", "exposure", "volatility", "drawdown"
+        ]):
+            return "risk_analyzer"
+        # Research (default specialist)
         else:
-            return "research"  # Default specialist
+            return "research"
 
     def _extract_entities(
         self, intent: ChatIntent, message_lower: str, original_message: str

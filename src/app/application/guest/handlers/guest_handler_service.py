@@ -94,6 +94,9 @@ class GuestHandlerService:
             ChatIntent.LENDING: self._handle_lending,
             ChatIntent.MONEY_MARKET: self._handle_money_market,
             ChatIntent.SWAP: self._handle_swap,
+            # Agent Squad (Specialist Tasks & Complex Workflows)
+            ChatIntent.SPECIALIST_TASK: self._handle_specialist_task,
+            ChatIntent.COMPLEX_WORKFLOW: self._handle_complex_workflow,
         }
 
         handler = handler_map.get(intent)
@@ -646,6 +649,211 @@ class GuestHandlerService:
                 logger.warning(f"Swap handler error: {e}")
 
         return self._fallback_response(ChatIntent.SWAP, language)
+
+    # ========================================
+    # Agent Squad Handlers
+    # ========================================
+
+    async def _handle_specialist_task(
+        self, content: str, language: str
+    ) -> dict[str, Any]:
+        """Handle specialist task requests (Agent Squad)."""
+        translations = {
+            "en": {
+                "title": "🤖 **Agent Squad - Specialist Agents**",
+                "desc": "Our AI agents can help with specialized DeFi tasks:",
+                "agents": [
+                    ("🔬 Research Agent", "Deep protocol analysis and yield strategies"),
+                    ("🛡️ Security Auditor", "Smart contract security analysis via Slither"),
+                    ("⛽ Gas Optimizer", "Reduce transaction costs with optimal timing"),
+                    ("📊 Tax Optimizer", "Capital gains strategies and tax reporting"),
+                    ("📈 Risk Analyzer", "Portfolio risk assessment and exposure analysis"),
+                    ("💼 Portfolio Agent", "Asset allocation and rebalancing recommendations"),
+                    ("🌉 Bridge Agent", "Cross-chain transfers via Axelar/LayerZero"),
+                    ("🏛️ Compliance", "AML/KYC checks via Chainalysis"),
+                    ("🔐 Multi-Sig", "Gnosis Safe treasury management"),
+                    ("🗳️ DAO Governance", "Snapshot voting and proposals"),
+                    ("🖼️ NFT Manager", "NFT portfolio via OpenSea"),
+                    ("💰 Lending Agent", "Aave/Morpho borrow optimization"),
+                ],
+            },
+            "es": {
+                "title": "🤖 **Agent Squad - Agentes Especialistas**",
+                "desc": "Nuestros agentes IA pueden ayudarte con tareas DeFi especializadas:",
+                "agents": [
+                    ("🔬 Agente de Investigación", "Análisis profundo de protocolos"),
+                    ("🛡️ Auditor de Seguridad", "Análisis de contratos inteligentes"),
+                    ("⛽ Optimizador de Gas", "Reduce costos de transacción"),
+                    ("📊 Optimizador de Impuestos", "Estrategias fiscales"),
+                    ("📈 Analizador de Riesgo", "Evaluación de riesgo del portafolio"),
+                    ("💼 Agente de Portafolio", "Recomendaciones de asignación"),
+                    ("🌉 Agente de Bridge", "Transferencias cross-chain"),
+                    ("🏛️ Compliance", "Verificaciones AML/KYC"),
+                    ("🔐 Multi-Sig", "Gestión de tesorería Gnosis Safe"),
+                    ("🗳️ Gobernanza DAO", "Votaciones y propuestas Snapshot"),
+                    ("🖼️ Gestor NFT", "Portafolio NFT via OpenSea"),
+                    ("💰 Agente de Préstamos", "Optimización Aave/Morpho"),
+                ],
+            },
+            "pt": {
+                "title": "🤖 **Agent Squad - Agentes Especialistas**",
+                "desc": "Nossos agentes IA podem ajudar com tarefas DeFi especializadas:",
+                "agents": [
+                    ("🔬 Agente de Pesquisa", "Análise profunda de protocolos"),
+                    ("🛡️ Auditor de Segurança", "Análise de contratos inteligentes"),
+                    ("⛽ Otimizador de Gas", "Reduz custos de transação"),
+                    ("📊 Otimizador de Impostos", "Estratégias fiscais"),
+                    ("📈 Analisador de Risco", "Avaliação de risco do portfólio"),
+                    ("💼 Agente de Portfólio", "Recomendações de alocação"),
+                    ("🌉 Agente de Bridge", "Transferências cross-chain"),
+                    ("🏛️ Compliance", "Verificações AML/KYC"),
+                    ("🔐 Multi-Sig", "Gestão de tesouraria Gnosis Safe"),
+                    ("🗳️ Governança DAO", "Votações e propostas Snapshot"),
+                    ("🖼️ Gestor NFT", "Portfólio NFT via OpenSea"),
+                    ("💰 Agente de Empréstimos", "Otimização Aave/Morpho"),
+                ],
+            },
+            "zh": {
+                "title": "🤖 **Agent Squad - 专家代理**",
+                "desc": "我们的AI代理可以帮助处理专业的DeFi任务：",
+                "agents": [
+                    ("🔬 研究代理", "深度协议分析和收益策略"),
+                    ("🛡️ 安全审计师", "通过Slither进行智能合约安全分析"),
+                    ("⛽ Gas优化器", "通过最佳时机减少交易成本"),
+                    ("📊 税务优化器", "资本利得策略和税务报告"),
+                    ("📈 风险分析师", "投资组合风险评估"),
+                    ("💼 投资组合代理", "资产配置和再平衡建议"),
+                    ("🌉 跨链代理", "通过Axelar/LayerZero跨链转账"),
+                    ("🏛️ 合规", "通过Chainalysis进行AML/KYC检查"),
+                    ("🔐 多签", "Gnosis Safe资金管理"),
+                    ("🗳️ DAO治理", "Snapshot投票和提案"),
+                    ("🖼️ NFT管理器", "通过OpenSea管理NFT投资组合"),
+                    ("💰 借贷代理", "Aave/Morpho借贷优化"),
+                ],
+            },
+        }
+
+        t = translations.get(language, translations["en"])
+
+        response = f"{t['title']}\n\n{t['desc']}\n\n"
+        for agent_name, agent_desc in t["agents"]:
+            response += f"- {agent_name}: {agent_desc}\n"
+
+        response += "\n" + self._get_registration_cta(language, for_action=True)
+
+        return {
+            "content": response,
+            "enrichment": {
+                "agent_squad": True,
+                "available_agents": [
+                    "research", "security_auditor", "gas_optimizer", "tax_optimizer",
+                    "risk_analyzer", "portfolio", "bridge_crosschain", "compliance_monitor",
+                    "multisig_coordinator", "dao_governance", "nft_asset_manager", "lending_borrowing",
+                ],
+            },
+            "requires_registration": True,
+        }
+
+    async def _handle_complex_workflow(
+        self, content: str, language: str
+    ) -> dict[str, Any]:
+        """Handle complex workflow requests (Supervisor)."""
+        translations = {
+            "en": {
+                "title": "🧠 **Agent Squad - Multi-Agent Workflows**",
+                "desc": "Our Supervisor can coordinate multiple agents for complex tasks:",
+                "examples": [
+                    "📊 Portfolio rebalancing with tax optimization",
+                    "🔍 Comprehensive DeFi protocol analysis",
+                    "⚖️ Risk assessment + execution planning",
+                    "💰 Yield optimization with security audit",
+                    "🌉 Cross-chain migration strategy",
+                ],
+                "how": "**How it works:**",
+                "steps": [
+                    "1️⃣ Supervisor analyzes your request",
+                    "2️⃣ Selects relevant specialist agents",
+                    "3️⃣ Coordinates their outputs",
+                    "4️⃣ Delivers comprehensive results",
+                ],
+            },
+            "es": {
+                "title": "🧠 **Agent Squad - Flujos Multi-Agente**",
+                "desc": "Nuestro Supervisor puede coordinar múltiples agentes:",
+                "examples": [
+                    "📊 Rebalanceo de portafolio con optimización fiscal",
+                    "🔍 Análisis comprensivo de protocolos DeFi",
+                    "⚖️ Evaluación de riesgo + planificación de ejecución",
+                    "💰 Optimización de rendimiento con auditoría de seguridad",
+                    "🌉 Estrategia de migración cross-chain",
+                ],
+                "how": "**Cómo funciona:**",
+                "steps": [
+                    "1️⃣ El Supervisor analiza tu solicitud",
+                    "2️⃣ Selecciona agentes especialistas relevantes",
+                    "3️⃣ Coordina sus resultados",
+                    "4️⃣ Entrega resultados comprensivos",
+                ],
+            },
+            "pt": {
+                "title": "🧠 **Agent Squad - Fluxos Multi-Agente**",
+                "desc": "Nosso Supervisor pode coordenar múltiplos agentes:",
+                "examples": [
+                    "📊 Rebalanceamento de portfólio com otimização fiscal",
+                    "🔍 Análise abrangente de protocolos DeFi",
+                    "⚖️ Avaliação de risco + planejamento de execução",
+                    "💰 Otimização de rendimento com auditoria de segurança",
+                    "🌉 Estratégia de migração cross-chain",
+                ],
+                "how": "**Como funciona:**",
+                "steps": [
+                    "1️⃣ O Supervisor analisa sua solicitação",
+                    "2️⃣ Seleciona agentes especialistas relevantes",
+                    "3️⃣ Coordena seus resultados",
+                    "4️⃣ Entrega resultados abrangentes",
+                ],
+            },
+            "zh": {
+                "title": "🧠 **Agent Squad - 多代理工作流**",
+                "desc": "我们的Supervisor可以协调多个代理处理复杂任务：",
+                "examples": [
+                    "📊 投资组合再平衡与税务优化",
+                    "🔍 全面的DeFi协议分析",
+                    "⚖️ 风险评估 + 执行规划",
+                    "💰 收益优化与安全审计",
+                    "🌉 跨链迁移策略",
+                ],
+                "how": "**工作原理：**",
+                "steps": [
+                    "1️⃣ Supervisor分析您的请求",
+                    "2️⃣ 选择相关专家代理",
+                    "3️⃣ 协调他们的输出",
+                    "4️⃣ 交付全面结果",
+                ],
+            },
+        }
+
+        t = translations.get(language, translations["en"])
+
+        response = f"{t['title']}\n\n{t['desc']}\n\n**Examples:**\n"
+        for example in t["examples"]:
+            response += f"- {example}\n"
+
+        response += f"\n{t['how']}\n"
+        for step in t["steps"]:
+            response += f"{step}\n"
+
+        response += "\n" + self._get_registration_cta(language, for_action=True)
+
+        return {
+            "content": response,
+            "enrichment": {
+                "agent_squad": True,
+                "workflow_type": "supervisor",
+                "max_agents": 5,
+            },
+            "requires_registration": True,
+        }
 
     # ========================================
     # Helpers
