@@ -38,6 +38,10 @@ logger = logging.getLogger(__name__)
 
 # Intents that use real handlers (not demo responses)
 REAL_HANDLER_INTENTS = {
+    # GraphRAG - Protocol Search (demo mode with protocol data)
+    ChatIntent.PROTOCOL_SEARCH,
+    ChatIntent.RISK_ASSESSMENT,
+    ChatIntent.SIMILAR_PROTOCOLS,
     # Hunter AI
     ChatIntent.HUNTER_SENTIMENT,
     ChatIntent.HUNTER_PRICE_PREDICTION,
@@ -54,6 +58,9 @@ REAL_HANDLER_INTENTS = {
     ChatIntent.LENDING,
     ChatIntent.MONEY_MARKET,
     ChatIntent.SWAP,
+    # Agent Squad
+    ChatIntent.SPECIALIST_TASK,
+    ChatIntent.COMPLEX_WORKFLOW,
 }
 
 
@@ -431,31 +438,58 @@ class SendGuestMessage:
             ],
         }
 
-        # DeFi shortcut patterns
+        # GraphRAG patterns (check FIRST - exploration queries)
+        graphrag_patterns = {
+            ChatIntent.PROTOCOL_SEARCH: [
+                "find protocols", "find defi", "list protocols", "show protocols",
+                "search protocols", "discover protocols", "explore protocols",
+                "best protocols", "top protocols", "safest protocols",
+                "compare protocols", "protocol comparison",
+                "protocols on ethereum", "protocols on arbitrum", "protocols on base",
+                "protocols on polygon", "protocols on optimism",
+                "lending protocols", "dex protocols", "staking protocols",
+                "bridge protocols", "yield protocols", "cdp protocols",
+                "low risk protocols", "high tvl protocols",
+            ],
+            ChatIntent.RISK_ASSESSMENT: [
+                "is it safe", "how safe", "safe to use",
+                "what are the risks", "risks of", "risk assessment",
+                "is aave safe", "is uniswap safe", "is compound safe",
+                "is morpho safe", "is curve safe", "is lido safe",
+                "es seguro", "es seguro usar",  # Spanish
+                "é seguro", "é seguro usar",  # Portuguese
+                "安全吗", "安全使用",  # Chinese
+            ],
+            ChatIntent.SIMILAR_PROTOCOLS: [
+                "similar to", "like", "alternative to", "alternatives for",
+                "protocols like", "similar protocols",
+            ],
+        }
+
+        # DeFi shortcut patterns (for ACTION intents)
         defi_patterns = {
             ChatIntent.LENDING: [
-                "lend", "lending", "deposit", "earn", "yield",
-                "morpho", "apy", "interest rate",
+                "deposit usdc", "deposit eth", "earn on morpho",
+                "supply to aave", "lend my", "earn yield",
             ],
             ChatIntent.MONEY_MARKET: [
-                "money market", "aave", "compound", "supply",
+                "money market", "compare aave", "compound vs aave",
                 "borrow rate", "lending rate",
             ],
             ChatIntent.SWAP: [
                 "swap", "exchange", "trade", "convert",
-                "1inch", "uniswap", "dex",
-            ],
-            ChatIntent.PROTOCOL_SEARCH: [
-                "find protocol", "search protocol", "what is",
-                "tell me about", "protocol info",
-            ],
-            ChatIntent.RISK_ASSESSMENT: [
-                "risk", "safe", "audit", "security", "tvl",
-                "trust", "reliable",
+                "1inch", "uniswap",
             ],
         }
 
-        # Check all patterns
+        # Check GraphRAG patterns FIRST (exploration > action)
+        for intent, keywords in graphrag_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_handler_for_intent(intent)
+                    return intent, 0.90, handler
+
+        # Check all other patterns
         all_patterns = {**hunter_patterns, **ultra_patterns, **defi_patterns}
 
         for intent, keywords in all_patterns.items():
@@ -487,6 +521,7 @@ class SendGuestMessage:
             ChatIntent.SWAP: "swap_handler",
             ChatIntent.PROTOCOL_SEARCH: "graphrag_handler",
             ChatIntent.RISK_ASSESSMENT: "graphrag_handler",
+            ChatIntent.SIMILAR_PROTOCOLS: "graphrag_handler",
         }
         return handler_map.get(intent, "demo_handler")
 

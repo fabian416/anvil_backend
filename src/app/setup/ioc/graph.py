@@ -18,7 +18,7 @@ from app.domain.graph.services import GraphService, RiskAnalysisService
 from app.domain.ml.services import RiskPredictionService, NetworkAnalysisService
 from app.infrastructure.persistence_age import GraphRepositoryAge
 from app.infrastructure.external_data.defillama import DeFiLlamaClient
-from app.infrastructure.embeddings import OpenAIEmbeddingService
+from app.infrastructure.embeddings import OpenAIEmbeddingService, DeepInfraEmbeddingService
 from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import VectorRepositorySqla
 from app.infrastructure.cache.graph_cache import GraphQueryCache
 from app.application.graph import (
@@ -105,7 +105,20 @@ class GraphProvider(Provider):
     
     @provide
     def provide_embedding_service(self) -> EmbeddingService:
-        """Provide Embedding service implementation"""
+        """Provide Embedding service implementation.
+        
+        Uses DeepInfra with multilingual BAAI/bge-m3 model (supports 100+ languages).
+        Falls back to OpenAI if DeepInfra key is not configured.
+        """
+        # Try DeepInfra first (preferred - multilingual support)
+        deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
+        if deepinfra_key:
+            return DeepInfraEmbeddingService(
+                api_key=deepinfra_key,
+                model="BAAI/bge-m3",  # Multilingual: EN, ES, PT, ZH, FR, etc.
+            )
+        
+        # Fallback to OpenAI
         openai_key = os.getenv("OPENAI_API_KEY", "")
         return OpenAIEmbeddingService(api_key=openai_key)
     

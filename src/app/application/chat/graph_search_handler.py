@@ -1,4 +1,7 @@
-"""Chat GraphRAG search integration handler."""
+"""Chat GraphRAG search integration handler.
+
+Supports multi-language queries and responses (EN, ES, PT, ZH, FR).
+"""
 
 from dataclasses import dataclass
 from typing import List, Optional
@@ -9,6 +12,116 @@ from app.application.graph.hybrid_retrieval import (
     HybridRetrievalResult,
 )
 from app.domain.graph.ports.graph_repository import GraphRepository
+
+
+# Multi-language translations for GraphRAG responses
+GRAPHRAG_TRANSLATIONS = {
+    "en": {
+        "no_results": "I couldn't find any protocols matching your criteria. Try broadening your search or adjusting your preferences.",
+        "found_protocols": "Found {count} protocol{plural}",
+        "that_are": "that are",
+        "on_chain": "on {chain}",
+        "risk": "{level}-risk",
+        "risk_warning": "Consider reviewing the risk factors before proceeding",
+        "low_tvl_warning": "Low TVL protocols may have higher liquidity risk",
+        "audit_warning": "Some protocols have limited audit history - proceed with caution",
+        "diversify": "Consider diversifying across multiple protocol types",
+        "all_good": "All protocols meet your criteria - review details before selecting",
+        "broaden_search": "Try broadening your search criteria",
+        "explore_categories": "Consider exploring different protocol categories",
+        "check_risk": "Check your risk tolerance settings",
+        "high_match": "High semantic match to your search",
+        "category_match": "{category} protocol as requested",
+        "deployed_on": "Deployed on {chain}",
+        "high_tvl": "High TVL (${tvl}B)",
+        "well_audited": "Well audited ({count} audits)",
+        "matches_criteria": "Matches your search criteria",
+    },
+    "es": {
+        "no_results": "No pude encontrar protocolos que coincidan con tus criterios. Intenta ampliar tu búsqueda o ajustar tus preferencias.",
+        "found_protocols": "Encontré {count} protocolo{plural}",
+        "that_are": "que son",
+        "on_chain": "en {chain}",
+        "risk": "riesgo {level}",
+        "risk_warning": "Considera revisar los factores de riesgo antes de continuar",
+        "low_tvl_warning": "Los protocolos con bajo TVL pueden tener mayor riesgo de liquidez",
+        "audit_warning": "Algunos protocolos tienen historial de auditorías limitado - procede con precaución",
+        "diversify": "Considera diversificar entre múltiples tipos de protocolos",
+        "all_good": "Todos los protocolos cumplen tus criterios - revisa los detalles antes de seleccionar",
+        "broaden_search": "Intenta ampliar tus criterios de búsqueda",
+        "explore_categories": "Considera explorar diferentes categorías de protocolos",
+        "check_risk": "Revisa tu configuración de tolerancia al riesgo",
+        "high_match": "Alta coincidencia semántica con tu búsqueda",
+        "category_match": "Protocolo {category} como solicitaste",
+        "deployed_on": "Desplegado en {chain}",
+        "high_tvl": "Alto TVL (${tvl}B)",
+        "well_audited": "Bien auditado ({count} auditorías)",
+        "matches_criteria": "Coincide con tus criterios de búsqueda",
+    },
+    "pt": {
+        "no_results": "Não encontrei protocolos que correspondam aos seus critérios. Tente ampliar sua busca ou ajustar suas preferências.",
+        "found_protocols": "Encontrei {count} protocolo{plural}",
+        "that_are": "que são",
+        "on_chain": "na {chain}",
+        "risk": "risco {level}",
+        "risk_warning": "Considere revisar os fatores de risco antes de prosseguir",
+        "low_tvl_warning": "Protocolos com baixo TVL podem ter maior risco de liquidez",
+        "audit_warning": "Alguns protocolos têm histórico de auditorias limitado - prossiga com cautela",
+        "diversify": "Considere diversificar entre múltiplos tipos de protocolos",
+        "all_good": "Todos os protocolos atendem seus critérios - revise os detalhes antes de selecionar",
+        "broaden_search": "Tente ampliar seus critérios de busca",
+        "explore_categories": "Considere explorar diferentes categorias de protocolos",
+        "check_risk": "Verifique suas configurações de tolerância ao risco",
+        "high_match": "Alta correspondência semântica com sua busca",
+        "category_match": "Protocolo {category} conforme solicitado",
+        "deployed_on": "Implantado na {chain}",
+        "high_tvl": "Alto TVL (${tvl}B)",
+        "well_audited": "Bem auditado ({count} auditorias)",
+        "matches_criteria": "Corresponde aos seus critérios de busca",
+    },
+    "zh": {
+        "no_results": "未能找到符合您条件的协议。请尝试扩大搜索范围或调整您的偏好。",
+        "found_protocols": "找到 {count} 个协议",
+        "that_are": "属于",
+        "on_chain": "在 {chain} 上",
+        "risk": "{level}风险",
+        "risk_warning": "请在继续之前查看风险因素",
+        "low_tvl_warning": "低TVL协议可能有更高的流动性风险",
+        "audit_warning": "部分协议审计历史有限 - 请谨慎操作",
+        "diversify": "考虑在多种协议类型之间进行多元化",
+        "all_good": "所有协议都符合您的条件 - 选择前请查看详情",
+        "broaden_search": "尝试扩大您的搜索条件",
+        "explore_categories": "考虑探索不同的协议类别",
+        "check_risk": "检查您的风险承受能力设置",
+        "high_match": "与您的搜索高度语义匹配",
+        "category_match": "您请求的{category}协议",
+        "deployed_on": "部署在{chain}",
+        "high_tvl": "高TVL (${tvl}B)",
+        "well_audited": "审计良好 ({count}次审计)",
+        "matches_criteria": "符合您的搜索条件",
+    },
+    "fr": {
+        "no_results": "Je n'ai trouvé aucun protocole correspondant à vos critères. Essayez d'élargir votre recherche ou d'ajuster vos préférences.",
+        "found_protocols": "{count} protocole{plural} trouvé{plural}",
+        "that_are": "qui sont",
+        "on_chain": "sur {chain}",
+        "risk": "risque {level}",
+        "risk_warning": "Envisagez de revoir les facteurs de risque avant de continuer",
+        "low_tvl_warning": "Les protocoles à faible TVL peuvent présenter un risque de liquidité plus élevé",
+        "audit_warning": "Certains protocoles ont un historique d'audit limité - procédez avec prudence",
+        "diversify": "Envisagez de diversifier entre plusieurs types de protocoles",
+        "all_good": "Tous les protocoles répondent à vos critères - examinez les détails avant de sélectionner",
+        "broaden_search": "Essayez d'élargir vos critères de recherche",
+        "explore_categories": "Envisagez d'explorer différentes catégories de protocoles",
+        "check_risk": "Vérifiez vos paramètres de tolérance au risque",
+        "high_match": "Correspondance sémantique élevée avec votre recherche",
+        "category_match": "Protocole {category} comme demandé",
+        "deployed_on": "Déployé sur {chain}",
+        "high_tvl": "TVL élevé (${tvl}B)",
+        "well_audited": "Bien audité ({count} audits)",
+        "matches_criteria": "Correspond à vos critères de recherche",
+    },
+}
 
 
 @dataclass
@@ -43,6 +156,9 @@ class ChatGraphSearchHandler:
 
     This service integrates hybrid retrieval with natural language
     understanding to provide chat-friendly protocol search results.
+    
+    Supports multi-language queries and responses (EN, ES, PT, ZH, FR).
+    Uses multilingual embeddings (BAAI/bge-m3) for cross-language search.
     """
 
     def __init__(
@@ -53,11 +169,16 @@ class ChatGraphSearchHandler:
         self._hybrid_retrieval = hybrid_retrieval
         self._graph_repo = graph_repository
 
+    def _get_translations(self, language: str) -> dict:
+        """Get translations for the specified language."""
+        return GRAPHRAG_TRANSLATIONS.get(language, GRAPHRAG_TRANSLATIONS["en"])
+
     async def search_protocols_from_chat(
         self,
         message: str,
         user_preferences: Optional[dict] = None,
         conversation_id: Optional[UUID] = None,
+        language: str = "en",
     ) -> ChatSearchContext:
         """
         Extract search intent and perform hybrid search.
@@ -66,6 +187,7 @@ class ChatGraphSearchHandler:
             message: User's natural language message
             user_preferences: Optional user preferences for filtering
             conversation_id: Optional conversation ID for context
+            language: Response language (en, es, pt, zh, fr)
 
         Returns:
             Chat-formatted search results with explanations
@@ -73,7 +195,7 @@ class ChatGraphSearchHandler:
         # Extract search parameters from natural language
         search_params = self._extract_search_intent(message, user_preferences)
 
-        # Perform hybrid retrieval
+        # Perform hybrid retrieval (uses multilingual embeddings)
         retrieval_results = await self._hybrid_retrieval.search_protocols(
             query=search_params["query"],
             limit=search_params.get("limit", 5),
@@ -83,7 +205,7 @@ class ChatGraphSearchHandler:
 
         # Convert to chat-friendly format
         chat_results = [
-            self._convert_to_chat_result(result, search_params)
+            self._convert_to_chat_result(result, search_params, language)
             for result in retrieval_results
         ]
 
@@ -91,14 +213,14 @@ class ChatGraphSearchHandler:
         if user_preferences:
             chat_results = self._apply_user_filters(chat_results, user_preferences)
 
-        # Generate natural language explanation
+        # Generate natural language explanation (localized)
         explanation = self._generate_search_explanation(
-            message, len(chat_results), search_params
+            message, len(chat_results), search_params, language
         )
 
-        # Generate recommendations
+        # Generate recommendations (localized)
         recommendations = self._generate_recommendations(
-            chat_results, search_params, user_preferences
+            chat_results, search_params, user_preferences, language
         )
 
         return ChatSearchContext(
@@ -173,14 +295,14 @@ class ChatGraphSearchHandler:
         return params
 
     def _convert_to_chat_result(
-        self, result: HybridRetrievalResult, search_params: dict
+        self, result: HybridRetrievalResult, search_params: dict, language: str = "en"
     ) -> ChatProtocolSearchResult:
         """Convert hybrid retrieval result to chat-friendly format."""
         # Classify risk level
         risk_level = self._classify_risk_level(result.risk_score)
 
-        # Generate relevance explanation
-        why_relevant = self._explain_relevance(result, search_params)
+        # Generate relevance explanation (localized)
+        why_relevant = self._explain_relevance(result, search_params, language)
 
         return ChatProtocolSearchResult(
             protocol_id=result.protocol_id,
@@ -209,39 +331,40 @@ class ChatGraphSearchHandler:
             return "CRITICAL"
 
     def _explain_relevance(
-        self, result: HybridRetrievalResult, search_params: dict
+        self, result: HybridRetrievalResult, search_params: dict, language: str = "en"
     ) -> str:
-        """Generate explanation for why protocol is relevant."""
+        """Generate explanation for why protocol is relevant (localized)."""
+        t = self._get_translations(language)
         reasons = []
 
         # High similarity
         if result.combined_score > 0.8:
-            reasons.append("High semantic match to your search")
+            reasons.append(t["high_match"])
 
         # Category match
         if "category" in search_params and result.category == search_params["category"]:
-            reasons.append(f"{result.category} protocol as requested")
+            reasons.append(t["category_match"].format(category=result.category))
 
         # Chain match
         if "chain" in search_params and result.chain == search_params["chain"]:
-            reasons.append(f"Deployed on {result.chain}")
+            reasons.append(t["deployed_on"].format(chain=result.chain))
 
         # Risk match
         risk_level = self._classify_risk_level(result.risk_score)
         if "risk_level" in search_params and risk_level == search_params["risk_level"]:
-            reasons.append(f"{risk_level.lower()}-risk as preferred")
+            reasons.append(t["risk"].format(level=risk_level.lower()))
 
         # High TVL
         if result.tvl > 1_000_000_000:
-            reasons.append(f"High TVL (${result.tvl/1e9:.1f}B)")
+            reasons.append(t["high_tvl"].format(tvl=f"{result.tvl/1e9:.1f}"))
 
         # Well audited
         if result.audit_count >= 5:
-            reasons.append(f"Well audited ({result.audit_count} audits)")
+            reasons.append(t["well_audited"].format(count=result.audit_count))
 
         # Default
         if not reasons:
-            reasons.append("Matches your search criteria")
+            reasons.append(t["matches_criteria"])
 
         return "; ".join(reasons)
 
@@ -278,25 +401,28 @@ class ChatGraphSearchHandler:
         return filtered
 
     def _generate_search_explanation(
-        self, message: str, result_count: int, search_params: dict
+        self, message: str, result_count: int, search_params: dict, language: str = "en"
     ) -> str:
-        """Generate natural language explanation of search results."""
+        """Generate natural language explanation of search results (localized)."""
+        t = self._get_translations(language)
+        
         if result_count == 0:
-            return "I couldn't find any protocols matching your criteria. Try broadening your search or adjusting your preferences."
+            return t["no_results"]
 
-        explanation_parts = [f"Found {result_count} protocol{'s' if result_count != 1 else ''}"]
+        plural = "s" if result_count != 1 else ""
+        explanation_parts = [t["found_protocols"].format(count=result_count, plural=plural)]
 
         # Add filters explanation
         filters = []
         if "risk_level" in search_params:
-            filters.append(f"{search_params['risk_level'].lower()}-risk")
+            filters.append(t["risk"].format(level=search_params["risk_level"].lower()))
         if "category" in search_params:
             filters.append(search_params["category"].lower())
         if "chain" in search_params:
-            filters.append(f"on {search_params['chain']}")
+            filters.append(t["on_chain"].format(chain=search_params["chain"]))
 
         if filters:
-            explanation_parts.append("that are " + ", ".join(filters))
+            explanation_parts.append(t["that_are"] + " " + ", ".join(filters))
 
         return " ".join(explanation_parts) + "."
 
@@ -305,13 +431,16 @@ class ChatGraphSearchHandler:
         results: List[ChatProtocolSearchResult],
         search_params: dict,
         user_preferences: Optional[dict],
+        language: str = "en",
     ) -> List[str]:
-        """Generate contextual recommendations based on results."""
+        """Generate contextual recommendations based on results (localized)."""
+        t = self._get_translations(language)
+        
         if not results:
             return [
-                "Try broadening your search criteria",
-                "Consider exploring different protocol categories",
-                "Check your risk tolerance settings",
+                t["broaden_search"],
+                t["explore_categories"],
+                t["check_risk"],
             ]
 
         recommendations = []
@@ -319,33 +448,23 @@ class ChatGraphSearchHandler:
         # Risk-based recommendations
         avg_risk = sum(r.risk_score for r in results) / len(results)
         if avg_risk > 5.0:
-            recommendations.append(
-                "Consider reviewing the risk factors before proceeding"
-            )
+            recommendations.append(t["risk_warning"])
 
         # TVL-based recommendations
         if results[0].tvl < 10_000_000:  # Less than $10M
-            recommendations.append(
-                "Low TVL protocols may have higher liquidity risk"
-            )
+            recommendations.append(t["low_tvl_warning"])
 
         # Audit-based recommendations
         if any(r.audit_count < 3 for r in results):
-            recommendations.append(
-                "Some protocols have limited audit history - proceed with caution"
-            )
+            recommendations.append(t["audit_warning"])
 
         # Diversification
         unique_categories = len({r.category for r in results})
         if unique_categories > 1:
-            recommendations.append(
-                "Consider diversifying across multiple protocol types"
-            )
+            recommendations.append(t["diversify"])
 
         # Default recommendation
         if not recommendations:
-            recommendations.append(
-                "All protocols meet your criteria - review details before selecting"
-            )
+            recommendations.append(t["all_good"])
 
         return recommendations

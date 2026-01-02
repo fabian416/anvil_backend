@@ -25,4 +25,6 @@ fields = [
     "stripe.STRIPE_API_KEY",
     # Admin configuration
     "admin.USER_ADMIN",
+    # DeepInfra from secrets (for embeddings)
+    "deepinfra.API_KEY",
 ]

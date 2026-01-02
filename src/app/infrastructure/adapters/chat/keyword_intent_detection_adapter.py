@@ -217,7 +217,47 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 self._determine_specialist_agent(message) if intent_str == "specialist_task" else None,
             )
 
-        # STEP 2: DeFi Shortcuts (check FIRST - user convenience shortcuts)
+        # STEP 2: GraphRAG Protocol Exploration (check BEFORE shortcuts)
+        # These are exploration/comparison queries, NOT action shortcuts
+        protocol_explore_keywords = [
+            "find protocols", "find defi", "list protocols", "show protocols",
+            "search protocols", "discover protocols", "explore protocols",
+            "best protocols", "top protocols", "safest protocols",
+            "compare protocols", "protocol comparison",
+            "protocols on ethereum", "protocols on arbitrum", "protocols on base",
+            "protocols on polygon", "protocols on optimism",
+            "lending protocols", "dex protocols", "staking protocols",
+            "bridge protocols", "yield protocols", "cdp protocols",
+            "low risk protocols", "high tvl protocols",
+        ]
+        if any(kw in message for kw in protocol_explore_keywords):
+            return (
+                ChatIntent.PROTOCOL_SEARCH,
+                0.90,
+                "Message contains protocol exploration keywords",
+                None,
+            )
+        
+        # Risk Assessment (GraphRAG) - check BEFORE shortcuts
+        # Clear security/safety questions about protocols
+        risk_assessment_patterns = [
+            "is it safe", "how safe", "safe to use",
+            "what are the risks", "risks of", "risk assessment",
+            "is aave safe", "is uniswap safe", "is compound safe",
+            "is morpho safe", "is curve safe", "is lido safe",
+            "es seguro", "es seguro usar", "seguro de usar",  # Spanish
+            "é seguro", "é seguro usar",  # Portuguese
+            "安全吗", "安全使用",  # Chinese
+        ]
+        if any(pattern in message for pattern in risk_assessment_patterns):
+            return (
+                ChatIntent.RISK_ASSESSMENT,
+                0.90,
+                "Message contains risk assessment keywords",
+                None,
+            )
+        
+        # STEP 3: DeFi Shortcuts (user convenience shortcuts for ACTIONS)
         
         # Lending intent (Morpho, Aave supply/deposit)
         if any(

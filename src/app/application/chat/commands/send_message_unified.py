@@ -220,15 +220,15 @@ class UnifiedChatOrchestrator:
         # Route based on intent
         if intent_result.intent == ChatIntent.PROTOCOL_SEARCH:
             result = await self._handle_protocol_search(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         elif intent_result.intent == ChatIntent.RISK_ASSESSMENT:
             result = await self._handle_risk_assessment(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         elif intent_result.intent == ChatIntent.SIMILAR_PROTOCOLS:
             result = await self._handle_similar_protocols(
-                user_id, conversation_id, content, intent_result
+                user_id, conversation_id, content, intent_result, language
             )
         # Hunter AI intents
         elif intent_result.intent == ChatIntent.HUNTER_SENTIMENT:
@@ -322,9 +322,9 @@ class UnifiedChatOrchestrator:
         return result
 
     async def _handle_protocol_search(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle protocol search intent via GraphRAG."""
+        """Handle protocol search intent via GraphRAG (with i18n support)."""
         entities = intent_result.extracted_entities
 
         # Build user preferences from entities
@@ -338,11 +338,12 @@ class UnifiedChatOrchestrator:
         if "category" in entities:
             user_preferences["preferred_categories"] = [entities["category"]]
 
-        # Perform GraphRAG search
+        # Perform GraphRAG search (multilingual embeddings handle cross-language queries)
         search_results = await self._graphrag_search.search_protocols_from_chat(
             message=content,
             user_preferences=user_preferences,
             conversation_id=conversation_id,
+            language=language,
         )
 
         # Format response message
@@ -382,9 +383,9 @@ class UnifiedChatOrchestrator:
         }
 
     async def _handle_risk_assessment(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle risk assessment intent via GraphRAG."""
+        """Handle risk assessment intent via GraphRAG (with i18n support)."""
         entities = intent_result.extracted_entities
 
         if "protocol_name" not in entities:
@@ -432,9 +433,9 @@ class UnifiedChatOrchestrator:
         }
 
     async def _handle_similar_protocols(
-        self, user_id, conversation_id, content, intent_result
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
     ) -> dict:
-        """Handle similar protocols intent via GraphRAG."""
+        """Handle similar protocols intent via GraphRAG (with i18n support)."""
         entities = intent_result.extracted_entities
         protocol_name = entities.get("protocol_name", "")
 
@@ -444,15 +445,25 @@ class UnifiedChatOrchestrator:
                 user_id, conversation_id, content, intent_result
             )
 
-        # Find base protocol
+        # Find base protocol (multilingual search)
         base_search = await self._graphrag_search.search_protocols_from_chat(
             message=protocol_name,
             conversation_id=conversation_id,
+            language=language,
         )
+
+        # Protocol not found messages (i18n)
+        not_found_messages = {
+            "en": f"I couldn't find the protocol '{protocol_name}'. Could you provide more details or check the spelling?",
+            "es": f"No pude encontrar el protocolo '{protocol_name}'. ¿Podrías proporcionar más detalles o verificar la ortografía?",
+            "pt": f"Não encontrei o protocolo '{protocol_name}'. Poderia fornecer mais detalhes ou verificar a ortografia?",
+            "zh": f"未能找到协议 '{protocol_name}'。您能提供更多详情或检查拼写吗?",
+            "fr": f"Je n'ai pas trouvé le protocole '{protocol_name}'. Pourriez-vous fournir plus de détails ou vérifier l'orthographe?",
+        }
 
         if not base_search.results:
             # Protocol not found - fallback to general chat
-            response_content = f"I couldn't find the protocol '{protocol_name}'. Could you provide more details or check the spelling?"
+            response_content = not_found_messages.get(language, not_found_messages["en"])
             user_msg, agent_msg = await self._save_messages(
                 conversation_id, content, response_content
             )
@@ -464,15 +475,17 @@ class UnifiedChatOrchestrator:
                     "confidence": intent_result.confidence,
                     "handler": "graphrag_search",
                     "reasoning": "Protocol not found, fallback response",
+                    "language": language,
                 },
             }
 
         base_protocol = base_search.results[0]
 
-        # Find similar protocols
+        # Find similar protocols (multilingual search)
         similar_search = await self._graphrag_search.search_protocols_from_chat(
             message=f"protocols similar to {protocol_name}",
             conversation_id=conversation_id,
+            language=language,
         )
 
         # Filter out base protocol

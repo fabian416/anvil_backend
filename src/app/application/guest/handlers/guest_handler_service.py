@@ -78,6 +78,10 @@ class GuestHandlerService:
             dict with 'content', 'enrichment', and 'requires_registration' fields
         """
         handler_map = {
+            # GraphRAG - Protocol Search
+            ChatIntent.PROTOCOL_SEARCH: self._handle_protocol_search,
+            ChatIntent.RISK_ASSESSMENT: self._handle_risk_assessment,
+            ChatIntent.SIMILAR_PROTOCOLS: self._handle_similar_protocols,
             # Hunter AI
             ChatIntent.HUNTER_SENTIMENT: self._handle_sentiment,
             ChatIntent.HUNTER_PRICE_PREDICTION: self._handle_price_prediction,
@@ -108,6 +112,262 @@ class GuestHandlerService:
                 return self._fallback_response(intent, language)
 
         return self._fallback_response(intent, language)
+
+    # ========================================
+    # ========================================
+    # GraphRAG Protocol Search Handlers (Demo Mode)
+    # ========================================
+
+    async def _handle_protocol_search(
+        self, content: str, language: str
+    ) -> dict[str, Any]:
+        """Handle protocol search intent (demo mode with example protocols)."""
+        # Demo protocols data - in production, this would query the graph
+        demo_protocols = [
+            {"name": "Aave", "category": "Lending", "tvl": 12.5, "risk": "LOW", "chain": "Ethereum"},
+            {"name": "Compound", "category": "Lending", "tvl": 3.2, "risk": "LOW", "chain": "Ethereum"},
+            {"name": "Uniswap", "category": "DEX", "tvl": 5.8, "risk": "LOW", "chain": "Ethereum"},
+            {"name": "Curve", "category": "DEX", "tvl": 4.1, "risk": "LOW", "chain": "Ethereum"},
+            {"name": "Lido", "category": "Staking", "tvl": 25.0, "risk": "LOW", "chain": "Ethereum"},
+            {"name": "Morpho", "category": "Lending", "tvl": 1.8, "risk": "MEDIUM", "chain": "Ethereum"},
+        ]
+
+        translations = {
+            "en": {
+                "title": "🔍 **Protocol Search Results (Demo)**",
+                "desc": "Here are some top DeFi protocols matching your criteria:",
+                "tvl": "TVL",
+                "risk": "Risk",
+                "chain": "Chain",
+                "note": "Register for full access to:",
+                "features": ["Search 500+ protocols", "Custom filters", "Real-time data", "Risk analysis"],
+            },
+            "es": {
+                "title": "🔍 **Resultados de Búsqueda de Protocolos (Demo)**",
+                "desc": "Aquí hay algunos protocolos DeFi principales que coinciden con tus criterios:",
+                "tvl": "TVL",
+                "risk": "Riesgo",
+                "chain": "Red",
+                "note": "Regístrate para acceso completo a:",
+                "features": ["Buscar 500+ protocolos", "Filtros personalizados", "Datos en tiempo real", "Análisis de riesgo"],
+            },
+            "pt": {
+                "title": "🔍 **Resultados da Pesquisa de Protocolos (Demo)**",
+                "desc": "Aqui estão alguns dos principais protocolos DeFi que correspondem aos seus critérios:",
+                "tvl": "TVL",
+                "risk": "Risco",
+                "chain": "Rede",
+                "note": "Registre-se para acesso completo a:",
+                "features": ["Pesquisar 500+ protocolos", "Filtros personalizados", "Dados em tempo real", "Análise de risco"],
+            },
+            "zh": {
+                "title": "🔍 **协议搜索结果 (演示)**",
+                "desc": "以下是符合您条件的一些顶级DeFi协议:",
+                "tvl": "总锁仓量",
+                "risk": "风险",
+                "chain": "链",
+                "note": "注册后可访问:",
+                "features": ["搜索500+协议", "自定义筛选", "实时数据", "风险分析"],
+            },
+        }
+        t = translations.get(language, translations["en"])
+
+        response = f"{t['title']}\n\n{t['desc']}\n\n"
+        for p in demo_protocols[:5]:
+            response += f"• **{p['name']}** ({p['category']})\n"
+            response += f"  {t['tvl']}: ${p['tvl']}B | {t['risk']}: {p['risk']} | {t['chain']}: {p['chain']}\n"
+        response += f"\n{t['note']}\n"
+        for feature in t["features"]:
+            response += f"  ✓ {feature}\n"
+        response += "\n" + self._get_registration_cta(language, for_action=False)
+
+        return {
+            "content": response,
+            "enrichment": {
+                "graphrag": True,
+                "demo_protocols": len(demo_protocols),
+                "full_search_requires_registration": True,
+            },
+            "requires_registration": False,
+        }
+
+    async def _handle_risk_assessment(
+        self, content: str, language: str
+    ) -> dict[str, Any]:
+        """Handle risk assessment intent (demo mode with example analysis)."""
+        # Extract protocol name from content
+        protocol = "Aave"  # Default
+        for p in ["aave", "uniswap", "compound", "curve", "morpho", "lido"]:
+            if p in content.lower():
+                protocol = p.capitalize()
+                break
+
+        # Demo risk data
+        risk_data = {
+            "Aave": {"score": 2.5, "level": "LOW", "audits": 12, "tvl": 12.5},
+            "Uniswap": {"score": 2.8, "level": "LOW", "audits": 10, "tvl": 5.8},
+            "Compound": {"score": 2.3, "level": "LOW", "audits": 8, "tvl": 3.2},
+            "Curve": {"score": 3.0, "level": "LOW", "audits": 7, "tvl": 4.1},
+            "Morpho": {"score": 4.5, "level": "MEDIUM", "audits": 4, "tvl": 1.8},
+            "Lido": {"score": 2.2, "level": "LOW", "audits": 9, "tvl": 25.0},
+        }
+        data = risk_data.get(protocol, risk_data["Aave"])
+
+        translations = {
+            "en": {
+                "title": f"🛡️ **Risk Assessment: {protocol} (Demo)**",
+                "score": "Risk Score",
+                "level": "Risk Level",
+                "audits": "Security Audits",
+                "tvl": "Total Value Locked",
+                "factors": "Key Risk Factors",
+                "smart_contract": "Smart Contract Risk",
+                "liquidity": "Liquidity Risk",
+                "oracle": "Oracle Risk",
+                "note": "Register for full risk analysis including:",
+                "features": ["Real-time monitoring", "Historical data", "ML predictions", "Alerts"],
+            },
+            "es": {
+                "title": f"🛡️ **Evaluación de Riesgo: {protocol} (Demo)**",
+                "score": "Puntuación de Riesgo",
+                "level": "Nivel de Riesgo",
+                "audits": "Auditorías de Seguridad",
+                "tvl": "Valor Total Bloqueado",
+                "factors": "Factores Clave de Riesgo",
+                "smart_contract": "Riesgo de Contrato Inteligente",
+                "liquidity": "Riesgo de Liquidez",
+                "oracle": "Riesgo de Oráculo",
+                "note": "Regístrate para análisis de riesgo completo incluyendo:",
+                "features": ["Monitoreo en tiempo real", "Datos históricos", "Predicciones ML", "Alertas"],
+            },
+            "pt": {
+                "title": f"🛡️ **Avaliação de Risco: {protocol} (Demo)**",
+                "score": "Pontuação de Risco",
+                "level": "Nível de Risco",
+                "audits": "Auditorias de Segurança",
+                "tvl": "Valor Total Bloqueado",
+                "factors": "Fatores Chave de Risco",
+                "smart_contract": "Risco de Contrato Inteligente",
+                "liquidity": "Risco de Liquidez",
+                "oracle": "Risco de Oráculo",
+                "note": "Registre-se para análise de risco completa incluindo:",
+                "features": ["Monitoramento em tempo real", "Dados históricos", "Previsões ML", "Alertas"],
+            },
+            "zh": {
+                "title": f"🛡️ **风险评估: {protocol} (演示)**",
+                "score": "风险评分",
+                "level": "风险等级",
+                "audits": "安全审计",
+                "tvl": "总锁仓量",
+                "factors": "主要风险因素",
+                "smart_contract": "智能合约风险",
+                "liquidity": "流动性风险",
+                "oracle": "预言机风险",
+                "note": "注册后可获得完整风险分析:",
+                "features": ["实时监控", "历史数据", "ML预测", "警报"],
+            },
+        }
+        t = translations.get(language, translations["en"])
+
+        response = f"{t['title']}\n\n"
+        response += f"📊 **{t['score']}:** {data['score']}/10\n"
+        response += f"⚡ **{t['level']}:** {data['level']}\n"
+        response += f"🔒 **{t['audits']}:** {data['audits']}\n"
+        response += f"💰 **{t['tvl']}:** ${data['tvl']}B\n\n"
+        response += f"**{t['factors']}:**\n"
+        response += f"  • {t['smart_contract']}: {'✅ Low' if data['score'] < 4 else '⚠️ Medium'}\n"
+        response += f"  • {t['liquidity']}: ✅ Low\n"
+        response += f"  • {t['oracle']}: ✅ Low\n\n"
+        response += f"{t['note']}\n"
+        for feature in t["features"]:
+            response += f"  ✓ {feature}\n"
+        response += "\n" + self._get_registration_cta(language, for_action=False)
+
+        return {
+            "content": response,
+            "enrichment": {
+                "graphrag": True,
+                "protocol": protocol,
+                "risk_score": data["score"],
+                "risk_level": data["level"],
+                "full_analysis_requires_registration": True,
+            },
+            "requires_registration": False,
+        }
+
+    async def _handle_similar_protocols(
+        self, content: str, language: str
+    ) -> dict[str, Any]:
+        """Handle similar protocols search intent (demo mode)."""
+        # Extract protocol name from content
+        protocol = "Aave"  # Default
+        for p in ["aave", "uniswap", "compound", "curve", "morpho", "lido"]:
+            if p in content.lower():
+                protocol = p.capitalize()
+                break
+
+        # Demo similar protocols
+        similar_map = {
+            "Aave": [("Compound", 0.92), ("Morpho", 0.85), ("Spark", 0.82)],
+            "Uniswap": [("Curve", 0.88), ("SushiSwap", 0.85), ("Balancer", 0.80)],
+            "Compound": [("Aave", 0.92), ("Morpho", 0.80), ("Spark", 0.78)],
+            "Curve": [("Uniswap", 0.88), ("Balancer", 0.82), ("Velodrome", 0.75)],
+            "Morpho": [("Aave", 0.85), ("Compound", 0.80), ("Spark", 0.78)],
+            "Lido": [("Rocket Pool", 0.90), ("Frax ETH", 0.85), ("Swell", 0.80)],
+        }
+        similar = similar_map.get(protocol, similar_map["Aave"])
+
+        translations = {
+            "en": {
+                "title": f"🔗 **Protocols Similar to {protocol} (Demo)**",
+                "desc": f"Based on category, features, and risk profile, here are protocols similar to {protocol}:",
+                "similarity": "Similarity",
+                "note": "Register for full comparison including:",
+                "features": ["Detailed feature comparison", "APY comparison", "Risk analysis", "User reviews"],
+            },
+            "es": {
+                "title": f"🔗 **Protocolos Similares a {protocol} (Demo)**",
+                "desc": f"Basándose en categoría, características y perfil de riesgo, aquí hay protocolos similares a {protocol}:",
+                "similarity": "Similitud",
+                "note": "Regístrate para comparación completa incluyendo:",
+                "features": ["Comparación detallada de características", "Comparación de APY", "Análisis de riesgo", "Opiniones de usuarios"],
+            },
+            "pt": {
+                "title": f"🔗 **Protocolos Similares a {protocol} (Demo)**",
+                "desc": f"Com base em categoria, recursos e perfil de risco, aqui estão protocolos semelhantes a {protocol}:",
+                "similarity": "Similaridade",
+                "note": "Registre-se para comparação completa incluindo:",
+                "features": ["Comparação detalhada de recursos", "Comparação de APY", "Análise de risco", "Avaliações de usuários"],
+            },
+            "zh": {
+                "title": f"🔗 **与{protocol}类似的协议 (演示)**",
+                "desc": f"根据类别、功能和风险配置,以下是与{protocol}类似的协议:",
+                "similarity": "相似度",
+                "note": "注册后可获得完整比较:",
+                "features": ["详细功能比较", "APY比较", "风险分析", "用户评价"],
+            },
+        }
+        t = translations.get(language, translations["en"])
+
+        response = f"{t['title']}\n\n{t['desc']}\n\n"
+        for name, score in similar:
+            bar = "█" * int(score * 10)
+            response += f"• **{name}** - {t['similarity']}: {score:.0%} {bar}\n"
+        response += f"\n{t['note']}\n"
+        for feature in t["features"]:
+            response += f"  ✓ {feature}\n"
+        response += "\n" + self._get_registration_cta(language, for_action=False)
+
+        return {
+            "content": response,
+            "enrichment": {
+                "graphrag": True,
+                "base_protocol": protocol,
+                "similar_protocols": [s[0] for s in similar],
+                "full_comparison_requires_registration": True,
+            },
+            "requires_registration": False,
+        }
 
     # ========================================
     # Hunter AI Handlers
