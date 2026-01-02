@@ -172,23 +172,61 @@ for p in protocols:
 
 ### 3. MEV Protection
 
-**Location**: `src/app/application/ultra/mev_protection.py`
+**Location**: 
+- `src/app/application/ultra/mev_protection.py` - Core protection logic
+- `src/app/application/ultra/flashbots_client.py` - Flashbots relay client
 
-Protects transactions from MEV attacks using Flashbots:
+Protects transactions from MEV (Maximal Extractable Value) attacks using private transaction relays.
 
-**Protection Levels**:
-- `NONE`: Public mempool (risky)
-- `BASIC`: Private relay only
-- `ADVANCED`: Flashbots + bundle optimization
-- `MAXIMUM`: All protections + MEV-share
+#### What is MEV?
 
-**Features**:
-- Private transaction submission
-- Bundle optimization
-- Sandwich attack prevention
-- Front-running protection
+MEV attacks occur when bots reorder/insert transactions to extract profit:
 
-**Usage**:
+| Attack | Description | Your Loss |
+|--------|-------------|-----------|
+| **Sandwich** | Bot buys BEFORE you, sells AFTER | 10-30% |
+| **Front-run** | Bot copies your trade with higher gas | 100% of opportunity |
+| **Back-run** | Bot trades after you to capture momentum | Minimal |
+
+#### Protection Levels
+
+| Level | Method | When to Use |
+|-------|--------|-------------|
+| `NONE` | Public mempool | Never (risky!) |
+| `BASIC` | Private relay only | Small trades |
+| `ADVANCED` | Flashbots + bundles | Standard trades |
+| `MAXIMUM` | All protections + MEV-share | High-value trades |
+
+#### API Keys Required
+
+**🔓 NO API KEY NEEDED** - Flashbots is free and open!
+
+| Relay | Endpoint | Fee |
+|-------|----------|-----|
+| **Flashbots** | `https://relay.flashbots.net` | FREE |
+| **MEV Blocker** | `https://rpc.mevblocker.io` | FREE |
+| **Eden Network** | `https://api.edennetwork.io` | FREE |
+
+Only requirement: **Private key** for signing bundles (already configured in Step 5).
+
+#### How It Works
+
+```
+Your Trade → MEV Protection → Flashbots Relay → Block Builders → Block
+                  ↓                                    ↑
+            Private Path                        (Not in mempool)
+                  ↓
+            No Sandwich Attack!
+```
+
+1. **Create Bundle**: Group related transactions
+2. **Simulate**: Verify profitability via `eth_call`
+3. **Sign**: Sign with your private key
+4. **Submit**: Send to Flashbots (bypasses public mempool)
+5. **Include**: Builder includes if profitable
+
+#### Usage (Core Protection)
+
 ```python
 from app.application.ultra.mev_protection import MEVProtection
 
@@ -199,6 +237,85 @@ print(f"Level: {info['protection_level']}")
 print(f"Flashbots: {info['use_flashbots']}")
 print(f"Private Relay: {info['use_private_relay']}")
 ```
+
+#### Usage (Flashbots Client - Real Integration)
+
+```python
+from app.application.ultra.flashbots_client import FlashbotsClient, Chain
+
+# Initialize client (no API key needed!)
+client = FlashbotsClient(
+    private_key="0x...",  # For signing bundles
+    chain=Chain.ETHEREUM,
+)
+
+# Send single transaction privately
+result = await client.send_private_transaction(
+    signed_tx="0x...",  # Already signed transaction
+    fast=True,  # Higher priority
+)
+print(f"Status: {result.status}")
+
+# Submit bundle (atomic execution)
+result = await client.send_bundle(
+    transactions=["0x...", "0x..."],  # Signed txs
+    target_block=18000000,
+)
+print(f"Bundle hash: {result.bundle_hash}")
+
+# Simulate before execution
+sim = await client.simulate_bundle(
+    transactions=["0x..."],
+    target_block=18000000,
+)
+if sim["success"]:
+    print(f"Gas used: {sim['totalGasUsed']}")
+
+await client.close()
+```
+
+#### Usage (MEV Blocker - Simplest Option)
+
+```python
+from app.application.ultra.flashbots_client import MEVBlockerClient
+
+# MEV Blocker is the simplest - just change RPC endpoint
+client = MEVBlockerClient()
+
+# Send transaction privately
+tx_hash = await client.send_raw_transaction(signed_tx="0x...")
+print(f"Sent: {tx_hash}")
+
+await client.close()
+```
+
+#### Implementation Status
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Core Protection Logic | ✅ Complete | `mev_protection.py` |
+| Flashbots Client | ✅ Complete | `flashbots_client.py` |
+| Bundle Simulation | ✅ Complete | `eth_call` support |
+| Bundle Submission | ✅ Complete | `eth_sendBundle` |
+| Private Transactions | ✅ Complete | `eth_sendPrivateTransaction` |
+| Mempool Scanning | 🔴 Not Implemented | Requires WebSocket to mempool |
+| Real Sandwich Detection | 🔴 Simulated | Would need mempool access |
+
+#### Supported Relays
+
+| Relay | Networks | Features |
+|-------|----------|----------|
+| **Flashbots** | Ethereum, Goerli, Sepolia | Full bundle API |
+| **MEV Blocker** | Ethereum | Simplest (RPC replacement) |
+| **Eden Network** | Ethereum | Bundle API |
+
+#### Best Practices
+
+1. **Always use MEV protection** for trades > $100
+2. **Use Balancer flash loans** (0% fee) when possible
+3. **Simulate before execution** to verify profitability
+4. **Use ADVANCED or MAXIMUM** protection for high-value trades
+5. **Never submit to public mempool** for arbitrage
 
 ---
 
