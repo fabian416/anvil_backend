@@ -34,7 +34,7 @@ class PerplexityMCPServer(MCPServer):
             timeout_ms: Request timeout in milliseconds
             settings: MCP settings for retry configuration
         """
-        super().__init__("perplexity", settings)
+        super().__init__("perplexity", version="1.0.0", description="Perplexity AI research MCP server")
         self.api_key = api_key
         self.base_url = base_url
         self.timeout_seconds = timeout_ms / 1000.0
