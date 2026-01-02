@@ -135,7 +135,7 @@ class GraphRepositoryAge(GraphRepository):
                 else:
                     where_clauses.append(f"n.{key} = {value}")
         
-        where_clause = " AND " + " AND ".join(where_clauses) if where_clauses else ""
+        where_clause = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
         
         query = text(f"""
             SELECT * FROM cypher('{self.graph_name}', $$
