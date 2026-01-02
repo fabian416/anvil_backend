@@ -298,8 +298,88 @@ await client.close()
 | Bundle Simulation | ✅ Complete | `eth_call` support |
 | Bundle Submission | ✅ Complete | `eth_sendBundle` |
 | Private Transactions | ✅ Complete | `eth_sendPrivateTransaction` |
-| Mempool Scanning | 🔴 Not Implemented | Requires WebSocket to mempool |
-| Real Sandwich Detection | 🔴 Simulated | Would need mempool access |
+| Mempool Scanning | ✅ Complete | `mempool_scanner.py` - Real-time via Alchemy |
+| Attack Detection | ✅ Complete | Sandwich + Front-run detection |
+| MEV Monitor | ✅ Complete | High-level wrapper with auto-protection |
+
+#### Mempool Scanner
+
+**Location**: `src/app/application/ultra/mempool_scanner.py`
+
+Real-time mempool monitoring to detect MEV attacks before they happen:
+
+```python
+from app.application.ultra.mempool_scanner import MempoolScanner, Chain
+
+# Initialize scanner
+scanner = MempoolScanner(
+    alchemy_api_key="your-alchemy-key",
+    chain=Chain.ETHEREUM,
+)
+
+# Start scanning
+await scanner.start()
+
+# Get mempool stats
+stats = await scanner.get_mempool_statistics()
+print(f"Pending TXs: {stats['pending_transactions']}")
+print(f"Pending Swaps: {stats['pending_swaps']}")
+print(f"MEV Bots Active: {stats['known_mev_bots_active']}")
+
+# Check for attacks on your transaction
+attack = await scanner.detect_attack_on_transaction(
+    token_pair=("WETH", "USDC"),
+    our_gas_price=50_000_000_000,  # 50 gwei
+    our_amount_usd=Decimal("10000"),
+)
+
+if attack:
+    print(f"Attack detected: {attack.attack_type.value}")
+    print(f"Estimated loss: ${attack.estimated_loss_usd}")
+    # Route via Flashbots instead!
+
+await scanner.stop()
+```
+
+**Detection Capabilities**:
+- **Sandwich Attacks**: Detects front-run + back-run pattern
+- **Front-Running**: Detects higher-gas copies of your trade
+- **Known MEV Bots**: Monitors addresses of known attackers
+
+#### MEV Monitor (High-Level)
+
+**Location**: `src/app/application/ultra/mempool_scanner.py`
+
+Simplified interface combining scanning + protection:
+
+```python
+from app.application.ultra.mempool_scanner import MEVMonitor
+
+monitor = MEVMonitor(alchemy_api_key="your-key")
+await monitor.start()
+
+# Check transaction safety
+safety = await monitor.check_transaction_safety(
+    token_pair=("WETH", "USDC"),
+    amount_usd=Decimal("50000"),
+    gas_price=50_000_000_000,
+)
+
+print(f"Safety: {safety['safety_level']}")  # SAFE, MODERATE, RISKY, DANGEROUS
+print(f"Recommendation: {safety['recommendation']}")  # NORMAL or USE_FLASHBOTS
+
+# Auto-protected submission
+result = await monitor.submit_protected_transaction(
+    signed_tx="0x...",
+    token_pair=("WETH", "USDC"),
+    amount_usd=Decimal("50000"),
+)
+
+if result["protected"]:
+    print("Routed via MEV Blocker")
+
+await monitor.stop()
+```
 
 #### Supported Relays
 

@@ -5,11 +5,36 @@ Implements MEV (Maximal Extractable Value) protection:
 - Private transaction submission
 - Bundle optimization
 - Sandwich attack prevention
+- Real-time mempool scanning
 
 Based on ULTRA Arbitrage Bot's MEV protection module.
+
+Usage:
+    # Basic protection
+    protection = MEVProtection()
+    bundle = await protection.create_bundle(transactions, expected_profit)
+    result = await protection.submit_bundle(bundle)
+    
+    # With real mempool scanning
+    protection = MEVProtection(
+        enable_mempool_scanning=True,
+        alchemy_api_key="your-key",
+    )
+    await protection.start_scanner()
+    
+    # Check if transaction is being attacked
+    is_safe = await protection.check_transaction_safety(
+        token_pair=("WETH", "USDC"),
+        amount_usd=Decimal("10000"),
+        gas_price=50_000_000_000,
+    )
+    
+    if not is_safe["safe"]:
+        # Route via Flashbots
+        result = await protection.submit_protected(signed_tx)
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -47,7 +72,7 @@ class Transaction:
     max_priority_fee: int
     nonce: Optional[int] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "to": self.to,
@@ -65,7 +90,7 @@ class MEVBundle:
     """MEV-protected transaction bundle."""
 
     bundle_id: str
-    transactions: List[Transaction]
+    transactions: list[Transaction]
     target_block: int
     gas_price: int
     priority_fee: int
@@ -73,9 +98,9 @@ class MEVBundle:
     bundle_hash: str
     status: BundleStatus = BundleStatus.PENDING
     created_at: datetime = field(default_factory=datetime.utcnow)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "bundle_id": self.bundle_id,
@@ -102,7 +127,7 @@ class FlashbotsResponse:
     gas_used: Optional[int]
     error_message: Optional[str] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "bundle_id": self.bundle_id,
@@ -147,17 +172,56 @@ class MEVProtection:
     - Transaction bundling
     - Priority fee optimization
     - Simulation before execution
+    - Real-time mempool scanning (optional)
+    
+    Example:
+        >>> protection = MEVProtection()
+        >>> 
+        >>> # Create and submit bundle
+        >>> tx = Transaction(to="0x...", data="0x...", value=Decimal("0"), ...)
+        >>> bundle = await protection.create_bundle([tx], Decimal("150"))
+        >>> result = await protection.submit_bundle(bundle)
+        >>> 
+        >>> # With mempool scanning
+        >>> protection = MEVProtection(
+        ...     enable_mempool_scanning=True,
+        ...     alchemy_api_key="your-key",
+        ... )
+        >>> await protection.start_scanner()
+        >>> 
+        >>> # Check safety
+        >>> safety = await protection.check_transaction_safety(
+        ...     token_pair=("WETH", "USDC"),
+        ...     amount_usd=Decimal("10000"),
+        ... )
+        >>> print(f"Safe: {safety['safe']}")
     """
 
-    def __init__(self, config: MEVConfig = None):
+    def __init__(
+        self,
+        config: MEVConfig | None = None,
+        enable_mempool_scanning: bool = False,
+        alchemy_api_key: str = "",
+        private_key: str = "",
+    ):
         """Initialize MEV protection.
 
         Args:
             config: MEV configuration
+            enable_mempool_scanning: Enable real-time mempool scanning
+            alchemy_api_key: Alchemy API key for mempool access
+            private_key: Private key for Flashbots signing
         """
         self.config = config or MEVConfig()
         self._bundle_counter = 0
-        self._submitted_bundles: Dict[str, MEVBundle] = {}
+        self._submitted_bundles: dict[str, MEVBundle] = {}
+        
+        # Mempool scanning (optional)
+        self._enable_scanning = enable_mempool_scanning
+        self._alchemy_key = alchemy_api_key
+        self._private_key = private_key
+        self._scanner: Any = None
+        self._flashbots_client: Any = None
 
     def _generate_bundle_id(self) -> str:
         """Generate unique bundle ID."""
@@ -165,11 +229,11 @@ class MEVProtection:
         timestamp = int(datetime.utcnow().timestamp())
         return f"BUNDLE-{timestamp}-{self._bundle_counter:04d}"
 
-    def _calculate_bundle_hash(self, transactions: List[Transaction]) -> str:
+    def _calculate_bundle_hash(self, transactions: list[Transaction]) -> str:
         """Calculate bundle hash.
 
         Args:
-            transactions: List of transactions
+            transactions: list of transactions
 
         Returns:
             Bundle hash (mock)
@@ -186,7 +250,7 @@ class MEVProtection:
         # In production, would query actual blockchain
         return 18000000  # Mock block number
 
-    async def _estimate_gas_price(self) -> Tuple[int, int]:
+    async def _estimate_gas_price(self) -> tuple[int, int]:
         """Estimate optimal gas price.
 
         Returns:
@@ -207,7 +271,7 @@ class MEVProtection:
 
     async def create_bundle(
         self,
-        transactions: List[Transaction],
+        transactions: list[Transaction],
         expected_profit: Decimal,
         target_block: Optional[int] = None,
     ) -> MEVBundle:
@@ -264,7 +328,7 @@ class MEVProtection:
 
         return bundle
 
-    async def simulate_bundle(self, bundle: MEVBundle) -> Tuple[bool, Optional[str]]:
+    async def simulate_bundle(self, bundle: MEVBundle) -> tuple[bool, Optional[str]]:
         """Simulate bundle execution.
 
         Args:
@@ -477,7 +541,7 @@ class MEVProtection:
 
         return False
 
-    async def get_bundle_statistics(self) -> Dict:
+    async def get_bundle_statistics(self) -> dict[str, Any]:
         """Get statistics about submitted bundles.
 
         Returns:
@@ -519,7 +583,7 @@ class MEVProtection:
             "total_profit": str(total_profit),
         }
 
-    def get_protection_info(self) -> Dict:
+    def get_protection_info(self) -> dict[str, Any]:
         """Get protection configuration info.
 
         Returns:
@@ -537,4 +601,208 @@ class MEVProtection:
             "use_mev_share": self.config.use_mev_share,
             "max_gas_price_gwei": self.config.max_gas_price_gwei,
             "simulation_enabled": self.config.enable_simulation,
+            "mempool_scanning_enabled": self._enable_scanning,
+            "scanner_active": self._scanner is not None,
         }
+
+    # ========================================================================
+    # Real-time Mempool Scanning
+    # ========================================================================
+
+    async def start_scanner(self) -> None:
+        """Start mempool scanner for real-time attack detection.
+        
+        Requires alchemy_api_key to be set during initialization.
+        
+        Example:
+            >>> protection = MEVProtection(
+            ...     enable_mempool_scanning=True,
+            ...     alchemy_api_key="your-key",
+            ... )
+            >>> await protection.start_scanner()
+            >>> # Scanner is now monitoring mempool
+        """
+        if not self._enable_scanning:
+            raise ValueError("Mempool scanning not enabled. Set enable_mempool_scanning=True")
+        
+        if not self._alchemy_key:
+            raise ValueError("Alchemy API key required for mempool scanning")
+        
+        from app.application.ultra.mempool_scanner import MempoolScanner, Chain
+        
+        self._scanner = MempoolScanner(
+            alchemy_api_key=self._alchemy_key,
+            chain=Chain.ETHEREUM,
+        )
+        await self._scanner.start()
+
+    async def stop_scanner(self) -> None:
+        """Stop mempool scanner.
+        
+        Example:
+            >>> await protection.stop_scanner()
+        """
+        if self._scanner:
+            await self._scanner.stop()
+            self._scanner = None
+
+    async def check_transaction_safety(
+        self,
+        token_pair: tuple[str, str],
+        amount_usd: Decimal,
+        gas_price: int = 0,
+    ) -> dict[str, Any]:
+        """Check if it's safe to submit a transaction.
+        
+        Analyzes mempool for potential attacks on your transaction.
+        
+        Args:
+            token_pair: Token pair being traded (e.g., ("WETH", "USDC"))
+            amount_usd: Trade amount in USD
+            gas_price: Your transaction's gas price in wei
+            
+        Returns:
+            Safety analysis with recommendation
+            
+        Example:
+            >>> safety = await protection.check_transaction_safety(
+            ...     token_pair=("WETH", "USDC"),
+            ...     amount_usd=Decimal("10000"),
+            ...     gas_price=50_000_000_000,
+            ... )
+            >>> if not safety["safe"]:
+            ...     print(f"Attack detected: {safety['attack']}")
+        """
+        result: dict[str, Any] = {
+            "safe": True,
+            "recommendation": "NORMAL",
+            "attack": None,
+            "reason": None,
+        }
+        
+        # Always recommend Flashbots for large trades
+        if amount_usd > Decimal("5000"):
+            result["recommendation"] = "USE_FLASHBOTS"
+            result["reason"] = "Large trade value"
+        
+        # Check mempool if scanner is active
+        if self._scanner:
+            attack = await self._scanner.detect_attack_on_transaction(
+                token_pair=token_pair,
+                our_gas_price=gas_price,
+                our_amount_usd=amount_usd,
+            )
+            
+            if attack:
+                result["safe"] = False
+                result["recommendation"] = "USE_FLASHBOTS"
+                result["attack"] = attack.to_dict()
+                result["reason"] = f"{attack.attack_type.value} detected"
+                result["estimated_loss_usd"] = str(attack.estimated_loss_usd)
+        
+        return result
+
+    async def submit_protected(
+        self,
+        signed_tx: str,
+        token_pair: tuple[str, str] | None = None,
+        amount_usd: Decimal = Decimal("0"),
+    ) -> dict[str, Any]:
+        """Submit transaction with automatic MEV protection.
+        
+        Checks for attacks and routes via Flashbots if needed.
+        
+        Args:
+            signed_tx: Signed transaction hex string
+            token_pair: Token pair being traded
+            amount_usd: Trade amount in USD
+            
+        Returns:
+            Submission result
+            
+        Example:
+            >>> result = await protection.submit_protected(
+            ...     signed_tx="0x...",
+            ...     token_pair=("WETH", "USDC"),
+            ...     amount_usd=Decimal("10000"),
+            ... )
+            >>> print(f"Protected: {result['protected']}")
+            >>> print(f"TX Hash: {result.get('tx_hash')}")
+        """
+        from app.application.ultra.flashbots_client import FlashbotsClient, MEVBlockerClient
+        
+        # Check for attacks if scanner is active
+        attack = None
+        if self._scanner and token_pair:
+            attack = await self._scanner.detect_attack_on_transaction(
+                token_pair=token_pair,
+                our_amount_usd=amount_usd,
+            )
+        
+        # Decide submission method
+        use_private = (
+            attack is not None
+            or amount_usd > Decimal("1000")
+            or self.config.protection_level in (ProtectionLevel.ADVANCED, ProtectionLevel.MAXIMUM)
+        )
+        
+        result: dict[str, Any] = {
+            "protected": use_private,
+            "attack_detected": attack.to_dict() if attack else None,
+            "method": "private" if use_private else "public",
+        }
+        
+        try:
+            if use_private:
+                # Use MEV Blocker (simplest, no signing required)
+                client = MEVBlockerClient()
+                try:
+                    tx_hash = await client.send_raw_transaction(signed_tx)
+                    result["tx_hash"] = tx_hash
+                    result["status"] = "submitted"
+                    result["relay"] = "mev_blocker"
+                finally:
+                    await client.close()
+            else:
+                result["status"] = "not_submitted"
+                result["note"] = "Public submission disabled for safety"
+                
+        except Exception as e:
+            result["status"] = "failed"
+            result["error"] = str(e)
+        
+        return result
+
+    async def get_scanner_stats(self) -> dict[str, Any]:
+        """Get mempool scanner statistics.
+        
+        Returns:
+            Scanner statistics
+            
+        Example:
+            >>> stats = await protection.get_scanner_stats()
+            >>> print(f"Attacks detected: {stats['attacks_detected']}")
+        """
+        if not self._scanner:
+            return {"enabled": False, "message": "Scanner not active"}
+        
+        return {
+            "enabled": True,
+            **self._scanner.get_stats(),
+        }
+
+    async def get_mempool_info(self) -> dict[str, Any]:
+        """Get current mempool information.
+        
+        Returns:
+            Mempool statistics
+            
+        Example:
+            >>> info = await protection.get_mempool_info()
+            >>> print(f"Pending txs: {info['pending_transactions']}")
+            >>> print(f"MEV bots active: {info['known_mev_bots_active']}")
+        """
+        if not self._scanner:
+            return {"enabled": False, "message": "Scanner not active"}
+        
+        return await self._scanner.get_mempool_statistics()
