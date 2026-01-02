@@ -20,9 +20,63 @@ class RPCSettings(BaseModel):
 
     # Infura (Backup)
     infura_api_key: str = ""
+    infura_ethereum_url: str = ""
+    infura_arbitrum_url: str = ""
+    infura_optimism_url: str = ""
+    infura_polygon_url: str = ""
+    infura_base_url: str = ""
 
     # Default chain
     default_chain: str = "ethereum"
+
+    @property
+    def has_alchemy(self) -> bool:
+        """Check if Alchemy is configured."""
+        return bool(self.alchemy_api_key)
+
+    @property
+    def has_infura(self) -> bool:
+        """Check if Infura is configured."""
+        return bool(self.infura_api_key)
+
+    def get_rpc_url(self, chain: str, provider: str = "auto") -> str:
+        """Get RPC URL for a specific chain.
+
+        Args:
+            chain: Chain name (ethereum, arbitrum, optimism, polygon, base)
+            provider: Provider preference (alchemy, infura, auto)
+
+        Returns:
+            RPC URL or empty string if not configured
+        """
+        # Chain to URL mapping
+        alchemy_urls = {
+            "ethereum": self.alchemy_ethereum_url,
+            "arbitrum": self.alchemy_arbitrum_url,
+            "optimism": self.alchemy_optimism_url,
+            "base": self.alchemy_base_url,
+            "polygon_zkevm": self.alchemy_polygon_zkevm_url,
+        }
+        infura_urls = {
+            "ethereum": self.infura_ethereum_url,
+            "arbitrum": self.infura_arbitrum_url,
+            "optimism": self.infura_optimism_url,
+            "polygon": self.infura_polygon_url,
+            "base": self.infura_base_url,
+        }
+
+        if provider == "alchemy" and chain in alchemy_urls:
+            return alchemy_urls[chain]
+        if provider == "infura" and chain in infura_urls:
+            return infura_urls[chain]
+
+        # Auto: try Alchemy first, then Infura
+        if chain in alchemy_urls and alchemy_urls[chain]:
+            return alchemy_urls[chain]
+        if chain in infura_urls and infura_urls[chain]:
+            return infura_urls[chain]
+
+        return ""
 
 
 class WalletSettings(BaseModel):

@@ -71,15 +71,43 @@ WEBSOCKET_ENDPOINTS = {
     },
     Chain.ARBITRUM: {
         "alchemy": "wss://arb-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "wss://arbitrum-mainnet.infura.io/ws/v3/{key}",
     },
     Chain.OPTIMISM: {
         "alchemy": "wss://opt-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "wss://optimism-mainnet.infura.io/ws/v3/{key}",
     },
     Chain.BASE: {
         "alchemy": "wss://base-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "wss://base-mainnet.infura.io/ws/v3/{key}",
     },
     Chain.POLYGON: {
         "alchemy": "wss://polygon-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "wss://polygon-mainnet.infura.io/ws/v3/{key}",
+    },
+}
+
+# HTTP RPC endpoints (for pending block queries)
+RPC_ENDPOINTS = {
+    Chain.ETHEREUM: {
+        "alchemy": "https://eth-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "https://mainnet.infura.io/v3/{key}",
+    },
+    Chain.ARBITRUM: {
+        "alchemy": "https://arb-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "https://arbitrum-mainnet.infura.io/v3/{key}",
+    },
+    Chain.OPTIMISM: {
+        "alchemy": "https://opt-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "https://optimism-mainnet.infura.io/v3/{key}",
+    },
+    Chain.BASE: {
+        "alchemy": "https://base-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "https://base-mainnet.infura.io/v3/{key}",
+    },
+    Chain.POLYGON: {
+        "alchemy": "https://polygon-mainnet.g.alchemy.com/v2/{key}",
+        "infura": "https://polygon-mainnet.infura.io/v3/{key}",
     },
 }
 
@@ -203,6 +231,9 @@ class MempoolScannerConfig:
     alchemy_api_key: str = ""
     infura_api_key: str = ""
     
+    # Provider preference (alchemy or infura)
+    preferred_provider: str = "alchemy"  # "alchemy" or "infura"
+    
     # Detection thresholds
     gas_price_threshold: float = 0.02  # 2% higher = suspicious
     sandwich_window_blocks: int = 2  # Look within N blocks
@@ -216,11 +247,52 @@ class MempoolScannerConfig:
     def websocket_url(self) -> str:
         """Get WebSocket URL."""
         chain_endpoints = WEBSOCKET_ENDPOINTS.get(self.chain, {})
+        
+        # Try preferred provider first
+        if self.preferred_provider == "infura" and self.infura_api_key:
+            if "infura" in chain_endpoints:
+                return chain_endpoints["infura"].format(key=self.infura_api_key)
+        
+        # Try Alchemy
         if self.alchemy_api_key and "alchemy" in chain_endpoints:
             return chain_endpoints["alchemy"].format(key=self.alchemy_api_key)
+        
+        # Fallback to Infura
         if self.infura_api_key and "infura" in chain_endpoints:
             return chain_endpoints["infura"].format(key=self.infura_api_key)
+        
         return ""
+    
+    @property
+    def rpc_url(self) -> str:
+        """Get HTTP RPC URL."""
+        chain_endpoints = RPC_ENDPOINTS.get(self.chain, {})
+        
+        # Try preferred provider first
+        if self.preferred_provider == "infura" and self.infura_api_key:
+            if "infura" in chain_endpoints:
+                return chain_endpoints["infura"].format(key=self.infura_api_key)
+        
+        # Try Alchemy
+        if self.alchemy_api_key and "alchemy" in chain_endpoints:
+            return chain_endpoints["alchemy"].format(key=self.alchemy_api_key)
+        
+        # Fallback to Infura
+        if self.infura_api_key and "infura" in chain_endpoints:
+            return chain_endpoints["infura"].format(key=self.infura_api_key)
+        
+        return ""
+    
+    @property
+    def active_provider(self) -> str:
+        """Get which provider is being used."""
+        if self.preferred_provider == "infura" and self.infura_api_key:
+            return "infura"
+        if self.alchemy_api_key:
+            return "alchemy"
+        if self.infura_api_key:
+            return "infura"
+        return "none"
 
 
 class MempoolScanner:
@@ -260,14 +332,16 @@ class MempoolScanner:
         alchemy_api_key: str = "",
         infura_api_key: str = "",
         chain: Chain = Chain.ETHEREUM,
+        preferred_provider: str = "alchemy",
         config: MempoolScannerConfig | None = None,
     ):
         """Initialize mempool scanner.
         
         Args:
-            alchemy_api_key: Alchemy API key (recommended)
-            infura_api_key: Infura API key (alternative)
+            alchemy_api_key: Alchemy API key
+            infura_api_key: Infura API key
             chain: Blockchain to scan
+            preferred_provider: "alchemy" or "infura"
             config: Full configuration
         """
         if config:
@@ -277,6 +351,7 @@ class MempoolScanner:
                 chain=chain,
                 alchemy_api_key=alchemy_api_key,
                 infura_api_key=infura_api_key,
+                preferred_provider=preferred_provider,
             )
         
         self._pending_txs: dict[str, PendingTransaction] = {}
@@ -377,8 +452,8 @@ class MempoolScanner:
         """
         client = await self._get_http_client()
         
-        # Use Alchemy's alchemy_pendingTransactions if available
-        rpc_url = self.config.websocket_url.replace("wss://", "https://").replace("/ws/", "/")
+        # Use HTTP RPC URL
+        rpc_url = self.config.rpc_url
         if not rpc_url:
             return []
         
@@ -570,6 +645,7 @@ class MempoolScanner:
         return {
             "running": self._running,
             "chain": self.config.chain.value,
+            "provider": self.config.active_provider,
             "pending_txs_tracked": len(self._pending_txs),
             **self._stats,
         }
