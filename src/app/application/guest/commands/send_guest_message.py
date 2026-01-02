@@ -299,15 +299,130 @@ class SendGuestMessage:
         self, content: str
     ) -> tuple[ChatIntent | None, float | None, str | None]:
         """Detect intent from message content."""
-        if not self._intent_detector:
-            return ChatIntent.GENERAL_CONVERSATION, 0.5, "demo_handler"
+        # Try external intent detector first
+        if self._intent_detector:
+            try:
+                result = await self._intent_detector.detect_intent(content)
+                return result.intent, result.confidence, result.handler
+            except Exception as e:
+                logger.warning(f"Intent detection failed: {e}")
 
-        try:
-            result = await self._intent_detector.detect_intent(content)
-            return result.intent, result.confidence, result.handler
-        except Exception as e:
-            logger.warning(f"Intent detection failed: {e}")
-            return ChatIntent.GENERAL_CONVERSATION, 0.5, "demo_handler"
+        # Fallback to keyword-based detection for guest chat
+        return self._detect_intent_by_keywords(content)
+
+    def _detect_intent_by_keywords(
+        self, content: str
+    ) -> tuple[ChatIntent, float, str]:
+        """Simple keyword-based intent detection for guest chat."""
+        content_lower = content.lower()
+
+        # Hunter AI patterns
+        hunter_patterns = {
+            ChatIntent.HUNTER_SENTIMENT: [
+                "sentiment", "feeling", "mood", "bullish", "bearish",
+                "twitter", "reddit", "social", "news", "hype",
+            ],
+            ChatIntent.HUNTER_PRICE_PREDICTION: [
+                "predict", "prediction", "forecast", "price target",
+                "will go", "where will", "price tomorrow", "future price",
+            ],
+            ChatIntent.HUNTER_RISK_SIGNALS: [
+                "risk signal", "market risk", "whale", "liquidation",
+                "danger", "warning", "alert", "crash",
+            ],
+            ChatIntent.HUNTER_TRADING_SIGNALS: [
+                "trading signal", "buy signal", "sell signal",
+                "should i buy", "should i sell", "entry point", "exit point",
+            ],
+            ChatIntent.HUNTER_PATTERNS: [
+                "chart pattern", "head and shoulders", "double bottom",
+                "flag pattern", "triangle", "breakout", "technical analysis",
+            ],
+            ChatIntent.HUNTER_PORTFOLIO: [
+                "optimize portfolio", "optimize my portfolio", "portfolio allocation",
+                "rebalance", "diversify", "risk adjusted", "sharpe ratio",
+                "portfolio optimization", "best allocation",
+            ],
+        }
+
+        # ULTRA patterns
+        ultra_patterns = {
+            ChatIntent.ULTRA_ARBITRAGE: [
+                "arbitrage", "arb", "price difference", "spread",
+                "profit opportunity", "cross dex",
+            ],
+            ChatIntent.ULTRA_FLASH_LOANS: [
+                "flash loan", "flashloan", "flash borrow",
+                "instant loan", "uncollateralized",
+            ],
+            ChatIntent.ULTRA_MEV_PROTECTION: [
+                "mev", "front run", "frontrun", "sandwich",
+                "flashbots", "private transaction", "protected",
+            ],
+            ChatIntent.ULTRA_AUTO_EXECUTOR: [
+                "auto execute", "automated trading", "trading bot",
+                "dca", "limit order", "stop loss", "auto trade",
+            ],
+        }
+
+        # DeFi shortcut patterns
+        defi_patterns = {
+            ChatIntent.LENDING: [
+                "lend", "lending", "deposit", "earn", "yield",
+                "morpho", "apy", "interest rate",
+            ],
+            ChatIntent.MONEY_MARKET: [
+                "money market", "aave", "compound", "supply",
+                "borrow rate", "lending rate",
+            ],
+            ChatIntent.SWAP: [
+                "swap", "exchange", "trade", "convert",
+                "1inch", "uniswap", "dex",
+            ],
+            ChatIntent.PROTOCOL_SEARCH: [
+                "find protocol", "search protocol", "what is",
+                "tell me about", "protocol info",
+            ],
+            ChatIntent.RISK_ASSESSMENT: [
+                "risk", "safe", "audit", "security", "tvl",
+                "trust", "reliable",
+            ],
+        }
+
+        # Check all patterns
+        all_patterns = {**hunter_patterns, **ultra_patterns, **defi_patterns}
+
+        for intent, keywords in all_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_handler_for_intent(intent)
+                    return intent, 0.75, handler
+
+        return ChatIntent.GENERAL_CONVERSATION, 0.5, "demo_handler"
+
+    def _get_handler_for_intent(self, intent: ChatIntent) -> str:
+        """Get handler name for intent."""
+        handler_map = {
+            # Hunter AI
+            ChatIntent.HUNTER_SENTIMENT: "hunter_sentiment_handler",
+            ChatIntent.HUNTER_PRICE_PREDICTION: "hunter_prediction_handler",
+            ChatIntent.HUNTER_RISK_SIGNALS: "hunter_risk_handler",
+            ChatIntent.HUNTER_TRADING_SIGNALS: "hunter_signals_handler",
+            ChatIntent.HUNTER_PATTERNS: "hunter_patterns_handler",
+            ChatIntent.HUNTER_PORTFOLIO: "hunter_portfolio_handler",
+            # ULTRA
+            ChatIntent.ULTRA_ARBITRAGE: "ultra_arbitrage_handler",
+            ChatIntent.ULTRA_FLASH_LOANS: "ultra_flashloan_handler",
+            ChatIntent.ULTRA_MEV_PROTECTION: "ultra_mev_handler",
+            ChatIntent.ULTRA_AUTO_EXECUTOR: "ultra_executor_handler",
+            # DeFi
+            ChatIntent.LENDING: "lending_handler",
+            ChatIntent.MONEY_MARKET: "money_market_handler",
+            ChatIntent.SWAP: "swap_handler",
+            ChatIntent.PROTOCOL_SEARCH: "graphrag_handler",
+            ChatIntent.RISK_ASSESSMENT: "graphrag_handler",
+        }
+        return handler_map.get(intent, "demo_handler")
 
     def _is_restricted_action(
         self, intent: ChatIntent | None
@@ -355,6 +470,9 @@ class SendGuestMessage:
         # In production, this would integrate with the actual handlers
 
         responses = {
+            # ========================================
+            # GraphRAG Intents
+            # ========================================
             ChatIntent.PROTOCOL_SEARCH: {
                 "en": "I can help you find DeFi protocols! In demo mode, try asking about popular protocols like Aave, Uniswap, or Compound. Sign up for full search capabilities.",
                 "es": "¡Puedo ayudarte a encontrar protocolos DeFi! En modo demo, pregunta sobre protocolos populares como Aave, Uniswap o Compound. Regístrate para búsquedas completas.",
@@ -367,6 +485,15 @@ class SendGuestMessage:
                 "pt": "Avaliação de risco disponível! Analiso segurança de protocolos, histórico de auditorias e tendências de TVL. Cadastre-se para relatórios detalhados.",
                 "zh": "风险评估可用！我分析协议安全性、审计历史和 TVL 趋势。注册以获取详细的风险报告。",
             },
+            ChatIntent.SIMILAR_PROTOCOLS: {
+                "en": "I can find similar protocols for you! Looking for alternatives to your favorite DeFi apps? Sign up to discover protocols with similar features and better yields.",
+                "es": "¡Puedo encontrar protocolos similares! ¿Buscas alternativas a tus apps DeFi favoritas? Regístrate para descubrir protocolos con características similares y mejores rendimientos.",
+                "pt": "Posso encontrar protocolos similares! Procurando alternativas aos seus apps DeFi favoritos? Cadastre-se para descobrir protocolos com recursos semelhantes e melhores rendimentos.",
+                "zh": "我可以为您找到类似的协议！正在寻找您喜爱的 DeFi 应用的替代品？注册以发现具有类似功能和更高收益的协议。",
+            },
+            # ========================================
+            # DeFi Shortcuts
+            # ========================================
             ChatIntent.LENDING: {
                 "en": "I can show you the best lending rates! Top Morpho vaults currently offer 5-15% APY on stablecoins. Sign up to deposit and earn.",
                 "es": "¡Puedo mostrarte las mejores tasas de préstamo! Las bóvedas top de Morpho ofrecen 5-15% APY en stablecoins. Regístrate para depositar y ganar.",
@@ -385,11 +512,80 @@ class SendGuestMessage:
                 "pt": "Posso obter cotações de swap! Agregamos preços de 1inch, LiFi e mais para as melhores taxas. Cadastre-se para executar swaps.",
                 "zh": "我可以为您获取交换报价！我们汇总来自 1inch、LiFi 等的价格以获得最佳利率。注册以执行交换。",
             },
+            # ========================================
+            # Hunter AI Intents (Market Intelligence)
+            # ========================================
+            ChatIntent.HUNTER_SENTIMENT: {
+                "en": "🎯 Hunter AI can analyze market sentiment from Twitter, Reddit, Discord, and news sources in real-time! Currently tracking 50+ tokens with sentiment scores. Sign up to get live sentiment alerts and trading signals.",
+                "es": "🎯 ¡Hunter AI puede analizar el sentimiento del mercado de Twitter, Reddit, Discord y noticias en tiempo real! Actualmente rastreando 50+ tokens con puntuaciones de sentimiento. Regístrate para recibir alertas de sentimiento en vivo.",
+                "pt": "🎯 Hunter AI pode analisar o sentimento do mercado do Twitter, Reddit, Discord e notícias em tempo real! Atualmente rastreando 50+ tokens com pontuações de sentimento. Cadastre-se para receber alertas de sentimento ao vivo.",
+                "zh": "🎯 Hunter AI 可以实时分析来自 Twitter、Reddit、Discord 和新闻来源的市场情绪！目前正在跟踪 50+ 代币的情绪评分。注册以获取实时情绪警报。",
+            },
+            ChatIntent.HUNTER_PRICE_PREDICTION: {
+                "en": "📈 Hunter AI uses ML models for price predictions! Our models analyze on-chain data, social sentiment, and technical indicators. Current accuracy: 72% on 24h predictions. Sign up for personalized price forecasts.",
+                "es": "📈 ¡Hunter AI usa modelos ML para predicciones de precios! Nuestros modelos analizan datos on-chain, sentimiento social e indicadores técnicos. Precisión actual: 72% en predicciones de 24h. Regístrate para pronósticos personalizados.",
+                "pt": "📈 Hunter AI usa modelos ML para previsões de preços! Nossos modelos analisam dados on-chain, sentimento social e indicadores técnicos. Precisão atual: 72% em previsões de 24h. Cadastre-se para previsões personalizadas.",
+                "zh": "📈 Hunter AI 使用 ML 模型进行价格预测！我们的模型分析链上数据、社交情绪和技术指标。当前准确率：24 小时预测 72%。注册以获取个性化价格预测。",
+            },
+            ChatIntent.HUNTER_RISK_SIGNALS: {
+                "en": "⚠️ Hunter AI monitors market risk signals 24/7! We track whale movements, liquidation risks, and anomaly detection. Current market risk level: MODERATE. Sign up for real-time risk alerts.",
+                "es": "⚠️ ¡Hunter AI monitorea señales de riesgo del mercado 24/7! Rastreamos movimientos de ballenas, riesgos de liquidación y detección de anomalías. Nivel de riesgo actual: MODERADO. Regístrate para alertas de riesgo en tiempo real.",
+                "pt": "⚠️ Hunter AI monitora sinais de risco do mercado 24/7! Rastreamos movimentos de baleias, riscos de liquidação e detecção de anomalias. Nível de risco atual: MODERADO. Cadastre-se para alertas de risco em tempo real.",
+                "zh": "⚠️ Hunter AI 全天候监控市场风险信号！我们跟踪鲸鱼动向、清算风险和异常检测。当前市场风险级别：中等。注册以获取实时风险警报。",
+            },
+            ChatIntent.HUNTER_TRADING_SIGNALS: {
+                "en": "💹 Hunter AI generates trading signals based on technical analysis and AI! Recent signals: BTC bullish divergence, ETH support at $3,200. Win rate: 68%. Sign up to receive personalized trading signals.",
+                "es": "💹 ¡Hunter AI genera señales de trading basadas en análisis técnico e IA! Señales recientes: divergencia alcista BTC, soporte ETH en $3,200. Tasa de éxito: 68%. Regístrate para recibir señales personalizadas.",
+                "pt": "💹 Hunter AI gera sinais de trading baseados em análise técnica e IA! Sinais recentes: divergência de alta BTC, suporte ETH em $3.200. Taxa de sucesso: 68%. Cadastre-se para receber sinais personalizados.",
+                "zh": "💹 Hunter AI 基于技术分析和 AI 生成交易信号！最近信号：BTC 看涨背离，ETH 支撑位 $3,200。胜率：68%。注册以接收个性化交易信号。",
+            },
+            ChatIntent.HUNTER_PATTERNS: {
+                "en": "📊 Hunter AI detects chart patterns automatically! Currently tracking: head & shoulders, double bottoms, flag patterns across 100+ pairs. Sign up to get pattern alerts before breakouts.",
+                "es": "📊 ¡Hunter AI detecta patrones de gráficos automáticamente! Actualmente rastreando: hombro-cabeza-hombro, doble suelo, banderas en 100+ pares. Regístrate para recibir alertas de patrones antes de los breakouts.",
+                "pt": "📊 Hunter AI detecta padrões de gráficos automaticamente! Atualmente rastreando: ombro-cabeça-ombro, fundo duplo, bandeiras em 100+ pares. Cadastre-se para receber alertas de padrões antes dos rompimentos.",
+                "zh": "📊 Hunter AI 自动检测图表模式！目前正在跟踪：头肩顶、双底、旗形模式，涵盖 100+ 交易对。注册以在突破前获取模式警报。",
+            },
+            ChatIntent.HUNTER_PORTFOLIO: {
+                "en": "💼 Hunter AI optimizes portfolios using Modern Portfolio Theory! We analyze risk-adjusted returns and suggest optimal allocations. Sign up to get AI-powered portfolio recommendations.",
+                "es": "💼 ¡Hunter AI optimiza portfolios usando la Teoría Moderna de Portafolios! Analizamos retornos ajustados por riesgo y sugerimos asignaciones óptimas. Regístrate para recomendaciones de portfolio con IA.",
+                "pt": "💼 Hunter AI otimiza portfólios usando a Teoria Moderna de Portfólios! Analisamos retornos ajustados ao risco e sugerimos alocações ótimas. Cadastre-se para recomendações de portfólio com IA.",
+                "zh": "💼 Hunter AI 使用现代投资组合理论优化投资组合！我们分析风险调整后的回报并建议最佳配置。注册以获取 AI 驱动的投资组合建议。",
+            },
+            # ========================================
+            # ULTRA Intents (DeFi Automation & MEV)
+            # ========================================
+            ChatIntent.ULTRA_ARBITRAGE: {
+                "en": "🔄 ULTRA detects arbitrage opportunities across DEXs in real-time! Current opportunities: 0.3% ETH/USDC spread between Uniswap and Curve. Sign up to execute arbitrage trades automatically.",
+                "es": "🔄 ¡ULTRA detecta oportunidades de arbitraje entre DEXs en tiempo real! Oportunidades actuales: 0.3% spread ETH/USDC entre Uniswap y Curve. Regístrate para ejecutar trades de arbitraje automáticamente.",
+                "pt": "🔄 ULTRA detecta oportunidades de arbitragem entre DEXs em tempo real! Oportunidades atuais: 0.3% spread ETH/USDC entre Uniswap e Curve. Cadastre-se para executar trades de arbitragem automaticamente.",
+                "zh": "🔄 ULTRA 实时检测跨 DEX 套利机会！当前机会：Uniswap 和 Curve 之间 ETH/USDC 价差 0.3%。注册以自动执行套利交易。",
+            },
+            ChatIntent.ULTRA_FLASH_LOANS: {
+                "en": "⚡ ULTRA supports flash loans from Aave, dYdX, and Balancer! Execute complex DeFi strategies with zero upfront capital. Sign up to access flash loan protocols and strategy builder.",
+                "es": "⚡ ¡ULTRA soporta flash loans de Aave, dYdX y Balancer! Ejecuta estrategias DeFi complejas sin capital inicial. Regístrate para acceder a protocolos de flash loan y constructor de estrategias.",
+                "pt": "⚡ ULTRA suporta flash loans de Aave, dYdX e Balancer! Execute estratégias DeFi complexas sem capital inicial. Cadastre-se para acessar protocolos de flash loan e construtor de estratégias.",
+                "zh": "⚡ ULTRA 支持来自 Aave、dYdX 和 Balancer 的闪电贷！无需前期资金即可执行复杂的 DeFi 策略。注册以访问闪电贷协议和策略构建器。",
+            },
+            ChatIntent.ULTRA_MEV_PROTECTION: {
+                "en": "🛡️ ULTRA provides MEV protection via Flashbots! Protect your trades from sandwich attacks and front-running. Your transactions are routed through private mempools. Sign up for MEV-protected execution.",
+                "es": "🛡️ ¡ULTRA proporciona protección MEV vía Flashbots! Protege tus trades de ataques sandwich y front-running. Tus transacciones se enrutan por mempools privados. Regístrate para ejecución protegida de MEV.",
+                "pt": "🛡️ ULTRA fornece proteção MEV via Flashbots! Proteja seus trades de ataques sandwich e front-running. Suas transações são roteadas por mempools privados. Cadastre-se para execução protegida de MEV.",
+                "zh": "🛡️ ULTRA 通过 Flashbots 提供 MEV 保护！保护您的交易免受三明治攻击和抢跑。您的交易通过私有内存池路由。注册以获得 MEV 保护执行。",
+            },
+            ChatIntent.ULTRA_AUTO_EXECUTOR: {
+                "en": "🤖 ULTRA Auto-Executor runs your trading strategies 24/7! Set up DCA, limit orders, stop-losses, and conditional trades. Currently executing 1,000+ strategies for users. Sign up to automate your trading.",
+                "es": "🤖 ¡ULTRA Auto-Executor ejecuta tus estrategias de trading 24/7! Configura DCA, órdenes límite, stop-losses y trades condicionales. Actualmente ejecutando 1,000+ estrategias. Regístrate para automatizar tu trading.",
+                "pt": "🤖 ULTRA Auto-Executor executa suas estratégias de trading 24/7! Configure DCA, ordens limite, stop-losses e trades condicionais. Atualmente executando 1.000+ estratégias. Cadastre-se para automatizar seu trading.",
+                "zh": "🤖 ULTRA Auto-Executor 全天候运行您的交易策略！设置 DCA、限价单、止损和条件交易。目前正在为用户执行 1,000+ 策略。注册以自动化您的交易。",
+            },
+            # ========================================
+            # General Conversation (Fallback)
+            # ========================================
             ChatIntent.GENERAL_CONVERSATION: {
-                "en": "I'm your AI assistant for DeFi! Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",
-                "es": "¡Soy tu asistente de IA para DeFi! Pregúntame sobre protocolos, rendimientos, riesgos o cómo empezar. Regístrate para acceso completo.",
-                "pt": "Sou seu assistente de IA para DeFi! Pergunte-me sobre protocolos, rendimentos, riscos ou como começar. Cadastre-se para acesso completo.",
-                "zh": "我是您的 DeFi AI 助手！问我关于协议、收益、风险或如何开始。注册以获得完整功能访问。",
+                "en": "I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",
+                "es": "¡Soy tu asistente de IA para DeFi! Puedo ayudar con análisis de mercado (Hunter AI), trading automatizado (ULTRA), tasas de préstamo, swaps y más. Pregúntame sobre protocolos, rendimientos, riesgos o cómo empezar. Regístrate para acceso completo.",
+                "pt": "Sou seu assistente de IA para DeFi! Posso ajudar com análise de mercado (Hunter AI), trading automatizado (ULTRA), taxas de empréstimo, swaps e mais. Pergunte-me sobre protocolos, rendimentos, riscos ou como começar. Cadastre-se para acesso completo.",
+                "zh": "我是您的 DeFi AI 助手！我可以帮助进行市场分析（Hunter AI）、自动交易（ULTRA）、借贷利率、交换等。问我关于协议、收益、风险或如何开始。注册以获得完整功能访问。",
             },
         }
 
