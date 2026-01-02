@@ -8,61 +8,72 @@ Routes messages to appropriate handlers:
 - Regular chat (general conversation)
 """
 
-from uuid import UUID
-from typing import Optional
 import time
+from decimal import Decimal
+from uuid import UUID
 
-from app.domain.chat.entities.message import Message
-from app.domain.chat.ports.conversation_repository import ConversationRepository
-from app.domain.exceptions.chat import (
-    ConversationNotFoundError,
-    ConversationAccessDeniedError,
-)
-from app.application.chat.services.intent_detector import (
-    IntentDetectorService,
-    ChatIntent,
-)
-from app.application.chat.graph_search_handler import ChatGraphSearchHandler
-from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
-from app.application.agent_squad.commands.send_agent_squad_message import (
-    SendAgentSquadMessage,
-)
 from app.application.agent_squad.commands.execute_supervisor_workflow import (
     ExecuteSupervisorWorkflow,
 )
+from app.application.agent_squad.commands.send_agent_squad_message import (
+    SendAgentSquadMessage,
+)
 from app.application.chat.commands.send_message import SendMessage
-
-# Hunter AI imports
-from app.application.hunter.sentiment_aggregator import SentimentAggregator
-from app.application.hunter.twitter_sentiment import TwitterSentimentAnalyzer, TwitterConfig
-from app.application.hunter.reddit_sentiment import RedditSentimentAnalyzer, RedditConfig
-from app.application.hunter.discord_sentiment import DiscordSentimentAnalyzer, DiscordConfig
-from app.application.hunter.news_sentiment import NewsSentimentAnalyzer, NewsConfig
-from app.application.hunter.lstm_price_predictor import LSTMPricePredictor
-from app.application.hunter.risk_analyzer import RiskAnalyzer
-from app.application.hunter.trading_signal_generator import TradingSignalGenerator, Timeframe
-from app.application.hunter.pattern_recognition import PatternRecognizer
-from app.application.hunter.portfolio_optimizer import PortfolioOptimizer
-from app.domain.value_objects.sentiment import SentimentSource
-
-# ULTRA imports
-from app.application.ultra.arbitrage_discovery import ArbitrageDiscovery, ArbitrageType
-from app.application.ultra.flash_loan_engine import FlashLoanEngine, FlashLoanProtocol
-from app.application.ultra.mev_protection import MEVProtection
-from app.application.ultra.arbitrage_executor import ArbitrageExecutor
-from app.application.ultra.auto_executor import AutoExecutor
-from decimal import Decimal
+from app.application.chat.graph_search_handler import ChatGraphSearchHandler
+from app.application.chat.handlers.activity_handler import ActivityHandler
 
 # DeFi Shortcut imports (Morpho, Swaps, Portfolio, etc.)
 from app.application.chat.handlers.lending_handler import LendingHandler
-from app.application.chat.handlers.portfolio_handler import PortfolioHandler
-from app.application.chat.handlers.swap_handler import SwapHandler
-from app.application.chat.handlers.activity_handler import ActivityHandler
-from app.application.chat.handlers.receive_handler import ReceiveHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
+from app.application.chat.handlers.portfolio_handler import PortfolioHandler
+from app.application.chat.handlers.receive_handler import ReceiveHandler
+from app.application.chat.handlers.swap_handler import SwapHandler
+from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
+from app.application.chat.services.intent_detector import (
+    ChatIntent,
+    IntentDetectorService,
+)
+from app.application.hunter.discord_sentiment import (
+    DiscordConfig,
+    DiscordSentimentAnalyzer,
+)
+from app.application.hunter.lstm_price_predictor import LSTMPricePredictor
+from app.application.hunter.news_sentiment import NewsConfig, NewsSentimentAnalyzer
+from app.application.hunter.pattern_recognition import PatternRecognizer
+from app.application.hunter.portfolio_optimizer import PortfolioOptimizer
+from app.application.hunter.reddit_sentiment import (
+    RedditConfig,
+    RedditSentimentAnalyzer,
+)
+from app.application.hunter.risk_analyzer import RiskAnalyzer
+
+# Hunter AI imports
+from app.application.hunter.sentiment_aggregator import SentimentAggregator
+from app.application.hunter.trading_signal_generator import (
+    Timeframe,
+    TradingSignalGenerator,
+)
+from app.application.hunter.twitter_sentiment import (
+    TwitterConfig,
+    TwitterSentimentAnalyzer,
+)
+
+# ULTRA imports
+from app.application.ultra.arbitrage_discovery import ArbitrageDiscovery
+from app.application.ultra.arbitrage_executor import ArbitrageExecutor
+from app.application.ultra.auto_executor import AutoExecutor
+from app.application.ultra.flash_loan_engine import FlashLoanEngine, FlashLoanProtocol
+from app.application.ultra.mev_protection import MEVProtection
+from app.domain.chat.entities.message import Message
+from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.exceptions.chat import (
+    ConversationAccessDeniedError,
+    ConversationNotFoundError,
+)
 
 # Wallet repository for user wallet lookup
 from app.domain.ports.wallet.wallet_repository import WalletRepository
+from app.domain.value_objects.sentiment import SentimentSource
 from app.domain.value_objects.user_id import UserId
 
 
@@ -88,13 +99,13 @@ class UnifiedChatOrchestrator:
         agent_squad: SendAgentSquadMessage,
         supervisor: ExecuteSupervisorWorkflow,
         regular_chat: SendMessage,
-        lending_handler: Optional[LendingHandler] = None,
-        portfolio_handler: Optional[PortfolioHandler] = None,
-        swap_handler: Optional[SwapHandler] = None,
-        activity_handler: Optional[ActivityHandler] = None,
-        receive_handler: Optional[ReceiveHandler] = None,
-        money_market_handler: Optional[MoneyMarketHandler] = None,
-        wallet_repository: Optional[WalletRepository] = None,
+        lending_handler: LendingHandler | None = None,
+        portfolio_handler: PortfolioHandler | None = None,
+        swap_handler: SwapHandler | None = None,
+        activity_handler: ActivityHandler | None = None,
+        receive_handler: ReceiveHandler | None = None,
+        money_market_handler: MoneyMarketHandler | None = None,
+        wallet_repository: WalletRepository | None = None,
     ):
         """
         Initialize orchestrator with all handlers.
@@ -679,7 +690,7 @@ class UnifiedChatOrchestrator:
 
         for i, protocol in enumerate(search_results.results, 1):
             output += f"**{i}. {protocol.protocol_name}**\n"
-            output += f"- TVL: ${protocol.tvl/1e9:.2f}B\n"
+            output += f"- TVL: ${protocol.tvl / 1e9:.2f}B\n"
             output += f"- Risk: {protocol.risk_level} ({protocol.risk_score:.1f}/10)\n"
             output += f"- Category: {protocol.category}\n"
             output += f"- Chain: {protocol.chain}\n"
@@ -700,7 +711,7 @@ class UnifiedChatOrchestrator:
 
         output = f"**Risk Analysis: {ra.protocol_name}**\n\n"
         output += f"**Overall Risk:** {ra.risk_score:.1f}/10 ({ra.risk_level})\n"
-        output += f"**Confidence:** {ra.confidence*100:.0f}%\n\n"
+        output += f"**Confidence:** {ra.confidence * 100:.0f}%\n\n"
 
         if ra.contributing_factors:
             output += "**Contributing Factors:**\n"
@@ -723,15 +734,15 @@ class UnifiedChatOrchestrator:
             for alt in risk_insights.alternatives[:3]:
                 output += f"\n**{alt.protocol_name}** (Risk: {alt.risk_level})\n"
                 output += f"- {alt.why_better}\n"
-                output += f"- TVL: ${alt.tvl/1e9:.2f}B\n"
+                output += f"- TVL: ${alt.tvl / 1e9:.2f}B\n"
 
         return output
 
     def _format_similar_protocols(self, base, similar_list) -> str:
         """Format similar protocols as markdown."""
         output = f"**Protocols Similar to {base.protocol_name}**\n\n"
-        output += f"**Base Protocol:**\n"
-        output += f"- TVL: ${base.tvl/1e9:.2f}B\n"
+        output += "**Base Protocol:**\n"
+        output += f"- TVL: ${base.tvl / 1e9:.2f}B\n"
         output += f"- Risk: {base.risk_level} ({base.risk_score:.1f}/10)\n"
         output += f"- Category: {base.category}\n\n"
 
@@ -743,8 +754,8 @@ class UnifiedChatOrchestrator:
 
         for i, protocol in enumerate(similar_list, 1):
             output += f"**{i}. {protocol.protocol_name}**\n"
-            output += f"- Similarity: {protocol.similarity_score*100:.0f}%\n"
-            output += f"- TVL: ${protocol.tvl/1e9:.2f}B\n"
+            output += f"- Similarity: {protocol.similarity_score * 100:.0f}%\n"
+            output += f"- TVL: ${protocol.tvl / 1e9:.2f}B\n"
             output += f"- Risk: {protocol.risk_level} ({protocol.risk_score:.1f}/10)\n"
             output += f"- Why similar: {protocol.why_relevant}\n\n"
 
@@ -826,23 +837,23 @@ class UnifiedChatOrchestrator:
             # Format response
             response_content = f"📊 **Sentiment Analysis for {token_symbol}**\n\n"
             response_content += f"**Overall Sentiment:** {aggregated.classification.value.title()} ({aggregated.overall_score:.1f}/100)\n"
-            response_content += f"**Confidence:** {aggregated.overall_confidence*100:.0f}%\n"
+            response_content += f"**Confidence:** {aggregated.overall_confidence * 100:.0f}%\n"
             response_content += f"**Signal Strength:** {aggregated.signal_strength}\n"
-            response_content += f"**Consensus:** {divergence['consensus']*100:.0f}%\n\n"
+            response_content += f"**Consensus:** {divergence['consensus'] * 100:.0f}%\n\n"
 
             response_content += "**Source Breakdown:**\n"
             for source_name, data in source_breakdown.items():
-                response_content += f"- {source_name.title()}: {data['score']:.1f}/100 (weight: {data['weight']*100:.0f}%)\n"
+                response_content += f"- {source_name.title()}: {data['score']:.1f}/100 (weight: {data['weight'] * 100:.0f}%)\n"
 
             if divergence["has_divergence"]:
-                response_content += f"\n⚠️ **Divergence Detected:** Sources show conflicting signals. Proceed with caution.\n"
+                response_content += "\n⚠️ **Divergence Detected:** Sources show conflicting signals. Proceed with caution.\n"
 
             response_content += f"\n*Analysis based on {hours}h of data from {aggregated.source_count} sources*"
 
         except Exception as e:
             # Fallback to placeholder response on error
             response_content = f"📊 **Sentiment Analysis for {token_symbol}**\n\n"
-            response_content += f"⚠️ Unable to fetch real-time sentiment data: {str(e)}\n\n"
+            response_content += f"⚠️ Unable to fetch real-time sentiment data: {e!s}\n\n"
             response_content += "This feature routes to Hunter AI sentiment analysis tools:\n"
             response_content += "- Twitter sentiment\n"
             response_content += "- Reddit discussions\n"
@@ -897,7 +908,7 @@ class UnifiedChatOrchestrator:
             response_content += f"**Predicted Price ({time_horizon}):** ${prediction.predicted_price:,.2f}\n"
             response_content += f"**Change:** {prediction.change_percent:+.2f}%\n"
             response_content += f"**Direction:** {prediction.direction.upper()} {'📈' if prediction.direction == 'up' else '📉' if prediction.direction == 'down' else '➡️'}\n"
-            response_content += f"**Confidence:** {prediction.confidence*100:.0f}%\n\n"
+            response_content += f"**Confidence:** {prediction.confidence * 100:.0f}%\n\n"
 
             response_content += "**Analysis:**\n"
             if prediction.direction == "up":
@@ -905,14 +916,14 @@ class UnifiedChatOrchestrator:
             elif prediction.direction == "down":
                 response_content += f"- Bearish trend detected with {prediction.change_percent:.1f}% expected downside\n"
             else:
-                response_content += f"- Sideways movement expected with minimal price action\n"
+                response_content += "- Sideways movement expected with minimal price action\n"
 
-            response_content += f"\n*LSTM forecast based on historical price patterns. Not financial advice.*"
+            response_content += "\n*LSTM forecast based on historical price patterns. Not financial advice.*"
 
         except Exception as e:
             # Fallback to placeholder response on error
             response_content = f"📈 **Price Prediction for {token_symbol}**\n\n"
-            response_content += f"⚠️ Unable to generate price prediction: {str(e)}\n\n"
+            response_content += f"⚠️ Unable to generate price prediction: {e!s}\n\n"
             response_content += "This feature routes to Hunter AI LSTM price prediction:\n"
             response_content += "- Historical price analysis\n"
             response_content += "- Machine learning forecasting\n"
@@ -962,12 +973,12 @@ class UnifiedChatOrchestrator:
                 response_content += f"{emoji} **{factor_name.replace('_', ' ').title()}:** {factor.level.upper()} ({factor.score:.1f}/100)\n"
 
             response_content += f"\n**Recommendation:**\n{assessment.recommendation}\n"
-            response_content += f"\n*ML-based risk analysis across volatility, liquidity, smart contract, and correlation factors*"
+            response_content += "\n*ML-based risk analysis across volatility, liquidity, smart contract, and correlation factors*"
 
         except Exception as e:
             # Fallback to placeholder response on error
             response_content = f"⚠️ **Risk Signals for {token_symbol}**\n\n"
-            response_content += f"⚠️ Unable to fetch risk analysis: {str(e)}\n\n"
+            response_content += f"⚠️ Unable to fetch risk analysis: {e!s}\n\n"
             response_content += "This feature routes to Hunter AI risk detection:\n"
             response_content += "- Market volatility warnings\n"
             response_content += "- Liquidity risk signals\n"
@@ -1010,7 +1021,7 @@ class UnifiedChatOrchestrator:
             signal_emoji = "🟢" if "BUY" in signal.signal_type.value else "🔴" if "SELL" in signal.signal_type.value else "🟡"
             response_content = f"{signal_emoji} **Trading Signal for {token_symbol}**\n\n"
             response_content += f"**Signal:** {signal.signal_type.value} (Strength: {signal.signal_strength:.1f}/100)\n"
-            response_content += f"**Confidence:** {signal.confidence*100:.0f}%\n\n"
+            response_content += f"**Confidence:** {signal.confidence * 100:.0f}%\n\n"
 
             if signal.entry_price:
                 response_content += f"**Entry Price:** ${signal.entry_price:,.2f}\n"
@@ -1019,18 +1030,18 @@ class UnifiedChatOrchestrator:
             if signal.take_profit_price:
                 response_content += f"**Take Profit:** ${signal.take_profit_price:,.2f}\n"
 
-            response_content += f"\n**Component Scores:**\n"
+            response_content += "\n**Component Scores:**\n"
             response_content += f"- Sentiment: {signal.sentiment_score:.1f}/100\n"
             response_content += f"- Price Prediction: {signal.prediction_score:.1f}/100\n"
             response_content += f"- Risk-Adjusted: {signal.risk_score:.1f}/100\n"
 
             response_content += f"\n**Recommendation:**\n{signal.recommendation}\n"
-            response_content += f"\n*AI-powered signal combining sentiment, price prediction, and risk analysis*"
+            response_content += "\n*AI-powered signal combining sentiment, price prediction, and risk analysis*"
 
         except Exception as e:
             # Fallback to placeholder response on error
             response_content = f"📉 **Trading Signals for {token_symbol}**\n\n"
-            response_content += f"⚠️ Unable to generate trading signal: {str(e)}\n\n"
+            response_content += f"⚠️ Unable to generate trading signal: {e!s}\n\n"
             response_content += "This feature routes to Hunter AI trading analysis:\n"
             response_content += "- Buy/sell recommendations\n"
             response_content += "- Entry/exit points\n"
@@ -1079,7 +1090,7 @@ class UnifiedChatOrchestrator:
                 response_content += "**Chart Patterns:**\n"
                 for pattern in chart_patterns[:3]:  # Top 3 patterns
                     emoji = "🔴" if pattern.signal == "bearish" else "🟢" if pattern.signal == "bullish" else "🟡"
-                    response_content += f"{emoji} {pattern.pattern_type.replace('_', ' ').title()} ({pattern.confidence*100:.0f}% confidence)\n"
+                    response_content += f"{emoji} {pattern.pattern_type.replace('_', ' ').title()} ({pattern.confidence * 100:.0f}% confidence)\n"
                 response_content += "\n"
 
             # Candlestick patterns
@@ -1087,25 +1098,25 @@ class UnifiedChatOrchestrator:
                 response_content += "**Recent Candlestick Patterns:**\n"
                 for pattern in candlestick_patterns[:3]:  # Top 3 patterns
                     emoji = "🔴" if pattern.signal == "bearish" else "🟢" if pattern.signal == "bullish" else "🟡"
-                    response_content += f"{emoji} {pattern.pattern.replace('_', ' ').title()} ({pattern.confidence*100:.0f}% confidence)\n"
+                    response_content += f"{emoji} {pattern.pattern.replace('_', ' ').title()} ({pattern.confidence * 100:.0f}% confidence)\n"
                 response_content += "\n"
 
             # Support/Resistance levels
             if levels:
                 response_content += "**Support Levels:**\n"
                 for level in levels["support"][:2]:  # Top 2
-                    response_content += f"- ${level.level:,.2f} (strength: {level.strength*100:.0f}%, {level.touches} touches)\n"
+                    response_content += f"- ${level.level:,.2f} (strength: {level.strength * 100:.0f}%, {level.touches} touches)\n"
 
                 response_content += "\n**Resistance Levels:**\n"
                 for level in levels["resistance"][:2]:  # Top 2
-                    response_content += f"- ${level.level:,.2f} (strength: {level.strength*100:.0f}%, {level.touches} touches)\n"
+                    response_content += f"- ${level.level:,.2f} (strength: {level.strength * 100:.0f}%, {level.touches} touches)\n"
 
-            response_content += f"\n*Technical pattern analysis using historical price data*"
+            response_content += "\n*Technical pattern analysis using historical price data*"
 
         except Exception as e:
             # Fallback to placeholder response on error
             response_content = f"📊 **Chart Pattern Analysis for {token_symbol}**\n\n"
-            response_content += f"⚠️ Unable to detect patterns: {str(e)}\n\n"
+            response_content += f"⚠️ Unable to detect patterns: {e!s}\n\n"
             response_content += "This feature routes to Hunter AI pattern detection:\n"
             response_content += "- Head and shoulders patterns\n"
             response_content += "- Support/resistance levels\n"
@@ -1151,22 +1162,22 @@ class UnifiedChatOrchestrator:
 
             response_content += "**Optimal Allocation:**\n"
             for token, weight in portfolio.weights.items():
-                response_content += f"- {token}: {weight*100:.1f}%\n"
+                response_content += f"- {token}: {weight * 100:.1f}%\n"
 
-            response_content += f"\n**Performance Metrics:**\n"
+            response_content += "\n**Performance Metrics:**\n"
             response_content += f"- Expected Return: {portfolio.metrics.get('expected_return', 0):.1f}%\n"
             response_content += f"- Volatility (Risk): {portfolio.metrics.get('volatility', 0):.1f}%\n"
             response_content += f"- Sharpe Ratio: {portfolio.metrics.get('sharpe_ratio', 0):.2f}\n"
 
             response_content += f"\n**Strategy:** {risk_level} risk profile optimized using Modern Portfolio Theory (MPT)\n"
-            response_content += f"*Allocation maximizes risk-adjusted returns for your risk tolerance*"
+            response_content += "*Allocation maximizes risk-adjusted returns for your risk tolerance*"
 
         except Exception as e:
             # Fallback to placeholder response on error
-            response_content = f"💼 **Portfolio Optimization**\n\n"
-            response_content += f"⚠️ Unable to optimize portfolio: {str(e)}\n\n"
+            response_content = "💼 **Portfolio Optimization**\n\n"
+            response_content += f"⚠️ Unable to optimize portfolio: {e!s}\n\n"
             response_content += f"Tokens: {', '.join(tokens)}\n"
-            response_content += f"Risk tolerance: {risk_tolerance*100:.0f}%\n\n"
+            response_content += f"Risk tolerance: {risk_tolerance * 100:.0f}%\n\n"
             response_content += "This feature routes to Hunter AI MPT optimization:\n"
             response_content += "- Modern Portfolio Theory analysis\n"
             response_content += "- Efficient frontier calculation\n"
@@ -1211,11 +1222,10 @@ class UnifiedChatOrchestrator:
             elif arb_type == "3hop":
                 opportunities = await discovery.discover_3hop_arbitrage(capital)
             elif arb_type == "triangle":
-                opportunities = await discovery.discover_triangular_arbitrage(capital)
+                opportunities = await discovery.discover_triangle_arbitrage(capital=capital)
             else:
-                # Discover all types
-                all_opps = await discovery.discover_all_opportunities(capital)
-                opportunities = all_opps.get("opportunities", [])
+                # Discover all types - returns a list directly
+                opportunities = await discovery.discover_all_opportunities(capital)
 
             # Format response
             response_content = f"🔍 **Arbitrage Opportunities** (${capital:,.2f} capital)\n\n"
@@ -1230,12 +1240,17 @@ class UnifiedChatOrchestrator:
                 response_content += f"**Found {len(opportunities)} opportunities:**\n\n"
 
                 for i, opp in enumerate(opportunities[:5], 1):  # Show top 5
-                    response_content += f"**{i}. {opp.get('type', 'Unknown').upper()} Arbitrage**\n"
-                    response_content += f"- Route: {' → '.join(opp.get('path', []))}\n"
-                    response_content += f"- Expected Profit: ${opp.get('expected_profit', 0):,.2f} ({opp.get('profit_percentage', 0):.2f}%)\n"
-                    response_content += f"- Gas Cost: ${opp.get('gas_cost', 0):,.2f}\n"
-                    response_content += f"- Net Profit: ${opp.get('net_profit', 0):,.2f}\n"
-                    response_content += f"- Opportunity ID: {opp.get('id', 'N/A')}\n\n"
+                    # Build path from trading pairs
+                    path_tokens = [opp.path[0].token_in]
+                    for pair in opp.path:
+                        path_tokens.append(pair.token_out)
+                    path_str = " → ".join(path_tokens)
+
+                    response_content += f"**{i}. {opp.type.value.upper()} Arbitrage**\n"
+                    response_content += f"- Route: {path_str}\n"
+                    response_content += f"- Expected Profit: ${float(opp.expected_profit_usd):,.2f} ({float(opp.profit_percentage * 100):.2f}%)\n"
+                    response_content += f"- Gas Cost: ${float(opp.estimated_gas_cost):,.2f}\n"
+                    response_content += f"- Opportunity ID: {opp.opportunity_id}\n\n"
 
                 if len(opportunities) > 5:
                     response_content += f"*+ {len(opportunities) - 5} more opportunities available*\n\n"
@@ -1247,8 +1262,8 @@ class UnifiedChatOrchestrator:
 
         except Exception as e:
             # Fallback to placeholder response on error
-            response_content = f"🔍 **Arbitrage Discovery**\n\n"
-            response_content += f"⚠️ Unable to scan for arbitrage: {str(e)}\n\n"
+            response_content = "🔍 **Arbitrage Discovery**\n\n"
+            response_content += f"⚠️ Unable to scan for arbitrage: {e!s}\n\n"
             response_content += f"Capital: ${capital:,.2f}\n"
             if arb_type:
                 response_content += f"Type: {arb_type.upper()}\n\n"
@@ -1299,8 +1314,8 @@ class UnifiedChatOrchestrator:
 
                 response_content = f"⚡ **{protocol.title()} Flash Loans**\n\n"
                 if protocol_info:
-                    response_content += f"**Protocol Details:**\n"
-                    response_content += f"- Fee: {protocol_info.fee_percentage*100:.3f}%\n"
+                    response_content += "**Protocol Details:**\n"
+                    response_content += f"- Fee: {protocol_info.fee_percentage * 100:.3f}%\n"
                     response_content += f"- Max Loan: ${protocol_info.max_loan_usd:,.0f}\n"
                     response_content += f"- Supported Tokens: {len(protocol_info.supported_tokens)}\n\n"
 
@@ -1310,27 +1325,30 @@ class UnifiedChatOrchestrator:
                     response_content += f"- Total Repayment: ${amount + fee:,.2f}\n"
             else:
                 # Compare all protocols
-                best = await engine.get_best_protocol(token_symbol, amount)
+                best_protocol = await engine.get_best_protocol(token_symbol, amount)
+                protocols = await engine.get_protocols()
 
                 response_content = f"⚡ **Flash Loan Comparison** ({token_symbol})\n\n"
-                response_content += f"**Best Protocol:** {best.get('protocol', 'Unknown').title()}\n"
-                response_content += f"- Fee: {best.get('fee_percentage', 0)*100:.3f}%\n"
-                response_content += f"- Total Cost: ${best.get('total_fee', 0):,.2f}\n\n"
+                if best_protocol:
+                    best_info = engine.get_protocol_info(best_protocol)
+                    best_fee = amount * best_info.fee_percentage
+                    response_content += f"**Best Protocol:** {best_info.name}\n"
+                    response_content += f"- Fee: {float(best_info.fee_percentage * 100):.3f}%\n"
+                    response_content += f"- Total Cost: ${float(best_fee):,.2f}\n\n"
 
                 response_content += "**All Protocols:**\n"
-                protocols = await engine.get_protocols()
                 for p in protocols:
                     if token_symbol.upper() in [t.upper() for t in p.supported_tokens]:
-                        fee = amount * Decimal(str(p.fee_percentage))
-                        response_content += f"- {p.protocol.value.title()}: ${fee:,.2f} ({p.fee_percentage*100:.3f}%)\n"
+                        fee = amount * p.fee_percentage
+                        response_content += f"- {p.name}: ${float(fee):,.2f} ({float(p.fee_percentage * 100):.3f}%)\n"
 
             response_content += f"\n💡 **Use Case:** Borrow ${amount:,.2f} {token_symbol} instantly with no collateral\n"
             response_content += "Execute arbitrage, liquidations, or collateral swaps in a single transaction"
 
         except Exception as e:
             # Fallback to placeholder response on error
-            response_content = f"⚡ **Flash Loan Protocol Selection**\n\n"
-            response_content += f"⚠️ Unable to fetch flash loan data: {str(e)}\n\n"
+            response_content = "⚡ **Flash Loan Protocol Selection**\n\n"
+            response_content += f"⚠️ Unable to fetch flash loan data: {e!s}\n\n"
             response_content += f"Token: {token_symbol}\n"
             response_content += f"Amount: ${amount:,.2f}\n\n"
             response_content += "Available protocols:\n"
@@ -1374,7 +1392,7 @@ class UnifiedChatOrchestrator:
 
                 # Note: In real implementation, we'd fetch the opportunity details first
                 # For now, we'll simulate the MEV-protected execution
-                response_content = f"🛡️ **MEV-Protected Execution**\n\n"
+                response_content = "🛡️ **MEV-Protected Execution**\n\n"
                 response_content += f"**Opportunity:** {opportunity_id}\n\n"
 
                 response_content += "**Flashbots Bundle Status:**\n"
@@ -1392,7 +1410,7 @@ class UnifiedChatOrchestrator:
                 # General MEV protection info
                 mev_protection = MEVProtection()
 
-                response_content = f"🛡️ **MEV Protection Service**\n\n"
+                response_content = "🛡️ **MEV Protection Service**\n\n"
                 response_content += "**Flashbots Integration:**\n"
                 response_content += "- Private transaction relay\n"
                 response_content += "- Bundle inclusion guarantees\n"
@@ -1410,8 +1428,8 @@ class UnifiedChatOrchestrator:
 
         except Exception as e:
             # Fallback to placeholder response on error
-            response_content = f"🛡️ **MEV Protection**\n\n"
-            response_content += f"⚠️ Unable to access MEV protection: {str(e)}\n\n"
+            response_content = "🛡️ **MEV Protection**\n\n"
+            response_content += f"⚠️ Unable to access MEV protection: {e!s}\n\n"
             if opportunity_id:
                 response_content += f"Opportunity: {opportunity_id}\n\n"
             response_content += "This feature provides:\n"
@@ -1453,7 +1471,7 @@ class UnifiedChatOrchestrator:
 
             if action == "start":
                 await executor.start()
-                response_content = f"🤖 **Trading Bot Started**\n\n"
+                response_content = "🤖 **Trading Bot Started**\n\n"
                 response_content += "✅ Auto-executor is now active\n\n"
                 response_content += "**What it does:**\n"
                 response_content += "- Continuously scans for arbitrage opportunities\n"
@@ -1464,45 +1482,47 @@ class UnifiedChatOrchestrator:
 
             elif action == "stop":
                 await executor.stop()
-                response_content = f"🤖 **Trading Bot Stopped**\n\n"
+                response_content = "🤖 **Trading Bot Stopped**\n\n"
                 response_content += "✅ Auto-executor has been stopped\n\n"
                 response_content += "All active operations completed gracefully.\n"
                 response_content += "Use `start` to resume automated trading."
 
             elif action == "pause":
                 await executor.pause()
-                response_content = f"🤖 **Trading Bot Paused**\n\n"
+                response_content = "🤖 **Trading Bot Paused**\n\n"
                 response_content += "⏸️ Auto-executor is paused\n\n"
                 response_content += "Current trades will complete, but new trades are suspended.\n"
                 response_content += "Use `resume` to continue automated trading."
 
             elif action == "resume":
                 await executor.resume()
-                response_content = f"🤖 **Trading Bot Resumed**\n\n"
+                response_content = "🤖 **Trading Bot Resumed**\n\n"
                 response_content += "▶️ Auto-executor is active again\n\n"
                 response_content += "Scanning for opportunities and executing trades."
 
             else:  # status
-                status = await executor.get_status()
-                response_content = f"🤖 **Trading Bot Status**\n\n"
-                response_content += f"**State:** {status.get('state', 'Unknown').upper()}\n"
-                response_content += f"**Uptime:** {status.get('uptime_hours', 0):.1f} hours\n\n"
+                status = executor.get_status()  # sync method
+                response_content = "🤖 **Trading Bot Status**\n\n"
+                response_content += f"**State:** {status.get('status', 'Unknown').upper()}\n"
+                response_content += f"**Total Executions:** {status.get('total_executions', 0)}\n\n"
 
-                response_content += f"**Performance:**\n"
-                response_content += f"- Trades Executed: {status.get('trades_executed', 0)}\n"
-                response_content += f"- Total Profit: ${status.get('total_profit', 0):,.2f}\n"
-                response_content += f"- Success Rate: {status.get('success_rate', 0)*100:.1f}%\n\n"
+                response_content += "**Configuration:**\n"
+                config = status.get("config", {})
+                response_content += f"- Scan Interval: {config.get('scan_interval', 0)}s\n"
+                response_content += f"- Min Profit: ${config.get('min_profit', '0')}\n"
+                response_content += f"- MEV Protection: {'Enabled' if config.get('mev_protection') else 'Disabled'}\n\n"
 
-                response_content += f"**Current Activity:**\n"
-                response_content += f"- Scanning: {status.get('scanning', False)}\n"
-                response_content += f"- Pending Executions: {status.get('pending_executions', 0)}\n\n"
+                metrics = status.get("metrics", {})
+                response_content += "**Metrics:**\n"
+                response_content += f"- Success Rate: {metrics.get('success_rate', 0):.1f}%\n"
+                response_content += f"- Risk Score: {status.get('risk_score', 0):.1f}/100\n\n"
 
                 response_content += "💡 **Commands:** `start`, `stop`, `pause`, `resume`"
 
         except Exception as e:
             # Fallback to placeholder response on error
-            response_content = f"🤖 **Auto-Executor Control**\n\n"
-            response_content += f"⚠️ Unable to control trading bot: {str(e)}\n\n"
+            response_content = "🤖 **Auto-Executor Control**\n\n"
+            response_content += f"⚠️ Unable to control trading bot: {e!s}\n\n"
             response_content += f"Action: {action}\n\n"
             response_content += "Available commands:\n"
             response_content += "- `start` - Begin automated trading\n"
@@ -1545,25 +1565,25 @@ class UnifiedChatOrchestrator:
         Responses are localized based on user language preference.
         """
         entities = intent_result.extracted_entities
-        
+
         # Extract chain and asset from message or entities
         chain = entities.get("chain", "base").lower()
         asset = entities.get("token_symbol", "USDC").upper()
-        
+
         # Auto-detect from message content
         message_lower = content.lower()
         if "base" in message_lower:
             chain = "base"
         elif "ethereum" in message_lower or "mainnet" in message_lower:
             chain = "ethereum"
-        
+
         if "eth" in message_lower and "ether" in message_lower:
             asset = "ETH"
         elif "usdt" in message_lower:
             asset = "USDT"
         elif "dai" in message_lower:
             asset = "DAI"
-        
+
         try:
             if self._lending_handler:
                 # Use real Morpho data
@@ -1587,7 +1607,7 @@ class UnifiedChatOrchestrator:
                 response_content = self._get_lending_fallback_response(chain, asset)
                 enrichment = {"chain": chain, "asset": asset, "fallback": True}
         except Exception as e:
-            response_content = f"⚠️ Error fetching vault data: {str(e)}\n\nPlease try again later."
+            response_content = f"⚠️ Error fetching vault data: {e!s}\n\nPlease try again later."
             enrichment = {"error": str(e)}
 
         user_msg, agent_msg = await self._save_messages(
@@ -1636,7 +1656,7 @@ Try asking: "Show me Morpho USDC vaults on Base"
         entities = intent_result.extracted_entities
         asset = entities.get("token_symbol", "USDC").upper()
         chain = entities.get("chain", "base").lower()
-        
+
         try:
             if self._money_market_handler:
                 result = await self._money_market_handler.compare_rates(
@@ -1656,7 +1676,7 @@ Try asking: "Show me Morpho USDC vaults on Base"
                 response_content = self._get_money_market_fallback_response(asset)
                 enrichment = {"asset": asset, "fallback": True}
         except Exception as e:
-            response_content = f"⚠️ Error comparing rates: {str(e)}"
+            response_content = f"⚠️ Error comparing rates: {e!s}"
             enrichment = {"error": str(e)}
 
         user_msg, agent_msg = await self._save_messages(
@@ -1696,18 +1716,18 @@ Try: "deposit USDC on Morpho" for direct vault access.
     ) -> dict:
         """Handle swap/exchange intent with i18n."""
         entities = intent_result.extracted_entities
-        
+
         try:
             if self._swap_handler:
                 # Parse swap details from message
                 amount, from_token, to_token, chain = self._swap_handler.parse_swap_from_message(content)
-                
+
                 # Override with entities if available
                 if entities.get("token_symbol"):
                     from_token = entities["token_symbol"]
                 if entities.get("chain"):
                     chain = entities["chain"].lower()
-                
+
                 result = await self._swap_handler.get_swap_quote(
                     from_token=from_token,
                     to_token=to_token,
@@ -1729,7 +1749,7 @@ Try: "deposit USDC on Morpho" for direct vault access.
                 response_content = self._get_swap_fallback_response()
                 enrichment = {"fallback": True}
         except Exception as e:
-            response_content = f"⚠️ Error getting swap quote: {str(e)}"
+            response_content = f"⚠️ Error getting swap quote: {e!s}"
             enrichment = {"error": str(e)}
 
         user_msg, agent_msg = await self._save_messages(
@@ -1775,13 +1795,13 @@ Please specify:
         """Handle balance check intent with i18n."""
         entities = intent_result.extracted_entities
         chain = entities.get("chain", "base").lower()
-        
+
         try:
             if self._portfolio_handler:
                 # Get user's wallet address from conversation context
                 # For now, we need the wallet address - this would come from user session
                 wallet_address = await self._get_user_wallet_address(user_id)
-                
+
                 if wallet_address:
                     result = await self._portfolio_handler.get_balance(
                         wallet_address=wallet_address,
@@ -1803,7 +1823,7 @@ Please specify:
                 response_content = self._get_balance_fallback_response()
                 enrichment = {"fallback": True}
         except Exception as e:
-            response_content = f"⚠️ Error fetching balance: {str(e)}"
+            response_content = f"⚠️ Error fetching balance: {e!s}"
             enrichment = {"error": str(e)}
 
         user_msg, agent_msg = await self._save_messages(
@@ -1854,11 +1874,11 @@ Once connected, I can show you real-time balances across all chains.
         """Handle portfolio enumeration intent with i18n."""
         entities = intent_result.extracted_entities
         chain = entities.get("chain", "base").lower()
-        
+
         try:
             if self._portfolio_handler:
                 wallet_address = await self._get_user_wallet_address(user_id)
-                
+
                 if wallet_address:
                     result = await self._portfolio_handler.get_portfolio(
                         wallet_address=wallet_address,
@@ -1878,7 +1898,7 @@ Once connected, I can show you real-time balances across all chains.
                 response_content = self._get_portfolio_fallback_response()
                 enrichment = {"fallback": True}
         except Exception as e:
-            response_content = f"⚠️ Error fetching portfolio: {str(e)}"
+            response_content = f"⚠️ Error fetching portfolio: {e!s}"
             enrichment = {"error": str(e)}
 
         user_msg, agent_msg = await self._save_messages(
@@ -1934,7 +1954,7 @@ Once connected, I can show you:
         """Handle transaction history/activity intent with i18n."""
         entities = intent_result.extracted_entities
         chain = entities.get("chain")  # Optional filter
-        
+
         try:
             if self._activity_handler:
                 result = await self._activity_handler.get_activity(
@@ -1954,7 +1974,7 @@ Once connected, I can show you:
                 response_content = self._get_activity_fallback_response()
                 enrichment = {"fallback": True}
         except Exception as e:
-            response_content = f"⚠️ Error fetching activity: {str(e)}"
+            response_content = f"⚠️ Error fetching activity: {e!s}"
             enrichment = {"error": str(e)}
 
         user_msg, agent_msg = await self._save_messages(
@@ -1994,7 +2014,7 @@ Your transactions are recorded when you use the app.
         """Handle receive funds intent with i18n - show address, QR, handle."""
         entities = intent_result.extracted_entities
         chain = entities.get("chain", "base").lower()
-        
+
         try:
             if self._receive_handler:
                 result = await self._receive_handler.get_receive_info(
@@ -2022,7 +2042,7 @@ Your transactions are recorded when you use the app.
                     response_content = self._get_receive_no_wallet_response()
                     enrichment = {"no_wallet": True}
         except Exception as e:
-            response_content = f"⚠️ Error fetching wallet: {str(e)}"
+            response_content = f"⚠️ Error fetching wallet: {e!s}"
             enrichment = {"error": str(e)}
 
         user_msg, agent_msg = await self._save_messages(
@@ -2082,7 +2102,7 @@ Once connected, you'll get:
 • Multi-chain support
 """
 
-    async def _get_user_wallet_address(self, user_id: int) -> Optional[str]:
+    async def _get_user_wallet_address(self, user_id: int) -> str | None:
         """
         Get user's primary wallet address from Privy/WalletRepository.
         
@@ -2097,26 +2117,26 @@ Once connected, you'll get:
         """
         if not self._wallet_repository:
             return None
-            
+
         try:
             # Get all wallets for user
             wallets = await self._wallet_repository.get_by_user_id(UserId(user_id))
-            
+
             if not wallets:
                 return None
-            
+
             # Prefer embedded wallets (managed by Privy)
             embedded_wallets = [
-                w for w in wallets 
-                if hasattr(w, 'wallet_type') and str(w.wallet_type).lower() == 'embedded'
+                w for w in wallets
+                if hasattr(w, "wallet_type") and str(w.wallet_type).lower() == "embedded"
             ]
-            
+
             if embedded_wallets:
                 return embedded_wallets[0].address
-            
+
             # Return first available wallet
             return wallets[0].address
-            
+
         except Exception:
             # Log would be helpful here but don't fail the chat
             return None

@@ -9,42 +9,40 @@ import logging
 from decimal import Decimal
 from typing import Any
 
+# DeFi Handler imports
+from app.application.chat.handlers.lending_handler import LendingHandler
+from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
+from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.services.intent_detector import ChatIntent
+from app.application.hunter.discord_sentiment import (
+    DiscordConfig,
+    DiscordSentimentAnalyzer,
+)
+from app.application.hunter.lstm_price_predictor import LSTMPricePredictor
+from app.application.hunter.news_sentiment import NewsConfig, NewsSentimentAnalyzer
+from app.application.hunter.pattern_recognition import PatternRecognizer
+from app.application.hunter.portfolio_optimizer import PortfolioOptimizer
+from app.application.hunter.reddit_sentiment import (
+    RedditConfig,
+    RedditSentimentAnalyzer,
+)
+from app.application.hunter.risk_analyzer import RiskAnalyzer
 
 # Hunter AI imports
 from app.application.hunter.sentiment_aggregator import SentimentAggregator
-from app.application.hunter.twitter_sentiment import (
-    TwitterSentimentAnalyzer,
-    TwitterConfig,
-)
-from app.application.hunter.reddit_sentiment import (
-    RedditSentimentAnalyzer,
-    RedditConfig,
-)
-from app.application.hunter.discord_sentiment import (
-    DiscordSentimentAnalyzer,
-    DiscordConfig,
-)
-from app.application.hunter.news_sentiment import NewsSentimentAnalyzer, NewsConfig
-from app.application.hunter.lstm_price_predictor import LSTMPricePredictor
-from app.application.hunter.risk_analyzer import RiskAnalyzer
 from app.application.hunter.trading_signal_generator import (
-    TradingSignalGenerator,
     Timeframe,
+    TradingSignalGenerator,
 )
-from app.application.hunter.pattern_recognition import PatternRecognizer
-from app.application.hunter.portfolio_optimizer import PortfolioOptimizer
-from app.domain.value_objects.sentiment import SentimentSource
+from app.application.hunter.twitter_sentiment import (
+    TwitterConfig,
+    TwitterSentimentAnalyzer,
+)
 
 # ULTRA imports
 from app.application.ultra.arbitrage_discovery import ArbitrageDiscovery
-from app.application.ultra.flash_loan_engine import FlashLoanEngine, FlashLoanProtocol
+from app.application.ultra.flash_loan_engine import FlashLoanEngine
 from app.application.ultra.mev_protection import MEVProtection
-
-# DeFi Handler imports
-from app.application.chat.handlers.lending_handler import LendingHandler
-from app.application.chat.handlers.swap_handler import SwapHandler
-from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +140,7 @@ class GuestHandlerService:
             response = f"📊 **Sentiment Analysis for {token}**\n\n"
             response += f"**Overall:** {aggregated.classification.value.title()} "
             response += f"({aggregated.overall_score:.1f}/100)\n"
-            response += f"**Confidence:** {aggregated.overall_confidence*100:.0f}%\n\n"
+            response += f"**Confidence:** {aggregated.overall_confidence * 100:.0f}%\n\n"
 
             response += "**By Source:**\n"
             for source, data in breakdown.items():
@@ -184,9 +182,9 @@ class GuestHandlerService:
             response += f"**7-Day Forecast:** ${prediction.predicted_price:,.2f}\n"
             response += f"**Expected Change:** {direction_emoji} {prediction.change_percent:+.1f}%\n"
             response += f"**Direction:** {prediction.direction.upper()}\n"
-            response += f"**Confidence:** {prediction.confidence*100:.0f}%\n\n"
+            response += f"**Confidence:** {prediction.confidence * 100:.0f}%\n\n"
 
-            response += f"**Model:** LSTM Neural Network\n"
+            response += "**Model:** LSTM Neural Network\n"
             response += f"**Horizon:** {prediction.horizon_hours} hours\n"
 
             response += self._get_registration_cta(language)
@@ -228,7 +226,7 @@ class GuestHandlerService:
                 response += f"- {emoji} {factor.name}: {factor.description}\n"
 
             if signals.whale_activity:
-                response += f"\n**🐋 Whale Activity:**\n"
+                response += "\n**🐋 Whale Activity:**\n"
                 response += f"- Large transfers: {signals.whale_activity.transfer_count}\n"
                 response += f"- Net flow: ${signals.whale_activity.net_flow:,.0f}\n"
 
@@ -265,7 +263,7 @@ class GuestHandlerService:
             response = f"💹 **Trading Signal for {token}**\n\n"
             response += f"**Signal:** {signal_emoji} {signal.signal_type.value.upper()}\n"
             response += f"**Strength:** {signal.signal_strength:.0f}/100\n"
-            response += f"**Confidence:** {signal.confidence*100:.0f}%\n"
+            response += f"**Confidence:** {signal.confidence * 100:.0f}%\n"
             response += f"**Timeframe:** {signal.timeframe.value}\n\n"
 
             if signal.entry_price:
@@ -275,7 +273,7 @@ class GuestHandlerService:
             if signal.take_profit_price:
                 response += f"**Take Profit:** ${signal.take_profit_price:,.2f}\n"
 
-            response += f"\n**Factor Scores:**\n"
+            response += "\n**Factor Scores:**\n"
             response += f"- Sentiment: {signal.sentiment_score:.0f}/100\n"
             response += f"- Prediction: {signal.prediction_score:.0f}/100\n"
             response += f"- Risk: {signal.risk_score:.0f}/100\n"
@@ -318,7 +316,7 @@ class GuestHandlerService:
                 for pattern in patterns[:3]:
                     emoji = "🟢" if pattern.bias == "bullish" else "🔴" if pattern.bias == "bearish" else "🟡"
                     response += f"**{emoji} {pattern.name}**\n"
-                    response += f"- Confidence: {pattern.confidence*100:.0f}%\n"
+                    response += f"- Confidence: {pattern.confidence * 100:.0f}%\n"
                     response += f"- Target: ${pattern.target_price:,.2f}\n"
                     response += f"- Status: {pattern.status}\n\n"
 
@@ -354,9 +352,9 @@ class GuestHandlerService:
 
             response += "**Suggested Allocation:**\n"
             for token, weight in result.allocation.items():
-                response += f"- {token}: {weight*100:.0f}%\n"
+                response += f"- {token}: {weight * 100:.0f}%\n"
 
-            response += f"\n**Expected Return:** {result.expected_return*100:.1f}% (annual)\n"
+            response += f"\n**Expected Return:** {result.expected_return * 100:.1f}% (annual)\n"
             response += f"**Sharpe Ratio:** {result.sharpe_ratio:.2f}\n"
 
             response += self._get_registration_cta(language, for_action=True)
@@ -396,11 +394,15 @@ class GuestHandlerService:
             else:
                 response += f"**Found {len(opportunities)} opportunities:**\n\n"
                 for i, opp in enumerate(opportunities[:3], 1):
-                    response += f"**{i}. {opp.arb_type.value.upper()}**\n"
-                    path_str = " → ".join([t.symbol for t in opp.path])
+                    response += f"**{i}. {opp.type.value.upper()}**\n"
+                    # Build path string from trading pairs
+                    path_tokens = [opp.path[0].token_in]
+                    for pair in opp.path:
+                        path_tokens.append(pair.token_out)
+                    path_str = " → ".join(path_tokens)
                     response += f"- Route: {path_str}\n"
-                    response += f"- Net Profit: ${float(opp.net_profit):,.2f}\n"
-                    response += f"- ROI: {float(opp.profit_percentage):.2f}%\n\n"
+                    response += f"- Net Profit: ${float(opp.expected_profit_usd):,.2f}\n"
+                    response += f"- ROI: {float(opp.profit_percentage * 100):.2f}%\n\n"
 
             response += self._get_registration_cta(language, for_action=True)
 
@@ -423,14 +425,14 @@ class GuestHandlerService:
         """Handle flash loan information."""
         try:
             engine = FlashLoanEngine()
-            protocols = await engine.get_available_protocols()
+            protocols = await engine.get_protocols()
 
             response = "⚡ **Flash Loan Protocols**\n\n"
 
-            for protocol in protocols[:4]:
+            for protocol in protocols:
                 response += f"**{protocol.name}**\n"
-                response += f"- Max Loan: ${protocol.max_loan:,.0f}\n"
-                response += f"- Fee: {protocol.fee_percent:.2f}%\n"
+                response += f"- Max Loan: ${float(protocol.max_loan_usd):,.0f}\n"
+                response += f"- Fee: {float(protocol.fee_percentage * 100):.2f}%\n"
                 response += f"- Tokens: {', '.join(protocol.supported_tokens[:3])}\n\n"
 
             response += "**Use Cases:**\n"
@@ -458,12 +460,14 @@ class GuestHandlerService:
         """Handle MEV protection information."""
         try:
             protection = MEVProtection()
-            status = await protection.get_protection_status()
+            info = protection.get_protection_info()
 
             response = "🛡️ **MEV Protection Status**\n\n"
-            response += f"**Flashbots Connected:** {'✅ Yes' if status.connected else '❌ No'}\n"
-            response += f"**Private Pool:** {status.private_pool}\n"
-            response += f"**Block Builders:** {len(status.builders)}\n\n"
+            response += f"**Flashbots:** {'✅ Enabled' if info['use_flashbots'] else '❌ Disabled'}\n"
+            response += f"**Private Relay:** {'✅ Enabled' if info['use_private_relay'] else '❌ Disabled'}\n"
+            response += f"**MEV-Share:** {'✅ Enabled' if info['use_mev_share'] else '❌ Disabled'}\n"
+            response += f"**Protection Level:** {info['protection_level'].upper()}\n"
+            response += f"**Max Gas Price:** {info['max_gas_price_gwei']} gwei\n\n"
 
             response += "**Protection Features:**\n"
             response += "- ✅ Sandwich attack prevention\n"
@@ -476,7 +480,9 @@ class GuestHandlerService:
             return {
                 "content": response,
                 "enrichment": {
-                    "connected": status.connected,
+                    "protection_level": info["protection_level"],
+                    "use_flashbots": info["use_flashbots"],
+                    "use_private_relay": info["use_private_relay"],
                     "ultra_tool": "mev_protection",
                 },
                 "requires_registration": True,
