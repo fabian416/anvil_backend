@@ -1,9 +1,10 @@
 """News sentiment analysis service.
 
 Analyzes cryptocurrency news articles for sentiment.
-Based on Hunter AI Bot's news aggregation module.
+Uses real RSS feeds from crypto news sources (no auth required).
 """
 
+import logging
 import re
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
@@ -14,6 +15,9 @@ from app.domain.value_objects.sentiment import (
     SentimentReading,
     SentimentSource,
 )
+from app.infrastructure.adapters.external.rss_news_client import RSSNewsClient
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -71,13 +75,15 @@ class NewsSentimentAnalyzer:
     - Publication patterns
     """
 
-    def __init__(self, config: NewsConfig = None):
+    def __init__(self, config: NewsConfig = None, rss_client: RSSNewsClient = None):
         """Initialize news sentiment analyzer.
 
         Args:
             config: Configuration for news analysis
+            rss_client: RSS client (optional, creates one if not provided)
         """
         self.config = config or NewsConfig()
+        self._rss_client = rss_client
         self._bullish_keywords = self._load_bullish_keywords()
         self._bearish_keywords = self._load_bearish_keywords()
         self._bullish_phrases = self._load_bullish_phrases()
@@ -245,8 +251,7 @@ class NewsSentimentAnalyzer:
     ) -> List[Dict]:
         """Fetch news articles mentioning token.
 
-        In production, this would call news APIs and parse RSS feeds.
-        For now, returns simulated data.
+        Uses real RSS feeds from crypto news sources.
 
         Args:
             token_symbol: Token symbol
@@ -255,55 +260,71 @@ class NewsSentimentAnalyzer:
         Returns:
             List of article dictionaries
         """
-        # Simulate news API response
-        # In production: use feedparser for RSS, NewsAPI, CryptoPanic API
-        # import feedparser
-        # for feed_url in self.config.rss_feeds:
-        #     feed = feedparser.parse(feed_url)
-        #     articles.extend(feed.entries)
+        # Map common symbols to full names for better matching
+        token_names = {
+            "ETH": "Ethereum",
+            "BTC": "Bitcoin",
+            "SOL": "Solana",
+            "MATIC": "Polygon",
+            "AVAX": "Avalanche",
+            "ARB": "Arbitrum",
+            "OP": "Optimism",
+            "LINK": "Chainlink",
+            "UNI": "Uniswap",
+            "AAVE": "Aave",
+        }
+        token_name = token_names.get(token_symbol.upper(), token_symbol)
 
-        # Simulated articles for testing
-        simulated_articles = [
-            {
-                "title": f"{token_symbol} Sees Major Institutional Adoption",
-                "content": f"Leading financial institutions announce {token_symbol} integration. Positive outlook for cryptocurrency markets.",
-                "source": "coindesk.com",
-                "published": utc_now() - timedelta(hours=2),
-            },
-            {
-                "title": f"{token_symbol} Network Upgrade Successful",
-                "content": f"The {token_symbol} network upgrade was deployed successfully. Strong momentum expected.",
-                "source": "cointelegraph.com",
-                "published": utc_now() - timedelta(hours=5),
-            },
-            {
-                "title": f"Regulatory Concerns Around {token_symbol}",
-                "content": f"Regulators express concern about {token_symbol}. Market uncertainty rising.",
-                "source": "bloomberg.com",
-                "published": utc_now() - timedelta(hours=8),
-            },
-            {
-                "title": f"{token_symbol} Price Analysis: Bullish Trend",
-                "content": f"Technical analysis shows {token_symbol} in strong bullish trend. Positive outlook.",
-                "source": "theblock.co",
-                "published": utc_now() - timedelta(hours=12),
-            },
-            {
-                "title": f"{token_symbol} Partnership Announced",
-                "content": f"Major partnership announced for {token_symbol}. Innovation and growth expected.",
-                "source": "decrypt.co",
-                "published": utc_now() - timedelta(hours=18),
-            },
-        ]
+        try:
+            # Create client if not provided
+            client = self._rss_client or RSSNewsClient()
+            should_close = self._rss_client is None
 
-        # Filter by article length
-        filtered = [
-            a
-            for a in simulated_articles
-            if len(a.get("content", "")) >= self.config.min_article_length
-        ]
+            try:
+                # Fetch articles about the token
+                articles = await client.get_token_news(
+                    token_symbol=token_symbol,
+                    token_name=token_name,
+                    limit=self.config.max_articles_per_query,
+                )
 
-        return filtered
+                # Filter by time window
+                cutoff_time = utc_now() - timedelta(hours=hours)
+                recent_articles = [
+                    a for a in articles
+                    if a.published.replace(tzinfo=None) > cutoff_time.replace(tzinfo=None)
+                ]
+
+                # Convert to dict format for analysis
+                result = []
+                for article in recent_articles:
+                    content = article.description
+                    # Filter by minimum length
+                    if len(content) >= self.config.min_article_length:
+                        result.append({
+                            "title": article.title,
+                            "content": content,
+                            "source": article.source,
+                            "published": article.published,
+                            "url": article.link,
+                            "categories": article.categories,
+                        })
+
+                logger.info(
+                    f"Fetched {len(result)} news articles for {token_symbol} "
+                    f"(from {len(articles)} total)"
+                )
+
+                return result
+
+            finally:
+                if should_close:
+                    await client.close()
+
+        except Exception as e:
+            logger.warning(f"Error fetching news for {token_symbol}: {e}")
+            # Return empty list on error - will create neutral reading
+            return []
 
     def _analyze_article(self, article: Dict) -> float:
         """Analyze individual news article sentiment.
