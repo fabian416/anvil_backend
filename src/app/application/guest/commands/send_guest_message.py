@@ -28,12 +28,33 @@ from app.application.guest.i18n.translations import (
     get_reason_for_intent,
     get_registration_message,
 )
+from app.application.guest.handlers.guest_handler_service import GuestHandlerService
 from app.domain.guest.entities.guest_conversation import GuestConversation
 from app.domain.guest.entities.guest_message import GuestMessage
 from app.domain.guest.entities.guest_user import GuestUser
 from app.domain.guest.ports.guest_repository import GuestRepository
 
 logger = logging.getLogger(__name__)
+
+# Intents that use real handlers (not demo responses)
+REAL_HANDLER_INTENTS = {
+    # Hunter AI
+    ChatIntent.HUNTER_SENTIMENT,
+    ChatIntent.HUNTER_PRICE_PREDICTION,
+    ChatIntent.HUNTER_RISK_SIGNALS,
+    ChatIntent.HUNTER_TRADING_SIGNALS,
+    ChatIntent.HUNTER_PATTERNS,
+    ChatIntent.HUNTER_PORTFOLIO,
+    # ULTRA
+    ChatIntent.ULTRA_ARBITRAGE,
+    ChatIntent.ULTRA_FLASH_LOANS,
+    ChatIntent.ULTRA_MEV_PROTECTION,
+    ChatIntent.ULTRA_AUTO_EXECUTOR,
+    # DeFi (with handlers)
+    ChatIntent.LENDING,
+    ChatIntent.MONEY_MARKET,
+    ChatIntent.SWAP,
+}
 
 
 # ========================================
@@ -98,9 +119,11 @@ class SendGuestMessage:
         self,
         guest_repository: GuestRepository,
         intent_detector: IntentDetectorService | None = None,
+        handler_service: GuestHandlerService | None = None,
     ):
         self._guest_repo = guest_repository
         self._intent_detector = intent_detector
+        self._handler_service = handler_service or GuestHandlerService()
 
     async def execute(
         self,
@@ -163,7 +186,43 @@ class SendGuestMessage:
                 is_restricted_action=True,
             )
             registration_required = self._build_registration_required(reason, language)
+            enrichment = None
+        elif intent in REAL_HANDLER_INTENTS:
+            # Use real handlers for Hunter AI, ULTRA, and DeFi intents
+            handler_result = await self._handler_service.handle_intent(
+                intent, content, language
+            )
+            agent_content = handler_result.get("content", "")
+            enrichment = handler_result.get("enrichment")
+
+            # Check if handler requires registration for action
+            if handler_result.get("requires_registration"):
+                registration_required = {
+                    "required": True,
+                    "reason": "action_required",
+                    "message": {
+                        "en": "Sign up to execute this action.",
+                        "es": "Regístrate para ejecutar esta acción.",
+                        "pt": "Cadastre-se para executar esta ação.",
+                        "zh": "注册以执行此操作。",
+                    },
+                    "cta": GUEST_CTA_MESSAGES,
+                    "signup_url": "/signup",
+                }
+            else:
+                registration_required = None
+
+            agent_message = GuestMessage.create_assistant_message(
+                conversation_id=conversation.id,
+                content=agent_content,
+                intent=intent.value if intent else None,
+                handler=handler,
+                confidence=confidence,
+                language=language,
+                is_restricted_action=handler_result.get("requires_registration", False),
+            )
         else:
+            # Fallback to demo response for other intents
             agent_content = await self._generate_demo_response(
                 content, intent, language
             )
@@ -177,6 +236,7 @@ class SendGuestMessage:
                 is_restricted_action=False,
             )
             registration_required = None
+            enrichment = None
 
         await self._guest_repo.create_message(agent_message)
 
@@ -209,6 +269,13 @@ class SendGuestMessage:
         )
         messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
 
+        # Build enrichment - use handler enrichment if available, otherwise disclaimer
+        final_enrichment = enrichment if enrichment else {}
+        final_enrichment["disclaimer"] = get_demo_disclaimer(language)
+
+        # Determine if using real handler or demo mode
+        is_real_handler = intent in REAL_HANDLER_INTENTS and enrichment is not None
+
         return GuestMessageResult(
             conversation_id=conversation.id,
             message_id=agent_message.id,
@@ -229,11 +296,10 @@ class SendGuestMessage:
                 "confidence": confidence or 0.5,
                 "handler": handler or "demo_handler",
                 "language": language,
-                "is_demo_mode": True,
+                "is_demo_mode": not is_real_handler,
+                "is_live_data": is_real_handler,
             },
-            enrichment={
-                "disclaimer": get_demo_disclaimer(language),
-            },
+            enrichment=final_enrichment,
             registration_required=registration_required,
             guest_info={
                 "messages_remaining": messages_remaining,
