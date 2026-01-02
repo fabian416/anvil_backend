@@ -29,6 +29,7 @@ class Chain(str, Enum):
     BASE = "base"
     OPTIMISM = "optimism"
     POLYGON = "polygon"
+    POLYGON_ZKEVM = "polygon_zkevm"
 
 
 # Chain IDs
@@ -38,6 +39,7 @@ CHAIN_IDS = {
     Chain.BASE: 8453,
     Chain.OPTIMISM: 10,
     Chain.POLYGON: 137,
+    Chain.POLYGON_ZKEVM: 1101,
 }
 
 # Native token symbols
@@ -47,6 +49,7 @@ NATIVE_TOKENS = {
     Chain.BASE: "ETH",
     Chain.OPTIMISM: "ETH",
     Chain.POLYGON: "MATIC",
+    Chain.POLYGON_ZKEVM: "ETH",
 }
 
 
@@ -108,6 +111,7 @@ class Web3Client:
         Chain.BASE: "https://base-mainnet.g.alchemy.com/v2",
         Chain.OPTIMISM: "https://opt-mainnet.g.alchemy.com/v2",
         Chain.POLYGON: "https://polygon-mainnet.g.alchemy.com/v2",
+        Chain.POLYGON_ZKEVM: "https://polygonzkevm-mainnet.g.alchemy.com/v2",
     }
 
     # Infura RPC URLs (backup)
@@ -117,6 +121,7 @@ class Web3Client:
         Chain.BASE: "https://base-mainnet.infura.io/v3",
         Chain.OPTIMISM: "https://optimism-mainnet.infura.io/v3",
         Chain.POLYGON: "https://polygon-mainnet.infura.io/v3",
+        Chain.POLYGON_ZKEVM: "https://polygon-zkevm-mainnet.infura.io/v3",
     }
 
     def __init__(
