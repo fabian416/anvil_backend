@@ -562,14 +562,30 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
             )
 
         # STEP 16: Ultra - Auto Executor
-        if any(
-            word in message
-            for word in ["bot", "trading bot", "start", "stop", "configure"]
-        ):
+        auto_executor_keywords = [
+            "trading bot", "auto executor", "auto-executor", "autoexecutor",
+            "automated trading", "auto trading", "auto trade",
+            "dca", "dollar cost", "limit order", "stop loss", "stop-loss",
+            "take profit", "take-profit", "trailing stop",
+            "bot status", "start bot", "stop bot", "pause bot",
+            "configure bot", "trading strategy", "auto strategy",
+        ]
+        if any(kw in message for kw in auto_executor_keywords):
             return (
                 ChatIntent.ULTRA_AUTO_EXECUTOR,
                 0.90,
                 "Message contains auto executor keywords",
+                None,
+            )
+        
+        # Also check for "bot" with trading context
+        if "bot" in message and any(
+            ctx in message for ctx in ["trading", "trade", "executor", "auto", "strategy"]
+        ):
+            return (
+                ChatIntent.ULTRA_AUTO_EXECUTOR,
+                0.85,
+                "Message contains bot with trading context",
                 None,
             )
 

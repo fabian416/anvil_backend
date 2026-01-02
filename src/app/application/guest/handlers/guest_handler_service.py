@@ -494,20 +494,81 @@ class GuestHandlerService:
     async def _handle_auto_executor(
         self, content: str, language: str
     ) -> dict[str, Any]:
-        """Handle auto-executor information."""
-        response = "🤖 **Auto-Executor Features**\n\n"
-        response += "**Available Strategies:**\n"
-        response += "- 📊 DCA (Dollar Cost Averaging)\n"
-        response += "- 🎯 Limit Orders\n"
-        response += "- 🛑 Stop-Loss Orders\n"
-        response += "- 📈 Take-Profit Orders\n"
-        response += "- 🔄 Trailing Stops\n"
-        response += "- ⚡ Conditional Trades\n\n"
+        """Handle auto-executor information with multi-language support."""
+        translations = {
+            "en": {
+                "title": "🤖 **Auto-Executor Features**",
+                "strategies": "**Available Strategies:**",
+                "dca": "📊 DCA (Dollar Cost Averaging)",
+                "limit": "🎯 Limit Orders",
+                "stop_loss": "🛑 Stop-Loss Orders",
+                "take_profit": "📈 Take-Profit Orders",
+                "trailing": "🔄 Trailing Stops",
+                "conditional": "⚡ Conditional Trades",
+                "execution": "**Execution:**",
+                "monitoring": "24/7 automated monitoring",
+                "mev": "MEV-protected execution",
+                "multichain": "Multi-chain support (ETH, ARB, OP, BASE)",
+            },
+            "es": {
+                "title": "🤖 **Funciones del Auto-Executor**",
+                "strategies": "**Estrategias Disponibles:**",
+                "dca": "📊 DCA (Promedio de Costo en Dólares)",
+                "limit": "🎯 Órdenes Límite",
+                "stop_loss": "🛑 Órdenes Stop-Loss",
+                "take_profit": "📈 Órdenes Take-Profit",
+                "trailing": "🔄 Trailing Stops",
+                "conditional": "⚡ Trades Condicionales",
+                "execution": "**Ejecución:**",
+                "monitoring": "Monitoreo automatizado 24/7",
+                "mev": "Ejecución protegida contra MEV",
+                "multichain": "Soporte multi-cadena (ETH, ARB, OP, BASE)",
+            },
+            "pt": {
+                "title": "🤖 **Recursos do Auto-Executor**",
+                "strategies": "**Estratégias Disponíveis:**",
+                "dca": "📊 DCA (Média de Custo em Dólares)",
+                "limit": "🎯 Ordens Limitadas",
+                "stop_loss": "🛑 Ordens Stop-Loss",
+                "take_profit": "📈 Ordens Take-Profit",
+                "trailing": "🔄 Trailing Stops",
+                "conditional": "⚡ Trades Condicionais",
+                "execution": "**Execução:**",
+                "monitoring": "Monitoramento automatizado 24/7",
+                "mev": "Execução protegida contra MEV",
+                "multichain": "Suporte multi-chain (ETH, ARB, OP, BASE)",
+            },
+            "zh": {
+                "title": "🤖 **自动执行器功能**",
+                "strategies": "**可用策略：**",
+                "dca": "📊 DCA（平均成本法）",
+                "limit": "🎯 限价单",
+                "stop_loss": "🛑 止损单",
+                "take_profit": "📈 止盈单",
+                "trailing": "🔄 追踪止损",
+                "conditional": "⚡ 条件交易",
+                "execution": "**执行：**",
+                "monitoring": "24/7 自动监控",
+                "mev": "MEV 保护执行",
+                "multichain": "多链支持 (ETH, ARB, OP, BASE)",
+            },
+        }
 
-        response += "**Execution:**\n"
-        response += "- 24/7 automated monitoring\n"
-        response += "- MEV-protected execution\n"
-        response += "- Multi-chain support\n"
+        t = translations.get(language, translations["en"])
+
+        response = f"{t['title']}\n\n"
+        response += f"{t['strategies']}\n"
+        response += f"- {t['dca']}\n"
+        response += f"- {t['limit']}\n"
+        response += f"- {t['stop_loss']}\n"
+        response += f"- {t['take_profit']}\n"
+        response += f"- {t['trailing']}\n"
+        response += f"- {t['conditional']}\n\n"
+
+        response += f"{t['execution']}\n"
+        response += f"- {t['monitoring']}\n"
+        response += f"- {t['mev']}\n"
+        response += f"- {t['multichain']}\n\n"
 
         response += self._get_registration_cta(language, for_action=True)
 
@@ -515,6 +576,8 @@ class GuestHandlerService:
             "content": response,
             "enrichment": {
                 "ultra_tool": "auto_executor",
+                "supported_chains": ["ethereum", "arbitrum", "optimism", "base"],
+                "strategies": ["dca", "limit", "stop_loss", "take_profit", "trailing"],
             },
             "requires_registration": True,
         }
