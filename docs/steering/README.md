@@ -237,6 +237,48 @@ Complete fallback and resilience strategies documentation.
 - Telemetry and monitoring metrics
 - Best practices and security considerations
 
+### [Audit Logging](./audit-logging.md)
+
+Complete audit logging and telemetry system documentation.
+
+- Audit Log Entity (AuditLogEntry):
+  - Immutable event records with categorization
+  - 45+ event types (Security, Data Access, Admin, User, System)
+  - Metadata storage (JSONB), IP tracking, user agent
+  - Outcome tracking (success, failure, pending)
+- Event Type Categories:
+  - User Actions (login, registration, profile updates)
+  - Security Events (auth failures, unauthorized access, rate limits)
+  - Data Access Events (PII view/export, sensitive data)
+  - Administrative Actions (user suspension, role assignment)
+  - Agent Actions (execution start/complete/failed)
+  - System Events (configuration changes, background jobs)
+- Audit Log Repository (Port-Adapter pattern):
+  - PostgreSQL persistence with optimized indexes
+  - Query by user, event type, resource, IP address
+  - Security event queries, failed event queries
+  - Compliance reporting with date ranges
+  - Retention policies (configurable, preserves critical events)
+- Telemetry Collectors:
+  - LLM Telemetry (requests, tokens, costs, cache hits)
+  - API Telemetry (latency percentiles, error rates, cost estimation)
+  - Retry Telemetry (attempts, circuit breaker state changes)
+  - Distillation Telemetry (model performance)
+- Distributed Tracing:
+  - OpenTelemetry-compatible spans
+  - W3C Trace Context propagation
+  - Integration with Jaeger, Zipkin, Datadog, X-Ray
+- Security Dashboard:
+  - Attack statistics (XSS, Prompt Injection)
+  - Security posture score (0-100)
+  - Transaction approval metrics
+  - PII protection stats
+  - Agent isolation violations
+- Compliance Features:
+  - GDPR support (data access logging, retention control)
+  - CCPA support (access/deletion request tracking)
+  - SOC 2 Type II controls
+
 ---
 
 ## 🔗 Related Documents
