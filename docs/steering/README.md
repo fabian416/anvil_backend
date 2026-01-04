@@ -206,6 +206,37 @@ Complete Agno-based agent router implementation documentation.
 - Error handling and fallback behavior
 - Dependency injection setup
 
+### [Agent Fallback Strategies](./agent-fallback-strategies.md)
+
+Complete fallback and resilience strategies documentation.
+
+- Architecture overview (multi-layer fallback)
+- LLM Provider Failover:
+  - OpenAI ↔ Anthropic ↔ DeepInfra ↔ Vertex AI
+  - Cost optimization (cheaper models on fallback)
+  - Priority-based routing
+- Circuit Breaker (Redis-backed):
+  - CLOSED → OPEN → HALF_OPEN state machine
+  - Configurable thresholds (failure/success)
+  - Automatic recovery testing
+  - Telemetry integration
+- Enterprise Retry Engine:
+  - Exponential backoff with jitter
+  - Error classification (retryable vs non-retryable)
+  - Service registry for manual override
+  - Comprehensive telemetry
+- Retry Configuration (RetryConfig):
+  - Pre-configured profiles (MCP servers, Agno agents, testing)
+  - Backoff calculation with jitter
+- Agent Fallback Chains:
+  - Priority-based agent routing
+  - Confidence threshold-based fallback
+  - Timeout handling
+  - FallbackReason tracking
+- Admin API endpoints for circuit breaker management
+- Telemetry and monitoring metrics
+- Best practices and security considerations
+
 ---
 
 ## 🔗 Related Documents
