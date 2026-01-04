@@ -82,6 +82,20 @@ Complete wallet database schema and entity documentation.
 - Data flow examples
 - Analytics queries
 
+### [Balance Data Model](./balance-data-model.md)
+
+Complete balance and position data model documentation.
+
+- Portfolio Snapshots (point-in-time wallet captures)
+- Token Holdings (native + ERC-20 with USD values)
+- Chain Addresses (multi-chain balance tracking)
+- Earn Positions (yield farming, staking)
+- Hyperliquid Positions (perpetual futures)
+- DeFi Positions (Aave, Morpho, Compound - external APIs)
+- Database schema (PostgreSQL)
+- Repository interfaces
+- Analytics and health factor monitoring
+
 ---
 
 ## 🔗 Related Documents
