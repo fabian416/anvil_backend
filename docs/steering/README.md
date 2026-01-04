@@ -279,6 +279,48 @@ Complete audit logging and telemetry system documentation.
   - CCPA support (access/deletion request tracking)
   - SOC 2 Type II controls
 
+### [Feature Flags](./feature-flags.md)
+
+Complete feature flags system documentation.
+
+- Telemetry Feature Flags:
+  - Master switch (global_enabled)
+  - Component-level: API, LLM, Database, Tracing, Metrics
+  - Per-API granular control (enabled_apis, disabled_apis)
+  - Per-LLM provider control (enabled_llm_providers, disabled_llm_providers)
+  - Sampling rates (0.0-1.0) for volume control
+  - Per-endpoint telemetry control
+  - Environment variable configuration
+  - Redis persistence for runtime changes
+- Agent Squad Feature Flags:
+  - 18 specialized AI agents (10 core + 4 enterprise + 4 advanced)
+  - Per-agent configuration (enabled, model, temperature, max_tokens)
+  - Intent classification settings
+  - Supervisor coordination settings
+  - TOML-based configuration
+- Subscription Tier Filtering:
+  - Free: 5 agents (chat, hunter_ai, research, portfolio, gas_optimizer)
+  - Pro: 10 agents (Free + execution, risk_analyzer, etc.)
+  - Enterprise: All 18 agents
+- External API Feature Flags:
+  - DeFi APIs: 1inch, DeFiLlama, CoinGecko, Hyperliquid, Uniswap, Curve, Aave
+  - Enterprise APIs: Chainalysis, TRM Labs, Gnosis Safe, Forta, Twilio
+  - Advanced APIs: Privy, Axelar, LayerZero, OpenSea, Snapshot
+- Agno Agent Feature Flags:
+  - 5 DeFi routing agents (Trading, Lending, Perpetual, Portfolio, Analytics)
+  - Intent classification toggle
+  - Fallback mode settings
+  - Retry configuration with circuit breaker
+- Integration Feature Flags:
+  - Chat tools (Hunter AI, ULTRA, parallel execution)
+  - Project scoping and permissions
+  - Risk validation settings
+- Admin API Endpoints:
+  - GET/PUT /api/v1/telemetry/flags
+  - POST /api/v1/telemetry/flags/disable-api/{api_name}
+  - POST /api/v1/telemetry/flags/save (Redis persistence)
+- Runtime toggle support for telemetry flags
+
 ---
 
 ## 🔗 Related Documents
