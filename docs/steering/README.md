@@ -44,6 +44,18 @@ Codebase organization and conventions.
 - Testing structure
 - File naming conventions
 
+### [Authentication & Authorization](./authentication.md)
+
+Complete authentication system documentation.
+
+- Privy integration (Web3-native auth)
+- Traditional authentication (email/password)
+- JWT token system
+- Session management
+- Role-Based Access Control (RBAC)
+- Admin system and Super Admin
+- Security features
+
 ---
 
 ## 🔗 Related Documents
