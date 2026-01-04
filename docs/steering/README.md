@@ -111,6 +111,21 @@ Complete transaction logging and confirmation documentation.
 - API endpoints (user + admin)
 - Data flow diagrams
 
+### [1inch Integration](./oneinch-integration.md)
+
+Complete 1inch DEX aggregator integration documentation.
+
+- Architecture overview (client stack)
+- Base, Cached, and Instrumented clients
+- MCP Server for AI agents (port 8082)
+- API methods (quotes, swaps, tokens, prices)
+- Multi-chain support (9 chains)
+- Redis caching strategy with TTLs
+- Telemetry and distributed tracing
+- Rate limiting (1 req/sec free, 10 req/sec paid)
+- Integration points (SwapHandler, TradingAgent, ULTRA)
+- Error handling and retry logic
+
 ---
 
 ## 🔗 Related Documents
