@@ -161,6 +161,27 @@ Complete yield farming and lending protocol integration documentation.
 - Database schema (earn_positions table)
 - API integration (deposit/withdraw via ExecuteActionCommand)
 
+### [Agent Orchestrator](./agent-orchestrator.md)
+
+Complete multi-agent orchestration system documentation.
+
+- Architecture overview (routing, workflows, fallback)
+- 18 Specialized Agents:
+  - Core Agents (10): Chat, Hunter AI, Research, Execution, Risk Analyzer, Portfolio, Tax Optimizer, DeFi Yield, Security Auditor, Gas Optimizer
+  - Enterprise Agents (8): Compliance, Multisig, Alerts, Crisis, Bridge, Lending, NFT, DAO
+- Intent Classification (LLM-based with gpt-4o-mini)
+- Agent Orchestrator (message routing, confidence thresholds)
+- Supervisor Coordinator (multi-agent workflows)
+- Agent Router (keyword-based quick routing)
+- Advanced features:
+  - Multi-agent voting and consensus
+  - Agent debates (structured deliberation)
+  - Fallback chains (resilient routing)
+  - Performance tracking (efficiency scoring)
+  - Custom agent configuration
+- Agent Library (10 pre-configured specialists)
+- Dependency injection setup
+
 ---
 
 ## 🔗 Related Documents
