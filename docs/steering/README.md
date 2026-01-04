@@ -142,6 +142,25 @@ Complete swap and DeFi action execution documentation.
 - Token address mappings per chain
 - API endpoints and request/response schemas
 
+### [Earn Provider Integration](./earn-provider-integration.md)
+
+Complete yield farming and lending protocol integration documentation.
+
+- Architecture overview (Morpho, Aave, Compound)
+- Protocol providers:
+  - Morpho (MetaMorpho vaults, Morpho Blue markets)
+  - Aave V3 (lending/borrowing, health factor)
+  - Compound
+- Domain entities: EarnPosition, MorphoPosition, AavePosition
+- Gateway ports (MorphoGateway, AaveGateway)
+- MCP Servers (Morpho: 8088, Aave: 8085)
+- AI Agents: DeFi Yield Agent, Lending Agent
+- Health Factor monitoring and liquidation risk
+- Multi-chain support (Ethereum, Base, Polygon, Arbitrum)
+- Yield comparison across protocols
+- Database schema (earn_positions table)
+- API integration (deposit/withdraw via ExecuteActionCommand)
+
 ---
 
 ## 🔗 Related Documents
