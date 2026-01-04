@@ -182,6 +182,30 @@ Complete multi-agent orchestration system documentation.
 - Agent Library (10 pre-configured specialists)
 - Dependency injection setup
 
+### [Agent Router](./agent-router.md)
+
+Complete Agno-based agent router implementation documentation.
+
+- Architecture overview (keyword classification, MCP integration)
+- 5 Specialized DeFi Agents:
+  - Trading Agent (1inch, Curve): Swaps, quotes, route comparison
+  - Lending Agent (Aave, Morpho): Lending, borrowing, health factor
+  - Perpetual Agent (Hyperliquid): Futures, funding rates, liquidation
+  - Analytics Agent (DeFiLlama): TVL, yields, protocol comparison
+  - Portfolio Agent: Balance tracking, multi-chain aggregation
+- Base Agent Architecture (DeFiAgentBase):
+  - MCP tool auto-discovery and registration
+  - Session management and memory
+  - Streaming support
+  - Retry with circuit breaker
+- MCP Server Integration (11 servers):
+  - 1inch, Aave, Morpho, Curve, DeFiLlama, Hyperliquid, Portfolio, etc.
+- Intent Keywords for fast routing (no LLM call)
+- Configuration (AgnoConfig, AgnoSettings, feature flags)
+- Agent instructions and best practices
+- Error handling and fallback behavior
+- Dependency injection setup
+
 ---
 
 ## 🔗 Related Documents
