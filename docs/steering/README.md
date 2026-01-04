@@ -69,6 +69,19 @@ Comprehensive wallet management documentation.
 - Bitcoin wallet creation and transactions
 - Frontend integration guide
 
+### [Wallet Data Model](./wallet-data-model.md)
+
+Complete wallet database schema and entity documentation.
+
+- Entity Relationship Diagram
+- Wallet, Transaction, Policy entities
+- Database schema (PostgreSQL)
+- Enumerations (Provider, Status, ChainType, TransactionType)
+- Repository interfaces with CRUD and analytics
+- Value Objects (WalletId, TransactionId, AdditionalSigner)
+- Data flow examples
+- Analytics queries
+
 ---
 
 ## 🔗 Related Documents
