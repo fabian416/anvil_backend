@@ -96,6 +96,21 @@ Complete balance and position data model documentation.
 - Repository interfaces
 - Analytics and health factor monitoring
 
+### [Transaction Data Model](./transaction-data-model.md)
+
+Complete transaction logging and confirmation documentation.
+
+- Transaction entity with DEX/swap support
+- Multi-chain support (Ethereum, L2s, Bitcoin)
+- Dual transaction records (sender + receiver views)
+- Transaction types (SEND, SWAP, APPROVE, EARN, etc.)
+- Celery worker for on-chain confirmation
+- Block explorer URL generation
+- Repository interface with 25+ methods
+- Volume and user activity analytics
+- API endpoints (user + admin)
+- Data flow diagrams
+
 ---
 
 ## 🔗 Related Documents
