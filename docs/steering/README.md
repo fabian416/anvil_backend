@@ -126,6 +126,22 @@ Complete 1inch DEX aggregator integration documentation.
 - Integration points (SwapHandler, TradingAgent, ULTRA)
 - Error handling and retry logic
 
+### [Swap Execution via Agents](./swap-execution-agents.md)
+
+Complete swap and DeFi action execution documentation.
+
+- Architecture overview (agents → handlers → aggregators)
+- SwapHandler (quote aggregation)
+- ExecuteActionCommand (two-step execution flow)
+- AI Agents: SwapAgent, ExecutionAgent, TradingAgent
+- Multi-aggregator support (1inch, LiFi, Hyperliquid)
+- Supported actions: swap, deposit, withdraw, transfer, approve, bridge
+- Transaction approval service (OWASP LLM08 protection)
+- Security limits ($50k swap, $100k deposit, $10k transfer)
+- Multi-language confirmation messages (5 languages)
+- Token address mappings per chain
+- API endpoints and request/response schemas
+
 ---
 
 ## 🔗 Related Documents
