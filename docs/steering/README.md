@@ -56,6 +56,19 @@ Complete authentication system documentation.
 - Admin system and Super Admin
 - Security features
 
+### [Wallet SDK Integration](./wallet-sdk-integration.md)
+
+Comprehensive wallet management documentation.
+
+- Multi-chain support (Ethereum, Solana, Bitcoin, L2s)
+- Privy SDK integration
+- Wallet types (Embedded, External, Imported)
+- Provider abstraction (Port-Adapter pattern)
+- Wallet source modes (Privy, Hybrid, Local)
+- Private key export (HPKE encryption)
+- Bitcoin wallet creation and transactions
+- Frontend integration guide
+
 ---
 
 ## 🔗 Related Documents
