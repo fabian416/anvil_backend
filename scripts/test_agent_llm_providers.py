@@ -28,14 +28,12 @@ async def test_vertex_ai_client():
     print("="*60)
 
     try:
-        import tomli
         from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClientVertexAI
+        from app.setup.config.loader import load_full_config, ValidEnvs
 
-        # Load API key from secrets
-        secrets_path = project_root / "config" / "local" / ".secrets.toml"
-        with open(secrets_path, "rb") as f:
-            secrets = tomli.load(f)
-            api_key = secrets.get("vertex_ai", {}).get("API_KEY", "")
+        # Load API key from config (includes secrets)
+        config = load_full_config(env=ValidEnvs.LOCAL)
+        api_key = config.get("vertex_ai", {}).get("API_KEY", "")
 
         if not api_key:
             print("❌ No API key found in .secrets.toml")
@@ -79,15 +77,13 @@ async def test_deepinfra_client():
     print("="*60)
 
     try:
-        import tomli
         from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
+        from app.setup.config.loader import load_full_config, ValidEnvs
 
-        # Load API key from secrets
-        secrets_path = project_root / "config" / "local" / ".secrets.toml"
-        with open(secrets_path, "rb") as f:
-            secrets = tomli.load(f)
-            api_key = secrets.get("deepinfra", {}).get("API_KEY", "")
-            base_url = secrets.get("deepinfra", {}).get("BASE_URL", "https://api.deepinfra.com/v1/openai")
+        # Load API key from config (includes secrets)
+        config = load_full_config(env=ValidEnvs.LOCAL)
+        api_key = config.get("deepinfra", {}).get("API_KEY", "")
+        base_url = config.get("deepinfra", {}).get("BASE_URL", "https://api.deepinfra.com/v1/openai")
 
         if not api_key:
             print("❌ No API key found in .secrets.toml")
@@ -132,18 +128,16 @@ async def test_fallback_client():
     print("="*60)
 
     try:
-        import tomli
         from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClientVertexAI
         from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
         from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
+        from app.setup.config.loader import load_full_config, ValidEnvs
 
-        # Load credentials from secrets
-        secrets_path = project_root / "config" / "local" / ".secrets.toml"
-        with open(secrets_path, "rb") as f:
-            secrets = tomli.load(f)
-            vertex_api_key = secrets.get("vertex_ai", {}).get("API_KEY", "")
-            deepinfra_api_key = secrets.get("deepinfra", {}).get("API_KEY", "")
-            deepinfra_base_url = secrets.get("deepinfra", {}).get("BASE_URL", "https://api.deepinfra.com/v1/openai")
+        # Load credentials from config (includes secrets)
+        config = load_full_config(env=ValidEnvs.LOCAL)
+        vertex_api_key = config.get("vertex_ai", {}).get("API_KEY", "")
+        deepinfra_api_key = config.get("deepinfra", {}).get("API_KEY", "")
+        deepinfra_base_url = config.get("deepinfra", {}).get("BASE_URL", "https://api.deepinfra.com/v1/openai")
 
         if not vertex_api_key or not deepinfra_api_key:
             print("❌ Missing API keys in .secrets.toml")
@@ -205,12 +199,11 @@ async def test_agent_system_integration():
     print("="*60)
 
     try:
-        import tomli
         from app.setup.config.settings import load_settings
-        from app.setup.config.loader import load_full_config
+        from app.setup.config.loader import load_full_config, ValidEnvs
 
         # Load raw config
-        raw_config = load_full_config(env="local")
+        raw_config = load_full_config(env=ValidEnvs.LOCAL)
         print(f"✅ Raw config loaded")
 
         # Load settings
