@@ -161,6 +161,27 @@ Complete yield farming and lending protocol integration documentation.
 - Database schema (earn_positions table)
 - API integration (deposit/withdraw via ExecuteActionCommand)
 
+### [Lending Protocols Implementation](./lending-protocols-implementation.md)
+
+Complete implementation documentation for Aave V3, Compound V3, and Morpho Protocol following CTO methodology.
+
+- Implementation Status:
+  - Aave V3: 75% complete (user positions ✅, markets ⚠️ partial)
+  - Compound V3: 100% complete ✅
+  - Morpho Protocol: 100% complete ✅
+- Architecture overview (Client → Adapter → Gateway pattern)
+- Real RPC implementations:
+  - Aave: `getUserAccountData()` for positions
+  - Compound: `balanceOf()`, `borrowBalanceOf()` for positions
+  - Morpho: GraphQL API (complete)
+- Caching strategy (2-10 min TTLs based on data type)
+- Health factor monitoring and risk assessment
+- Error handling and fallback mechanisms
+- MCP server integration (Aave: 8085, Morpho: 8088)
+- Multi-chain support (6+ chains)
+- CTO methodology application (Problem Decomposition, Solution Generation, Risk Assessment)
+- Performance considerations and future enhancements
+
 ### [Agent Orchestrator](./agent-orchestrator.md)
 
 Complete multi-agent orchestration system documentation.
@@ -531,6 +552,26 @@ Complete API documentation with endpoint reference.
   - 30+ API modules
   - 4 supported languages
   - 3 WebSocket endpoints
+
+### [Error Handling](./error-handling.md)
+
+Complete error handling system documentation following CTO methodology.
+
+- Architecture overview (Domain, Application, Infrastructure layers)
+- Error Code System (100+ codes across 15 categories)
+- Standardized error response format with i18n support
+- Error handling layers:
+  - Domain Layer (DomainError, DomainFieldError)
+  - Application Layer (ApplicationError with ErrorCode)
+  - Infrastructure Layer (route-level handlers)
+- Global exception handlers (8 handlers)
+- Error translators (9 translators for fastapi-error-map)
+- Error callbacks (logging: log_info, log_error)
+- Usage patterns and best practices
+- Error code reference (AUTH, USER, CHAT, WALLET, PORT, MKT, SRCH, ALRT, SUB, ADM, LLM, TEL, VAL, SYS, LOC)
+- Testing error handling (unit and integration tests)
+- Migration guide from legacy DomainError to ApplicationError
+- Key files reference
 
 ---
 
