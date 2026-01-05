@@ -1019,6 +1019,25 @@ curl -X GET "http://localhost:8000/api/v1/admin/users?limit=20&offset=0&sort_by=
 - **Authentication**: Test with Bearer tokens
 - **Examples**: Request/response examples
 
+## Postman Collection
+
+### Complete API Collection
+
+A comprehensive Postman collection is available at:
+- **Location**: [`docs/api/examples/anvil-backend-complete-postman-collection.json`](../../api/examples/anvil-backend-complete-postman-collection.json)
+- **Description**: Complete collection with 200+ endpoints, automatic authentication, test scripts, and multi-language support
+- **Methodology**: Follows CTO engineering methodology (problem decomposition, solution generation, risk assessment)
+
+**Features**:
+- Automatic token management
+- Pre-request scripts for dynamic data
+- Test scripts for validation
+- Organized by functional domains
+- Error handling examples
+- Rate limiting awareness
+
+**Usage**: Import into Postman, set `base_url` variable, and run "Login" to start testing.
+
 ---
 
 ## Best Practices

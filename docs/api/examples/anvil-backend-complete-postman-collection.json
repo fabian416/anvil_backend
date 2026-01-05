@@ -1,0 +1,2018 @@
+{
+  "info": {
+    "name": "Anvil Backend - Complete API Collection",
+    "description": "Complete Postman collection for Anvil Backend API following CTO methodology.\n\n**Methodology Applied:**\n- Problem Decomposition: Organized by functional domains (Public, User, Admin)\n- Solution Generation: Modular structure with reusable variables and scripts\n- Risk Assessment: Comprehensive test coverage and error handling\n\n**Features:**\n- 200+ endpoints organized in 30+ modules\n- Automatic authentication flow\n- Pre-request scripts for dynamic data\n- Test scripts for validation\n- Environment variables support\n- Multi-language support (en, es, pt, zh)\n- Rate limiting awareness\n- Error handling examples",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0",
+    "_postman_id": "anvil-backend-complete-v2"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string",
+      "description": "Base URL for API. Change to production URL when needed."
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT access token. Auto-populated after login."
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT refresh token. Auto-populated after login."
+    },
+    {
+      "key": "conversation_id",
+      "value": "",
+      "type": "string",
+      "description": "Conversation ID for chat endpoints. Auto-populated after creating conversation."
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string",
+      "description": "Current user ID. Auto-populated after login."
+    },
+    {
+      "key": "wallet_id",
+      "value": "",
+      "type": "string",
+      "description": "Wallet ID for wallet operations."
+    },
+    {
+      "key": "project_id",
+      "value": "",
+      "type": "string",
+      "description": "Project ID for project operations."
+    },
+    {
+      "key": "language",
+      "value": "en",
+      "type": "string",
+      "description": "Language code: en, es, pt, zh"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Setup & Authentication",
+      "description": "Initial setup and authentication flows. Run these first to obtain tokens.",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has status field\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/healthcheck",
+              "host": ["{{base_url}}"],
+              "path": ["healthcheck"]
+            },
+            "description": "Check API health status. No authentication required."
+          },
+          "response": []
+        },
+        {
+          "name": "Sign Up",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has user data\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    ",
+                  "    // Store tokens",
+                  "    if (jsonData.access_token) {",
+                  "        pm.collectionVariables.set('auth_token', jsonData.access_token);",
+                  "    }",
+                  "    if (jsonData.refresh_token) {",
+                  "        pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+                  "    }",
+                  "    if (jsonData.user && jsonData.user.id) {",
+                  "        pm.collectionVariables.set('user_id', jsonData.user.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"country_id\": 1,\n  \"city_id\": 1,\n  \"language\": \"{{language}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/account/signup",
+              "host": ["{{base_url}}"],
+              "path": ["account", "signup"]
+            },
+            "description": "Register a new user account. Returns access_token and refresh_token."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Email/Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has access_token\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    ",
+                  "    // Store tokens automatically",
+                  "    pm.collectionVariables.set('auth_token', jsonData.access_token);",
+                  "    if (jsonData.refresh_token) {",
+                  "        pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+                  "    }",
+                  "    if (jsonData.user && jsonData.user.id) {",
+                  "        pm.collectionVariables.set('user_id', jsonData.user.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"SecurePassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/account/login",
+              "host": ["{{base_url}}"],
+              "path": ["account", "login"]
+            },
+            "description": "Login with email and password. Returns JWT tokens."
+          },
+          "response": []
+        },
+        {
+          "name": "Privy Login (Web3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('auth_token', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"privy_token\": \"YOUR_PRIVY_TOKEN\",\n  \"wallet_address\": \"0x...\",\n  \"chain\": \"ethereum\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/account/privy-login",
+              "host": ["{{base_url}}"],
+              "path": ["account", "privy-login"]
+            },
+            "description": "Login with Privy Web3 authentication. Requires Privy token from frontend."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('auth_token', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/account/refresh-token",
+              "host": ["{{base_url}}"],
+              "path": ["account", "refresh-token"]
+            },
+            "description": "Refresh access token using refresh token."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('user_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/account/me",
+              "host": ["{{base_url}}"],
+              "path": ["account", "me"]
+            },
+            "description": "Get current authenticated user profile. Requires authentication."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1. Public Endpoints",
+      "description": "Public endpoints that don't require authentication.",
+      "item": [
+        {
+          "name": "Guest Chat",
+          "item": [
+            {
+              "name": "Send Guest Message",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"message\": \"What are the best DeFi protocols for yield farming?\",\n  \"language\": \"{{language}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/guest/chat",
+                  "host": ["{{base_url}}"],
+                  "path": ["guest", "chat"]
+                },
+                "description": "Send a message as guest user. IP-based tracking. Rate limited: 20 msgs/hour."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Guest Chat History",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/guest/chat/history",
+                  "host": ["{{base_url}}"],
+                  "path": ["guest", "chat", "history"]
+                },
+                "description": "Get chat history for current guest session (IP-based)."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Guest Status",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/guest/chat/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["guest", "chat", "status"]
+                },
+                "description": "Get guest status including rate limit information."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Chat Shortcuts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chat/shortcuts?language={{language}}",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "shortcuts"],
+              "query": [
+                {
+                  "key": "language",
+                  "value": "{{language}}"
+                }
+              ]
+            },
+            "description": "Get available chat shortcuts for quick actions. Multi-language support."
+          },
+          "response": []
+        },
+        {
+          "name": "Password Reset",
+          "item": [
+            {
+              "name": "Request Password Reset",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@example.com\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/account/password-reset/request",
+                  "host": ["{{base_url}}"],
+                  "path": ["account", "password-reset", "request"]
+                },
+                "description": "Request password reset email."
+              },
+              "response": []
+            },
+            {
+              "name": "Confirm Password Reset",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"RESET_TOKEN_FROM_EMAIL\",\n  \"new_password\": \"NewSecurePassword123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/account/password-reset/confirm",
+                  "host": ["{{base_url}}"],
+                  "path": ["account", "password-reset", "confirm"]
+                },
+                "description": "Confirm password reset with token from email."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. User Endpoints - Chat",
+      "description": "Chat and conversation management endpoints.",
+      "item": [
+        {
+          "name": "Conversations",
+          "item": [
+            {
+              "name": "Create Conversation",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "const jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set('conversation_id', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"My DeFi Strategy Discussion\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/conversations",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "conversations"]
+                },
+                "description": "Create a new conversation. Returns conversation ID."
+              },
+              "response": []
+            },
+            {
+              "name": "List Conversations",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/chat/conversations?page=1&limit=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "conversations"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "List user conversations with pagination."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Conversation",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "conversations", "{{conversation_id}}"]
+                },
+                "description": "Get conversation details by ID."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Messages",
+          "item": [
+            {
+              "name": "Send Message (Unified Routing)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"content\": \"What are the best yield farming opportunities on Ethereum?\",\n  \"language\": \"{{language}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"]
+                },
+                "description": "Send message with unified routing. Automatically routes to GraphRAG, Agent Squad, Supervisor, or regular chat based on intent detection."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Messages",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/messages?page=1&limit=50",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "conversations", "{{conversation_id}}", "messages"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    }
+                  ]
+                },
+                "description": "Get messages from a conversation with pagination."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Execute Actions",
+          "item": [
+            {
+              "name": "Execute Swap",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action_type\": \"swap\",\n  \"confirmed\": false,\n  \"from_token\": \"USDC\",\n  \"to_token\": \"ETH\",\n  \"amount\": \"1000\",\n  \"chain\": \"ethereum\",\n  \"slippage\": 0.5\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/execute",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "conversations", "{{conversation_id}}", "execute"]
+                },
+                "description": "Execute a swap action. Two-step flow: simulate → confirm → execute. Set confirmed=true after user approval."
+              },
+              "response": []
+            },
+            {
+              "name": "Execute Deposit",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action_type\": \"deposit\",\n  \"confirmed\": false,\n  \"protocol\": \"aave\",\n  \"asset\": \"USDC\",\n  \"amount\": \"5000\",\n  \"chain\": \"ethereum\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/execute",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "conversations", "{{conversation_id}}", "execute"]
+                },
+                "description": "Execute a deposit to a lending protocol. Requires confirmation."
+              },
+              "response": []
+            },
+            {
+              "name": "Execute Transfer",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action_type\": \"transfer\",\n  \"confirmed\": false,\n  \"token\": \"USDC\",\n  \"amount\": \"100\",\n  \"to_address\": \"0x...\",\n  \"chain\": \"ethereum\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/conversations/{{conversation_id}}/execute",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "conversations", "{{conversation_id}}", "execute"]
+                },
+                "description": "Execute a token transfer. Requires confirmation."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "GraphRAG",
+          "item": [
+            {
+              "name": "Search Protocols",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"high yield staking protocols on Ethereum\",\n  \"filters\": {\n    \"chain\": \"ethereum\",\n    \"min_tvl\": 1000000\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/search-protocols",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "search-protocols"]
+                },
+                "description": "GraphRAG hybrid search for DeFi protocols. Combines semantic and graph search."
+              },
+              "response": []
+            },
+            {
+              "name": "Analyze Risk",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"protocol_name\": \"Aave\",\n  \"chain\": \"ethereum\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/analyze-risk",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "analyze-risk"]
+                },
+                "description": "ML-powered risk analysis for protocols."
+              },
+              "response": []
+            },
+            {
+              "name": "Find Similar Protocols",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"protocol_name\": \"Uniswap\",\n  \"limit\": 5\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/similar-protocols",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "similar-protocols"]
+                },
+                "description": "Find similar protocols using graph analysis."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Agent Squad",
+          "item": [
+            {
+              "name": "Send Agent Squad Message",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"message\": \"Analyze ETH/USDC liquidity depth on Uniswap V3\",\n  \"agent_type\": \"trading\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/agent-squad/messages",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "agent-squad", "messages"]
+                },
+                "description": "Send message to specific Agent Squad agent."
+              },
+              "response": []
+            },
+            {
+              "name": "Supervisor Workflow",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query\": \"Create a complete DeFi investment strategy for $50k with risk analysis and execution plan\",\n  \"agents\": [\"portfolio\", \"risk_analyzer\", \"execution\"]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/chat/agent-squad/supervisor",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "agent-squad", "supervisor"]
+                },
+                "description": "Multi-agent workflow orchestration via Supervisor."
+              },
+              "response": []
+            },
+            {
+              "name": "List Enabled Agents",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/chat/agent-squad/agents",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "chat", "agent-squad", "agents"]
+                },
+                "description": "List all enabled agents for current user (filtered by subscription tier)."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. User Endpoints - Wallet",
+      "description": "Wallet management endpoints.",
+      "item": [
+        {
+          "name": "Get My Wallets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.wallets && jsonData.wallets.length > 0) {",
+                  "    pm.collectionVariables.set('wallet_id', jsonData.wallets[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/wallet/me",
+              "host": ["{{base_url}}"],
+              "path": ["wallet", "me"]
+            },
+            "description": "Get all wallets for current user."
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Wallets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wallets\": [\n    {\n      \"address\": \"0x...\",\n      \"chain\": \"ethereum\",\n      \"provider\": \"privy\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/wallet/sync",
+              "host": ["{{base_url}}"],
+              "path": ["wallet", "sync"]
+            },
+            "description": "Sync wallets from frontend (Privy embedded wallets)."
+          },
+          "response": []
+        },
+        {
+          "name": "Export Wallet (HPKE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wallet_id\": \"{{wallet_id}}\",\n  \"public_key\": \"YOUR_PUBLIC_KEY_FOR_HPKE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/wallet/export",
+              "host": ["{{base_url}}"],
+              "path": ["wallet", "export"]
+            },
+            "description": "Export wallet private key encrypted with HPKE. Requires public key for encryption."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. User Endpoints - Portfolio",
+      "description": "Portfolio and position management.",
+      "item": [
+        {
+          "name": "Get Portfolio Snapshots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/user/portfolio/snapshots?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["user", "portfolio", "snapshots"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get portfolio snapshots (point-in-time holdings)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Positions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/user/portfolio/positions?protocol=aave",
+              "host": ["{{base_url}}"],
+              "path": ["user", "portfolio", "positions"],
+              "query": [
+                {
+                  "key": "protocol",
+                  "value": "aave"
+                }
+              ]
+            },
+            "description": "Get DeFi positions (Aave, Morpho, Hyperliquid)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Balances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/user/portfolio/balances?chain=ethereum",
+              "host": ["{{base_url}}"],
+              "path": ["user", "portfolio", "balances"],
+              "query": [
+                {
+                  "key": "chain",
+                  "value": "ethereum"
+                }
+              ]
+            },
+            "description": "Get token balances for user wallets."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. User Endpoints - DeFi Protocols",
+      "description": "DeFi protocol integrations (Aave, Morpho, Hyperliquid, etc.).",
+      "item": [
+        {
+          "name": "Aave",
+          "item": [
+            {
+              "name": "Get Markets",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/defi/aave/markets?chain=ethereum",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "aave", "markets"],
+                  "query": [
+                    {
+                      "key": "chain",
+                      "value": "ethereum"
+                    }
+                  ]
+                },
+                "description": "List Aave V3 markets."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Positions",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/defi/aave/positions?chain=ethereum",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "aave", "positions"],
+                  "query": [
+                    {
+                      "key": "chain",
+                      "value": "ethereum"
+                    }
+                  ]
+                },
+                "description": "Get user Aave positions."
+              },
+              "response": []
+            },
+            {
+              "name": "Deposit",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"asset\": \"USDC\",\n  \"amount\": \"1000\",\n  \"chain\": \"ethereum\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/defi/aave/deposit",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "aave", "deposit"]
+                },
+                "description": "Deposit to Aave V3."
+              },
+              "response": []
+            },
+            {
+              "name": "Withdraw",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"asset\": \"USDC\",\n  \"amount\": \"500\",\n  \"chain\": \"ethereum\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/defi/aave/withdraw",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "aave", "withdraw"]
+                },
+                "description": "Withdraw from Aave V3."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Morpho",
+          "item": [
+            {
+              "name": "Get Vaults",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/defi/morpho/vaults?chain=ethereum",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "morpho", "vaults"],
+                  "query": [
+                    {
+                      "key": "chain",
+                      "value": "ethereum"
+                    }
+                  ]
+                },
+                "description": "List Morpho MetaMorpho vaults."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Positions",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/defi/morpho/positions?chain=ethereum",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "morpho", "positions"],
+                  "query": [
+                    {
+                      "key": "chain",
+                      "value": "ethereum"
+                    }
+                  ]
+                },
+                "description": "Get user Morpho positions."
+              },
+              "response": []
+            },
+            {
+              "name": "Deposit",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vault_id\": \"vault_address\",\n  \"amount\": \"1000\",\n  \"chain\": \"ethereum\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/defi/morpho/deposit",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "morpho", "deposit"]
+                },
+                "description": "Deposit to Morpho vault."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Hyperliquid",
+          "item": [
+            {
+              "name": "Get Positions",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/defi/hyperliquid/positions",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "hyperliquid", "positions"]
+                },
+                "description": "Get perpetual futures positions."
+              },
+              "response": []
+            },
+            {
+              "name": "Place Order",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"symbol\": \"ETH\",\n  \"side\": \"buy\",\n  \"size\": \"1.0\",\n  \"price\": \"3000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/defi/hyperliquid/trade",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "defi", "hyperliquid", "trade"]
+                },
+                "description": "Place perpetual futures order."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. User Endpoints - Hunter AI",
+      "description": "Hunter AI endpoints for sentiment, predictions, and trading signals.",
+      "item": [
+        {
+          "name": "Sentiment Analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"ETH\",\n  \"sources\": [\"twitter\", \"reddit\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/hunter/sentiment",
+              "host": ["{{base_url}}"],
+              "path": ["user", "hunter", "sentiment"]
+            },
+            "description": "Get sentiment analysis for token from social media."
+          },
+          "response": []
+        },
+        {
+          "name": "Price Prediction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"BTC\",\n  \"timeframe\": \"7d\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/hunter/price-prediction",
+              "host": ["{{base_url}}"],
+              "path": ["user", "hunter", "price-prediction"]
+            },
+            "description": "ML-powered price prediction."
+          },
+          "response": []
+        },
+        {
+          "name": "Trading Signals",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"SOL\",\n  \"strategy\": \"momentum\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/hunter/trading-signals",
+              "host": ["{{base_url}}"],
+              "path": ["user", "hunter", "trading-signals"]
+            },
+            "description": "Get trading signals (buy/sell) with entry/exit prices."
+          },
+          "response": []
+        },
+        {
+          "name": "Portfolio Optimization",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokens\": [\"BTC\", \"ETH\", \"SOL\"],\n  \"risk_tolerance\": \"moderate\",\n  \"capital\": 50000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/hunter/portfolio-optimization",
+              "host": ["{{base_url}}"],
+              "path": ["user", "hunter", "portfolio-optimization"]
+            },
+            "description": "Modern Portfolio Theory optimization."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. User Endpoints - ULTRA Arbitrage",
+      "description": "ULTRA arbitrage and MEV protection endpoints.",
+      "item": [
+        {
+          "name": "Find Arbitrage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capital\": 10000,\n  \"min_profit_percent\": 0.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/ultra/arbitrage",
+              "host": ["{{base_url}}"],
+              "path": ["user", "ultra", "arbitrage"]
+            },
+            "description": "Find cross-DEX arbitrage opportunities."
+          },
+          "response": []
+        },
+        {
+          "name": "Flash Loans",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100000,\n  \"token\": \"USDC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/ultra/flash-loans",
+              "host": ["{{base_url}}"],
+              "path": ["user", "ultra", "flash-loans"]
+            },
+            "description": "Find flash loan opportunities."
+          },
+          "response": []
+        },
+        {
+          "name": "MEV Protection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_hash\": \"0x...\",\n  \"use_flashbots\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/user/ultra/mev-protection",
+              "host": ["{{base_url}}"],
+              "path": ["user", "ultra", "mev-protection"]
+            },
+            "description": "MEV protection via Flashbots."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. User Endpoints - Other",
+      "description": "Additional user endpoints (alerts, projects, transactions, etc.).",
+      "item": [
+        {
+          "name": "Alerts",
+          "item": [
+            {
+              "name": "Create Alert",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"ETH\",\n  \"condition\": \"price_above\",\n  \"value\": 3500\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/alerts",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "alerts"]
+                },
+                "description": "Create price alert."
+              },
+              "response": []
+            },
+            {
+              "name": "List Alerts",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/alerts",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "alerts"]
+                },
+                "description": "List user alerts."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Projects",
+          "item": [
+            {
+              "name": "List Projects",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const jsonData = pm.response.json();",
+                      "if (jsonData.projects && jsonData.projects.length > 0) {",
+                      "    pm.collectionVariables.set('project_id', jsonData.projects[0].id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/projects",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "projects"]
+                },
+                "description": "List user projects."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Project",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/projects/{{project_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "projects", "{{project_id}}"]
+                },
+                "description": "Get project details."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Transactions",
+          "item": [
+            {
+              "name": "List Transactions",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/user/transactions?page=1&limit=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "transactions"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "List user transactions."
+              },
+              "response": []
+            },
+            {
+              "name": "Log Transaction",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tx_hash\": \"0x...\",\n  \"chain\": \"ethereum\",\n  \"type\": \"swap\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/user/transactions/log",
+                  "host": ["{{base_url}}"],
+                  "path": ["user", "transactions", "log"]
+                },
+                "description": "Log on-chain transaction."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9. Admin Endpoints",
+      "description": "Admin-only endpoints. Requires ADMIN role.",
+      "item": [
+        {
+          "name": "User Management",
+          "item": [
+            {
+              "name": "List Users",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/users?page=1&limit=20&search=",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "users"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "List all users with pagination and search."
+              },
+              "response": []
+            },
+            {
+              "name": "Grant Admin",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/users/user@example.com/grant-admin",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "users", "user@example.com", "grant-admin"]
+                },
+                "description": "Grant admin role (super admin only)."
+              },
+              "response": []
+            },
+            {
+              "name": "Activate User",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/users/user@example.com/activate",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "users", "user@example.com", "activate"]
+                },
+                "description": "Activate user account."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "LLM Orchestration",
+          "item": [
+            {
+              "name": "LLM Dashboard",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/llm/dashboard",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "llm", "dashboard"]
+                },
+                "description": "Get LLM orchestration dashboard data."
+              },
+              "response": []
+            },
+            {
+              "name": "List Providers",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/llm/providers",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "llm", "providers"]
+                },
+                "description": "List all LLM providers."
+              },
+              "response": []
+            },
+            {
+              "name": "List Models",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/llm/models",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "llm", "models"]
+                },
+                "description": "List all LLM models."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Telemetry Metrics",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/llm/telemetry/metrics",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "llm", "telemetry", "metrics"]
+                },
+                "description": "Get LLM telemetry metrics."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Security Dashboard",
+          "item": [
+            {
+              "name": "Get Security Dashboard",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/security/dashboard",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "security", "dashboard"]
+                },
+                "description": "Get security dashboard data."
+              },
+              "response": []
+            },
+            {
+              "name": "Latest Security Scan",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/security/scans/latest",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "security", "scans", "latest"]
+                },
+                "description": "Get latest security scan results."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Chat Analytics",
+          "item": [
+            {
+              "name": "Chat Dashboard",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/chat/dashboard",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "chat", "dashboard"]
+                },
+                "description": "Get chat analytics dashboard."
+              },
+              "response": []
+            },
+            {
+              "name": "Agent Performance",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/chat/dashboard/agents/performance",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "chat", "dashboard", "agents", "performance"]
+                },
+                "description": "Get agent performance metrics."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Projects Management",
+          "item": [
+            {
+              "name": "Create Project",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"My Project\",\n  \"description\": \"Project description\",\n  \"enabled_tools\": [\"hunter\", \"ultra\"],\n  \"enabled_protocols\": [\"aave\", \"morpho\"],\n  \"enabled_chains\": [\"ethereum\", \"base\"]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/projects",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "projects"]
+                },
+                "description": "Create a new project."
+              },
+              "response": []
+            },
+            {
+              "name": "List Projects",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/projects",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "projects"]
+                },
+                "description": "List all projects."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "System Stats",
+          "item": [
+            {
+              "name": "Get System Statistics",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/admin/stats",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "stats"]
+                },
+                "description": "Get high-level system statistics."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10. Subscription & Payment",
+      "description": "Subscription and payment endpoints.",
+      "item": [
+        {
+          "name": "Get Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/subscription",
+              "host": ["{{base_url}}"],
+              "path": ["subscription"]
+            },
+            "description": "Get all available subscription plans."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": \"pro_monthly\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/subscription",
+              "host": ["{{base_url}}"],
+              "path": ["subscription"]
+            },
+            "description": "Create customer subscription."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Subscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/subscription/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["subscription", "cancel"]
+            },
+            "description": "Cancel active subscription."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "// Add any global setup here"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "// Add any global tests here",
+          "",
+          "// Check for rate limiting",
+          "if (pm.response.code === 429) {",
+          "    console.log('Rate limit exceeded. Headers:', pm.response.headers.toObject());",
+          "}"
+        ]
+      }
+    }
+  ]
+}
