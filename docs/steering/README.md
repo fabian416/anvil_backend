@@ -396,6 +396,74 @@ Complete admin endpoints (operaciones internas) documentation.
 - Authentication: All endpoints require Bearer token + ADMIN role
 - Total: 110+ admin endpoints across 13 categories
 
+### [Permissions & Scopes](./permissions-scopes.md)
+
+Complete permissions and scopes system documentation.
+
+- Permission-Based Authorization:
+  - Base Permission class with PermissionContext
+  - authorize() function for permission checks
+  - Permission types: CanManageSelf, CanManageSubordinate, CanManageRole
+  - Composite permissions (AnyOf) for OR logic
+- User Role-Based Access Control (RBAC):
+  - 4 roles: ADMIN, MODERATOR, USER, GUEST
+  - Role hierarchy (SUBORDINATE_ROLES):
+    - ADMIN can manage all roles (including other admins)
+    - MODERATOR can manage USER and GUEST
+    - USER can manage GUEST
+    - GUEST can manage nothing
+  - Role properties: is_assignable, is_changeable
+  - get_hierarchy() method for role hierarchy
+- Super Admin Protection:
+  - Email-based super admin (ADMIN_USER_ADMIN or USER_ADMIN env var)
+  - Cannot be revoked or deactivated
+  - Only super admin can grant/revoke admin roles
+  - Protected from role changes
+- Agent Isolation & RBAC:
+  - 4 agent roles: READ_ONLY, STANDARD, PRIVILEGED, ADMIN
+  - 8 resource types: USER_DATA, SYSTEM_CONFIG, EXTERNAL_API, DATABASE, FILE_SYSTEM, NETWORK, WALLET, AGENT_COMMUNICATION
+  - AgentPermission dataclass (resource_type, actions, scope)
+  - AgentIsolationGuard class:
+    - register_agent() for role assignment
+    - check_permission() for resource access
+    - check_agent_communication() for agent-to-agent messaging
+    - validate_agent_routing() to prevent prompt injection
+    - get_agent_capabilities() for capability queries
+    - revoke_agent_access() for access revocation
+  - Default role permissions matrix
+  - High-risk actions: delete, transfer, execute, terminate, broadcast, elevate
+  - Permission decorator (@require_agent_permission)
+- Project Tool Permissions:
+  - Tool whitelisting via enabled_tools list
+  - Protocol whitelisting via enabled_protocols
+  - Chain whitelisting via enabled_chains
+  - Risk validation against risk_config:
+    - max_risk_tolerance for portfolio optimization
+    - max_capital_per_trade for arbitrage tools
+    - min_profit_threshold for trading
+  - ProjectToolExecutor with permission and risk validation
+  - Feature flags: tool_permissions_enabled, risk_validation_enabled
+- Setting Scopes:
+  - SettingScope enum: GLOBAL, SECURITY, PAYMENTS, AI
+  - Setting entity with scope field
+  - Scope-based organization for access control
+- Permission Contexts:
+  - UserManagementContext (subject, target)
+  - RoleManagementContext (subject, target_role)
+  - AgentPermission (resource_type, actions, scope)
+- Permission Enforcement Points:
+  - Application layer (interactors)
+  - Presentation layer (controllers with Security(bearer_scheme))
+  - Agent actions (AgentIsolationGuard)
+  - Project tool execution (ProjectToolExecutor)
+- Usage examples for all permission types
+- Security considerations:
+  - Principle of least privilege
+  - Defense in depth
+  - Super admin protection
+  - Agent isolation
+  - Project tool permissions
+
 ---
 
 ## 🔗 Related Documents
