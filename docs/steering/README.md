@@ -321,6 +321,81 @@ Complete feature flags system documentation.
   - POST /api/v1/telemetry/flags/save (Redis persistence)
 - Runtime toggle support for telemetry flags
 
+### [Admin Endpoints](./admin-endpoints.md)
+
+Complete admin endpoints (operaciones internas) documentation.
+
+- User Management:
+  - List users (pagination, sorting, search)
+  - Grant/revoke admin roles (super admin only for revoke)
+  - Activate/deactivate user accounts
+  - Change user passwords
+- Wallet Management:
+  - List wallets with filters (provider, chain, search)
+  - Get wallet details by Privy wallet ID
+  - Update wallet configuration and metadata
+- LLM Orchestration Management:
+  - Dashboard with WebSocket real-time updates
+  - Provider management (list, update, health checks)
+  - Model management (list, update, performance metrics)
+  - Rankings and leaderboards
+  - Telemetry metrics and cost tracking
+  - Budget configuration and alerts
+  - Circuit breaker management
+- Agent Management:
+  - List all agents with status
+- Security Dashboard:
+  - Security dashboard summary
+  - Latest security scan results
+  - Scan history and tool results
+  - Vulnerability trends (1-90 days)
+  - Health check for security system
+  - 5 OWASP security tools (Helios, LLMExploiter, Nettacker, etc.)
+- Retry System Management:
+  - List all services with retry status
+  - Enable/disable services manually
+  - Circuit breaker status and reset
+  - Service metrics (attempts, success rate, latency)
+- Transactions Admin View:
+  - List transactions by wallet address or user ID
+  - Filter by chain, status, transaction type
+  - Pagination support
+- Projects Management:
+  - CRUD operations for projects
+  - Knowledge base documents (create, list, process)
+  - Assignment rules (create, list, update)
+  - User assignments to projects
+- Chat Analytics Dashboard:
+  - Dashboard summary (conversations, messages, users)
+  - Agent performance leaderboard
+  - Cache efficiency metrics
+  - Cost tracking (by agent, model, day, user)
+  - Error monitoring and trends
+  - Active users metrics (DAU, WAU, MAU)
+  - Conversation metrics
+  - Data export (JSON, CSV)
+- Metrics & Statistics:
+  - Metrics overview (wallets, transactions, users)
+  - Time series data (transactions, wallets, user activity)
+  - Distribution data (wallets by provider, transactions by chain/status/type)
+  - System statistics
+- Distillation Management:
+  - Static response templates (CRUD)
+  - Configuration management
+  - Cache invalidation (exact, semantic, all)
+  - Cache statistics
+  - Telemetry requests and summary
+  - Distillation validation metrics
+- Policies Management:
+  - List, create, get, update Privy policies
+  - Policy rules management
+- Telemetry Feature Flags:
+  - Runtime toggle for telemetry components
+  - Per-API and per-LLM provider control
+  - Redis persistence
+- Authentication: All endpoints require Bearer token + ADMIN role
+- Total: 110+ admin endpoints across 13 categories
+
 ---
 
 ## 🔗 Related Documents
