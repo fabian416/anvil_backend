@@ -464,6 +464,74 @@ Complete permissions and scopes system documentation.
   - Agent isolation
   - Project tool permissions
 
+### [API Documentation](./api-documentation.md)
+
+Complete API documentation with endpoint reference.
+
+- API Architecture:
+  - Root router structure
+  - API v1 router organization
+  - Public, User, and Admin endpoint categories
+  - WebSocket endpoints
+- Endpoint Categories (200+ endpoints):
+  - Public Endpoints (15): Account management, Guest chat, Health check
+  - User Endpoints (100+): Chat, Wallet, Portfolio, Markets, Alerts, Projects, Transactions, Bitcoin, DeFi protocols (Aave, Morpho, Hyperliquid, Curve, Axelar, LayerZero), Hunter AI (6 tools), ULTRA Arbitrage (4 tools), GraphRAG, ML, Preferences, Dashboard, Search, Comparison, Notifications, Metrics
+  - Admin Endpoints (110+): User management, Wallet management, LLM orchestration (dashboard, providers, models, rankings, telemetry, budgets, circuit breakers), Agent management, Retry system, Security dashboard, Chat analytics, Transactions admin, Projects management, Distillation, Policies, Stats, Metrics, Telemetry flags
+  - Subscription & Payment: Subscription management, Payment processing
+- Authentication & Authorization:
+  - Bearer Token (JWT): Access token (15 min), Refresh token (7 days)
+  - Privy Web3 Login: Web3-native authentication
+  - Role-Based Access Control: GUEST, USER, MODERATOR, ADMIN, SUPER_ADMIN
+  - Permission checks in application layer
+- Request/Response Formats:
+  - Standard JSON request/response
+  - Pagination (limit, offset)
+  - Sorting (sort_by, sort_order)
+  - Filtering (field=value, search)
+  - Error response format
+- Error Handling:
+  - Error codes: Authentication (401), Authorization (403), Validation (400), Not Found (404), Conflict (409), Service (503)
+  - Structured error responses with codes, messages, details
+- Rate Limiting:
+  - Guest: 20/hour, 50/day
+  - Authenticated: 1000/hour, 10000/day
+  - Rate limit headers (X-RateLimit-*)
+- Multi-Language Support:
+  - Supported languages: en (English), es (Spanish), pt (Portuguese), zh (Mandarin)
+  - Language detection: Header, Query parameter, Request body
+  - Language-specific endpoints
+- WebSocket API:
+  - Chat WebSocket (/ws/chat): Real-time agent responses, streaming support
+  - Graph WebSocket (/ws/graph): Real-time graph updates
+  - LLM Dashboard WebSocket (/admin/llm/dashboard/ws): Real-time metrics
+  - Message format and types
+- API Examples:
+  - Create conversation
+  - Send message (unified routing)
+  - Execute swap action (two-step flow)
+  - List users (admin)
+- API Versioning:
+  - Current version: v1
+  - Future versions: v2 (GraphQL, webhooks, batch operations)
+  - Migration strategy
+- OpenAPI/Swagger Documentation:
+  - Swagger UI (/docs)
+  - ReDoc (/redoc)
+  - OpenAPI JSON (/openapi.json)
+  - Interactive testing
+- Best Practices:
+  - HTTP methods (GET, POST, PUT, PATCH, DELETE)
+  - Error handling
+  - Pagination
+  - Rate limiting
+  - WebSockets for real-time
+  - Language support
+- API Statistics:
+  - 200+ total endpoints
+  - 30+ API modules
+  - 4 supported languages
+  - 3 WebSocket endpoints
+
 ---
 
 ## 🔗 Related Documents
