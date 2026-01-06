@@ -1808,9 +1808,45 @@ class UnifiedChatOrchestrator:
             response_content += "- `resume` - Continue after pause\n"
             response_content += "- `status` - View bot performance\n"
 
-        user_msg, agent_msg = await self._save_messages(
-            conversation_id, content, response_content
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_api_source,
+            create_blockchain_source,
         )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add 1inch source (used for arbitrage discovery)
+        sources.append(create_api_source(
+            source_name="1inch",
+            url="https://app.1inch.io/",
+            citation_text="DEX price data for automated arbitrage scanning",
+            fetched_at=fetched_at,
+        ))
+        
+        # Add Flashbots source (for MEV protection)
+        sources.append(create_api_source(
+            source_name="Flashbots",
+            url="https://www.flashbots.net/",
+            citation_text="MEV protection for automated execution",
+            fetched_at=fetched_at,
+        ))
+        
+        # Add blockchain source
+        sources.append(create_blockchain_source(
+            chain="Ethereum",
+            citation_text="Automated transaction execution on Ethereum",
+            fetched_at=fetched_at,
+            metadata={"auto_executor": True, "mev_protection": True},
+        ))
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content, sources=sources
+        )
+        
+        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -1826,6 +1862,7 @@ class UnifiedChatOrchestrator:
                 "action": action,
                 "ultra_tool": "auto_executor",
             },
+            "sources": sources_response,  # NEW
         }
 
     # ============================================================================
