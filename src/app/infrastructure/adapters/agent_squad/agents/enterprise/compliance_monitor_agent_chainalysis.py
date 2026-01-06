@@ -120,10 +120,48 @@ class ComplianceMonitorAgentChainalysis:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add Chainalysis source
+        if self._chainalysis_client:
+            sources.append(create_api_source(
+                source_name="Chainalysis",
+                url="https://www.chainalysis.com/",
+                citation_text=f"Compliance screening for wallet {str(wallet_address)[:10]}...",
+                fetched_at=fetched_at,
+                provider="Chainalysis API",
+                metadata={"wallet_address": str(wallet_address)},
+            ))
+        
+        # Add OFAC source
+        sources.append(create_api_source(
+            source_name="OFAC",
+            url="https://ofac.treasury.gov/",
+            citation_text="OFAC sanctions list check",
+            fetched_at=fetched_at,
+            provider="US Treasury OFAC",
+        ))
+        
+        # Add LLM source
+        model_name = self._model
+        sources.append(create_llm_source(
+            model=model_name,
+            fetched_at=fetched_at,
+        ))
+        
         return AgentResponse(
             content=report,
             agent_type=self.agent_type,
             tools_used=["chainalysis_api", "ofac_api", "openai_api"],
+            sources=sources,
             metadata={
                 "latency_ms": latency_ms,
                 "wallet_address": str(wallet_address),

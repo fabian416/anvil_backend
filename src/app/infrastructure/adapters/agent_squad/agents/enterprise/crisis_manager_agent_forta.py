@@ -121,10 +121,45 @@ class CrisisManagerAgentForta:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add Forta source
+        sources.append(create_api_source(
+            source_name="Forta",
+            url="https://forta.org/",
+            citation_text="Crisis detection from Forta Network",
+            fetched_at=fetched_at,
+            provider="Forta API",
+            data_points_used=len(active_crises),
+        ))
+        
+        # Add Privy source (for wallet operations)
+        sources.append(create_api_source(
+            source_name="Privy",
+            url="https://privy.io/",
+            citation_text="Wallet operations via Privy",
+            fetched_at=fetched_at,
+        ))
+        
+        # Add LLM source
+        sources.append(create_llm_source(
+            model=self._model,
+            fetched_at=fetched_at,
+        ))
+        
         return AgentResponse(
             content=report,
             agent_type=self.agent_type,
             tools_used=["forta_api", "privy_wallet", "openai_api"],
+            sources=sources,
             metadata={
                 "latency_ms": latency_ms,
                 "active_crises": len(active_crises),

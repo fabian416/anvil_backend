@@ -77,10 +77,44 @@ class SecurityAuditorAgentSlither:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add LLM source
+        model_name = response.get("model", "Unknown")
+        sources.append(create_llm_source(
+            model=model_name,
+            fetched_at=fetched_at,
+        ))
+        
+        # TODO: Add Slither source when integrated
+        # sources.append(create_api_source(
+        #     source_name="Slither",
+        #     citation_text="Static analysis from Slither",
+        #     fetched_at=fetched_at,
+        #     provider="Slither Static Analyzer",
+        # ))
+        
+        # TODO: Add audit database source when integrated
+        # sources.append(create_api_source(
+        #     source_name="Audit Reports",
+        #     url="https://github.com/trailofbits/publications",
+        #     citation_text="Security audit reports database",
+        #     fetched_at=fetched_at,
+        # ))
+        
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
             tools_used=["openai_api"],  # TODO: Add Slither, Mythril
+            sources=sources,
             metadata={
                 "tokens_used": response.get("tokens_used"),
                 "latency_ms": latency_ms,

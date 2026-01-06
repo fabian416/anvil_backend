@@ -95,10 +95,49 @@ class LendingBorrowingAgentAave:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_mcp_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add Aave source (if client available)
+        if self._aave_client:
+            sources.append(create_mcp_source(
+                mcp_server_name="Aave",
+                tool_name="get_user_position",
+                url="https://app.aave.com/",
+                citation_text="Aave V3 lending position data",
+                fetched_at=fetched_at,
+                metadata={"protocol": "Aave V3"},
+            ))
+        
+        # Add Compound source (TODO: when integrated)
+        # sources.append(create_mcp_source(
+        #     mcp_server_name="Compound",
+        #     tool_name="get_markets",
+        #     url="https://app.compound.finance/",
+        #     citation_text="Compound V3 market data",
+        #     fetched_at=fetched_at,
+        # ))
+        
+        # Add LLM source
+        model_name = self._model
+        sources.append(create_llm_source(
+            model=model_name,
+            fetched_at=fetched_at,
+        ))
+        
         return AgentResponse(
             content=report,
             agent_type=self.agent_type,
             tools_used=["aave_api", "compound_api", "openai_api"],
+            sources=sources,
             metadata={
                 "latency_ms": latency_ms,
                 "health_factor": position["health_factor"] if position else None,

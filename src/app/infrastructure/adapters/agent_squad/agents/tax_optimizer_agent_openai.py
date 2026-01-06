@@ -77,10 +77,37 @@ class TaxOptimizerAgentOpenAI:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_database_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add database source (transaction history)
+        sources.append(create_database_source(
+            citation_text="Your transaction history from Anvil",
+            fetched_at=fetched_at,
+            metadata={"query_type": "transaction_history"},
+        ))
+        
+        # Add LLM source
+        model_name = response.get("model", "Unknown")
+        sources.append(create_llm_source(
+            model=model_name,
+            fetched_at=fetched_at,
+        ))
+        
+        # TODO: Add tax calculation API sources when integrated
+        
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
             tools_used=["openai_api"],  # TODO: Add tax calculation tools
+            sources=sources,
             metadata={
                 "tokens_used": response.get("tokens_used"),
                 "latency_ms": latency_ms,

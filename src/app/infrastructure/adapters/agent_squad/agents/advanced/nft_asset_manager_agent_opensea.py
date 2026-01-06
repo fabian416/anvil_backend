@@ -85,10 +85,45 @@ class NFTAssetManagerAgentOpenSea:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add OpenSea source
+        sources.append(create_api_source(
+            source_name="OpenSea",
+            url="https://opensea.io/",
+            citation_text="NFT portfolio data from OpenSea",
+            fetched_at=fetched_at,
+            provider="OpenSea API",
+        ))
+        
+        # Add Blur source
+        sources.append(create_api_source(
+            source_name="Blur",
+            url="https://blur.io/",
+            citation_text="NFT marketplace data from Blur",
+            fetched_at=fetched_at,
+            provider="Blur API",
+        ))
+        
+        # Add LLM source
+        sources.append(create_llm_source(
+            model=self._model,
+            fetched_at=fetched_at,
+        ))
+        
         return AgentResponse(
             content=report,
             agent_type=self.agent_type,
             tools_used=["opensea_api", "blur_api", "openai_api"],
+            sources=sources,
             metadata={
                 "latency_ms": latency_ms,
                 "nft_count": portfolio["total_nfts"],

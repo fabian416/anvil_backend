@@ -105,10 +105,36 @@ class MultiSigCoordinatorAgentGnosis:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add Gnosis Safe source
+        sources.append(create_api_source(
+            source_name="Gnosis Safe",
+            url="https://app.safe.global/",
+            citation_text="Multi-sig wallet coordination via Gnosis Safe",
+            fetched_at=fetched_at,
+            provider="Gnosis Safe API",
+        ))
+        
+        # Add LLM source
+        sources.append(create_llm_source(
+            model=self._model,
+            fetched_at=fetched_at,
+        ))
+        
         return AgentResponse(
             content=summary,
             agent_type=self.agent_type,
             tools_used=["gnosis_safe_api", "openai_api"],
+            sources=sources,
             metadata={
                 "latency_ms": latency_ms,
                 "proposal_id": proposal["proposal_id"],

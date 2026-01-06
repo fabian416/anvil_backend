@@ -111,10 +111,53 @@ class ExecutionAgentPrivy:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+            create_blockchain_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add LLM source (for intent parsing)
+        model_name = self._model
+        sources.append(create_llm_source(
+            model=model_name,
+            fetched_at=fetched_at,
+        ))
+        
+        # Add 1inch source (if swap action)
+        action = intent_response.get("action", "")
+        if action == "swap":
+            from_token = intent_response.get("from_token", "")
+            to_token = intent_response.get("to_token", "")
+            sources.append(create_api_source(
+                source_name="1inch",
+                url=f"https://app.1inch.io/",
+                endpoint="/swap/v5.2/quote",
+                citation_text=f"1inch swap quote: {from_token} → {to_token}",
+                fetched_at=fetched_at,
+                query_params={"fromTokenAddress": from_token, "toTokenAddress": to_token} if from_token and to_token else None,
+            ))
+        
+        # Add Privy source
+        sources.append(create_api_source(
+            source_name="Privy",
+            url="https://privy.io/",
+            citation_text="Wallet connection and transaction signing via Privy",
+            fetched_at=fetched_at,
+        ))
+        
+        # TODO: Add blockchain source when transaction is submitted (tx_hash available)
+        
         return AgentResponse(
             content=response_content,
             agent_type=self.agent_type,
             tools_used=["privy_wallet", "1inch_api", "openai_api"],
+            sources=sources,
             metadata={
                 "latency_ms": latency_ms,
                 "transaction_intent": intent_response,

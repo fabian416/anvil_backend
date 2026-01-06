@@ -78,10 +78,44 @@ class PortfolioAgentOpenAI:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_database_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add database source (portfolio data)
+        sources.append(create_database_source(
+            citation_text="Your portfolio data from Anvil",
+            fetched_at=fetched_at,
+            metadata={"query_type": "portfolio_snapshot"},
+        ))
+        
+        # Add LLM source
+        model_name = response.get("model", "Unknown")
+        sources.append(create_llm_source(
+            model=model_name,
+            fetched_at=fetched_at,
+        ))
+        
+        # TODO: Add price API sources (CoinGecko) when integrated
+        # sources.append(create_api_source(
+        #     source_name="CoinGecko",
+        #     url="https://www.coingecko.com/",
+        #     citation_text="Token prices from CoinGecko",
+        #     fetched_at=fetched_at,
+        # ))
+        
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
             tools_used=["openai_api"],  # TODO: Add MPT calculator, price APIs
+            sources=sources,
             metadata={
                 "tokens_used": response.get("tokens_used"),
                 "latency_ms": latency_ms,

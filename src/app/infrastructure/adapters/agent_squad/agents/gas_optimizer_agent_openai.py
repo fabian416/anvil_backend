@@ -77,10 +77,44 @@ class GasOptimizerAgentOpenAI:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+            create_blockchain_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add LLM source
+        model_name = response.get("model", "Unknown")
+        sources.append(create_llm_source(
+            model=model_name,
+            fetched_at=fetched_at,
+        ))
+        
+        # TODO: Add gas oracle source when integrated
+        # sources.append(create_api_source(
+        #     source_name="EthGasStation",
+        #     url="https://ethgasstation.info/",
+        #     citation_text="Real-time gas price data",
+        #     fetched_at=fetched_at,
+        # ))
+        
+        # TODO: Add blockchain source for current gas prices
+        # sources.append(create_blockchain_source(
+        #     chain="Ethereum",
+        #     citation_text="Current gas prices from Ethereum network",
+        #     fetched_at=fetched_at,
+        # ))
+        
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
             tools_used=["openai_api"],  # TODO: Add gas oracle
+            sources=sources,
             metadata={
                 "tokens_used": response.get("tokens_used"),
                 "latency_ms": latency_ms,

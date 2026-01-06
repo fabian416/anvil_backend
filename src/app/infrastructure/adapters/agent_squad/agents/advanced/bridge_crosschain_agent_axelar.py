@@ -99,10 +99,45 @@ class BridgeCrosschainAgentAxelar:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add Axelar source
+        sources.append(create_api_source(
+            source_name="Axelar",
+            url="https://axelar.network/",
+            citation_text="Cross-chain bridge routes from Axelar",
+            fetched_at=fetched_at,
+            provider="Axelar API",
+        ))
+        
+        # Add LayerZero source
+        sources.append(create_api_source(
+            source_name="LayerZero",
+            url="https://layerzero.network/",
+            citation_text="Cross-chain bridge routes from LayerZero",
+            fetched_at=fetched_at,
+            provider="LayerZero API",
+        ))
+        
+        # Add LLM source
+        sources.append(create_llm_source(
+            model=self._model,
+            fetched_at=fetched_at,
+        ))
+        
         return AgentResponse(
             content=comparison,
             agent_type=self.agent_type,
             tools_used=["axelar_api", "layerzero_api", "openai_api"],
+            sources=sources,
             metadata={
                 "latency_ms": latency_ms,
                 "routes_found": len(routes),

@@ -87,10 +87,46 @@ class DAOGovernanceAgentSnapshot:
         
         latency_ms = int((time.time() - start_time) * 1000)
         
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+            create_api_source,
+        )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add Snapshot source
+        sources.append(create_api_source(
+            source_name="Snapshot",
+            url="https://snapshot.org/",
+            citation_text="DAO governance proposals from Snapshot",
+            fetched_at=fetched_at,
+            provider="Snapshot API",
+            data_points_used=len(proposals),
+        ))
+        
+        # Add Tally source
+        sources.append(create_api_source(
+            source_name="Tally",
+            url="https://www.tally.xyz/",
+            citation_text="DAO voting data from Tally",
+            fetched_at=fetched_at,
+            provider="Tally API",
+        ))
+        
+        # Add LLM source
+        sources.append(create_llm_source(
+            model=self._model,
+            fetched_at=fetched_at,
+        ))
+        
         return AgentResponse(
             content=report,
             agent_type=self.agent_type,
             tools_used=["snapshot_api", "tally_api", "openai_api"],
+            sources=sources,
             metadata={
                 "latency_ms": latency_ms,
                 "active_proposals": len(proposals),

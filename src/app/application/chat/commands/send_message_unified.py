@@ -349,10 +349,34 @@ class UnifiedChatOrchestrator:
         # Format response message
         response_content = self._format_search_results(search_results)
 
-        # Save to conversation history
-        user_msg, agent_msg = await self._save_messages(
-            conversation_id, content, response_content
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_database_source,
         )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add GraphRAG database source
+        sources.append(create_database_source(
+            source_name="GraphRAG Knowledge Base",
+            citation_text="Protocol search results from Anvil's GraphRAG knowledge base",
+            fetched_at=fetched_at,
+            data_points_used=len(search_results.results),
+            metadata={
+                "search_type": "protocol_search",
+                "protocols_found": len(search_results.results),
+            },
+        ))
+
+        # Save to conversation history (with sources)
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content, sources=sources
+        )
+
+        # Convert sources to dict for response
+        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -379,7 +403,8 @@ class UnifiedChatOrchestrator:
                 ],
                 "search_context": search_results.search_explanation,
                 "recommendations": search_results.recommendations,
-            }
+            },
+            "sources": sources_response,  # NEW
         }
 
     async def _handle_risk_assessment(
@@ -405,10 +430,41 @@ class UnifiedChatOrchestrator:
         # Format response
         response_content = self._format_risk_analysis(risk_insights)
 
-        # Save to conversation
-        user_msg, agent_msg = await self._save_messages(
-            conversation_id, content, response_content
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_database_source,
+            create_api_source,
         )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add GraphRAG database source
+        sources.append(create_database_source(
+            source_name="GraphRAG Knowledge Base",
+            citation_text=f"Risk analysis for {entities['protocol_name']} from Anvil's GraphRAG knowledge base",
+            fetched_at=fetched_at,
+            metadata={
+                "search_type": "risk_assessment",
+                "protocol_name": entities["protocol_name"],
+            },
+        ))
+        
+        # TODO: Add DeFiLlama source when integrated
+        # sources.append(create_api_source(
+        #     source_name="DeFiLlama",
+        #     url=f"https://defillama.com/protocol/{entities['protocol_name']}",
+        #     citation_text=f"DeFiLlama risk data for {entities['protocol_name']}",
+        #     fetched_at=fetched_at,
+        # ))
+
+        # Save to conversation (with sources)
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content, sources=sources
+        )
+        
+        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -429,7 +485,8 @@ class UnifiedChatOrchestrator:
                     "should_warn": risk_insights.risk_analysis.should_warn,
                 },
                 "alternatives_count": len(risk_insights.alternatives),
-            }
+            },
+            "sources": sources_response,  # NEW
         }
 
     async def _handle_similar_protocols(
@@ -499,14 +556,39 @@ class UnifiedChatOrchestrator:
             base_protocol, similar_protocols
         )
 
-        # Save to conversation
-        user_msg, agent_msg = await self._save_messages(
-            conversation_id, content, response_content
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_database_source,
         )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add GraphRAG database source
+        sources.append(create_database_source(
+            source_name="GraphRAG Knowledge Base",
+            citation_text=f"Similar protocols to {protocol_name} from Anvil's GraphRAG knowledge base",
+            fetched_at=fetched_at,
+            data_points_used=len(similar_protocols) + 1,  # Base + similar
+            metadata={
+                "search_type": "similar_protocols",
+                "base_protocol": protocol_name,
+                "similar_count": len(similar_protocols),
+            },
+        ))
+
+        # Save to conversation (with sources)
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content, sources=sources
+        )
+        
+        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
 
         return {
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
+            "sources": sources_response,  # NEW
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
@@ -1366,9 +1448,31 @@ class UnifiedChatOrchestrator:
             response_content += "- 3-hop arbitrage (DEX A → DEX B → DEX C)\n"
             response_content += "- Triangular arbitrage (Token A → B → C → A)\n"
 
-        user_msg, agent_msg = await self._save_messages(
-            conversation_id, content, response_content
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_api_source,
         )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add 1inch source (used by ArbitrageDiscovery)
+        sources.append(create_api_source(
+            source_name="1inch",
+            url="https://app.1inch.io/",
+            citation_text="DEX price data from 1inch aggregator for arbitrage discovery",
+            fetched_at=fetched_at,
+            provider="1inch Aggregator API",
+        ))
+        
+        # TODO: Add other DEX sources when integrated (Uniswap, Curve, etc.)
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content, sources=sources
+        )
+        
+        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -1385,6 +1489,7 @@ class UnifiedChatOrchestrator:
                 "arb_type": arb_type or "all",
                 "ultra_tool": "arbitrage_scanner",
             },
+            "sources": sources_response,  # NEW
         }
 
     async def _handle_ultra_flash_loans(
@@ -1450,9 +1555,56 @@ class UnifiedChatOrchestrator:
             response_content += "- Balancer (0.00% fee)\n"
             response_content += "- Uniswap V3 (variable fee)\n"
 
-        user_msg, agent_msg = await self._save_messages(
-            conversation_id, content, response_content
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_mcp_source,
+            create_api_source,
         )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add protocol sources based on what was queried
+        if protocol:
+            protocol_name = protocol.title()
+            if protocol.lower() == "aave":
+                sources.append(create_mcp_source(
+                    mcp_server_name="Aave",
+                    tool_name="get_flash_loan_info",
+                    url="https://app.aave.com/",
+                    citation_text=f"{protocol_name} flash loan protocol information",
+                    fetched_at=fetched_at,
+                ))
+            elif protocol.lower() == "balancer":
+                sources.append(create_api_source(
+                    source_name="Balancer",
+                    url="https://balancer.fi/",
+                    citation_text="Balancer flash loan protocol information",
+                    fetched_at=fetched_at,
+                ))
+            elif protocol.lower() == "uniswap":
+                sources.append(create_api_source(
+                    source_name="Uniswap",
+                    url="https://app.uniswap.org/",
+                    citation_text="Uniswap V3 flash loan protocol information",
+                    fetched_at=fetched_at,
+                ))
+        else:
+            # All protocols queried
+            sources.append(create_mcp_source(
+                mcp_server_name="Aave",
+                tool_name="get_flash_loan_info",
+                url="https://app.aave.com/",
+                citation_text="Flash loan protocol comparison data",
+                fetched_at=fetched_at,
+            ))
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content, sources=sources
+        )
+        
+        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -1470,6 +1622,7 @@ class UnifiedChatOrchestrator:
                 "protocol": protocol,
                 "ultra_tool": "flash_loan_selector",
             },
+            "sources": sources_response,  # NEW
         }
 
     async def _handle_ultra_mev_protection(
@@ -1532,9 +1685,38 @@ class UnifiedChatOrchestrator:
             response_content += "- MEV attack prevention\n"
             response_content += "- Bundle optimization\n"
 
-        user_msg, agent_msg = await self._save_messages(
-            conversation_id, content, response_content
+        # Collect sources
+        from datetime import datetime
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_api_source,
+            create_blockchain_source,
         )
+        
+        sources = []
+        fetched_at = datetime.utcnow()
+        
+        # Add Flashbots source
+        sources.append(create_api_source(
+            source_name="Flashbots",
+            url="https://www.flashbots.net/",
+            citation_text="MEV protection via Flashbots private relay",
+            fetched_at=fetched_at,
+            provider="Flashbots Relay API",
+        ))
+        
+        # Add blockchain source (for transaction execution)
+        sources.append(create_blockchain_source(
+            chain="Ethereum",
+            citation_text="MEV-protected transaction on Ethereum",
+            fetched_at=fetched_at,
+            metadata={"mev_protection": True, "flashbots": True},
+        ))
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content, sources=sources
+        )
+        
+        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -1550,6 +1732,7 @@ class UnifiedChatOrchestrator:
                 "opportunity_id": opportunity_id,
                 "ultra_tool": "mev_protector",
             },
+            "sources": sources_response,  # NEW
         }
 
     async def _handle_ultra_auto_executor(
