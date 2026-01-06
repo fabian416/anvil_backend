@@ -205,6 +205,31 @@ Comprehensive analysis of LLM models and costs across Hunter AI, Agent Squad, UL
 - Real-world usage patterns and projections
 - Configuration files reference
 
+### [Chat Message Sources Attribution](./chat-message-sources-spec.md)
+
+Complete specification for adding source attribution to chat messages, enabling frontend to display knowledge sources and citations.
+
+- Problem decomposition (CTO methodology): Source tracking requirements, constraints, solution space
+- Solution generation: Hybrid approach (metadata + optional table) selected
+- Data model: SourceInfo value object with rich source information
+- Source mapping by agent:
+  - Hunter AI: CoinGecko, Twitter, Reddit, Discord, RSS News
+  - Research: Perplexity citations
+  - DeFi Yield: DeFiLlama, Aave, Morpho, Compound
+  - Execution: 1inch, Privy, blockchain
+  - Portfolio: Database, price APIs
+  - Risk Analyzer: DeFiLlama, protocol APIs
+  - All 18 agents mapped with their data sources
+- Updated response schemas: MessageResponse, UnifiedChatResponse with sources
+- Implementation plan: 5 phases (infrastructure → agents → handlers → persistence → frontend)
+- Source collection patterns: API calls, MCP servers, database queries, aggregated sources
+- Security: Source sanitization (remove sensitive data from query params)
+- Frontend display guidelines: Component structure, examples, citation formats
+- Testing strategy: Unit tests, integration tests, backward compatibility
+- Migration strategy: Gradual rollout, backward compatibility
+- Performance considerations: Latency impact (<5%), storage impact (~1-2 KB per message)
+- Analytics: Source usage tracking, reliability metrics
+
 ### [Agent Orchestrator](./agent-orchestrator.md)
 
 Complete multi-agent orchestration system documentation.
