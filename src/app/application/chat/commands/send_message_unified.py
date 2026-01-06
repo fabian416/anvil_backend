@@ -550,6 +550,25 @@ class UnifiedChatOrchestrator:
         user_msg = await self._conversation_repo.get_message(result["user_message_id"])
         agent_msg = await self._conversation_repo.get_message(result["agent_message_id"])
 
+        # Extract sources from agent response if available
+        sources = []
+        if "sources" in result:
+            sources = result["sources"]
+        elif "tools_used" in result and result.get("tools_used"):
+            # Fallback: create basic sources from tools_used
+            from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
+            from datetime import datetime
+            fetched_at = datetime.utcnow()
+            for tool in result["tools_used"]:
+                if tool != "openai_api":  # Skip LLM as it's implicit
+                    sources.append(SourceInfo(
+                        source_type=SourceType.API,
+                        source_name=tool.replace("_api", "").replace("_", " ").title(),
+                        citation_text=f"Data from {tool}",
+                        fetched_at=fetched_at,
+                        provider=tool,
+                    ))
+
         if user_msg and agent_msg:
             # Production: messages were saved by agent_squad.execute
             user_message_dict = self._message_to_dict(user_msg)
@@ -573,10 +592,25 @@ class UnifiedChatOrchestrator:
                 "agent_type": result["agent_type"],
                 "created_at": utc_now().isoformat(),
             }
+            # Add sources to agent message dict if available
+            if sources:
+                agent_message_dict["sources"] = [
+                    s.to_dict() if hasattr(s, "to_dict") else s
+                    for s in sources
+                ]
+
+        # Convert sources to dict format for response
+        sources_response = []
+        if sources:
+            sources_response = [
+                s.to_dict() if hasattr(s, "to_dict") else s
+                for s in sources
+            ]
 
         return {
             "user_message": user_message_dict,
             "agent_message": agent_message_dict,
+            "sources": sources_response,  # NEW: Aggregated sources
             "routing": {
                 "intent": intent_result.intent.value,
                 "confidence": intent_result.confidence,
@@ -655,9 +689,23 @@ class UnifiedChatOrchestrator:
         }
 
     async def _save_messages(
-        self, conversation_id: UUID, user_content: str, agent_content: str
+        self,
+        conversation_id: UUID,
+        user_content: str,
+        agent_content: str,
+        agent_type: str | None = None,
+        sources: list | None = None,
     ) -> tuple[Message, Message]:
-        """Save user and agent messages to conversation."""
+        """
+        Save user and agent messages to conversation.
+        
+        Args:
+            conversation_id: Conversation ID
+            user_content: User message content
+            agent_content: Agent message content
+            agent_type: Optional agent type
+            sources: Optional list of SourceInfo objects or dicts
+        """
         # Create and save user message
         user_message = Message.create_user_message(
             conversation_id=conversation_id,
@@ -665,10 +713,24 @@ class UnifiedChatOrchestrator:
         )
         await self._conversation_repo.add_message(user_message)
 
+        # Prepare metadata for agent message (include sources)
+        metadata = {}
+        if sources:
+            # Convert SourceInfo objects to dicts if needed
+            sources_data = []
+            for source in sources:
+                if hasattr(source, "to_dict"):
+                    sources_data.append(source.to_dict())
+                elif isinstance(source, dict):
+                    sources_data.append(source)
+            metadata["sources"] = sources_data
+
         # Create and save agent message
         agent_message = Message.create_agent_message(
             conversation_id=conversation_id,
             content=agent_content,
+            agent_type=agent_type,
+            metadata=metadata if metadata else None,
         )
         await self._conversation_repo.add_message(agent_message)
 
@@ -682,10 +744,23 @@ class UnifiedChatOrchestrator:
 
     def _message_to_dict(self, message: Message) -> dict:
         """Convert Message entity to dict for response."""
+        from app.domain.value_objects.chat.source_info import SourceInfo
+        
         # Map 'agent' role to 'assistant' for OpenAI API compatibility
         role = "assistant" if message.role.value == "agent" else message.role.value
 
-        return {
+        # Extract sources from metadata
+        sources = []
+        if message.metadata and "sources" in message.metadata:
+            sources_data = message.metadata["sources"]
+            if isinstance(sources_data, list):
+                for s in sources_data:
+                    if isinstance(s, dict):
+                        sources.append(s)
+                    elif hasattr(s, "to_dict"):
+                        sources.append(s.to_dict())
+
+        result = {
             "id": str(message.id),
             "conversation_id": str(message.conversation_id),
             "role": role,
@@ -693,6 +768,12 @@ class UnifiedChatOrchestrator:
             "agent_type": message.agent_type,
             "created_at": message.created_at.isoformat(),
         }
+        
+        # Add sources if present
+        if sources:
+            result["sources"] = sources
+        
+        return result
 
     def _format_search_results(self, search_results) -> str:
         """Format GraphRAG search results as markdown."""

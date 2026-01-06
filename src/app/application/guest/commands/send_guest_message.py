@@ -101,6 +101,7 @@ class GuestMessageResult:
     agent_message: dict[str, Any]
     routing: dict[str, Any]
     enrichment: dict[str, Any] | None = None
+    sources: list[dict[str, Any]] | None = None  # NEW: Source attribution
     registration_required: dict[str, Any] | None = None
     guest_info: dict[str, Any] | None = None
     rate_limited: bool = False
@@ -280,8 +281,24 @@ class SendGuestMessage:
         final_enrichment = enrichment if enrichment else {}
         final_enrichment["disclaimer"] = get_demo_disclaimer(language)
 
+        # Extract sources from handler result
+        sources = []
+        if handler_result and "sources" in handler_result:
+            sources = handler_result["sources"]
+
         # Determine if using real handler or demo mode
         is_real_handler = intent in REAL_HANDLER_INTENTS and enrichment is not None
+
+        agent_message_dict = {
+            "id": str(agent_message.id),
+            "role": agent_message.role.value,
+            "content": agent_message.content,
+            "created_at": agent_message.created_at.isoformat(),
+        }
+        
+        # Add sources if available
+        if sources:
+            agent_message_dict["sources"] = sources
 
         return GuestMessageResult(
             conversation_id=conversation.id,
@@ -292,12 +309,7 @@ class SendGuestMessage:
                 "content": user_message.content,
                 "created_at": user_message.created_at.isoformat(),
             },
-            agent_message={
-                "id": str(agent_message.id),
-                "role": agent_message.role.value,
-                "content": agent_message.content,
-                "created_at": agent_message.created_at.isoformat(),
-            },
+            agent_message=agent_message_dict,
             routing={
                 "intent": intent.value if intent else "GENERAL_CONVERSATION",
                 "confidence": confidence or 0.5,
@@ -307,6 +319,7 @@ class SendGuestMessage:
                 "is_live_data": is_real_handler,
             },
             enrichment=final_enrichment,
+            sources=sources,  # NEW: Sources from handler
             registration_required=registration_required,
             guest_info={
                 "messages_remaining": messages_remaining,

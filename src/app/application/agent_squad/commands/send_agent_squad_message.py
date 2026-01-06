@@ -138,12 +138,18 @@ class SendAgentSquadMessage:
             conversation_context=context,
         )
 
-        # Step 6: Save agent response to database
+        # Step 6: Save agent response to database (with sources in metadata)
+        metadata = {}
+        if agent_response.sources:
+            # Store sources in metadata
+            metadata["sources"] = [s.to_dict() for s in agent_response.sources]
+        
         agent_message = Message.create(
             conversation_id=conversation_id,
             role=MessageRole.AGENT,
             content=agent_response.content,
             agent_type=agent_response.agent_type,
+            metadata=metadata if metadata else None,
         )
         await self._message_repository.save(agent_message)
 
@@ -182,8 +188,8 @@ class SendAgentSquadMessage:
             success=True,
         )
 
-        # Step 10: Return response
-        return {
+        # Step 10: Return response (include sources)
+        result = {
             "user_message_id": user_message.id,
             "agent_message_id": agent_message.id,
             "agent_type": agent_response.agent_type.value,
@@ -198,6 +204,12 @@ class SendAgentSquadMessage:
             "latency_ms": latency_ms,
             "tokens_used": tokens_used,
         }
+        
+        # Add sources if available
+        if agent_response.sources:
+            result["sources"] = [s.to_dict() for s in agent_response.sources]
+        
+        return result
 
     async def _track_telemetry(
         self,

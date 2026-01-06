@@ -412,6 +412,25 @@ class GuestHandlerService:
 
             response += self._get_registration_cta(language)
 
+            # Build sources list
+            from datetime import datetime
+            from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
+            
+            sources = []
+            fetched_at = datetime.utcnow()
+            
+            # Add social media sources
+            for source_name, data in breakdown.items():
+                sources.append(SourceInfo(
+                    source_type=SourceType.SOCIAL_MEDIA if source_name.lower() in ["twitter", "reddit", "discord"] else SourceType.RSS_FEED,
+                    source_name=source_name.title(),
+                    citation_text=f"{source_name.title()} sentiment analysis for {token}",
+                    fetched_at=fetched_at,
+                    data_points_used=data.get("sample_size", 0),
+                    relevance_score=data.get("weight", 0.25),
+                    metadata={"score": data["score"], "classification": data["classification"]},
+                ))
+            
             return {
                 "content": response,
                 "enrichment": {
@@ -421,6 +440,7 @@ class GuestHandlerService:
                     "sources": breakdown,
                     "hunter_tool": "sentiment_aggregator",
                 },
+                "sources": [s.to_dict() for s in sources],  # NEW
                 "requires_registration": False,
             }
         except Exception as e:

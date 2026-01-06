@@ -40,17 +40,64 @@ class ConversationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class SourceInfoResponse(BaseModel):
+    """Source information response for frontend."""
+    
+    source_type: str  # api, database, mcp_server, rss_feed, social_media, blockchain, llm, aggregated
+    source_name: str
+    source_id: Optional[str] = None
+    url: Optional[str] = None
+    citation_text: Optional[str] = None
+    fetched_at: Optional[str] = None  # ISO format
+    data_age_seconds: Optional[int] = None
+    provider: Optional[str] = None
+    endpoint: Optional[str] = None
+    query_params: Optional[dict] = None
+    relevance_score: Optional[float] = None
+    data_points_used: Optional[int] = None
+    metadata: Optional[dict] = None
+
+
 class MessageResponse(BaseModel):
-    """Message response."""
+    """Message response with source attribution."""
     
     id: UUID
     conversation_id: UUID
     role: str
     content: str
     agent_type: Optional[str]
+    sources: List[SourceInfoResponse] = Field(default_factory=list)  # NEW
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
+    
+    @classmethod
+    def from_domain(cls, message: "Message") -> "MessageResponse":
+        """Create response from domain entity."""
+        from app.domain.entities.message import Message as DomainMessage
+        from app.domain.value_objects.chat.source_info import SourceInfo
+        
+        # Extract sources from metadata
+        sources = []
+        if message.metadata and "sources" in message.metadata:
+            sources_data = message.metadata["sources"]
+            if isinstance(sources_data, list):
+                sources = []
+                for s in sources_data:
+                    if isinstance(s, dict):
+                        sources.append(SourceInfoResponse(**s))
+                    elif hasattr(s, "to_dict"):
+                        sources.append(SourceInfoResponse(**s.to_dict()))
+        
+        return cls(
+            id=message.id,
+            conversation_id=message.conversation_id,
+            role=message.role.value if hasattr(message.role, "value") else str(message.role),
+            content=message.content,
+            agent_type=message.agent_type,
+            sources=sources,
+            created_at=message.created_at,
+        )
 
 
 class SendMessageResponse(BaseModel):
@@ -128,12 +175,13 @@ class EnrichmentData(BaseModel):
 
 
 class UnifiedChatResponse(BaseModel):
-    """Unified response for all chat routing handlers."""
+    """Unified response for all chat routing handlers with source attribution."""
 
     user_message: dict  # User message data
-    agent_message: dict  # Agent response data
+    agent_message: dict  # Agent response data with sources
     routing: RoutingMetadata  # Routing information
     enrichment: Optional[EnrichmentData] = None  # Handler-specific data
+    sources: List[SourceInfoResponse] = Field(default_factory=list)  # NEW: Aggregated sources
 
 
 class ConversationListResponse(BaseModel):

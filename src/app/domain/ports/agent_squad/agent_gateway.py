@@ -3,12 +3,13 @@ Agent Gateway port - Base interface for all agents.
 """
 
 from typing import Protocol
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
 from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.chat.source_info import SourceInfo
 
 
 @dataclass
@@ -19,13 +20,15 @@ class AgentResponse:
     Contains:
     - content: Agent response text
     - agent_type: Which agent generated the response
-    - tools_used: List of tools/APIs used
+    - tools_used: List of tools/APIs used (legacy, for backward compatibility)
+    - sources: List of detailed source information (NEW)
     - metadata: Additional metadata (tokens, latency, etc.)
     """
     content: str
     agent_type: AgentType
     tools_used: list[str]
-    metadata: dict
+    sources: list[SourceInfo] = field(default_factory=list)  # NEW: Detailed sources
+    metadata: dict = field(default_factory=dict)
     
     @property
     def tokens_used(self) -> int | None:
@@ -36,6 +39,16 @@ class AgentResponse:
     def latency_ms(self) -> int | None:
         """Get latency in milliseconds (if available)."""
         return self.metadata.get("latency_ms")
+    
+    def to_dict(self) -> dict:
+        """Serialize to dictionary."""
+        return {
+            "content": self.content,
+            "agent_type": self.agent_type.value,
+            "tools_used": self.tools_used,
+            "sources": [s.to_dict() for s in self.sources],
+            "metadata": self.metadata,
+        }
 
 
 class AgentGateway(Protocol):
