@@ -70,9 +70,16 @@ class GuestHandlerService:
         intent: ChatIntent,
         content: str,
         language: str = "en",
+        context: str = "",
     ) -> dict[str, Any]:
         """
         Handle intent with real data.
+
+        Args:
+            intent: The detected chat intent
+            content: The user's message content
+            language: Language code (en, es, pt, zh)
+            context: Conversation context from previous messages (for multi-turn)
 
         Returns:
             dict with 'content', 'enrichment', and 'requires_registration' fields
@@ -106,6 +113,9 @@ class GuestHandlerService:
         handler = handler_map.get(intent)
         if handler:
             try:
+                # Pass context to handlers that support it (swap)
+                if intent == ChatIntent.SWAP:
+                    return await self._handle_swap(content, language, context)
                 return await handler(content, language)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
@@ -911,9 +921,22 @@ class GuestHandlerService:
         return self._fallback_response(ChatIntent.MONEY_MARKET, language)
 
     async def _handle_swap(
-        self, content: str, language: str
+        self, content: str, language: str, context: str = ""
     ) -> dict[str, Any]:
-        """Handle swap quotes with real 1inch data."""
+        """
+        Handle swap quotes with real 1inch data or demo response.
+        
+        Supports multi-turn conversations:
+        - "quiero swap" → "de USDC" → "a ETH" → "100 tokens"
+        
+        Args:
+            content: User message
+            language: Language code
+            context: Previous conversation context for multi-turn support
+        """
+        # Parse swap parameters from content and context
+        swap_info = self._parse_swap_from_context(content, context)
+        
         if self._swap_handler:
             try:
                 result = await self._swap_handler.handle(
@@ -928,7 +951,210 @@ class GuestHandlerService:
             except Exception as e:
                 logger.warning(f"Swap handler error: {e}")
 
-        return self._fallback_response(ChatIntent.SWAP, language)
+        # Demo response with parsed swap info
+        return self._get_swap_demo_response(swap_info, language)
+    
+    def _parse_swap_from_context(
+        self, content: str, context: str
+    ) -> dict[str, str | None]:
+        """
+        Parse swap parameters from message and conversation context.
+        
+        Supports multi-turn conversations like:
+        - "quiero swap" → "de USDC" → "a ETH" → "100"
+        """
+        import re
+        
+        combined = f"{context}\n{content}".lower()
+        
+        result = {
+            "from_token": None,
+            "to_token": None,
+            "amount": None,
+            "is_complete": False,
+        }
+        
+        # Extract tokens mentioned
+        tokens = ["eth", "usdc", "usdt", "dai", "wbtc", "weth", "btc", "sol", "matic", "arb", "op"]
+        found_tokens = []
+        for token in tokens:
+            if token in combined:
+                found_tokens.append(token.upper())
+        
+        # Try to extract source/target from patterns
+        from_patterns = [
+            r"(?:de|from|del)\s+(\w+)",
+            r"swap\s+(\d*\.?\d*)\s*(\w+)",
+            r"cambiar\s+(\d*\.?\d*)\s*(\w+)",
+        ]
+        to_patterns = [
+            r"(?:a|to|hacia|por|for)\s+(\w+)",
+        ]
+        amount_patterns = [
+            r"(\d+\.?\d*)\s*(?:tokens?)?",
+            r"swap\s+(\d+\.?\d*)",
+        ]
+        
+        for pattern in from_patterns:
+            match = re.search(pattern, combined)
+            if match:
+                groups = match.groups()
+                if len(groups) >= 2 and groups[0]:  # Amount + token
+                    result["amount"] = groups[0]
+                    token = groups[1].upper()
+                    if token in [t.upper() for t in tokens]:
+                        result["from_token"] = token
+                elif groups[0].upper() in [t.upper() for t in tokens]:
+                    result["from_token"] = groups[0].upper()
+        
+        for pattern in to_patterns:
+            match = re.search(pattern, combined)
+            if match and match.group(1).upper() in [t.upper() for t in tokens]:
+                result["to_token"] = match.group(1).upper()
+        
+        for pattern in amount_patterns:
+            match = re.search(pattern, combined)
+            if match and match.group(1):
+                result["amount"] = match.group(1)
+        
+        # If we found tokens but couldn't determine source/target, use order
+        if found_tokens and not result["from_token"] and not result["to_token"]:
+            if len(found_tokens) >= 1:
+                result["from_token"] = found_tokens[0]
+            if len(found_tokens) >= 2:
+                result["to_token"] = found_tokens[1]
+        
+        # Check if we have enough info
+        result["is_complete"] = bool(
+            result["from_token"] and result["to_token"] and result["amount"]
+        )
+        
+        return result
+    
+    def _get_swap_demo_response(
+        self, swap_info: dict[str, str | None], language: str
+    ) -> dict[str, Any]:
+        """Generate demo swap response based on parsed info."""
+        from_token = swap_info.get("from_token")
+        to_token = swap_info.get("to_token")
+        amount = swap_info.get("amount")
+        is_complete = swap_info.get("is_complete", False)
+        
+        if is_complete and from_token and to_token and amount:
+            # Generate realistic demo quote
+            demo_rates = {
+                ("USDC", "ETH"): 0.00045,
+                ("ETH", "USDC"): 2200.0,
+                ("USDC", "WBTC"): 0.000024,
+                ("WBTC", "USDC"): 42000.0,
+                ("ETH", "WBTC"): 0.053,
+                ("WBTC", "ETH"): 18.9,
+            }
+            
+            rate = demo_rates.get((from_token, to_token), 1.0)
+            try:
+                from_amount = float(amount)
+                to_amount = from_amount * rate
+            except ValueError:
+                from_amount = 100.0
+                to_amount = from_amount * rate
+            
+            translations = {
+                "en": {
+                    "title": "🔄 **Swap Quote (Demo)**",
+                    "from": "From",
+                    "to": "To",
+                    "rate": "Rate",
+                    "impact": "Price Impact",
+                    "gas": "Est. Gas",
+                    "note": "This is a demo quote. Sign up to execute real swaps with live pricing.",
+                },
+                "es": {
+                    "title": "🔄 **Cotización de Swap (Demo)**",
+                    "from": "De",
+                    "to": "A",
+                    "rate": "Tasa",
+                    "impact": "Impacto en Precio",
+                    "gas": "Gas Est.",
+                    "note": "Esta es una cotización demo. Regístrate para ejecutar swaps reales con precios en vivo.",
+                },
+                "pt": {
+                    "title": "🔄 **Cotação de Swap (Demo)**",
+                    "from": "De",
+                    "to": "Para",
+                    "rate": "Taxa",
+                    "impact": "Impacto no Preço",
+                    "gas": "Gas Est.",
+                    "note": "Esta é uma cotação demo. Cadastre-se para executar swaps reais com preços ao vivo.",
+                },
+                "zh": {
+                    "title": "🔄 **交换报价 (演示)**",
+                    "from": "从",
+                    "to": "到",
+                    "rate": "汇率",
+                    "impact": "价格影响",
+                    "gas": "预估Gas",
+                    "note": "这是演示报价。注册后可执行实时定价的真实交换。",
+                },
+            }
+            t = translations.get(language, translations["en"])
+            
+            response = f"{t['title']}\n\n"
+            response += f"**{t['from']}:** {from_amount:.4f} {from_token}\n"
+            response += f"**{t['to']}:** {to_amount:.6f} {to_token}\n\n"
+            response += f"**{t['rate']}:** 1 {from_token} = {rate:.6f} {to_token}\n"
+            response += f"**{t['impact']}:** ~0.12%\n"
+            response += f"**{t['gas']}:** ~$0.50\n\n"
+            response += f"💡 {t['note']}"
+            response += self._get_registration_cta(language, for_action=True)
+            
+            return {
+                "content": response,
+                "enrichment": {
+                    "swap_demo": True,
+                    "from_token": from_token,
+                    "to_token": to_token,
+                    "from_amount": str(from_amount),
+                    "to_amount": str(to_amount),
+                    "rate": rate,
+                },
+                "requires_registration": True,
+            }
+        
+        # Incomplete swap - ask for more info
+        if from_token and not to_token:
+            prompts = {
+                "en": f"🔄 Got it! You want to swap **{from_token}**. What token would you like to receive?",
+                "es": f"🔄 ¡Entendido! Quieres cambiar **{from_token}**. ¿A qué token quieres cambiar?",
+                "pt": f"🔄 Entendi! Você quer trocar **{from_token}**. Para qual token você quer trocar?",
+                "zh": f"🔄 好的！您想交换 **{from_token}**。您想要接收什么代币？",
+            }
+        elif from_token and to_token and not amount:
+            prompts = {
+                "en": f"🔄 Perfect! Swapping **{from_token}** to **{to_token}**. How much {from_token} would you like to swap?",
+                "es": f"🔄 ¡Perfecto! Cambiando **{from_token}** a **{to_token}**. ¿Cuánto {from_token} quieres cambiar?",
+                "pt": f"🔄 Perfeito! Trocando **{from_token}** para **{to_token}**. Quanto {from_token} você quer trocar?",
+                "zh": f"🔄 好的！将 **{from_token}** 交换为 **{to_token}**。您想交换多少 {from_token}？",
+            }
+        else:
+            prompts = {
+                "en": "🔄 I can help you swap tokens! Please tell me:\n\n• **From:** Which token to swap\n• **To:** Which token to receive\n• **Amount:** How much to swap\n\nExample: *swap 100 USDC to ETH*",
+                "es": "🔄 ¡Puedo ayudarte a cambiar tokens! Por favor dime:\n\n• **De:** Qué token cambiar\n• **A:** Qué token recibir\n• **Cantidad:** Cuánto cambiar\n\nEjemplo: *cambiar 100 USDC a ETH*",
+                "pt": "🔄 Posso ajudá-lo a trocar tokens! Por favor me diga:\n\n• **De:** Qual token trocar\n• **Para:** Qual token receber\n• **Quantidade:** Quanto trocar\n\nExemplo: *trocar 100 USDC para ETH*",
+                "zh": "🔄 我可以帮您交换代币！请告诉我：\n\n• **从：** 要交换的代币\n• **到：** 要接收的代币\n• **数量：** 交换多少\n\n示例：*交换 100 USDC 到 ETH*",
+            }
+        
+        return {
+            "content": prompts.get(language, prompts["en"]),
+            "enrichment": {
+                "swap_demo": True,
+                "awaiting_info": True,
+                "from_token": from_token,
+                "to_token": to_token,
+                "amount": amount,
+            },
+            "requires_registration": False,
+        }
 
     # ========================================
     # Agent Squad Handlers
@@ -1141,11 +1367,38 @@ class GuestHandlerService:
 
     def _extract_token(self, content: str) -> str | None:
         """Extract token symbol from content."""
-        content_upper = content.upper()
-        tokens = ["ETH", "BTC", "USDC", "USDT", "DAI", "WETH", "WBTC", "SOL", "MATIC", "ARB", "OP"]
-        for token in tokens:
-            if token in content_upper:
-                return token
+        content_lower = content.lower()
+        
+        # Token aliases map common names to their symbols
+        token_aliases = {
+            "bitcoin": "BTC",
+            "btc": "BTC",
+            "ethereum": "ETH",
+            "eth": "ETH",
+            "ether": "ETH",
+            "solana": "SOL",
+            "sol": "SOL",
+            "usdc": "USDC",
+            "usdt": "USDT",
+            "tether": "USDT",
+            "dai": "DAI",
+            "weth": "WETH",
+            "wrapped eth": "WETH",
+            "wrapped ether": "WETH",
+            "wbtc": "WBTC",
+            "wrapped bitcoin": "WBTC",
+            "matic": "MATIC",
+            "polygon": "MATIC",
+            "arbitrum": "ARB",
+            "arb": "ARB",
+            "optimism": "OP",
+            "op": "OP",
+        }
+        
+        # Check aliases (longer names first to avoid partial matches)
+        for alias, symbol in sorted(token_aliases.items(), key=lambda x: -len(x[0])):
+            if alias in content_lower:
+                return symbol
         return None
 
     def _get_registration_cta(
@@ -1184,6 +1437,24 @@ class GuestHandlerService:
                 "es": "📈 El servicio de predicción de precios está cargando. Intenta de nuevo.",
                 "pt": "📈 Serviço de previsão de preços carregando. Tente novamente.",
                 "zh": "📈 价格预测服务正在加载。请重试。",
+            },
+            ChatIntent.SWAP: {
+                "en": "🔄 I can help you swap tokens! Please tell me:\n\n• **From:** Which token to swap\n• **To:** Which token to receive\n• **Amount:** How much to swap\n\nExample: *swap 100 USDC to ETH*",
+                "es": "🔄 ¡Puedo ayudarte a cambiar tokens! Por favor dime:\n\n• **De:** Qué token cambiar\n• **A:** Qué token recibir\n• **Cantidad:** Cuánto cambiar\n\nEjemplo: *cambiar 100 USDC a ETH*",
+                "pt": "🔄 Posso ajudá-lo a trocar tokens! Por favor me diga:\n\n• **De:** Qual token trocar\n• **Para:** Qual token receber\n• **Quantidade:** Quanto trocar\n\nExemplo: *trocar 100 USDC para ETH*",
+                "zh": "🔄 我可以帮您交换代币！请告诉我：\n\n• **从：** 要交换的代币\n• **到：** 要接收的代币\n• **数量：** 交换多少\n\n示例：*交换 100 USDC 到 ETH*",
+            },
+            ChatIntent.LENDING: {
+                "en": "💰 I can show you lending rates! Try asking:\n• 'show Morpho rates'\n• 'deposit USDC to earn yield'\n• 'best lending rates on Ethereum'",
+                "es": "💰 ¡Puedo mostrarte tasas de préstamo! Intenta preguntar:\n• 'mostrar tasas de Morpho'\n• 'depositar USDC para ganar rendimiento'\n• 'mejores tasas en Ethereum'",
+                "pt": "💰 Posso mostrar taxas de empréstimo! Tente perguntar:\n• 'mostrar taxas do Morpho'\n• 'depositar USDC para ganhar rendimento'\n• 'melhores taxas em Ethereum'",
+                "zh": "💰 我可以为您显示借贷利率！尝试询问：\n• '显示 Morpho 利率'\n• '存入 USDC 赚取收益'\n• '以太坊最佳借贷利率'",
+            },
+            ChatIntent.MONEY_MARKET: {
+                "en": "🏦 I can compare money market rates! Try asking:\n• 'compare Aave vs Compound'\n• 'money market rates for USDC'\n• 'best borrow rates'",
+                "es": "🏦 ¡Puedo comparar tasas del mercado monetario! Intenta preguntar:\n• 'comparar Aave vs Compound'\n• 'tasas de mercado para USDC'\n• 'mejores tasas de préstamo'",
+                "pt": "🏦 Posso comparar taxas do mercado monetário! Tente perguntar:\n• 'comparar Aave vs Compound'\n• 'taxas de mercado para USDC'\n• 'melhores taxas de empréstimo'",
+                "zh": "🏦 我可以比较货币市场利率！尝试询问：\n• '比较 Aave 和 Compound'\n• 'USDC 货币市场利率'\n• '最佳借贷利率'",
             },
         }
 

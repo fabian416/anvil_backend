@@ -8,8 +8,6 @@ from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, status, Security
 from fastapi.exceptions import HTTPException
 
-from app.application.common.exceptions.base import ApplicationError
-from app.domain.exceptions.base import DomainError
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.application.common.services.current_user import CurrentUserService
 from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
@@ -40,7 +38,6 @@ from app.presentation.http.schemas.chat import (
 )
 from app.application.chat.commands.create_conversation import CreateConversation
 from app.application.chat.commands.send_message import SendMessage
-from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
 from app.application.chat.commands.execute_action import ExecuteActionCommand
 from app.application.chat.queries.get_conversation import GetConversation
 from app.application.chat.queries.list_conversations import ListConversations
@@ -163,7 +160,6 @@ def create_chat_router() -> APIRouter:
         request: SendMessageRequest,
         current_user: FromDishka[CurrentUserService],
         interactor: FromDishka[SendMessage],
-        unified_orchestrator: FromDishka[UnifiedChatOrchestrator] = None,
     ) -> UnifiedChatResponse:
         """
         Send a message with intelligent routing.
@@ -223,39 +219,9 @@ def create_chat_router() -> APIRouter:
         }
         ```
         """
-        from app.setup.config.loader import load_full_config
-        import os
-
-        # Load configuration to check if unified routing is enabled
-        config = load_full_config(env=os.getenv("APP_ENV", "local"))
-        agent_squad_config = config.get("agent_squad", {})
-        use_unified_routing = agent_squad_config.get("enable_unified_routing", True)
-
         user = await current_user.get_current_user()
 
-        # Use unified routing if enabled and orchestrator is available
-        if use_unified_routing and unified_orchestrator is not None:
-            try:
-                # Execute unified routing with language support
-                result = await unified_orchestrator.execute(
-                    user_id=user.id_.value,
-                    conversation_id=conversation_id,
-                    content=request.content,
-                    language=request.language or "en",
-                )
-
-                return UnifiedChatResponse(**result)
-
-            except (ApplicationError, DomainError) as e:
-                # Let domain/application errors propagate (they have proper HTTP mappings)
-                raise
-            except Exception as e:
-                # Log unexpected errors and fallback to regular chat
-                import logging
-                logging.warning(f"Unified routing failed with unexpected error: {e}, falling back to regular chat")
-                # Fall through to regular chat
-
-        # Fallback: Use regular chat (backward compatible)
+        # Use regular chat (unified routing temporarily disabled - requires OPENAI_API_KEY)
         user_message, agent_message = await interactor.execute(
             user_id=user.id_.value,
             conversation_id=conversation_id,

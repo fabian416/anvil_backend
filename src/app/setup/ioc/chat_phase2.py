@@ -68,6 +68,20 @@ from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
 from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
 from app.application.agent_squad.commands.execute_supervisor_workflow import ExecuteSupervisorWorkflow
 
+# Chat V2 Services (Unified Chat System)
+from app.application.chat.services.user_service import UserService
+from app.application.chat.services.rate_limit_service import RateLimitService
+from app.application.chat.services.conversation_service import ConversationService
+from app.application.chat.services.conversation_memory import ConversationMemory
+
+# Chat V2 Repositories (Unified Chat System)
+from app.infrastructure.adapters.chat_unified_repository_sqla import (
+    ChatUserRepositorySqla,
+    ChatConversationRepositorySqla,
+    ChatMessageRepositorySqla,
+    RateLimitRepositorySqla,
+)
+
 # Intent Detection Port & Adapters (Hexagonal Architecture)
 from app.domain.ports.chat.intent_detection_port import IntentDetectionPort
 from app.infrastructure.adapters.chat.keyword_intent_detection_adapter import (
@@ -426,13 +440,13 @@ class ChatPhase2Provider(Provider):
         self,
         cohere_embedding_service: Optional[EmbeddingService],
         redis_cache_client: Redis,
-    ) -> EmbeddingService:
+    ) -> Optional[EmbeddingService]:
         """
         Provide cached embedding service.
 
         Wraps primary embedding service (Cohere or DeepInfra) with Redis cache layer
         to reduce API costs and improve latency.
-        
+
         Note: OpenAI removed - using Cohere or DeepInfra for embeddings.
         """
         # Use Cohere if available, otherwise fallback to DeepInfra (from graph.py)
@@ -445,7 +459,7 @@ class ChatPhase2Provider(Provider):
                     "DEEPINFRA_API_KEY environment variable not set. "
                     "Required for embedding service (OpenAI removed)."
                 )
-            base_service = DeepInfraEmbeddingService(api_key=deepinfra_key)
+            base_service: EmbeddingService = DeepInfraEmbeddingService(api_key=deepinfra_key)
         else:
             base_service = cohere_embedding_service
         
@@ -868,6 +882,85 @@ class ChatPhase2Provider(Provider):
             lifi_client=None,
             morpho_gateway=None,
             aave_gateway=None,
+        )
+
+    # ========================================
+    # Chat V2 Repositories (Unified Chat System)
+    # ========================================
+
+    @provide(scope=Scope.REQUEST)
+    def provide_chat_user_repository(
+        self,
+        session: MainAsyncSession,
+    ) -> ChatUserRepositorySqla:
+        """Provide chat user repository for unified chat system."""
+        return ChatUserRepositorySqla(session)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_chat_conversation_repository(
+        self,
+        session: MainAsyncSession,
+    ) -> ChatConversationRepositorySqla:
+        """Provide chat conversation repository for unified chat system."""
+        return ChatConversationRepositorySqla(session)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_chat_message_repository(
+        self,
+        session: MainAsyncSession,
+    ) -> ChatMessageRepositorySqla:
+        """Provide chat message repository for unified chat system."""
+        return ChatMessageRepositorySqla(session)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_rate_limit_repository(
+        self,
+        session: MainAsyncSession,
+    ) -> RateLimitRepositorySqla:
+        """Provide rate limit repository for unified chat system."""
+        return RateLimitRepositorySqla(session)
+
+    # ========================================
+    # Chat V2 Services (Unified Chat System)
+    # ========================================
+
+    @provide(scope=Scope.REQUEST)
+    def provide_chat_user_service(
+        self,
+        user_repository: ChatUserRepositorySqla,
+    ) -> UserService:
+        """Provide user service for unified chat system."""
+        return UserService(
+            user_repository=user_repository,
+            privy_client=None,  # Optional Privy integration
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_rate_limit_service(
+        self,
+        rate_limit_repository: RateLimitRepositorySqla,
+    ) -> RateLimitService:
+        """Provide rate limit service for unified chat system."""
+        return RateLimitService(rate_limit_repository=rate_limit_repository)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_conversation_memory(
+        self,
+        message_repository: ChatMessageRepositorySqla,
+    ) -> ConversationMemory:
+        """Provide conversation memory for unified chat system."""
+        return ConversationMemory(message_repository=message_repository)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_conversation_service(
+        self,
+        conversation_repository: ChatConversationRepositorySqla,
+        message_repository: ChatMessageRepositorySqla,
+    ) -> ConversationService:
+        """Provide conversation service for unified chat system."""
+        return ConversationService(
+            conversation_repository=conversation_repository,
+            message_repository=message_repository,
         )
 
 

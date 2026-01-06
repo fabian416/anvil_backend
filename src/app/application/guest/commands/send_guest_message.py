@@ -8,6 +8,7 @@ Handles guest chat messages with:
 - Registration prompts for restricted actions
 - Rate limiting
 - Telemetry logging
+- Conversational memory (context from previous messages)
 """
 
 import logging
@@ -35,6 +36,12 @@ from app.domain.guest.entities.guest_user import GuestUser
 from app.domain.guest.ports.guest_repository import GuestRepository
 
 logger = logging.getLogger(__name__)
+
+# ========================================
+# Conversational Memory Configuration
+# ========================================
+
+MAX_CONTEXT_MESSAGES = 10  # Number of recent messages to use for context
 
 # Intents that use real handlers (not demo responses)
 REAL_HANDLER_INTENTS = {
@@ -167,13 +174,18 @@ class SendGuestMessage:
         # 3. Get or create active conversation
         conversation = await self._get_or_create_conversation(guest, language)
 
-        # 4. Detect intent
-        intent, confidence, handler = await self._detect_intent(content)
+        # 4. Get conversation history for context (conversational memory)
+        context = await self._build_conversation_context(conversation.id)
 
-        # 5. Check if restricted
+        # 5. Detect intent with context
+        intent, confidence, handler = await self._detect_intent_with_context(
+            content, context, language
+        )
+
+        # 6. Check if restricted
         is_restricted, reason = self._is_restricted_action(intent)
 
-        # 6. Create user message
+        # 7. Create user message
         user_message = GuestMessage.create_user_message(
             conversation_id=conversation.id,
             content=content,
@@ -181,7 +193,8 @@ class SendGuestMessage:
         )
         await self._guest_repo.create_message(user_message)
 
-        # 7. Generate response
+        # 8. Generate response
+        handler_result = None  # Initialize to avoid UnboundLocalError
         if is_restricted:
             agent_content = self._build_registration_response(reason, language)
             agent_message = GuestMessage.create_assistant_message(
@@ -197,8 +210,9 @@ class SendGuestMessage:
             enrichment = None
         elif intent in REAL_HANDLER_INTENTS:
             # Use real handlers for Hunter AI, ULTRA, and DeFi intents
+            # Pass context for conversational memory
             handler_result = await self._handler_service.handle_intent(
-                intent, content, language
+                intent, content, language, context=context
             )
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")
@@ -381,10 +395,63 @@ class SendGuestMessage:
 
         return False, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
 
+    # ========================================
+    # Conversational Memory
+    # ========================================
+
+    async def _build_conversation_context(self, conversation_id: UUID) -> str:
+        """
+        Build conversation context from recent messages.
+        
+        Returns a formatted string of recent messages for use in intent detection
+        and response generation.
+        """
+        try:
+            messages = await self._guest_repo.get_messages(
+                conversation_id, limit=MAX_CONTEXT_MESSAGES
+            )
+            
+            if not messages:
+                return ""
+            
+            context_lines = []
+            for msg in messages:
+                role = "User" if msg.role.value == "user" else "Assistant"
+                # Truncate long messages in context
+                content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+                context_lines.append(f"{role}: {content}")
+            
+            return "\n".join(context_lines)
+        except Exception as e:
+            logger.warning(f"Failed to build conversation context: {e}")
+            return ""
+
+    async def _detect_intent_with_context(
+        self, content: str, context: str, language: str
+    ) -> tuple[ChatIntent | None, float | None, str | None]:
+        """
+        Detect intent from message content with conversational context.
+        
+        Uses context to:
+        1. Resolve follow-up references (e.g., "And what about Bitcoin?")
+        2. Complete partial commands (e.g., "de USDC" after "quiero swap")
+        3. Maintain topic continuity
+        """
+        # Try external intent detector first (with context if supported)
+        if self._intent_detector:
+            try:
+                result = await self._intent_detector.detect_intent(content)
+                return result.intent, result.confidence, result.handler
+            except Exception as e:
+                logger.warning(f"Intent detection failed: {e}")
+
+        # Use context-aware keyword detection
+        return self._detect_intent_by_keywords_with_context(content, context, language)
+
     async def _detect_intent(
         self, content: str
     ) -> tuple[ChatIntent | None, float | None, str | None]:
-        """Detect intent from message content."""
+        """Detect intent from message content (legacy method for compatibility)."""
         # Try external intent detector first
         if self._intent_detector:
             try:
@@ -400,60 +467,241 @@ class SendGuestMessage:
         self, content: str
     ) -> tuple[ChatIntent, float, str]:
         """Simple keyword-based intent detection for guest chat."""
-        content_lower = content.lower()
+        return self._detect_intent_by_keywords_with_context(content, "", "en")
+    
+    def _detect_intent_by_keywords_with_context(
+        self, content: str, context: str, language: str
+    ) -> tuple[ChatIntent, float, str]:
+        """
+        Context-aware keyword-based intent detection for guest chat.
+        
+        Supports:
+        - English and Spanish keywords
+        - Context-based intent resolution for follow-up messages
+        - Partial command completion (e.g., "de USDC" after "quiero swap")
+        """
+        import re
 
-        # Hunter AI patterns
+        content_lower = content.lower()
+        context_lower = context.lower() if context else ""
+
+        # ========================================
+        # Restricted action patterns (check FIRST for guests)
+        # ========================================
+        restricted_patterns = {
+            ChatIntent.BALANCE: [
+                # English
+                "my balance", "show balance", "check balance", "wallet balance",
+                "how much do i have", "my holdings", "my portfolio value",
+                "show my wallet", "what's in my wallet", "my funds",
+                # Spanish
+                "mi saldo", "ver saldo", "mostrar saldo", "mi balance",
+                "cuánto tengo", "mis fondos", "mi cartera", "mis activos",
+                # Portuguese
+                "meu saldo", "ver saldo", "mostrar saldo", "minha carteira",
+                # Chinese
+                "我的余额", "查看余额", "我的钱包",
+            ],
+            ChatIntent.PORTFOLIO: [
+                # English
+                "my portfolio", "show portfolio", "portfolio performance",
+                "my positions", "my investments", "my assets",
+                # Spanish
+                "mi portafolio", "ver portafolio", "mis posiciones",
+                "mis inversiones", "rendimiento de mi cartera",
+                # Portuguese
+                "meu portfólio", "ver portfólio", "minhas posições",
+            ],
+            ChatIntent.ACTIVITY: [
+                # English
+                "my activity", "transaction history", "my transactions",
+                "my trades", "trade history", "my swaps",
+                # Spanish
+                "mi actividad", "historial de transacciones", "mis transacciones",
+                "mis intercambios", "historial de trades",
+            ],
+            ChatIntent.RECEIVE: [
+                # English
+                "receive address", "my address", "deposit address",
+                "wallet address", "send me", "receive crypto",
+                # Spanish
+                "dirección de recepción", "mi dirección", "dirección de depósito",
+                "recibir cripto", "envíame",
+            ],
+        }
+
+        # Check restricted patterns first
+        for intent, keywords in restricted_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_handler_for_intent(intent)
+                    return intent, 0.95, handler
+
+        # ========================================
+        # Context-based follow-up detection
+        # ========================================
+        # Check if this is a follow-up to a previous intent
+        if context_lower:
+            # Detect follow-up price queries: "And what about Bitcoin?"
+            follow_up_patterns = [
+                "and what about", "what about", "how about", "and for",
+                "y qué hay de", "qué tal", "y para", "y sobre",  # Spanish
+            ]
+            for pattern in follow_up_patterns:
+                if pattern in content_lower:
+                    # Check if previous context was about price/sentiment
+                    if any(kw in context_lower for kw in ["price", "precio", "sentiment", "sentimiento"]):
+                        # Extract token and return same intent type
+                        if any(kw in context_lower for kw in ["sentiment", "sentimiento"]):
+                            return ChatIntent.HUNTER_SENTIMENT, 0.85, "hunter_sentiment_handler"
+                        return ChatIntent.HUNTER_PRICE_PREDICTION, 0.85, "hunter_prediction_handler"
+            
+            # Detect multi-turn swap flow: "quiero swap" → "de USDC" → "a ETH" → "100"
+            swap_context_keywords = ["swap", "cambiar", "intercambiar", "exchange"]
+            if any(kw in context_lower for kw in swap_context_keywords):
+                # Enterprise fix: don't treat clear new questions (e.g. price/sentiment)
+                # as swap continuation just because they contain common prepositions like "de"
+                # (e.g. "precio de bitcoin" includes "de").
+                new_intent_breakers = [
+                    # Price (ES/EN/PT)
+                    "precio", "cuál es el precio", "precio de", "precio actual", "cuánto vale", "cuánto cuesta",
+                    "price", "current price", "price of", "how much is", "what is the price", "what's the price",
+                    "preço", "qual é o preço", "preço de", "preço atual", "quanto vale", "quanto custa",
+                    # Sentiment (ES/EN/PT)
+                    "sentimiento", "sentimiento de", "sentimiento del mercado", "alcista", "bajista",
+                    "sentiment", "market sentiment", "bullish", "bearish", "mood",
+                    "sentimento", "altista", "baixista", "humor",
+                    # Risk / protocol search (common question-y breakers)
+                    "riesgo", "risk", "protocol", "protocolo", "protocolos",
+                ]
+                if any(breaker in content_lower for breaker in new_intent_breakers):
+                    # Let normal detection below decide the real intent
+                    pass
+                else:
+                # This is a follow-up to a swap request
+                    # Only treat as swap continuation if it looks like an explicit swap field answer,
+                    # not a generic phrase containing "de"/"a"/"to" somewhere in the middle.
+                    token_words = r"(usdc|eth|btc|usdt|dai|weth|wbtc|sol|matic|arb|op)\b"
+                    partial_swap_patterns = [
+                        rf"^(?:de|from|del)\s+{token_words}",           # Source token
+                        rf"^(?:a|to|hacia|por|for)\s+{token_words}",     # Target token
+                    ]
+                    for pattern in partial_swap_patterns:
+                        if re.match(pattern, content_lower, re.IGNORECASE):
+                            return ChatIntent.SWAP, 0.90, "swap_handler"
+                
+                    # Check for amount only (number at start)
+                    if content_lower.strip().replace(".", "").replace(",", "").isdigit():
+                        return ChatIntent.SWAP, 0.90, "swap_handler"
+                
+                    # Check for token symbols as standalone message (e.g. "USDC", "ETH")
+                    tokens = ["usdc", "eth", "btc", "usdt", "dai", "weth", "wbtc", "sol", "matic", "arb", "op"]
+                    if content_lower.strip() in tokens:
+                        return ChatIntent.SWAP, 0.90, "swap_handler"
+
+        # ========================================
+        # Hunter AI patterns (English + Spanish)
+        # ========================================
         hunter_patterns = {
             ChatIntent.HUNTER_SENTIMENT: [
+                # English
                 "sentiment", "feeling", "mood", "bullish", "bearish",
                 "twitter", "reddit", "social", "news", "hype",
+                "what do people think", "market mood", "community sentiment",
+                # Spanish
+                "sentimiento", "opinión", "opiniones", "alcista", "bajista",
+                "qué opina", "qué piensan", "clima del mercado", "percepción",
+                "sentimiento de mercado", "sentimiento para",
             ],
             ChatIntent.HUNTER_PRICE_PREDICTION: [
+                # English
                 "predict", "prediction", "forecast", "price target",
                 "will go", "where will", "price tomorrow", "future price",
+                "price of", "what's the price", "current price", "how much is",
+                "what is the price", "price for",
+                # Spanish
+                "predecir", "predicción", "pronóstico", "objetivo de precio",
+                "a dónde irá", "precio de", "cuál es el precio", "precio actual",
+                "precio futuro", "va a subir", "va a bajar", "cuánto vale",
+                "cuánto cuesta",
             ],
             ChatIntent.HUNTER_RISK_SIGNALS: [
+                # English
                 "risk signal", "market risk", "whale", "liquidation",
                 "danger", "warning", "alert", "crash",
+                # Spanish
+                "señal de riesgo", "riesgo de mercado", "ballena", "liquidación",
+                "peligro", "advertencia", "alerta", "caída",
             ],
             ChatIntent.HUNTER_TRADING_SIGNALS: [
+                # English
                 "trading signal", "buy signal", "sell signal",
                 "should i buy", "should i sell", "entry point", "exit point",
+                # Spanish
+                "señal de trading", "señal de compra", "señal de venta",
+                "debería comprar", "debería vender", "punto de entrada", "punto de salida",
             ],
             ChatIntent.HUNTER_PATTERNS: [
+                # English
                 "chart pattern", "head and shoulders", "double bottom",
                 "flag pattern", "triangle", "breakout", "technical analysis",
+                # Spanish
+                "patrón de gráfico", "hombro cabeza hombro", "doble suelo",
+                "patrón de bandera", "triángulo", "ruptura", "análisis técnico",
             ],
             ChatIntent.HUNTER_PORTFOLIO: [
+                # English
                 "optimize portfolio", "optimize my portfolio", "portfolio allocation",
                 "rebalance", "diversify", "risk adjusted", "sharpe ratio",
                 "portfolio optimization", "best allocation",
+                # Spanish
+                "optimizar portafolio", "optimizar mi portafolio", "asignación de portafolio",
+                "rebalancear", "diversificar", "ajustado al riesgo",
+                "optimización de portafolio", "mejor asignación",
             ],
         }
 
-        # ULTRA patterns
+        # ========================================
+        # ULTRA patterns (English + Spanish)
+        # ========================================
         ultra_patterns = {
             ChatIntent.ULTRA_ARBITRAGE: [
+                # English
                 "arbitrage", "arb", "price difference", "spread",
                 "profit opportunity", "cross dex",
+                # Spanish
+                "arbitraje", "diferencia de precio", "oportunidad de ganancia",
             ],
             ChatIntent.ULTRA_FLASH_LOANS: [
+                # English
                 "flash loan", "flashloan", "flash borrow",
                 "instant loan", "uncollateralized",
+                # Spanish
+                "préstamo flash", "préstamo instantáneo", "sin colateral",
             ],
             ChatIntent.ULTRA_MEV_PROTECTION: [
+                # English
                 "mev", "front run", "frontrun", "sandwich",
                 "flashbots", "private transaction", "protected",
+                # Spanish
+                "protección mev", "transacción privada", "protegido",
             ],
             ChatIntent.ULTRA_AUTO_EXECUTOR: [
+                # English
                 "auto execute", "automated trading", "trading bot",
                 "dca", "limit order", "stop loss", "auto trade",
+                # Spanish
+                "ejecución automática", "trading automatizado", "bot de trading",
+                "orden límite", "stop loss", "trade automático",
             ],
         }
 
+        # ========================================
         # GraphRAG patterns (check FIRST - exploration queries)
+        # ========================================
         graphrag_patterns = {
             ChatIntent.PROTOCOL_SEARCH: [
+                # English
                 "find protocols", "find defi", "list protocols", "show protocols",
                 "search protocols", "discover protocols", "explore protocols",
                 "best protocols", "top protocols", "safest protocols",
@@ -463,35 +711,63 @@ class SendGuestMessage:
                 "lending protocols", "dex protocols", "staking protocols",
                 "bridge protocols", "yield protocols", "cdp protocols",
                 "low risk protocols", "high tvl protocols",
+                # Spanish
+                "buscar protocolos", "encontrar protocolos", "listar protocolos",
+                "mostrar protocolos", "mejores protocolos", "protocolos seguros",
+                "comparar protocolos", "protocolos de préstamo", "protocolos de staking",
+                "protocolos de bajo riesgo",
             ],
             ChatIntent.RISK_ASSESSMENT: [
+                # English
                 "is it safe", "how safe", "safe to use",
                 "what are the risks", "risks of", "risk assessment",
                 "is aave safe", "is uniswap safe", "is compound safe",
                 "is morpho safe", "is curve safe", "is lido safe",
-                "es seguro", "es seguro usar",  # Spanish
-                "é seguro", "é seguro usar",  # Portuguese
-                "安全吗", "安全使用",  # Chinese
+                # Spanish
+                "es seguro", "es seguro usar", "qué tan seguro",
+                "cuáles son los riesgos", "riesgos de", "evaluación de riesgo",
+                # Portuguese
+                "é seguro", "é seguro usar",
+                # Chinese
+                "安全吗", "安全使用",
             ],
             ChatIntent.SIMILAR_PROTOCOLS: [
+                # English
                 "similar to", "like", "alternative to", "alternatives for",
                 "protocols like", "similar protocols",
+                # Spanish
+                "similar a", "parecido a", "alternativa a", "alternativas para",
+                "protocolos como", "protocolos similares",
             ],
         }
 
-        # DeFi shortcut patterns (for ACTION intents)
+        # ========================================
+        # DeFi shortcut patterns (English + Spanish)
+        # ========================================
         defi_patterns = {
             ChatIntent.LENDING: [
+                # English
                 "deposit usdc", "deposit eth", "earn on morpho",
                 "supply to aave", "lend my", "earn yield",
+                # Spanish
+                "depositar usdc", "depositar eth", "ganar en morpho",
+                "prestar en aave", "prestar mi", "ganar rendimiento",
             ],
             ChatIntent.MONEY_MARKET: [
+                # English
                 "money market", "compare aave", "compound vs aave",
                 "borrow rate", "lending rate",
+                # Spanish
+                "mercado de dinero", "comparar aave", "compound vs aave",
+                "tasa de préstamo", "tasa de interés",
             ],
             ChatIntent.SWAP: [
+                # English
                 "swap", "exchange", "trade", "convert",
                 "1inch", "uniswap",
+                # Spanish
+                "cambiar", "intercambiar", "convertir", "canjear",
+                "quiero swap", "hacer swap", "swap de",
             ],
         }
 
@@ -502,10 +778,22 @@ class SendGuestMessage:
                     handler = self._get_handler_for_intent(intent)
                     return intent, 0.90, handler
 
-        # Check all other patterns
-        all_patterns = {**hunter_patterns, **ultra_patterns, **defi_patterns}
+        # Check Hunter AI patterns SECOND (market intelligence > actions)
+        for intent, keywords in hunter_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_handler_for_intent(intent)
+                    return intent, 0.85, handler
 
-        for intent, keywords in all_patterns.items():
+        # Check ULTRA patterns THIRD (DeFi automation)
+        for intent, keywords in ultra_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_handler_for_intent(intent)
+                    return intent, 0.80, handler
+
+        # Check DeFi patterns LAST (action intents)
+        for intent, keywords in defi_patterns.items():
             for keyword in keywords:
                 if keyword in content_lower:
                     handler = self._get_handler_for_intent(intent)
@@ -541,12 +829,27 @@ class SendGuestMessage:
     def _is_restricted_action(
         self, intent: ChatIntent | None
     ) -> tuple[bool, str | None]:
-        """Check if intent requires registration."""
+        """
+        Check if intent requires registration.
+        
+        Restricted intents are actions that require a connected wallet:
+        - BALANCE: Viewing wallet balance
+        - PORTFOLIO: Viewing portfolio positions
+        - ACTIVITY: Viewing transaction history
+        - RECEIVE: Getting deposit address
+        """
         if not intent:
             return False, None
 
         if intent in RESTRICTED_INTENTS:
-            reason = get_reason_for_intent(intent.value)
+            # Map intent to specific reason
+            reason_map = {
+                ChatIntent.BALANCE: "wallet_access",
+                ChatIntent.PORTFOLIO: "portfolio_access",
+                ChatIntent.ACTIVITY: "transaction_history",
+                ChatIntent.RECEIVE: "wallet_address",
+            }
+            reason = reason_map.get(intent, get_reason_for_intent(intent.value))
             return True, reason
 
         return False, None

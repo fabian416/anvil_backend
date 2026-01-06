@@ -47,6 +47,9 @@ from app.presentation.http.controllers.chat.websocket_router import (
 from app.presentation.http.controllers.chat.intent_detection_router import (
     create_intent_detection_router,
 )
+from app.presentation.http.controllers.chat.conversations_router import (
+    create_conversations_router,
+)
 from app.presentation.http.controllers.chat.analytics_dashboard import (
     router as analytics_dashboard_router,
 )
@@ -154,6 +157,7 @@ def create_api_v1_router() -> APIRouter:
         create_chat_router(),
         create_chat_websocket_router(),
         create_intent_detection_router(),
+        create_conversations_router(),  # Chat System V2 conversations
         analytics_dashboard_router,
         # Admin overview routers
         security_dashboard_router,

@@ -23,6 +23,21 @@ from app.presentation.http.schemas.guest import (
     GuestStatusResponse,
 )
 
+def _get_client_ip(http_request: Request) -> str:
+    """
+    Resolve client IP address.
+
+    Prefer X-Forwarded-For (first IP) to support local/testing behind proxies.
+    Fallback to the direct client host.
+    """
+    xff = http_request.headers.get("x-forwarded-for")
+    if xff:
+        # X-Forwarded-For can be a comma-separated list. The first one is the original client.
+        first = xff.split(",")[0].strip()
+        if first:
+            return first
+    return http_request.client.host if http_request.client else "unknown"
+
 
 def create_guest_router() -> APIRouter:
     """Create the guest chat router."""
@@ -72,7 +87,7 @@ def create_guest_router() -> APIRouter:
         Automatically creates guest user and conversation based on IP.
         """
         # Extract client info
-        ip_address = http_request.client.host if http_request.client else "unknown"
+        ip_address = _get_client_ip(http_request)
         user_agent = http_request.headers.get("user-agent")
         referer = http_request.headers.get("referer")
 
@@ -136,7 +151,7 @@ def create_guest_router() -> APIRouter:
         limit: int = 50,
     ) -> GuestHistoryResponse:
         """Get guest chat history for current IP."""
-        ip_address = http_request.client.host if http_request.client else "unknown"
+        ip_address = _get_client_ip(http_request)
 
         # Get guest user
         guest = await repository.get_guest_by_ip(ip_address)
@@ -185,7 +200,7 @@ def create_guest_router() -> APIRouter:
         repository: FromDishka[GuestRepository],
     ) -> GuestStatusResponse:
         """Get guest status for current IP."""
-        ip_address = http_request.client.host if http_request.client else "unknown"
+        ip_address = _get_client_ip(http_request)
 
         # Get guest user
         guest = await repository.get_guest_by_ip(ip_address)

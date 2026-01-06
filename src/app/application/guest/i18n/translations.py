@@ -17,11 +17,29 @@ GUEST_REGISTRATION_MESSAGES: dict[str, dict[str, str]] = {
         "pt": "Crie uma conta gratuita para ver seu portfólio e rastrear suas posições DeFi.",
         "zh": "创建免费账户以查看您的投资组合并跟踪您的 DeFi 头寸。",
     },
+    "wallet_access": {
+        "en": "🔐 **Wallet Access Required**\n\nTo view your balance and wallet holdings, you need to create an account and connect your wallet.\n\nSign up to:\n• View real-time balances\n• Track your holdings\n• Monitor your positions",
+        "es": "🔐 **Acceso a Billetera Requerido**\n\nPara ver tu saldo y holdings, necesitas crear una cuenta y conectar tu billetera.\n\nRegístrate para:\n• Ver saldos en tiempo real\n• Rastrear tus holdings\n• Monitorear tus posiciones",
+        "pt": "🔐 **Acesso à Carteira Necessário**\n\nPara ver seu saldo e holdings, você precisa criar uma conta e conectar sua carteira.\n\nCadastre-se para:\n• Ver saldos em tempo real\n• Rastrear seus holdings\n• Monitorar suas posições",
+        "zh": "🔐 **需要钱包访问权限**\n\n要查看您的余额和持仓，您需要创建账户并连接钱包。\n\n注册后可以：\n• 查看实时余额\n• 跟踪您的持仓\n• 监控您的头寸",
+    },
     "balance_access": {
         "en": "Sign up to connect your wallet and view your balance.",
         "es": "Regístrate para conectar tu billetera y ver tu saldo.",
         "pt": "Cadastre-se para conectar sua carteira e ver seu saldo.",
         "zh": "注册以连接您的钱包并查看余额。",
+    },
+    "transaction_history": {
+        "en": "🔐 **Account Required**\n\nTo view your transaction history and past activity, you need to create an account.\n\nSign up to:\n• View all transactions\n• Track your trading history\n• Export transaction records",
+        "es": "🔐 **Cuenta Requerida**\n\nPara ver tu historial de transacciones y actividad pasada, necesitas crear una cuenta.\n\nRegístrate para:\n• Ver todas las transacciones\n• Rastrear tu historial de trading\n• Exportar registros de transacciones",
+        "pt": "🔐 **Conta Necessária**\n\nPara ver seu histórico de transações e atividade passada, você precisa criar uma conta.\n\nCadastre-se para:\n• Ver todas as transações\n• Rastrear seu histórico de trading\n• Exportar registros de transações",
+        "zh": "🔐 **需要账户**\n\n要查看您的交易历史和过去的活动，您需要创建账户。\n\n注册后可以：\n• 查看所有交易\n• 跟踪您的交易历史\n• 导出交易记录",
+    },
+    "wallet_address": {
+        "en": "🔐 **Wallet Required**\n\nTo get your deposit address, you need to create an account and set up your wallet.\n\nSign up to:\n• Get your personal wallet address\n• Receive crypto deposits\n• Manage multiple chains",
+        "es": "🔐 **Billetera Requerida**\n\nPara obtener tu dirección de depósito, necesitas crear una cuenta y configurar tu billetera.\n\nRegístrate para:\n• Obtener tu dirección de billetera personal\n• Recibir depósitos de cripto\n• Gestionar múltiples cadenas",
+        "pt": "🔐 **Carteira Necessária**\n\nPara obter seu endereço de depósito, você precisa criar uma conta e configurar sua carteira.\n\nCadastre-se para:\n• Obter seu endereço de carteira pessoal\n• Receber depósitos de cripto\n• Gerenciar múltiplas redes",
+        "zh": "🔐 **需要钱包**\n\n要获取您的存款地址，您需要创建账户并设置钱包。\n\n注册后可以：\n• 获取您的个人钱包地址\n• 接收加密货币存款\n• 管理多条链",
     },
     "activity_access": {
         "en": "Create an account to view your transaction history.",

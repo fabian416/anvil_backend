@@ -1,0 +1,226 @@
+"""
+Conversation Memory Service.
+
+Provides real conversational context from previous messages.
+"""
+
+import logging
+from dataclasses import dataclass, field
+from typing import Any, Protocol
+from uuid import UUID
+
+from app.domain.chat.entities.chat_message import ChatMessage
+
+logger = logging.getLogger(__name__)
+
+# Maximum messages to use for context
+MAX_CONTEXT_MESSAGES = 10
+
+
+class MessageRepositoryProtocol(Protocol):
+    """Protocol for message repository."""
+    
+    async def get_recent_messages(
+        self,
+        conversation_id: UUID,
+        limit: int = MAX_CONTEXT_MESSAGES,
+    ) -> list[ChatMessage]:
+        """Get recent messages from conversation."""
+        ...
+
+
+@dataclass
+class ConversationContext:
+    """Container for conversation context."""
+    
+    messages: list[ChatMessage] = field(default_factory=list)
+    summary: str = ""
+    detected_entities: dict[str, Any] = field(default_factory=dict)
+    pending_intent: str | None = None
+    pending_swap_info: dict[str, Any] | None = None
+    
+    @property
+    def has_context(self) -> bool:
+        """Check if there's any context."""
+        return len(self.messages) > 0
+    
+    @property
+    def message_count(self) -> int:
+        """Number of messages in context."""
+        return len(self.messages)
+
+
+class ConversationMemory:
+    """
+    Service for managing conversational memory.
+    
+    Retrieves context from previous messages for multi-turn conversations.
+    """
+    
+    def __init__(
+        self,
+        message_repository: MessageRepositoryProtocol,
+        max_context_messages: int = MAX_CONTEXT_MESSAGES,
+    ):
+        self._message_repo = message_repository
+        self._max_messages = max_context_messages
+    
+    async def get_context(self, conversation_id: UUID) -> ConversationContext:
+        """
+        Get conversation context from recent messages.
+        
+        Args:
+            conversation_id: Conversation UUID
+            
+        Returns:
+            ConversationContext with messages, summary, entities, and pending intent
+        """
+        try:
+            messages = await self._message_repo.get_recent_messages(
+                conversation_id=conversation_id,
+                limit=self._max_messages,
+            )
+            
+            return ConversationContext(
+                messages=messages,
+                summary=self._build_summary(messages),
+                detected_entities=self._extract_entities(messages),
+                pending_intent=self._get_pending_intent(messages),
+                pending_swap_info=self._get_pending_swap_info(messages),
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get conversation context: {e}")
+            return ConversationContext()
+    
+    def _build_summary(self, messages: list[ChatMessage]) -> str:
+        """
+        Build text summary for context.
+        
+        Creates a formatted string of recent messages for use in
+        intent detection and response generation.
+        """
+        if not messages:
+            return ""
+        
+        lines = []
+        for msg in messages:
+            role = "User" if msg.role.value == "user" else "Assistant"
+            intent_info = f" [{msg.intent}]" if msg.intent else ""
+            # Truncate long messages
+            content = msg.content[:200]
+            if len(msg.content) > 200:
+                content += "..."
+            lines.append(f"{role}{intent_info}: {content}")
+        
+        return "\n".join(lines)
+    
+    def _extract_entities(self, messages: list[ChatMessage]) -> dict[str, Any]:
+        """
+        Extract entities mentioned in conversation.
+        
+        Collects tokens, amounts, protocols, and other entities
+        from message metadata.
+        """
+        entities: dict[str, Any] = {
+            "tokens": set(),
+            "amounts": [],
+            "protocols": set(),
+            "chains": set(),
+        }
+        
+        for msg in messages:
+            if not msg.metadata:
+                continue
+            
+            msg_entities = msg.get_extracted_entities()
+            
+            # Collect tokens
+            if "token" in msg_entities:
+                entities["tokens"].add(msg_entities["token"])
+            if "tokens" in msg_entities:
+                for token in msg_entities["tokens"]:
+                    entities["tokens"].add(token)
+            
+            # Collect amounts
+            if "amount" in msg_entities:
+                entities["amounts"].append(msg_entities["amount"])
+            
+            # Collect protocols
+            if "protocol" in msg_entities:
+                entities["protocols"].add(msg_entities["protocol"])
+            if "protocols" in msg_entities:
+                for protocol in msg_entities["protocols"]:
+                    entities["protocols"].add(protocol)
+            
+            # Collect chains
+            if "chain" in msg_entities:
+                entities["chains"].add(msg_entities["chain"])
+        
+        # Convert sets to lists for JSON serialization
+        return {
+            "tokens": list(entities["tokens"]),
+            "amounts": entities["amounts"],
+            "protocols": list(entities["protocols"]),
+            "chains": list(entities["chains"]),
+        }
+    
+    def _get_pending_intent(self, messages: list[ChatMessage]) -> str | None:
+        """
+        Detect if there's a pending/incomplete flow.
+        
+        Checks the last assistant message for pending_action metadata
+        (e.g., swap awaiting confirmation).
+        """
+        if not messages:
+            return None
+        
+        # Find the most recent assistant message
+        for msg in reversed(messages):
+            if msg.is_assistant_message:
+                pending = msg.get_pending_action()
+                if pending:
+                    return pending
+                break
+        
+        return None
+    
+    def _get_pending_swap_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+        """
+        Get swap info from the last assistant message if there's a pending swap flow.
+        
+        This preserves the state of multi-turn swap conversations
+        (e.g., from_token, to_token already collected).
+        """
+        if not messages:
+            return None
+        
+        # Find the most recent assistant message with pending swap action
+        for msg in reversed(messages):
+            if msg.is_assistant_message:
+                pending = msg.get_pending_action()
+                if pending and pending.startswith("swap_"):
+                    return msg.get_swap_info()
+                break
+        
+        return None
+    
+    def build_context_string(self, context: ConversationContext) -> str:
+        """
+        Build a context string for handlers.
+        
+        Combines summary and entity information.
+        """
+        parts = []
+        
+        if context.summary:
+            parts.append(context.summary)
+        
+        if context.detected_entities.get("tokens"):
+            tokens = ", ".join(context.detected_entities["tokens"])
+            parts.append(f"[Mentioned tokens: {tokens}]")
+        
+        if context.pending_intent:
+            parts.append(f"[Pending action: {context.pending_intent}]")
+        
+        return "\n".join(parts)
+

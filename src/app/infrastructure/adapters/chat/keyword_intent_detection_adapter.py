@@ -755,15 +755,27 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
 
         # Token symbol extraction for Hunter intents
         if intent.value.startswith("hunter_"):
-            tokens = {
-                "eth": "ETH",
+            # Token aliases map common names to their symbols
+            token_aliases = {
+                "bitcoin": "BTC",
                 "btc": "BTC",
+                "ethereum": "ETH",
+                "eth": "ETH",
+                "ether": "ETH",
+                "solana": "SOL",
                 "sol": "SOL",
                 "usdc": "USDC",
+                "usdt": "USDT",
+                "tether": "USDT",
                 "dai": "DAI",
+                "weth": "WETH",
+                "wrapped eth": "WETH",
+                "wbtc": "WBTC",
+                "wrapped bitcoin": "WBTC",
             }
-            for keyword, symbol in tokens.items():
-                if keyword in message_lower:
+            # Check aliases (longer names first to avoid partial matches)
+            for alias, symbol in sorted(token_aliases.items(), key=lambda x: -len(x[0])):
+                if alias in message_lower:
                     entities["token_symbol"] = symbol
                     break
 
