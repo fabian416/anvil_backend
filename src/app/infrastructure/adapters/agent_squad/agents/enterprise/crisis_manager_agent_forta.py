@@ -60,7 +60,7 @@ class CrisisManagerAgentForta:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         forta_client: Any,  # FortaClient
         execution_client: Any,  # ExecutionClient (Privy)
         auto_exit_threshold_usd: Decimal = Decimal("1000"),

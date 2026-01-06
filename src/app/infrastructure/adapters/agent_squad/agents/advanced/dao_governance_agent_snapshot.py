@@ -49,7 +49,7 @@ class DAOGovernanceAgentSnapshot:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         snapshot_client: Any,  # SnapshotClient
         model: str = "gpt-4o",
         temperature: float = 0.2,

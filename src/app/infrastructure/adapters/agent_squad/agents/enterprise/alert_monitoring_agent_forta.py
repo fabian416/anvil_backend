@@ -51,7 +51,7 @@ class AlertMonitoringAgentForta:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         forta_client: Any,  # FortaClient
         twilio_client: Any,  # TwilioClient
         model: str = "gpt-4o-mini",

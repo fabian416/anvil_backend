@@ -421,7 +421,7 @@ class ChatPhase2Provider(Provider):
             max_retries=3,
         )
 
-    @decorate
+    @provide(scope=Scope.APP)
     def provide_cached_embedding_service(
         self,
         cohere_embedding_service: Optional[EmbeddingService],
@@ -432,8 +432,6 @@ class ChatPhase2Provider(Provider):
 
         Wraps primary embedding service (Cohere or DeepInfra) with Redis cache layer
         to reduce API costs and improve latency.
-
-        Uses @decorate to wrap the base EmbeddingService provider.
         
         Note: OpenAI removed - using Cohere or DeepInfra for embeddings.
         """
@@ -442,6 +440,11 @@ class ChatPhase2Provider(Provider):
             # Fallback to DeepInfra embedding service (provided in graph.py)
             from app.infrastructure.embeddings import DeepInfraEmbeddingService
             deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
+            if not deepinfra_key:
+                raise ValueError(
+                    "DEEPINFRA_API_KEY environment variable not set. "
+                    "Required for embedding service (OpenAI removed)."
+                )
             base_service = DeepInfraEmbeddingService(api_key=deepinfra_key)
         else:
             base_service = cohere_embedding_service

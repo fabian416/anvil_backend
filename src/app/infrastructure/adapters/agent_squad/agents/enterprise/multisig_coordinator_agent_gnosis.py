@@ -46,7 +46,7 @@ class MultiSigCoordinatorAgentGnosis:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         gnosis_safe_client: Any,  # GnosisSafeClient
         max_transaction_usd: Decimal = Decimal("100000"),
         model: str = "gpt-4o",

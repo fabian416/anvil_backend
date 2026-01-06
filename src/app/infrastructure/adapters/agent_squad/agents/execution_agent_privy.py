@@ -43,7 +43,7 @@ class ExecutionAgentPrivy:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         privy_client: Any,  # PrivyClient (TODO: type properly)
         swap_gateway: Any,  # SwapGateway (1inch, Uniswap)
         model: str = "gpt-4o",

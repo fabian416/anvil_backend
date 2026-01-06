@@ -55,7 +55,7 @@ class LendingBorrowingAgentAave:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         aave_client: Any,  # AaveClient
         safe_health_factor: Decimal = Decimal("2.0"),
         model: str = "gpt-4o",

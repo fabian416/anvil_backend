@@ -34,7 +34,7 @@ class SecurityAuditorAgentSlither:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         model: str = "gpt-4o",
         temperature: float = 0.1,
         max_tokens: int = 2000,

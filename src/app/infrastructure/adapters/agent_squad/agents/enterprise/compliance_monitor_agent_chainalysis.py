@@ -45,7 +45,7 @@ class ComplianceMonitorAgentChainalysis:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         chainalysis_client: Any,  # ChainalysisClient
         risk_threshold_block: int = 80,
         risk_threshold_review: int = 60,

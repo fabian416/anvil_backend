@@ -55,7 +55,7 @@ class BridgeCrosschainAgentAxelar:
     
     def __init__(
         self,
-        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
+        llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         axelar_client: Any,  # AxelarClient
         model: str = "gpt-4o",
         temperature: float = 0.2,
