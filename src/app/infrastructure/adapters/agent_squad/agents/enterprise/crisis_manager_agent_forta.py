@@ -11,7 +11,7 @@ from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
 from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
-from app.infrastructure.adapters.agent_squad.llm_client_openai import LLMClientOpenAI
+from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 
 class CrisisManagerAgentForta:
@@ -60,7 +60,7 @@ class CrisisManagerAgentForta:
     
     def __init__(
         self,
-        llm_client: LLMClientOpenAI,
+        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
         forta_client: Any,  # FortaClient
         execution_client: Any,  # ExecutionClient (Privy)
         auto_exit_threshold_usd: Decimal = Decimal("1000"),

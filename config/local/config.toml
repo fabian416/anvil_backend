@@ -247,7 +247,8 @@ log_agent_selection = true
 # LLM Provider Configuration
 # ========================================
 [llm_provider]
-# Primary provider for agent squad (vertex_ai, deepinfra, openai)
+# Primary provider for agent squad (vertex_ai, deepinfra)
+# Note: OpenAI removed - only vertex_ai and deepinfra supported
 primary_provider = "vertex_ai"
 
 # Fallback provider if primary fails
@@ -282,9 +283,9 @@ use_unified_gateway = true
 "gpt-4" = "meta-llama/Meta-Llama-3.1-405B-Instruct"
 "gpt-3.5-turbo" = "meta-llama/Llama-3.2-3B-Instruct"
 
-[llm_provider.openai]
-# Optional: if you want to use OpenAI as primary or fallback
-# Add OPENAI_API_KEY to .secrets.toml
+# OpenAI removed - not supported anymore
+# [llm_provider.openai]
+# OpenAI provider has been removed. Use vertex_ai or deepinfra instead.
 
 # Privy Configuration
 [privy]

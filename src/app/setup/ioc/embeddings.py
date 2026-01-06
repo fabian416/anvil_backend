@@ -10,9 +10,10 @@ import redis.asyncio as aioredis
 from dishka import Provider, Scope, provide
 
 from app.domain.ports.ai.embedding_service import EmbeddingService
-from app.infrastructure.adapters.ai.openai_embedding_adapter import (
-    OpenAIEmbeddingAdapter,
-)
+# OpenAI removed - using only Cohere and DeepInfra for embeddings
+# from app.infrastructure.adapters.ai.openai_embedding_adapter import (
+#     OpenAIEmbeddingAdapter,
+# )
 from app.infrastructure.adapters.ai.cohere_embedding_adapter import (
     CohereEmbeddingAdapter,
 )
@@ -27,36 +28,11 @@ class EmbeddingProvider(Provider):
 
     scope = Scope.APP
 
-    @provide
-    def provide_openai_embedding_service(
-        self,
-        settings: AppSettings,
-    ) -> Optional[OpenAIEmbeddingAdapter]:
-        """
-        Provide OpenAI embedding service.
-
-        Requires settings.openai.api_key to be configured.
-
-        Returns:
-            OpenAIEmbeddingAdapter or None if not configured
-        """
-        # Check if OpenAI settings exist
-        if not hasattr(settings, "openai") or not settings.openai:
-            return None
-
-        if not settings.openai.api_key:
-            return None
-
-        # Get model configuration
-        model = getattr(settings.openai, "embedding_model", "text-embedding-3-large")
-        dimensions = getattr(settings.openai, "embedding_dimensions", None)
-
-        return OpenAIEmbeddingAdapter(
-            api_key=settings.openai.api_key,
-            model=model,
-            dimensions=dimensions,
-            organization=getattr(settings.openai, "organization", None),
-        )
+    # OpenAI removed - using only Cohere and DeepInfra for embeddings
+    # @provide
+    # def provide_openai_embedding_service(...) -> Optional[OpenAIEmbeddingAdapter]:
+    #     """OpenAI embedding service - REMOVED"""
+    #     return None
 
     @provide
     def provide_cohere_embedding_service(
@@ -89,7 +65,6 @@ class EmbeddingProvider(Provider):
     @provide
     def provide_default_embedding_service(
         self,
-        openai_service: Optional[OpenAIEmbeddingAdapter],
         cohere_service: Optional[CohereEmbeddingAdapter],
         redis_client: aioredis.Redis,
         settings: AppSettings,
@@ -98,9 +73,11 @@ class EmbeddingProvider(Provider):
         Provide default embedding service with caching.
 
         Priority:
-        1. OpenAI (if configured)
-        2. Cohere (if configured)
+        1. Cohere (if configured)
+        2. DeepInfra (fallback)
         3. Raises error if neither is configured
+
+        Note: OpenAI removed - using only Cohere and DeepInfra.
 
         Returns:
             Cached embedding service wrapping the selected provider
@@ -108,17 +85,23 @@ class EmbeddingProvider(Provider):
         Raises:
             ValueError: If no embedding service is configured
         """
+        import os
+        from app.infrastructure.embeddings import DeepInfraEmbeddingService
+        
         # Select base service
         base_service = None
-        if openai_service is not None:
-            base_service = openai_service
-        elif cohere_service is not None:
+        if cohere_service is not None:
             base_service = cohere_service
         else:
-            raise ValueError(
-                "No embedding service configured. "
-                "Configure OpenAI or Cohere in settings."
-            )
+            # Fallback to DeepInfra
+            deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
+            if deepinfra_key:
+                base_service = DeepInfraEmbeddingService(api_key=deepinfra_key)
+            else:
+                raise ValueError(
+                    "No embedding service configured. "
+                    "Configure Cohere (COHERE_API_KEY) or DeepInfra (DEEPINFRA_API_KEY) in settings."
+                )
 
         # Get cache settings
         cache_enabled = getattr(

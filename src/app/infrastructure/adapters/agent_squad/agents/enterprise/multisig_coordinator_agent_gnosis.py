@@ -13,7 +13,7 @@ from app.domain.value_objects.message_content import MessageContent
 from app.domain.value_objects.wallet_address import WalletAddress
 from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
-from app.infrastructure.adapters.agent_squad.llm_client_openai import LLMClientOpenAI
+from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 
 class MultiSigCoordinatorAgentGnosis:
@@ -46,7 +46,7 @@ class MultiSigCoordinatorAgentGnosis:
     
     def __init__(
         self,
-        llm_client: LLMClientOpenAI,
+        llm_client: LLMClientGateway  # Can be Vertex AI or DeepInfra (OpenAI removed),
         gnosis_safe_client: Any,  # GnosisSafeClient
         max_transaction_usd: Decimal = Decimal("100000"),
         model: str = "gpt-4o",

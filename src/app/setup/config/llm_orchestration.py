@@ -124,7 +124,7 @@ class OrchestratorConfig(BaseModel):
         default=True, description="Use cheaper models on fallback"
     )
     primary_chat_provider: str = Field(
-        default="openai", description="Primary chat provider (openai or anthropic)"
+        default="vertex_ai", description="Primary chat provider (vertex_ai, deepinfra, or anthropic)"
     )
 
 
@@ -153,16 +153,11 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
     """
     import os
 
-    # Load OpenAI config if API key is present
+    # OpenAI removed - not loading OpenAI config
+    # openai_config = None
+    # if os.getenv("OPENAI_API_KEY"):
+    #     openai_config = OpenAIConfig(...)
     openai_config = None
-    if os.getenv("OPENAI_API_KEY"):
-        openai_config = OpenAIConfig(
-            api_key=os.getenv("OPENAI_API_KEY", ""),
-            base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-            organization=os.getenv("OPENAI_ORGANIZATION"),
-            timeout=int(os.getenv("OPENAI_TIMEOUT", "60")),
-            max_retries=int(os.getenv("OPENAI_MAX_RETRIES", "3")),
-        )
 
     # Load Anthropic config if API key is present
     anthropic_config = None
@@ -204,6 +199,6 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
             enable_caching=os.getenv("LLM_ENABLE_CACHING", "true").lower() == "true",
             enable_cost_fallback=os.getenv("LLM_ENABLE_COST_FALLBACK", "true").lower()
             == "true",
-            primary_chat_provider=os.getenv("LLM_PRIMARY_CHAT_PROVIDER", "openai"),
+            primary_chat_provider=os.getenv("LLM_PRIMARY_CHAT_PROVIDER", "vertex_ai"),
         ),
     )

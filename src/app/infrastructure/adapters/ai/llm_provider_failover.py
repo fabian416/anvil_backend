@@ -421,53 +421,48 @@ class LLMProviderFailover:
 
 
 def create_openai_anthropic_failover(
-    openai_api_key: str,
+    openai_api_key: str,  # Not used - OpenAI removed
     anthropic_api_key: str,
-    primary: str = "openai",
+    primary: str = "anthropic",  # Changed default from "openai"
     enable_cost_fallback: bool = True,
 ) -> LLMProviderFailover:
     """
-    Create failover with OpenAI and Anthropic providers.
+    Create failover with Anthropic provider (OpenAI removed).
 
     Args:
-        openai_api_key: OpenAI API key
+        openai_api_key: Not used - OpenAI removed
         anthropic_api_key: Anthropic API key
-        primary: Primary provider ("openai" or "anthropic")
+        primary: Primary provider ("anthropic" - OpenAI removed)
         enable_cost_fallback: Use cheaper models on fallback
 
     Returns:
         Configured failover orchestrator
+        
+    Note:
+        OpenAI provider has been removed. This function now only supports Anthropic.
+        For Vertex AI/DeepInfra, use the agent_squad_infrastructure provider.
     """
-    from app.infrastructure.adapters.ai.openai_chat_adapter import OpenAIChatAdapter
+    # OpenAI removed - using only Anthropic and Vertex AI/DeepInfra
+    # from app.infrastructure.adapters.ai.openai_chat_adapter import OpenAIChatAdapter
     from app.infrastructure.adapters.ai.anthropic_chat_adapter import (
         AnthropicChatAdapter,
     )
 
-    # Create adapters
-    openai = OpenAIChatAdapter(api_key=openai_api_key)
+    # Create adapters (OpenAI removed)
+    # openai = OpenAIChatAdapter(api_key=openai_api_key)
     anthropic = AnthropicChatAdapter(api_key=anthropic_api_key)
 
-    # Configure priority based on primary
+    # Configure priority based on primary (OpenAI removed)
     if primary == "openai":
-        providers = [
-            ProviderConfig(provider=openai, priority=0, cost_tier="standard"),
-            ProviderConfig(
-                provider=anthropic,
-                priority=1,
-                cost_tier="standard",
-                is_fallback=True,
-            ),
-        ]
-    else:
-        providers = [
-            ProviderConfig(provider=anthropic, priority=0, cost_tier="standard"),
-            ProviderConfig(
-                provider=openai,
-                priority=1,
-                cost_tier="standard",
-                is_fallback=True,
-            ),
-        ]
+        raise ValueError(
+            "OpenAI provider has been removed. "
+            "Please use 'anthropic' or configure Vertex AI/DeepInfra as primary."
+        )
+    
+    # Only Anthropic supported now (OpenAI removed)
+    providers = [
+        ProviderConfig(provider=anthropic, priority=0, cost_tier="standard"),
+    ]
 
     return LLMProviderFailover(
         providers=providers,

@@ -9,7 +9,7 @@ import openai
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 
-class LLMClientOpenAI:
+class LLMClientGateway:
     """
     LLM Client OpenAI adapter.
     

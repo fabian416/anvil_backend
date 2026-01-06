@@ -52,9 +52,10 @@ from app.infrastructure.adapters.chat.template_execution_repository_adapter impo
 from app.infrastructure.adapters.chat.preferences_repository_adapter import UserPreferencesRepositoryAdapter
 
 # Infrastructure Adapters - External Services
-from app.infrastructure.adapters.ai.openai_chat_adapter import OpenAIChatAdapter
+# OpenAI removed - using only Vertex AI and DeepInfra
+# from app.infrastructure.adapters.ai.openai_chat_adapter import OpenAIChatAdapter
 from app.infrastructure.adapters.ai.anthropic_chat_adapter import AnthropicChatAdapter
-from app.infrastructure.adapters.ai.openai_embedding_adapter import OpenAIEmbeddingAdapter
+# from app.infrastructure.adapters.ai.openai_embedding_adapter import OpenAIEmbeddingAdapter
 from app.infrastructure.adapters.ai.cached_embedding_adapter import CachedEmbeddingAdapter
 
 # Application Services
@@ -349,31 +350,11 @@ class ChatPhase2Provider(Provider):
     # External LLM Providers (APP-scoped)
     # ========================================
 
-    @provide(scope=Scope.APP)
-    def provide_openai_chat_provider(self) -> ChatLLMProvider:
-        """
-        Provide OpenAI chat LLM provider.
-
-        Configured with:
-        - GPT-4 Turbo or GPT-3.5 Turbo
-        - Streaming support
-        - Retry policies with exponential backoff
-        """
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable not set")
-
-        model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4-turbo-preview")
-
-        return OpenAIChatAdapter(
-            api_key=api_key,
-            model=model,
-            temperature=0.7,
-            max_tokens=2048,
-            timeout=60.0,
-            max_retries=3,
-            retry_delay=1.0,
-        )
+    # OpenAI removed - using only Vertex AI and DeepInfra
+    # @provide(scope=Scope.APP)
+    # def provide_openai_chat_provider(self) -> ChatLLMProvider:
+    #     """OpenAI chat provider - REMOVED"""
+    #     pass
 
     @provide(scope=Scope.APP)
     def provide_anthropic_chat_provider(self) -> Optional[ChatLLMProvider]:
@@ -407,28 +388,11 @@ class ChatPhase2Provider(Provider):
     # Embedding Services (APP-scoped)
     # ========================================
 
-    @provide(scope=Scope.APP)
-    def provide_openai_embedding_service(self) -> EmbeddingService:
-        """
-        Provide OpenAI embedding service.
-
-        Configured with:
-        - text-embedding-3-large (3072 dimensions)
-        - Batch processing support
-        - Rate limiting
-        """
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable not set")
-
-        model = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large")
-
-        return OpenAIEmbeddingAdapter(
-            api_key=api_key,
-            model=model,
-            timeout=30.0,
-            max_retries=3,
-        )
+    # OpenAI removed - using DeepInfra for embeddings
+    # @provide(scope=Scope.APP)
+    # def provide_openai_embedding_service(self) -> EmbeddingService:
+    #     """OpenAI embedding service - REMOVED"""
+    #     pass
 
     @provide(scope=Scope.APP)
     def provide_cohere_embedding_service(self) -> Optional[EmbeddingService]:
@@ -460,19 +424,30 @@ class ChatPhase2Provider(Provider):
     @decorate
     def provide_cached_embedding_service(
         self,
-        openai_embedding_service: EmbeddingService,
+        cohere_embedding_service: Optional[EmbeddingService],
         redis_cache_client: Redis,
     ) -> EmbeddingService:
         """
         Provide cached embedding service.
 
-        Wraps primary embedding service with Redis cache layer
+        Wraps primary embedding service (Cohere or DeepInfra) with Redis cache layer
         to reduce API costs and improve latency.
 
         Uses @decorate to wrap the base EmbeddingService provider.
+        
+        Note: OpenAI removed - using Cohere or DeepInfra for embeddings.
         """
+        # Use Cohere if available, otherwise fallback to DeepInfra (from graph.py)
+        if cohere_embedding_service is None:
+            # Fallback to DeepInfra embedding service (provided in graph.py)
+            from app.infrastructure.embeddings import DeepInfraEmbeddingService
+            deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
+            base_service = DeepInfraEmbeddingService(api_key=deepinfra_key)
+        else:
+            base_service = cohere_embedding_service
+        
         return CachedEmbeddingAdapter(
-            embedding_service=openai_embedding_service,
+            embedding_service=base_service,
             redis_client=redis_cache_client,
             prefix="embed",
             ttl=2592000,  # 30 days

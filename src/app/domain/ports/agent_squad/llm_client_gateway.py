@@ -10,9 +10,9 @@ class LLMClientGateway(Protocol):
     LLM Client Gateway port.
     
     Implementing adapters:
-    - LLMClientOpenAI (OpenAI API)
-    - LLMClientAnthropic (Anthropic API)
-    - LLMClientVertexAI (Google Vertex AI)
+    - LLMClientVertexAI (Google Vertex AI) - Primary
+    - LLMClientDeepInfra (DeepInfra API) - Fallback
+    Note: LLMClientOpenAI removed - using only Vertex AI and DeepInfra
     """
     
     async def classify_intent(

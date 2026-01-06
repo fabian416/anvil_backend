@@ -7,11 +7,12 @@
 
 ## Resumen Ejecutivo
 
-El sistema Anvil Backend está configurado con **3 proveedores LLM principales**:
+El sistema Anvil Backend está configurado con **2 proveedores LLM principales**:
 
 1. **Vertex AI (Google Gemini 2.0)** - Proveedor primario
 2. **DeepInfra (Meta Llama)** - Proveedor de fallback
-3. **OpenAI (GPT-4)** - Proveedor legacy/opcional (más costoso)
+
+**OpenAI (GPT-4) ha sido eliminado** debido a costos 50-187x más altos.
 
 ---
 
@@ -83,36 +84,24 @@ El sistema Anvil Backend está configurado con **3 proveedores LLM principales**
 
 ---
 
-## 3. OpenAI (GPT-4)
+## 3. OpenAI (GPT-4) - **REMOVED**
 
-### Configuración
-- **Proveedor**: OpenAI API
-- **Modelos**: GPT-4o, GPT-4o-mini, GPT-4
-- **Rol**: Proveedor legacy/opcional (más costoso)
-- **Archivo de configuración**: `config/local/.secrets.toml` → `[openai]` (opcional)
+### Estado
+- **❌ ELIMINADO**: OpenAI provider ha sido removido del código
+- **Razón**: Costos 50-187x más altos que Vertex AI/DeepInfra
+- **Fecha de eliminación**: Enero 2026
 
-### Costos por Millón de Tokens
-- **GPT-4o**:
-  - Input: $5.00/1M tokens
-  - Output: $15.00/1M tokens
-  - **Total**: $5.00-15.00/1M tokens
-- **GPT-4o-mini**:
-  - Input: $0.15/1M tokens
-  - Output: $0.60/1M tokens
-  - **Total**: $0.15-0.60/1M tokens
+### Costos (Histórico - Ya no se usa)
+- **GPT-4o**: $5.00-15.00/1M tokens
+- **GPT-4o-mini**: $0.15-0.60/1M tokens
+- **50-187x más caro** que Vertex AI/DeepInfra
 
-### Comparación de Costos
-- **50x más caro** que Vertex AI (GPT-4o vs Gemini 2.0 Flash)
-- **187x más caro** que DeepInfra (GPT-4o vs Llama)
+### Nota
+El paquete `openai` sigue en `pyproject.toml` porque:
+- DeepInfra usa la API compatible con OpenAI (requiere el paquete `openai`)
+- Agno requiere `openai` para modelos OpenAI (si se usa Agno)
 
-### Uso
-- **Opcional**: Solo se usa si está configurado y Vertex AI + DeepInfra fallan
-- **Legacy**: Mantenido para compatibilidad
-- **No recomendado** para producción debido a costos
-
-### Archivos de Implementación
-- `src/app/infrastructure/adapters/agent_squad/llm_client_openai.py`
-- `src/app/setup/config/llm_orchestration.py` → `OpenAIConfig`
+Pero la implementación de `LLMClientOpenAI` (que llama directamente a la API de OpenAI) ha sido eliminada.
 
 ---
 
@@ -122,11 +111,12 @@ El sistema Anvil Backend está configurado con **3 proveedores LLM principales**
 |-----------|--------|-----------------|-------------------|
 | **DeepInfra** | Llama 3.2 3B / 70B | **$0.08** | 1x (más barato) |
 | **Vertex AI** | Gemini 2.0 Flash | **$0.10-0.40** | 1.25-5x |
-| **OpenAI** | GPT-4o | **$5.00-15.00** | 62.5-187.5x (más caro) |
+| ~~**OpenAI**~~ | ~~GPT-4o~~ | ~~$5.00-15.00~~ | ~~62.5-187.5x~~ **REMOVED** |
 
-### Ahorro vs OpenAI
+### Ahorro vs OpenAI (Histórico)
 - **Vertex AI**: 91.6% de ahorro vs OpenAI GPT-4o
 - **DeepInfra**: 97.7% de ahorro vs OpenAI GPT-4o
+- **OpenAI eliminado** para evitar costos excesivos
 
 ---
 
@@ -135,7 +125,7 @@ El sistema Anvil Backend está configurado con **3 proveedores LLM principales**
 ### Orden de Prioridad
 1. **Vertex AI** (Gemini 2.0) - Primario
 2. **DeepInfra** (Meta Llama) - Fallback automático
-3. **OpenAI** (GPT-4) - Último recurso (si está configurado)
+3. ~~**OpenAI** (GPT-4)~~ - **REMOVED** (no disponible)
 
 ### Triggers de Fallback
 - Error de API de Vertex AI
@@ -196,10 +186,10 @@ API_KEY = "your-deepinfra-api-key"
 BASE_URL = "https://api.deepinfra.com/v1/openai"
 # Get from: https://deepinfra.com/dash/api_keys
 
-# OpenAI (Optional) - Alternative Provider
-[openai]
-API_KEY = "your-openai-api-key"  # Optional
-# Get from: https://platform.openai.com/api-keys
+# OpenAI REMOVED - Not supported anymore
+# [openai]
+# API_KEY = ""
+# OpenAI provider has been removed. Use vertex_ai or deepinfra instead.
 ```
 
 ---

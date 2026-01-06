@@ -18,7 +18,8 @@ from app.domain.graph.services import GraphService, RiskAnalysisService
 from app.domain.ml.services import RiskPredictionService, NetworkAnalysisService
 from app.infrastructure.persistence_age import GraphRepositoryAge
 from app.infrastructure.external_data.defillama import DeFiLlamaClient
-from app.infrastructure.embeddings import OpenAIEmbeddingService, DeepInfraEmbeddingService
+# OpenAI removed - using only DeepInfra for embeddings
+from app.infrastructure.embeddings import DeepInfraEmbeddingService
 from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import VectorRepositorySqla
 from app.infrastructure.cache.graph_cache import GraphQueryCache
 from app.application.graph import (
@@ -108,19 +109,20 @@ class GraphProvider(Provider):
         """Provide Embedding service implementation.
         
         Uses DeepInfra with multilingual BAAI/bge-m3 model (supports 100+ languages).
-        Falls back to OpenAI if DeepInfra key is not configured.
+        Note: OpenAI removed - using only DeepInfra for embeddings.
         """
-        # Try DeepInfra first (preferred - multilingual support)
+        # Use DeepInfra (OpenAI removed)
         deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
-        if deepinfra_key:
-            return DeepInfraEmbeddingService(
-                api_key=deepinfra_key,
-                model="BAAI/bge-m3",  # Multilingual: EN, ES, PT, ZH, FR, etc.
+        if not deepinfra_key:
+            raise ValueError(
+                "DEEPINFRA_API_KEY environment variable not set. "
+                "Required for embedding service (OpenAI removed)."
             )
         
-        # Fallback to OpenAI
-        openai_key = os.getenv("OPENAI_API_KEY", "")
-        return OpenAIEmbeddingService(api_key=openai_key)
+        return DeepInfraEmbeddingService(
+            api_key=deepinfra_key,
+            model="BAAI/bge-m3",  # Multilingual: EN, ES, PT, ZH, FR, etc.
+        )
     
     @provide
     async def provide_graph_cache(self) -> GraphQueryCache:

@@ -7,7 +7,7 @@ from app.domain.value_objects.agent_squad.conversation_context import Conversati
 from app.domain.enums.agent_type import AgentType
 from app.domain.services.agent_squad.intent_classifier import IntentClassifier
 from app.domain.ports.agent_squad.intent_classifier_gateway import IntentClassifierGateway
-from app.infrastructure.adapters.agent_squad.llm_client_openai import LLMClientOpenAI
+from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 
 class IntentClassifierOpenAI:
@@ -21,7 +21,7 @@ class IntentClassifierOpenAI:
     
     def __init__(
         self,
-        llm_client: LLMClientOpenAI,
+        llm_client: LLMClientGateway,
         classification_model: str = "gpt-4o-mini",
     ):
         """
