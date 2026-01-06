@@ -8,7 +8,7 @@ from app.infrastructure.adapters.ai.llm.deepinfra import DeepInfraStrategy
 class LLMProviderFactory:
     """
     Factory for creating LLM Strategies.
-    See libs/python-patterns/patterns/creational/factory.py
+    See: Factory Pattern (python-patterns package)
     
     Provider Priority:
     1. Vertex AI (Primary) - Google Gemini models

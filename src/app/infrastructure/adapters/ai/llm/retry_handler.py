@@ -4,7 +4,7 @@ from app.infrastructure.adapters.ai.llm.strategy import LLMStrategy
 class RetryHandler:
     """
     Chain of Responsibility Handler for LLM Retries.
-    See libs/python-patterns/patterns/behavioral/chain_of_responsibility.py
+    See: Chain of Responsibility Pattern (python-patterns package)
     """
     def __init__(self, strategy: LLMStrategy, next_handler: Optional['RetryHandler'] = None):
         self._strategy = strategy

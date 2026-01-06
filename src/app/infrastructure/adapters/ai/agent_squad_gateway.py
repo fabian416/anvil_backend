@@ -11,7 +11,7 @@ Replaces AgentGatewayImpl with Agent Squad library for:
 from typing import Dict, Any, Optional
 from uuid import UUID
 
-# NOTE: Agent Squad installed via: uv pip install -e libs/agent-squad/python/
+# NOTE: Agent Squad installed as package dependency (see pyproject.toml)
 # Additional dependencies: openai, boto3
 try:
     from agent_squad.orchestrator import AgentSquad
@@ -63,7 +63,7 @@ class AgentSquadGateway(AgentGateway):
             raise ImportError(
                 "Agent Squad library not installed. "
                 "Install with: pip install agent-squad "
-                "or: pip install -e libs/agent-squad/python/"
+                "or: uv pip install -e '.[dev,test]'"
             )
         
         self.storage = storage
