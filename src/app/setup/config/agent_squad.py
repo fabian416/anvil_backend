@@ -2,11 +2,14 @@
 
 from pydantic import BaseModel, Field
 
+# Default model for agents (Vertex AI native name)
+DEFAULT_AGENT_MODEL = "gemini-2.0-flash-exp"
+
 
 class AgentConfigModel(BaseModel):
     """Individual agent configuration."""
     enabled: bool = True
-    model: str = "gpt-4o-mini"
+    model: str = DEFAULT_AGENT_MODEL
     temperature: float = 0.7
     max_tokens: int = 1000
 
@@ -73,14 +76,14 @@ class AgentSquadSettings(BaseModel):
     enable_intent_classification: bool = True
     log_intent_classification: bool = False
     log_agent_selection: bool = False  # Log agent selection decisions
-    intent_classification_model: str = "gpt-4o-mini"
+    intent_classification_model: str = DEFAULT_AGENT_MODEL  # gemini-2.0-flash-exp
     intent_confidence_threshold: float = 0.85
     fallback_agent: str = "chat"
     max_context_messages: int = 10
 
     # Supervisor coordination
     enable_supervisor: bool = True
-    supervisor_model: str = "gpt-4o"
+    supervisor_model: str = DEFAULT_AGENT_MODEL  # gemini-2.0-flash-exp
     supervisor_max_agents: int = 5
     supervisor_timeout_seconds: int = 120
 
@@ -109,9 +112,9 @@ class AgentSquadSettings(BaseModel):
     
     # Flag to use agent-squad library vs hand-rolled implementation
     use_agent_squad: bool = False
-    
-    # Default model for agents
-    default_model: str = "gpt-4o-mini"
+
+    # Default model for agents (Vertex AI native name)
+    default_model: str = DEFAULT_AGENT_MODEL  # gemini-2.0-flash-exp
 
 
 # Alias for backward compatibility

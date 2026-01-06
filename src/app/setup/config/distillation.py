@@ -64,7 +64,7 @@ class VertexAISettings(BaseModel):
         description="Google Cloud API Key (alternative to service account)",
     )
     model: str = Field(
-        default="gemini-1.5-flash",
+        default="gemini-2.0-flash-exp",
         description="Vertex AI model to use",
     )
 

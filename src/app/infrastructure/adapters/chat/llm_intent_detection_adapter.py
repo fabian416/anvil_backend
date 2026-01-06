@@ -95,7 +95,7 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
         # Call LLM
         try:
             response = await self._llm.generate(
-                model="gpt-4o-mini",
+                model="gemini-2.0-flash-exp",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},

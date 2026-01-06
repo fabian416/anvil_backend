@@ -1,5 +1,7 @@
 """
 LLM Client Vertex AI adapter - Google Gemini API integration.
+
+Uses native Gemini model names directly (no OpenAI mapping).
 """
 
 import json
@@ -9,6 +11,9 @@ import logging
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 logger = logging.getLogger(__name__)
+
+# Default Gemini model for Vertex AI
+DEFAULT_MODEL = "gemini-2.0-flash-exp"
 
 
 class LLMClientVertexAI:
@@ -22,16 +27,20 @@ class LLMClientVertexAI:
     - Agent recommendation
     - Workflow planning
     - Chat completion
+
+    Available models:
+    - gemini-2.0-flash-exp  (fast, cost-effective)
+    - gemini-1.5-pro        (premium, complex reasoning)
+    - gemini-1.5-flash      (balanced)
     """
 
-    def __init__(self, api_key: str, model_mapping: dict[str, str] | None = None):
+    def __init__(self, api_key: str, default_model: str = DEFAULT_MODEL):
         """
         Initialize Vertex AI client.
 
         Args:
             api_key: Google Cloud API key
-            model_mapping: Map OpenAI model names to Gemini models
-                          Example: {"gpt-4o": "gemini-2.0-flash-exp", "gpt-4o-mini": "gemini-2.0-flash-exp"}
+            default_model: Default Gemini model to use (default: gemini-2.0-flash-exp)
         """
         try:
             import google.genai as genai
@@ -43,17 +52,13 @@ class LLMClientVertexAI:
                 "google-genai not installed. Run: pip install google-genai"
             ) from e
 
-        # Default model mapping (OpenAI model names -> Gemini models)
-        self._model_mapping = model_mapping or {
-            "gpt-4o": "gemini-2.0-flash-exp",
-            "gpt-4o-mini": "gemini-2.0-flash-exp",
-            "gpt-4": "gemini-1.5-pro",
-            "gpt-3.5-turbo": "gemini-2.0-flash-exp",
-        }
+        self._default_model = default_model
 
-    def _map_model(self, openai_model: str) -> str:
-        """Map OpenAI model name to Gemini model."""
-        return self._model_mapping.get(openai_model, "gemini-2.0-flash-exp")
+    def _resolve_model(self, model: str) -> str:
+        """Resolve model name, using default if empty or invalid."""
+        if not model or not model.startswith("gemini"):
+            return self._default_model
+        return model
 
     async def classify_intent(
         self,
@@ -65,7 +70,7 @@ class LLMClientVertexAI:
 
         Returns JSON with: intent, confidence, reasoning
         """
-        gemini_model = self._map_model(model)
+        gemini_model = self._resolve_model(model)
 
         full_prompt = (
             "You are an intent classification assistant. Always respond with valid JSON.\n\n"
@@ -94,7 +99,7 @@ class LLMClientVertexAI:
 
         Returns JSON with: agents (list), reasoning
         """
-        gemini_model = self._map_model(model)
+        gemini_model = self._resolve_model(model)
 
         full_prompt = (
             "You are an AI agent coordinator. Always respond with valid JSON.\n\n"
@@ -155,7 +160,7 @@ class LLMClientVertexAI:
 
         Returns dict with: content, tokens_used, finish_reason
         """
-        gemini_model = self._map_model(model)
+        gemini_model = self._resolve_model(model)
 
         # Convert OpenAI-style messages to Gemini format
         prompt = self._convert_messages_to_prompt(messages)
@@ -200,7 +205,7 @@ class LLMClientVertexAI:
 
         Returns generated text content directly.
         """
-        gemini_model = self._map_model(model)
+        gemini_model = self._resolve_model(model)
 
         # Convert OpenAI-style messages to Gemini format
         prompt = self._convert_messages_to_prompt(messages)

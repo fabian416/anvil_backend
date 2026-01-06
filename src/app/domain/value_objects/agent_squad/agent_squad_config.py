@@ -7,22 +7,25 @@ from typing import Any
 
 from app.domain.enums.agent_type import AgentType
 
+# Default model for agents (Vertex AI native name)
+DEFAULT_AGENT_MODEL = "gemini-2.0-flash-exp"
+
 
 @dataclass(frozen=True)
 class AgentConfig:
     """
     Configuration for a single agent.
-    
+
     Controls:
     - enabled: Whether agent is available
-    - model: LLM model to use (e.g., "gpt-4o", "gpt-4o-mini")
+    - model: LLM model to use (e.g., "gemini-2.0-flash-exp", "gemini-1.5-pro")
     - temperature: Model temperature (0.0-1.0)
     - max_tokens: Maximum response tokens
     - timeout_seconds: Agent execution timeout
     - custom_params: Agent-specific parameters
     """
     enabled: bool
-    model: str = "gpt-4o-mini"
+    model: str = DEFAULT_AGENT_MODEL
     temperature: float = 0.7
     max_tokens: int = 1000
     timeout_seconds: int = 60
@@ -49,7 +52,7 @@ class AgentConfig:
         """Create default agent configuration."""
         return cls(
             enabled=enabled,
-            model="gpt-4o-mini",
+            model=DEFAULT_AGENT_MODEL,
             temperature=0.7,
             max_tokens=1000,
             timeout_seconds=60,
@@ -61,7 +64,7 @@ class AgentConfig:
         """Create from dictionary (TOML config)."""
         return cls(
             enabled=data.get("enabled", True),
-            model=data.get("model", "gpt-4o-mini"),
+            model=data.get("model", DEFAULT_AGENT_MODEL),
             temperature=data.get("temperature", 0.7),
             max_tokens=data.get("max_tokens", 1000),
             timeout_seconds=data.get("timeout_seconds", 60),
@@ -197,11 +200,11 @@ class AgentSquadConfig:
         
         return cls(
             enabled=True,
-            intent_classification_model="gpt-4o-mini",
+            intent_classification_model=DEFAULT_AGENT_MODEL,
             intent_confidence_threshold=0.85,
             fallback_agent=AgentType.CHAT,
             enable_supervisor=True,
-            supervisor_model="gpt-4o",
+            supervisor_model=DEFAULT_AGENT_MODEL,
             supervisor_max_agents=5,
             supervisor_timeout_seconds=120,
             conversation_history_limit=20,
@@ -252,11 +255,11 @@ class AgentSquadConfig:
         
         return cls(
             enabled=data.get("enabled", True),
-            intent_classification_model=data.get("intent_classification_model", "gpt-4o-mini"),
+            intent_classification_model=data.get("intent_classification_model", DEFAULT_AGENT_MODEL),
             intent_confidence_threshold=data.get("intent_confidence_threshold", 0.85),
             fallback_agent=fallback_agent,
             enable_supervisor=data.get("enable_supervisor", True),
-            supervisor_model=data.get("supervisor_model", "gpt-4o"),
+            supervisor_model=data.get("supervisor_model", DEFAULT_AGENT_MODEL),
             supervisor_max_agents=data.get("supervisor_max_agents", 5),
             supervisor_timeout_seconds=data.get("supervisor_timeout_seconds", 120),
             conversation_history_limit=data.get("conversation_history_limit", 20),

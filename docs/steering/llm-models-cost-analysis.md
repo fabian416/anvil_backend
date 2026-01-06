@@ -1,8 +1,8 @@
 # LLM Models & Cost Analysis - Hunter, Squad, ULTRA, Chat
 
-**Version**: 1.0  
-**Date**: January 2, 2026  
-**Status**: Production Analysis
+**Version**: 2.0
+**Date**: January 6, 2026
+**Status**: Production Analysis (Refactored to native Vertex AI model names)
 
 ---
 
@@ -15,10 +15,12 @@ This document provides a comprehensive analysis of LLM models used across all AI
 - **Chat**: General conversation
 
 **Key Findings**:
-- **Primary Provider**: Vertex AI (Google Gemini) - $0.10/1M tokens
-- **Fallback Provider**: DeepInfra (Meta Llama) - $0.08/1M tokens
-- **Cost Savings**: 99% vs OpenAI GPT-4 ($30/1M tokens)
+- **Primary Provider**: Vertex AI (Google Gemini 2.0 Flash) - $0.10-0.40/1M tokens
+- **Fallback Provider**: DeepInfra (Meta Llama 3.x) - $0.08/1M tokens
+- **OpenAI Status**: Removed from codebase (January 2026)
+- **Cost Savings**: 91.6-97.7% vs OpenAI GPT-4
 - **Monthly Estimate**: $25-50/month (vs $1,500-2,000/month with OpenAI)
+- **Unified Gateway**: Enabled (`use_unified_gateway = true`)
 
 ---
 
@@ -28,37 +30,47 @@ This document provides a comprehensive analysis of LLM models used across all AI
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    LLM Provider Stack                       │
+│             LLM Provider Stack (Native Names)               │
 └─────────────────────────────────────────────────────────────┘
 
                     ┌─────────────────┐
                     │  Agent Code      │
-                    │ (Uses OpenAI    │
+                    │ (Uses native    │
+                    │  Vertex AI      │
                     │  model names)   │
+                    │ gemini-2.0-     │
+                    │ flash-exp       │
                     └────────┬────────┘
                              │
                              ▼
                     ┌─────────────────┐
-                    │ Model Mapping    │
-                    │ (gpt-4o → Gemini)│
+                    │ Unified Gateway  │
+                    │ (AgentLLMGateway)│
                     └────────┬────────┘
                              │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-        ▼                    ▼                    ▼
-┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│ Vertex AI     │    │ DeepInfra     │    │ OpenAI        │
-│ (Primary)     │    │ (Fallback)    │    │ (Legacy)      │
-│ Gemini        │    │ Llama         │    │ GPT-4         │
-└───────────────┘    └───────────────┘    └───────────────┘
+              ┌──────────────┴──────────────┐
+              │                             │
+              ▼                             ▼
+      ┌───────────────┐            ┌───────────────┐
+      │ Vertex AI     │            │ DeepInfra     │
+      │ (Primary)     │            │ (Fallback)    │
+      │ Uses native   │◄──────────►│ Maps Gemini   │
+      │ gemini-*      │  failover  │ → Llama 3.x   │
+      │ names         │            │               │
+      └───────────────┘            └───────────────┘
+
+Note: OpenAI provider was removed from the codebase (January 2026).
+Agent code now uses native Vertex AI model names directly.
+DeepInfra client maps Vertex AI names to Llama equivalents for fallback.
 ```
 
-### Model Mapping Strategy
+### Native Model Names (v2.0 Refactor)
 
-**Why Model Mapping?**
-- Agent code uses OpenAI model names (`gpt-4o`, `gpt-4o-mini`) for compatibility
-- LLM clients automatically map to actual provider models
-- Zero code changes required when switching providers
+**Why Native Names?**
+- Agent code uses Vertex AI model names directly (`gemini-2.0-flash-exp`)
+- No intermediate mapping layer for primary provider
+- DeepInfra maps Vertex AI names to Llama equivalents for fallback
+- Cleaner architecture with single source of truth (config.toml)
 
 ---
 
@@ -75,7 +87,6 @@ This document provides a comprehensive analysis of LLM models used across all AI
 **Model Mapping**:
 - **Vertex AI**: `gpt-4o` → `gemini-2.0-flash-exp`
 - **DeepInfra**: `gpt-4o` → `meta-llama/Meta-Llama-3.1-70B-Instruct`
-- **OpenAI** (legacy): `gpt-4o` → `gpt-4o` (direct)
 
 **Parameters**:
 - Temperature: `0.3` (factual, less creative)
@@ -99,46 +110,48 @@ This document provides a comprehensive analysis of LLM models used across all AI
 
 ### Model Configuration by Agent
 
-| Agent | Default Model | Actual Model (Vertex AI) | Actual Model (DeepInfra) | Use Case |
-|-------|--------------|-------------------------|-------------------------|----------|
-| **Chat** | `gpt-4o-mini` | `gemini-2.0-flash-exp` | `meta-llama/Llama-3.2-3B-Instruct` | General conversation |
-| **Hunter AI** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Market sentiment |
-| **Research** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Deep protocol analysis |
-| **Execution** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Transaction parsing |
-| **Risk Analyzer** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Risk assessment |
-| **Portfolio** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Portfolio optimization |
-| **Tax Optimizer** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Tax strategies |
-| **DeFi Yield** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Yield farming |
-| **Security Auditor** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Security analysis |
-| **Gas Optimizer** | `gpt-4o-mini` | `gemini-2.0-flash-exp` | `meta-llama/Llama-3.2-3B-Instruct` | Gas optimization |
-| **Compliance Monitor** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | AML/KYC |
-| **MultiSig Coordinator** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Treasury management |
-| **Alert Monitoring** | `gpt-4o-mini` | `gemini-2.0-flash-exp` | `meta-llama/Llama-3.2-3B-Instruct` | Real-time alerts |
-| **Crisis Manager** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Emergency response |
-| **Bridge Crosschain** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Cross-chain ops |
-| **Lending Borrowing** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | Leverage strategies |
-| **NFT Asset Manager** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | NFT portfolio |
-| **DAO Governance** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | DAO governance |
+| Agent | Config Model | Temp | Tokens | DeepInfra Fallback | Status |
+|-------|--------------|------|--------|-------------------|--------|
+| **Chat** | `gemini-2.0-flash-exp` | 0.7 | 1000 | `Llama-3.1-70B` | ✅ Enabled |
+| **Hunter AI** | `gemini-2.0-flash-exp` | 0.3 | 1500 | `Llama-3.1-70B` | ✅ Enabled |
+| **Research** | `gemini-2.0-flash-exp` | 0.2 | 2000 | `Llama-3.1-70B` | ✅ Enabled |
+| **Execution** | `gemini-2.0-flash-exp` | 0.1 | 1000 | `Llama-3.1-70B` | ✅ Enabled |
+| **Risk Analyzer** | `gemini-2.0-flash-exp` | 0.2 | 1500 | `Llama-3.1-70B` | ✅ Enabled |
+| **Portfolio** | `gemini-2.0-flash-exp` | 0.3 | 2000 | `Llama-3.1-70B` | ✅ Enabled |
+| **Tax Optimizer** | `gemini-2.0-flash-exp` | 0.2 | 1500 | `Llama-3.1-70B` | ✅ Enabled |
+| **DeFi Yield** | `gemini-2.0-flash-exp` | 0.3 | 1500 | `Llama-3.1-70B` | ✅ Enabled |
+| **Security Auditor** | `gemini-2.0-flash-exp` | 0.1 | 2000 | `Llama-3.1-70B` | ✅ Enabled |
+| **Gas Optimizer** | `gemini-2.0-flash-exp` | 0.2 | 1000 | `Llama-3.1-70B` | ✅ Enabled |
+| **Compliance Monitor** | `gemini-2.0-flash-exp` | 0.1 | 2000 | `Llama-3.1-70B` | ⚪ Enterprise |
+| **MultiSig Coordinator** | `gemini-2.0-flash-exp` | 0.2 | 1500 | `Llama-3.1-70B` | ⚪ Enterprise |
+| **Alert Monitoring** | `gemini-2.0-flash-exp` | 0.3 | 1000 | `Llama-3.1-70B` | ⚪ Pro/Enterprise |
+| **Crisis Manager** | `gemini-2.0-flash-exp` | 0.1 | 2000 | `Llama-3.1-70B` | ⚪ Enterprise |
+| **Bridge Crosschain** | `gemini-2.0-flash-exp` | 0.2 | 1500 | `Llama-3.1-70B` | ⚪ Pro+ |
+| **Lending Borrowing** | `gemini-2.0-flash-exp` | 0.2 | 1500 | `Llama-3.1-70B` | ⚪ Pro+ |
+| **NFT Asset Manager** | `gemini-2.0-flash-exp` | 0.3 | 1500 | `Llama-3.1-70B` | ⚪ Pro |
+| **DAO Governance** | `gemini-2.0-flash-exp` | 0.3 | 1500 | `Llama-3.1-70B` | ⚪ Pro |
+
+**Legend**: ✅ = Enabled by default, ⚪ = Disabled (tier-based)
 
 ### Intent Classification
 
-**Model**: `gpt-4o-mini` (maps to `gemini-2.0-flash-exp`)
+**Model**: `gemini-2.0-flash-exp` (native Vertex AI name)
 
 **Purpose**: Route user messages to appropriate agents
 
 **Cost**: ~200 tokens/classification
 - **Vertex AI**: $0.00002/classification
-- **DeepInfra**: $0.000016/classification
+- **DeepInfra**: $0.000016/classification (fallback: `Llama-3.1-70B`)
 
 ### Supervisor Coordination
 
-**Model**: `gpt-4o` (maps to `gemini-2.0-flash-exp`)
+**Model**: `gemini-2.0-flash-exp` (native Vertex AI name)
 
 **Purpose**: Coordinate multi-agent workflows
 
 **Cost**: ~500 tokens/workflow
 - **Vertex AI**: $0.00005/workflow
-- **DeepInfra**: $0.00004/workflow
+- **DeepInfra**: $0.00004/workflow (fallback: `Llama-3.1-70B`)
 
 ### Workflow Planning
 
@@ -186,7 +199,6 @@ This document provides a comprehensive analysis of LLM models used across all AI
 **Model Mapping**:
 - **Vertex AI**: `gpt-4o-mini` → `gemini-2.0-flash-exp`
 - **DeepInfra**: `gpt-4o-mini` → `meta-llama/Llama-3.2-3B-Instruct`
-- **OpenAI** (legacy): `gpt-4o-mini` → `gpt-4o-mini` (direct)
 
 **Parameters**:
 - Temperature: `0.7` (balanced creativity)
@@ -289,8 +301,7 @@ This document provides a comprehensive analysis of LLM models used across all AI
 **Used for**:
 - Chat agent (general conversation)
 - Gas optimizer (simple calculations)
-- Alert monitoring (fast responses)
-- Intent classification (low complexity)
+- Intent classification (fast, low complexity)
 
 **Cost**: Lowest ($0.10-0.40/1M tokens Vertex AI, $0.08/1M DeepInfra)
 
@@ -302,7 +313,8 @@ This document provides a comprehensive analysis of LLM models used across all AI
 - Research agent (deep analysis)
 - Risk analyzer (complex modeling)
 - Portfolio optimizer (mathematical reasoning)
-- Most specialized agents
+- Alert Monitoring (real-time alerts)
+- Most specialized agents (14 of 18 agents)
 
 **Cost**: Medium ($0.10-0.40/1M tokens Vertex AI, $0.08/1M DeepInfra)
 
@@ -314,6 +326,66 @@ This document provides a comprehensive analysis of LLM models used across all AI
 - Supervisor coordination (critical decisions)
 
 **Cost**: Higher ($1.25-5.00/1M tokens Vertex AI, $0.08/1M DeepInfra)
+
+---
+
+## Unified Gateway Architecture
+
+### Overview
+
+The system uses a unified gateway pattern (`use_unified_gateway = true`) that provides:
+- Single entry point for all LLM operations
+- Automatic model mapping (OpenAI names → actual provider models)
+- Seamless fallback handling
+- Consistent response format across providers
+
+### Architecture Flow
+
+```
+Agent Code (uses native Vertex AI model names)
+         │  gemini-2.0-flash-exp
+         ▼
+┌─────────────────────────────────┐
+│      AgentLLMGateway            │
+│  (Unified interface adapter)    │
+└────────────┬────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────┐
+│   LLMClientWithFallback         │
+│   (Fallback orchestration)      │
+└────────────┬────────────────────┘
+             │
+     ┌───────┴───────┐
+     │               │
+     ▼               ▼
+┌──────────┐   ┌──────────┐
+│ Primary  │   │ Fallback │
+│ (Vertex) │   │(DeepInfra)│
+│ Uses     │   │ Maps to  │
+│ native   │   │ Llama    │
+│ names    │   │ models   │
+└──────────┘   └──────────┘
+```
+
+### Key Components
+
+| Component | Purpose | File |
+|-----------|---------|------|
+| `LLMClientGateway` | Port interface (domain) | `domain/ports/agent_squad/llm_client_gateway.py` |
+| `LLMClientVertexAI` | Vertex AI adapter | `infrastructure/adapters/agent_squad/llm_client_vertex_ai.py` |
+| `LLMClientDeepInfra` | DeepInfra adapter | `infrastructure/adapters/agent_squad/llm_client_deepinfra.py` |
+| `LLMClientWithFallback` | Fallback wrapper | `infrastructure/adapters/agent_squad/llm_client_with_fallback.py` |
+| `AgentLLMGateway` | Unified gateway | `infrastructure/adapters/agent_squad/agent_llm_gateway.py` |
+
+### Supported Operations
+
+All adapters implement these operations:
+- `classify_intent()` - Route user messages to appropriate agents
+- `recommend_agents()` - Suggest agents for complex tasks
+- `plan_workflow()` - Plan multi-agent workflows (uses best model)
+- `chat()` - Standard chat completion
+- `generate()` - Simple text generation
 
 ---
 
@@ -351,7 +423,7 @@ This document provides a comprehensive analysis of LLM models used across all AI
 **✅ DO**: Use `gpt-4o-mini` for simple tasks
 - Chat agent: ✅ Using `gpt-4o-mini`
 - Gas optimizer: ✅ Using `gpt-4o-mini`
-- Alert monitoring: ✅ Using `gpt-4o-mini`
+- Intent classification: ✅ Using `gpt-4o-mini`
 
 **✅ DO**: Use `gpt-4o` for complex reasoning
 - Hunter AI: ✅ Using `gpt-4o` (market analysis needs reasoning)
@@ -442,45 +514,67 @@ This document provides a comprehensive analysis of LLM models used across all AI
 
 ### Agent Squad Config
 
-**File**: `config/local/config.toml`
+**File**: `config/local/config.toml` (lines 100-245)
 
 ```toml
 [agent_squad]
-# Intent classification
-intent_classification_model = "gpt-4o-mini"  # Maps to gemini-2.0-flash-exp
+# Intent classification (uses native Vertex AI model names)
+intent_classification_model = "gemini-2.0-flash-exp"
+intent_confidence_threshold = 0.85
+fallback_agent = "chat"
 
-# Supervisor
-supervisor_model = "gpt-4o"  # Maps to gemini-2.0-flash-exp
+# Supervisor coordination
+enable_supervisor = true
+supervisor_model = "gemini-2.0-flash-exp"
+supervisor_max_agents = 5
+supervisor_timeout_seconds = 120
 
-# Per-agent configuration
+# Performance
+max_concurrent_agents = 3
+routing_timeout_seconds = 5
+execution_timeout_seconds = 60
+
+# Per-agent configuration (all use native Vertex AI names)
 [agent_squad.agents.chat]
-model = "gpt-4o-mini"  # Maps to gemini-2.0-flash-exp
+enabled = true
+model = "gemini-2.0-flash-exp"  # Native Vertex AI name
+temperature = 0.7
+max_tokens = 1000
 
 [agent_squad.agents.hunter_ai]
-model = "gpt-4o"  # Maps to gemini-2.0-flash-exp
+enabled = true
+model = "gemini-2.0-flash-exp"  # Native Vertex AI name
+temperature = 0.3
+max_tokens = 1500
 
-# ... (all 18 agents)
+# ... (all 18 agents use gemini-2.0-flash-exp)
 ```
 
 ### LLM Provider Config
 
-**File**: `config/local/config.toml`
+**File**: `config/local/config.toml` (lines 247-288)
 
 ```toml
 [llm_provider]
+# Primary uses native Vertex AI model names
 primary_provider = "vertex_ai"
 fallback_provider = "deepinfra"
 enable_fallback = true
+use_unified_gateway = true
 
-[llm_provider.vertex_ai.model_mapping]
-"gpt-4o" = "gemini-2.0-flash-exp"
-"gpt-4o-mini" = "gemini-2.0-flash-exp"
-"gpt-4" = "gemini-1.5-pro"
+[llm_provider.vertex_ai]
+# Vertex AI uses native model names directly - no mapping needed
+default_model = "gemini-2.0-flash-exp"
 
+[llm_provider.deepinfra]
+# DeepInfra maps Vertex AI names to Llama equivalents for fallback
+default_model = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+
+# Fallback mapping: Vertex AI names → DeepInfra equivalents
 [llm_provider.deepinfra.model_mapping]
-"gpt-4o" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
-"gpt-4o-mini" = "meta-llama/Llama-3.2-3B-Instruct"
-"gpt-4" = "meta-llama/Meta-Llama-3.1-405B-Instruct"
+"gemini-2.0-flash-exp" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+"gemini-1.5-flash" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+"gemini-1.5-pro" = "meta-llama/Meta-Llama-3.1-405B-Instruct"
 ```
 
 ### API Keys
@@ -490,11 +584,25 @@ enable_fallback = true
 ```toml
 [vertex_ai]
 API_KEY = "your-vertex-ai-api-key"
+PROJECT_ID = "your-gcp-project-id"
+PROJECT_NUMBER = "your-gcp-project-number"
 
 [deepinfra]
 API_KEY = "your-deepinfra-api-key"
 BASE_URL = "https://api.deepinfra.com/v1/openai"
 ```
+
+### Implementation Files
+
+| Component | File Path |
+|-----------|-----------|
+| **Vertex AI Client** | `src/app/infrastructure/adapters/agent_squad/llm_client_vertex_ai.py` |
+| **DeepInfra Client** | `src/app/infrastructure/adapters/agent_squad/llm_client_deepinfra.py` |
+| **Fallback Wrapper** | `src/app/infrastructure/adapters/agent_squad/llm_client_with_fallback.py` |
+| **Unified Gateway** | `src/app/infrastructure/adapters/agent_squad/agent_llm_gateway.py` |
+| **IoC Configuration** | `src/app/setup/ioc/agent_squad_infrastructure.py` |
+| **LLM Config Types** | `src/app/setup/config/llm_orchestration.py` |
+| **Agent Config Types** | `src/app/setup/config/agent_squad.py` |
 
 ---
 
@@ -502,7 +610,9 @@ BASE_URL = "https://api.deepinfra.com/v1/openai"
 
 ### Current Telemetry
 
-**Location**: `src/app/infrastructure/adapters/agent_squad/agent_llm_gateway.py`
+**Files**:
+- `src/app/infrastructure/telemetry/llm_telemetry.py` - LLM cost and usage tracking
+- `src/app/infrastructure/adapters/agent_squad/agent_llm_gateway.py` - Gateway-level metrics
 
 **Tracks**:
 - Tokens used (input + output)
@@ -510,6 +620,7 @@ BASE_URL = "https://api.deepinfra.com/v1/openai"
 - Provider used (Vertex AI vs DeepInfra)
 - Latency
 - Success/failure
+- Cost per request
 
 ### Cost Calculation
 
@@ -587,14 +698,14 @@ total_cost = (total_tokens / 1_000_000) * 0.08
 
 ## Summary
 
-### Current Configuration
+### Current Configuration (v2.0 - Native Names)
 
-| System | Model (Code) | Actual Model (Vertex AI) | Actual Model (DeepInfra) | Cost/1M tokens |
-|--------|--------------|-------------------------|-------------------------|---------------|
-| **Hunter AI** | `gpt-4o` | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | $0.10-0.40 / $0.08 |
-| **Chat** | `gpt-4o-mini` | `gemini-2.0-flash-exp` | `meta-llama/Llama-3.2-3B-Instruct` | $0.10-0.40 / $0.08 |
-| **Agent Squad** | `gpt-4o` (most) | `gemini-2.0-flash-exp` | `meta-llama/Meta-Llama-3.1-70B-Instruct` | $0.10-0.40 / $0.08 |
-| **Workflow Planning** | `gpt-4` | `gemini-1.5-pro` | `meta-llama/Meta-Llama-3.1-405B-Instruct` | $1.25-5.00 / $0.08 |
+| System | Config Model | Vertex AI (Primary) | DeepInfra (Fallback) | Cost/1M tokens |
+|--------|--------------|---------------------|---------------------|---------------|
+| **Hunter AI** | `gemini-2.0-flash-exp` | Direct use | `meta-llama/Meta-Llama-3.1-70B-Instruct` | $0.10-0.40 / $0.08 |
+| **Chat** | `gemini-2.0-flash-exp` | Direct use | `meta-llama/Meta-Llama-3.1-70B-Instruct` | $0.10-0.40 / $0.08 |
+| **Agent Squad** | `gemini-2.0-flash-exp` | Direct use | `meta-llama/Meta-Llama-3.1-70B-Instruct` | $0.10-0.40 / $0.08 |
+| **Workflow Planning** | `gemini-1.5-pro` | Direct use | `meta-llama/Meta-Llama-3.1-405B-Instruct` | $1.25-5.00 / $0.08 |
 
 ### Cost Savings
 
@@ -609,12 +720,25 @@ total_cost = (total_tokens / 1_000_000) * 0.08
 
 ### Key Takeaways
 
-1. **99% cost reduction** achieved vs OpenAI
-2. **Automatic fallback** ensures reliability
-3. **Model mapping** enables zero code changes
-4. **Further optimization** possible (caching, DeepInfra primary for chat)
-5. **Production ready** with current configuration
+1. **91.6-97.7% cost reduction** achieved vs OpenAI
+2. **OpenAI removed** from codebase (January 2026)
+3. **Native Vertex AI model names** used directly in config (v2.0 refactor)
+4. **Unified gateway** pattern for consistent interface
+5. **Automatic fallback** ensures reliability (Vertex AI → DeepInfra)
+6. **DeepInfra mapping** converts Gemini names to Llama equivalents for fallback
+7. **10 agents enabled** by default, 8 agents tier-gated
+8. **Production ready** with current configuration
+
+### v2.0 Refactor Changes
+
+| Before (v1.x) | After (v2.0) |
+|--------------|--------------|
+| Agent code uses OpenAI names | Agent code uses native Vertex AI names |
+| Model mapping in all LLM clients | Model mapping only in DeepInfra (for fallback) |
+| `gpt-4o` → `gemini-2.0-flash-exp` | Direct: `gemini-2.0-flash-exp` |
+| Two mapping layers | Single source of truth (config.toml) |
 
 ---
 
-**Last Updated**: January 2, 2026
+**Last Updated**: January 6, 2026
+**Version**: 2.0 (Native Vertex AI model names refactor)

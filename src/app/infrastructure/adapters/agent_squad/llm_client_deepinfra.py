@@ -1,5 +1,8 @@
 """
 LLM Client DeepInfra adapter - OpenAI-compatible API integration.
+
+Maps Vertex AI (Gemini) model names to DeepInfra (Llama) equivalents.
+Used as fallback provider when Vertex AI is unavailable.
 """
 
 import json
@@ -10,6 +13,22 @@ import openai
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 logger = logging.getLogger(__name__)
+
+# Default DeepInfra model
+DEFAULT_MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+
+# Vertex AI to DeepInfra model mapping
+VERTEX_TO_DEEPINFRA_MAPPING = {
+    # Standard models
+    "gemini-2.0-flash-exp": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    "gemini-1.5-flash": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    # Premium models
+    "gemini-1.5-pro": "meta-llama/Meta-Llama-3.1-405B-Instruct",
+    # Legacy fallbacks (in case old names slip through)
+    "gpt-4o": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    "gpt-4o-mini": "meta-llama/Llama-3.2-3B-Instruct",
+    "gpt-4": "meta-llama/Meta-Llama-3.1-405B-Instruct",
+}
 
 
 class LLMClientDeepInfra:
@@ -23,6 +42,11 @@ class LLMClientDeepInfra:
     - Agent recommendation
     - Workflow planning
     - Chat completion
+
+    Available models:
+    - meta-llama/Llama-3.2-3B-Instruct       (fast, 3B params)
+    - meta-llama/Meta-Llama-3.1-70B-Instruct (standard, 70B params)
+    - meta-llama/Meta-Llama-3.1-405B-Instruct (premium, 405B params)
     """
 
     def __init__(
@@ -30,6 +54,7 @@ class LLMClientDeepInfra:
         api_key: str,
         base_url: str = "https://api.deepinfra.com/v1/openai",
         model_mapping: dict[str, str] | None = None,
+        default_model: str = DEFAULT_MODEL,
     ):
         """
         Initialize DeepInfra client.
@@ -37,8 +62,8 @@ class LLMClientDeepInfra:
         Args:
             api_key: DeepInfra API key
             base_url: DeepInfra base URL (OpenAI-compatible endpoint)
-            model_mapping: Map OpenAI model names to DeepInfra models
-                          Example: {"gpt-4o": "meta-llama/Meta-Llama-3.1-70B-Instruct"}
+            model_mapping: Optional custom model mapping (Vertex AI -> DeepInfra)
+            default_model: Default DeepInfra model to use
         """
         self._client = openai.AsyncOpenAI(
             api_key=api_key,
@@ -46,17 +71,22 @@ class LLMClientDeepInfra:
         )
         logger.info(f"DeepInfra LLM client initialized with base_url={base_url}")
 
-        # Default model mapping (OpenAI model names -> DeepInfra models)
-        self._model_mapping = model_mapping or {
-            "gpt-4o": "meta-llama/Meta-Llama-3.1-70B-Instruct",
-            "gpt-4o-mini": "meta-llama/Llama-3.2-3B-Instruct",
-            "gpt-4": "meta-llama/Meta-Llama-3.1-405B-Instruct",
-            "gpt-3.5-turbo": "meta-llama/Llama-3.2-3B-Instruct",
-        }
+        # Model mapping: Vertex AI (Gemini) names -> DeepInfra (Llama) models
+        self._model_mapping = model_mapping or VERTEX_TO_DEEPINFRA_MAPPING
+        self._default_model = default_model
 
-    def _map_model(self, openai_model: str) -> str:
-        """Map OpenAI model name to DeepInfra model."""
-        return self._model_mapping.get(openai_model, "meta-llama/Llama-3.2-3B-Instruct")
+    def _resolve_model(self, model: str) -> str:
+        """
+        Resolve model name to DeepInfra model.
+
+        Accepts both Vertex AI model names (for fallback) and native DeepInfra names.
+        """
+        # If it's already a DeepInfra model name, use it directly
+        if model.startswith("meta-llama/"):
+            return model
+
+        # Map Vertex AI model names to DeepInfra equivalents
+        return self._model_mapping.get(model, self._default_model)
 
     async def classify_intent(
         self,
@@ -68,7 +98,7 @@ class LLMClientDeepInfra:
 
         Returns JSON with: intent, confidence, reasoning
         """
-        deepinfra_model = self._map_model(model)
+        deepinfra_model = self._resolve_model(model)
 
         response = await self._client.chat.completions.create(
             model=deepinfra_model,
@@ -96,7 +126,7 @@ class LLMClientDeepInfra:
 
         Returns JSON with: agents (list), reasoning
         """
-        deepinfra_model = self._map_model(model)
+        deepinfra_model = self._resolve_model(model)
 
         response = await self._client.chat.completions.create(
             model=deepinfra_model,
@@ -155,7 +185,7 @@ class LLMClientDeepInfra:
 
         Returns dict with: content, tokens_used, finish_reason
         """
-        deepinfra_model = self._map_model(model)
+        deepinfra_model = self._resolve_model(model)
 
         response = await self._client.chat.completions.create(
             model=deepinfra_model,
@@ -187,7 +217,7 @@ class LLMClientDeepInfra:
 
         Returns generated text content directly.
         """
-        deepinfra_model = self._map_model(model)
+        deepinfra_model = self._resolve_model(model)
 
         response = await self._client.chat.completions.create(
             model=deepinfra_model,

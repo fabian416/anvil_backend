@@ -113,7 +113,7 @@ Return JSON: {{"tasks": [{{"agent": "...", "task": "...", "order": 1}}]}}""",
         ]
 
         response = await self._llm.generate(
-            model="gpt-4o-mini",  # Use fast model for planning
+            model="gemini-2.0-flash-exp",  # Use fast Gemini model for planning
             messages=messages,
             temperature=0.3,
             max_tokens=800,
