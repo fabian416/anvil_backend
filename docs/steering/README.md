@@ -186,6 +186,15 @@ Complete implementation documentation for Aave V3, Compound V3, and Morpho Proto
 
 Comprehensive analysis of LLM models and costs across Hunter AI, Agent Squad, ULTRA, and Chat systems.
 
+### [LLM Providers Analysis](./llm-providers-analysis.md)
+
+Detailed analysis of the 3 LLM providers configured in the system:
+- **Vertex AI (Gemini 2.0 Flash)**: Primary provider - $0.10-0.40/1M tokens
+- **DeepInfra (Meta Llama)**: Fallback provider - $0.08/1M tokens (68% cheaper)
+- **OpenAI (GPT-4)**: Legacy/Optional - $5.00-15.00/1M tokens (50-187x more expensive)
+
+Includes cost comparison, fallback strategy, configuration files, and implementation details.
+
 - Model configuration overview (Vertex AI + DeepInfra)
 - Model mapping strategy (OpenAI names → actual models)
 - Cost analysis by system:
