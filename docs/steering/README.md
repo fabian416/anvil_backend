@@ -182,6 +182,29 @@ Complete implementation documentation for Aave V3, Compound V3, and Morpho Proto
 - CTO methodology application (Problem Decomposition, Solution Generation, Risk Assessment)
 - Performance considerations and future enhancements
 
+### [LLM Models & Cost Analysis](./llm-models-cost-analysis.md)
+
+Comprehensive analysis of LLM models and costs across Hunter AI, Agent Squad, ULTRA, and Chat systems.
+
+- Model configuration overview (Vertex AI + DeepInfra)
+- Model mapping strategy (OpenAI names → actual models)
+- Cost analysis by system:
+  - Hunter AI Agent: Market sentiment ($0.20/month at 1K requests)
+  - Agent Squad: 18 agents ($1.25-12.50/month depending on usage)
+  - Chat: General conversation ($1.25/month at 5K requests)
+  - ULTRA: Limited LLM usage (algorithmic focus)
+- Provider pricing comparison:
+  - Vertex AI: $0.10-0.40/1M tokens (primary)
+  - DeepInfra: $0.08/1M tokens (fallback, 68% cheaper)
+  - OpenAI: $5.00-15.00/1M tokens (legacy, 99% more expensive)
+- Monthly cost estimates (10M, 50M, 100M tokens)
+- Cost savings: 91.6% (Vertex AI) or 97.7% (DeepInfra) vs OpenAI
+- Model selection strategy (when to use which model)
+- Fallback strategy and cost impact
+- Cost optimization recommendations
+- Real-world usage patterns and projections
+- Configuration files reference
+
 ### [Agent Orchestrator](./agent-orchestrator.md)
 
 Complete multi-agent orchestration system documentation.
