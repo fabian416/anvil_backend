@@ -3,6 +3,7 @@ Research Agent Perplexity - Deep protocol analysis.
 """
 
 import time
+from typing import Any
 
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
