@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional, Tuple
 class LLMStrategy(ABC):
     """
     Abstract Strategy for LLM Providers.
-    See libs/python-patterns/patterns/behavioral/strategy.py
+    See: Strategy Pattern (python-patterns package)
     """
     
     @abstractmethod
