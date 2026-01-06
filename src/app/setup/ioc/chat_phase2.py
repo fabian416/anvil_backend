@@ -29,7 +29,6 @@ from app.domain.preferences.ports.user_preferences_repository import UserPrefere
 
 # Domain Ports - External Services
 from app.domain.ports.chat_llm_provider import ChatLLMProvider
-from app.domain.ports.ai.embedding_service import EmbeddingService
 from app.domain.ports.translation_adapter import TranslationAdapter
 from app.domain.ports.vector.vector_repository import VectorRepository
 from app.domain.ports.ai.llm_gateway import LLMGateway
@@ -55,8 +54,6 @@ from app.infrastructure.adapters.chat.preferences_repository_adapter import User
 # OpenAI removed - using only Vertex AI and DeepInfra
 # from app.infrastructure.adapters.ai.openai_chat_adapter import OpenAIChatAdapter
 from app.infrastructure.adapters.ai.anthropic_chat_adapter import AnthropicChatAdapter
-# from app.infrastructure.adapters.ai.openai_embedding_adapter import OpenAIEmbeddingAdapter
-from app.infrastructure.adapters.ai.cached_embedding_adapter import CachedEmbeddingAdapter
 
 # Application Services
 from app.application.chat.services.intent_detector import IntentDetectorService
@@ -93,13 +90,6 @@ from app.infrastructure.adapters.chat.llm_intent_detection_adapter import (
 from app.infrastructure.adapters.chat.hybrid_intent_detection_adapter import (
     HybridIntentDetectionAdapter,
 )
-
-# Optional: Cohere embedding adapter (requires cohere package)
-try:
-    from app.infrastructure.adapters.ai.cohere_embedding_adapter import CohereEmbeddingAdapter
-    COHERE_AVAILABLE = True
-except ImportError:
-    COHERE_AVAILABLE = False
 
 # Optional: DeepL translation adapter (requires deepl package)
 try:
@@ -396,79 +386,6 @@ class ChatPhase2Provider(Provider):
             timeout=60.0,
             max_retries=3,
             retry_delay=1.0,
-        )
-
-    # ========================================
-    # Embedding Services (APP-scoped)
-    # ========================================
-
-    # OpenAI removed - using DeepInfra for embeddings
-    # @provide(scope=Scope.APP)
-    # def provide_openai_embedding_service(self) -> EmbeddingService:
-    #     """OpenAI embedding service - REMOVED"""
-    #     pass
-
-    @provide(scope=Scope.APP)
-    def provide_cohere_embedding_service(self) -> Optional["CohereEmbeddingAdapter"]:
-        """
-        Provide Cohere embedding service.
-
-        Optional fallback embedding service configured with:
-        - embed-english-v3.0 or embed-multilingual-v3.0
-        - Batch processing support
-
-        Returns None if API key not configured or cohere package not installed.
-        """
-        if not COHERE_AVAILABLE:
-            return None
-
-        api_key = os.getenv("COHERE_API_KEY")
-        if not api_key:
-            return None
-
-        model = os.getenv("COHERE_EMBEDDING_MODEL", "embed-english-v3.0")
-
-        return CohereEmbeddingAdapter(
-            api_key=api_key,
-            model=model,
-            timeout=30.0,
-            max_retries=3,
-        )
-
-    @provide(scope=Scope.APP)
-    def provide_cached_embedding_service(
-        self,
-        cohere_embedding_service: Optional["CohereEmbeddingAdapter"],
-        redis_cache_client: Redis,
-    ) -> EmbeddingService:
-        """
-        Provide cached embedding service.
-
-        Wraps primary embedding service (Cohere or DeepInfra) with Redis cache layer
-        to reduce API costs and improve latency.
-
-        Note: OpenAI removed - using Cohere or DeepInfra for embeddings.
-        """
-        # Use Cohere if available, otherwise fallback to DeepInfra
-        base_service: EmbeddingService
-        if cohere_embedding_service is not None:
-            base_service = cohere_embedding_service
-        else:
-            from app.infrastructure.embeddings import DeepInfraEmbeddingService
-
-            deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
-            if not deepinfra_key:
-                raise ValueError(
-                    "No embedding service configured. "
-                    "Configure Cohere (COHERE_API_KEY) or DeepInfra (DEEPINFRA_API_KEY)."
-                )
-            base_service = DeepInfraEmbeddingService(api_key=deepinfra_key)
-        
-        return CachedEmbeddingAdapter(
-            embedding_service=base_service,
-            redis_client=redis_cache_client,
-            prefix="embed",
-            ttl=2592000,  # 30 days
         )
 
     # ========================================
