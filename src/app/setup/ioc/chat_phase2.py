@@ -29,7 +29,7 @@ from app.domain.preferences.ports.user_preferences_repository import UserPrefere
 
 # Domain Ports - External Services
 from app.domain.ports.chat_llm_provider import ChatLLMProvider
-from app.domain.ports.embeddings.embedding_service import EmbeddingService
+from app.domain.ports.ai.embedding_service import EmbeddingService
 from app.domain.ports.translation_adapter import TranslationAdapter
 from app.domain.ports.vector.vector_repository import VectorRepository
 from app.domain.ports.ai.llm_gateway import LLMGateway
@@ -409,7 +409,7 @@ class ChatPhase2Provider(Provider):
     #     pass
 
     @provide(scope=Scope.APP)
-    def provide_cohere_embedding_service(self) -> Optional[EmbeddingService]:
+    def provide_cohere_embedding_service(self) -> Optional["CohereEmbeddingAdapter"]:
         """
         Provide Cohere embedding service.
 
@@ -438,9 +438,9 @@ class ChatPhase2Provider(Provider):
     @provide(scope=Scope.APP)
     def provide_cached_embedding_service(
         self,
-        cohere_embedding_service: Optional[EmbeddingService],
+        cohere_embedding_service: Optional["CohereEmbeddingAdapter"],
         redis_cache_client: Redis,
-    ) -> Optional[EmbeddingService]:
+    ) -> EmbeddingService:
         """
         Provide cached embedding service.
 
@@ -449,19 +449,20 @@ class ChatPhase2Provider(Provider):
 
         Note: OpenAI removed - using Cohere or DeepInfra for embeddings.
         """
-        # Use Cohere if available, otherwise fallback to DeepInfra (from graph.py)
-        if cohere_embedding_service is None:
-            # Fallback to DeepInfra embedding service (provided in graph.py)
+        # Use Cohere if available, otherwise fallback to DeepInfra
+        base_service: EmbeddingService
+        if cohere_embedding_service is not None:
+            base_service = cohere_embedding_service
+        else:
             from app.infrastructure.embeddings import DeepInfraEmbeddingService
+
             deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
             if not deepinfra_key:
                 raise ValueError(
-                    "DEEPINFRA_API_KEY environment variable not set. "
-                    "Required for embedding service (OpenAI removed)."
+                    "No embedding service configured. "
+                    "Configure Cohere (COHERE_API_KEY) or DeepInfra (DEEPINFRA_API_KEY)."
                 )
-            base_service: EmbeddingService = DeepInfraEmbeddingService(api_key=deepinfra_key)
-        else:
-            base_service = cohere_embedding_service
+            base_service = DeepInfraEmbeddingService(api_key=deepinfra_key)
         
         return CachedEmbeddingAdapter(
             embedding_service=base_service,
