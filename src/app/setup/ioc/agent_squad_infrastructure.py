@@ -349,10 +349,44 @@ class AgentSquadInfrastructureProvider(Provider):
 
     @provide
     def provide_research_agent(
-        self, llm_client: LLMClientGateway
+        self,
+        llm_client: LLMClientGateway,
+        settings: AppSettings,
     ) -> ResearchAgentPerplexity:
-        """Provide Research agent."""
-        return ResearchAgentPerplexity(llm_client=llm_client)
+        """
+        Provide Research agent with optional Perplexity integration.
+        
+        If Perplexity is enabled and API key is available, injects PerplexityMCPServer
+        for real-time web search with citations.
+        """
+        import os
+        from app.infrastructure.mcp.servers.perplexity_mcp import PerplexityMCPServer
+        from app.setup.config.mcp import MCPSettings
+        
+        perplexity_client = None
+        
+        # Check if Perplexity is enabled and API key is available
+        if settings.mcp and settings.mcp.servers.perplexity_enabled:
+            perplexity_api_key = os.getenv("PERPLEXITY_API_KEY")
+            if perplexity_api_key:
+                try:
+                    # Create Perplexity MCP server
+                    mcp_settings = MCPSettings(
+                        enabled=True,
+                        retry=settings.mcp.retry if settings.mcp else None,
+                    )
+                    perplexity_client = PerplexityMCPServer(
+                        api_key=perplexity_api_key,
+                        settings=mcp_settings,
+                    )
+                except Exception:
+                    # If Perplexity fails to initialize, continue without it
+                    perplexity_client = None
+        
+        return ResearchAgentPerplexity(
+            llm_client=llm_client,
+            perplexity_client=perplexity_client,
+        )
 
     @provide
     def provide_execution_agent(
