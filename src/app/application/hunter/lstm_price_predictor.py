@@ -254,13 +254,67 @@ class LSTMPricePredictor:
             >>> print(f"Predicted 24h price: ${prediction.predicted_price}")
         """
         # For testing: Skip actual training and return mock prediction
+        # BUT use real current price from CoinGecko
         import os
         if os.getenv("TESTING") or not os.getenv("ENABLE_LSTM_TRAINING"):
-            # Return mock prediction for tests (avoids long training times)
+            # Get real current price from CoinGecko
+            try:
+                # Fetch latest price from PriceDataService
+                latest_price_point = await self.price_service.get_latest_price(token_symbol)
+                if latest_price_point:
+                    current_price = latest_price_point.close
+                else:
+                    # Fallback: try to get from CoinGecko directly
+                    from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+                    client = CoinGeckoClient()
+                    try:
+                        # Map symbol to CoinGecko ID
+                        symbol_to_id = {
+                            "ETH": "ethereum",
+                            "BTC": "bitcoin",
+                            "SOL": "solana",
+                            "MATIC": "matic-network",
+                            "AVAX": "avalanche-2",
+                            "ARB": "arbitrum",
+                            "OP": "optimism",
+                            "LINK": "chainlink",
+                            "UNI": "uniswap",
+                            "AAVE": "aave",
+                            "USDC": "usd-coin",
+                            "USDT": "tether",
+                            "DAI": "dai",
+                        }
+                        coin_id = symbol_to_id.get(token_symbol.upper(), token_symbol.lower())
+                        price_data = await client.get_simple_price(coin_ids=[coin_id], vs_currencies=["usd"])
+                        if price_data and coin_id in price_data:
+                            current_price = price_data[coin_id]["usd"]
+                        else:
+                            # Final fallback: use token-specific defaults
+                            default_prices = {
+                                "BTC": 90000.0,
+                                "ETH": 3000.0,
+                                "SOL": 100.0,
+                                "USDC": 1.0,
+                                "USDT": 1.0,
+                            }
+                            current_price = default_prices.get(token_symbol.upper(), 2000.0)
+                    finally:
+                        await client.close()
+            except Exception as e:
+                logger.warning(f"Error fetching real price for {token_symbol}, using fallback: {e}")
+                # Fallback: use token-specific defaults
+                default_prices = {
+                    "BTC": 90000.0,
+                    "ETH": 3000.0,
+                    "SOL": 100.0,
+                    "USDC": 1.0,
+                    "USDT": 1.0,
+                }
+                current_price = default_prices.get(token_symbol.upper(), 2000.0)
+            
+            # Return mock prediction with REAL current price
             # Mark as trained to satisfy test expectations
             self.is_trained = True
-
-            current_price = 2000.0
             predicted_change = 0.03  # 3% increase
 
             return PricePrediction(
