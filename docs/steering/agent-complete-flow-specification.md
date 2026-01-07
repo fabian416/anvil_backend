@@ -1494,10 +1494,184 @@ await telemetry_service.log(telemetry)
 
 ---
 
+## 13. Cost Analysis
+
+### 13.1 LLM Token Costs Per Agent
+
+All agents use **gemini-2.0-flash-exp** (Vertex AI native name).
+
+| Agent | Max Tokens | Temp | Est. Input | Est. Output | Total/Req | Vertex AI Cost | DeepInfra Cost |
+|-------|------------|------|------------|-------------|-----------|----------------|----------------|
+| **Chat** | 1000 | 0.7 | ~300 | ~200 | ~500 | $0.00013 | $0.00004 |
+| **Hunter AI** | 1500 | 0.3 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+| **Research** | 2000 | 0.2 | ~700 | ~400 | ~1100 | $0.00023 | $0.000088 |
+| **Execution** | 1000 | 0.1 | ~400 | ~200 | ~600 | $0.00012 | $0.000048 |
+| **Risk Analyzer** | 1500 | 0.2 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+| **Portfolio** | 2000 | 0.3 | ~600 | ~400 | ~1000 | $0.00021 | $0.00008 |
+| **Tax Optimizer** | 1500 | 0.2 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+| **DeFi Yield** | 1500 | 0.3 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+| **Security Auditor** | 2000 | 0.1 | ~700 | ~400 | ~1100 | $0.00023 | $0.000088 |
+| **Gas Optimizer** | 1000 | 0.2 | ~300 | ~200 | ~500 | $0.00013 | $0.00004 |
+| **Compliance Monitor** | 2000 | 0.1 | ~700 | ~400 | ~1100 | $0.00023 | $0.000088 |
+| **MultiSig Coordinator** | 1500 | 0.2 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+| **Alert Monitoring** | 1000 | 0.3 | ~400 | ~200 | ~600 | $0.00012 | $0.000048 |
+| **Crisis Manager** | 2000 | 0.1 | ~700 | ~400 | ~1100 | $0.00023 | $0.000088 |
+| **Bridge Crosschain** | 1500 | 0.2 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+| **Lending Borrowing** | 1500 | 0.2 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+| **NFT Asset Manager** | 1500 | 0.3 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+| **DAO Governance** | 1500 | 0.3 | ~500 | ~300 | ~800 | $0.00017 | $0.000064 |
+
+**Pricing Formula**:
+- **Vertex AI**: Input × $0.10/1M + Output × $0.40/1M
+- **DeepInfra**: Total × $0.08/1M
+
+### 13.2 System LLM Costs (Per Request)
+
+| Component | Model | Tokens/Req | Vertex AI | DeepInfra |
+|-----------|-------|------------|-----------|-----------|
+| **Intent Classification** | gemini-2.0-flash-exp | ~200 | $0.00002 | $0.000016 |
+| **Agent Selection** | gemini-2.0-flash-exp | ~100 | $0.00001 | $0.000008 |
+| **Supervisor Coordination** | gemini-2.0-flash-exp | ~500 | $0.00005 | $0.00004 |
+| **Workflow Planning** | gemini-1.5-pro | ~800 | $0.00008 | $0.000064 |
+
+**Total per User Message** (typical flow):
+- Intent + Agent + Processing + Response: ~1,400 tokens
+- **Vertex AI**: $0.00023-0.00047/message
+- **DeepInfra**: $0.000112/message
+
+### 13.3 MCP Server API Costs
+
+| MCP Server | Port | API Provider | Pricing | Rate Limits | Notes |
+|------------|------|--------------|---------|-------------|-------|
+| **CoinGecko** | 8081 | CoinGecko API | ✅ Free | 30 req/min | Demo API key |
+| **1inch** | 8082 | 1inch Fusion | ✅ Free | 10 req/min | Public API |
+| **DeFiLlama** | 8083 | DeFiLlama | ✅ Free | Unlimited | Open API |
+| **The Graph** | 8084 | The Graph | ✅ Free* | 100K queries/mo | *Free tier |
+| **Aave** | 8085 | Aave Protocol | ✅ Free | On-chain calls | RPC costs only |
+| **Portfolio** | 8086 | Internal | ✅ Free | N/A | Uses DB |
+| **Perplexity** | 8087 | Perplexity AI | 💰 Paid | 50 req/min | ~$0.003/query |
+| **Morpho** | 8088 | Morpho Protocol | ✅ Free | On-chain calls | RPC costs only |
+| **Curve** | 8089 | Curve Protocol | ✅ Free | On-chain calls | RPC costs only |
+| **HyperLiquid** | 8090 | HyperLiquid | ✅ Free | 100 req/min | Public API |
+| **LayerZero** | 8091 | LayerZero | ✅ Free | On-chain calls | Bridge queries |
+
+**RPC Costs** (for on-chain calls):
+- Alchemy/Infura Free tier: 330K requests/month
+- Paid tier: ~$49/month for 100M requests
+
+### 13.4 Cost Per Intent Type
+
+| Intent Category | Intent | LLM Cost | MCP Cost | Total/Request |
+|-----------------|--------|----------|----------|---------------|
+| **ULTRA** | | | | |
+| | ARBITRAGE | $0.00017 | Free (CoinGecko + 1inch) | $0.00017 |
+| | FLASH_LOANS | $0.00017 | Free (Aave/Morpho) | $0.00017 |
+| | MEV_PROTECTION | $0.00012 | Free (Flashbots) | $0.00012 |
+| | AUTO_EXECUTOR | $0.00023 | Free (1inch) | $0.00023 |
+| **Hunter AI** | | | | |
+| | SENTIMENT | $0.00017 | Free (CoinGecko + RSS) | $0.00017 |
+| | PRICE_PREDICTION | $0.00017 | Free (CoinGecko) | $0.00017 |
+| | RISK_SIGNALS | $0.00017 | Free (CoinGecko + Graph) | $0.00017 |
+| | TRADING_SIGNALS | $0.00017 | Free (CoinGecko) | $0.00017 |
+| | PATTERNS | $0.00017 | Free (CoinGecko) | $0.00017 |
+| | PORTFOLIO | $0.00021 | Free (Portfolio + CoinGecko) | $0.00021 |
+| **DeFi Shortcuts** | | | | |
+| | LENDING | $0.00017 | Free (Morpho/Aave) | $0.00017 |
+| | MONEY_MARKET | $0.00017 | Free (Morpho/Aave/DeFiLlama) | $0.00017 |
+| | SWAP | $0.00012 | Free (1inch/LiFi) | $0.00012 |
+| | BALANCE | $0.00012 | Free (Portfolio/CoinGecko) | $0.00012 |
+| | PORTFOLIO | $0.00021 | Free (Portfolio) | $0.00021 |
+| | ACTIVITY | $0.00012 | Free (The Graph) | $0.00012 |
+| | RECEIVE | $0.00012 | Free (ENS) | $0.00012 |
+| **GraphRAG** | | | | |
+| | PROTOCOL_SEARCH | $0.00023 | Free (GraphRAG DB) | $0.00023 |
+| | RISK_ASSESSMENT | $0.00023 | Free (GraphRAG DB) | $0.00023 |
+| | SIMILAR_PROTOCOLS | $0.00023 | Free (GraphRAG DB) | $0.00023 |
+| **Agent Squad** | | | | |
+| | SPECIALIST_TASK | $0.00017-0.00023 | Varies by agent | $0.00017-0.00026 |
+| | COMPLEX_WORKFLOW | $0.00050+ | Multiple agents | $0.00050+ |
+| **General** | | | | |
+| | CONVERSATION | $0.00013 | Free (None) | $0.00013 |
+
+### 13.5 Execute Action Costs
+
+| Action | LLM Cost | API Cost | RPC Cost | Gas Cost |
+|--------|----------|----------|----------|----------|
+| **swap** | $0.00012 | Free (1inch) | ~$0.001 | Variable |
+| **deposit** | $0.00012 | Free (Morpho/Aave) | ~$0.001 | Variable |
+| **withdraw** | $0.00012 | Free (Morpho/Aave) | ~$0.001 | Variable |
+| **transfer** | $0.00012 | Free | ~$0.001 | Variable |
+| **approve** | $0.00012 | Free | ~$0.001 | Variable |
+| **bridge** | $0.00012 | Free (LiFi) | ~$0.002 | Variable |
+
+**Notes**:
+- RPC costs assume Alchemy/Infura free tier
+- Gas costs depend on network congestion and operation complexity
+- Bridge operations have both source and destination chain gas
+
+### 13.6 Monthly Cost Projections
+
+#### Low Usage (100 users × 50 msgs/month = 5,000 messages)
+
+| Component | Tokens | Vertex AI | DeepInfra |
+|-----------|--------|-----------|-----------|
+| Intent Classification | 1M | $0.10 | $0.08 |
+| Agent Processing | 4M | $1.00 | $0.32 |
+| Supervisor (10%) | 0.25M | $0.025 | $0.02 |
+| **LLM Total** | **5.25M** | **$1.125** | **$0.42** |
+| MCP APIs | N/A | $0 | $0 |
+| RPC Costs (est.) | N/A | $0 (free tier) | $0 |
+| **Grand Total** | | **$1.125/mo** | **$0.42/mo** |
+
+#### Medium Usage (1,000 users × 50 msgs/month = 50,000 messages)
+
+| Component | Tokens | Vertex AI | DeepInfra |
+|-----------|--------|-----------|-----------|
+| Intent Classification | 10M | $1.00 | $0.80 |
+| Agent Processing | 40M | $10.00 | $3.20 |
+| Supervisor (10%) | 2.5M | $0.25 | $0.20 |
+| **LLM Total** | **52.5M** | **$11.25** | **$4.20** |
+| MCP APIs | N/A | $0 | $0 |
+| RPC Costs (est.) | N/A | $0 (free tier) | $0 |
+| **Grand Total** | | **$11.25/mo** | **$4.20/mo** |
+
+#### High Usage (10,000 users × 50 msgs/month = 500,000 messages)
+
+| Component | Tokens | Vertex AI | DeepInfra |
+|-----------|--------|-----------|-----------|
+| Intent Classification | 100M | $10.00 | $8.00 |
+| Agent Processing | 400M | $100.00 | $32.00 |
+| Supervisor (10%) | 25M | $2.50 | $2.00 |
+| **LLM Total** | **525M** | **$112.50** | **$42.00** |
+| MCP APIs | N/A | $0-$50* | $0-$50* |
+| RPC Costs (est.) | N/A | $49 (paid tier) | $49 |
+| **Grand Total** | | **$161.50/mo** | **$91.00/mo** |
+
+*Perplexity API costs if heavily used
+
+### 13.7 Cost Optimization Strategies
+
+1. **Use DeepInfra for chat/simple tasks**: 68% savings
+2. **Cache intent classifications**: 20-30% token reduction
+3. **Batch similar requests**: Reduce redundant API calls
+4. **Use free MCP endpoints**: All 11 MCP servers use free APIs
+5. **Stay within RPC free tier**: 330K requests/month
+
+### 13.8 Cost Comparison vs OpenAI
+
+| Provider | Cost/1M tokens | Monthly (100M tokens) | Savings |
+|----------|----------------|----------------------|---------|
+| **OpenAI GPT-4o** | $5.00-15.00 | $355.50 | Baseline |
+| **Vertex AI** | $0.10-0.40 | $29.75 | **91.6%** |
+| **DeepInfra** | $0.08 | $8.00 | **97.7%** |
+
+---
+
 ## Related Documentation
 
 - `docs/steering/guest-chat-complete-flow-spec.md` - Guest chat flow
 - `docs/steering/user-chat-complete-flow-spec.md` - User chat flow
 - `docs/steering/guest-chat-intent-testing.md` - Intent test examples
+- `docs/steering/llm-models-cost-analysis.md` - Detailed LLM cost analysis
 - `docs/AGENT_SQUAD_VERTEX_DEEPINFRA.md` - Agent configuration
 - `docs/HUNTER_AI_DATA_SOURCES.md` - Hunter AI data sources
