@@ -1,420 +1,158 @@
 Input:
-Deposit USDC on Morpho
-
-Output
-🔵 USDC MORPHO VAULTS ON BASE
-
-Top 3 vaults by APY (Morpho Protocol):
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-TOP 3 VAULTS (by APY)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. Universal USDC ⭐
-
-   • APY: 7.26%
-
-   • TVL: $313.40B
-
-   • Address: `0xB7890CEE...6ab863`
-
-2. Edge UltraYield USDC ⭐
-
-   • APY: 6.22%
-
-   • TVL: $499.91B
-
-   • Address: `0x5435BC53...259ca0`
-
-3. Extrafi XLend USDC ⭐
-
-   • APY: 6.16%
-
-   • TVL: $8.13M
-
-   • Address: `0x23479229...753B5e`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Universal USDC
-
-APY: 7.26%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Universal USDC?
-
-👉 Sign up to execute this action → /signup
-
-
-Input:
-Show best lending vaults
+I want to receive crypto
 
 Output:
-🔵 USDC MORPHO VAULTS ON BASE
+🔐 Wallet Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To get your deposit address, you need to create an account and set up your wallet.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• Get your personal wallet address
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Receive crypto deposits
 
-1. Universal USDC ⭐
+• Manage multiple chains
 
-   • APY: 7.26%
+👉 Sign Up Free: /signup
 
-   • TVL: $313.40B
 
-   • Address: `0xB7890CEE...6ab863`
-
-2. Edge UltraYield USDC ⭐
-
-   • APY: 6.22%
-
-   • TVL: $499.91B
-
-   • Address: `0x5435BC53...259ca0`
-
-3. Extrafi XLend USDC ⭐
-
-   • APY: 6.16%
-
-   • TVL: $8.13M
-
-   • Address: `0x23479229...753B5e`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Universal USDC
-
-APY: 7.26%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Universal USDC?
-
-👉 Sign up to execute this action → /signup
+🔐 **Wallet Required** To get your deposit address, you need to create an account and set up your wallet. Sign up to: • Get your personal wallet address • Receive crypto deposits • Manage multiple chains
+Sign Up Free
 
 Input:
-Earn yield on my ETH
+Receive crypto
 
-Output: 
-USDC MORPHO VAULTS ON ETHEREUM
+Output:
+🔐 Wallet Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To get your deposit address, you need to create an account and set up your wallet.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• Get your personal wallet address
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Receive crypto deposits
 
-1. Resolv USDC ⭐
+• Manage multiple chains
 
-   • APY: 7.37%
+👉 Sign Up Free: /signup
 
-   • TVL: $1.94M
 
-   • Address: `0x132E6C9C...E485Eb`
-
-2. Re Ecosystem USDC ⭐
-
-   • APY: 7.20%
-
-   • TVL: $4.57M
-
-   • Address: `0xA1FF9C28...80c6fb`
-
-3. Clearstar High Yield USDC ⭐
-
-   • APY: 6.96%
-
-   • TVL: $11.81M
-
-   • Address: `0x9B5E92fd...639DfA`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Resolv USDC
-
-APY: 7.37%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have ETHEREUM ETH for gas
-
-Would you like me to help you deposit into Resolv USDC?
-
-👉 Sign up to execute this action → /signup
+🔐 **Wallet Required** To get your deposit address, you need to create an account and set up your wallet. Sign up to: • Get your personal wallet address • Receive crypto deposits • Manage multiple chains
+Sign Up Free
 
 Input:
-Best lending vaults
+My address
 
-Output: 
-🔵 USDC MORPHO VAULTS ON BASE
+Output:
+🔐 Wallet Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To get your deposit address, you need to create an account and set up your wallet.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• Get your personal wallet address
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Receive crypto deposits
 
-1. Edge UltraYield USDC ⭐
+• Manage multiple chains
 
-   • APY: 6.24%
+👉 Sign Up Free: /signup
 
-   • TVL: $499.77B
 
-   • Address: `0x5435BC53...259ca0`
-
-2. Extrafi XLend USDC ⭐
-
-   • APY: 6.15%
-
-   • TVL: $8.15M
-
-   • Address: `0x23479229...753B5e`
-
-3. Apostro Resolv USDC ⭐
-
-   • APY: 6.01%
-
-   • TVL: $50.40B
-
-   • Address: `0xcdDCDd18...B9e8f3`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Edge UltraYield USDC
-
-APY: 6.24%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Edge UltraYield USDC?
-
-👉 Sign up to execute this action → /signup
+🔐 **Wallet Required** To get your deposit address, you need to create an account and set up your wallet. Sign up to: • Get your personal wallet address • Receive crypto deposits • Manage multiple chains
+Sign Up Free
 
 Input:
-Lending vaults
+My wallet address
 
-Output: 
-🔵 USDC MORPHO VAULTS ON BASE
+Output:
+🔐 Wallet Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To get your deposit address, you need to create an account and set up your wallet.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• Get your personal wallet address
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Receive crypto deposits
 
-1. Edge UltraYield USDC ⭐
+• Manage multiple chains
 
-   • APY: 6.24%
+👉 Sign Up Free: /signup
 
-   • TVL: $499.77B
 
-   • Address: `0x5435BC53...259ca0`
-
-2. Extrafi XLend USDC ⭐
-
-   • APY: 6.15%
-
-   • TVL: $8.15M
-
-   • Address: `0x23479229...753B5e`
-
-3. Apostro Resolv USDC ⭐
-
-   • APY: 6.01%
-
-   • TVL: $50.40B
-
-   • Address: `0xcdDCDd18...B9e8f3`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Edge UltraYield USDC
-
-APY: 6.24%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Edge UltraYield USDC?
-
-👉 Sign up to execute this action → /signup
+🔐 **Wallet Required** To get your deposit address, you need to create an account and set up your wallet. Sign up to: • Get your personal wallet address • Receive crypto deposits • Manage multiple chains
+Sign Up Free
 
 Input:
-Earn yield
+Deposit address"
 
-Output: 
-🔵 USDC MORPHO VAULTS ON BASE
+Output:
+🔐 Wallet Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To get your deposit address, you need to create an account and set up your wallet.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• Get your personal wallet address
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Receive crypto deposits
 
-1. Edge UltraYield USDC ⭐
+• Manage multiple chains
 
-   • APY: 6.24%
+👉 Sign Up Free: /signup
 
-   • TVL: $499.77B
 
-   • Address: `0x5435BC53...259ca0`
+🔐 **Wallet Required** To get your deposit address, you need to create an account and set up your wallet. Sign up to: • Get your personal wallet address • Receive crypto deposits • Manage multiple chains
+Sign Up Free
 
-2. Extrafi XLend USDC ⭐
+Input:
+Receive address
 
-   • APY: 6.15%
+Output:
+🔐 Wallet Required
 
-   • TVL: $8.15M
+To get your deposit address, you need to create an account and set up your wallet.
 
-   • Address: `0x23479229...753B5e`
+Sign up to:
 
-3. Apostro Resolv USDC ⭐
+• Get your personal wallet address
 
-   • APY: 6.01%
+• Receive crypto deposits
 
-   • TVL: $50.40B
+• Manage multiple chains
 
-   • Address: `0xcdDCDd18...B9e8f3`
+👉 Sign Up Free: /signup
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎯 RECOMMENDATION
+🔐 **Wallet Required** To get your deposit address, you need to create an account and set up your wallet. Sign up to: • Get your personal wallet address • Receive crypto deposits • Manage multiple chains
+Sign Up Free
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Best Vault: Edge UltraYield USDC
+Input:
+Give me my QR code
 
-APY: 6.24%
+Output:
+🔐 Wallet Required
 
-Risk Level: Low (Curated)
+To get your deposit address, you need to create an account and set up your wallet.
 
-How to Deposit:
+Sign up to:
 
-1. Approve USDC spending for the vault
+• Get your personal wallet address
 
-2. Call `vault.deposit(amount, receiver)`
+• Receive crypto deposits
 
-3. Receive vault shares (ERC-4626)
+• Manage multiple chains
 
-Safety Checks:
+👉 Sign Up Free: /signup
 
-✅ Verify vault address before depositing
 
-✅ Start with a small test amount
+🔐 **Wallet Required** To get your deposit address, you need to create an account and set up your wallet. Sign up to: • Get your personal wallet address • Receive crypto deposits • Manage multiple chains
+Sign Up Free
 
-✅ Ensure you have BASE ETH for gas
 
-Would you like me to help you deposit into Edge UltraYield USDC?
-
-👉 Sign up to execute this action → /signup
+        
+   
