@@ -410,10 +410,39 @@ class GuestHandlerService:
             breakdown = aggregator.get_source_breakdown(aggregated)
 
             # Format response
-            response = f"📊 **Sentiment Analysis for {token}**\n\n"
-            response += f"**Overall:** {aggregated.classification.value.title()} "
+            # Translations for sentiment analysis
+            translations = {
+                "en": {
+                    "title": f"📊 **Sentiment Analysis for {token}**",
+                    "overall": "**Overall:**",
+                    "confidence": "**Confidence:**",
+                    "sources": "**Sources:**",
+                },
+                "es": {
+                    "title": f"📊 **Análisis de Sentimiento para {token}**",
+                    "overall": "**General:**",
+                    "confidence": "**Confianza:**",
+                    "sources": "**Fuentes:**",
+                },
+                "pt": {
+                    "title": f"📊 **Análise de Sentimento para {token}**",
+                    "overall": "**Geral:**",
+                    "confidence": "**Confiança:**",
+                    "sources": "**Fontes:**",
+                },
+                "zh": {
+                    "title": f"📊 **{token} 情绪分析**",
+                    "overall": "**总体:**",
+                    "confidence": "**置信度:**",
+                    "sources": "**来源:**",
+                },
+            }
+            t = translations.get(language, translations["en"])
+
+            response = f"{t['title']}\n\n"
+            response += f"{t['overall']} {aggregated.classification.value.title()} "
             response += f"({aggregated.overall_score:.1f}/100)\n"
-            response += f"**Confidence:** {aggregated.overall_confidence * 100:.0f}%\n\n"
+            response += f"{t['confidence']} {aggregated.overall_confidence * 100:.0f}%\n\n"
 
             response += "**By Source:**\n"
             for source, data in breakdown.items():
@@ -578,19 +607,60 @@ class GuestHandlerService:
             analyzer = RiskAnalyzer()
             signals = await analyzer.analyze_market_risk(token)
 
-            response = f"⚠️ **Risk Signals for {token}**\n\n"
-            response += f"**Overall Risk Level:** {signals.risk_level.upper()}\n"
-            response += f"**Risk Score:** {signals.risk_score}/100\n\n"
+            # Translations for risk signals
+            translations = {
+                "en": {
+                    "title": f"⚠️ **Risk Signals for {token}**",
+                    "overall_risk": "**Overall Risk Level:**",
+                    "risk_score": "**Risk Score:**",
+                    "risk_factors": "**Risk Factors:**",
+                    "whale_activity": "**🐋 Whale Activity:**",
+                    "large_transfers": "Large transfers:",
+                    "net_flow": "Net flow:",
+                },
+                "es": {
+                    "title": f"⚠️ **Señales de Riesgo para {token}**",
+                    "overall_risk": "**Nivel de Riesgo General:**",
+                    "risk_score": "**Puntuación de Riesgo:**",
+                    "risk_factors": "**Factores de Riesgo:**",
+                    "whale_activity": "**🐋 Actividad de Ballenas:**",
+                    "large_transfers": "Transferencias grandes:",
+                    "net_flow": "Flujo neto:",
+                },
+                "pt": {
+                    "title": f"⚠️ **Sinais de Risco para {token}**",
+                    "overall_risk": "**Nível de Risco Geral:**",
+                    "risk_score": "**Pontuação de Risco:**",
+                    "risk_factors": "**Fatores de Risco:**",
+                    "whale_activity": "**🐋 Atividade de Baleias:**",
+                    "large_transfers": "Transferências grandes:",
+                    "net_flow": "Fluxo líquido:",
+                },
+                "zh": {
+                    "title": f"⚠️ **{token} 风险信号**",
+                    "overall_risk": "**总体风险级别:**",
+                    "risk_score": "**风险评分:**",
+                    "risk_factors": "**风险因素:**",
+                    "whale_activity": "**🐋 鲸鱼活动:**",
+                    "large_transfers": "大额转账:",
+                    "net_flow": "净流量:",
+                },
+            }
+            t = translations.get(language, translations["en"])
 
-            response += "**Risk Factors:**\n"
+            response = f"{t['title']}\n\n"
+            response += f"{t['overall_risk']} {signals.risk_level.upper()}\n"
+            response += f"{t['risk_score']} {signals.risk_score}/100\n\n"
+
+            response += f"{t['risk_factors']}\n"
             for factor in signals.factors[:5]:
                 emoji = "🔴" if factor.severity == "high" else "🟡" if factor.severity == "medium" else "🟢"
                 response += f"- {emoji} {factor.name}: {factor.description}\n"
 
             if signals.whale_activity:
-                response += "\n**🐋 Whale Activity:**\n"
-                response += f"- Large transfers: {signals.whale_activity.transfer_count}\n"
-                response += f"- Net flow: ${signals.whale_activity.net_flow:,.0f}\n"
+                response += f"\n{t['whale_activity']}\n"
+                response += f"- {t['large_transfers']} {signals.whale_activity.transfer_count}\n"
+                response += f"- {t['net_flow']} ${signals.whale_activity.net_flow:,.0f}\n"
 
             response += self._get_registration_cta(language)
 
@@ -622,23 +692,84 @@ class GuestHandlerService:
             # Determine emoji based on signal type
             signal_emoji = "🟢" if signal.signal_type.value == "buy" else "🔴" if signal.signal_type.value == "sell" else "🟡"
 
-            response = f"💹 **Trading Signal for {token}**\n\n"
-            response += f"**Signal:** {signal_emoji} {signal.signal_type.value.upper()}\n"
-            response += f"**Strength:** {signal.signal_strength:.0f}/100\n"
-            response += f"**Confidence:** {signal.confidence * 100:.0f}%\n"
-            response += f"**Timeframe:** {signal.timeframe.value}\n\n"
+            # Translations for trading signals
+            translations = {
+                "en": {
+                    "title": f"💹 **Trading Signal for {token}**",
+                    "signal": "**Signal:**",
+                    "strength": "**Strength:**",
+                    "confidence": "**Confidence:**",
+                    "timeframe": "**Timeframe:**",
+                    "entry_price": "**Entry Price:**",
+                    "stop_loss": "**Stop Loss:**",
+                    "take_profit": "**Take Profit:**",
+                    "factor_scores": "**Factor Scores:**",
+                    "sentiment": "Sentiment:",
+                    "prediction": "Prediction:",
+                    "risk": "Risk:",
+                },
+                "es": {
+                    "title": f"💹 **Señal de Trading para {token}**",
+                    "signal": "**Señal:**",
+                    "strength": "**Fuerza:**",
+                    "confidence": "**Confianza:**",
+                    "timeframe": "**Marco Temporal:**",
+                    "entry_price": "**Precio de Entrada:**",
+                    "stop_loss": "**Stop Loss:**",
+                    "take_profit": "**Take Profit:**",
+                    "factor_scores": "**Puntuaciones de Factores:**",
+                    "sentiment": "Sentimiento:",
+                    "prediction": "Predicción:",
+                    "risk": "Riesgo:",
+                },
+                "pt": {
+                    "title": f"💹 **Sinal de Trading para {token}**",
+                    "signal": "**Sinal:**",
+                    "strength": "**Força:**",
+                    "confidence": "**Confiança:**",
+                    "timeframe": "**Período:**",
+                    "entry_price": "**Preço de Entrada:**",
+                    "stop_loss": "**Stop Loss:**",
+                    "take_profit": "**Take Profit:**",
+                    "factor_scores": "**Pontuações de Fatores:**",
+                    "sentiment": "Sentimento:",
+                    "prediction": "Previsão:",
+                    "risk": "Risco:",
+                },
+                "zh": {
+                    "title": f"💹 **{token} 交易信号**",
+                    "signal": "**信号:**",
+                    "strength": "**强度:**",
+                    "confidence": "**置信度:**",
+                    "timeframe": "**时间框架:**",
+                    "entry_price": "**入场价:**",
+                    "stop_loss": "**止损:**",
+                    "take_profit": "**止盈:**",
+                    "factor_scores": "**因子评分:**",
+                    "sentiment": "情绪:",
+                    "prediction": "预测:",
+                    "risk": "风险:",
+                },
+            }
+            t = translations.get(language, translations["en"])
+
+            response = f"{t['title']}\n\n"
+            response += f"{t['signal']} {signal_emoji} {signal.signal_type.value.upper()}\n"
+            response += f"{t['strength']} {signal.signal_strength:.0f}/100\n"
+            response += f"{t['confidence']} {signal.confidence * 100:.0f}%\n"
+            response += f"{t['timeframe']} {signal.timeframe.value}\n\n"
 
             if signal.entry_price:
-                response += f"**Entry Price:** ${signal.entry_price:,.2f}\n"
+                response += f"{t['entry_price']} ${signal.entry_price:,.2f}\n"
             if signal.stop_loss_price:
-                response += f"**Stop Loss:** ${signal.stop_loss_price:,.2f}\n"
+                response += f"{t['stop_loss']} ${signal.stop_loss_price:,.2f}\n"
             if signal.take_profit_price:
-                response += f"**Take Profit:** ${signal.take_profit_price:,.2f}\n"
+                response += f"{t['take_profit']} ${signal.take_profit_price:,.2f}\n"
 
-            response += "\n**Factor Scores:**\n"
-            response += f"- Sentiment: {signal.sentiment_score:.0f}/100\n"
-            response += f"- Prediction: {signal.prediction_score:.0f}/100\n"
-            response += f"- Risk: {signal.risk_score:.0f}/100\n"
+            response += f"\n{t['factor_scores']}\n"
+            response += f"- {t['sentiment']} {signal.sentiment_score:.0f}/100\n"
+            response += f"- {t['prediction']} {signal.prediction_score:.0f}/100\n"
+            response += f"- {t['risk']} {signal.risk_score:.0f}/100\n"
 
             response += self._get_registration_cta(language)
 
@@ -670,17 +801,50 @@ class GuestHandlerService:
             recognizer = PatternRecognizer()
             patterns = await recognizer.detect_patterns(token, timeframe="4h")
 
-            response = f"📊 **Chart Patterns for {token}**\n\n"
+            # Translations for chart patterns
+            translations = {
+                "en": {
+                    "title": f"📊 **Chart Patterns for {token}**",
+                    "no_patterns": "No significant patterns detected currently.",
+                    "confidence": "Confidence:",
+                    "target": "Target:",
+                    "status": "Status:",
+                },
+                "es": {
+                    "title": f"📊 **Patrones de Gráfico para {token}**",
+                    "no_patterns": "No se detectaron patrones significativos actualmente.",
+                    "confidence": "Confianza:",
+                    "target": "Objetivo:",
+                    "status": "Estado:",
+                },
+                "pt": {
+                    "title": f"📊 **Padrões de Gráfico para {token}**",
+                    "no_patterns": "Nenhum padrão significativo detectado no momento.",
+                    "confidence": "Confiança:",
+                    "target": "Alvo:",
+                    "status": "Status:",
+                },
+                "zh": {
+                    "title": f"📊 **{token} 图表模式**",
+                    "no_patterns": "当前未检测到显著模式。",
+                    "confidence": "置信度:",
+                    "target": "目标:",
+                    "status": "状态:",
+                },
+            }
+            t = translations.get(language, translations["en"])
+
+            response = f"{t['title']}\n\n"
 
             if not patterns:
-                response += "No significant patterns detected currently.\n"
+                response += f"{t['no_patterns']}\n"
             else:
                 for pattern in patterns[:3]:
                     emoji = "🟢" if pattern.bias == "bullish" else "🔴" if pattern.bias == "bearish" else "🟡"
                     response += f"**{emoji} {pattern.name}**\n"
-                    response += f"- Confidence: {pattern.confidence * 100:.0f}%\n"
-                    response += f"- Target: ${pattern.target_price:,.2f}\n"
-                    response += f"- Status: {pattern.status}\n\n"
+                    response += f"- {t['confidence']} {pattern.confidence * 100:.0f}%\n"
+                    response += f"- {t['target']} ${pattern.target_price:,.2f}\n"
+                    response += f"- {t['status']} {pattern.status}\n\n"
 
             response += self._get_registration_cta(language)
 
@@ -708,16 +872,57 @@ class GuestHandlerService:
             demo_portfolio = ["ETH", "BTC", "USDC"]
             result = await optimizer.optimize(demo_portfolio, risk_tolerance="moderate")
 
-            response = "💼 **Portfolio Optimization (Demo)**\n\n"
-            response += f"**Strategy:** {result.strategy}\n"
-            response += f"**Risk Level:** {result.risk_level}\n\n"
+            # Translations for portfolio optimization
+            translations = {
+                "en": {
+                    "title": "💼 **Portfolio Optimization (Demo)**",
+                    "strategy": "**Strategy:**",
+                    "risk_level": "**Risk Level:**",
+                    "suggested_allocation": "**Suggested Allocation:**",
+                    "expected_return": "**Expected Return:**",
+                    "annual": "(annual)",
+                    "sharpe_ratio": "**Sharpe Ratio:**",
+                },
+                "es": {
+                    "title": "💼 **Optimización de Portafolio (Demo)**",
+                    "strategy": "**Estrategia:**",
+                    "risk_level": "**Nivel de Riesgo:**",
+                    "suggested_allocation": "**Asignación Sugerida:**",
+                    "expected_return": "**Retorno Esperado:**",
+                    "annual": "(anual)",
+                    "sharpe_ratio": "**Ratio de Sharpe:**",
+                },
+                "pt": {
+                    "title": "💼 **Otimização de Portfólio (Demo)**",
+                    "strategy": "**Estratégia:**",
+                    "risk_level": "**Nível de Risco:**",
+                    "suggested_allocation": "**Alocação Sugerida:**",
+                    "expected_return": "**Retorno Esperado:**",
+                    "annual": "(anual)",
+                    "sharpe_ratio": "**Índice de Sharpe:**",
+                },
+                "zh": {
+                    "title": "💼 **投资组合优化 (演示)**",
+                    "strategy": "**策略:**",
+                    "risk_level": "**风险级别:**",
+                    "suggested_allocation": "**建议配置:**",
+                    "expected_return": "**预期回报:**",
+                    "annual": "(年化)",
+                    "sharpe_ratio": "**夏普比率:**",
+                },
+            }
+            t = translations.get(language, translations["en"])
 
-            response += "**Suggested Allocation:**\n"
+            response = f"{t['title']}\n\n"
+            response += f"{t['strategy']} {result.strategy}\n"
+            response += f"{t['risk_level']} {result.risk_level}\n\n"
+
+            response += f"{t['suggested_allocation']}\n"
             for token, weight in result.allocation.items():
                 response += f"- {token}: {weight * 100:.0f}%\n"
 
-            response += f"\n**Expected Return:** {result.expected_return * 100:.1f}% (annual)\n"
-            response += f"**Sharpe Ratio:** {result.sharpe_ratio:.2f}\n"
+            response += f"\n{t['expected_return']} {result.expected_return * 100:.1f}% {t['annual']}\n"
+            response += f"{t['sharpe_ratio']} {result.sharpe_ratio:.2f}\n"
 
             response += self._get_registration_cta(language, for_action=True)
 
@@ -748,13 +953,58 @@ class GuestHandlerService:
             capital = Decimal("10000")  # Demo with $10k
             opportunities = await discovery.discover_all_opportunities(capital)
 
-            response = "🔄 **Arbitrage Opportunities** (Demo: $10,000)\n\n"
+            # Translations for arbitrage
+            translations = {
+                "en": {
+                    "title": "🔄 **Arbitrage Opportunities** (Demo: $10,000)",
+                    "no_opportunities": "❌ No profitable opportunities found currently.",
+                    "markets_efficient": "Markets are efficient or gas > profit.",
+                    "found": "**Found",
+                    "opportunities": "opportunities:**",
+                    "route": "Route:",
+                    "net_profit": "Net Profit:",
+                    "roi": "ROI:",
+                },
+                "es": {
+                    "title": "🔄 **Oportunidades de Arbitraje** (Demo: $10,000)",
+                    "no_opportunities": "❌ No se encontraron oportunidades rentables actualmente.",
+                    "markets_efficient": "Los mercados son eficientes o el gas > ganancia.",
+                    "found": "**Se encontraron",
+                    "opportunities": "oportunidades:**",
+                    "route": "Ruta:",
+                    "net_profit": "Ganancia Neta:",
+                    "roi": "ROI:",
+                },
+                "pt": {
+                    "title": "🔄 **Oportunidades de Arbitragem** (Demo: $10,000)",
+                    "no_opportunities": "❌ Nenhuma oportunidade lucrativa encontrada no momento.",
+                    "markets_efficient": "Mercados são eficientes ou gas > lucro.",
+                    "found": "**Encontradas",
+                    "opportunities": "oportunidades:**",
+                    "route": "Rota:",
+                    "net_profit": "Lucro Líquido:",
+                    "roi": "ROI:",
+                },
+                "zh": {
+                    "title": "🔄 **套利机会** (演示: $10,000)",
+                    "no_opportunities": "❌ 当前未找到有利可图的机会。",
+                    "markets_efficient": "市场高效或 gas > 利润。",
+                    "found": "**找到",
+                    "opportunities": "个机会:**",
+                    "route": "路线:",
+                    "net_profit": "净利润:",
+                    "roi": "投资回报率:",
+                },
+            }
+            t = translations.get(language, translations["en"])
+
+            response = f"{t['title']}\n\n"
 
             if not opportunities:
-                response += "❌ No profitable opportunities found currently.\n\n"
-                response += "Markets are efficient or gas > profit.\n"
+                response += f"{t['no_opportunities']}\n\n"
+                response += f"{t['markets_efficient']}\n"
             else:
-                response += f"**Found {len(opportunities)} opportunities:**\n\n"
+                response += f"{t['found']} {len(opportunities)} {t['opportunities']}\n\n"
                 for i, opp in enumerate(opportunities[:3], 1):
                     response += f"**{i}. {opp.type.value.upper()}**\n"
                     # Build path string from trading pairs
@@ -762,9 +1012,9 @@ class GuestHandlerService:
                     for pair in opp.path:
                         path_tokens.append(pair.token_out)
                     path_str = " → ".join(path_tokens)
-                    response += f"- Route: {path_str}\n"
-                    response += f"- Net Profit: ${float(opp.expected_profit_usd):,.2f}\n"
-                    response += f"- ROI: {float(opp.profit_percentage * 100):.2f}%\n\n"
+                    response += f"- {t['route']} {path_str}\n"
+                    response += f"- {t['net_profit']} ${float(opp.expected_profit_usd):,.2f}\n"
+                    response += f"- {t['roi']} {float(opp.profit_percentage * 100):.2f}%\n\n"
 
             response += self._get_registration_cta(language, for_action=True)
 
@@ -789,18 +1039,63 @@ class GuestHandlerService:
             engine = FlashLoanEngine()
             protocols = await engine.get_protocols()
 
-            response = "⚡ **Flash Loan Protocols**\n\n"
+            # Translations for flash loans
+            translations = {
+                "en": {
+                    "title": "⚡ **Flash Loan Protocols**",
+                    "max_loan": "Max Loan:",
+                    "fee": "Fee:",
+                    "tokens": "Tokens:",
+                    "use_cases": "**Use Cases:**",
+                    "arbitrage": "Arbitrage execution",
+                    "collateral": "Collateral swaps",
+                    "liquidation": "Liquidation protection",
+                },
+                "es": {
+                    "title": "⚡ **Protocolos de Flash Loan**",
+                    "max_loan": "Préstamo Máximo:",
+                    "fee": "Comisión:",
+                    "tokens": "Tokens:",
+                    "use_cases": "**Casos de Uso:**",
+                    "arbitrage": "Ejecución de arbitraje",
+                    "collateral": "Intercambio de colateral",
+                    "liquidation": "Protección contra liquidación",
+                },
+                "pt": {
+                    "title": "⚡ **Protocolos de Flash Loan**",
+                    "max_loan": "Empréstimo Máximo:",
+                    "fee": "Taxa:",
+                    "tokens": "Tokens:",
+                    "use_cases": "**Casos de Uso:**",
+                    "arbitrage": "Execução de arbitragem",
+                    "collateral": "Trocas de garantia",
+                    "liquidation": "Proteção contra liquidação",
+                },
+                "zh": {
+                    "title": "⚡ **闪电贷协议**",
+                    "max_loan": "最大贷款:",
+                    "fee": "费用:",
+                    "tokens": "代币:",
+                    "use_cases": "**用例:**",
+                    "arbitrage": "套利执行",
+                    "collateral": "抵押品交换",
+                    "liquidation": "清算保护",
+                },
+            }
+            t = translations.get(language, translations["en"])
+
+            response = f"{t['title']}\n\n"
 
             for protocol in protocols:
                 response += f"**{protocol.name}**\n"
-                response += f"- Max Loan: ${float(protocol.max_loan_usd):,.0f}\n"
-                response += f"- Fee: {float(protocol.fee_percentage * 100):.2f}%\n"
-                response += f"- Tokens: {', '.join(protocol.supported_tokens[:3])}\n\n"
+                response += f"- {t['max_loan']} ${float(protocol.max_loan_usd):,.0f}\n"
+                response += f"- {t['fee']} {float(protocol.fee_percentage * 100):.2f}%\n"
+                response += f"- {t['tokens']} {', '.join(protocol.supported_tokens[:3])}\n\n"
 
-            response += "**Use Cases:**\n"
-            response += "- Arbitrage execution\n"
-            response += "- Collateral swaps\n"
-            response += "- Liquidation protection\n"
+            response += f"{t['use_cases']}\n"
+            response += f"- {t['arbitrage']}\n"
+            response += f"- {t['collateral']}\n"
+            response += f"- {t['liquidation']}\n"
 
             response += self._get_registration_cta(language, for_action=True)
 
@@ -824,18 +1119,86 @@ class GuestHandlerService:
             protection = MEVProtection()
             info = protection.get_protection_info()
 
-            response = "🛡️ **MEV Protection Status**\n\n"
-            response += f"**Flashbots:** {'✅ Enabled' if info['use_flashbots'] else '❌ Disabled'}\n"
-            response += f"**Private Relay:** {'✅ Enabled' if info['use_private_relay'] else '❌ Disabled'}\n"
-            response += f"**MEV-Share:** {'✅ Enabled' if info['use_mev_share'] else '❌ Disabled'}\n"
-            response += f"**Protection Level:** {info['protection_level'].upper()}\n"
-            response += f"**Max Gas Price:** {info['max_gas_price_gwei']} gwei\n\n"
+            # Translations for MEV protection
+            translations = {
+                "en": {
+                    "title": "🛡️ **MEV Protection Status**",
+                    "flashbots": "**Flashbots:**",
+                    "private_relay": "**Private Relay:**",
+                    "mev_share": "**MEV-Share:**",
+                    "protection_level": "**Protection Level:**",
+                    "max_gas_price": "**Max Gas Price:**",
+                    "protection_features": "**Protection Features:**",
+                    "sandwich": "Sandwich attack prevention",
+                    "front_running": "Front-running protection",
+                    "private_routing": "Private transaction routing",
+                    "backrun": "Backrun capture",
+                    "enabled": "✅ Enabled",
+                    "disabled": "❌ Disabled",
+                },
+                "es": {
+                    "title": "🛡️ **Estado de Protección MEV**",
+                    "flashbots": "**Flashbots:**",
+                    "private_relay": "**Relé Privado:**",
+                    "mev_share": "**MEV-Share:**",
+                    "protection_level": "**Nivel de Protección:**",
+                    "max_gas_price": "**Precio Máximo de Gas:**",
+                    "protection_features": "**Características de Protección:**",
+                    "sandwich": "Prevención de ataques sandwich",
+                    "front_running": "Protección contra front-running",
+                    "private_routing": "Enrutamiento de transacciones privadas",
+                    "backrun": "Captura de backrun",
+                    "enabled": "✅ Habilitado",
+                    "disabled": "❌ Deshabilitado",
+                },
+                "pt": {
+                    "title": "🛡️ **Status de Proteção MEV**",
+                    "flashbots": "**Flashbots:**",
+                    "private_relay": "**Relé Privado:**",
+                    "mev_share": "**MEV-Share:**",
+                    "protection_level": "**Nível de Proteção:**",
+                    "max_gas_price": "**Preço Máximo de Gas:**",
+                    "protection_features": "**Recursos de Proteção:**",
+                    "sandwich": "Prevenção de ataques sandwich",
+                    "front_running": "Proteção contra front-running",
+                    "private_routing": "Roteamento de transações privadas",
+                    "backrun": "Captura de backrun",
+                    "enabled": "✅ Habilitado",
+                    "disabled": "❌ Desabilitado",
+                },
+                "zh": {
+                    "title": "🛡️ **MEV 保护状态**",
+                    "flashbots": "**Flashbots:**",
+                    "private_relay": "**私有中继:**",
+                    "mev_share": "**MEV-Share:**",
+                    "protection_level": "**保护级别:**",
+                    "max_gas_price": "**最大 Gas 价格:**",
+                    "protection_features": "**保护功能:**",
+                    "sandwich": "三明治攻击防护",
+                    "front_running": "抢跑保护",
+                    "private_routing": "私有交易路由",
+                    "backrun": "后跑捕获",
+                    "enabled": "✅ 已启用",
+                    "disabled": "❌ 已禁用",
+                },
+            }
+            t = translations.get(language, translations["en"])
 
-            response += "**Protection Features:**\n"
-            response += "- ✅ Sandwich attack prevention\n"
-            response += "- ✅ Front-running protection\n"
-            response += "- ✅ Private transaction routing\n"
-            response += "- ✅ Backrun capture\n"
+            enabled_text = t["enabled"]
+            disabled_text = t["disabled"]
+
+            response = f"{t['title']}\n\n"
+            response += f"{t['flashbots']} {enabled_text if info['use_flashbots'] else disabled_text}\n"
+            response += f"{t['private_relay']} {enabled_text if info['use_private_relay'] else disabled_text}\n"
+            response += f"{t['mev_share']} {enabled_text if info['use_mev_share'] else disabled_text}\n"
+            response += f"{t['protection_level']} {info['protection_level'].upper()}\n"
+            response += f"{t['max_gas_price']} {info['max_gas_price_gwei']} gwei\n\n"
+
+            response += f"{t['protection_features']}\n"
+            response += f"- ✅ {t['sandwich']}\n"
+            response += f"- ✅ {t['front_running']}\n"
+            response += f"- ✅ {t['private_routing']}\n"
+            response += f"- ✅ {t['backrun']}\n"
 
             response += self._get_registration_cta(language, for_action=True)
 
