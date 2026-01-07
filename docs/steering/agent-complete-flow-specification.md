@@ -148,10 +148,7 @@ DistillationEngine.distill(query, user_id, context)
 ├── Step 2: Intent Classification
 │   └── IntentClassifier.classify(query)
 │       ├── Rule-based patterns (95% confidence)
-│       │   ├── Price patterns: "price of ETH"
-│       │   ├── Swap patterns: "swap 100 ETH"
-│       │   ├── Risk patterns: "is Aave safe"
-│       │   └── 20+ pattern categories
+│       │   └── See Section 2.1 for complete pattern reference
 │       └── ML fallback (if no match)
 │
 ├── Step 3: Complexity Assessment
@@ -201,6 +198,161 @@ DistillationEngine.distill(query, user_id, context)
 | Research/Analysis | FULL_LLM | Premium | Perplexity |
 | Price check | LIGHT_LLM | Economy | CoinGecko |
 | General chat | LIGHT_LLM | Economy | None |
+
+### 3.3 Complete Intent Classification Patterns
+
+**File:** `src/app/infrastructure/adapters/chat/keyword_intent_detection_adapter.py`
+
+#### 3.3.1 ULTRA Intent Patterns
+
+| Intent | Keywords | Confidence | Example Query | Handler |
+|--------|----------|------------|---------------|---------|
+| **ULTRA_ARBITRAGE** | `arbitrage`, `arb`, `cross-chain` | 0.92 | "find arbitrage opportunities with $10,000" | `ultra` |
+| **ULTRA_FLASH_LOANS** | `flash loan`, `flashloan` | 0.93 | "best flash loan protocol for 100k usdc" | `ultra` |
+| **ULTRA_MEV_PROTECTION** | `mev`, `flashbots`, `privately`, `avoid mev` | 0.91 | "execute arb-001 with flashbots protection" | `ultra` |
+| **ULTRA_AUTO_EXECUTOR** | `trading bot`, `auto executor`, `dca`, `dollar cost`, `limit order`, `stop loss`, `take profit`, `trailing stop`, `bot status`, `start bot`, `stop bot` | 0.90 | "configure bot with 2% profit threshold" | `ultra` |
+
+#### 3.3.2 Hunter AI Intent Patterns
+
+| Intent | Keywords | Confidence | Example Query | Handler |
+|--------|----------|------------|---------------|---------|
+| **HUNTER_SENTIMENT** | `sentiment`, `twitter`, `reddit`, `social media` | 0.92 | "what's the eth sentiment on twitter and reddit?" | `hunter_ai` |
+| **HUNTER_PRICE_PREDICTION** | `predict`, `forecast`, `price` | 0.90 | "predict btc price for next 7 days" | `hunter_ai` |
+| **HUNTER_RISK_SIGNALS** | `risk signal`, `show risk` | 0.89 | "show risk signals for eth" | `hunter_ai` |
+| **HUNTER_TRADING_SIGNALS** | `trading signal`, `buy`, `entry`, `exit`, `sell` | 0.91 | "should i buy sol now? give me trading signals" | `hunter_ai` |
+| **HUNTER_PATTERNS** | `pattern`, `chart`, `technical formation` | 0.88 | "what chart patterns do you see for btc?" | `hunter_ai` |
+| **HUNTER_PORTFOLIO** | `portfolio`, `optimize`, `conservative`, `aggressive` | 0.85 | "optimize my portfolio with btc, eth for moderate risk" | `hunter_ai` |
+
+#### 3.3.3 DeFi Shortcuts Intent Patterns
+
+| Intent | Keywords | Confidence | Example Query | Handler |
+|--------|----------|------------|---------------|---------|
+| **LENDING** | `morpho`, `deposit usdc`, `deposit eth`, `earn usdc`, `earn yield`, `supply to aave`, `lend my`, `lending vault` | 0.92 | "deposit 1000 usdc on base morpho" | `lending_handler` |
+| **MONEY_MARKET** | `compare lending`, `compare rates`, `compare aave`, `money market`, `best supply apy`, `aave vs compound` | 0.90 | "compare aave vs compound vs morpho" | `money_market_handler` |
+| **SWAP** | `swap`, `exchange`, `trade`, `convert`, `eth for usdc` | 0.93 | "swap eth for usdc" | `swap_handler` |
+| **BALANCE** | `my balance`, `show balance`, `check balance`, `how much usdc`, `wallet balance` | 0.94 | "show my balance" | `balance_handler` |
+| **PORTFOLIO** | `my portfolio`, `show portfolio`, `list my assets`, `my holdings`, `all my tokens` | 0.93 | "show my portfolio" | `portfolio_handler` |
+| **ACTIVITY** | `activity`, `transaction history`, `my transactions`, `tx history` | 0.92 | "show my activity" | `activity_handler` |
+| **RECEIVE** | `receive crypto`, `receive funds`, `show my address`, `deposit address`, `qr code` | 0.94 | "show qr code" | `receive_handler` |
+
+#### 3.3.4 GraphRAG Intent Patterns
+
+| Intent | Keywords | Confidence | Example Query | Handler |
+|--------|----------|------------|---------------|---------|
+| **PROTOCOL_SEARCH** | `find protocols`, `list protocols`, `show protocols`, `search protocols`, `best protocols`, `lending protocols`, `dex protocols`, `protocols on ethereum/arbitrum/base` | 0.90 | "show me high-yield lending protocols on ethereum" | `graphrag_search` |
+| **RISK_ASSESSMENT** | `is it safe`, `how safe`, `safe to use`, `what are the risks`, `is aave safe`, `es seguro` (Spanish), `é seguro` (Portuguese), `安全吗` (Chinese) | 0.90 | "is aave safe to use? what are the risks?" | `graphrag_search` |
+| **SIMILAR_PROTOCOLS** | `similar to`, `like`, `alternative to` | 0.85 | "what protocols are similar to uniswap?" | `graphrag_search` |
+
+#### 3.3.5 Agent Squad Intent Patterns
+
+| Intent | Keywords | Confidence | Example Query | Handler |
+|--------|----------|------------|---------------|---------|
+| **SPECIALIST_TASK** | `analyze`, `research`, `evaluate`, `assess`, `investigate`, `deep dive`, `liquidity depth`, `security audit`, `vulnerability`, `gas optimization`, `tax optimization`, `bridge tokens`, `compliance check`, `multisig`, `dao governance`, `nft portfolio` | 0.82 | "analyze eth/usdc liquidity depth on uniswap v3" | `agent_orchestrator` |
+| **COMPLEX_WORKFLOW** | `complete defi`, `from start to finish`, `multi-step`, `full portfolio rebalancing`, `investment strategy for`, `comprehensive analysis`, `plan migration`, `with tax optimization`, `and risk analysis` | 0.85 | "create a complete defi investment strategy for $50k" | `agent_orchestrator` |
+
+#### 3.3.6 General Intent Patterns
+
+| Intent | Keywords | Confidence | Example Query | Handler |
+|--------|----------|------------|---------------|---------|
+| **GENERAL_CONVERSATION** | `hello`, `hi`, `hey`, `what can you`, `what features`, `help me` | 0.95 | "hello! what can you help me with?" | `general_chat` |
+| **(No match fallback)** | - | 0.65 | "random unclear message" | `general_chat` |
+
+#### 3.3.7 Specialist Agent Selection (for SPECIALIST_TASK)
+
+| Keywords | Specialist Agent |
+|----------|------------------|
+| `security`, `audit`, `vulnerability`, `slither`, `contract audit` | `security_auditor` |
+| `gas`, `fees`, `optimize gas`, `reduce gas` | `gas_optimizer` |
+| `tax`, `capital gains`, `tax strategy`, `tax report` | `tax_optimizer` |
+| `bridge`, `cross-chain`, `bridging`, `axelar`, `layerzero` | `bridge_crosschain` |
+| `compliance`, `aml`, `kyc`, `regulatory`, `chainalysis` | `compliance_monitor` |
+| `multisig`, `multi-sig`, `gnosis`, `safe wallet`, `treasury` | `multisig_coordinator` |
+| `dao`, `governance`, `snapshot`, `vote`, `proposal` | `dao_governance` |
+| `nft`, `opensea`, `nft portfolio`, `collectibles` | `nft_asset_manager` |
+| `borrow`, `leverage`, `collateral`, `liquidation` | `lending_borrowing` |
+| `yield`, `apy`, `earn`, `farming`, `staking` | `defi_yield` |
+| `portfolio`, `allocation`, `rebalance`, `diversify` | `portfolio` |
+| `risk`, `exposure`, `volatility`, `drawdown` | `risk_analyzer` |
+| *(default)* | `research` |
+
+#### 3.3.8 Distillation Engine Patterns (Low-Level)
+
+**File:** `src/app/domain/services/distillation/intent_classifier.py`
+
+| Intent Category | Intent | Regex Patterns |
+|-----------------|--------|----------------|
+| **Informational** | PRICE_CHECK | `price of (\w+)`, `what's ETH price`, `how much is ETH` |
+| | BALANCE_CHECK | `my balance`, `my holdings`, `show me my assets` |
+| | GAS_CHECK | `gas price`, `current gas`, `how much gas` |
+| | APY_CHECK | `apy on`, `yield for`, `earning rate` |
+| | STATUS_CHECK | `is (\w+) working`, `(\w+) status` |
+| **Educational** | EXPLAIN_CONCEPT | `what is`, `explain`, `tell me about`, `how does (\w+) work` |
+| | HOW_TO | `how do i`, `steps to`, `how can i` |
+| | COMPARE | `compare (\w+) vs (\w+)`, `difference between`, `which is better` |
+| **Transactional** | SWAP_REQUEST | `swap \d+`, `buy (\w+) with`, `sell \d+`, `trade for` |
+| | STAKE_REQUEST | `stake \d+`, `stake my`, `staking` |
+| | LEND_REQUEST | `lend \d+`, `deposit (\w+) on` |
+| | BORROW_REQUEST | `borrow \d+`, `take a loan` |
+| | BRIDGE_REQUEST | `bridge (\w+) to`, `move to (\w+) chain` |
+| **Analytical** | PORTFOLIO_ANALYSIS | `analyze my portfolio`, `portfolio performance` |
+| | RISK_ASSESSMENT | `risk of`, `is this safe`, `check risk` |
+| | YIELD_OPTIMIZATION | `best yield for`, `optimize yield` |
+| | STRATEGY_ADVICE | `strategy for`, `should i`, `advice on` |
+| **Administrative** | SETTINGS_CHANGE | `change settings`, `set slippage` |
+| | ALERT_SETUP | `alert me when`, `set up alert` |
+| **Other** | GREETING | `hello`, `hi`, `hey`, `good morning` |
+| | SMALL_TALK | `how are you`, `what's up` |
+
+#### 3.3.9 Entity Extraction Patterns
+
+| Entity Type | Patterns | Examples |
+|-------------|----------|----------|
+| **Tokens** | `bitcoin/btc`, `ethereum/eth/ether`, `solana/sol`, `usdc`, `usdt/tether`, `dai`, `weth`, `wbtc` | "swap 100 ETH" → `token_symbol: ETH` |
+| **Protocols** | `aave`, `uniswap`, `curve`, `compound`, `morpho` | "is aave safe" → `protocol_name: Aave` |
+| **Amounts** | `\$\d+`, `\d+k`, `\d+ ETH` | "$10,000 capital" → `capital: 10000` |
+| **Chains** | `ethereum/eth/mainnet`, `arbitrum/arb`, `polygon/matic`, `base`, `optimism/op` | "protocols on base" → `chain: Base` |
+
+#### 3.3.10 Exact Match Lookup (Highest Confidence: 0.95)
+
+The system maintains a lookup table for exact message matches to ensure deterministic test results:
+
+```python
+EXACT_MATCH_LOOKUP = {
+    # GraphRAG
+    "show me high-yield lending protocols on ethereum": "protocol_search",
+    "is aave safe to use? what are the risks?": "risk_assessment",
+    "what protocols are similar to uniswap?": "similar_protocols",
+
+    # Hunter AI
+    "what's the eth sentiment on twitter and reddit?": "hunter_sentiment",
+    "predict btc price for next 7 days": "hunter_price_prediction",
+    "should i buy sol now? give me trading signals": "hunter_trading_signals",
+    "what chart patterns do you see for btc?": "hunter_patterns",
+    "optimize my portfolio with btc, eth, and sol for moderate risk": "hunter_portfolio",
+
+    # ULTRA
+    "find arbitrage opportunities with $10,000 capital": "ultra_arbitrage",
+    "best flash loan protocol for 100k usdc": "ultra_flash_loans",
+    "execute arb-001 with flashbots protection": "ultra_mev_protection",
+    "start trading bot": "ultra_auto_executor",
+
+    # DeFi Shortcuts
+    "earn usdc on morpho": "lending",
+    "compare lending rates": "money_market",
+    "swap eth for usdc": "swap",
+    "show my balance": "balance",
+    "show my portfolio": "portfolio",
+    "show my activity": "activity",
+    "receive crypto": "receive",
+
+    # Agent Squad
+    "analyze eth/usdc liquidity depth on uniswap v3": "specialist_task",
+    "create a complete defi investment strategy for $50k with risk analysis": "complex_workflow",
+
+    # General
+    "hello! what can you help me with?": "general_conversation",
+}
+```
 
 ---
 
