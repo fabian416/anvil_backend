@@ -1028,7 +1028,8 @@ class GuestHandlerService:
             # Translations for arbitrage
             translations = {
                 "en": {
-                    "title": "🔄 **Arbitrage Opportunities** (Demo: $10,000)",
+                    "title": "🔄 **Arbitrage Opportunities**",
+                    "demo_note": "**Demo Mode:** Using $10,000 capital for simulation",
                     "no_opportunities": "❌ No profitable opportunities found currently.",
                     "markets_efficient": "Markets are efficient or gas > profit.",
                     "found": "**Found",
@@ -1038,7 +1039,8 @@ class GuestHandlerService:
                     "roi": "ROI:",
                 },
                 "es": {
-                    "title": "🔄 **Oportunidades de Arbitraje** (Demo: $10,000)",
+                    "title": "🔄 **Oportunidades de Arbitraje**",
+                    "demo_note": "**Modo Demo:** Usando $10,000 de capital para simulación",
                     "no_opportunities": "❌ No se encontraron oportunidades rentables actualmente.",
                     "markets_efficient": "Los mercados son eficientes o el gas > ganancia.",
                     "found": "**Se encontraron",
@@ -1048,7 +1050,8 @@ class GuestHandlerService:
                     "roi": "ROI:",
                 },
                 "pt": {
-                    "title": "🔄 **Oportunidades de Arbitragem** (Demo: $10,000)",
+                    "title": "🔄 **Oportunidades de Arbitragem**",
+                    "demo_note": "**Modo Demo:** Usando $10,000 de capital para simulação",
                     "no_opportunities": "❌ Nenhuma oportunidade lucrativa encontrada no momento.",
                     "markets_efficient": "Mercados são eficientes ou gas > lucro.",
                     "found": "**Encontradas",
@@ -1058,7 +1061,8 @@ class GuestHandlerService:
                     "roi": "ROI:",
                 },
                 "zh": {
-                    "title": "🔄 **套利机会** (演示: $10,000)",
+                    "title": "🔄 **套利机会**",
+                    "demo_note": "**演示模式:** 使用 $10,000 资金进行模拟",
                     "no_opportunities": "❌ 当前未找到有利可图的机会。",
                     "markets_efficient": "市场高效或 gas > 利润。",
                     "found": "**找到",
