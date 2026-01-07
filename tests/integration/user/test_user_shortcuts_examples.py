@@ -47,43 +47,21 @@ async def client():
 
 @pytest_asyncio.fixture
 async def conversation_id(client: AsyncClient):
-    """Create or get conversation for authenticated user."""
-    # Try to get existing conversation first
-    response = await client.get(
-        "/api/v1/user/chat/conversations",
-        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
-    )
+    """
+    Create or get conversation for authenticated user.
     
-    if response.status_code == 200:
-        data = response.json()
-        # Handle ConversationListResponse format
-        if isinstance(data, dict) and "conversations" in data:
-            conversations = data["conversations"]
-        elif isinstance(data, list):
-            conversations = data
-        else:
-            conversations = []
-        
-        if conversations and len(conversations) > 0:
-            conv = conversations[0]
-            # Handle both dict and object format
-            if isinstance(conv, dict):
-                return conv["id"]
-            else:
-                return conv.id if hasattr(conv, "id") else str(conv)
+    CTO Framework: Resource Management
+    - Creates a new conversation for each test run
+    - Avoids transaction conflicts by using fresh conversation
+    - Auto-creates conversation if needed
+    """
+    # Always create a new conversation to avoid transaction conflicts
+    # Use a unique UUID that will be auto-created by the endpoint
+    conversation_uuid = str(uuid4())
     
-    # Create new conversation
-    response = await client.post(
-        "/api/v1/user/chat/conversations",
-        json={"title": "Test Conversation", "language": "en"},
-        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
-    )
-    
-    if response.status_code == 201:
-        return response.json()["id"]
-    
-    # Fallback: generate UUID (will be auto-created by endpoint)
-    return str(uuid4())
+    # The endpoint will auto-create the conversation when we send the first message
+    # This avoids transaction conflicts from previous test runs
+    return conversation_uuid
 
 
 @pytest_asyncio.fixture
