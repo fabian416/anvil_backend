@@ -9,7 +9,7 @@ to function without GraphRAG features.
 from typing import List
 import logging
 
-from app.domain.ports.embeddings import EmbeddingResult
+from app.domain.ports.ai.embedding_service import EmbeddingResult
 
 logger = logging.getLogger(__name__)
 
