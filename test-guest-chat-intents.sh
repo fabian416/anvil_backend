@@ -3,7 +3,8 @@
 # Based on: docs/steering/guest-chat-intent-testing.md
 # Endpoint: POST /api/v1/guest/chat
 
-set -e
+# Don't exit on error - continue testing all intents
+set +e
 
 BASE_URL="http://localhost:8080/api/v1/guest/chat"
 TOTAL_TESTS=0
@@ -96,7 +97,7 @@ test_intent() {
             echo -e "${RED}  - No valid response content${NC}"
         fi
         FAILED_TESTS=$((FAILED_TESTS + 1))
-        return 1
+        return 0  # Return 0 to continue testing even on failure
     fi
 }
 
