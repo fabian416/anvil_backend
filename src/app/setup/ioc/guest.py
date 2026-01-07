@@ -15,6 +15,7 @@ from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.domain.guest.ports.guest_repository import GuestRepository
+from app.domain.ports.morpho_gateway import MorphoGateway
 from app.infrastructure.adapters.guest_repository_sqla import GuestRepositorySqla
 from app.infrastructure.adapters.types import MainAsyncSession
 
@@ -31,19 +32,34 @@ class GuestProvider(Provider):
         return GuestRepositorySqla(session)
 
     @provide(scope=Scope.REQUEST)
+    def provide_lending_handler(
+        self,
+        morpho_gateway: MorphoGateway,
+    ) -> LendingHandler:
+        """
+        Provide lending handler for Morpho vault operations.
+        
+        Uses real Morpho GraphQL API for vault data.
+        """
+        return LendingHandler(morpho_gateway=morpho_gateway)
+
+    @provide(scope=Scope.REQUEST)
     def provide_guest_handler_service(
         self,
+        lending_handler: LendingHandler,
         money_market_handler: MoneyMarketHandler,
     ) -> GuestHandlerService:
         """
         Provide GuestHandlerService with real handlers.
         
-        Injects MoneyMarketHandler for real Aave/Compound rate comparisons.
-        LendingHandler and SwapHandler are optional (can be None for demo mode).
-        Hunter AI and ULTRA handlers don't require DI as they are stateless.
+        Injects:
+        - LendingHandler for real Morpho vault data
+        - MoneyMarketHandler for real Aave/Compound rate comparisons
+        - SwapHandler is optional (can be None for demo mode)
+        - Hunter AI and ULTRA handlers don't require DI as they are stateless.
         """
         return GuestHandlerService(
-            lending_handler=None,  # Optional - can use Hunter/ULTRA handlers
+            lending_handler=lending_handler,  # Real Morpho vault data
             swap_handler=None,  # Optional - demo mode supported
             money_market_handler=money_market_handler,  # Real data for comparisons
         )

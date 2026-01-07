@@ -1353,23 +1353,41 @@ class GuestHandlerService:
     # ========================================
 
     async def _handle_lending(
-        self, content: str, language: str
+        self, content: str, language: str, context: str = ""
     ) -> dict[str, Any]:
         """Handle lending rates with real Morpho data."""
         if self._lending_handler:
             try:
-                result = await self._lending_handler.handle(
-                    content=content,
-                    user_id=None,  # Guest mode
-                    wallet_address=None,
+                # Extract chain and asset from message
+                chain, asset = self._lending_handler._extract_params_from_message(content)
+                
+                # Call execute method with correct parameters
+                result = await self._lending_handler.execute(
+                    message=content,
+                    chain=chain,
+                    asset=asset,
+                    whitelisted_only=True,
                     language=language,
                 )
-                # Add registration CTA
-                result["content"] += self._get_registration_cta(language, for_action=True)
-                result["requires_registration"] = True
-                return result
+                
+                # Convert LendingHandlerResult to dict format
+                response_content = result.content
+                response_content += self._get_registration_cta(language, for_action=True)
+                
+                return {
+                    "content": response_content,
+                    "enrichment": {
+                        "vaults": result.vaults,
+                        "chain": result.chain,
+                        "asset": result.asset,
+                        "best_apy": result.best_apy,
+                        "latency_ms": result.latency_ms,
+                        "hunter_tool": "lending_handler",
+                    },
+                    "requires_registration": True,
+                }
             except Exception as e:
-                logger.warning(f"Lending handler error: {e}")
+                logger.error(f"Lending handler error for '{content}': {e}", exc_info=True)
 
         return self._fallback_response(ChatIntent.LENDING, language)
 

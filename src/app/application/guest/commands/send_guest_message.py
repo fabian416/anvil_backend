@@ -798,9 +798,12 @@ class SendGuestMessage:
                 # English
                 "deposit usdc", "deposit eth", "earn on morpho",
                 "supply to aave", "lend my", "earn yield",
+                "lending vault", "lending vaults", "best vault", "best vaults",
+                "show vault", "show vaults", "morpho vault", "morpho vaults",
                 # Spanish
                 "depositar usdc", "depositar eth", "ganar en morpho",
                 "prestar en aave", "prestar mi", "ganar rendimiento",
+                "bóveda de préstamo", "bóvedas de préstamo", "mejor bóveda", "mejores bóvedas",
             ],
             ChatIntent.MONEY_MARKET: [
                 # English
