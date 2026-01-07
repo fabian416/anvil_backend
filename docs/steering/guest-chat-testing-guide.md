@@ -117,7 +117,10 @@ curl -X POST "http://localhost:8080/api/v1/guest/chat" \
 
 **Expected:**
 - Both messages should have same `conversation_id`
-- Second response should reference "Bitcoin" or "BTC"
+- Second message intent: `hunter_sentiment` (detected as follow-up)
+- Second response should reference "Bitcoin" or "BTC" in the sentiment analysis
+- Response should show sentiment analysis for BTC (not ETH)
+- Content should include: "Sentiment Analysis for BTC" or similar
 
 ---
 

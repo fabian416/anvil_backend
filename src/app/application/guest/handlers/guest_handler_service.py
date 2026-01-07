@@ -113,9 +113,18 @@ class GuestHandlerService:
         handler = handler_map.get(intent)
         if handler:
             try:
-                # Pass context to handlers that support it (swap)
+                # Pass context to handlers that support it
                 if intent == ChatIntent.SWAP:
                     return await self._handle_swap(content, language, context)
+                # Hunter AI handlers can use context for follow-up questions
+                elif intent in [
+                    ChatIntent.HUNTER_SENTIMENT,
+                    ChatIntent.HUNTER_PRICE_PREDICTION,
+                    ChatIntent.HUNTER_RISK_SIGNALS,
+                    ChatIntent.HUNTER_TRADING_SIGNALS,
+                    ChatIntent.HUNTER_PATTERNS,
+                ]:
+                    return await handler(content, language, context)
                 return await handler(content, language)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
@@ -384,11 +393,11 @@ class GuestHandlerService:
     # ========================================
 
     async def _handle_sentiment(
-        self, content: str, language: str
+        self, content: str, language: str, context: str = ""
     ) -> dict[str, Any]:
         """Handle sentiment analysis with real data."""
-        # Extract token from content (simple parsing)
-        token = self._extract_token(content) or "ETH"
+        # Extract token from content, using context if token not found in current message
+        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
 
         try:
             # Initialize analyzers
@@ -1830,6 +1839,47 @@ class GuestHandlerService:
         # Check aliases (longer names first to avoid partial matches)
         for alias, symbol in sorted(token_aliases.items(), key=lambda x: -len(x[0])):
             if alias in content_lower:
+                return symbol
+        return None
+
+    def _extract_token_from_context(self, context: str) -> str | None:
+        """Extract token from conversation context (for follow-up questions)."""
+        if not context:
+            return None
+        
+        # Look for token mentions in context
+        # Context format: "User: message\nAssistant: response\n..."
+        context_lower = context.lower()
+        
+        # Extract token from context using same logic as _extract_token
+        token_aliases = {
+            "bitcoin": "BTC",
+            "btc": "BTC",
+            "ethereum": "ETH",
+            "eth": "ETH",
+            "ether": "ETH",
+            "solana": "SOL",
+            "sol": "SOL",
+            "usdc": "USDC",
+            "usdt": "USDT",
+            "tether": "USDT",
+            "dai": "DAI",
+            "weth": "WETH",
+            "wrapped eth": "WETH",
+            "wrapped ether": "WETH",
+            "wbtc": "WBTC",
+            "wrapped bitcoin": "WBTC",
+            "matic": "MATIC",
+            "polygon": "MATIC",
+            "arbitrum": "ARB",
+            "arb": "ARB",
+            "optimism": "OP",
+            "op": "OP",
+        }
+        
+        # Check aliases (longer names first to avoid partial matches)
+        for alias, symbol in sorted(token_aliases.items(), key=lambda x: -len(x[0])):
+            if alias in context_lower:
                 return symbol
         return None
 
