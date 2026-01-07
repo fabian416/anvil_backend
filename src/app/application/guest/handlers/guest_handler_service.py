@@ -1544,21 +1544,39 @@ class GuestHandlerService:
         self, content: str, language: str
     ) -> dict[str, Any]:
         """Handle money market rates with real Aave/Compound data."""
-        if self._money_market_handler:
-            try:
-                result = await self._money_market_handler.handle(
-                    content=content,
-                    user_id=None,
-                    wallet_address=None,
-                    language=language,
-                )
-                result["content"] += self._get_registration_cta(language, for_action=True)
-                result["requires_registration"] = True
-                return result
-            except Exception as e:
-                logger.warning(f"Money market handler error: {e}")
+        # NOTE:
+        # MoneyMarketHandler exposes `compare_rates()` (not `.handle()`).
+        # Calling `.handle()` forces an exception and makes the guest endpoint
+        # always fall back to the generic "🏦 ¡Puedo comparar tasas..." message.
+        asset = (self._extract_token(content) or "USDC").upper()
+        chain = (self._extract_chain(content) or "ethereum").lower()
 
-        return self._fallback_response(ChatIntent.MONEY_MARKET, language)
+        try:
+            handler = self._money_market_handler or MoneyMarketHandler()
+            result = await handler.compare_rates(
+                asset=asset,
+                chain=chain,
+                language=language,
+            )
+
+            return {
+                "content": result.content
+                + self._get_registration_cta(language, for_action=True),
+                "enrichment": {
+                    "asset": result.asset,
+                    "chain": chain,
+                    "rates": result.rates,
+                    "best_supply_protocol": result.best_supply_protocol,
+                    "best_supply_apy": result.best_supply_apy,
+                    "best_borrow_protocol": result.best_borrow_protocol,
+                    "best_borrow_apy": result.best_borrow_apy,
+                    "latency_ms": result.latency_ms,
+                },
+                "requires_registration": True,
+            }
+        except Exception as e:
+            logger.warning(f"Money market handler error: {e}")
+            return self._fallback_response(ChatIntent.MONEY_MARKET, language)
 
     async def _handle_swap(
         self, content: str, language: str, context: str = ""
@@ -2080,6 +2098,37 @@ class GuestHandlerService:
         for alias, symbol in sorted(token_aliases.items(), key=lambda x: -len(x[0])):
             if alias in context_lower:
                 return symbol
+        return None
+
+    def _extract_chain(self, content: str) -> str | None:
+        """Extract chain name from content (best-effort)."""
+        content_lower = content.lower()
+
+        chain_aliases = {
+            # Canonical: ethereum
+            "ethereum": "ethereum",
+            "mainnet": "ethereum",
+            # L2s
+            "base": "base",
+            "arbitrum": "arbitrum",
+            "optimism": "optimism",
+            # Other EVM
+            "polygon": "polygon",
+            "avalanche": "avalanche",
+        }
+
+        for alias, chain in sorted(chain_aliases.items(), key=lambda x: -len(x[0])):
+            if alias in content_lower:
+                return chain
+
+        # Short aliases (avoid false positives like "eth" in "tether")
+        if " op " in f" {content_lower} ":
+            return "optimism"
+        if " arb " in f" {content_lower} ":
+            return "arbitrum"
+        if " eth " in f" {content_lower} ":
+            return "ethereum"
+
         return None
 
     def _get_registration_cta(

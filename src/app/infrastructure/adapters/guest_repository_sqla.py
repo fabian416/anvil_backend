@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.domain.guest.entities.guest_conversation import (
@@ -229,6 +229,59 @@ class GuestRepositorySqla(GuestRepository):
             await self._session.rollback()
             logger.error(f"Failed to archive conversations: {e}")
             raise DataMapperError("Failed to archive conversations") from e
+
+    async def delete_conversation_for_guest(
+        self, guest_user_id: UUID
+    ) -> bool:
+        """
+        Delete (archive) the active conversation for a guest user and clear all messages.
+        Returns True if successful, False if no active conversation found.
+        """
+        try:
+            conv_table = mapping_registry.metadata.tables["guest_conversations"]
+            msg_table = mapping_registry.metadata.tables["guest_messages"]
+
+            # Find the active conversation
+            conv_stmt = (
+                select(conv_table.c.id)
+                .where(conv_table.c.guest_user_id == guest_user_id)
+                .where(conv_table.c.status == "active")
+            )
+            conv_result = await self._session.execute(conv_stmt)
+            conv_row = conv_result.first()
+
+            if not conv_row:
+                return False
+
+            conversation_id = conv_row[0]
+
+            # Delete all messages for this conversation
+            delete_msgs_stmt = delete(msg_table).where(
+                msg_table.c.conversation_id == conversation_id
+            )
+            await self._session.execute(delete_msgs_stmt)
+
+            # Archive the conversation (soft delete)
+            archive_conv_stmt = (
+                update(conv_table)
+                .where(conv_table.c.id == conversation_id)
+                .values(
+                    status="archived",
+                    message_count=0,
+                    archived_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                )
+            )
+            await self._session.execute(archive_conv_stmt)
+            await self._session.commit()
+
+            logger.info(f"Deleted conversation {conversation_id} for guest {guest_user_id}")
+            return True
+
+        except SQLAlchemyError as e:
+            await self._session.rollback()
+            logger.error(f"Failed to delete conversation for guest: {e}")
+            raise DataMapperError("Failed to delete conversation") from e
 
     # ========================================
     # Guest Message Operations

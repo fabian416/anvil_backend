@@ -18,6 +18,7 @@ from app.domain.guest.ports.guest_repository import GuestRepository
 from app.presentation.http.schemas.guest import (
     GuestChatRequest,
     GuestChatResponse,
+    GuestDeleteChatResponse,
     GuestHistoryMessage,
     GuestHistoryResponse,
     GuestInfo,
@@ -228,5 +229,51 @@ def create_guest_router() -> APIRouter:
             is_blocked=guest.is_blocked,
             language=guest.language,
         )
+
+    @router.delete(
+        "/chat",
+        response_model=GuestDeleteChatResponse,
+        status_code=status.HTTP_200_OK,
+        summary="Delete Guest Chat",
+        description="""
+        Delete the current guest chat session and all its messages.
+        
+        This will:
+        - Archive the current conversation
+        - Delete all messages in the conversation
+        - Allow the guest to start a fresh chat
+        
+        The guest user record is preserved (for rate limiting tracking).
+        """,
+    )
+    @inject
+    async def delete_guest_chat(
+        http_request: Request,
+        repository: FromDishka[GuestRepository],
+    ) -> GuestDeleteChatResponse:
+        """Delete guest chat for current IP."""
+        ip_address = _get_client_ip(http_request)
+
+        # Get guest user
+        guest = await repository.get_guest_by_ip(ip_address)
+        if not guest:
+            return GuestDeleteChatResponse(
+                success=False,
+                message="No guest session found",
+            )
+
+        # Delete the active conversation and its messages
+        deleted = await repository.delete_conversation_for_guest(guest.id)
+
+        if deleted:
+            return GuestDeleteChatResponse(
+                success=True,
+                message="Chat deleted successfully",
+            )
+        else:
+            return GuestDeleteChatResponse(
+                success=False,
+                message="No active chat to delete",
+            )
 
     return router

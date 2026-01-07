@@ -12,7 +12,6 @@ from dishka import Provider, Scope, provide
 from app.application.guest.commands.send_guest_message import SendGuestMessage
 from app.application.guest.handlers.guest_handler_service import GuestHandlerService
 from app.application.chat.handlers.lending_handler import LendingHandler
-from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.domain.guest.ports.guest_repository import GuestRepository
 from app.domain.ports.morpho_gateway import MorphoGateway

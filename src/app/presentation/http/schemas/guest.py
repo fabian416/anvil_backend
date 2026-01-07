@@ -109,3 +109,10 @@ class GuestStatusResponse(BaseModel):
     messages_this_hour: int = 0
     is_blocked: bool = False
     language: str = "en"
+
+
+class GuestDeleteChatResponse(BaseModel):
+    """Response for deleting guest chat."""
+
+    success: bool = False
+    message: str = "No active chat to delete"
