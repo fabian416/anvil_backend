@@ -688,6 +688,35 @@ class IntentDetectorV2:
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.LENDING],
                 )
+
+        # Money market patterns (Aave / Compound / Morpho comparisons & rate queries)
+        # NOTE: This intent is handled by MoneyMarketHandler in GuestHandlerService and
+        # is expected by UX flows like "comparar Aave vs Compound vs Morpho".
+        money_market_patterns = [
+            # Explicit "money market" phrasing
+            r"\bmoney\s+market\b",
+            r"\bmercado\s+(?:monetario|de\s+dinero)\b",
+            r"\bmercado\s+monetário\b",
+            # Rate queries
+            r"\b(best|top)\s+(?:borrow|lending)\s+rates?\b",
+            r"\b(?:borrow|lending)\s+rates?\b",
+            r"\bmejores\s+tasas\s+(?:de\s+pr[ée]stamo|de\s+pr[ée]stamos|de\s+cr[ée]dito)\b",
+            r"\btasas\s+(?:de\s+mercado|de\s+pr[ée]stamo|de\s+pr[ée]stamos)\b",
+            r"\bmelhores\s+taxas\s+de\s+empr[ée]stimo\b",
+            r"\btaxas\s+(?:de\s+mercado|de\s+empr[ée]stimo)\b",
+            # Protocol comparisons (Aave/Compound/Morpho)
+            r"\b(compare|comparar|comparar)\b.*\b(aave|compound|morpho)\b",
+            r"\b(aave|compound|morpho)\b\s*(?:vs|versus)\s*\b(aave|compound|morpho)\b",
+            r"\b(aave|compound)\b.*\b(morpho)\b",
+            r"\b(morpho)\b.*\b(aave|compound)\b",
+        ]
+        for pattern in money_market_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                return IntentResult(
+                    intent=ChatIntentV2.MONEY_MARKET,
+                    confidence=0.85,
+                    handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
+                )
         
         return None
     
