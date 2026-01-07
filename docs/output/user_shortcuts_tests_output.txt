@@ -734,3 +734,1432 @@ sqlalchemy.exc.InternalError: (psycopg.errors.InFailedSqlTransaction) current tr
 [2026-01-07 21:45:17.880] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
 [2026-01-07 21:45:17.880] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
 [2026-01-07 21:45:17.883]              execute send_message_unified:229 INFO     - Conversation a4d069d0-ecc4-45e9-8a63-b5dd81ce996e not found, creating new conversation for user 239
+[2026-01-07 21:45:30.722]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:45:41.947]               commit main_transaction_manager_sqla:31 DEBUG    - Commit was done. Main session.
+[2026-01-07 21:45:41.947] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:45:41.948]   _broadcast_message send_message:539 ERROR    - Failed to broadcast message via WebSocket: 'ConnectionManager' object has no attribute 'broadcast_to_conversation'
+[2026-01-07 21:45:41.948] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:45:41.948] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:45:41.948] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:45:41.953] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/a4d069d0-ecc4-45e9-8a63-b5dd81ce996e/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:45:41.955] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:45:41.955] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:45:41.955] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:45:41.955] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:45:41.955]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:45:41.956] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:45:41.956]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:45:41.956]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:45:41.957]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:45:42.000] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:45:42.000] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:45:42.001] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:45:42.001] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:45:42.001] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:45:42.122] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:45:42.122] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:45:42.122] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:45:42.125] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:45:42.125] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:45:42.125] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:45:42.125] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:45:42.128]              execute send_message_unified:229 INFO     - Conversation 593fed9a-cd3c-4445-8d19-285495798156 not found, creating new conversation for user 239
+[2026-01-07 21:45:54.300]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:45:54.303] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:45:54.303] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:45:54.304] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:45:54.304] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:45:54.304] unhandled_exception_handler handlers:335 ERROR    - Unhandled exception: InternalError - (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('2ae1e44e-9c9d-440a-8a5e-bd6b9318d71d'), 'conversation_id': UUID('593fed9a-cd3c-4445-8d19-285495798156'), 'role': 'user', 'content': 'List my holdings', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 45, 54, 302263, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85) (path=/api/v1/user/chat/conversations/593fed9a-cd3c-4445-8d19-285495798156/messages)
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InFailedSqlTransaction: current transaction is aborted, commands ignored until end of transaction block
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/starlette.py", line 68, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/auth/asgi_middleware.py", line 39, in __call__
+    return await self.app(scope, receive, send_wrapper)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 302, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 213, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/base.py", line 169, in auto_injected_func
+    return await func(*args, **kwargs, **solved)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/controllers/chat/router.py", line 266, in send_message
+    result = await orchestrator.execute(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 347, in execute
+    result = await self._handle_portfolio(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 2680, in _handle_portfolio
+    user_msg, agent_msg = await self._save_messages(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 1255, in _save_messages
+    await self._conversation_repo.add_message(user_message)
+  File "/home/ubuntu/anvil_backend/src/app/infrastructure/adapters/conversation_repository_sqla.py", line 155, in add_message
+    await self._session.execute(stmt)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2260, in _execute_internal
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+sqlalchemy.exc.InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('2ae1e44e-9c9d-440a-8a5e-bd6b9318d71d'), 'conversation_id': UUID('593fed9a-cd3c-4445-8d19-285495798156'), 'role': 'user', 'content': 'List my holdings', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 45, 54, 302263, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
+[2026-01-07 21:45:54.309] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:45:54.309] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:45:54.309] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:45:54.309] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:45:54.309]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:45:54.310] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:45:54.311]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:45:54.311]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:45:54.312]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:45:54.356] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:45:54.356] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:45:54.356] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:45:54.356] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:45:54.356] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:45:54.479] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:45:54.479] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:45:54.479] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:45:54.482] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:45:54.482] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:45:54.482] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:45:54.482] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:45:54.485]              execute send_message_unified:229 INFO     - Conversation 71393c11-3dd7-49dd-8d2f-d6a5d6a35746 not found, creating new conversation for user 239
+[2026-01-07 21:45:59.002]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:46:11.252]               commit main_transaction_manager_sqla:31 DEBUG    - Commit was done. Main session.
+[2026-01-07 21:46:11.253] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:46:11.253]   _broadcast_message send_message:539 ERROR    - Failed to broadcast message via WebSocket: 'ConnectionManager' object has no attribute 'broadcast_to_conversation'
+[2026-01-07 21:46:11.253] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:46:11.253] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:46:11.254] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:46:11.259] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/71393c11-3dd7-49dd-8d2f-d6a5d6a35746/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:46:11.260] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:46:11.260] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:46:11.260] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:46:11.260] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:46:11.261]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:11.262] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:46:11.262]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:46:11.262]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:11.263]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:46:11.307] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:46:11.307] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:46:11.307] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:46:11.307] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:46:11.307] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:46:11.432] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:46:11.432] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:46:11.432] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:11.435] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:11.435] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:11.435] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:11.435] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:46:11.438]              execute send_message_unified:229 INFO     - Conversation d9f8b3e7-8e76-4727-9137-bd58b6c47a8a not found, creating new conversation for user 239
+[2026-01-07 21:46:24.680]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:46:24.683] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:46:24.684] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:46:24.684] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:46:24.684] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:46:24.684] unhandled_exception_handler handlers:335 ERROR    - Unhandled exception: InternalError - (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('ce30dd93-9197-42de-bac3-df754262ec31'), 'conversation_id': UUID('d9f8b3e7-8e76-4727-9137-bd58b6c47a8a'), 'role': 'user', 'content': 'Show my holdings', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 46, 24, 682414, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85) (path=/api/v1/user/chat/conversations/d9f8b3e7-8e76-4727-9137-bd58b6c47a8a/messages)
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InFailedSqlTransaction: current transaction is aborted, commands ignored until end of transaction block
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/starlette.py", line 68, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/auth/asgi_middleware.py", line 39, in __call__
+    return await self.app(scope, receive, send_wrapper)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 302, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 213, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/base.py", line 169, in auto_injected_func
+    return await func(*args, **kwargs, **solved)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/controllers/chat/router.py", line 266, in send_message
+    result = await orchestrator.execute(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 347, in execute
+    result = await self._handle_portfolio(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 2680, in _handle_portfolio
+    user_msg, agent_msg = await self._save_messages(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 1255, in _save_messages
+    await self._conversation_repo.add_message(user_message)
+  File "/home/ubuntu/anvil_backend/src/app/infrastructure/adapters/conversation_repository_sqla.py", line 155, in add_message
+    await self._session.execute(stmt)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2260, in _execute_internal
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+sqlalchemy.exc.InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('ce30dd93-9197-42de-bac3-df754262ec31'), 'conversation_id': UUID('d9f8b3e7-8e76-4727-9137-bd58b6c47a8a'), 'role': 'user', 'content': 'Show my holdings', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 46, 24, 682414, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
+[2026-01-07 21:46:24.689] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:46:24.689] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:46:24.689] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:46:24.689] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:46:24.689]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:24.691] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:46:24.691]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:46:24.691]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:24.692]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:46:24.735] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:46:24.735] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:46:24.735] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:46:24.735] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:46:24.735] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:46:24.859] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:46:24.859] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:46:24.859] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:24.864] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:24.864] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:24.864] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:24.864] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:46:24.867]              execute send_message_unified:229 INFO     - Conversation 2f4b082b-518f-4832-84c5-6b295f89164a not found, creating new conversation for user 239
+[2026-01-07 21:46:32.001]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:46:43.605]               commit main_transaction_manager_sqla:31 DEBUG    - Commit was done. Main session.
+[2026-01-07 21:46:43.605] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:46:43.605]   _broadcast_message send_message:539 ERROR    - Failed to broadcast message via WebSocket: 'ConnectionManager' object has no attribute 'broadcast_to_conversation'
+[2026-01-07 21:46:43.605] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:46:43.605] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:46:43.606] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:46:43.611] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/2f4b082b-518f-4832-84c5-6b295f89164a/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:46:43.612] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:46:43.612] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:46:43.612] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:46:43.612] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:46:43.613]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:43.614] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:46:43.614]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:46:43.614]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:43.615]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:46:43.658] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:46:43.658] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:46:43.658] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:46:43.658] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:46:43.658] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:46:43.779] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:46:43.779] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:46:43.779] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:43.782] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:43.782] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:43.782] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:43.782] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:46:43.785]              execute send_message_unified:229 INFO     - Conversation a125fefb-6955-4867-ba00-6bfc3d58c56b not found, creating new conversation for user 239
+[2026-01-07 21:46:48.716]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:46:48.719] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:46:48.720] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:46:48.720] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:46:48.721] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:46:48.721] unhandled_exception_handler handlers:335 ERROR    - Unhandled exception: InternalError - (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('fe7e81ec-e29d-46df-858d-90ed6c38044b'), 'conversation_id': UUID('a125fefb-6955-4867-ba00-6bfc3d58c56b'), 'role': 'user', 'content': "What's my balance?", 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 46, 48, 718515, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85) (path=/api/v1/user/chat/conversations/a125fefb-6955-4867-ba00-6bfc3d58c56b/messages)
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InFailedSqlTransaction: current transaction is aborted, commands ignored until end of transaction block
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/starlette.py", line 68, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/auth/asgi_middleware.py", line 39, in __call__
+    return await self.app(scope, receive, send_wrapper)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 302, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 213, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/base.py", line 169, in auto_injected_func
+    return await func(*args, **kwargs, **solved)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/controllers/chat/router.py", line 266, in send_message
+    result = await orchestrator.execute(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 343, in execute
+    result = await self._handle_balance(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 2605, in _handle_balance
+    user_msg, agent_msg = await self._save_messages(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 1255, in _save_messages
+    await self._conversation_repo.add_message(user_message)
+  File "/home/ubuntu/anvil_backend/src/app/infrastructure/adapters/conversation_repository_sqla.py", line 155, in add_message
+    await self._session.execute(stmt)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2260, in _execute_internal
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+sqlalchemy.exc.InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('fe7e81ec-e29d-46df-858d-90ed6c38044b'), 'conversation_id': UUID('a125fefb-6955-4867-ba00-6bfc3d58c56b'), 'role': 'user', 'content': "What's my balance?", 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 46, 48, 718515, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
+[2026-01-07 21:46:48.725] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:46:48.725] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:46:48.725] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:46:48.726] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:46:48.726]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:48.727] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:46:48.727]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:46:48.727]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:48.728]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:46:48.796] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:46:48.796] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:46:48.796] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:46:48.796] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:46:48.796] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:46:48.977] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:46:48.977] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:46:48.977] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:48.980] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:48.980] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:48.980] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:48.980] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:46:48.984]              execute send_message_unified:229 INFO     - Conversation 941f61aa-edde-4876-b6a4-15dcf1d58c25 not found, creating new conversation for user 239
+[2026-01-07 21:46:54.654]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:46:54.681] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:46:54.681] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:46:54.681] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:46:54.682] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:46:54.682] unhandled_exception_handler handlers:335 ERROR    - Unhandled exception: InternalError - (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('217f30ca-d926-4d1e-a841-1f86b7a03f34'), 'conversation_id': UUID('941f61aa-edde-4876-b6a4-15dcf1d58c25'), 'role': 'user', 'content': 'Check my balance', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 46, 54, 680067, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85) (path=/api/v1/user/chat/conversations/941f61aa-edde-4876-b6a4-15dcf1d58c25/messages)
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InFailedSqlTransaction: current transaction is aborted, commands ignored until end of transaction block
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/starlette.py", line 68, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/auth/asgi_middleware.py", line 39, in __call__
+    return await self.app(scope, receive, send_wrapper)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 302, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 213, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/base.py", line 169, in auto_injected_func
+    return await func(*args, **kwargs, **solved)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/controllers/chat/router.py", line 266, in send_message
+    result = await orchestrator.execute(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 343, in execute
+    result = await self._handle_balance(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 2605, in _handle_balance
+    user_msg, agent_msg = await self._save_messages(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 1255, in _save_messages
+    await self._conversation_repo.add_message(user_message)
+  File "/home/ubuntu/anvil_backend/src/app/infrastructure/adapters/conversation_repository_sqla.py", line 155, in add_message
+    await self._session.execute(stmt)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2260, in _execute_internal
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+sqlalchemy.exc.InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('217f30ca-d926-4d1e-a841-1f86b7a03f34'), 'conversation_id': UUID('941f61aa-edde-4876-b6a4-15dcf1d58c25'), 'role': 'user', 'content': 'Check my balance', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 46, 54, 680067, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
+[2026-01-07 21:46:54.699] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:46:54.699] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:46:54.699] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:46:54.699] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:46:54.699]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:54.712] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:46:54.713]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:46:54.713]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:46:54.714]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:46:54.864] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:46:54.864] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:46:54.864] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:46:54.864] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:46:54.864] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:46:55.307] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:46:55.307] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:46:55.307] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:55.326] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:55.326] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:55.327] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:46:55.327] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:46:55.333]              execute send_message_unified:229 INFO     - Conversation bcd6a858-5f0c-4ac8-89f4-071d1a72e631 not found, creating new conversation for user 239
+[2026-01-07 21:47:02.157]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:47:02.187] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:47:02.188] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:47:02.188] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:47:02.189] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:47:02.189] unhandled_exception_handler handlers:335 ERROR    - Unhandled exception: InternalError - (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('149d350c-f4d6-4f23-9d57-cd657a2b9777'), 'conversation_id': UUID('bcd6a858-5f0c-4ac8-89f4-071d1a72e631'), 'role': 'user', 'content': 'My balance', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 47, 2, 186722, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85) (path=/api/v1/user/chat/conversations/bcd6a858-5f0c-4ac8-89f4-071d1a72e631/messages)
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InFailedSqlTransaction: current transaction is aborted, commands ignored until end of transaction block
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/starlette.py", line 68, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/auth/asgi_middleware.py", line 39, in __call__
+    return await self.app(scope, receive, send_wrapper)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 302, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 213, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/base.py", line 169, in auto_injected_func
+    return await func(*args, **kwargs, **solved)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/controllers/chat/router.py", line 266, in send_message
+    result = await orchestrator.execute(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 343, in execute
+    result = await self._handle_balance(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 2605, in _handle_balance
+    user_msg, agent_msg = await self._save_messages(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 1255, in _save_messages
+    await self._conversation_repo.add_message(user_message)
+  File "/home/ubuntu/anvil_backend/src/app/infrastructure/adapters/conversation_repository_sqla.py", line 155, in add_message
+    await self._session.execute(stmt)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2260, in _execute_internal
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+sqlalchemy.exc.InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('149d350c-f4d6-4f23-9d57-cd657a2b9777'), 'conversation_id': UUID('bcd6a858-5f0c-4ac8-89f4-071d1a72e631'), 'role': 'user', 'content': 'My balance', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 47, 2, 186722, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
+[2026-01-07 21:47:02.201] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:47:02.201] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:47:02.201] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:47:02.202] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:47:02.202]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:02.231] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:47:02.231]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:47:02.231]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:02.232]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:47:02.390] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:47:02.390] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:47:02.390] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:47:02.390] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:47:02.390] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:47:02.872] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:47:02.872] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:47:02.873] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:02.875] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:02.875] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:02.875] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:02.875] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:47:02.890]              execute send_message_unified:229 INFO     - Conversation 40eaa814-4403-4e9c-9273-f7fe56370d01 not found, creating new conversation for user 239
+[2026-01-07 21:47:08.608]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:47:08.611] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:47:08.612] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:47:08.612] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:47:08.612] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:47:08.613] unhandled_exception_handler handlers:335 ERROR    - Unhandled exception: InternalError - (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('278cc37f-6e32-4330-9fea-13c422b9245d'), 'conversation_id': UUID('40eaa814-4403-4e9c-9273-f7fe56370d01'), 'role': 'user', 'content': 'Show my balance', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 47, 8, 610589, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85) (path=/api/v1/user/chat/conversations/40eaa814-4403-4e9c-9273-f7fe56370d01/messages)
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InFailedSqlTransaction: current transaction is aborted, commands ignored until end of transaction block
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/starlette.py", line 68, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/auth/asgi_middleware.py", line 39, in __call__
+    return await self.app(scope, receive, send_wrapper)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 302, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 213, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/dishka/integrations/base.py", line 169, in auto_injected_func
+    return await func(*args, **kwargs, **solved)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/presentation/http/controllers/chat/router.py", line 266, in send_message
+    result = await orchestrator.execute(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 343, in execute
+    result = await self._handle_balance(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 2605, in _handle_balance
+    user_msg, agent_msg = await self._save_messages(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/src/app/application/chat/commands/send_message_unified.py", line 1255, in _save_messages
+    await self._conversation_repo.add_message(user_message)
+  File "/home/ubuntu/anvil_backend/src/app/infrastructure/adapters/conversation_repository_sqla.py", line 155, in add_message
+    await self._session.execute(stmt)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 463, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2260, in _execute_internal
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 594, in execute
+    result = self.await_(self._cursor.execute(query, params, **kw))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/ubuntu/anvil_backend/.venv/lib/python3.12/site-packages/psycopg/cursor_async.py", line 97, in execute
+    raise ex.with_traceback(None)
+sqlalchemy.exc.InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block
+[SQL: INSERT INTO messages (id, conversation_id, role, content, agent_type, created_at) VALUES (%(id)s::UUID, %(conversation_id)s::UUID, %(role)s, %(content)s::VARCHAR, %(agent_type)s, %(created_at)s::TIMESTAMP WITH TIME ZONE)]
+[parameters: {'id': UUID('278cc37f-6e32-4330-9fea-13c422b9245d'), 'conversation_id': UUID('40eaa814-4403-4e9c-9273-f7fe56370d01'), 'role': 'user', 'content': 'Show my balance', 'agent_type': None, 'created_at': datetime.datetime(2026, 1, 7, 21, 47, 8, 610589, tzinfo=datetime.timezone.utc)}]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
+[2026-01-07 21:47:08.633] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:47:08.634] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:47:08.634] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:47:08.634] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:47:08.634]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:08.635] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:47:08.635]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:47:08.635]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:08.636]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:47:08.804] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:47:08.804] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:47:08.804] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:47:08.804] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:47:08.804] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:47:09.256] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:47:09.257] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:47:09.257] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:09.259] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:09.259] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:09.284] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:09.284] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:47:09.287]              execute send_message_unified:229 INFO     - Conversation b937755d-81e3-47d8-8c60-f22c53bef3c7 not found, creating new conversation for user 239
+[2026-01-07 21:47:20.576]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:47:28.660]               commit main_transaction_manager_sqla:31 DEBUG    - Commit was done. Main session.
+[2026-01-07 21:47:28.661] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:47:28.661]   _broadcast_message send_message:539 ERROR    - Failed to broadcast message via WebSocket: 'ConnectionManager' object has no attribute 'broadcast_to_conversation'
+[2026-01-07 21:47:28.661] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:47:28.661] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:47:28.661] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:47:28.666] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/b937755d-81e3-47d8-8c60-f22c53bef3c7/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:47:28.667] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:47:28.668] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:47:28.688] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:47:28.688] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:47:28.688]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:28.689] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:47:28.689]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:47:28.690]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:28.691]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:47:28.824] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:47:28.824] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:47:28.824] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:47:28.824] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:47:28.836] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:47:29.271] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:47:29.272] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:47:29.272] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:29.282] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:29.282] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:29.282] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:29.282] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:47:29.285]              execute send_message_unified:229 INFO     - Conversation 4f3923ac-2503-4459-97b8-68de3374a067 not found, creating new conversation for user 239
+[2026-01-07 21:47:34.266]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+
+================================================================================
+CTO Framework: Intent Detection Verification
+================================================================================
+Total shortcuts: 9
+Conversation ID: a91072a2-851d-45d6-9259-c30377a419df
+================================================================================
+
+
+📋 Testing Shortcut: Lend (intent: lending)
+   Examples to test: 6
+   [1/6] Testing: 'Deposit USDC on Morpho'
+      ✅ Intent correct: lending
+      Content length: 1025 chars
+      Preview: 🔵 **USDC MORPHO VAULTS ON BASE**
+
+Top 3 vaults by APY (Morpho Protocol):
+
+━━━━━━...
+   [2/6] Testing: 'Show best lending vaults'
+      ✅ Intent correct: lending
+      Content length: 1025 chars
+      Preview: 🔵 **USDC MORPHO VAULTS ON BASE**
+
+Top 3 vaults by APY (Morpho Protocol):
+
+━━━━━━...
+   [3/6] Testing: 'Earn yield on my ETH'
+      ✅ Intent correct: lending
+      Content length: 1025 chars
+      Preview: 🔵 **USDC MORPHO VAULTS ON BASE**
+
+Top 3 vaults by APY (Morpho Protocol):
+
+━━━━━━...
+   [4/6] Testing: 'Best lending vaults'
+      ✅ Intent correct: lending
+      Content length: 1025 chars
+      Preview: 🔵 **USDC MORPHO VAULTS ON BASE**
+
+Top 3 vaults by APY (Morpho Protocol):
+
+━━━━━━...
+   [5/6] Testing: 'Lending vaults'
+      ✅ Intent correct: lending
+      Content length: 1025 chars
+      Preview: 🔵 **USDC MORPHO VAULTS ON BASE**
+
+Top 3 vaults by APY (Morpho Protocol):
+
+━━━━━━...
+   [6/6] Testing: 'Earn yield'
+      ✅ Intent correct: lending
+      Content length: 1025 chars
+      Preview: 🔵 **USDC MORPHO VAULTS ON BASE**
+
+Top 3 vaults by APY (Morpho Protocol):
+
+━━━━━━...
+
+📋 Testing Shortcut: Compare Rates (intent: money_market)
+   Examples to test: 3
+   [1/3] Testing: 'Compare Aave vs Compound'
+      ✅ Intent correct: money_market
+      Content length: 529 chars
+      Preview: 📊 **Money Market Comparison - USDC**
+
+Comparing Aave & Compound rates on BASE:
+
+...
+   [2/3] Testing: 'Best money market rates for USDC'
+      ✅ Intent correct: money_market
+      Content length: 529 chars
+      Preview: 📊 **Money Market Comparison - USDC**
+
+Comparing Aave & Compound rates on BASE:
+
+...
+   [3/3] Testing: 'Compare lending rates for ETH'
+      ✅ Intent correct: money_market
+      Content length: 529 chars
+      Preview: 📊 **Money Market Comparison - USDC**
+
+Comparing Aave & Compound rates on BASE:
+
+...
+
+📋 Testing Shortcut: Swap (intent: swap)
+   Examples to test: 3
+   [1/3] Testing: 'Swap 100 USDC for ETH'
+      ✅ Intent correct: swap
+      Content length: 67 chars
+      Preview: ⚠️ Error getting swap quote: too many values to unpack (expected 4)...
+   [2/3] Testing: 'Swap USDC from Ethereum to Base'
+      ✅ Intent correct: swap
+      Content length: 67 chars
+      Preview: ⚠️ Error getting swap quote: too many values to unpack (expected 4)...
+   [3/3] Testing: 'Best swap rate for ETH to USDC'
+      ✅ Intent correct: swap
+      Content length: 67 chars
+      Preview: ⚠️ Error getting swap quote: too many values to unpack (expected 4)...
+
+📋 Testing Shortcut: Portfolio (intent: portfolio)
+   Examples to test: 6
+   [1/6] Testing: 'Show my portfolio'
+      ❌ Exception: InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end o
+   [2/6] Testing: 'What tokens do I have?'
+      ❌ Intent mismatch: expected 'portfolio', got 'general_conversation'
+      Content preview: ('I\'m happy to help you with DeFi concepts.\n\nHowever, I don\'t have the abili...
+   [3/6] Testing: 'List my holdings'
+      ❌ Exception: InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end o
+   [4/6] Testing: 'What tokens do I own?'
+      ❌ Intent mismatch: expected 'portfolio', got 'general_conversation'
+      Content preview: ('It seems like you\'re looking to check your token holdings. To do that, you\'l...
+   [5/6] Testing: 'Show my holdings'
+      ❌ Exception: InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end o
+   [6/6] Testing: 'List my tokens'
+      ❌ Intent mismatch: expected 'portfolio', got 'general_conversation'
+      Content preview: ("It seems like you're interested in managing your cryptocurrency tokens, but I'...
+
+📋 Testing Shortcut: Balance (intent: balance)
+   Examples to test: 6
+   [1/6] Testing: 'What's my balance?'
+      ❌ Exception: InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end o
+   [2/6] Testing: 'Check my balance'
+      ❌ Exception: InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end o
+   [3/6] Testing: 'My balance'
+      ❌ Exception: InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end o
+   [4/6] Testing: 'Show my balance'
+      ❌ Exception: InternalError: (psycopg.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end o
+   [5/6] Testing: 'How much do I have?'
+      ❌ Intent mismatch: expected 'balance', got 'general_conversation'
+      Content preview: ("It seems like you're looking to check your balance, but I'm a DeFi education a...
+   [6/6] Testing: 'Show my USDC balance'
+WARNING  add_history_to_context is True, but no database has been assigned to   
+         the agent. History will not be added to the context.                   
+ERROR    Model authentication error from OpenAI API: OPENAI_API_KEY not set.    
+         Please set the OPENAI_API_KEY environment variable.                    
+ERROR    Error in Agent run: OPENAI_API_KEY not set. Please set the             
+         OPENAI_API_KEY environment variable.                                   
+[2026-01-07 21:47:34.840]               commit main_transaction_manager_sqla:31 DEBUG    - Commit was done. Main session.
+[2026-01-07 21:47:34.840] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:47:34.841]   _broadcast_message send_message:539 ERROR    - Failed to broadcast message via WebSocket: 'ConnectionManager' object has no attribute 'broadcast_to_conversation'
+[2026-01-07 21:47:34.841] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:47:34.841] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:47:34.841] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:47:34.863] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/4f3923ac-2503-4459-97b8-68de3374a067/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:47:34.876] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:47:34.876] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:47:34.876] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:47:34.876] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:47:34.877]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:34.878] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:47:34.878]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:47:34.878]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:34.879]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:47:35.032] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:47:35.032] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:47:35.032] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:47:35.032] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:47:35.032] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:47:35.513] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:47:35.513] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:47:35.513] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:35.547] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:35.547] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:35.547] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:35.547] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:47:35.550]              execute send_message_unified:229 INFO     - Conversation b4dee14e-3599-4f9a-9a74-3c8422869a80 not found, creating new conversation for user 239
+[2026-01-07 21:47:39.400]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:47:39.405] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:47:39.405] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:47:39.405] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:47:39.406] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:47:39.440] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/b4dee14e-3599-4f9a-9a74-3c8422869a80/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:47:39.441] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:47:39.441] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:47:39.441] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:47:39.441] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:47:39.442]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:39.443] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:47:39.443]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:47:39.443]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:39.460]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:47:39.639] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:47:39.639] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:47:39.639] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:47:39.639] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:47:39.639] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:47:40.085] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:47:40.086] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:47:40.086] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:40.101] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:40.101] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:40.101] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:40.101] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:47:40.116]              execute send_message_unified:229 INFO     - Conversation c173a9c9-9af5-4724-a1b5-605823313448 not found, creating new conversation for user 239
+[2026-01-07 21:47:45.178]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:47:45.197] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:47:45.210] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:47:45.210] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:47:45.211] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:47:45.228] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/c173a9c9-9af5-4724-a1b5-605823313448/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:47:45.229] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:47:45.229] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:47:45.230] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:47:45.242] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:47:45.242]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:45.243] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:47:45.243]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:47:45.244]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:45.244]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:47:45.401] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:47:45.401] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:47:45.402] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:47:45.402] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:47:45.402] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:47:45.898] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:47:45.898] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:47:45.898] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:45.901] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:45.901] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:45.913] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:45.913] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:47:45.916]              execute send_message_unified:229 INFO     - Conversation c93c8287-02ba-4fb3-b5d5-e55d7ef1b446 not found, creating new conversation for user 239
+[2026-01-07 21:47:50.058]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:47:53.902]               commit main_transaction_manager_sqla:31 DEBUG    - Commit was done. Main session.
+[2026-01-07 21:47:53.903] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:47:53.903]   _broadcast_message send_message:539 ERROR    - Failed to broadcast message via WebSocket: 'ConnectionManager' object has no attribute 'broadcast_to_conversation'
+[2026-01-07 21:47:53.903] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:47:53.903] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:47:53.904] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:47:53.925] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/c93c8287-02ba-4fb3-b5d5-e55d7ef1b446/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:47:53.926] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:47:53.934] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:47:53.934] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:47:53.934] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:47:53.935]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:53.936] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:47:53.936]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:47:53.936]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:53.937]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:47:54.079] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:47:54.079] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:47:54.079] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:47:54.079] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:47:54.079] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:47:54.563] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:47:54.563] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:47:54.564] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:54.578] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:54.579] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:54.579] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:54.579] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:47:54.590]              execute send_message_unified:229 INFO     - Conversation 4c56a9ea-e2ac-4450-8c84-bf35a099802a not found, creating new conversation for user 239
+[2026-01-07 21:47:58.453]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:47:58.458] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:47:58.459] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:47:58.459] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:47:58.459] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:47:58.493] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/4c56a9ea-e2ac-4450-8c84-bf35a099802a/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:47:58.494] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:47:58.494] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:47:58.494] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:47:58.494] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:47:58.494]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:58.495] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:47:58.495]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:47:58.496]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:47:58.513]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:47:58.678] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:47:58.678] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:47:58.678] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:47:58.678] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:47:58.678] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:47:59.121] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:47:59.121] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:47:59.121] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:59.124] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:59.124] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:59.124] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:47:59.124] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:47:59.147]              execute send_message_unified:229 INFO     - Conversation ecd8fe0f-4f70-4a2a-8fef-63a6f6e73bc1 not found, creating new conversation for user 239
+[2026-01-07 21:48:03.692]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:48:03.697] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:48:03.698] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:48:03.698] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:48:03.698] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:48:03.715] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/ecd8fe0f-4f70-4a2a-8fef-63a6f6e73bc1/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:48:03.717] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:48:03.717] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:48:03.717] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:48:03.717] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:48:03.717]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:48:03.718] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:48:03.718]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:48:03.719]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:48:03.736]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:48:03.893] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:48:03.894] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:48:03.894] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:48:03.894] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:48:03.894] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:48:04.337] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:48:04.338] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:48:04.338] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:04.340] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:04.341] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:04.341] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:04.341] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:48:04.356]              execute send_message_unified:229 INFO     - Conversation ba140702-866f-4afd-a10c-c5e44848fad5 not found, creating new conversation for user 239
+[2026-01-07 21:48:08.805]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:48:08.810] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:48:08.810] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:48:08.810] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:48:08.811] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:48:08.844] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/ba140702-866f-4afd-a10c-c5e44848fad5/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:48:08.845] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:48:08.846] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:48:08.846] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:48:08.846] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:48:08.846]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:48:08.847] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:48:08.847]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:48:08.847]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:48:08.856]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:48:09.009] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:48:09.010] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:48:09.010] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:48:09.010] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:48:09.010] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:48:09.473] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:48:09.473] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:48:09.473] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:09.483] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:09.484] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:09.484] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:09.484] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:48:09.499]              execute send_message_unified:229 INFO     - Conversation 2c20989e-7ac9-4c58-b988-77153ccb35e5 not found, creating new conversation for user 239
+[2026-01-07 21:48:15.671]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:48:15.676] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:48:15.676] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:48:15.676] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:48:15.677] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:48:15.711] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/2c20989e-7ac9-4c58-b988-77153ccb35e5/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:48:15.712] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:48:15.712] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:48:15.712] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:48:15.712] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:48:15.712]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:48:15.714] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:48:15.714]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:48:15.714]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:48:15.727]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:48:15.872] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:48:15.872] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:48:15.873] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:48:15.873] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:48:15.873] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:48:16.324] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:48:16.324] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:48:16.337] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:16.339] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:16.339] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:16.339] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:16.339] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:48:16.365]              execute send_message_unified:229 INFO     - Conversation 68ed1c69-01fe-43e1-b58f-da9a28e90862 not found, creating new conversation for user 239
+[2026-01-07 21:48:25.657]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
+[2026-01-07 21:48:25.673] get_main_async_session provider:73 DEBUG    - Closing async session.
+[2026-01-07 21:48:25.682] get_main_async_session provider:74 DEBUG    - Main async session closed.
+[2026-01-07 21:48:25.682] get_auth_async_session provider:84 DEBUG    - Closing async session.
+[2026-01-07 21:48:25.683] get_auth_async_session provider:85 DEBUG    - Async session closed for Auth.
+[2026-01-07 21:48:25.700] _send_single_request _client:1740 INFO     - HTTP Request: POST http://test/api/v1/user/chat/conversations/68ed1c69-01fe-43e1-b58f-da9a28e90862/messages "HTTP/1.1 201 Created"
+[2026-01-07 21:48:25.701] get_auth_async_session provider:80 DEBUG    - Starting Auth async session...
+[2026-01-07 21:48:25.702] get_auth_async_session provider:82 DEBUG    - Async session started for Auth.
+[2026-01-07 21:48:25.702] get_main_async_session provider:69 DEBUG    - Starting Main async session...
+[2026-01-07 21:48:25.714] get_main_async_session provider:71 DEBUG    - Main async session started.
+[2026-01-07 21:48:25.714]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:48:25.715] provide_embedding_service graph:143 INFO     - DeepInfra embedding service initialized with API key from config
+[2026-01-07 21:48:25.716]             __init__ deepinfra_embedding_service:72 INFO     - DeepInfra Embedding Service initialized: model=BAAI/bge-m3, dims=1024
+[2026-01-07 21:48:25.716]     load_full_config loader:73 INFO     - Reading config for environment: 'local'
+[2026-01-07 21:48:25.717]   provide_llm_client agent_squad_infrastructure:132 INFO     - LLM client configured: using unified AgentLLMGateway (use_unified_gateway=true)
+[2026-01-07 21:48:25.895] register_with_gateway agent_factory:130 INFO     - Registering agents with Agent Gateway...
+[2026-01-07 21:48:25.895] register_with_gateway agent_factory:135 INFO     - Registered SwapAgent for intents: ['trade_swap']
+[2026-01-07 21:48:25.895] register_with_gateway agent_factory:135 INFO     - Registered TradingAgent for intents: ['trade_perp_open', 'trade_perp_close']
+[2026-01-07 21:48:25.896] register_with_gateway agent_factory:135 INFO     - Registered PortfolioAgent for intents: ['portfolio_view']
+[2026-01-07 21:48:25.896] register_with_gateway agent_factory:137 INFO     - Successfully registered 3 agents with gateway
+[2026-01-07 21:48:26.339] get_authenticated_user_id service:87 DEBUG    - Get authenticated user ID: started.
+[2026-01-07 21:48:26.339] _load_current_session service:169 DEBUG    - Load current auth session: started. Auth session id: unknown.
+[2026-01-07 21:48:26.340] _load_current_session service:183 DEBUG    - Load current auth session: in progress. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:26.358] _load_current_session service:204 DEBUG    - Load current auth session: done. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:26.358] _validate_and_extend_session service:217 DEBUG    - Validate and extend auth session: started. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:26.358] _validate_and_extend_session service:231 DEBUG    - Validate and extend auth session: validated without extension. Auth session id: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI.
+[2026-01-07 21:48:26.358] get_authenticated_user_id service:92 DEBUG    - Get authenticated user ID: done. Auth session ID: W9JYlri-BdLnZP9o5v0hahFLPvhU3e8UxHf_B2DQ2vI. User ID: 239.
+[2026-01-07 21:48:26.369]              execute send_message_unified:229 INFO     - Conversation ea12e241-177a-43ea-92ba-a2039105fbb3 not found, creating new conversation for user 239
+[2026-01-07 21:48:30.175]        detect_intent hybrid_intent_detection_adapter:82 WARNING  - LLM intent detection failed: Failed to parse LLM response: Expecting property name enclosed in double quotes: line 1 column 2 (char 1), using keyword fallback
