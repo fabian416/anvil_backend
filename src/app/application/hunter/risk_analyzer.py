@@ -9,6 +9,7 @@ Comprehensive risk scoring for cryptocurrency tokens using 4 factors:
 Based on Hunter AI Bot's risk assessment module.
 """
 
+import logging
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -16,6 +17,8 @@ from app.domain.common.datetime_utils import utc_now
 import numpy as np
 
 from app.application.hunter.price_data_service import PriceDataService
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -184,9 +187,30 @@ class RiskAnalyzer:
             Volatility risk score
         """
         # Fetch historical prices
-        prices = await self.price_service.fetch_historical_prices(
-            token_symbol, days=self.config.volatility_window
-        )
+        try:
+            prices = await self.price_service.fetch_historical_prices(
+                token_symbol, days=self.config.volatility_window
+            )
+        except Exception as e:
+            logger.warning(f"Error fetching prices for {token_symbol}: {e}")
+            # Return default low risk score if data unavailable
+            return RiskScore(
+                factor="volatility",
+                score=15.0,  # Low risk default
+                level="low",
+                details={"error": "Data unavailable", "fallback": True},
+                timestamp=utc_now(),
+            )
+
+        if not prices or len(prices) < 2:
+            # Not enough data
+            return RiskScore(
+                factor="volatility",
+                score=20.0,  # Low-medium risk default
+                level="low",
+                details={"error": "Insufficient data", "data_points": len(prices) if prices else 0},
+                timestamp=utc_now(),
+            )
 
         closes = np.array([p.close for p in prices])
         returns = np.diff(closes) / closes[:-1]
@@ -242,9 +266,30 @@ class RiskAnalyzer:
             Liquidity risk score
         """
         # Fetch recent price data
-        prices = await self.price_service.fetch_historical_prices(
-            token_symbol, days=self.config.liquidity_window
-        )
+        try:
+            prices = await self.price_service.fetch_historical_prices(
+                token_symbol, days=self.config.liquidity_window
+            )
+        except Exception as e:
+            logger.warning(f"Error fetching prices for {token_symbol}: {e}")
+            # Return default low risk score if data unavailable
+            return RiskScore(
+                factor="liquidity",
+                score=20.0,  # Low-medium risk default
+                level="low",
+                details={"error": "Data unavailable", "fallback": True},
+                timestamp=utc_now(),
+            )
+
+        if not prices or len(prices) < 2:
+            # Not enough data
+            return RiskScore(
+                factor="liquidity",
+                score=25.0,  # Medium risk default
+                level="medium",
+                details={"error": "Insufficient data", "data_points": len(prices) if prices else 0},
+                timestamp=utc_now(),
+            )
 
         volumes = np.array([p.volume for p in prices])
         avg_volume = np.mean(volumes)
@@ -362,22 +407,57 @@ class RiskAnalyzer:
             Correlation risk score
         """
         # Fetch price data for token and benchmark
-        token_prices = await self.price_service.fetch_historical_prices(
-            token_symbol, days=self.config.correlation_window
-        )
-        btc_prices = await self.price_service.fetch_historical_prices(
-            self.config.market_benchmark, days=self.config.correlation_window
-        )
+        try:
+            token_prices = await self.price_service.fetch_historical_prices(
+                token_symbol, days=self.config.correlation_window
+            )
+            btc_prices = await self.price_service.fetch_historical_prices(
+                self.config.market_benchmark, days=self.config.correlation_window
+            )
+        except Exception as e:
+            logger.warning(f"Error fetching prices for correlation analysis: {e}")
+            # Return default moderate correlation if data unavailable
+            return RiskScore(
+                factor="correlation",
+                score=50.0,  # Moderate correlation default
+                level="medium",
+                details={"error": "Data unavailable", "fallback": True, "correlation_with_btc": 0.5},
+                timestamp=utc_now(),
+            )
+
+        if not token_prices or not btc_prices or len(token_prices) < 2 or len(btc_prices) < 2:
+            # Not enough data
+            return RiskScore(
+                factor="correlation",
+                score=50.0,  # Moderate correlation default
+                level="medium",
+                details={"error": "Insufficient data", "fallback": True, "correlation_with_btc": 0.5},
+                timestamp=utc_now(),
+            )
 
         # Calculate returns
         token_closes = np.array([p.close for p in token_prices])
         btc_closes = np.array([p.close for p in btc_prices])
 
+        # Ensure both arrays have the same length
+        min_length = min(len(token_closes), len(btc_closes))
+        token_closes = token_closes[:min_length]
+        btc_closes = btc_closes[:min_length]
+
         token_returns = np.diff(token_closes) / token_closes[:-1]
         btc_returns = np.diff(btc_closes) / btc_closes[:-1]
 
+        # Ensure return arrays have same length
+        min_returns_length = min(len(token_returns), len(btc_returns))
+        token_returns = token_returns[:min_returns_length]
+        btc_returns = btc_returns[:min_returns_length]
+
         # Calculate correlation
-        correlation = np.corrcoef(token_returns, btc_returns)[0, 1]
+        if len(token_returns) > 1 and len(btc_returns) > 1:
+            correlation = np.corrcoef(token_returns, btc_returns)[0, 1]
+        else:
+            # Fallback if not enough data
+            correlation = 0.5  # Default moderate correlation
 
         # Score calculation (0-100)
         # High correlation = High systemic risk

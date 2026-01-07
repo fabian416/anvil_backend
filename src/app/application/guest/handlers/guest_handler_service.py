@@ -636,14 +636,15 @@ class GuestHandlerService:
             return self._fallback_response(ChatIntent.HUNTER_PRICE_PREDICTION, language)
 
     async def _handle_risk_signals(
-        self, content: str, language: str
+        self, content: str, language: str, context: str = ""
     ) -> dict[str, Any]:
         """Handle market risk signals."""
-        token = self._extract_token(content) or "ETH"
+        # Extract token from content, using context if token not found in current message
+        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
 
         try:
             analyzer = RiskAnalyzer()
-            signals = await analyzer.analyze_market_risk(token)
+            assessment = await analyzer.analyze_comprehensive_risk(token)
 
             # Translations for risk signals
             translations = {
@@ -687,18 +688,19 @@ class GuestHandlerService:
             t = translations.get(language, translations["en"])
 
             response = f"{t['title']}\n\n"
-            response += f"{t['overall_risk']} {signals.risk_level.upper()}\n"
-            response += f"{t['risk_score']} {signals.risk_score}/100\n\n"
+            response += f"{t['overall_risk']} {assessment.overall_risk_level.upper()}\n"
+            response += f"{t['risk_score']} {assessment.overall_risk_score:.1f}/100\n\n"
 
             response += f"{t['risk_factors']}\n"
-            for factor in signals.factors[:5]:
-                emoji = "🔴" if factor.severity == "high" else "🟡" if factor.severity == "medium" else "🟢"
-                response += f"- {emoji} {factor.name}: {factor.description}\n"
+            # Display risk factors from assessment
+            for factor_name, risk_score in assessment.risk_factors.items():
+                emoji = "🔴" if risk_score.level in ["high", "extreme"] else "🟡" if risk_score.level == "medium" else "🟢"
+                factor_display = factor_name.replace("_", " ").title()
+                response += f"- {emoji} {factor_display}: {risk_score.level.upper()} risk (score: {risk_score.score:.1f}/100)\n"
 
-            if signals.whale_activity:
-                response += f"\n{t['whale_activity']}\n"
-                response += f"- {t['large_transfers']} {signals.whale_activity.transfer_count}\n"
-                response += f"- {t['net_flow']} ${signals.whale_activity.net_flow:,.0f}\n"
+            # Add recommendation
+            if assessment.recommendation:
+                response += f"\n**Recommendation:** {assessment.recommendation}\n"
 
             response += self._get_registration_cta(language)
 
@@ -706,15 +708,16 @@ class GuestHandlerService:
                 "content": response,
                 "enrichment": {
                     "token": token,
-                    "risk_level": signals.risk_level,
-                    "risk_score": signals.risk_score,
-                    "factors": [f.name for f in signals.factors],
+                    "overall_risk_score": assessment.overall_risk_score,
+                    "risk_level": assessment.overall_risk_level,
+                    "risk_factors": {k: v.to_dict() for k, v in assessment.risk_factors.items()},
+                    "recommendation": assessment.recommendation,
                     "hunter_tool": "risk_analyzer",
                 },
                 "requires_registration": False,
             }
         except Exception as e:
-            logger.warning(f"Risk signals error: {e}")
+            logger.error(f"Risk signals error for token {token}: {e}", exc_info=True)
             return self._fallback_response(ChatIntent.HUNTER_RISK_SIGNALS, language)
 
     async def _handle_trading_signals(
