@@ -12,10 +12,106 @@ Supports: English (en), Spanish (es), Portuguese (pt), Mandarin (zh).
 
 GUEST_REGISTRATION_MESSAGES: dict[str, dict[str, str]] = {
     "portfolio_access": {
-        "en": "Create a free account to view your portfolio and track your DeFi positions.",
-        "es": "Crea una cuenta gratuita para ver tu portafolio y rastrear tus posiciones DeFi.",
-        "pt": "Crie uma conta gratuita para ver seu portfólio e rastrear suas posições DeFi.",
-        "zh": "创建免费账户以查看您的投资组合并跟踪您的 DeFi 头寸。",
+        "en": """💼 **Unlock Your Complete Portfolio Dashboard**
+
+Track all your DeFi positions in one place! With a free account, you'll get:
+
+✨ **Real-time Portfolio Tracking**
+• View all your assets across multiple chains
+• Monitor your total portfolio value
+• Track performance over time
+
+📊 **Advanced Analytics**
+• Asset allocation breakdown
+• Profit/loss analysis
+• Risk exposure metrics
+
+🔔 **Smart Alerts**
+• Price movement notifications
+• Liquidation risk warnings
+• Yield opportunity alerts
+
+🎯 **AI-Powered Insights**
+• Portfolio optimization suggestions
+• Rebalancing recommendations
+• Tax optimization strategies
+
+**It's free and takes less than 30 seconds to sign up!**""",
+        "es": """💼 **Desbloquea Tu Panel de Portafolio Completo**
+
+¡Rastrea todas tus posiciones DeFi en un solo lugar! Con una cuenta gratuita, obtendrás:
+
+✨ **Seguimiento de Portafolio en Tiempo Real**
+• Ver todos tus activos en múltiples cadenas
+• Monitorear el valor total de tu portafolio
+• Rastrear el rendimiento a lo largo del tiempo
+
+📊 **Análisis Avanzados**
+• Desglose de asignación de activos
+• Análisis de ganancias/pérdidas
+• Métricas de exposición al riesgo
+
+🔔 **Alertas Inteligentes**
+• Notificaciones de movimientos de precios
+• Advertencias de riesgo de liquidación
+• Alertas de oportunidades de rendimiento
+
+🎯 **Insights Impulsados por IA**
+• Sugerencias de optimización de portafolio
+• Recomendaciones de reequilibrio
+• Estrategias de optimización fiscal
+
+**¡Es gratis y toma menos de 30 segundos registrarse!**""",
+        "pt": """💼 **Desbloqueie Seu Painel Completo de Portfólio**
+
+Rastreie todas as suas posições DeFi em um só lugar! Com uma conta gratuita, você terá:
+
+✨ **Rastreamento de Portfólio em Tempo Real**
+• Ver todos os seus ativos em múltiplas redes
+• Monitorar o valor total do seu portfólio
+• Acompanhar o desempenho ao longo do tempo
+
+📊 **Análises Avançadas**
+• Divisão de alocação de ativos
+• Análise de lucro/perda
+• Métricas de exposição ao risco
+
+🔔 **Alertas Inteligentes**
+• Notificações de movimentos de preços
+• Avisos de risco de liquidação
+• Alertas de oportunidades de rendimento
+
+🎯 **Insights Impulsionados por IA**
+• Sugestões de otimização de portfólio
+• Recomendações de rebalanceamento
+• Estratégias de otimização fiscal
+
+**É grátis e leva menos de 30 segundos para se cadastrar!**""",
+        "zh": """💼 **解锁您的完整投资组合仪表板**
+
+在一个地方跟踪您所有的 DeFi 头寸！使用免费账户，您将获得：
+
+✨ **实时投资组合跟踪**
+• 查看跨多条链的所有资产
+• 监控您的总投资组合价值
+• 跟踪长期表现
+
+📊 **高级分析**
+• 资产配置细分
+• 盈亏分析
+• 风险敞口指标
+
+🔔 **智能警报**
+• 价格变动通知
+• 清算风险警告
+• 收益机会提醒
+
+🎯 **AI 驱动的洞察**
+• 投资组合优化建议
+• 再平衡推荐
+• 税务优化策略
+
+**免费注册，只需不到 30 秒！**""",
     },
     "wallet_access": {
         "en": "🔐 **Wallet Access Required**\n\nTo view your balance and wallet holdings, you need to create an account and connect your wallet.\n\nSign up to:\n• View real-time balances\n• Track your holdings\n• Monitor your positions",
