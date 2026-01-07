@@ -1075,6 +1075,7 @@ class GuestHandlerService:
             t = translations.get(language, translations["en"])
 
             response = f"{t['title']}\n\n"
+            response += f"{t['demo_note']}\n\n"
 
             if not opportunities:
                 response += f"{t['no_opportunities']}\n\n"
