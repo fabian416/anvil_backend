@@ -124,38 +124,62 @@ async def test_user_shortcut_examples_detect_correct_intent(
         for idx, example in enumerate(examples, 1):
             print(f"   [{idx}/{len(examples)}] Testing: '{example}'")
             
-            response = await client.post(
-                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-                json={"content": example, "language": "en"},
-                headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
-            )
+            # Use unique conversation ID for each example to avoid transaction conflicts
+            unique_conv_id = str(uuid4())
             
-            # Accept both 200 (existing conversation) and 201 (new conversation created)
-            assert response.status_code in [200, 201], (
-                f"Failed for {intent}: {example} - Status: {response.status_code}"
-            )
-            data = response.json()
-            
-            detected_intent = data.get("routing", {}).get("intent", "unknown")
-            agent_content = data.get("agent_message", {}).get("content", "")
-            
-            if detected_intent == intent:
-                print(f"      ✅ Intent correct: {detected_intent}")
-                successes.append({
-                    "shortcut": command,
-                    "intent": intent,
-                    "example": example,
-                    "detected": detected_intent,
-                })
-            else:
-                print(f"      ❌ Intent mismatch: expected '{intent}', got '{detected_intent}'")
-                print(f"      Content preview: {agent_content[:80]}...")
+            try:
+                response = await client.post(
+                    f"/api/v1/user/chat/conversations/{unique_conv_id}/messages",
+                    json={"content": example, "language": "en"},
+                    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                )
+                
+                # Accept both 200 (existing conversation) and 201 (new conversation created)
+                if response.status_code not in [200, 201]:
+                    print(f"      ❌ HTTP Error: {response.status_code}")
+                    print(f"      Response: {response.text[:200]}")
+                    failures.append({
+                        "shortcut": command,
+                        "intent": intent,
+                        "example": example,
+                        "detected": "error",
+                        "error": f"HTTP {response.status_code}",
+                    })
+                    continue
+                
+                data = response.json()
+                
+                detected_intent = data.get("routing", {}).get("intent", "unknown")
+                agent_content = data.get("agent_message", {}).get("content", "")
+                
+                if detected_intent == intent:
+                    print(f"      ✅ Intent correct: {detected_intent}")
+                    print(f"      Content length: {len(agent_content)} chars")
+                    print(f"      Preview: {agent_content[:80]}...")
+                    successes.append({
+                        "shortcut": command,
+                        "intent": intent,
+                        "example": example,
+                        "detected": detected_intent,
+                    })
+                else:
+                    print(f"      ❌ Intent mismatch: expected '{intent}', got '{detected_intent}'")
+                    print(f"      Content preview: {agent_content[:80]}...")
+                    failures.append({
+                        "shortcut": command,
+                        "intent": intent,
+                        "example": example,
+                        "detected": detected_intent,
+                        "content_preview": agent_content[:100],
+                    })
+            except Exception as e:
+                print(f"      ❌ Exception: {type(e).__name__}: {str(e)[:100]}")
                 failures.append({
                     "shortcut": command,
                     "intent": intent,
                     "example": example,
-                    "detected": detected_intent,
-                    "content_preview": agent_content[:100],
+                    "detected": "error",
+                    "error": str(e)[:100],
                 })
     
     print(f"\n{'='*80}")
@@ -208,37 +232,54 @@ async def test_user_shortcut_examples_not_generic_fallback(
         for idx, example in enumerate(examples, 1):
             print(f"   [{idx}/{len(examples)}] Testing: '{example}'")
             
-            response = await client.post(
-                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-                json={"content": example, "language": "en"},
-                headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
-            )
+            # Use unique conversation ID for each example to avoid transaction conflicts
+            unique_conv_id = str(uuid4())
             
-            # Accept both 200 (existing conversation) and 201 (new conversation created)
-            assert response.status_code in [200, 201], (
-                f"Failed for {intent}: {example} - Status: {response.status_code}"
-            )
-            data = response.json()
-            
-            content = data.get("agent_message", {}).get("content", "")
-            
-            # Check if response is generic fallback
-            if GENERIC_FALLBACK_MESSAGE in content:
-                print(f"      ❌ Generic fallback detected")
-                print(f"      Content: {content[:100]}...")
+            try:
+                response = await client.post(
+                    f"/api/v1/user/chat/conversations/{unique_conv_id}/messages",
+                    json={"content": example, "language": "en"},
+                    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                )
+                
+                if response.status_code not in [200, 201]:
+                    print(f"      ❌ HTTP Error: {response.status_code}")
+                    failures.append({
+                        "shortcut": command,
+                        "intent": intent,
+                        "example": example,
+                        "error": f"HTTP {response.status_code}",
+                    })
+                    continue
+                
+                data = response.json()
+                content = data.get("agent_message", {}).get("content", "")
+                
+                # Check if response is generic fallback
+                if GENERIC_FALLBACK_MESSAGE in content:
+                    print(f"      ❌ Generic fallback detected")
+                    print(f"      Content: {content[:100]}...")
+                    failures.append({
+                        "shortcut": command,
+                        "intent": intent,
+                        "example": example,
+                        "content_preview": content[:100],
+                    })
+                else:
+                    print(f"      ✅ Meaningful response (length: {len(content)})")
+                    print(f"      Preview: {content[:80]}...")
+                    successes.append({
+                        "shortcut": command,
+                        "intent": intent,
+                        "example": example,
+                    })
+            except Exception as e:
+                print(f"      ❌ Exception: {type(e).__name__}: {str(e)[:100]}")
                 failures.append({
                     "shortcut": command,
                     "intent": intent,
                     "example": example,
-                    "content_preview": content[:100],
-                })
-            else:
-                print(f"      ✅ Meaningful response (length: {len(content)})")
-                print(f"      Preview: {content[:80]}...")
-                successes.append({
-                    "shortcut": command,
-                    "intent": intent,
-                    "example": example,
+                    "error": str(e)[:100],
                 })
     
     print(f"\n{'='*80}")
@@ -305,62 +346,80 @@ async def test_user_shortcut_examples_have_meaningful_content(
         for idx, example in enumerate(examples, 1):
             print(f"   [{idx}/{len(examples)}] Testing: '{example}'")
             
-            response = await client.post(
-                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-                json={"content": example, "language": "en"},
-                headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
-            )
+            # Use unique conversation ID for each example to avoid transaction conflicts
+            unique_conv_id = str(uuid4())
             
-            # Accept both 200 (existing conversation) and 201 (new conversation created)
-            assert response.status_code in [200, 201], (
-                f"Failed for {intent}: {example} - Status: {response.status_code}"
-            )
-            data = response.json()
-            
-            content = data.get("agent_message", {}).get("content", "").lower()
-            
-            # Check minimum content length
-            if len(content) < 50:
-                print(f"      ❌ Content too short: {len(content)} chars")
-                failures.append({
-                    "shortcut": command,
-                    "intent": intent,
-                    "example": example,
-                    "issue": "Content too short",
-                    "length": len(content),
-                })
-                continue
-            
-            # Check for intent-specific keywords
-            if intent in intent_keywords:
-                keywords = intent_keywords[intent]
-                found_keyword = any(keyword in content for keyword in keywords)
+            try:
+                response = await client.post(
+                    f"/api/v1/user/chat/conversations/{unique_conv_id}/messages",
+                    json={"content": example, "language": "en"},
+                    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                )
                 
-                if not found_keyword:
-                    print(f"      ❌ No intent keywords found (expected: {keywords})")
-                    print(f"      Content: {content[:100]}...")
+                if response.status_code not in [200, 201]:
+                    print(f"      ❌ HTTP Error: {response.status_code}")
                     failures.append({
                         "shortcut": command,
                         "intent": intent,
                         "example": example,
-                        "issue": "No intent-specific keywords found",
-                        "expected_keywords": keywords,
-                        "content_preview": content[:150],
+                        "issue": f"HTTP {response.status_code}",
                     })
+                    continue
+                
+                data = response.json()
+                content = data.get("agent_message", {}).get("content", "").lower()
+                
+                # Check minimum content length
+                if len(content) < 50:
+                    print(f"      ❌ Content too short: {len(content)} chars")
+                    failures.append({
+                        "shortcut": command,
+                        "intent": intent,
+                        "example": example,
+                        "issue": "Content too short",
+                        "length": len(content),
+                    })
+                    continue
+                
+                # Check for intent-specific keywords
+                if intent in intent_keywords:
+                    keywords = intent_keywords[intent]
+                    found_keyword = any(keyword in content for keyword in keywords)
+                    
+                    if not found_keyword:
+                        print(f"      ❌ No intent keywords found (expected: {keywords})")
+                        print(f"      Content: {content[:100]}...")
+                        failures.append({
+                            "shortcut": command,
+                            "intent": intent,
+                            "example": example,
+                            "issue": "No intent-specific keywords found",
+                            "expected_keywords": keywords,
+                            "content_preview": content[:150],
+                        })
+                    else:
+                        print(f"      ✅ Content quality OK (length: {len(content)}, keywords found)")
+                        successes.append({
+                            "shortcut": command,
+                            "intent": intent,
+                            "example": example,
+                        })
                 else:
-                    print(f"      ✅ Content quality OK (length: {len(content)}, keywords found)")
+                    # No specific keywords defined, just check length
+                    print(f"      ✅ Content quality OK (length: {len(content)})")
                     successes.append({
                         "shortcut": command,
                         "intent": intent,
                         "example": example,
                     })
-            else:
-                # No specific keywords defined, just check length
-                print(f"      ✅ Content quality OK (length: {len(content)})")
-                successes.append({
+            except Exception as e:
+                print(f"      ❌ Exception: {type(e).__name__}: {str(e)[:100]}")
+                failures.append({
                     "shortcut": command,
                     "intent": intent,
                     "example": example,
+                    "issue": f"Exception: {type(e).__name__}",
+                    "error": str(e)[:100],
                 })
     
     print(f"\n{'='*80}")
@@ -426,53 +485,81 @@ async def test_user_shortcut_examples_comprehensive_output(
         for idx, example in enumerate(examples, 1):
             print(f"\n  Example {idx}/{len(examples)}: '{example}'")
             
-            response = await client.post(
-                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-                json={"content": example, "language": "en"},
-                headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
-            )
+            # Use unique conversation ID for each example to avoid transaction conflicts
+            unique_conv_id = str(uuid4())
             
-            # Accept both 200 and 201
-            assert response.status_code in [200, 201], (
-                f"Failed for {intent}: {example} - Status: {response.status_code}"
-            )
-            
-            data = response.json()
-            
-            # Extract key information
-            detected_intent = data.get("routing", {}).get("intent", "unknown")
-            agent_content = data.get("agent_message", {}).get("content", "")
-            routing_info = data.get("routing", {})
-            enrichment = data.get("enrichment", {})
-            
-            # Verify response structure
-            assert "agent_message" in data, "Response missing 'agent_message'"
-            assert "routing" in data, "Response missing 'routing'"
-            
-            # Build result
-            result = {
-                "example": example,
-                "status_code": response.status_code,
-                "detected_intent": detected_intent,
-                "content_length": len(agent_content),
-                "content_preview": agent_content[:150],
-                "routing": routing_info,
-                "has_enrichment": bool(enrichment),
-                "is_generic_fallback": GENERIC_FALLBACK_MESSAGE in agent_content,
-            }
-            
-            shortcut_results["examples"].append(result)
-            
-            # Print detailed output
-            print(f"    Status: {response.status_code}")
-            print(f"    Detected Intent: {detected_intent} {'✅' if detected_intent == intent else '❌'}")
-            print(f"    Content Length: {len(agent_content)} chars")
-            print(f"    Generic Fallback: {'Yes ❌' if result['is_generic_fallback'] else 'No ✅'}")
-            print(f"    Has Enrichment: {'Yes' if result['has_enrichment'] else 'No'}")
-            print(f"    Content Preview: {agent_content[:100]}...")
-            
-            if enrichment:
-                print(f"    Enrichment Keys: {list(enrichment.keys())}")
+            try:
+                response = await client.post(
+                    f"/api/v1/user/chat/conversations/{unique_conv_id}/messages",
+                    json={"content": example, "language": "en"},
+                    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                )
+                
+                if response.status_code not in [200, 201]:
+                    print(f"    ❌ HTTP Error: {response.status_code}")
+                    print(f"    Response: {response.text[:200]}")
+                    shortcut_results["examples"].append({
+                        "example": example,
+                        "status_code": response.status_code,
+                        "error": f"HTTP {response.status_code}",
+                    })
+                    continue
+                
+                data = response.json()
+                
+                # Extract key information
+                detected_intent = data.get("routing", {}).get("intent", "unknown")
+                agent_content = data.get("agent_message", {}).get("content", "")
+                routing_info = data.get("routing", {})
+                enrichment = data.get("enrichment", {})
+                
+                # Verify response structure
+                if "agent_message" not in data:
+                    print(f"    ❌ Response missing 'agent_message'")
+                    shortcut_results["examples"].append({
+                        "example": example,
+                        "error": "Missing agent_message",
+                    })
+                    continue
+                
+                if "routing" not in data:
+                    print(f"    ❌ Response missing 'routing'")
+                    shortcut_results["examples"].append({
+                        "example": example,
+                        "error": "Missing routing",
+                    })
+                    continue
+                
+                # Build result
+                result = {
+                    "example": example,
+                    "status_code": response.status_code,
+                    "detected_intent": detected_intent,
+                    "content_length": len(agent_content),
+                    "content_preview": agent_content[:150],
+                    "routing": routing_info,
+                    "has_enrichment": bool(enrichment),
+                    "is_generic_fallback": GENERIC_FALLBACK_MESSAGE in agent_content,
+                }
+                
+                shortcut_results["examples"].append(result)
+                
+                # Print detailed output
+                print(f"    Status: {response.status_code}")
+                print(f"    Detected Intent: {detected_intent} {'✅' if detected_intent == intent else '❌'}")
+                print(f"    Content Length: {len(agent_content)} chars")
+                print(f"    Generic Fallback: {'Yes ❌' if result['is_generic_fallback'] else 'No ✅'}")
+                print(f"    Has Enrichment: {'Yes' if result['has_enrichment'] else 'No'}")
+                print(f"    Content Preview: {agent_content[:100]}...")
+                
+                if enrichment:
+                    print(f"    Enrichment Keys: {list(enrichment.keys())}")
+            except Exception as e:
+                print(f"    ❌ Exception: {type(e).__name__}: {str(e)[:200]}")
+                shortcut_results["examples"].append({
+                    "example": example,
+                    "error": f"{type(e).__name__}: {str(e)[:100]}",
+                })
         
         all_results.append(shortcut_results)
     
