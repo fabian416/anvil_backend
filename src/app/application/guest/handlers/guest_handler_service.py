@@ -1038,17 +1038,17 @@ class GuestHandlerService:
                 except (ValueError, Exception) as e:
                     logger.debug(f"Could not load 1inch API key from config: {e}")
             
-            # 3. Try from agent_squad settings (where external APIs are configured)
+            # 3. Try from TOML config (external_apis section in .secrets.toml)
             if not oneinch_api_key:
                 try:
-                    from app.setup.config.settings import load_settings
-                    settings = load_settings()
-                    if settings.agent_squad and hasattr(settings.agent_squad, 'external_apis'):
-                        external_apis = settings.agent_squad.external_apis
-                        if hasattr(external_apis, 'oneinch_api_key') and external_apis.oneinch_api_key:
-                            oneinch_api_key = external_apis.oneinch_api_key.strip()
+                    from app.setup.config.loader import load_full_config, get_current_env
+                    raw_config = load_full_config(env=get_current_env())
+                    if 'external_apis' in raw_config and isinstance(raw_config['external_apis'], dict):
+                        oneinch_key = raw_config['external_apis'].get('ONEINCH_API_KEY', '')
+                        if oneinch_key:
+                            oneinch_api_key = str(oneinch_key).strip()
                 except Exception as e:
-                    logger.debug(f"Could not load 1inch API key from agent_squad: {e}")
+                    logger.debug(f"Could not load 1inch API key from TOML config: {e}")
             
             if not oneinch_api_key:
                 logger.info("1inch API key not available - using simulated data")
