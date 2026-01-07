@@ -50,9 +50,17 @@ async def conversation_id(client: AsyncClient):
     )
     
     if response.status_code == 200:
-        conversations = response.json()
+        data = response.json()
+        # Handle both list and ConversationListResponse format
+        if isinstance(data, dict) and "conversations" in data:
+            conversations = data["conversations"]
+        else:
+            conversations = data if isinstance(data, list) else []
+        
         if conversations and len(conversations) > 0:
-            return conversations[0]["id"]
+            conv = conversations[0]
+            # Handle both dict and object format
+            return conv["id"] if isinstance(conv, dict) else conv.id
     
     # Create new conversation
     response = await client.post(
