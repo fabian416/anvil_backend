@@ -1612,10 +1612,13 @@ class GuestHandlerService:
                 
                 # For bridge swaps
                 if is_bridge and from_token and to_chain:
+                    # Use default amount if not specified
+                    bridge_amount = amount or "100"  # Default to 100 tokens for bridge quotes
+                    
                     result = await self._swap_handler.get_swap_quote(
                         from_token=from_token,
                         to_token=from_token,  # Same token, different chain
-                        amount=amount or "1",
+                        amount=bridge_amount,
                         from_chain=from_chain,
                         to_chain=to_chain,
                         slippage=1.0,
@@ -1642,6 +1645,7 @@ class GuestHandlerService:
                             "from_chain": from_chain,
                             "to_chain": to_chain,
                             "latency_ms": result.latency_ms,
+                            "quote": result.quote,  # Include full quote data
                         },
                         "requires_registration": True,
                     }
@@ -1845,35 +1849,72 @@ class GuestHandlerService:
         from_chain = swap_info.get("from_chain")
         to_chain = swap_info.get("to_chain")
         
-        # Bridge swap - show bridge quote
+        # Bridge swap - show bridge quote with detailed information
         if is_bridge and from_token and to_chain:
+            # Use default amount for demo if not specified
+            bridge_amount = amount or "100"
+            
+            # Estimate bridge details (demo data)
+            # In production, this would come from LiFi/LayerZero API
+            estimated_time_minutes = 5  # Typical bridge time
+            estimated_fee_usd = 2.5  # Typical bridge fee
+            bridge_protocol = "LiFi"  # Default bridge aggregator
+            
+            # For same token bridge, amount received is same (minus fees)
+            try:
+                amount_float = float(bridge_amount)
+                received_amount = amount_float * 0.9975  # ~0.25% bridge fee
+            except ValueError:
+                amount_float = 100.0
+                received_amount = 99.75
+            
             translations = {
                 "en": {
                     "title": "🌉 **Bridge Quote**",
-                    "from": f"**From:** {from_token}",
-                    "from_chain": f"**Chain:** {from_chain or 'Ethereum'}",
-                    "to_chain": f"**To:** {to_chain}",
+                    "from": f"**From:** {bridge_amount} {from_token}",
+                    "from_chain": f"**Source Chain:** {from_chain or 'Ethereum'}",
+                    "to_chain": f"**Destination Chain:** {to_chain}",
+                    "to": f"**You'll Receive:** ~{received_amount:.2f} {from_token}",
+                    "protocol": f"**Bridge Protocol:** {bridge_protocol}",
+                    "time": f"**Estimated Time:** ~{estimated_time_minutes} minutes",
+                    "fee": f"**Bridge Fee:** ~${estimated_fee_usd:.2f}",
+                    "gas": "**Estimated Gas:** ~$5-10 (source chain)",
                     "note": "⚠️ **To execute this bridge, you need to register.** Sign up to proceed with the transaction.",
                 },
                 "es": {
                     "title": "🌉 **Cotización de Bridge**",
-                    "from": f"**Desde:** {from_token}",
-                    "from_chain": f"**Cadena:** {from_chain or 'Ethereum'}",
-                    "to_chain": f"**Hacia:** {to_chain}",
+                    "from": f"**Desde:** {bridge_amount} {from_token}",
+                    "from_chain": f"**Cadena Origen:** {from_chain or 'Ethereum'}",
+                    "to_chain": f"**Cadena Destino:** {to_chain}",
+                    "to": f"**Recibirás:** ~{received_amount:.2f} {from_token}",
+                    "protocol": f"**Protocolo de Bridge:** {bridge_protocol}",
+                    "time": f"**Tiempo Estimado:** ~{estimated_time_minutes} minutos",
+                    "fee": f"**Tarifa de Bridge:** ~${estimated_fee_usd:.2f}",
+                    "gas": "**Gas Estimado:** ~$5-10 (cadena origen)",
                     "note": "⚠️ **Para ejecutar este bridge, necesitas registrarte.** Regístrate para proceder con la transacción.",
                 },
                 "pt": {
                     "title": "🌉 **Cotação de Bridge**",
-                    "from": f"**De:** {from_token}",
-                    "from_chain": f"**Cadeia:** {from_chain or 'Ethereum'}",
-                    "to_chain": f"**Para:** {to_chain}",
+                    "from": f"**De:** {bridge_amount} {from_token}",
+                    "from_chain": f"**Cadeia Origem:** {from_chain or 'Ethereum'}",
+                    "to_chain": f"**Cadeia Destino:** {to_chain}",
+                    "to": f"**Você Receberá:** ~{received_amount:.2f} {from_token}",
+                    "protocol": f"**Protocolo de Bridge:** {bridge_protocol}",
+                    "time": f"**Tempo Estimado:** ~{estimated_time_minutes} minutos",
+                    "fee": f"**Taxa de Bridge:** ~${estimated_fee_usd:.2f}",
+                    "gas": "**Gas Estimado:** ~$5-10 (cadeia origem)",
                     "note": "⚠️ **Para executar este bridge, você precisa se cadastrar.** Cadastre-se para prosseguir com a transação.",
                 },
                 "zh": {
                     "title": "🌉 **桥接报价**",
-                    "from": f"**从:** {from_token}",
-                    "from_chain": f"**链:** {from_chain or 'Ethereum'}",
-                    "to_chain": f"**到:** {to_chain}",
+                    "from": f"**从:** {bridge_amount} {from_token}",
+                    "from_chain": f"**源链:** {from_chain or 'Ethereum'}",
+                    "to_chain": f"**目标链:** {to_chain}",
+                    "to": f"**您将收到:** ~{received_amount:.2f} {from_token}",
+                    "protocol": f"**桥接协议:** {bridge_protocol}",
+                    "time": f"**预计时间:** ~{estimated_time_minutes} 分钟",
+                    "fee": f"**桥接费用:** ~${estimated_fee_usd:.2f}",
+                    "gas": "**预估Gas:** ~$5-10 (源链)",
                     "note": "⚠️ **要执行此桥接，您需要注册。** 注册以继续交易。",
                 },
             }
@@ -1881,9 +1922,16 @@ class GuestHandlerService:
             
             response = f"{t['title']}\n\n"
             response += f"{t['from']}\n"
-            if from_chain:
-                response += f"{t['from_chain']}\n"
+            response += f"{t['from_chain']}\n"
             response += f"{t['to_chain']}\n\n"
+            response += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            response += f"**DETAILS**\n"
+            response += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            response += f"{t['to']}\n"
+            response += f"{t['protocol']}\n"
+            response += f"{t['time']}\n"
+            response += f"{t['fee']}\n"
+            response += f"{t['gas']}\n\n"
             response += f"{t['note']}\n\n"
             response += self._get_registration_cta(language, for_action=True)
             
@@ -1895,6 +1943,11 @@ class GuestHandlerService:
                     "from_token": from_token,
                     "from_chain": from_chain or "ethereum",
                     "to_chain": to_chain,
+                    "from_amount": bridge_amount,
+                    "to_amount": str(received_amount),
+                    "bridge_protocol": bridge_protocol,
+                    "estimated_time_minutes": estimated_time_minutes,
+                    "estimated_fee_usd": estimated_fee_usd,
                 },
                 "requires_registration": True,
             }
