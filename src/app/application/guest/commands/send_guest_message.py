@@ -440,10 +440,56 @@ class SendGuestMessage:
         2. Complete partial commands (e.g., "de USDC" after "quiero swap")
         3. Maintain topic continuity
         """
-        # Try external intent detector first (with context if supported)
+        # If context exists, check for follow-up patterns FIRST (before external detector)
+        # This ensures follow-ups are detected even if external detector returns general_conversation
+        if context:
+            context_lower = context.lower()
+            content_lower = content.lower()
+            
+            # Detect follow-up patterns
+            follow_up_patterns = [
+                "and what about", "what about", "how about", "and for",
+                "y qué hay de", "qué tal", "y para", "y sobre",  # Spanish
+            ]
+            
+            for pattern in follow_up_patterns:
+                if pattern in content_lower:
+                    # Check if previous context was about price/sentiment
+                    if any(kw in context_lower for kw in ["price", "precio", "sentiment", "sentimiento"]):
+                        # Extract token and return same intent type
+                        if any(kw in context_lower for kw in ["sentiment", "sentimiento"]):
+                            logger.info(f"Detected sentiment follow-up: {content}")
+                            return ChatIntent.HUNTER_SENTIMENT, 0.90, "hunter_sentiment_handler"
+                        if any(kw in context_lower for kw in ["price", "precio", "prediction", "predecir"]):
+                            logger.info(f"Detected price prediction follow-up: {content}")
+                            return ChatIntent.HUNTER_PRICE_PREDICTION, 0.90, "hunter_prediction_handler"
+        
+        # Try external intent detector (but follow-ups already handled above)
         if self._intent_detector:
             try:
                 result = await self._intent_detector.detect_intent(content)
+                # If external detector returns general_conversation but we have context with sentiment/price,
+                # prefer the context-based detection
+                if result.intent == ChatIntent.GENERAL_CONVERSATION and context:
+                    context_lower = context.lower()
+                    content_lower = content.lower()
+                    
+                    # Check for follow-up patterns
+                    follow_up_patterns = [
+                        "and what about", "what about", "how about", "and for",
+                        "y qué hay de", "qué tal", "y para", "y sobre",
+                    ]
+                    
+                    is_follow_up = any(pattern in content_lower for pattern in follow_up_patterns)
+                    
+                    if is_follow_up:
+                        if any(kw in context_lower for kw in ["sentiment", "sentimiento"]):
+                            logger.info(f"Overriding general_conversation with sentiment follow-up: {content}")
+                            return ChatIntent.HUNTER_SENTIMENT, 0.90, "hunter_sentiment_handler"
+                        if any(kw in context_lower for kw in ["price", "precio", "prediction", "predecir"]):
+                            logger.info(f"Overriding general_conversation with price prediction follow-up: {content}")
+                            return ChatIntent.HUNTER_PRICE_PREDICTION, 0.90, "hunter_prediction_handler"
+                
                 return result.intent, result.confidence, result.handler
             except Exception as e:
                 logger.warning(f"Intent detection failed: {e}")
