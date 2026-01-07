@@ -815,9 +815,28 @@ class SendGuestMessage:
                 # English
                 "money market", "compare aave", "compound vs aave",
                 "borrow rate", "lending rate",
+                "where should i supply", "where to supply", "where can i supply",
+                "best place to supply", "where to deposit", "where should i deposit",
+                "supply eth", "supply usdc", "supply dai", "supply usdt",
+                "compare rates", "best rates", "best lending rates",
+                "aave vs compound", "compound vs aave", "compare aave compound",
+                "where supply", "where deposit", "best supply", "best deposit",
                 # Spanish
                 "mercado de dinero", "comparar aave", "compound vs aave",
                 "tasa de préstamo", "tasa de interés",
+                "dónde debería depositar", "dónde depositar", "dónde puedo depositar",
+                "mejor lugar para depositar", "dónde suministrar", "dónde debería suministrar",
+                "suministrar eth", "suministrar usdc", "suministrar dai",
+                "comparar tasas", "mejores tasas", "mejores tasas de préstamo",
+                "aave vs compound", "compound vs aave", "comparar aave compound",
+                # Portuguese
+                "onde devo depositar", "onde depositar", "onde posso depositar",
+                "melhor lugar para depositar", "onde fornecer", "onde devo fornecer",
+                "fornecer eth", "fornecer usdc", "fornecer dai",
+                "comparar taxas", "melhores taxas", "melhores taxas de empréstimo",
+                # Chinese
+                "在哪里供应", "应该在哪里供应", "在哪里存款",
+                "最佳供应地点", "比较利率", "最佳利率",
             ],
             ChatIntent.SWAP: [
                 # English
