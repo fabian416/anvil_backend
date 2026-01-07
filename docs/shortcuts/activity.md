@@ -1,420 +1,133 @@
 Input:
-Deposit USDC on Morpho
-
-Output
-🔵 USDC MORPHO VAULTS ON BASE
-
-Top 3 vaults by APY (Morpho Protocol):
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-TOP 3 VAULTS (by APY)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. Universal USDC ⭐
-
-   • APY: 7.26%
-
-   • TVL: $313.40B
-
-   • Address: `0xB7890CEE...6ab863`
-
-2. Edge UltraYield USDC ⭐
-
-   • APY: 6.22%
-
-   • TVL: $499.91B
-
-   • Address: `0x5435BC53...259ca0`
-
-3. Extrafi XLend USDC ⭐
-
-   • APY: 6.16%
-
-   • TVL: $8.13M
-
-   • Address: `0x23479229...753B5e`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Universal USDC
-
-APY: 7.26%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Universal USDC?
-
-👉 Sign up to execute this action → /signup
-
-
-Input:
-Show best lending vaults
+Show my transactions
 
 Output:
-🔵 USDC MORPHO VAULTS ON BASE
+🔐 Account Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To view your transaction history and past activity, you need to create an account.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• View all transactions
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Track your trading history
 
-1. Universal USDC ⭐
+• Export transaction records
 
-   • APY: 7.26%
+👉 Sign Up Free: /signup
 
-   • TVL: $313.40B
 
-   • Address: `0xB7890CEE...6ab863`
-
-2. Edge UltraYield USDC ⭐
-
-   • APY: 6.22%
-
-   • TVL: $499.91B
-
-   • Address: `0x5435BC53...259ca0`
-
-3. Extrafi XLend USDC ⭐
-
-   • APY: 6.16%
-
-   • TVL: $8.13M
-
-   • Address: `0x23479229...753B5e`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Universal USDC
-
-APY: 7.26%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Universal USDC?
-
-👉 Sign up to execute this action → /signup
+🔐 **Account Required** To view your transaction history and past activity, you need to create an account. Sign up to: • View all transactions • Track your trading history • Export transaction records
+Sign Up Free
 
 Input:
-Earn yield on my ETH
+Recent activity
 
-Output: 
-USDC MORPHO VAULTS ON ETHEREUM
+Output:
+🔐 Account Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To view your transaction history and past activity, you need to create an account.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• View all transactions
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Track your trading history
 
-1. Resolv USDC ⭐
+• Export transaction records
 
-   • APY: 7.37%
+👉 Sign Up Free: /signup
 
-   • TVL: $1.94M
 
-   • Address: `0x132E6C9C...E485Eb`
-
-2. Re Ecosystem USDC ⭐
-
-   • APY: 7.20%
-
-   • TVL: $4.57M
-
-   • Address: `0xA1FF9C28...80c6fb`
-
-3. Clearstar High Yield USDC ⭐
-
-   • APY: 6.96%
-
-   • TVL: $11.81M
-
-   • Address: `0x9B5E92fd...639DfA`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Resolv USDC
-
-APY: 7.37%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have ETHEREUM ETH for gas
-
-Would you like me to help you deposit into Resolv USDC?
-
-👉 Sign up to execute this action → /signup
+🔐 **Account Required** To view your transaction history and past activity, you need to create an account. Sign up to: • View all transactions • Track your trading history • Export transaction records
+Sign Up Free
 
 Input:
-Best lending vaults
+What did I do today?
 
-Output: 
-🔵 USDC MORPHO VAULTS ON BASE
+Output:
+🔐 Account Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To view your transaction history and past activity, you need to create an account.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• View all transactions
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Track your trading history
 
-1. Edge UltraYield USDC ⭐
+• Export transaction records
 
-   • APY: 6.24%
+👉 Sign Up Free: /signup
 
-   • TVL: $499.77B
 
-   • Address: `0x5435BC53...259ca0`
+🔐 **Account Required** To view your transaction history and past activity, you need to create an account. Sign up to: • View all transactions • Track your trading history • Export transaction records
+Sign Up Free
 
-2. Extrafi XLend USDC ⭐
-
-   • APY: 6.15%
-
-   • TVL: $8.15M
-
-   • Address: `0x23479229...753B5e`
-
-3. Apostro Resolv USDC ⭐
-
-   • APY: 6.01%
-
-   • TVL: $50.40B
-
-   • Address: `0xcdDCDd18...B9e8f3`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Edge UltraYield USDC
-
-APY: 6.24%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Edge UltraYield USDC?
-
-👉 Sign up to execute this action → /signup
 
 Input:
-Lending vaults
+My activity
 
-Output: 
-🔵 USDC MORPHO VAULTS ON BASE
+Output:
+🔐 Account Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To view your transaction history and past activity, you need to create an account.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• View all transactions
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Track your trading history
 
-1. Edge UltraYield USDC ⭐
+• Export transaction records
 
-   • APY: 6.24%
+👉 Sign Up Free: /signup
 
-   • TVL: $499.77B
 
-   • Address: `0x5435BC53...259ca0`
-
-2. Extrafi XLend USDC ⭐
-
-   • APY: 6.15%
-
-   • TVL: $8.15M
-
-   • Address: `0x23479229...753B5e`
-
-3. Apostro Resolv USDC ⭐
-
-   • APY: 6.01%
-
-   • TVL: $50.40B
-
-   • Address: `0xcdDCDd18...B9e8f3`
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 RECOMMENDATION
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Edge UltraYield USDC
-
-APY: 6.24%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Edge UltraYield USDC?
-
-👉 Sign up to execute this action → /signup
+🔐 **Account Required** To view your transaction history and past activity, you need to create an account. Sign up to: • View all transactions • Track your trading history • Export transaction records
+Sign Up Free
 
 Input:
-Earn yield
+Transaction history"
 
-Output: 
-🔵 USDC MORPHO VAULTS ON BASE
+Output:
+🔐 Account Required
 
-Top 3 vaults by APY (Morpho Protocol):
+To view your transaction history and past activity, you need to create an account.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sign up to:
 
-TOP 3 VAULTS (by APY)
+• View all transactions
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Track your trading history
 
-1. Edge UltraYield USDC ⭐
+• Export transaction records
 
-   • APY: 6.24%
+👉 Sign Up Free: /signup
 
-   • TVL: $499.77B
 
-   • Address: `0x5435BC53...259ca0`
+🔐 **Account Required** To view your transaction history and past activity, you need to create an account. Sign up to: • View all transactions • Track your trading history • Export transaction records
+Sign Up Free
 
-2. Extrafi XLend USDC ⭐
+Input:
+My trades
 
-   • APY: 6.15%
+Output:
+🔐 Account Required
 
-   • TVL: $8.15M
+To view your transaction history and past activity, you need to create an account.
 
-   • Address: `0x23479229...753B5e`
+Sign up to:
 
-3. Apostro Resolv USDC ⭐
+• View all transactions
 
-   • APY: 6.01%
+• Track your trading history
 
-   • TVL: $50.40B
+• Export transaction records
 
-   • Address: `0xcdDCDd18...B9e8f3`
+👉 Sign Up Free: /signup
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎯 RECOMMENDATION
+🔐 **Account Required** To view your transaction history and past activity, you need to create an account. Sign up to: • View all transactions • Track your trading history • Export transaction records
+Sign Up Free
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Best Vault: Edge UltraYield USDC
-
-APY: 6.24%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into Edge UltraYield USDC?
-
-👉 Sign up to execute this action → /signup
