@@ -496,10 +496,11 @@ class GuestHandlerService:
             return self._fallback_response(ChatIntent.HUNTER_SENTIMENT, language)
 
     async def _handle_price_prediction(
-        self, content: str, language: str
+        self, content: str, language: str, context: str = ""
     ) -> dict[str, Any]:
         """Handle price prediction with real ML model."""
-        token = self._extract_token(content) or "ETH"
+        # Extract token from content, using context if token not found in current message
+        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
 
         try:
             predictor = LSTMPricePredictor()
@@ -603,7 +604,35 @@ class GuestHandlerService:
                 "requires_registration": False,
             }
         except Exception as e:
-            logger.warning(f"Price prediction error: {e}")
+            logger.error(f"Price prediction error for token {token}: {e}", exc_info=True)
+            # Try to provide a helpful response even on error
+            # Get current price at least
+            try:
+                from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+                client = CoinGeckoClient()
+                try:
+                    symbol_to_id = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana"}
+                    coin_id = symbol_to_id.get(token.upper(), token.lower())
+                    price_data = await client.get_simple_price(coin_ids=[coin_id], vs_currencies=["usd"])
+                    if price_data and coin_id in price_data:
+                        current_price = price_data[coin_id]["usd"]
+                        # Provide basic response with current price
+                        translations = {
+                            "en": f"📈 **Current Price for {token}:** ${current_price:,.2f}\n\nPrice prediction model is temporarily unavailable. Please try again in a moment.",
+                            "es": f"📈 **Precio Actual para {token}:** ${current_price:,.2f}\n\nEl modelo de predicción de precios no está disponible temporalmente. Intenta de nuevo en un momento.",
+                            "pt": f"📈 **Preço Atual para {token}:** ${current_price:,.2f}\n\nO modelo de previsão de preços não está disponível temporariamente. Tente novamente em um momento.",
+                            "zh": f"📈 **{token} 当前价格:** ${current_price:,.2f}\n\n价格预测模型暂时不可用。请稍后再试。",
+                        }
+                        return {
+                            "content": translations.get(language, translations["en"]),
+                            "enrichment": {"token": token, "current_price": current_price, "error": True},
+                            "requires_registration": False,
+                        }
+                finally:
+                    await client.close()
+            except Exception as e2:
+                logger.warning(f"Failed to get fallback price: {e2}")
+            
             return self._fallback_response(ChatIntent.HUNTER_PRICE_PREDICTION, language)
 
     async def _handle_risk_signals(

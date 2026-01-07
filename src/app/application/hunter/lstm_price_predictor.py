@@ -253,10 +253,14 @@ class LSTMPricePredictor:
             >>> prediction = await predictor.predict("ETH", horizon_hours=24)
             >>> print(f"Predicted 24h price: ${prediction.predicted_price}")
         """
-        # For testing: Skip actual training and return mock prediction
+        # For testing/guest mode: Skip actual training and return mock prediction
         # BUT use real current price from CoinGecko
         import os
-        if os.getenv("TESTING") or not os.getenv("ENABLE_LSTM_TRAINING"):
+        # Default to demo mode (use real prices but mock predictions) unless explicitly enabled
+        enable_training = os.getenv("ENABLE_LSTM_TRAINING", "").lower() in ("true", "1", "yes")
+        is_testing = os.getenv("TESTING", "").lower() in ("true", "1", "yes")
+        
+        if is_testing or not enable_training:
             # Get real current price from CoinGecko
             try:
                 # Fetch latest price from PriceDataService
