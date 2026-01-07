@@ -51,6 +51,9 @@ class ExternalAPIsConfig(BaseModel):
     enable_uniswap: bool = True
     enable_curve: bool = True
     enable_aave: bool = True
+    
+    # API Keys (loaded from environment/secrets)
+    oneinch_api_key: str = ""  # Optional - loaded from ONEINCH_API_KEY env var
 
     # Enterprise APIs (Week 2)
     enable_chainalysis: bool = False  # Requires paid license
@@ -136,7 +139,14 @@ def load_agent_squad_config(use_agent_squad: bool = False) -> AgentSquadConfig:
     Returns:
         AgentSquadConfig instance with default settings
     """
+    import os
     config = AgentSquadSettings()
+    
+    # Load API keys from environment
+    oneinch_api_key = os.getenv("ONEINCH_API_KEY", "")
+    if oneinch_api_key:
+        config.external_apis.oneinch_api_key = oneinch_api_key
+    
     # Override use_agent_squad if specified
     if use_agent_squad:
         config = config.model_copy(update={"use_agent_squad": True})

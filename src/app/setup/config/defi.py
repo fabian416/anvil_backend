@@ -11,7 +11,7 @@ class DeFiConfig:
     """Configuration for DeFi integrations."""
     
     # 1inch configuration
-    oneinch_api_key: str
+    oneinch_api_key: str = ""  # Optional - empty means use simulated data
     oneinch_chain_id: int = 1  # Ethereum mainnet
     
     # Hyperliquid configuration
@@ -35,13 +35,14 @@ def load_defi_config() -> DeFiConfig:
     Raises:
         ValueError: If required configuration is missing
     """
-    oneinch_api_key = os.getenv("ONEINCH_API_KEY")
+    oneinch_api_key = os.getenv("ONEINCH_API_KEY", "")
     
-    if not oneinch_api_key:
-        raise ValueError(
-            "ONEINCH_API_KEY environment variable is required. "
-            "Get your API key from https://portal.1inch.dev/"
-        )
+    # Allow None/empty for optional usage (will use simulated data)
+    # if not oneinch_api_key:
+    #     raise ValueError(
+    #         "ONEINCH_API_KEY environment variable is required. "
+    #         "Get your API key from https://portal.1inch.dev/"
+    #     )
     
     return DeFiConfig(
         oneinch_api_key=oneinch_api_key,

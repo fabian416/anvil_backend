@@ -1019,17 +1019,61 @@ class GuestHandlerService:
     async def _handle_arbitrage(
         self, content: str, language: str
     ) -> dict[str, Any]:
-        """Handle arbitrage opportunity discovery."""
+        """Handle arbitrage opportunity discovery with REAL data."""
         try:
-            # Use demo config with lower thresholds to show example opportunities
-            from app.application.ultra.arbitrage_discovery import ArbitrageConfig
-            demo_config = ArbitrageConfig(
-                min_profit_usd=Decimal("15.0"),  # Lower threshold for demo ($15 instead of $50)
-                min_profit_percentage=Decimal("0.0015"),  # Lower threshold (0.15% instead of 0.5%)
-            )
-            discovery = ArbitrageDiscovery(config=demo_config)
+            # Try to get real data from 1inch API
+            import os
+            # Try multiple sources for API key
+            oneinch_api_key = None
+            
+            # 1. Try environment variable
+            oneinch_api_key = os.getenv("ONEINCH_API_KEY", "").strip()
+            
+            # 2. Try from TOML config if not in env
+            if not oneinch_api_key:
+                try:
+                    from app.setup.config.defi import load_defi_config
+                    defi_config = load_defi_config()
+                    oneinch_api_key = defi_config.oneinch_api_key.strip() if defi_config.oneinch_api_key else ""
+                except (ValueError, Exception) as e:
+                    logger.debug(f"Could not load 1inch API key from config: {e}")
+            
+            # 3. Try from agent_squad settings (where external APIs are configured)
+            if not oneinch_api_key:
+                try:
+                    from app.setup.config.settings import load_settings
+                    settings = load_settings()
+                    if settings.agent_squad and hasattr(settings.agent_squad, 'external_apis'):
+                        external_apis = settings.agent_squad.external_apis
+                        if hasattr(external_apis, 'oneinch_api_key') and external_apis.oneinch_api_key:
+                            oneinch_api_key = external_apis.oneinch_api_key.strip()
+                except Exception as e:
+                    logger.debug(f"Could not load 1inch API key from agent_squad: {e}")
+            
+            if not oneinch_api_key:
+                logger.info("1inch API key not available - using simulated data")
+            
+            discovery = ArbitrageDiscovery()
             capital = Decimal("10000")  # Demo with $10k
-            opportunities = await discovery.discover_all_opportunities(capital)
+            
+            # Use real data if API key is available
+            if oneinch_api_key and oneinch_api_key.strip():
+                try:
+                    logger.info("Using 1inch API for real arbitrage data")
+                    opportunities = await discovery.discover_with_real_data(
+                        capital=capital,
+                        oneinch_api_key=oneinch_api_key,
+                        chain="ethereum",
+                    )
+                    logger.info(f"Found {len(opportunities)} real arbitrage opportunities")
+                except Exception as e:
+                    logger.error(f"Real arbitrage data fetch failed: {e}", exc_info=True)
+                    # Fallback to regular discovery if real data fails
+                    opportunities = await discovery.discover_all_opportunities(capital)
+            else:
+                # No API key - use regular discovery (may find opportunities with increased variations)
+                logger.info("No 1inch API key available, using simulated data")
+                opportunities = await discovery.discover_all_opportunities(capital)
 
             # Translations for arbitrage
             translations = {
@@ -1080,70 +1124,27 @@ class GuestHandlerService:
             }
             t = translations.get(language, translations["en"])
 
-            response = f"{t['title']}\n\n"
-            response += f"{t['demo_note']}\n\n"
-
-            # If no real opportunities found, generate demo examples for educational purposes
-            if not opportunities:
-                # Generate example opportunities for demo
-                from app.application.ultra.arbitrage_discovery import (
-                    ArbitrageOpportunity,
-                    ArbitrageType,
-                    TradingPair,
-                    DEX,
-                )
-                from app.domain.common.datetime_utils import utc_now
-                
-                # Example 1: 2-hop WETH/USDC arbitrage
-                # Buy WETH on Uniswap V3 at $1995, sell on Sushiswap at $2008 (0.65% spread)
-                buy_price = Decimal("1995")
-                sell_price = Decimal("2008")
-                weth_amount = capital / buy_price  # Buy WETH amount
-                
-                # Calculate after fees (0.3% per trade)
-                amount_after_fee1 = capital * Decimal("0.997")  # After first trade fee
-                usdc_received = weth_amount * sell_price * Decimal("0.997")  # After second trade fee
-                
-                gross_profit = usdc_received - capital
-                gas_cost = Decimal("9")
-                net_profit = gross_profit - gas_cost
-                
-                example_path1 = [
-                    TradingPair(
-                        dex=DEX.UNISWAP_V3,
-                        token_in="WETH",
-                        token_out="USDC",
-                        amount_in=weth_amount,
-                        amount_out=amount_after_fee1,
-                        price=buy_price,
-                        liquidity=Decimal("5000000"),
-                    ),
-                    TradingPair(
-                        dex=DEX.SUSHISWAP,
-                        token_in="USDC",
-                        token_out="WETH",
-                        amount_in=amount_after_fee1,
-                        amount_out=weth_amount,
-                        price=sell_price,
-                        liquidity=Decimal("3000000"),
-                    ),
-                ]
-                profit1 = max(net_profit, Decimal("45"))  # Ensure at least $45 profit for demo
-                opportunities = [
-                    ArbitrageOpportunity(
-                        opportunity_id="DEMO-2HOP-001",
-                        type=ArbitrageType.TWO_HOP,
-                        path=example_path1,
-                        expected_profit_usd=profit1,
-                        profit_percentage=profit1 / capital,
-                        required_capital=capital,
-                        estimated_gas_cost=Decimal("9"),
-                        slippage_tolerance=Decimal("0.01"),
-                        confidence_score=0.75,
-                        timestamp=utc_now(),
-                        metadata={"demo": True, "dex1": "uniswap_v3", "dex2": "sushiswap"},
-                    )
-                ]
+            # Determine if using real data
+            using_real_data = (
+                oneinch_api_key 
+                and oneinch_api_key.strip() 
+                and any(opp.metadata.get("is_real_data", False) for opp in opportunities)
+            )
+            
+            if using_real_data:
+                response = f"{t['title']}\n\n"
+                response += "**Using real-time DEX data from 1inch API**\n\n"
+            else:
+                response = f"{t['title']}\n\n"
+                response += f"{t['demo_note']}\n\n"
+                if not oneinch_api_key:
+                    no_key_msgs = {
+                        "en": "⚠️ **Note:** Real-time data requires 1inch API key. Currently using simulated prices.",
+                        "es": "⚠️ **Nota:** Los datos en tiempo real requieren una clave API de 1inch. Actualmente usando precios simulados.",
+                        "pt": "⚠️ **Nota:** Dados em tempo real requerem chave API do 1inch. Atualmente usando preços simulados.",
+                        "zh": "⚠️ **注意:** 实时数据需要 1inch API 密钥。当前使用模拟价格。",
+                    }
+                    response += f"{no_key_msgs.get(language, no_key_msgs['en'])}\n\n"
 
             if not opportunities:
                 response += f"{t['no_opportunities']}\n\n"
