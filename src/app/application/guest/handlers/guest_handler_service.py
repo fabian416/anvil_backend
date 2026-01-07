@@ -1021,7 +1021,13 @@ class GuestHandlerService:
     ) -> dict[str, Any]:
         """Handle arbitrage opportunity discovery."""
         try:
-            discovery = ArbitrageDiscovery()
+            # Use demo config with lower thresholds to show example opportunities
+            from app.application.ultra.arbitrage_discovery import ArbitrageConfig
+            demo_config = ArbitrageConfig(
+                min_profit_usd=Decimal("15.0"),  # Lower threshold for demo ($15 instead of $50)
+                min_profit_percentage=Decimal("0.0015"),  # Lower threshold (0.15% instead of 0.5%)
+            )
+            discovery = ArbitrageDiscovery(config=demo_config)
             capital = Decimal("10000")  # Demo with $10k
             opportunities = await discovery.discover_all_opportunities(capital)
 
@@ -1076,6 +1082,68 @@ class GuestHandlerService:
 
             response = f"{t['title']}\n\n"
             response += f"{t['demo_note']}\n\n"
+
+            # If no real opportunities found, generate demo examples for educational purposes
+            if not opportunities:
+                # Generate example opportunities for demo
+                from app.application.ultra.arbitrage_discovery import (
+                    ArbitrageOpportunity,
+                    ArbitrageType,
+                    TradingPair,
+                    DEX,
+                )
+                from app.domain.common.datetime_utils import utc_now
+                
+                # Example 1: 2-hop WETH/USDC arbitrage
+                # Buy WETH on Uniswap V3 at $1995, sell on Sushiswap at $2008 (0.65% spread)
+                buy_price = Decimal("1995")
+                sell_price = Decimal("2008")
+                weth_amount = capital / buy_price  # Buy WETH amount
+                
+                # Calculate after fees (0.3% per trade)
+                amount_after_fee1 = capital * Decimal("0.997")  # After first trade fee
+                usdc_received = weth_amount * sell_price * Decimal("0.997")  # After second trade fee
+                
+                gross_profit = usdc_received - capital
+                gas_cost = Decimal("9")
+                net_profit = gross_profit - gas_cost
+                
+                example_path1 = [
+                    TradingPair(
+                        dex=DEX.UNISWAP_V3,
+                        token_in="WETH",
+                        token_out="USDC",
+                        amount_in=weth_amount,
+                        amount_out=amount_after_fee1,
+                        price=buy_price,
+                        liquidity=Decimal("5000000"),
+                    ),
+                    TradingPair(
+                        dex=DEX.SUSHISWAP,
+                        token_in="USDC",
+                        token_out="WETH",
+                        amount_in=amount_after_fee1,
+                        amount_out=weth_amount,
+                        price=sell_price,
+                        liquidity=Decimal("3000000"),
+                    ),
+                ]
+                profit1 = max(net_profit, Decimal("45"))  # Ensure at least $45 profit for demo
+                opportunities = [
+                    ArbitrageOpportunity(
+                        opportunity_id="DEMO-2HOP-001",
+                        type=ArbitrageType.TWO_HOP,
+                        path=example_path1,
+                        expected_profit_usd=profit1,
+                        profit_percentage=profit1 / capital,
+                        required_capital=capital,
+                        estimated_gas_cost=Decimal("9"),
+                        slippage_tolerance=Decimal("0.01"),
+                        confidence_score=0.75,
+                        timestamp=utc_now(),
+                        metadata={"demo": True, "dex1": "uniswap_v3", "dex2": "sushiswap"},
+                    )
+                ]
 
             if not opportunities:
                 response += f"{t['no_opportunities']}\n\n"

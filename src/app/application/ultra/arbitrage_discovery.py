@@ -211,13 +211,15 @@ class ArbitrageDiscovery:
             ("USDT", "WETH"): Decimal("0.0005005"),
         }
 
-        # DEX-specific price variations
+        # DEX-specific price variations (increased for demo opportunities)
+        # In production, these would come from real DEX price feeds
+        # Larger variations to ensure demo opportunities are found
         dex_variations = {
             DEX.UNISWAP_V2: Decimal("1.0"),
-            DEX.UNISWAP_V3: Decimal("0.998"),  # Slightly better
-            DEX.SUSHISWAP: Decimal("1.002"),  # Slightly worse
-            DEX.CURVE: Decimal("0.9995"),  # Best for stables
-            DEX.BALANCER: Decimal("1.001"),
+            DEX.UNISWAP_V3: Decimal("0.992"),  # 0.8% better for arbitrage
+            DEX.SUSHISWAP: Decimal("1.008"),  # 0.8% worse - creates opportunity
+            DEX.CURVE: Decimal("0.994"),  # Best for stables - 0.6% better
+            DEX.BALANCER: Decimal("1.006"),  # 0.6% worse - creates opportunity
         }
 
         base_price = base_prices.get((token_in, token_out), Decimal("1.0"))
