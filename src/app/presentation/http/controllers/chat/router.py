@@ -149,6 +149,42 @@ def create_chat_router() -> APIRouter:
         
         return ConversationResponse.model_validate(conversation)
     
+    @router.delete(
+        "/conversations/{conversation_id}",
+        status_code=status.HTTP_200_OK,
+        response_model=ConversationResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def delete_conversation(
+        conversation_id: UUID,
+        current_user: FromDishka[CurrentUserService],
+        interactor: FromDishka[GetConversation],
+    ) -> ConversationResponse:
+        """
+        Archive a conversation (soft delete).
+        
+        This endpoint archives the conversation by marking it as archived.
+        Archived conversations are not shown in the default conversation list.
+        
+        **Implementation Note:**
+        This endpoint redirects to the new ChatConversation system endpoint
+        at /api/v1/chat/conversations/{conversation_id} which supports archiving.
+        The old Conversation entity system doesn't support archiving natively.
+        """
+        # The old Conversation system doesn't support archiving
+        # We need to use the new ChatConversation system
+        # Redirect to the conversations_router endpoint which has proper archiving support
+        raise HTTPException(
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            detail=(
+                "Archive functionality is available at "
+                f"/api/v1/chat/conversations/{conversation_id}. "
+                "Please use that endpoint for archiving conversations."
+            ),
+            headers={"Location": f"/api/v1/chat/conversations/{conversation_id}"},
+        )
+    
     @router.post(
         "/conversations/{conversation_id}/messages",
         status_code=status.HTTP_201_CREATED,

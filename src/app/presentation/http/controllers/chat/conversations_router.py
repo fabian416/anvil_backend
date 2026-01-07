@@ -248,9 +248,16 @@ def create_conversations_router() -> APIRouter:
     
     @router.delete(
         "/{conversation_id}",
+        response_model=ConversationResponse,
         status_code=status.HTTP_200_OK,
-        summary="Delete Conversation",
-        description="Delete (soft) a conversation.",
+        summary="Archive Conversation",
+        description="""
+        Archive a conversation (soft delete).
+        
+        This endpoint archives the conversation, marking it as archived.
+        Archived conversations are not shown in the default conversation list.
+        The conversation can be restored later if needed.
+        """,
     )
     @inject
     async def delete_conversation(
@@ -258,8 +265,14 @@ def create_conversations_router() -> APIRouter:
         http_request: Request,
         user_service: FromDishka[UserService],
         conversation_service: FromDishka[ConversationService],
-    ) -> dict[str, bool]:
-        """Delete a conversation."""
+    ) -> ConversationResponse:
+        """
+        Archive a conversation.
+        
+        This endpoint archives the conversation instead of permanently deleting it.
+        Archived conversations are excluded from the default conversation list
+        (which filters by status='active').
+        """
         # Get user
         ip_address = http_request.client.host if http_request.client else "unknown"
         privy_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
@@ -269,19 +282,28 @@ def create_conversations_router() -> APIRouter:
             privy_token=privy_token if privy_token else None,
         )
         
-        # Delete conversation
-        deleted = await conversation_service.delete(
+        # Archive conversation (instead of deleting)
+        conversation = await conversation_service.archive(
             conversation_id=conversation_id,
             user_id=user.id,
         )
         
-        if not deleted:
+        if not conversation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
             )
         
-        return {"deleted": True}
+        return ConversationResponse(
+            id=str(conversation.id),
+            title=conversation.title,
+            status=conversation.status.value,
+            created_at=conversation.created_at.isoformat(),
+            updated_at=conversation.updated_at.isoformat(),
+            last_message_at=conversation.last_message_at.isoformat() if conversation.last_message_at else None,
+            message_count=conversation.message_count,
+            language=conversation.language,
+        )
     
     @router.post(
         "/{conversation_id}/archive",
