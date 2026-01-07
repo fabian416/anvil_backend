@@ -31,19 +31,21 @@ class GuestProvider(Provider):
         return GuestRepositorySqla(session)
 
     @provide(scope=Scope.REQUEST)
-    def provide_guest_handler_service(self) -> GuestHandlerService:
+    def provide_guest_handler_service(
+        self,
+        money_market_handler: MoneyMarketHandler,
+    ) -> GuestHandlerService:
         """
         Provide GuestHandlerService with real handlers.
         
-        Note: DeFi handlers (LendingHandler, SwapHandler, MoneyMarketHandler)
-        are not injected here to avoid Dishka resolution complexity.
-        They are instantiated directly in the service when needed.
+        Injects MoneyMarketHandler for real Aave/Compound rate comparisons.
+        LendingHandler and SwapHandler are optional (can be None for demo mode).
         Hunter AI and ULTRA handlers don't require DI as they are stateless.
         """
         return GuestHandlerService(
-            lending_handler=None,  # Will use Hunter/ULTRA handlers
-            swap_handler=None,
-            money_market_handler=None,
+            lending_handler=None,  # Optional - can use Hunter/ULTRA handlers
+            swap_handler=None,  # Optional - demo mode supported
+            money_market_handler=money_market_handler,  # Real data for comparisons
         )
 
     @provide(scope=Scope.REQUEST)

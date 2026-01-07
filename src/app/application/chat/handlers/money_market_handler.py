@@ -12,7 +12,7 @@ Per CEO spec: Money Market = Aave + Compound only
 import logging
 import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 
 from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.ports.compound_gateway import CompoundGateway
@@ -317,3 +317,102 @@ class MoneyMarketHandler:
 💡 *{t("money_market", "tip_morpho", language)}*
 """
         return response
+
+    async def handle(
+        self,
+        content: str,
+        user_id: Optional[str] = None,
+        wallet_address: Optional[str] = None,
+        language: str = "en",
+    ) -> dict[str, Any]:
+        """
+        Handle money market comparison request from chat.
+        
+        Parses messages like:
+        - "compare Aave vs Compound"
+        - "money market rates for USDC"
+        - "best borrow rates"
+        
+        Args:
+            content: User message content
+            user_id: User ID (optional, for guest mode)
+            wallet_address: Wallet address (optional, for guest mode)
+            language: Response language (en, es, pt, zh)
+            
+        Returns:
+            dict with 'content', 'enrichment', and 'requires_registration' fields
+        """
+        # Extract asset and chain from message
+        asset, chain = self._extract_params_from_message(content)
+        
+        # Compare rates
+        result = await self.compare_rates(
+            asset=asset,
+            chain=chain,
+            language=language,
+        )
+        
+        return {
+            "content": result.content,
+            "enrichment": {
+                "asset": result.asset,
+                "chain": chain,
+                "rates": result.rates,
+                "best_supply_protocol": result.best_supply_protocol,
+                "best_supply_apy": result.best_supply_apy,
+                "best_borrow_protocol": result.best_borrow_protocol,
+                "best_borrow_apy": result.best_borrow_apy,
+                "latency_ms": result.latency_ms,
+                "handler": "money_market_handler",
+            },
+            "requires_registration": False,  # View-only, no registration needed
+        }
+    
+    def _extract_params_from_message(self, message: str) -> tuple[str, str]:
+        """
+        Extract asset and chain from user message.
+        
+        Examples:
+        - "compare Aave vs Compound" -> ("USDC", "ethereum")
+        - "money market rates for USDC" -> ("USDC", "ethereum")
+        - "compare Aave vs Compound on Base" -> ("USDC", "base")
+        - "best borrow rates for ETH" -> ("ETH", "ethereum")
+        
+        Returns:
+            Tuple of (asset, chain)
+        """
+        message_lower = message.lower()
+        
+        # Detect chain
+        if "base" in message_lower:
+            chain = "base"
+        elif "arbitrum" in message_lower or "arb" in message_lower:
+            chain = "arbitrum"
+        elif "polygon" in message_lower or "matic" in message_lower:
+            chain = "polygon"
+        elif "optimism" in message_lower or "op" in message_lower:
+            chain = "optimism"
+        elif "avalanche" in message_lower or "avax" in message_lower:
+            chain = "avalanche"
+        elif "ethereum" in message_lower or "mainnet" in message_lower:
+            chain = "ethereum"
+        else:
+            chain = "ethereum"  # Default to Ethereum
+        
+        # Detect asset
+        asset_patterns = {
+            "USDC": ["usdc"],
+            "USDT": ["usdt", "tether"],
+            "DAI": ["dai"],
+            "ETH": ["eth", "ethereum", "ether"],
+            "WETH": ["weth", "wrapped eth", "wrapped ether"],
+            "WBTC": ["wbtc", "wrapped btc", "wrapped bitcoin"],
+        }
+        
+        for asset_symbol, patterns in asset_patterns.items():
+            for pattern in patterns:
+                if pattern in message_lower:
+                    return asset_symbol, chain
+        
+        # Default to USDC if no asset detected
+        return "USDC", chain
