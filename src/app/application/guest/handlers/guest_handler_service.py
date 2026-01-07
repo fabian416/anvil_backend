@@ -1765,6 +1765,115 @@ class GuestHandlerService:
         from_chain = swap_info.get("from_chain")
         to_chain = swap_info.get("to_chain")
         
+        # Bridge swap - show bridge quote
+        if is_bridge and from_token and to_chain:
+            translations = {
+                "en": {
+                    "title": "🌉 **Bridge Quote (Demo)**",
+                    "from": f"**From:** {from_token}",
+                    "from_chain": f"**Chain:** {from_chain or 'Ethereum'}",
+                    "to_chain": f"**To:** {to_chain}",
+                    "note": "This is a demo quote. Sign up to execute real bridges with live pricing via LiFi or LayerZero.",
+                },
+                "es": {
+                    "title": "🌉 **Cotización de Bridge (Demo)**",
+                    "from": f"**Desde:** {from_token}",
+                    "from_chain": f"**Cadena:** {from_chain or 'Ethereum'}",
+                    "to_chain": f"**Hacia:** {to_chain}",
+                    "note": "Esta es una cotización demo. Regístrate para ejecutar bridges reales con precios en vivo vía LiFi o LayerZero.",
+                },
+                "pt": {
+                    "title": "🌉 **Cotação de Bridge (Demo)**",
+                    "from": f"**De:** {from_token}",
+                    "from_chain": f"**Cadeia:** {from_chain or 'Ethereum'}",
+                    "to_chain": f"**Para:** {to_chain}",
+                    "note": "Esta é uma cotação demo. Cadastre-se para executar bridges reais com preços ao vivo via LiFi ou LayerZero.",
+                },
+                "zh": {
+                    "title": "🌉 **桥接报价（演示）**",
+                    "from": f"**从:** {from_token}",
+                    "from_chain": f"**链:** {from_chain or 'Ethereum'}",
+                    "to_chain": f"**到:** {to_chain}",
+                    "note": "这是演示报价。注册以通过 LiFi 或 LayerZero 执行实时价格的真实桥接。",
+                },
+            }
+            t = translations.get(language, translations["en"])
+            
+            response = f"{t['title']}\n\n"
+            response += f"{t['from']}\n"
+            if from_chain:
+                response += f"{t['from_chain']}\n"
+            response += f"{t['to_chain']}\n\n"
+            response += f"*{t['note']}*\n\n"
+            response += self._get_registration_cta(language, for_action=True)
+            
+            return {
+                "content": response,
+                "enrichment": {
+                    "swap_demo": True,
+                    "is_bridge": True,
+                    "from_token": from_token,
+                    "from_chain": from_chain or "ethereum",
+                    "to_chain": to_chain,
+                },
+                "requires_registration": True,
+            }
+        
+        # Best rate query - show rate comparison
+        if is_complete and from_token and to_token and not amount:
+            demo_rates = {
+                ("ETH", "USDC"): 2200.0,
+                ("USDC", "ETH"): 0.00045,
+                ("ETH", "USDT"): 2200.0,
+                ("USDT", "ETH"): 0.00045,
+            }
+            rate = demo_rates.get((from_token, to_token), 1.0)
+            
+            translations = {
+                "en": {
+                    "title": "🔄 **Best Swap Rate**",
+                    "rate": f"**Rate:** 1 {from_token} = {rate:.6f} {to_token}",
+                    "protocol": "**Best Protocol:** 1inch Aggregator",
+                    "note": "This is a demo rate. Sign up to get real-time quotes from 1inch, LiFi, and Hyperliquid.",
+                },
+                "es": {
+                    "title": "🔄 **Mejor Tasa de Swap**",
+                    "rate": f"**Tasa:** 1 {from_token} = {rate:.6f} {to_token}",
+                    "protocol": "**Mejor Protocolo:** Agregador 1inch",
+                    "note": "Esta es una tasa demo. Regístrate para obtener cotizaciones en tiempo real de 1inch, LiFi e Hyperliquid.",
+                },
+                "pt": {
+                    "title": "🔄 **Melhor Taxa de Swap**",
+                    "rate": f"**Taxa:** 1 {from_token} = {rate:.6f} {to_token}",
+                    "protocol": "**Melhor Protocolo:** Agregador 1inch",
+                    "note": "Esta é uma taxa demo. Cadastre-se para obter cotações em tempo real de 1inch, LiFi e Hyperliquid.",
+                },
+                "zh": {
+                    "title": "🔄 **最佳交换汇率**",
+                    "rate": f"**汇率:** 1 {from_token} = {rate:.6f} {to_token}",
+                    "protocol": "**最佳协议:** 1inch 聚合器",
+                    "note": "这是演示汇率。注册以从 1inch、LiFi 和 Hyperliquid 获取实时报价。",
+                },
+            }
+            t = translations.get(language, translations["en"])
+            
+            response = f"{t['title']}\n\n"
+            response += f"{t['rate']}\n"
+            response += f"{t['protocol']}\n\n"
+            response += f"💡 {t['note']}\n\n"
+            response += self._get_registration_cta(language, for_action=True)
+            
+            return {
+                "content": response,
+                "enrichment": {
+                    "swap_demo": True,
+                    "from_token": from_token,
+                    "to_token": to_token,
+                    "rate": rate,
+                },
+                "requires_registration": True,
+            }
+        
         if is_complete and from_token and to_token and amount:
             # Generate realistic demo quote
             demo_rates = {
