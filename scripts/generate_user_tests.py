@@ -243,8 +243,8 @@ async def test_user_shortcut_examples_detect_correct_intent(
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
-                json={{"content": example, "language": "en"},
-                headers={{"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                json={{'content': example, 'language': 'en'}},
+                headers={{'Authorization': f'Bearer {ACCESS_TOKEN}'}},
             )
             
             assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
@@ -295,8 +295,8 @@ async def test_user_shortcut_examples_not_generic_fallback(
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
-                json={{"content": example, "language": "en"},
-                headers={{"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                json={{'content': example, 'language': 'en'}},
+                headers={{'Authorization': f'Bearer {ACCESS_TOKEN}'}},
             )
             
             assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
@@ -362,8 +362,8 @@ async def test_user_shortcut_examples_have_meaningful_content(
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
-                json={{"content": example, "language": "en"},
-                headers={{"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                json={{'content': example, 'language': 'en'}},
+                headers={{'Authorization': f'Bearer {ACCESS_TOKEN}'}},
             )
             
             assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
