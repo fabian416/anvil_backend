@@ -4,6 +4,7 @@ Deep learning model for cryptocurrency price forecasting.
 Based on Hunter AI Bot's LSTM architecture.
 """
 
+import logging
 from typing import Dict, Optional, Tuple, List
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -16,6 +17,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from app.application.hunter.price_data_service import PriceDataService, PricePoint
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -305,7 +308,7 @@ class LSTMPricePredictor:
                     finally:
                         await client.close()
             except Exception as e:
-                logger.warning(f"Error fetching real price for {token_symbol}, using fallback: {e}")
+                logger.warning(f"Error fetching real price for {token_symbol}, using fallback: {e}", exc_info=True)
                 # Fallback: use token-specific defaults
                 default_prices = {
                     "BTC": 90000.0,
@@ -315,6 +318,7 @@ class LSTMPricePredictor:
                     "USDT": 1.0,
                 }
                 current_price = default_prices.get(token_symbol.upper(), 2000.0)
+                logger.info(f"Using fallback price for {token_symbol}: ${current_price}")
             
             # Return mock prediction with REAL current price
             # Mark as trained to satisfy test expectations
