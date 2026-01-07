@@ -111,8 +111,9 @@ fi
 # ============================================
 echo -e "${YELLOW}🛑 Deteniendo procesos existentes...${NC}"
 
-# Kill existing processes
+# Kill existing processes (try graceful first)
 pkill -f "uvicorn app.run:make_app" 2>/dev/null || true
+pkill -f "python.*uvicorn.*app.run" 2>/dev/null || true
 pkill -f "app.infrastructure.mcp.servers" 2>/dev/null || true
 pkill -f "celery.*worker" 2>/dev/null || true
 pkill -f "celery.*beat" 2>/dev/null || true
@@ -124,16 +125,38 @@ sleep 2
 
 # Force kill any remaining processes
 pkill -9 -f "uvicorn app.run:make_app" 2>/dev/null || true
+pkill -9 -f "python.*uvicorn.*app.run" 2>/dev/null || true
 pkill -9 -f "app.infrastructure.mcp.servers" 2>/dev/null || true
 pkill -9 -f "celery.*worker" 2>/dev/null || true
 pkill -9 -f "celery.*beat" 2>/dev/null || true
 pkill -9 -f "flower" 2>/dev/null || true
 
+# Kill any process using port 8080 (FastAPI)
+if command -v lsof >/dev/null 2>&1; then
+    lsof -ti :8080 | xargs kill -9 2>/dev/null || true
+fi
+
+# Kill any process using ports 8081-8091 (MCP servers)
+for port in {8081..8091}; do
+    lsof -ti :$port | xargs kill -9 2>/dev/null || true
+done
+
+# Kill any process using port 5555 (Flower)
+lsof -ti :5555 | xargs kill -9 2>/dev/null || true
+
 # Clean up PID file from previous run
 rm -f "$PID_FILE"
 
 # Wait a bit more to ensure ports are released
-sleep 1
+sleep 2
+
+# Verify ports are free
+if command -v lsof >/dev/null 2>&1; then
+    if lsof -i :8080 >/dev/null 2>&1; then
+        echo -e "${RED}⚠️  Advertencia: Puerto 8080 todavía en uso${NC}"
+        lsof -i :8080
+    fi
+fi
 
 echo -e "${GREEN}✅ Procesos anteriores detenidos${NC}\n"
 
