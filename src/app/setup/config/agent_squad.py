@@ -122,7 +122,7 @@ class AgentSquadSettings(BaseModel):
     # DEMO MODE: Use pre-built demo handlers instead of real LLM calls
     # When enabled, authenticated users get the same responses as /guest/chat
     # This is useful for demos and testing without requiring LLM API costs
-    use_demo_mode: bool = True
+    use_demo_mode: bool = False  # Changed to False to enable real LLM for authenticated users
 
 
 # Alias for backward compatibility

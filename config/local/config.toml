@@ -46,6 +46,9 @@ ALLOWED_ADMIN_EMAILS = [
 [agent_squad]
 # Master toggle (disable entire Agent Squad system)
 enabled = true
+# Demo mode: Use pre-built demo handlers instead of real LLM calls
+# Set to false to enable real LLM for authenticated users
+use_demo_mode = false
 
 # ========================================
 # External API Feature Flags (Phase 7)
