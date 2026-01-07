@@ -546,15 +546,18 @@ class SendGuestMessage:
                 "how much do i have", "my portfolio value", "total value",
                 "show my wallet", "what's in my wallet", "my funds",
                 "how much money do i have", "what's my balance", "check my balance",
+                "show my usdc balance", "my usdc balance", "usdc balance",
                 # Spanish
                 "mi saldo", "ver saldo", "mostrar saldo", "mi balance",
                 "cuánto tengo", "mis fondos", "mi cartera",
                 "cuánto dinero tengo", "cuál es mi saldo", "verificar mi saldo",
+                "mostrar mi saldo usdc", "mi saldo usdc",
                 # Portuguese
                 "meu saldo", "ver saldo", "mostrar saldo", "minha carteira",
                 "quanto eu tenho", "quanto dinheiro eu tenho", "qual é meu saldo",
+                "mostrar meu saldo usdc", "meu saldo usdc",
                 # Chinese
-                "我的余额", "查看余额", "我的钱包", "我有多少钱",
+                "我的余额", "查看余额", "我的钱包", "我有多少钱", "显示我的USDC余额",
             ],
             ChatIntent.PORTFOLIO: [
                 # English
@@ -600,13 +603,16 @@ class SendGuestMessage:
                 # English
                 "receive address", "my address", "deposit address",
                 "wallet address", "receive crypto",
+                "give me my qr code", "my qr code", "qr code",
+                "show qr", "get qr", "qr code address",
                 # Spanish
                 "dirección de recepción", "mi dirección", "dirección de depósito",
-                "recibir cripto",
+                "recibir cripto", "dame mi código qr", "mi código qr",
                 # Portuguese
                 "endereço de recebimento", "meu endereço", "receber cripto",
+                "me dê meu código qr", "meu código qr",
                 # Chinese
-                "接收地址", "我的地址", "接收加密货币",
+                "接收地址", "我的地址", "接收加密货币", "给我二维码", "我的二维码",
             ],
             ChatIntent.BUY: [
                 # English
@@ -629,15 +635,20 @@ class SendGuestMessage:
                 "send crypto", "send bitcoin", "send eth", "send usdc",
                 "send tokens", "transfer to", "send to wallet",
                 "i want to send", "how to send", "transfer crypto",
+                "transfer eth to", "transfer to another wallet", "send to another",
+                "transfer to wallet", "send to address",
                 # Spanish
                 "enviar cripto", "enviar bitcoin", "enviar eth", "enviar usdc",
                 "enviar tokens", "transferir a", "enviar a billetera",
                 "quiero enviar", "cómo enviar", "transferir cripto",
+                "transferir eth a", "transferir a otra billetera",
                 # Portuguese
                 "enviar cripto", "enviar bitcoin", "enviar eth",
                 "quero enviar", "como enviar", "transferir para",
+                "transferir eth para", "transferir para outra carteira",
                 # Chinese
                 "发送加密货币", "发送比特币", "发送以太坊", "我想发送", "转账",
+                "转账ETH到", "转账到另一个钱包",
             ],
         }
 
