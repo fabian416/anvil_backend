@@ -84,21 +84,23 @@ class GuestProvider(Provider):
                 chain="ethereum",  # Default to Ethereum mainnet
             )
             
-            # LiFi doesn't require API key, but we can add it later if needed
+            # LiFi doesn't require API key - always try to create it
             lifi_client = None
             try:
                 from app.infrastructure.adapters.external.lifi_client import LiFiClient
                 lifi_client = LiFiClient()
-            except Exception:
-                pass
+                logger.info("LiFi client created successfully")
+            except Exception as e:
+                logger.debug(f"LiFi client not available: {e}")
             
+            logger.info("SwapHandler created with real 1inch client")
             return SwapHandler(
                 oneinch_client=oneinch_client,
                 lifi_client=lifi_client,
                 hyperliquid_client=None,  # Optional
             )
         except Exception as e:
-            logger.warning(f"Failed to create SwapHandler: {e}")
+            logger.warning(f"Failed to create SwapHandler: {e}", exc_info=True)
             return None
 
     @provide(scope=Scope.REQUEST)

@@ -1849,32 +1849,32 @@ class GuestHandlerService:
         if is_bridge and from_token and to_chain:
             translations = {
                 "en": {
-                    "title": "🌉 **Bridge Quote (Demo)**",
+                    "title": "🌉 **Bridge Quote**",
                     "from": f"**From:** {from_token}",
                     "from_chain": f"**Chain:** {from_chain or 'Ethereum'}",
                     "to_chain": f"**To:** {to_chain}",
-                    "note": "This is a demo quote. Sign up to execute real bridges with live pricing via LiFi or LayerZero.",
+                    "note": "⚠️ **To execute this bridge, you need to register.** Sign up to proceed with the transaction.",
                 },
                 "es": {
-                    "title": "🌉 **Cotización de Bridge (Demo)**",
+                    "title": "🌉 **Cotización de Bridge**",
                     "from": f"**Desde:** {from_token}",
                     "from_chain": f"**Cadena:** {from_chain or 'Ethereum'}",
                     "to_chain": f"**Hacia:** {to_chain}",
-                    "note": "Esta es una cotización demo. Regístrate para ejecutar bridges reales con precios en vivo vía LiFi o LayerZero.",
+                    "note": "⚠️ **Para ejecutar este bridge, necesitas registrarte.** Regístrate para proceder con la transacción.",
                 },
                 "pt": {
-                    "title": "🌉 **Cotação de Bridge (Demo)**",
+                    "title": "🌉 **Cotação de Bridge**",
                     "from": f"**De:** {from_token}",
                     "from_chain": f"**Cadeia:** {from_chain or 'Ethereum'}",
                     "to_chain": f"**Para:** {to_chain}",
-                    "note": "Esta é uma cotação demo. Cadastre-se para executar bridges reais com preços ao vivo via LiFi ou LayerZero.",
+                    "note": "⚠️ **Para executar este bridge, você precisa se cadastrar.** Cadastre-se para prosseguir com a transação.",
                 },
                 "zh": {
-                    "title": "🌉 **桥接报价（演示）**",
+                    "title": "🌉 **桥接报价**",
                     "from": f"**从:** {from_token}",
                     "from_chain": f"**链:** {from_chain or 'Ethereum'}",
                     "to_chain": f"**到:** {to_chain}",
-                    "note": "这是演示报价。注册以通过 LiFi 或 LayerZero 执行实时价格的真实桥接。",
+                    "note": "⚠️ **要执行此桥接，您需要注册。** 注册以继续交易。",
                 },
             }
             t = translations.get(language, translations["en"])
@@ -1884,7 +1884,7 @@ class GuestHandlerService:
             if from_chain:
                 response += f"{t['from_chain']}\n"
             response += f"{t['to_chain']}\n\n"
-            response += f"*{t['note']}*\n\n"
+            response += f"{t['note']}\n\n"
             response += self._get_registration_cta(language, for_action=True)
             
             return {
@@ -1914,25 +1914,25 @@ class GuestHandlerService:
                     "title": "🔄 **Best Swap Rate**",
                     "rate": f"**Rate:** 1 {from_token} = {rate:.6f} {to_token}",
                     "protocol": "**Best Protocol:** 1inch Aggregator",
-                    "note": "This is a demo rate. Sign up to get real-time quotes from 1inch, LiFi, and Hyperliquid.",
+                    "note": "⚠️ **To execute this swap, you need to register.** Sign up to proceed with the transaction.",
                 },
                 "es": {
                     "title": "🔄 **Mejor Tasa de Swap**",
                     "rate": f"**Tasa:** 1 {from_token} = {rate:.6f} {to_token}",
                     "protocol": "**Mejor Protocolo:** Agregador 1inch",
-                    "note": "Esta es una tasa demo. Regístrate para obtener cotizaciones en tiempo real de 1inch, LiFi e Hyperliquid.",
+                    "note": "⚠️ **Para ejecutar este swap, necesitas registrarte.** Regístrate para proceder con la transacción.",
                 },
                 "pt": {
                     "title": "🔄 **Melhor Taxa de Swap**",
                     "rate": f"**Taxa:** 1 {from_token} = {rate:.6f} {to_token}",
                     "protocol": "**Melhor Protocolo:** Agregador 1inch",
-                    "note": "Esta é uma taxa demo. Cadastre-se para obter cotações em tempo real de 1inch, LiFi e Hyperliquid.",
+                    "note": "⚠️ **Para executar este swap, você precisa se cadastrar.** Cadastre-se para prosseguir com a transação.",
                 },
                 "zh": {
                     "title": "🔄 **最佳交换汇率**",
                     "rate": f"**汇率:** 1 {from_token} = {rate:.6f} {to_token}",
                     "protocol": "**最佳协议:** 1inch 聚合器",
-                    "note": "这是演示汇率。注册以从 1inch、LiFi 和 Hyperliquid 获取实时报价。",
+                    "note": "⚠️ **要执行此交换，您需要注册。** 注册以继续交易。",
                 },
             }
             t = translations.get(language, translations["en"])
@@ -1940,7 +1940,7 @@ class GuestHandlerService:
             response = f"{t['title']}\n\n"
             response += f"{t['rate']}\n"
             response += f"{t['protocol']}\n\n"
-            response += f"💡 {t['note']}\n\n"
+            response += f"{t['note']}\n\n"
             response += self._get_registration_cta(language, for_action=True)
             
             return {
@@ -1975,40 +1975,40 @@ class GuestHandlerService:
             
             translations = {
                 "en": {
-                    "title": "🔄 **Swap Quote (Demo)**",
+                    "title": "🔄 **Swap Quote**",
                     "from": "From",
                     "to": "To",
                     "rate": "Rate",
                     "impact": "Price Impact",
                     "gas": "Est. Gas",
-                    "note": "This is a demo quote. Sign up to execute real swaps with live pricing.",
+                    "note": "⚠️ **To execute this swap, you need to register.** Sign up to proceed with the transaction.",
                 },
                 "es": {
-                    "title": "🔄 **Cotización de Swap (Demo)**",
+                    "title": "🔄 **Cotización de Swap**",
                     "from": "De",
                     "to": "A",
                     "rate": "Tasa",
                     "impact": "Impacto en Precio",
                     "gas": "Gas Est.",
-                    "note": "Esta es una cotización demo. Regístrate para ejecutar swaps reales con precios en vivo.",
+                    "note": "⚠️ **Para ejecutar este swap, necesitas registrarte.** Regístrate para proceder con la transacción.",
                 },
                 "pt": {
-                    "title": "🔄 **Cotação de Swap (Demo)**",
+                    "title": "🔄 **Cotação de Swap**",
                     "from": "De",
                     "to": "Para",
                     "rate": "Taxa",
                     "impact": "Impacto no Preço",
                     "gas": "Gas Est.",
-                    "note": "Esta é uma cotação demo. Cadastre-se para executar swaps reais com preços ao vivo.",
+                    "note": "⚠️ **Para executar este swap, você precisa se cadastrar.** Cadastre-se para prosseguir com a transação.",
                 },
                 "zh": {
-                    "title": "🔄 **交换报价 (演示)**",
+                    "title": "🔄 **交换报价**",
                     "from": "从",
                     "to": "到",
                     "rate": "汇率",
                     "impact": "价格影响",
                     "gas": "预估Gas",
-                    "note": "这是演示报价。注册后可执行实时定价的真实交换。",
+                    "note": "⚠️ **要执行此交换，您需要注册。** 注册以继续交易。",
                 },
             }
             t = translations.get(language, translations["en"])
@@ -2019,7 +2019,7 @@ class GuestHandlerService:
             response += f"**{t['rate']}:** 1 {from_token} = {rate:.6f} {to_token}\n"
             response += f"**{t['impact']}:** ~0.12%\n"
             response += f"**{t['gas']}:** ~$0.50\n\n"
-            response += f"💡 {t['note']}"
+            response += f"{t['note']}\n\n"
             response += self._get_registration_cta(language, for_action=True)
             
             return {
