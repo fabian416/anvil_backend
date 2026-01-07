@@ -100,8 +100,8 @@ async def test_user_shortcut_examples_detect_correct_intent(
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
-                json={{'content': example, 'language': 'en'}},
-                headers={{'Authorization': f'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ'}},
+                json={'content': example, 'language': 'en'},
+                headers={'Authorization': f'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ'},
             )
             
             assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
@@ -152,8 +152,8 @@ async def test_user_shortcut_examples_not_generic_fallback(
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
-                json={{'content': example, 'language': 'en'}},
-                headers={{'Authorization': f'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ'}},
+                json={'content': example, 'language': 'en'},
+                headers={'Authorization': f'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ'},
             )
             
             assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
@@ -219,8 +219,8 @@ async def test_user_shortcut_examples_have_meaningful_content(
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
-                json={{'content': example, 'language': 'en'}},
-                headers={{'Authorization': f'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ'}},
+                json={'content': example, 'language': 'en'},
+                headers={'Authorization': f'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ'},
             )
             
             assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
