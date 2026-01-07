@@ -47,6 +47,7 @@ from app.infrastructure.persistence_sqla.mappings.ai_telemetry import map_ai_tel
 from app.infrastructure.persistence_sqla.mappings.system_config import map_system_config_tables
 from app.infrastructure.persistence_sqla.mappings.portfolio_snapshot import map_portfolio_snapshot_tables
 from app.infrastructure.persistence_sqla.mappings.policy import map_policy_tables
+from app.infrastructure.persistence_sqla.mappings.guest import map_guest_tables
 
 
 def map_tables() -> None:
@@ -79,3 +80,5 @@ def map_tables() -> None:
     map_system_config_tables()
     # Portfolio Snapshots
     map_portfolio_snapshot_tables()
+    # Guest Chat
+    map_guest_tables()

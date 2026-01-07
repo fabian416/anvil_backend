@@ -77,9 +77,9 @@ REAL_HANDLER_INTENTS = {
 
 # Increased for testing: allows comprehensive test suite execution
 # Production: 20/hour, 50/day
-# Testing: 200/hour, 1000/day
-RATE_LIMIT_MESSAGES_PER_HOUR = 200
-RATE_LIMIT_MESSAGES_PER_DAY = 1000
+# Testing: 5000/hour, 10000/day
+RATE_LIMIT_MESSAGES_PER_HOUR = 5000
+RATE_LIMIT_MESSAGES_PER_DAY = 10000
 MAX_MESSAGE_LENGTH = 500
 
 # ========================================

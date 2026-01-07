@@ -10,7 +10,10 @@ from datetime import datetime, timedelta
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Request, status
 
-from app.application.guest.commands.send_guest_message import SendGuestMessage
+from app.application.guest.commands.send_guest_message import (
+    RATE_LIMIT_MESSAGES_PER_HOUR,
+    SendGuestMessage,
+)
 from app.domain.guest.ports.guest_repository import GuestRepository
 from app.presentation.http.schemas.guest import (
     GuestChatRequest,
@@ -68,8 +71,8 @@ def create_guest_router() -> APIRouter:
         - Get wallet receive address
         
         **Rate Limits:**
-        - 20 messages per hour
-        - 50 messages per day
+        - 5000 messages per hour (testing)
+        - 10000 messages per day (testing)
         - Max 500 characters per message
         
         **Languages:** en (English), es (Spanish), pt (Portuguese), zh (Mandarin)
@@ -121,7 +124,7 @@ def create_guest_router() -> APIRouter:
         guest_info = None
         if result.guest_info:
             guest_info = GuestInfo(
-                messages_remaining=result.guest_info.get("messages_remaining", 20),
+                messages_remaining=result.guest_info.get("messages_remaining", RATE_LIMIT_MESSAGES_PER_HOUR),
                 session_active=result.guest_info.get("session_active", True),
             )
 
@@ -215,7 +218,7 @@ def create_guest_router() -> APIRouter:
         messages_this_hour = await repository.get_message_count_since(
             guest.id, hour_ago
         )
-        messages_remaining = max(0, 20 - messages_this_hour)
+        messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
 
         return GuestStatusResponse(
             has_active_session=conversation is not None and conversation.is_active,

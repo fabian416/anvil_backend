@@ -267,6 +267,10 @@ async def cleanup_database(test_db_engine):
         "conversations",
         "sessions",
         "users",  # Also clean users table
+        "guest_messages",
+        "guest_conversations",
+        "guest_users",
+        "guest_telemetry",
     ]
 
     # Clean up BEFORE test to prevent data pollution from previous tests
