@@ -47,6 +47,8 @@ class ChatIntent(Enum):
     LENDING = "lending"  # Morpho vaults, Aave, Compound - deposit/earn/supply
     MONEY_MARKET = "money_market"  # Compare lending rates across protocols
     SWAP = "swap"  # Token swaps via 1inch, Hyperliquid, UniswapX
+    BUY = "buy"  # Buy crypto with fiat (on-ramp)
+    SEND = "send"  # Send tokens to another wallet
     BALANCE = "balance"  # Show user balance in USDC
     PORTFOLIO = "portfolio"  # Full portfolio enumeration
     ACTIVITY = "activity"  # Transaction history

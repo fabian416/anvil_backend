@@ -654,18 +654,38 @@ class IntentDetectorV2:
                     handler=self._handler_map[ChatIntentV2.SWAP],
                 )
         
-        # Lending patterns
+        # Lending patterns (improved to handle amounts and variations)
+        # Use regex patterns to allow numbers and intermediate words
         lending_patterns = [
-            "deposit usdc", "deposit eth", "earn on morpho",
-            "supply to aave", "lend my", "earn yield",
-            "depositar usdc", "depositar eth", "prestar en",
-            "depositar usdc", "emprestar",
+            # Spanish patterns with amounts
+            r"depositar\s+\d+\.?\d*\s*(usdc|eth|usdt|dai|wbtc|weth|btc)",
+            r"depositar\s+(usdc|eth|usdt|dai|wbtc|weth|btc)",
+            r"depositar.*vault.*morpho",
+            r"depositar.*en.*vault",
+            r"prestar\s+\d+\.?\d*\s*(usdc|eth|usdt|dai)",
+            r"prestar\s+(usdc|eth|usdt|dai)",
+            r"prestar\s+en",
+            r"emprestar",
+            # English patterns with amounts
+            r"deposit\s+\d+\.?\d*\s*(usdc|eth|usdt|dai|wbtc|weth|btc)",
+            r"deposit\s+(usdc|eth|usdt|dai|wbtc|weth|btc)",
+            r"deposit.*vault.*morpho",
+            r"deposit.*in.*vault",
+            r"supply\s+\d+\.?\d*\s*(usdc|eth|usdt|dai)",
+            r"supply\s+to\s+aave",
+            r"lend\s+my",
+            r"earn\s+yield",
+            r"earn\s+on\s+morpho",
+            # Portuguese patterns
+            r"depositar\s+\d+\.?\d*\s*(usdc|eth|usdt|dai)",
+            r"depositar\s+(usdc|eth|usdt|dai)",
+            r"emprestar\s+\d+\.?\d*",
         ]
         for pattern in lending_patterns:
-            if pattern in message:
+            if re.search(pattern, message, flags=re.IGNORECASE):
                 return IntentResult(
                     intent=ChatIntentV2.LENDING,
-                    confidence=0.80,
+                    confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.LENDING],
                 )
         

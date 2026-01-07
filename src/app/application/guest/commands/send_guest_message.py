@@ -91,6 +91,8 @@ RESTRICTED_INTENTS = {
     ChatIntent.BALANCE,
     ChatIntent.ACTIVITY,
     ChatIntent.RECEIVE,
+    ChatIntent.BUY,
+    ChatIntent.SEND,
 }
 
 # Intents that require confirmation (only restricted when confirmed=true)
@@ -588,10 +590,45 @@ class SendGuestMessage:
             ChatIntent.RECEIVE: [
                 # English
                 "receive address", "my address", "deposit address",
-                "wallet address", "send me", "receive crypto",
+                "wallet address", "receive crypto",
                 # Spanish
                 "dirección de recepción", "mi dirección", "dirección de depósito",
-                "recibir cripto", "envíame",
+                "recibir cripto",
+                # Portuguese
+                "endereço de recebimento", "meu endereço", "receber cripto",
+                # Chinese
+                "接收地址", "我的地址", "接收加密货币",
+            ],
+            ChatIntent.BUY: [
+                # English
+                "buy crypto", "buy bitcoin", "buy eth", "buy ethereum",
+                "buy usdc", "buy tokens", "purchase crypto", "purchase bitcoin",
+                "buy with card", "buy with fiat", "on-ramp", "onramp",
+                "i want to buy", "how to buy", "where to buy",
+                # Spanish
+                "comprar cripto", "comprar bitcoin", "comprar eth", "comprar ethereum",
+                "comprar usdc", "comprar tokens", "quiero comprar",
+                "comprar con tarjeta", "cómo comprar", "dónde comprar",
+                # Portuguese
+                "comprar cripto", "comprar bitcoin", "comprar eth",
+                "quero comprar", "como comprar", "onde comprar",
+                # Chinese
+                "购买加密货币", "购买比特币", "购买以太坊", "我想买",
+            ],
+            ChatIntent.SEND: [
+                # English
+                "send crypto", "send bitcoin", "send eth", "send usdc",
+                "send tokens", "transfer to", "send to wallet",
+                "i want to send", "how to send", "transfer crypto",
+                # Spanish
+                "enviar cripto", "enviar bitcoin", "enviar eth", "enviar usdc",
+                "enviar tokens", "transferir a", "enviar a billetera",
+                "quiero enviar", "cómo enviar", "transferir cripto",
+                # Portuguese
+                "enviar cripto", "enviar bitcoin", "enviar eth",
+                "quero enviar", "como enviar", "transferir para",
+                # Chinese
+                "发送加密货币", "发送比特币", "发送以太坊", "我想发送", "转账",
             ],
         }
 
@@ -946,6 +983,8 @@ class SendGuestMessage:
         - PORTFOLIO: Viewing portfolio positions
         - ACTIVITY: Viewing transaction history
         - RECEIVE: Getting deposit address
+        - BUY: Buying crypto with fiat
+        - SEND: Sending tokens to another wallet
         """
         if not intent:
             return False, None
@@ -957,6 +996,8 @@ class SendGuestMessage:
                 ChatIntent.PORTFOLIO: "portfolio_access",
                 ChatIntent.ACTIVITY: "transaction_history",
                 ChatIntent.RECEIVE: "wallet_address",
+                ChatIntent.BUY: "buy_crypto",
+                ChatIntent.SEND: "send_crypto",
             }
             reason = reason_map.get(intent, get_reason_for_intent(intent.value))
             return True, reason

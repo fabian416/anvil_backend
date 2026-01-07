@@ -137,6 +137,18 @@ Rastreie todas as suas posições DeFi em um só lugar! Com uma conta gratuita, 
         "pt": "🔐 **Carteira Necessária**\n\nPara obter seu endereço de depósito, você precisa criar uma conta e configurar sua carteira.\n\nCadastre-se para:\n• Obter seu endereço de carteira pessoal\n• Receber depósitos de cripto\n• Gerenciar múltiplas redes",
         "zh": "🔐 **需要钱包**\n\n要获取您的存款地址，您需要创建账户并设置钱包。\n\n注册后可以：\n• 获取您的个人钱包地址\n• 接收加密货币存款\n• 管理多条链",
     },
+    "buy_crypto": {
+        "en": "🔐 **Account Required**\n\nTo buy crypto with fiat, you need to create an account and complete verification.\n\nSign up to:\n• Buy crypto with card or bank transfer\n• Access multiple on-ramp providers\n• Get the best rates",
+        "es": "🔐 **Cuenta Requerida**\n\nPara comprar cripto con dinero fiat, necesitas crear una cuenta y completar la verificación.\n\nRegístrate para:\n• Comprar cripto con tarjeta o transferencia bancaria\n• Acceder a múltiples proveedores\n• Obtener las mejores tasas",
+        "pt": "🔐 **Conta Necessária**\n\nPara comprar cripto com moeda fiat, você precisa criar uma conta e completar a verificação.\n\nCadastre-se para:\n• Comprar cripto com cartão ou transferência bancária\n• Acessar múltiplos provedores\n• Obter as melhores taxas",
+        "zh": "🔐 **需要账户**\n\n要用法币购买加密货币，您需要创建账户并完成验证。\n\n注册后可以：\n• 用卡或银行转账购买加密货币\n• 访问多个入金渠道\n• 获得最优汇率",
+    },
+    "send_crypto": {
+        "en": "🔐 **Wallet Required**\n\nTo send crypto to another wallet, you need to create an account and connect your wallet.\n\nSign up to:\n• Send tokens to any address\n• Transfer across multiple chains\n• Track your transfers",
+        "es": "🔐 **Billetera Requerida**\n\nPara enviar cripto a otra billetera, necesitas crear una cuenta y conectar tu billetera.\n\nRegístrate para:\n• Enviar tokens a cualquier dirección\n• Transferir entre múltiples cadenas\n• Rastrear tus transferencias",
+        "pt": "🔐 **Carteira Necessária**\n\nPara enviar cripto para outra carteira, você precisa criar uma conta e conectar sua carteira.\n\nCadastre-se para:\n• Enviar tokens para qualquer endereço\n• Transferir entre múltiplas redes\n• Rastrear suas transferências",
+        "zh": "🔐 **需要钱包**\n\n要向其他钱包发送加密货币，您需要创建账户并连接钱包。\n\n注册后可以：\n• 向任何地址发送代币\n• 跨链转账\n• 跟踪您的转账",
+    },
     "activity_access": {
         "en": "Create an account to view your transaction history.",
         "es": "Crea una cuenta para ver tu historial de transacciones.",
