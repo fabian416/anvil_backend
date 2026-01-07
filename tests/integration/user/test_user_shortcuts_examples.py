@@ -58,7 +58,7 @@ async def conversation_id(client: AsyncClient):
     response = await client.post(
         "/api/v1/user/chat/conversations",
         json={"title": "Test Conversation", "language": "en"},
-        headers={{"Authorization": f"Bearer {eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ}"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
     
     if response.status_code == 201:
@@ -99,12 +99,12 @@ async def test_user_shortcut_examples_detect_correct_intent(
         
         for example in shortcut["examples"]:
             response = await client.post(
-                f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
+                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
                 json={"content": example, "language": "en"},
                 headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
             )
             
-            assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
+            assert response.status_code == 200, f"Failed for {intent}: {example}"
             data = response.json()
             
             detected_intent = data["routing"]["intent"]
@@ -151,12 +151,12 @@ async def test_user_shortcut_examples_not_generic_fallback(
         
         for example in shortcut["examples"]:
             response = await client.post(
-                f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
+                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
                 json={"content": example, "language": "en"},
                 headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
             )
             
-            assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
+            assert response.status_code == 200, f"Failed for {intent}: {example}"
             data = response.json()
             
             content = data["agent_message"]["content"]
@@ -200,7 +200,7 @@ async def test_user_shortcut_examples_have_meaningful_content(
     failures = []
     
     # Intent-specific keywords that should appear in responses
-        intent_keywords = {
+    intent_keywords = {
         "lending": ["lending", "vault", "yield", "morpho", "deposit"],
         "money_market": ["aave", "compound", "rate", "supply", "lending"],
         "swap": ["swap", "quote", "rate", "bridge", "exchange"],
@@ -218,12 +218,12 @@ async def test_user_shortcut_examples_have_meaningful_content(
         
         for example in shortcut["examples"]:
             response = await client.post(
-                f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
+                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
                 json={"content": example, "language": "en"},
                 headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
             )
             
-            assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
+            assert response.status_code == 200, f"Failed for {intent}: {example}"
             data = response.json()
             
             content = data["agent_message"]["content"].lower()
