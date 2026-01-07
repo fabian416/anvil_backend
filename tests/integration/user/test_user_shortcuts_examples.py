@@ -46,27 +46,19 @@ async def conversation_id(client: AsyncClient):
     # Try to get existing conversation first
     response = await client.get(
         "/api/v1/user/chat/conversations",
-        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+        headers={{"Authorization": f"Bearer {eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ}"},
     )
     
     if response.status_code == 200:
-        data = response.json()
-        # Handle both list and ConversationListResponse format
-        if isinstance(data, dict) and "conversations" in data:
-            conversations = data["conversations"]
-        else:
-            conversations = data if isinstance(data, list) else []
-        
+        conversations = response.json()
         if conversations and len(conversations) > 0:
-            conv = conversations[0]
-            # Handle both dict and object format
-            return conv["id"] if isinstance(conv, dict) else conv.id
+            return conversations[0]["id"]
     
     # Create new conversation
     response = await client.post(
         "/api/v1/user/chat/conversations",
         json={"title": "Test Conversation", "language": "en"},
-        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+        headers={{"Authorization": f"Bearer {eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ}"},
     )
     
     if response.status_code == 201:
@@ -107,34 +99,34 @@ async def test_user_shortcut_examples_detect_correct_intent(
         
         for example in shortcut["examples"]:
             response = await client.post(
-                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-                json={"content": example, "language": "en"},
-                headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
+                json={{"content": example, "language": "en"},
+                headers={{"Authorization": f"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ"},
             )
             
-            assert response.status_code == 200, f"Failed for {intent}: {example}"
+            assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
             data = response.json()
             
             detected_intent = data["routing"]["intent"]
             
             if detected_intent != intent:
                 failures.append(
-                    {
+                    {{
                         "shortcut": command,
                         "intent": intent,
                         "example": example,
                         "detected": detected_intent,
-                    }
+                    }}
                 )
     
     if failures:
         error_msg = "\n".join(
             [
-                f"❌ {f['shortcut']} ({f['intent']}): '{f['example']}' → detected as '{f['detected']}'"
+                f"❌ {{f['shortcut']}} ({{f['intent']}}): '{{f['example']}}' → detected as '{{f['detected']}}'"
                 for f in failures
             ]
         )
-        pytest.fail(f"Intent detection failures:\n{error_msg}")
+        pytest.fail(f"Intent detection failures:\n{{error_msg}}")
 
 
 @pytest.mark.asyncio
@@ -159,12 +151,12 @@ async def test_user_shortcut_examples_not_generic_fallback(
         
         for example in shortcut["examples"]:
             response = await client.post(
-                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-                json={"content": example, "language": "en"},
-                headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
+                json={{"content": example, "language": "en"},
+                headers={{"Authorization": f"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ"},
             )
             
-            assert response.status_code == 200, f"Failed for {intent}: {example}"
+            assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
             data = response.json()
             
             content = data["agent_message"]["content"]
@@ -172,22 +164,22 @@ async def test_user_shortcut_examples_not_generic_fallback(
             # Check if response is generic fallback
             if GENERIC_FALLBACK_MESSAGE in content:
                 failures.append(
-                    {
+                    {{
                         "shortcut": command,
                         "intent": intent,
                         "example": example,
                         "content_preview": content[:100],
-                    }
+                    }}
                 )
     
     if failures:
         error_msg = "\n".join(
             [
-                f"❌ {f['shortcut']} ({f['intent']}): '{f['example']}' → Generic fallback detected"
+                f"❌ {{f['shortcut']}} ({{f['intent']}}): '{{f['example']}}' → Generic fallback detected"
                 for f in failures
             ]
         )
-        pytest.fail(f"Generic fallback detected for:\n{error_msg}")
+        pytest.fail(f"Generic fallback detected for:\n{{error_msg}}")
 
 
 @pytest.mark.asyncio
@@ -208,7 +200,7 @@ async def test_user_shortcut_examples_have_meaningful_content(
     failures = []
     
     # Intent-specific keywords that should appear in responses
-    intent_keywords = {
+    intent_keywords = {{
         "lending": ["lending", "vault", "yield", "morpho", "deposit"],
         "money_market": ["aave", "compound", "rate", "supply", "lending"],
         "swap": ["swap", "quote", "rate", "bridge", "exchange"],
@@ -218,7 +210,7 @@ async def test_user_shortcut_examples_have_meaningful_content(
         "receive": ["address", "wallet", "receive", "deposit"],
         "buy": ["buy", "crypto", "card"],
         "send": ["send", "transfer", "wallet"],
-    }
+    }}
     
     for shortcut in shortcuts_data:
         intent = shortcut["intent"]
@@ -226,12 +218,12 @@ async def test_user_shortcut_examples_have_meaningful_content(
         
         for example in shortcut["examples"]:
             response = await client.post(
-                f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-                json={"content": example, "language": "en"},
-                headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                f"/api/v1/user/chat/conversations/{{conversation_id}}/messages",
+                json={{"content": example, "language": "en"},
+                headers={{"Authorization": f"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ"},
             )
             
-            assert response.status_code == 200, f"Failed for {intent}: {example}"
+            assert response.status_code == 200, f"Failed for {{intent}}: {{example}}"
             data = response.json()
             
             content = data["agent_message"]["content"].lower()
@@ -239,13 +231,13 @@ async def test_user_shortcut_examples_have_meaningful_content(
             # Check minimum content length
             if len(content) < 50:
                 failures.append(
-                    {
+                    {{
                         "shortcut": command,
                         "intent": intent,
                         "example": example,
                         "issue": "Content too short",
                         "length": len(content),
-                    }
+                    }}
                 )
                 continue
             
@@ -256,21 +248,21 @@ async def test_user_shortcut_examples_have_meaningful_content(
                 
                 if not found_keyword:
                     failures.append(
-                        {
+                        {{
                             "shortcut": command,
                             "intent": intent,
                             "example": example,
                             "issue": "No intent-specific keywords found",
                             "expected_keywords": keywords,
                             "content_preview": content[:150],
-                        }
+                        }}
                     )
     
     if failures:
         error_msg = "\n".join(
             [
-                f"❌ {f['shortcut']} ({f['intent']}): '{f['example']}' → {f['issue']}"
+                f"❌ {{f['shortcut']}} ({{f['intent']}}): '{{f['example']}}' → {{f['issue']}}"
                 for f in failures
             ]
         )
-        pytest.fail(f"Content quality issues:\n{error_msg}")
+        pytest.fail(f"Content quality issues:\n{{error_msg}}")
