@@ -470,15 +470,84 @@ class GuestHandlerService:
             # Determine emoji based on direction
             direction_emoji = "🟢" if prediction.direction == "up" else "🔴" if prediction.direction == "down" else "🟡"
 
-            response = f"📈 **Price Prediction for {token}**\n\n"
-            response += f"**Current Price:** ${prediction.current_price:,.2f}\n"
-            response += f"**7-Day Forecast:** ${prediction.predicted_price:,.2f}\n"
-            response += f"**Expected Change:** {direction_emoji} {prediction.change_percent:+.1f}%\n"
-            response += f"**Direction:** {prediction.direction.upper()}\n"
-            response += f"**Confidence:** {prediction.confidence * 100:.0f}%\n\n"
+            # Translations for price prediction response
+            translations = {
+                "en": {
+                    "title": f"📈 **Price Prediction for {token}**",
+                    "current_price": "**Current Price:**",
+                    "forecast": "**7-Day Forecast:**",
+                    "expected_change": "**Expected Change:**",
+                    "direction": "**Direction:**",
+                    "confidence": "**Confidence:**",
+                    "model": "**Model:** LSTM Neural Network",
+                    "horizon": "**Horizon:**",
+                    "hours": "hours",
+                    "up": "UP",
+                    "down": "DOWN",
+                    "neutral": "NEUTRAL",
+                },
+                "es": {
+                    "title": f"📈 **Predicción de Precio para {token}**",
+                    "current_price": "**Precio Actual:**",
+                    "forecast": "**Pronóstico 7 Días:**",
+                    "expected_change": "**Cambio Esperado:**",
+                    "direction": "**Dirección:**",
+                    "confidence": "**Confianza:**",
+                    "model": "**Modelo:** Red Neuronal LSTM",
+                    "horizon": "**Horizonte:**",
+                    "hours": "horas",
+                    "up": "ALZA",
+                    "down": "BAJA",
+                    "neutral": "NEUTRAL",
+                },
+                "pt": {
+                    "title": f"📈 **Previsão de Preço para {token}**",
+                    "current_price": "**Preço Atual:**",
+                    "forecast": "**Previsão 7 Dias:**",
+                    "expected_change": "**Mudança Esperada:**",
+                    "direction": "**Direção:**",
+                    "confidence": "**Confiança:**",
+                    "model": "**Modelo:** Rede Neural LSTM",
+                    "horizon": "**Horizonte:**",
+                    "hours": "horas",
+                    "up": "ALTA",
+                    "down": "BAIXA",
+                    "neutral": "NEUTRO",
+                },
+                "zh": {
+                    "title": f"📈 **{token} 价格预测**",
+                    "current_price": "**当前价格:**",
+                    "forecast": "**7天预测:**",
+                    "expected_change": "**预期变化:**",
+                    "direction": "**方向:**",
+                    "confidence": "**置信度:**",
+                    "model": "**模型:** LSTM 神经网络",
+                    "horizon": "**时间范围:**",
+                    "hours": "小时",
+                    "up": "上涨",
+                    "down": "下跌",
+                    "neutral": "中性",
+                },
+            }
 
-            response += "**Model:** LSTM Neural Network\n"
-            response += f"**Horizon:** {prediction.horizon_hours} hours\n"
+            t = translations.get(language, translations["en"])
+
+            # Map direction to translated text
+            direction_text = {
+                "up": t["up"],
+                "down": t["down"],
+                "neutral": t["neutral"],
+            }.get(prediction.direction, prediction.direction.upper())
+
+            response = f"{t['title']}\n\n"
+            response += f"{t['current_price']} ${prediction.current_price:,.2f}\n"
+            response += f"{t['forecast']} ${prediction.predicted_price:,.2f}\n"
+            response += f"{t['expected_change']} {direction_emoji} {prediction.change_percent:+.1f}%\n"
+            response += f"{t['direction']} {direction_text}\n"
+            response += f"{t['confidence']} {prediction.confidence * 100:.0f}%\n\n"
+
+            response += f"{t['model']}\n"
+            response += f"{t['horizon']} {prediction.horizon_hours} {t['hours']}\n"
 
             response += self._get_registration_cta(language)
 
