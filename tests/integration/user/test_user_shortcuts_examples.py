@@ -46,7 +46,7 @@ async def conversation_id(client: AsyncClient):
     # Try to get existing conversation first
     response = await client.get(
         "/api/v1/user/chat/conversations",
-        headers={{"Authorization": f"Bearer {eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ}"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
     
     if response.status_code == 200:
@@ -58,7 +58,7 @@ async def conversation_id(client: AsyncClient):
     response = await client.post(
         "/api/v1/user/chat/conversations",
         json={"title": "Test Conversation", "language": "en"},
-        headers={{"Authorization": f"Bearer {eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ}"},
+        headers={"Authorization": f"Bearer {eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ}"},
     )
     
     if response.status_code == 201:
