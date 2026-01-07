@@ -1620,6 +1620,9 @@ class GuestHandlerService:
         
         Supports multi-turn conversations like:
         - "quiero swap" → "de USDC" → "a ETH" → "100"
+        - "Swap 100 USDC for ETH"
+        - "Bridge USDC from Ethereum to Base"
+        - "Best swap rate for ETH to USDC"
         """
         import re
         
@@ -1630,14 +1633,75 @@ class GuestHandlerService:
             "to_token": None,
             "amount": None,
             "is_complete": False,
+            "is_bridge": False,
+            "from_chain": None,
+            "to_chain": None,
         }
         
         # Extract tokens mentioned
         tokens = ["eth", "usdc", "usdt", "dai", "wbtc", "weth", "btc", "sol", "matic", "arb", "op"]
+        chains = ["ethereum", "base", "arbitrum", "optimism", "polygon", "avalanche", "mainnet"]
         found_tokens = []
         for token in tokens:
             if token in combined:
                 found_tokens.append(token.upper())
+        
+        # Pattern 1: Bridge - "bridge USDC from Ethereum to Base"
+        bridge_pattern = re.compile(
+            r"bridge\s+(\w+)\s+(?:from\s+)?(\w+)?\s*(?:to|on)\s+(\w+)",
+            re.IGNORECASE,
+        )
+        bridge_match = bridge_pattern.search(combined)
+        if bridge_match:
+            result["from_token"] = bridge_match.group(1).upper()
+            if bridge_match.group(2) and bridge_match.group(2) in chains:
+                result["from_chain"] = bridge_match.group(2).lower()
+            if bridge_match.group(3) in chains:
+                result["to_chain"] = bridge_match.group(3).lower()
+            result["is_bridge"] = True
+            result["is_complete"] = True
+            return result
+        
+        # Pattern 2: Best swap rate - "best swap rate for ETH to USDC"
+        best_rate_pattern = re.compile(
+            r"(?:best\s+)?(?:swap\s+)?rate\s+(?:for|from)?\s*(\w+)\s+(?:to|for)\s+(\w+)",
+            re.IGNORECASE,
+        )
+        best_rate_match = best_rate_pattern.search(combined)
+        if best_rate_match:
+            result["from_token"] = best_rate_match.group(1).upper()
+            result["to_token"] = best_rate_match.group(2).upper()
+            result["is_complete"] = True
+            return result
+        
+        # Pattern 3: Swap with amount - "swap 100 USDC for ETH" or "swap 100 USDC to ETH"
+        swap_pattern = re.compile(
+            r"swap\s+(\d*\.?\d*)\s*(\w+)\s+(?:for|to)\s+(\w+)",
+            re.IGNORECASE,
+        )
+        swap_match = swap_pattern.search(combined)
+        if swap_match:
+            if swap_match.group(1):
+                result["amount"] = swap_match.group(1)
+            result["from_token"] = swap_match.group(2).upper()
+            result["to_token"] = swap_match.group(3).upper()
+            result["is_complete"] = True
+            return result
+        
+        # Pattern 4: Token to token - "ETH to USDC" or "USDC for ETH"
+        token_to_token = re.compile(
+            r"(\w+)\s+(?:to|for)\s+(\w+)",
+            re.IGNORECASE,
+        )
+        token_match = token_to_token.search(combined)
+        if token_match:
+            token1 = token_match.group(1).upper()
+            token2 = token_match.group(2).upper()
+            if token1 in [t.upper() for t in tokens] and token2 in [t.upper() for t in tokens]:
+                result["from_token"] = token1
+                result["to_token"] = token2
+                result["is_complete"] = True
+                return result
         
         # Try to extract source/target from patterns
         from_patterns = [
@@ -1684,7 +1748,7 @@ class GuestHandlerService:
         
         # Check if we have enough info
         result["is_complete"] = bool(
-            result["from_token"] and result["to_token"] and result["amount"]
+            result["from_token"] and result["to_token"] and (result["amount"] or result["is_bridge"])
         )
         
         return result
@@ -1697,6 +1761,9 @@ class GuestHandlerService:
         to_token = swap_info.get("to_token")
         amount = swap_info.get("amount")
         is_complete = swap_info.get("is_complete", False)
+        is_bridge = swap_info.get("is_bridge", False)
+        from_chain = swap_info.get("from_chain")
+        to_chain = swap_info.get("to_chain")
         
         if is_complete and from_token and to_token and amount:
             # Generate realistic demo quote

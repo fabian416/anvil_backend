@@ -841,10 +841,26 @@ class SendGuestMessage:
             ChatIntent.SWAP: [
                 # English
                 "swap", "exchange", "trade", "convert",
-                "1inch", "uniswap",
+                "1inch", "uniswap", "lifi", "hyperliquid",
+                "swap.*for", "swap.*to", "exchange.*for", "exchange.*to",
+                "convert.*to", "convert.*for", "trade.*for", "trade.*to",
+                "bridge", "bridge.*from", "bridge.*to", "cross.*chain",
+                "best swap rate", "best rate", "swap rate", "exchange rate",
+                "swap.*usdc.*eth", "swap.*eth.*usdc", "swap.*usdt.*eth",
+                "bridge.*ethereum.*base", "bridge.*base.*ethereum",
+                "bridge.*arbitrum", "bridge.*optimism", "bridge.*polygon",
                 # Spanish
                 "cambiar", "intercambiar", "convertir", "canjear",
                 "quiero swap", "hacer swap", "swap de",
+                "puente", "hacer puente", "cruzar.*cadena",
+                "mejor tasa", "tasa de cambio", "cotización",
+                # Portuguese
+                "trocar", "troca", "converter", "câmbio",
+                "ponte", "fazer ponte", "cruzar.*cadeia",
+                "melhor taxa", "taxa de câmbio", "cotação",
+                # Chinese
+                "交换", "兑换", "交易", "桥接",
+                "最佳汇率", "汇率", "报价",
             ],
         }
 
