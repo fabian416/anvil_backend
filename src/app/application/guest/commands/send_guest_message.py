@@ -583,9 +583,18 @@ class SendGuestMessage:
                 # English
                 "my activity", "transaction history", "my transactions",
                 "my trades", "trade history", "my swaps",
+                "recent activity", "activity history", "show activity",
+                "what did i do", "what did i do today", "my history",
                 # Spanish
                 "mi actividad", "historial de transacciones", "mis transacciones",
                 "mis intercambios", "historial de trades",
+                "actividad reciente", "historial de actividad", "mostrar actividad",
+                "qué hice", "qué hice hoy", "mi historial",
+                # Portuguese
+                "minha atividade", "histórico de transações", "minhas transações",
+                "atividade recente", "histórico de atividade",
+                # Chinese
+                "我的活动", "交易历史", "最近活动", "活动历史",
             ],
             ChatIntent.RECEIVE: [
                 # English
