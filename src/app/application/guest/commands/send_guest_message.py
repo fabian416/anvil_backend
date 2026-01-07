@@ -541,25 +541,41 @@ class SendGuestMessage:
             ChatIntent.BALANCE: [
                 # English
                 "my balance", "show balance", "check balance", "wallet balance",
-                "how much do i have", "my holdings", "my portfolio value",
+                "how much do i have", "my portfolio value", "total value",
                 "show my wallet", "what's in my wallet", "my funds",
+                "how much money do i have", "what's my balance", "check my balance",
                 # Spanish
                 "mi saldo", "ver saldo", "mostrar saldo", "mi balance",
-                "cuánto tengo", "mis fondos", "mi cartera", "mis activos",
+                "cuánto tengo", "mis fondos", "mi cartera",
+                "cuánto dinero tengo", "cuál es mi saldo", "verificar mi saldo",
                 # Portuguese
                 "meu saldo", "ver saldo", "mostrar saldo", "minha carteira",
+                "quanto eu tenho", "quanto dinheiro eu tenho", "qual é meu saldo",
                 # Chinese
-                "我的余额", "查看余额", "我的钱包",
+                "我的余额", "查看余额", "我的钱包", "我有多少钱",
             ],
             ChatIntent.PORTFOLIO: [
                 # English
                 "my portfolio", "show portfolio", "portfolio performance",
                 "my positions", "my investments", "my assets",
+                "what tokens do i have", "what tokens do i own", "list my tokens",
+                "list my holdings", "show my holdings", "my holdings",
+                "what do i own", "what assets do i have", "show my assets",
+                "my token holdings", "token portfolio", "all my tokens",
                 # Spanish
                 "mi portafolio", "ver portafolio", "mis posiciones",
                 "mis inversiones", "rendimiento de mi cartera",
+                "qué tokens tengo", "qué tokens poseo", "lista mis tokens",
+                "lista mis holdings", "mostrar mis holdings", "mis holdings",
+                "qué poseo", "qué activos tengo", "mostrar mis activos",
                 # Portuguese
                 "meu portfólio", "ver portfólio", "minhas posições",
+                "quais tokens eu tenho", "quais tokens eu possuo", "listar meus tokens",
+                "listar meus holdings", "mostrar meus holdings", "meus holdings",
+                "o que eu possuo", "quais ativos eu tenho", "mostrar meus ativos",
+                # Chinese
+                "我的投资组合", "显示我的投资组合", "我的持仓",
+                "我有什么代币", "列出我的代币", "我的资产",
             ],
             ChatIntent.ACTIVITY: [
                 # English
