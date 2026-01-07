@@ -223,6 +223,25 @@ class UnifiedChatOrchestrator:
         # Get conversation for verification
         conversation = await self._conversation_repo.get_conversation(conversation_id)
         
+        # Auto-create conversation if it doesn't exist (similar to guest endpoint behavior)
+        # This allows users to send messages without explicitly creating conversation first
+        if not conversation:
+            logger.info(f"Conversation {conversation_id} not found, creating new conversation for user {user_id}")
+            from app.domain.chat.entities.conversation import Conversation
+            from uuid import UUID as UUIDType
+            
+            # Create new conversation with the provided ID
+            conversation = Conversation(
+                id=conversation_id,
+                user_id=user_id,
+                title=None,
+            )
+            await self._conversation_repo.add_conversation(conversation)
+            # Re-fetch to ensure it's properly loaded
+            conversation = await self._conversation_repo.get_conversation(conversation_id)
+            if not conversation:
+                raise ConversationNotFoundError(conversation_id)
+        
         # ========================================
         # DEMO MODE: Use GuestHandlerService instead of real LLM
         # ========================================
@@ -236,8 +255,6 @@ class UnifiedChatOrchestrator:
                 language=language,
                 start_time=start_time,
             )
-        if not conversation:
-            raise ConversationNotFoundError(conversation_id)
 
         if conversation.user_id != user_id:
             raise ConversationAccessDeniedError(conversation_id, user_id)
@@ -1263,6 +1280,9 @@ class UnifiedChatOrchestrator:
         if conversation:
             conversation.touch()
             await self._conversation_repo.update_conversation(conversation)
+        else:
+            # This shouldn't happen, but log if it does
+            logger.warning(f"Conversation {conversation_id} not found after saving messages")
 
         return user_message, agent_message
 

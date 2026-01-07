@@ -262,6 +262,7 @@ def create_chat_router() -> APIRouter:
         user = await current_user.get_current_user()
 
         # Use UnifiedChatOrchestrator for intelligent intent-based routing
+        # The orchestrator will handle conversation validation and creation if needed
         result = await orchestrator.execute(
             user_id=user.id_.value,
             conversation_id=conversation_id,
