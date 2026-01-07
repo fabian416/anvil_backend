@@ -694,9 +694,15 @@ class SendGuestMessage:
                 # English
                 "chart pattern", "head and shoulders", "double bottom",
                 "flag pattern", "triangle", "breakout", "technical analysis",
+                "what patterns", "patterns do you see", "patterns in",
+                "see in.*chart", "chart patterns", "pattern recognition",
+                "detect pattern", "identify pattern", "find pattern",
+                "pattern", "patterns", "chart", "technical pattern",
                 # Spanish
                 "patrón de gráfico", "hombro cabeza hombro", "doble suelo",
                 "patrón de bandera", "triángulo", "ruptura", "análisis técnico",
+                "qué patrones", "patrones ves", "patrones en",
+                "patrón", "patrones", "gráfico", "patrón técnico",
             ],
             ChatIntent.HUNTER_PORTFOLIO: [
                 # English

@@ -833,14 +833,17 @@ class GuestHandlerService:
             return self._fallback_response(ChatIntent.HUNTER_TRADING_SIGNALS, language)
 
     async def _handle_patterns(
-        self, content: str, language: str
+        self, content: str, language: str, context: str = ""
     ) -> dict[str, Any]:
         """Handle chart pattern recognition."""
-        token = self._extract_token(content) or "ETH"
+        # Extract token from content, using context if token not found in current message
+        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
 
         try:
             recognizer = PatternRecognizer()
-            patterns = await recognizer.detect_patterns(token, timeframe="4h")
+            # Detect both chart patterns and candlestick patterns
+            chart_patterns = await recognizer.detect_chart_patterns(token)
+            candlestick_patterns = await recognizer.detect_candlestick_patterns(token)
 
             # Translations for chart patterns
             translations = {
@@ -848,44 +851,71 @@ class GuestHandlerService:
                     "title": f"📊 **Chart Patterns for {token}**",
                     "no_patterns": "No significant patterns detected currently.",
                     "confidence": "Confidence:",
-                    "target": "Target:",
-                    "status": "Status:",
+                    "signal": "Signal:",
+                    "pattern_type": "Pattern:",
+                    "chart_patterns": "**Chart Patterns:**",
+                    "candlestick_patterns": "**Candlestick Patterns:**",
                 },
                 "es": {
                     "title": f"📊 **Patrones de Gráfico para {token}**",
                     "no_patterns": "No se detectaron patrones significativos actualmente.",
                     "confidence": "Confianza:",
-                    "target": "Objetivo:",
-                    "status": "Estado:",
+                    "signal": "Señal:",
+                    "pattern_type": "Patrón:",
+                    "chart_patterns": "**Patrones de Gráfico:**",
+                    "candlestick_patterns": "**Patrones de Velas:**",
                 },
                 "pt": {
                     "title": f"📊 **Padrões de Gráfico para {token}**",
                     "no_patterns": "Nenhum padrão significativo detectado no momento.",
                     "confidence": "Confiança:",
-                    "target": "Alvo:",
-                    "status": "Status:",
+                    "signal": "Sinal:",
+                    "pattern_type": "Padrão:",
+                    "chart_patterns": "**Padrões de Gráfico:**",
+                    "candlestick_patterns": "**Padrões de Velas:**",
                 },
                 "zh": {
                     "title": f"📊 **{token} 图表模式**",
                     "no_patterns": "当前未检测到显著模式。",
                     "confidence": "置信度:",
-                    "target": "目标:",
-                    "status": "状态:",
+                    "signal": "信号:",
+                    "pattern_type": "模式:",
+                    "chart_patterns": "**图表模式:**",
+                    "candlestick_patterns": "**蜡烛图模式:**",
                 },
             }
             t = translations.get(language, translations["en"])
 
             response = f"{t['title']}\n\n"
 
-            if not patterns:
+            if not chart_patterns and not candlestick_patterns:
                 response += f"{t['no_patterns']}\n"
             else:
-                for pattern in patterns[:3]:
-                    emoji = "🟢" if pattern.bias == "bullish" else "🔴" if pattern.bias == "bearish" else "🟡"
-                    response += f"**{emoji} {pattern.name}**\n"
-                    response += f"- {t['confidence']} {pattern.confidence * 100:.0f}%\n"
-                    response += f"- {t['target']} ${pattern.target_price:,.2f}\n"
-                    response += f"- {t['status']} {pattern.status}\n\n"
+                # Chart patterns
+                if chart_patterns:
+                    response += f"{t['chart_patterns']}\n"
+                    for pattern in chart_patterns[:3]:
+                        emoji = "🟢" if pattern.signal.value == "bullish" else "🔴" if pattern.signal.value == "bearish" else "🟡"
+                        pattern_name = pattern.pattern_type.value.replace("_", " ").title()
+                        response += f"**{emoji} {pattern_name}**\n"
+                        response += f"- {t['signal']} {pattern.signal.value.upper()}\n"
+                        response += f"- {t['confidence']} {pattern.confidence * 100:.0f}%\n"
+                        if pattern.key_levels:
+                            target = pattern.key_levels.get("target", pattern.key_levels.get("neckline", 0))
+                            if target:
+                                response += f"- Target: ${target:,.2f}\n"
+                        response += f"- {pattern.description}\n\n"
+
+                # Candlestick patterns
+                if candlestick_patterns:
+                    response += f"{t['candlestick_patterns']}\n"
+                    for signal in candlestick_patterns[:2]:
+                        emoji = "🟢" if signal.signal.value == "bullish" else "🔴" if signal.signal.value == "bearish" else "🟡"
+                        pattern_name = signal.pattern.value.replace("_", " ").title()
+                        response += f"**{emoji} {pattern_name}**\n"
+                        response += f"- {t['signal']} {signal.signal.value.upper()}\n"
+                        response += f"- {t['confidence']} {signal.confidence * 100:.0f}%\n"
+                        response += f"- Price: ${signal.price:,.2f}\n\n"
 
             response += self._get_registration_cta(language)
 
@@ -893,13 +923,14 @@ class GuestHandlerService:
                 "content": response,
                 "enrichment": {
                     "token": token,
-                    "patterns": [p.name for p in patterns],
+                    "chart_patterns": [p.pattern_type.value for p in chart_patterns],
+                    "candlestick_patterns": [s.pattern.value for s in candlestick_patterns],
                     "hunter_tool": "pattern_recognizer",
                 },
                 "requires_registration": False,
             }
         except Exception as e:
-            logger.warning(f"Pattern recognition error: {e}")
+            logger.error(f"Pattern recognition error for token {token}: {e}", exc_info=True)
             return self._fallback_response(ChatIntent.HUNTER_PATTERNS, language)
 
     async def _handle_portfolio_optimization(
