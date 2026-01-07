@@ -50,15 +50,28 @@ async def conversation_id(client: AsyncClient):
     )
     
     if response.status_code == 200:
-        conversations = response.json()
+        data = response.json()
+        # Handle ConversationListResponse format
+        if isinstance(data, dict) and "conversations" in data:
+            conversations = data["conversations"]
+        elif isinstance(data, list):
+            conversations = data
+        else:
+            conversations = []
+        
         if conversations and len(conversations) > 0:
-            return conversations[0]["id"]
+            conv = conversations[0]
+            # Handle both dict and object format
+            if isinstance(conv, dict):
+                return conv["id"]
+            else:
+                return conv.id if hasattr(conv, "id") else str(conv)
     
     # Create new conversation
     response = await client.post(
         "/api/v1/user/chat/conversations",
         json={"title": "Test Conversation", "language": "en"},
-        headers={"Authorization": f"Bearer {eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSEZBY1Mxd2RMN0lkWEx3aGQyb3pKYjdmeTFvd1lMUTZWci1OdkFJYWRFIiwiZXhwIjoxNzY3ODE3Mzk2fQ.qFnOS9hWQF4svpnxWe8YKDYFerQNKJSyGrYXhoSqHdQ}"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
     
     if response.status_code == 201:
