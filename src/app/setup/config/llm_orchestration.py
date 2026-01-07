@@ -144,44 +144,88 @@ class LLMOrchestrationConfig(BaseModel):
 # ============================================================================
 
 
+def _get_config_value(raw_config: dict, section: str, key: str, env_var: str, default: str = "") -> str:
+    """
+    Get configuration value with priority:
+    1. .secrets.toml (raw_config)
+    2. Environment variable
+    3. Default value
+    """
+    import os
+    
+    # Try .secrets.toml first
+    value = raw_config.get(section, {}).get(key, "")
+    if value:
+        return value
+    
+    # Fallback to environment variable
+    return os.getenv(env_var, default)
+
+
 def load_llm_orchestration_config() -> LLMOrchestrationConfig:
     """
-    Load LLM orchestration configuration from environment.
+    Load LLM orchestration configuration from .secrets.toml and environment.
+
+    Priority: .secrets.toml > environment variables > defaults
 
     Returns:
         LLM orchestration configuration
     """
     import os
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # Load raw config from .secrets.toml
+    raw_config: dict = {}
+    try:
+        from app.setup.config.loader import load_full_config, get_current_env
+        raw_config = load_full_config(env=get_current_env())
+        logger.debug("Loaded LLM config from .secrets.toml")
+    except Exception as e:
+        logger.debug(f"Could not load config from .secrets.toml: {e}")
 
     # OpenAI removed - not loading OpenAI config
-    # openai_config = None
-    # if os.getenv("OPENAI_API_KEY"):
-    #     openai_config = OpenAIConfig(...)
     openai_config = None
 
     # Load Anthropic config if API key is present
+    anthropic_key = _get_config_value(raw_config, "anthropic", "API_KEY", "ANTHROPIC_API_KEY")
     anthropic_config = None
-    if os.getenv("ANTHROPIC_API_KEY"):
+    if anthropic_key:
         anthropic_config = AnthropicConfig(
-            api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+            api_key=anthropic_key,
             base_url=os.getenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1"),
             anthropic_version=os.getenv("ANTHROPIC_VERSION", "2023-06-01"),
             timeout=int(os.getenv("ANTHROPIC_TIMEOUT", "60")),
             max_retries=int(os.getenv("ANTHROPIC_MAX_RETRIES", "3")),
         )
 
+    # Load Vertex AI config
+    vertex_api_key = _get_config_value(raw_config, "vertex_ai", "API_KEY", "VERTEX_AI_API_KEY")
+    vertex_project_id = _get_config_value(raw_config, "vertex_ai", "PROJECT_ID", "VERTEX_AI_PROJECT_ID")
+    
+    # Load DeepInfra config - this is the key fix!
+    deepinfra_api_key = _get_config_value(raw_config, "deepinfra", "API_KEY", "DEEPINFRA_API_KEY")
+    deepinfra_base_url = _get_config_value(
+        raw_config, "deepinfra", "BASE_URL", "DEEPINFRA_BASE_URL", 
+        "https://api.deepinfra.com/v1/openai"
+    )
+    
+    if deepinfra_api_key:
+        logger.info("DeepInfra LLM configured with API key from .secrets.toml or env var")
+    else:
+        logger.warning("DeepInfra API key not found in .secrets.toml or environment")
+
     return LLMOrchestrationConfig(
         vertex_ai=VertexAIConfig(
-            project_id=os.getenv("VERTEX_AI_PROJECT_ID", ""),
+            project_id=vertex_project_id,
             location=os.getenv("VERTEX_AI_LOCATION", "us-central1"),
             credentials_path=os.getenv("GOOGLE_APPLICATION_CREDENTIALS"),
-            api_key=os.getenv("VERTEX_AI_API_KEY"),
+            api_key=vertex_api_key,
         ),
         deepinfra=DeepInfraConfig(
-            api_key=os.getenv("DEEPINFRA_API_KEY", ""),
-            base_url=os.getenv(
-                "DEEPINFRA_BASE_URL", "https://api.deepinfra.com/v1/openai"
-            ),
+            api_key=deepinfra_api_key,
+            base_url=deepinfra_base_url,
         ),
         bedrock=BedrockConfig(
             region=os.getenv("AWS_BEDROCK_REGION", "us-east-1"),

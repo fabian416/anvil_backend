@@ -113,7 +113,7 @@ Return JSON: {{"tasks": [{{"agent": "...", "task": "...", "order": 1}}]}}""",
         ]
 
         response = await self._llm.generate(
-            model="gemini-2.0-flash-exp",  # Use fast Gemini model for planning
+            model="meta-llama/Meta-Llama-3.1-70B-Instruct",  # Use DeepInfra Llama model for planning
             messages=messages,
             temperature=0.3,
             max_tokens=800,

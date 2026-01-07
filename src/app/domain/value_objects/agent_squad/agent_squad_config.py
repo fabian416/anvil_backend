@@ -7,8 +7,8 @@ from typing import Any
 
 from app.domain.enums.agent_type import AgentType
 
-# Default model for agents (Vertex AI native name)
-DEFAULT_AGENT_MODEL = "gemini-2.0-flash-exp"
+# Default model for agents (DeepInfra native name)
+DEFAULT_AGENT_MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 
 @dataclass(frozen=True)
@@ -18,7 +18,7 @@ class AgentConfig:
 
     Controls:
     - enabled: Whether agent is available
-    - model: LLM model to use (e.g., "gemini-2.0-flash-exp", "gemini-1.5-pro")
+    - model: LLM model to use (e.g., "meta-llama/Meta-Llama-3.1-70B-Instruct")
     - temperature: Model temperature (0.0-1.0)
     - max_tokens: Maximum response tokens
     - timeout_seconds: Agent execution timeout

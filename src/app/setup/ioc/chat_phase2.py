@@ -65,6 +65,10 @@ from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
 from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
 from app.application.agent_squad.commands.execute_supervisor_workflow import ExecuteSupervisorWorkflow
 
+# Demo mode service (same handlers as /guest/chat)
+from app.application.guest.handlers.guest_handler_service import GuestHandlerService
+from app.setup.config.agent_squad import AgentSquadSettings
+
 # Chat V2 Services (Unified Chat System)
 from app.application.chat.services.user_service import UserService
 from app.application.chat.services.rate_limit_service import RateLimitService
@@ -744,6 +748,7 @@ class ChatPhase2Provider(Provider):
         receive_handler: ReceiveHandler,
         money_market_handler: MoneyMarketHandler,
         wallet_repository: WalletRepository,
+        agent_squad_settings: AgentSquadSettings,
     ) -> UnifiedChatOrchestrator:
         """
         Provide unified chat orchestrator.
@@ -754,7 +759,19 @@ class ChatPhase2Provider(Provider):
         - ULTRA (arbitrage, flash loans, MEV)
         - DeFi Shortcuts (lending, swap, balance, portfolio)
         - Agent Squad (specialist tasks, complex workflows)
+        
+        DEMO MODE (use_demo_mode=True in config):
+        - Uses GuestHandlerService instead of real LLM calls
+        - Provides same responses as /guest/chat endpoint
+        - Useful for demos and testing without API costs
         """
+        # Create GuestHandlerService for demo mode
+        guest_handler = GuestHandlerService(
+            lending_handler=lending_handler,
+            swap_handler=swap_handler,
+            money_market_handler=money_market_handler,
+        )
+        
         return UnifiedChatOrchestrator(
             conversation_repo=conversation_repository,
             intent_detector=intent_detector_service,
@@ -770,6 +787,9 @@ class ChatPhase2Provider(Provider):
             receive_handler=receive_handler,
             money_market_handler=money_market_handler,
             wallet_repository=wallet_repository,
+            # Demo mode dependencies
+            agent_squad_settings=agent_squad_settings,
+            guest_handler_service=guest_handler,
         )
 
     @provide(scope=Scope.REQUEST)

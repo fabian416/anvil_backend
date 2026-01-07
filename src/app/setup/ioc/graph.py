@@ -18,8 +18,8 @@ from app.domain.graph.services import GraphService, RiskAnalysisService
 from app.domain.ml.services import RiskPredictionService, NetworkAnalysisService
 from app.infrastructure.persistence_age import GraphRepositoryAge
 from app.infrastructure.external_data.defillama import DeFiLlamaClient
-# OpenAI removed - using only DeepInfra for embeddings
-from app.infrastructure.embeddings import DeepInfraEmbeddingService
+# OpenAI removed - using DeepInfra or Noop for embeddings
+from app.infrastructure.embeddings import DeepInfraEmbeddingService, NoopEmbeddingService
 from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import VectorRepositorySqla
 from app.infrastructure.cache.graph_cache import GraphQueryCache
 from app.application.graph import (
@@ -110,15 +110,37 @@ class GraphProvider(Provider):
         
         Uses DeepInfra with multilingual BAAI/bge-m3 model (supports 100+ languages).
         Note: OpenAI removed - using only DeepInfra for embeddings.
-        """
-        # Use DeepInfra (OpenAI removed)
-        deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
-        if not deepinfra_key:
-            raise ValueError(
-                "DEEPINFRA_API_KEY environment variable not set. "
-                "Required for embedding service (OpenAI removed)."
-            )
         
+        Reads API key from .secrets.toml first, then falls back to environment variable.
+        If neither is configured, returns a NoopEmbeddingService that allows the 
+        system to function without GraphRAG features.
+        """
+        import logging
+        from app.setup.config.loader import load_full_config, get_current_env
+        
+        logger = logging.getLogger(__name__)
+        
+        # Try to load from .secrets.toml first (same pattern as agent_squad_infrastructure.py)
+        deepinfra_key = ""
+        try:
+            raw_config = load_full_config(env=get_current_env())
+            deepinfra_key = raw_config.get("deepinfra", {}).get("API_KEY", "")
+        except Exception as e:
+            logger.debug(f"Could not load config from .secrets.toml: {e}")
+        
+        # Fallback to environment variable for backward compatibility
+        if not deepinfra_key:
+            deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
+        
+        if not deepinfra_key:
+            logger.warning(
+                "DeepInfra API key not configured. GraphRAG search features will be disabled. "
+                "Set [deepinfra] API_KEY in .secrets.toml or DEEPINFRA_API_KEY env var."
+            )
+            # Return noop service that allows the system to function
+            return NoopEmbeddingService()
+        
+        logger.info("DeepInfra embedding service initialized with API key from config")
         return DeepInfraEmbeddingService(
             api_key=deepinfra_key,
             model="BAAI/bge-m3",  # Multilingual: EN, ES, PT, ZH, FR, etc.

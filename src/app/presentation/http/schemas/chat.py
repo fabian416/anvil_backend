@@ -116,7 +116,7 @@ class RoutingMetadata(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0)  # Classification confidence
     handler: str  # Which handler processed the message
     agent_used: Optional[str] = None  # If Agent Squad, which agent
-    reasoning: str  # Why this route was chosen
+    reasoning: Optional[str] = None  # Why this route was chosen
     total_latency_ms: Optional[int] = None  # Total processing time
     language: Optional[str] = Field(
         default="en",

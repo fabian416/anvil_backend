@@ -385,17 +385,65 @@ class InfrastructureProvider(Provider):
 
     @provide(scope=Scope.APP)
     def get_llm_provider_factory(self) -> LLMProviderFactory:
-        """Provide LLM Provider Factory with API keys from environment."""
+        """Provide LLM Provider Factory with API keys from .secrets.toml or environment."""
         import os
+        import logging
+        from app.setup.config.loader import load_full_config, get_current_env
+        
+        logger = logging.getLogger(__name__)
+        
+        # Try to load from .secrets.toml first (same pattern as EmbeddingService and agent_squad)
+        deepinfra_api_key = ""
+        vertex_ai_api_key = ""
+        vertex_ai_project_id = ""
+        vertex_ai_credentials_path = ""
+        
+        try:
+            raw_config = load_full_config(env=get_current_env())
+            
+            # DeepInfra config
+            deepinfra_api_key = raw_config.get("deepinfra", {}).get("API_KEY", "")
+            if deepinfra_api_key:
+                logger.info("DeepInfra API key loaded from .secrets.toml for LLMProviderFactory")
+            
+            # Vertex AI config
+            vertex_config = raw_config.get("vertex_ai", {})
+            vertex_ai_api_key = vertex_config.get("API_KEY", "")
+            vertex_ai_project_id = vertex_config.get("PROJECT_ID", "")
+            vertex_ai_credentials_path = vertex_config.get("CREDENTIALS_PATH", "")
+            
+        except Exception as e:
+            logger.debug(f"Could not load config from .secrets.toml: {e}")
+        
+        # Fallback to environment variables for backward compatibility
+        if not deepinfra_api_key:
+            deepinfra_api_key = os.environ.get("DEEPINFRA_API_KEY", "")
+            if deepinfra_api_key:
+                logger.info("DeepInfra API key loaded from environment variable")
+        
+        if not vertex_ai_api_key:
+            vertex_ai_api_key = os.environ.get("VERTEX_AI_API_KEY", "")
+        if not vertex_ai_project_id:
+            vertex_ai_project_id = os.environ.get("VERTEX_AI_PROJECT_ID", "")
+        if not vertex_ai_credentials_path:
+            vertex_ai_credentials_path = os.environ.get("VERTEX_AI_CREDENTIALS_PATH", "")
+        
+        google_credentials = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+        
+        if not deepinfra_api_key:
+            logger.warning(
+                "DeepInfra API key not configured for LLMProviderFactory. "
+                "LLM calls will fail. Set [deepinfra] API_KEY in .secrets.toml"
+            )
 
         config = {
             # Primary: Vertex AI
-            "VERTEX_AI_PROJECT_ID": os.environ.get("VERTEX_AI_PROJECT_ID", ""),
-            "VERTEX_AI_API_KEY": os.environ.get("VERTEX_AI_API_KEY", ""),
-            "VERTEX_AI_CREDENTIALS_PATH": os.environ.get("VERTEX_AI_CREDENTIALS_PATH", ""),
-            "GOOGLE_APPLICATION_CREDENTIALS": os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", ""),
+            "VERTEX_AI_PROJECT_ID": vertex_ai_project_id,
+            "VERTEX_AI_API_KEY": vertex_ai_api_key,
+            "VERTEX_AI_CREDENTIALS_PATH": vertex_ai_credentials_path,
+            "GOOGLE_APPLICATION_CREDENTIALS": google_credentials,
             # Fallback: DeepInfra (only used if Vertex AI fails)
-            "DEEPINFRA_API_KEY": os.environ.get("DEEPINFRA_API_KEY", ""),
+            "DEEPINFRA_API_KEY": deepinfra_api_key,
             # Note: OpenAI is NOT used - removed from configuration
         }
         return LLMProviderFactory(config)

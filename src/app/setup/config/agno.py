@@ -101,8 +101,8 @@ class AgnoRetryConfig(BaseModel):
 class AgnoConfig(BaseModel):
     """Agno configuration (existing model extended with settings)."""
     
-    default_model: str = "gemini-2.0-flash-exp"
-    fallback_model: str = "gemini-2.0-flash-exp"
+    default_model: str = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+    fallback_model: str = "meta-llama/Meta-Llama-3.1-70B-Instruct"
     intent_threshold: float = 0.75
     session_timeout: int = 3600
     max_context_messages: int = 20

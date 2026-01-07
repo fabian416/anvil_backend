@@ -38,6 +38,7 @@ from app.presentation.http.schemas.chat import (
 )
 from app.application.chat.commands.create_conversation import CreateConversation
 from app.application.chat.commands.send_message import SendMessage
+from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
 from app.application.chat.commands.execute_action import ExecuteActionCommand
 from app.application.chat.queries.get_conversation import GetConversation
 from app.application.chat.queries.list_conversations import ListConversations
@@ -159,7 +160,7 @@ def create_chat_router() -> APIRouter:
         conversation_id: UUID,
         request: SendMessageRequest,
         current_user: FromDishka[CurrentUserService],
-        interactor: FromDishka[SendMessage],
+        orchestrator: FromDishka[UnifiedChatOrchestrator],
     ) -> UnifiedChatResponse:
         """
         Send a message with intelligent routing.
@@ -175,6 +176,10 @@ def create_chat_router() -> APIRouter:
           - Examples: "is Aave safe?", "analyze risk of supplying $50k to Curve"
         - **Similar Protocols** → GraphRAG similarity search
           - Examples: "what's similar to Uniswap?", "alternatives to Aave"
+        - **Hunter AI** → Market intelligence and sentiment analysis
+          - Examples: "what's the sentiment for Bitcoin?", "predict ETH price"
+        - **ULTRA** → DeFi automation (arbitrage, flash loans, MEV)
+          - Examples: "find arbitrage for ETH", "best flash loan rates"
         - **Specialist Tasks** → Agent Squad (18 specialized agents)
           - Examples: "best USDC yield on Arbitrum", "optimize gas for swap"
         - **Complex Workflows** → Supervisor multi-agent orchestration
@@ -205,30 +210,30 @@ def create_chat_router() -> APIRouter:
           "user_message": {...},
           "agent_message": {...},
           "routing": {
-            "intent": "PROTOCOL_SEARCH",
+            "intent": "HUNTER_SENTIMENT",
             "confidence": 0.95,
-            "handler": "graphrag_search",
-            "reasoning": "Message contains protocol search keywords",
+            "handler": "hunter_sentiment_handler",
+            "reasoning": "Message contains sentiment analysis keywords",
             "total_latency_ms": 850
           },
           "enrichment": {
-            "protocols": [...],
-            "search_context": "Found 5 protocols...",
-            "recommendations": [...]
+            "sentiment_score": 0.75,
+            "sources": ["twitter", "reddit", "news"]
           }
         }
         ```
         """
         user = await current_user.get_current_user()
 
-        # Use regular chat (unified routing temporarily disabled - requires OPENAI_API_KEY)
-        user_message, agent_message = await interactor.execute(
+        # Use UnifiedChatOrchestrator for intelligent intent-based routing
+        result = await orchestrator.execute(
             user_id=user.id_.value,
             conversation_id=conversation_id,
             content=request.content,
+            language=getattr(request, 'language', 'en') or 'en',
         )
 
-        # Convert to unified response format (backward compatible)
+        # Convert to unified response format
         from app.presentation.http.schemas.chat import RoutingMetadata
 
         # Map internal role to API standard (agent -> assistant for OpenAI compatibility)
@@ -236,29 +241,38 @@ def create_chat_router() -> APIRouter:
             """Map internal role enum to OpenAI/ChatGPT standard."""
             return "assistant" if role_value == "agent" else role_value
 
+        # Extract messages from result
+        user_message_data = result.get("user_message", {})
+        agent_message_data = result.get("agent_message", {})
+        routing_data = result.get("routing", {})
+        enrichment_data = result.get("enrichment")
+
         return UnifiedChatResponse(
             user_message={
-                "id": str(user_message.id),
-                "conversation_id": str(user_message.conversation_id),
-                "role": map_role_to_api(user_message.role.value),
-                "content": user_message.content,
-                "agent_type": user_message.agent_type,
-                "created_at": user_message.created_at.isoformat(),
+                "id": str(user_message_data.get("id", "")),
+                "conversation_id": str(user_message_data.get("conversation_id", conversation_id)),
+                "role": map_role_to_api(user_message_data.get("role", "user")),
+                "content": user_message_data.get("content", request.content),
+                "agent_type": user_message_data.get("agent_type"),
+                "created_at": user_message_data.get("created_at", ""),
             },
             agent_message={
-                "id": str(agent_message.id),
-                "conversation_id": str(agent_message.conversation_id),
-                "role": map_role_to_api(agent_message.role.value),
-                "content": agent_message.content,
-                "agent_type": agent_message.agent_type,
-                "created_at": agent_message.created_at.isoformat(),
+                "id": str(agent_message_data.get("id", "")),
+                "conversation_id": str(agent_message_data.get("conversation_id", conversation_id)),
+                "role": map_role_to_api(agent_message_data.get("role", "agent")),
+                "content": agent_message_data.get("content", ""),
+                "agent_type": agent_message_data.get("agent_type"),
+                "created_at": agent_message_data.get("created_at", ""),
             },
             routing=RoutingMetadata(
-                intent="GENERAL_CONVERSATION",
-                confidence=1.0,
-                handler="regular_chat",
-                reasoning="Unified routing disabled or failed, using regular chat",
+                intent=routing_data.get("intent", "GENERAL_CONVERSATION"),
+                confidence=routing_data.get("confidence", 0.0),
+                handler=routing_data.get("handler", "regular_chat"),
+                reasoning=routing_data.get("reasoning"),
+                agent_used=routing_data.get("agent_used"),
+                total_latency_ms=routing_data.get("total_latency_ms"),
             ),
+            enrichment=enrichment_data,
         )
     
     @router.get(

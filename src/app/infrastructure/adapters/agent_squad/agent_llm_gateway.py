@@ -211,7 +211,7 @@ Return JSON: {{"tasks": [{{"agent": "...", "task": "...", "order": 1}}]}}""",
         ]
 
         response = await self._llm.generate(
-            model="gemini-2.0-flash-exp",
+            model="meta-llama/Meta-Llama-3.1-70B-Instruct",
             messages=messages,
             temperature=0.3,
             max_tokens=800,

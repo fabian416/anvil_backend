@@ -12,8 +12,8 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 logger = logging.getLogger(__name__)
 
-# Default Gemini model for Vertex AI
-DEFAULT_MODEL = "gemini-2.0-flash-exp"
+# Default model (DeepInfra-compatible)
+DEFAULT_MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 
 class LLMClientVertexAI:
@@ -29,9 +29,9 @@ class LLMClientVertexAI:
     - Chat completion
 
     Available models:
-    - gemini-2.0-flash-exp  (fast, cost-effective)
-    - gemini-1.5-pro        (premium, complex reasoning)
-    - gemini-1.5-flash      (balanced)
+    - meta-llama/Meta-Llama-3.1-70B-Instruct  (default, balanced)
+    - meta-llama/Meta-Llama-3.1-405B-Instruct (premium, complex reasoning)
+    - meta-llama/Llama-3.2-3B-Instruct        (fast, cost-effective)
     """
 
     def __init__(self, api_key: str, default_model: str = DEFAULT_MODEL):
@@ -40,7 +40,7 @@ class LLMClientVertexAI:
 
         Args:
             api_key: Google Cloud API key
-            default_model: Default Gemini model to use (default: gemini-2.0-flash-exp)
+            default_model: Default model to use (default: meta-llama/Meta-Llama-3.1-70B-Instruct)
         """
         try:
             import google.genai as genai

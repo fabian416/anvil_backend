@@ -2,8 +2,8 @@
 
 from pydantic import BaseModel, Field
 
-# Default model for agents (Vertex AI native name)
-DEFAULT_AGENT_MODEL = "gemini-2.0-flash-exp"
+# Default model for agents (DeepInfra native name)
+DEFAULT_AGENT_MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 
 class AgentConfigModel(BaseModel):
@@ -76,14 +76,14 @@ class AgentSquadSettings(BaseModel):
     enable_intent_classification: bool = True
     log_intent_classification: bool = False
     log_agent_selection: bool = False  # Log agent selection decisions
-    intent_classification_model: str = DEFAULT_AGENT_MODEL  # gemini-2.0-flash-exp
+    intent_classification_model: str = DEFAULT_AGENT_MODEL  # meta-llama/Meta-Llama-3.1-70B-Instruct
     intent_confidence_threshold: float = 0.85
     fallback_agent: str = "chat"
     max_context_messages: int = 10
 
     # Supervisor coordination
     enable_supervisor: bool = True
-    supervisor_model: str = DEFAULT_AGENT_MODEL  # gemini-2.0-flash-exp
+    supervisor_model: str = DEFAULT_AGENT_MODEL  # meta-llama/Meta-Llama-3.1-70B-Instruct
     supervisor_max_agents: int = 5
     supervisor_timeout_seconds: int = 120
 
@@ -114,7 +114,12 @@ class AgentSquadSettings(BaseModel):
     use_agent_squad: bool = False
 
     # Default model for agents (Vertex AI native name)
-    default_model: str = DEFAULT_AGENT_MODEL  # gemini-2.0-flash-exp
+    default_model: str = DEFAULT_AGENT_MODEL  # meta-llama/Meta-Llama-3.1-70B-Instruct
+
+    # DEMO MODE: Use pre-built demo handlers instead of real LLM calls
+    # When enabled, authenticated users get the same responses as /guest/chat
+    # This is useful for demos and testing without requiring LLM API costs
+    use_demo_mode: bool = True
 
 
 # Alias for backward compatibility

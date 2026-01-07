@@ -6,8 +6,14 @@ Routes messages to appropriate handlers:
 - Agent Squad (specialist tasks)
 - Supervisor (complex workflows)
 - Regular chat (general conversation)
+
+Supports DEMO MODE (use_demo_mode=True):
+- Uses pre-built demo handlers (same as /guest/chat)
+- No LLM API calls required
+- Perfect for demos and testing
 """
 
+import logging
 import time
 from decimal import Decimal
 from uuid import UUID
@@ -33,6 +39,11 @@ from app.application.chat.services.intent_detector import (
     ChatIntent,
     IntentDetectorService,
 )
+# Demo mode imports
+from app.application.guest.handlers.guest_handler_service import GuestHandlerService
+from app.setup.config.agent_squad import AgentSquadSettings
+
+logger = logging.getLogger(__name__)
 from app.application.hunter.discord_sentiment import (
     DiscordConfig,
     DiscordSentimentAnalyzer,
@@ -106,6 +117,9 @@ class UnifiedChatOrchestrator:
         receive_handler: ReceiveHandler | None = None,
         money_market_handler: MoneyMarketHandler | None = None,
         wallet_repository: WalletRepository | None = None,
+        # Demo mode dependencies
+        agent_squad_settings: AgentSquadSettings | None = None,
+        guest_handler_service: GuestHandlerService | None = None,
     ):
         """
         Initialize orchestrator with all handlers.
@@ -125,6 +139,8 @@ class UnifiedChatOrchestrator:
             receive_handler: Handler for wallet address/QR
             money_market_handler: Handler for rate comparison
             wallet_repository: Repository for wallet lookups (Privy)
+            agent_squad_settings: Settings for agent squad (includes use_demo_mode flag)
+            guest_handler_service: Demo handlers service (used when use_demo_mode=True)
         """
         self._conversation_repo = conversation_repo
         self._intent_detector = intent_detector
@@ -140,6 +156,13 @@ class UnifiedChatOrchestrator:
         self._receive_handler = receive_handler
         self._money_market_handler = money_market_handler
         self._wallet_repository = wallet_repository
+        # Demo mode
+        self._settings = agent_squad_settings or AgentSquadSettings()
+        self._guest_handler_service = guest_handler_service or GuestHandlerService(
+            lending_handler=lending_handler,
+            swap_handler=swap_handler,
+            money_market_handler=money_market_handler,
+        )
 
     # Supported languages for i18n responses
     SUPPORTED_LANGUAGES = ["en", "es", "fr", "zh", "pt"]
@@ -199,6 +222,20 @@ class UnifiedChatOrchestrator:
 
         # Get conversation for verification
         conversation = await self._conversation_repo.get_conversation(conversation_id)
+        
+        # ========================================
+        # DEMO MODE: Use GuestHandlerService instead of real LLM
+        # ========================================
+        if self._settings.use_demo_mode:
+            logger.info(f"[DEMO MODE] Handling message with demo handlers for user {user_id}")
+            return await self._execute_demo_mode(
+                user_id=user_id,
+                conversation_id=conversation_id,
+                conversation=conversation,
+                content=content,
+                language=language,
+                start_time=start_time,
+            )
         if not conversation:
             raise ConversationNotFoundError(conversation_id)
 
@@ -320,6 +357,411 @@ class UnifiedChatOrchestrator:
         result["routing"]["total_latency_ms"] = total_latency
 
         return result
+
+    async def _execute_demo_mode(
+        self,
+        user_id: int,
+        conversation_id: UUID,
+        conversation,
+        content: str,
+        language: str,
+        start_time: float,
+    ) -> dict:
+        """
+        Execute demo mode using GuestHandlerService.
+        
+        This provides the same responses as /guest/chat but for authenticated users.
+        Useful for demos and testing without requiring LLM API costs.
+        
+        Args:
+            user_id: User ID
+            conversation_id: Conversation ID
+            conversation: Conversation entity
+            content: User message
+            language: Response language code
+            start_time: Start time for latency calculation
+            
+        Returns:
+            Unified response with routing metadata and enrichment
+        """
+        if not conversation:
+            raise ConversationNotFoundError(conversation_id)
+
+        if conversation.user_id != user_id:
+            raise ConversationAccessDeniedError(conversation_id, user_id)
+
+        # Get conversation history for context (last 10 messages)
+        messages = await self._conversation_repo.get_messages(
+            conversation_id=conversation_id,
+            limit=10,
+        )
+        
+        # Build context string from messages for multi-turn support
+        context = self._build_context_from_messages(messages)
+
+        # Detect intent using keyword-based detection (no LLM calls in demo mode)
+        # This provides instant responses without API costs
+        intent, confidence, handler = self._detect_intent_by_keywords_demo(
+            content=content,
+            context=context,
+            language=language,
+        )
+        
+        # Create a simple intent result for handler
+        from dataclasses import dataclass
+        
+        @dataclass
+        class DemoIntentResult:
+            intent: ChatIntent
+            confidence: float
+            handler: str
+            reasoning: str
+            
+        intent_result = DemoIntentResult(
+            intent=intent,
+            confidence=confidence,
+            handler=handler,
+            reasoning="Keyword-based detection (demo mode)",
+        )
+        
+        logger.info(f"[DEMO MODE] Detected intent: {intent.value} with confidence {confidence}")
+        
+        # Use GuestHandlerService to handle the intent
+        handler_result = await self._guest_handler_service.handle_intent(
+            intent=intent_result.intent,
+            content=content,
+            language=language,
+            context=context,
+        )
+        
+        # Extract response data
+        agent_content = handler_result.get("content", "")
+        enrichment = handler_result.get("enrichment")
+        sources = handler_result.get("sources", [])
+        requires_registration = handler_result.get("requires_registration", False)
+        
+        # Get handler name
+        handler_name = self._get_demo_handler_name(intent_result.intent)
+        
+        # Save messages to conversation history
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id=conversation_id,
+            user_content=content,
+            agent_content=agent_content,
+            sources=sources if sources else None,
+        )
+        
+        # Calculate latency
+        total_latency = int((time.time() - start_time) * 1000)
+        
+        # Build response in the unified format
+        response = {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value if hasattr(intent_result.intent, "value") else str(intent_result.intent),
+                "confidence": intent_result.confidence,
+                "handler": handler_name,
+                "reasoning": intent_result.reasoning,
+                "total_latency_ms": total_latency,
+                "language": language,
+                "is_demo_mode": True,
+            },
+        }
+        
+        # Add enrichment if present
+        if enrichment:
+            response["enrichment"] = enrichment
+            
+        # Add sources if present
+        if sources:
+            response["sources"] = sources
+            
+        # Add registration_required info if needed (for wallet-dependent actions)
+        if requires_registration:
+            response["enrichment"] = response.get("enrichment", {})
+            response["enrichment"]["requires_wallet_connection"] = True
+            
+        return response
+    
+    def _build_context_from_messages(self, messages: list) -> str:
+        """Build context string from message history for multi-turn support."""
+        if not messages:
+            return ""
+        
+        context_lines = []
+        for msg in messages:
+            role = "User" if msg.role.value == "user" else "Assistant"
+            # Truncate long messages in context
+            content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+            context_lines.append(f"{role}: {content}")
+        
+        return "\n".join(context_lines)
+    
+    def _get_demo_handler_name(self, intent: ChatIntent) -> str:
+        """Get handler name for demo mode routing metadata."""
+        handler_map = {
+            # GraphRAG
+            ChatIntent.PROTOCOL_SEARCH: "demo_graphrag_handler",
+            ChatIntent.RISK_ASSESSMENT: "demo_graphrag_handler",
+            ChatIntent.SIMILAR_PROTOCOLS: "demo_graphrag_handler",
+            # Hunter AI
+            ChatIntent.HUNTER_SENTIMENT: "demo_hunter_sentiment_handler",
+            ChatIntent.HUNTER_PRICE_PREDICTION: "demo_hunter_prediction_handler",
+            ChatIntent.HUNTER_RISK_SIGNALS: "demo_hunter_risk_handler",
+            ChatIntent.HUNTER_TRADING_SIGNALS: "demo_hunter_signals_handler",
+            ChatIntent.HUNTER_PATTERNS: "demo_hunter_patterns_handler",
+            ChatIntent.HUNTER_PORTFOLIO: "demo_hunter_portfolio_handler",
+            # ULTRA
+            ChatIntent.ULTRA_ARBITRAGE: "demo_ultra_arbitrage_handler",
+            ChatIntent.ULTRA_FLASH_LOANS: "demo_ultra_flashloan_handler",
+            ChatIntent.ULTRA_MEV_PROTECTION: "demo_ultra_mev_handler",
+            ChatIntent.ULTRA_AUTO_EXECUTOR: "demo_ultra_executor_handler",
+            # DeFi
+            ChatIntent.LENDING: "demo_lending_handler",
+            ChatIntent.MONEY_MARKET: "demo_money_market_handler",
+            ChatIntent.SWAP: "demo_swap_handler",
+            # Wallet (restricted)
+            ChatIntent.BALANCE: "demo_balance_handler",
+            ChatIntent.PORTFOLIO: "demo_portfolio_handler",
+            ChatIntent.ACTIVITY: "demo_activity_handler",
+            ChatIntent.RECEIVE: "demo_receive_handler",
+            # Agent Squad
+            ChatIntent.SPECIALIST_TASK: "demo_specialist_handler",
+            ChatIntent.COMPLEX_WORKFLOW: "demo_workflow_handler",
+            # Default
+            ChatIntent.GENERAL_CONVERSATION: "demo_general_handler",
+        }
+        return handler_map.get(intent, "demo_handler")
+
+    def _detect_intent_by_keywords_demo(
+        self, content: str, context: str, language: str
+    ) -> tuple[ChatIntent, float, str]:
+        """
+        Keyword-based intent detection for demo mode.
+        
+        No LLM calls - provides instant, reliable intent detection.
+        Supports English, Spanish, Portuguese, and Chinese keywords.
+        
+        Based on SendGuestMessage._detect_intent_by_keywords_with_context()
+        """
+        import re
+        
+        content_lower = content.lower()
+        context_lower = context.lower() if context else ""
+
+        # ========================================
+        # Hunter AI patterns (English + Spanish + Portuguese)
+        # ========================================
+        hunter_patterns = {
+            ChatIntent.HUNTER_SENTIMENT: [
+                # English
+                "sentiment", "feeling", "mood", "bullish", "bearish",
+                "twitter", "reddit", "social", "news", "hype",
+                "what do people think", "market mood", "community sentiment",
+                # Spanish
+                "sentimiento", "opinión", "opiniones", "alcista", "bajista",
+                "qué opina", "qué piensan", "clima del mercado", "percepción",
+                "sentimiento de mercado", "sentimiento para",
+                # Portuguese
+                "sentimento", "altista", "baixista", "humor do mercado",
+            ],
+            ChatIntent.HUNTER_PRICE_PREDICTION: [
+                # English
+                "predict", "prediction", "forecast", "price target",
+                "will go", "where will", "price tomorrow", "future price",
+                "price of", "what's the price", "current price", "how much is",
+                "what is the price", "price for",
+                # Spanish
+                "predecir", "predicción", "pronóstico", "objetivo de precio",
+                "a dónde irá", "precio de", "cuál es el precio", "precio actual",
+                "precio futuro", "va a subir", "va a bajar", "cuánto vale",
+                "cuánto cuesta",
+                # Portuguese
+                "prever", "previsão", "preço de", "qual é o preço", "preço atual",
+            ],
+            ChatIntent.HUNTER_RISK_SIGNALS: [
+                # English
+                "risk signal", "market risk", "whale", "liquidation",
+                "danger", "warning", "alert", "crash",
+                # Spanish
+                "señal de riesgo", "riesgo de mercado", "ballena", "liquidación",
+                "peligro", "advertencia", "alerta", "caída",
+            ],
+            ChatIntent.HUNTER_TRADING_SIGNALS: [
+                # English
+                "trading signal", "buy signal", "sell signal",
+                "should i buy", "should i sell", "entry point", "exit point",
+                # Spanish
+                "señal de trading", "señal de compra", "señal de venta",
+                "debería comprar", "debería vender", "punto de entrada", "punto de salida",
+            ],
+            ChatIntent.HUNTER_PATTERNS: [
+                # English
+                "chart pattern", "head and shoulders", "double bottom",
+                "flag pattern", "triangle", "breakout", "technical analysis",
+                # Spanish
+                "patrón de gráfico", "hombro cabeza hombro", "doble suelo",
+                "patrón de bandera", "triángulo", "ruptura", "análisis técnico",
+            ],
+            ChatIntent.HUNTER_PORTFOLIO: [
+                # English
+                "optimize portfolio", "optimize my portfolio", "portfolio allocation",
+                "rebalance", "diversify", "risk adjusted", "sharpe ratio",
+                "portfolio optimization", "best allocation",
+                # Spanish
+                "optimizar portafolio", "optimizar mi portafolio", "asignación de portafolio",
+                "rebalancear", "diversificar", "ajustado al riesgo",
+                "optimización de portafolio", "mejor asignación",
+            ],
+        }
+
+        # ========================================
+        # ULTRA patterns (English + Spanish)
+        # ========================================
+        ultra_patterns = {
+            ChatIntent.ULTRA_ARBITRAGE: [
+                "arbitrage", "arb", "price difference", "spread",
+                "profit opportunity", "cross dex",
+                "arbitraje", "diferencia de precio", "oportunidad de ganancia",
+            ],
+            ChatIntent.ULTRA_FLASH_LOANS: [
+                "flash loan", "flashloan", "flash borrow",
+                "instant loan", "uncollateralized",
+                "préstamo flash", "préstamo instantáneo", "sin colateral",
+            ],
+            ChatIntent.ULTRA_MEV_PROTECTION: [
+                "mev", "front run", "frontrun", "sandwich",
+                "flashbots", "private transaction", "protected",
+                "protección mev", "transacción privada", "protegido",
+            ],
+            ChatIntent.ULTRA_AUTO_EXECUTOR: [
+                "auto execute", "automated trading", "trading bot",
+                "dca", "limit order", "stop loss", "auto trade",
+                "ejecución automática", "trading automatizado", "bot de trading",
+            ],
+        }
+
+        # ========================================
+        # GraphRAG patterns
+        # ========================================
+        graphrag_patterns = {
+            ChatIntent.PROTOCOL_SEARCH: [
+                "find protocols", "find defi", "list protocols", "show protocols",
+                "search protocols", "discover protocols", "explore protocols",
+                "best protocols", "top protocols", "safest protocols",
+                "compare protocols", "protocols on", "lending protocols",
+                "dex protocols", "staking protocols", "bridge protocols",
+                "buscar protocolos", "encontrar protocolos", "mejores protocolos",
+            ],
+            ChatIntent.RISK_ASSESSMENT: [
+                "is it safe", "how safe", "safe to use",
+                "what are the risks", "risks of", "risk assessment",
+                "es seguro", "es seguro usar", "qué tan seguro",
+                "cuáles son los riesgos", "riesgos de", "evaluación de riesgo",
+            ],
+            ChatIntent.SIMILAR_PROTOCOLS: [
+                "similar to", "like", "alternative to", "alternatives for",
+                "protocols like", "similar protocols",
+                "similar a", "parecido a", "alternativa a",
+            ],
+        }
+
+        # ========================================
+        # DeFi shortcut patterns
+        # ========================================
+        defi_patterns = {
+            ChatIntent.LENDING: [
+                "deposit usdc", "deposit eth", "earn on morpho",
+                "supply to aave", "lend my", "earn yield",
+                "depositar usdc", "depositar eth", "ganar en morpho",
+                "prestar en aave", "prestar mi", "ganar rendimiento",
+            ],
+            ChatIntent.MONEY_MARKET: [
+                "money market", "compare aave", "compound vs aave",
+                "borrow rate", "lending rate",
+                "mercado de dinero", "comparar aave",
+            ],
+            ChatIntent.SWAP: [
+                "swap", "exchange", "trade", "convert",
+                "1inch", "uniswap",
+                "cambiar", "intercambiar", "convertir", "canjear",
+                "quiero swap", "hacer swap", "swap de",
+            ],
+        }
+
+        # ========================================
+        # Wallet patterns (restricted for guests but available for auth users)
+        # ========================================
+        wallet_patterns = {
+            ChatIntent.BALANCE: [
+                "my balance", "show balance", "check balance", "wallet balance",
+                "mi saldo", "ver saldo", "mostrar saldo", "mi balance",
+            ],
+            ChatIntent.PORTFOLIO: [
+                "my portfolio", "show portfolio", "portfolio performance",
+                "mi portafolio", "ver portafolio", "mis posiciones",
+            ],
+            ChatIntent.ACTIVITY: [
+                "my activity", "transaction history", "my transactions",
+                "mi actividad", "historial de transacciones",
+            ],
+            ChatIntent.RECEIVE: [
+                "receive address", "my address", "deposit address",
+                "dirección de recepción", "mi dirección",
+            ],
+        }
+
+        # Check Hunter AI patterns FIRST (most common in demo)
+        for intent, keywords in hunter_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_demo_handler_name(intent)
+                    return intent, 0.90, handler
+
+        # Check ULTRA patterns
+        for intent, keywords in ultra_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_demo_handler_name(intent)
+                    return intent, 0.85, handler
+
+        # Check GraphRAG patterns
+        for intent, keywords in graphrag_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_demo_handler_name(intent)
+                    return intent, 0.85, handler
+
+        # Check DeFi patterns
+        for intent, keywords in defi_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_demo_handler_name(intent)
+                    return intent, 0.80, handler
+
+        # Check wallet patterns (for authenticated users)
+        for intent, keywords in wallet_patterns.items():
+            for keyword in keywords:
+                if keyword in content_lower:
+                    handler = self._get_demo_handler_name(intent)
+                    return intent, 0.85, handler
+
+        # Context-based follow-up detection (if previous messages mentioned price/sentiment)
+        if context_lower:
+            follow_up_patterns = [
+                "and what about", "what about", "how about", "and for",
+                "y qué hay de", "qué tal", "y para", "y sobre",
+            ]
+            for pattern in follow_up_patterns:
+                if pattern in content_lower:
+                    if any(kw in context_lower for kw in ["sentiment", "sentimiento"]):
+                        return ChatIntent.HUNTER_SENTIMENT, 0.80, "demo_hunter_sentiment_handler"
+                    if any(kw in context_lower for kw in ["price", "precio", "predict", "predecir"]):
+                        return ChatIntent.HUNTER_PRICE_PREDICTION, 0.80, "demo_hunter_prediction_handler"
+
+        # Default to general conversation
+        return ChatIntent.GENERAL_CONVERSATION, 0.65, "demo_general_handler"
 
     async def _handle_protocol_search(
         self, user_id, conversation_id, content, intent_result, language: str = "en"

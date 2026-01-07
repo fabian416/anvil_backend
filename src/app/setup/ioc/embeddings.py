@@ -86,21 +86,36 @@ class EmbeddingProvider(Provider):
             ValueError: If no embedding service is configured
         """
         import os
+        import logging
         from app.infrastructure.embeddings import DeepInfraEmbeddingService
+        from app.setup.config.loader import load_full_config, get_current_env
+        
+        logger = logging.getLogger(__name__)
         
         # Select base service
         base_service = None
         if cohere_service is not None:
             base_service = cohere_service
         else:
-            # Fallback to DeepInfra
-            deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
+            # Fallback to DeepInfra - try .secrets.toml first, then env var
+            deepinfra_key = ""
+            try:
+                raw_config = load_full_config(env=get_current_env())
+                deepinfra_key = raw_config.get("deepinfra", {}).get("API_KEY", "")
+            except Exception as e:
+                logger.debug(f"Could not load config from .secrets.toml: {e}")
+            
+            # Fallback to environment variable
+            if not deepinfra_key:
+                deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
+            
             if deepinfra_key:
+                logger.info("DeepInfra embedding service configured from .secrets.toml or env var")
                 base_service = DeepInfraEmbeddingService(api_key=deepinfra_key)
             else:
                 raise ValueError(
                     "No embedding service configured. "
-                    "Configure Cohere (COHERE_API_KEY) or DeepInfra (DEEPINFRA_API_KEY) in settings."
+                    "Configure Cohere (COHERE_API_KEY) or DeepInfra ([deepinfra] API_KEY in .secrets.toml) in settings."
                 )
 
         # Get cache settings

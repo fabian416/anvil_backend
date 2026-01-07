@@ -16,6 +16,7 @@ from app.setup.config.admin import AdminSettings
 from app.setup.config.privy import PrivySettings
 from app.setup.config.distillation import DistillationSettings
 from app.setup.config.transaction_confirmation import TransactionConfirmationSettings
+from app.setup.config.agent_squad import AgentSquadSettings
 
 
 class SettingsProvider(Provider):
@@ -125,3 +126,16 @@ class SettingsProvider(Provider):
         Uses defaults from TransactionConfirmationSettings if not configured.
         """
         return settings.transaction_confirmation
+
+    @provide
+    def provide_agent_squad_settings(
+        self, settings: AppSettings
+    ) -> AgentSquadSettings:
+        """
+        Provide Agent Squad settings.
+        
+        Includes:
+        - use_demo_mode: If True, use demo handlers instead of real LLM
+        - Other agent squad configuration
+        """
+        return settings.agent_squad

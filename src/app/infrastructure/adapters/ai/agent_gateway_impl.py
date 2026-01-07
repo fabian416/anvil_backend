@@ -158,7 +158,7 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
         # Get classification from LLM
         try:
             response = await self.llm_gateway.generate(
-                model="gemini-2.0-flash-exp",  # Fast Gemini model for classification
+                model="meta-llama/Meta-Llama-3.1-70B-Instruct",  # DeepInfra Llama model for classification
                 messages=[
                     {"role": "system", "content": "You are an intent classifier. Respond only with the intent name."},
                     {"role": "user", "content": prompt},
@@ -249,7 +249,7 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
         
         # Generate response using LLM
         response = await self.llm_gateway.generate(
-            model="gemini-2.0-flash-exp",  # Default Gemini model for fallback responses
+            model="meta-llama/Meta-Llama-3.1-70B-Instruct",  # DeepInfra Llama model for fallback responses
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": full_prompt},
