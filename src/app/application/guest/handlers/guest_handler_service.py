@@ -1963,57 +1963,115 @@ class GuestHandlerService:
                 "requires_registration": True,
             }
         
-        # Best rate query - show rate comparison
+        # Best rate query - show comprehensive rate comparison
         if is_complete and from_token and to_token and not amount:
+            # Demo rates for common pairs
             demo_rates = {
                 ("ETH", "USDC"): 2200.0,
-                ("USDC", "ETH"): 0.00045,
+                ("USDC", "ETH"): 0.0004545,
                 ("ETH", "USDT"): 2200.0,
-                ("USDT", "ETH"): 0.00045,
+                ("USDT", "ETH"): 0.0004545,
+                ("BTC", "USDC"): 45000.0,
+                ("USDC", "BTC"): 0.0000222,
             }
-            rate = demo_rates.get((from_token, to_token), 1.0)
+            
+            rate = demo_rates.get((from_token.upper(), to_token.upper()))
+            if not rate:
+                # Default rate estimation
+                rate = 1.0 if from_token.upper() == to_token.upper() else 0.5
+            
+            # Simulate multiple protocol rates for comparison
+            base_rate = rate
+            protocols = [
+                {"name": "1inch", "rate": base_rate, "price_impact": 0.12, "gas_usd": 8.50, "slippage": 0.1},
+                {"name": "Uniswap V3", "rate": base_rate * 0.9995, "price_impact": 0.15, "gas_usd": 12.00, "slippage": 0.3},
+                {"name": "Curve", "rate": base_rate * 0.9998, "price_impact": 0.08, "gas_usd": 15.00, "slippage": 0.1},
+                {"name": "Balancer", "rate": base_rate * 0.9992, "price_impact": 0.18, "gas_usd": 10.00, "slippage": 0.2},
+            ]
+            
+            # Sort by best rate
+            protocols.sort(key=lambda x: x["rate"], reverse=True)
+            best_protocol = protocols[0]
             
             translations = {
                 "en": {
-                    "title": "🔄 **Best Swap Rate**",
-                    "rate": f"**Rate:** 1 {from_token} = {rate:.6f} {to_token}",
-                    "protocol": "**Best Protocol:** 1inch Aggregator",
+                    "title": "🔄 **Best Swap Rate Comparison**",
+                    "best_rate": f"**Best Rate:** 1 {from_token.upper()} = {best_protocol['rate']:.6f} {to_token.upper()}",
+                    "best_protocol": f"**Best Protocol:** {best_protocol['name']}",
+                    "comparison": "**Protocol Comparison:**",
+                    "protocol_row": "• **{name}**: {rate:.6f} {to_token} | Impact: {impact}% | Gas: ${gas:.2f}",
+                    "price_impact": f"**Price Impact:** {best_protocol['price_impact']:.2f}%",
+                    "gas_estimate": f"**Estimated Gas:** ${best_protocol['gas_usd']:.2f}",
+                    "slippage": f"**Slippage:** {best_protocol['slippage']:.1f}%",
                     "note": "⚠️ **To execute this swap, you need to register.** Sign up to proceed with the transaction.",
                 },
                 "es": {
-                    "title": "🔄 **Mejor Tasa de Swap**",
-                    "rate": f"**Tasa:** 1 {from_token} = {rate:.6f} {to_token}",
-                    "protocol": "**Mejor Protocolo:** Agregador 1inch",
+                    "title": "🔄 **Comparación de Mejores Tasas**",
+                    "best_rate": f"**Mejor Tasa:** 1 {from_token.upper()} = {best_protocol['rate']:.6f} {to_token.upper()}",
+                    "best_protocol": f"**Mejor Protocolo:** {best_protocol['name']}",
+                    "comparison": "**Comparación de Protocolos:**",
+                    "protocol_row": "• **{name}**: {rate:.6f} {to_token} | Impacto: {impact}% | Gas: ${gas:.2f}",
+                    "price_impact": f"**Impacto de Precio:** {best_protocol['price_impact']:.2f}%",
+                    "gas_estimate": f"**Gas Estimado:** ${best_protocol['gas_usd']:.2f}",
+                    "slippage": f"**Deslizamiento:** {best_protocol['slippage']:.1f}%",
                     "note": "⚠️ **Para ejecutar este swap, necesitas registrarte.** Regístrate para proceder con la transacción.",
                 },
                 "pt": {
-                    "title": "🔄 **Melhor Taxa de Swap**",
-                    "rate": f"**Taxa:** 1 {from_token} = {rate:.6f} {to_token}",
-                    "protocol": "**Melhor Protocolo:** Agregador 1inch",
+                    "title": "🔄 **Comparação de Melhores Taxas**",
+                    "best_rate": f"**Melhor Taxa:** 1 {from_token.upper()} = {best_protocol['rate']:.6f} {to_token.upper()}",
+                    "best_protocol": f"**Melhor Protocolo:** {best_protocol['name']}",
+                    "comparison": "**Comparação de Protocolos:**",
+                    "protocol_row": "• **{name}**: {rate:.6f} {to_token} | Impacto: {impact}% | Gas: ${gas:.2f}",
+                    "price_impact": f"**Impacto de Preço:** {best_protocol['price_impact']:.2f}%",
+                    "gas_estimate": f"**Gas Estimado:** ${best_protocol['gas_usd']:.2f}",
+                    "slippage": f"**Deslizamento:** {best_protocol['slippage']:.1f}%",
                     "note": "⚠️ **Para executar este swap, você precisa se cadastrar.** Cadastre-se para prosseguir com a transação.",
                 },
                 "zh": {
-                    "title": "🔄 **最佳交换汇率**",
-                    "rate": f"**汇率:** 1 {from_token} = {rate:.6f} {to_token}",
-                    "protocol": "**最佳协议:** 1inch 聚合器",
+                    "title": "🔄 **最佳交换率比较**",
+                    "best_rate": f"**最佳汇率:** 1 {from_token.upper()} = {best_protocol['rate']:.6f} {to_token.upper()}",
+                    "best_protocol": f"**最佳协议:** {best_protocol['name']}",
+                    "comparison": "**协议比较:**",
+                    "protocol_row": "• **{name}**: {rate:.6f} {to_token} | 影响: {impact}% | Gas: ${gas:.2f}",
+                    "price_impact": f"**价格影响:** {best_protocol['price_impact']:.2f}%",
+                    "gas_estimate": f"**预估Gas:** ${best_protocol['gas_usd']:.2f}",
+                    "slippage": f"**滑点:** {best_protocol['slippage']:.1f}%",
                     "note": "⚠️ **要执行此交换，您需要注册。** 注册以继续交易。",
                 },
             }
             t = translations.get(language, translations["en"])
             
             response = f"{t['title']}\n\n"
-            response += f"{t['rate']}\n"
-            response += f"{t['protocol']}\n\n"
+            response += f"{t['best_rate']}\n"
+            response += f"{t['best_protocol']}\n\n"
+            response += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            response += f"{t['comparison']}\n"
+            response += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            for proto in protocols:
+                response += f"{t['protocol_row'].format(name=proto['name'], rate=proto['rate'], to_token=to_token.upper(), impact=proto['price_impact'], gas=proto['gas_usd'])}\n"
+            response += f"\n"
+            response += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            response += f"**DETAILS**\n"
+            response += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            response += f"{t['price_impact']}\n"
+            response += f"{t['gas_estimate']}\n"
+            response += f"{t['slippage']}\n\n"
             response += f"{t['note']}\n\n"
-            response += self._get_registration_cta(language, for_action=True)
+            # Note: registration_cta is added by the caller if needed
             
             return {
                 "content": response,
                 "enrichment": {
                     "swap_demo": True,
+                    "is_best_rate": True,
                     "from_token": from_token,
                     "to_token": to_token,
-                    "rate": rate,
+                    "rate": best_protocol["rate"],
+                    "protocol": best_protocol["name"],
+                    "protocols": protocols,
+                    "price_impact": best_protocol["price_impact"],
+                    "gas_estimate": best_protocol["gas_usd"],
+                    "slippage": best_protocol["slippage"],
                 },
                 "requires_registration": True,
             }
