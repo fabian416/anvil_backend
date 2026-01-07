@@ -1690,9 +1690,20 @@ class GuestHandlerService:
         # Demo response with parsed swap info
         demo_response = self._get_swap_demo_response(swap_info, language)
         # Ensure registration message is present in demo response too
-        if "To execute this swap" not in demo_response["content"] and "Para ejecutar este swap" not in demo_response["content"]:
+        # Check if registration message is already in content (for bridge/best rate responses)
+        content_lower = demo_response["content"].lower()
+        has_registration_msg = (
+            "to execute" in content_lower or 
+            "para ejecutar" in content_lower or
+            "para executar" in content_lower or
+            "要执行" in content_lower
+        )
+        if not has_registration_msg:
             registration_msg = self._get_registration_message_for_execution(language)
             demo_response["content"] += f"\n\n{registration_msg}"
+        # Add registration CTA if not already present
+        if "👉" not in demo_response["content"] and "Sign up" not in demo_response["content"]:
+            demo_response["content"] += f"\n\n{self._get_registration_cta(language, for_action=True)}"
         demo_response["requires_registration"] = True
         return demo_response
     
@@ -1933,7 +1944,7 @@ class GuestHandlerService:
             response += f"{t['fee']}\n"
             response += f"{t['gas']}\n\n"
             response += f"{t['note']}\n\n"
-            response += self._get_registration_cta(language, for_action=True)
+            # Note: registration_cta is added by the caller, don't duplicate here
             
             return {
                 "content": response,
