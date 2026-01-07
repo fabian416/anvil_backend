@@ -106,6 +106,37 @@ if ! redis-cli ping > /dev/null 2>&1; then
     fi
 fi
 
+# ============================================
+# Stop existing processes first
+# ============================================
+echo -e "${YELLOW}🛑 Deteniendo procesos existentes...${NC}"
+
+# Kill existing processes
+pkill -f "uvicorn app.run:make_app" 2>/dev/null || true
+pkill -f "app.infrastructure.mcp.servers" 2>/dev/null || true
+pkill -f "celery.*worker" 2>/dev/null || true
+pkill -f "celery.*beat" 2>/dev/null || true
+pkill -f "flower" 2>/dev/null || true
+pkill -f "tail -f.*logs/" 2>/dev/null || true
+
+# Wait for processes to stop
+sleep 2
+
+# Force kill any remaining processes
+pkill -9 -f "uvicorn app.run:make_app" 2>/dev/null || true
+pkill -9 -f "app.infrastructure.mcp.servers" 2>/dev/null || true
+pkill -9 -f "celery.*worker" 2>/dev/null || true
+pkill -9 -f "celery.*beat" 2>/dev/null || true
+pkill -9 -f "flower" 2>/dev/null || true
+
+# Clean up PID file from previous run
+rm -f "$PID_FILE"
+
+# Wait a bit more to ensure ports are released
+sleep 1
+
+echo -e "${GREEN}✅ Procesos anteriores detenidos${NC}\n"
+
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}"
 echo -e "${MAGENTA}🚀 INICIANDO ENTORNO DE DESARROLLO COMPLETO${NC}"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════════${NC}"
