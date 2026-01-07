@@ -1582,10 +1582,13 @@ class GuestHandlerService:
         self, content: str, language: str, context: str = ""
     ) -> dict[str, Any]:
         """
-        Handle swap quotes with real 1inch data or demo response.
+        Handle swap quotes with real 1inch/LiFi data or demo response.
         
         Supports multi-turn conversations:
         - "quiero swap" → "de USDC" → "a ETH" → "100 tokens"
+        - "Swap 100 USDC for ETH"
+        - "Bridge USDC from Ethereum to Base"
+        - "Best swap rate for ETH to USDC"
         
         Args:
             content: User message
@@ -1595,22 +1598,99 @@ class GuestHandlerService:
         # Parse swap parameters from content and context
         swap_info = self._parse_swap_from_context(content, context)
         
+        # Try to use real swap handler if available
         if self._swap_handler:
+            logger.info(f"Using real SwapHandler for swap request: {content[:50]}")
             try:
-                result = await self._swap_handler.handle(
-                    content=content,
-                    user_id=None,
-                    wallet_address=None,
-                    language=language,
-                )
-                result["content"] += self._get_registration_cta(language, for_action=True)
-                result["requires_registration"] = True
-                return result
+                # Extract swap parameters
+                from_token = swap_info.get("from_token")
+                to_token = swap_info.get("to_token")
+                amount = swap_info.get("amount", "1")
+                is_bridge = swap_info.get("is_bridge", False)
+                from_chain = swap_info.get("from_chain", "ethereum")
+                to_chain = swap_info.get("to_chain")
+                
+                # For bridge swaps
+                if is_bridge and from_token and to_chain:
+                    result = await self._swap_handler.get_swap_quote(
+                        from_token=from_token,
+                        to_token=from_token,  # Same token, different chain
+                        amount=amount or "1",
+                        from_chain=from_chain,
+                        to_chain=to_chain,
+                        slippage=1.0,
+                    )
+                    content_response = result.content
+                    if language != "en":
+                        # Translate key phrases (simplified)
+                        content_response = self._translate_swap_response(content_response, language)
+                    
+                    # Add registration message - clear that execution requires registration
+                    registration_msg = self._get_registration_message_for_execution(language)
+                    content_response += f"\n\n{registration_msg}"
+                    
+                    return {
+                        "content": content_response,
+                        "enrichment": {
+                            "from_token": result.from_token,
+                            "to_token": result.to_token,
+                            "from_amount": result.from_amount,
+                            "to_amount": result.to_amount,
+                            "chain": result.chain,
+                            "aggregator": result.aggregator,
+                            "is_bridge": True,
+                            "from_chain": from_chain,
+                            "to_chain": to_chain,
+                            "latency_ms": result.latency_ms,
+                        },
+                        "requires_registration": True,
+                    }
+                
+                # For regular swaps or best rate queries
+                elif from_token and to_token:
+                    result = await self._swap_handler.get_swap_quote(
+                        from_token=from_token,
+                        to_token=to_token,
+                        amount=amount or "1",
+                        from_chain=from_chain,
+                        to_chain=to_chain or from_chain,
+                        slippage=1.0,
+                    )
+                    content_response = result.content
+                    if language != "en":
+                        content_response = self._translate_swap_response(content_response, language)
+                    
+                    # Add registration message - clear that execution requires registration
+                    registration_msg = self._get_registration_message_for_execution(language)
+                    content_response += f"\n\n{registration_msg}"
+                    
+                    return {
+                        "content": content_response,
+                        "enrichment": {
+                            "from_token": result.from_token,
+                            "to_token": result.to_token,
+                            "from_amount": result.from_amount,
+                            "to_amount": result.to_amount,
+                            "chain": result.chain,
+                            "aggregator": result.aggregator,
+                            "price_impact": result.price_impact,
+                            "latency_ms": result.latency_ms,
+                        },
+                        "requires_registration": True,
+                    }
             except Exception as e:
-                logger.warning(f"Swap handler error: {e}")
+                logger.warning(f"Swap handler error: {e}", exc_info=True)
+        else:
+            logger.info("SwapHandler not available, using demo response")
 
         # Demo response with parsed swap info
-        return self._get_swap_demo_response(swap_info, language)
+        demo_response = self._get_swap_demo_response(swap_info, language)
+        # Ensure registration message is present in demo response too
+        if "To execute this swap" not in demo_response["content"] and "Para ejecutar este swap" not in demo_response["content"]:
+            registration_msg = self._get_registration_message_for_execution(language)
+            demo_response["content"] += f"\n\n{registration_msg}"
+        demo_response["requires_registration"] = True
+        return demo_response
     
     def _parse_swap_from_context(
         self, content: str, context: str
@@ -2306,6 +2386,73 @@ class GuestHandlerService:
             return "ethereum"
 
         return None
+
+    def _translate_swap_response(self, content: str, language: str) -> str:
+        """Translate swap response content to target language."""
+        # Simple translation mapping for key phrases
+        translations = {
+            "es": {
+                "Swap Quote": "Cotización de Swap",
+                "From": "Desde",
+                "To": "A",
+                "Rate": "Tasa",
+                "Price Impact": "Impacto en Precio",
+                "Est. Gas": "Gas Est.",
+                "Chain": "Cadena",
+                "Cross-Chain Swap": "Swap Cross-Chain",
+                "Route": "Ruta",
+                "Estimated Time": "Tiempo Estimado",
+                "Aggregator": "Agregador",
+                "Ready to swap?": "¿Listo para intercambiar?",
+            },
+            "pt": {
+                "Swap Quote": "Cotação de Swap",
+                "From": "De",
+                "To": "Para",
+                "Rate": "Taxa",
+                "Price Impact": "Impacto no Preço",
+                "Est. Gas": "Gas Est.",
+                "Chain": "Cadeia",
+                "Cross-Chain Swap": "Swap Cross-Chain",
+                "Route": "Rota",
+                "Estimated Time": "Tempo Estimado",
+                "Aggregator": "Agregador",
+                "Ready to swap?": "Pronto para trocar?",
+            },
+            "zh": {
+                "Swap Quote": "交换报价",
+                "From": "从",
+                "To": "到",
+                "Rate": "汇率",
+                "Price Impact": "价格影响",
+                "Est. Gas": "预估Gas",
+                "Chain": "链",
+                "Cross-Chain Swap": "跨链交换",
+                "Route": "路线",
+                "Estimated Time": "预计时间",
+                "Aggregator": "聚合器",
+                "Ready to swap?": "准备交换？",
+            },
+        }
+        
+        if language not in translations:
+            return content
+        
+        translated = content
+        for en_phrase, translated_phrase in translations[language].items():
+            translated = translated.replace(en_phrase, translated_phrase)
+        
+        return translated
+
+    def _get_registration_message_for_execution(self, language: str) -> str:
+        """Get registration message specifically for swap execution."""
+        messages = {
+            "en": "⚠️ **To execute this swap, you need to register.** Sign up to proceed with the transaction.",
+            "es": "⚠️ **Para ejecutar este swap, necesitas registrarte.** Regístrate para proceder con la transacción.",
+            "pt": "⚠️ **Para executar este swap, você precisa se cadastrar.** Cadastre-se para prosseguir com a transação.",
+            "zh": "⚠️ **要执行此交换，您需要注册。** 注册以继续交易。",
+        }
+        return messages.get(language, messages["en"])
 
     def _get_registration_cta(
         self, language: str, for_action: bool = False
