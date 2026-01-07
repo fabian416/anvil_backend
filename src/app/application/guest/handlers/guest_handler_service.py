@@ -1074,7 +1074,51 @@ class GuestHandlerService:
 
             if not opportunities:
                 response += f"{t['no_opportunities']}\n\n"
-                response += f"{t['markets_efficient']}\n"
+                response += f"{t['markets_efficient']}\n\n"
+                # Add helpful context about arbitrage
+                context_msgs = {
+                    "en": "**Why no opportunities?**\n"
+                    "- Markets are highly efficient (prices align quickly)\n"
+                    "- Gas costs exceed potential profit margins\n"
+                    "- Slippage reduces profitability\n"
+                    "- High competition from MEV bots\n\n"
+                    "**When opportunities appear:**\n"
+                    "- Market volatility creates temporary price gaps\n"
+                    "- New token listings with initial price discovery\n"
+                    "- Low liquidity pools with price inefficiencies\n"
+                    "- Cross-chain arbitrage during bridge delays",
+                    "es": "**¿Por qué no hay oportunidades?**\n"
+                    "- Los mercados son muy eficientes (precios se alinean rápidamente)\n"
+                    "- Los costos de gas superan los márgenes de ganancia potenciales\n"
+                    "- El slippage reduce la rentabilidad\n"
+                    "- Alta competencia de bots MEV\n\n"
+                    "**Cuándo aparecen oportunidades:**\n"
+                    "- La volatilidad del mercado crea brechas de precio temporales\n"
+                    "- Nuevos listados de tokens con descubrimiento de precio inicial\n"
+                    "- Pools de baja liquidez con ineficiencias de precio\n"
+                    "- Arbitraje cross-chain durante retrasos de puentes",
+                    "pt": "**Por que não há oportunidades?**\n"
+                    "- Os mercados são altamente eficientes (preços se alinham rapidamente)\n"
+                    "- Custos de gas excedem margens de lucro potenciais\n"
+                    "- Slippage reduz a rentabilidade\n"
+                    "- Alta competição de bots MEV\n\n"
+                    "**Quando oportunidades aparecem:**\n"
+                    "- Volatilidade do mercado cria lacunas de preço temporárias\n"
+                    "- Novos listagens de tokens com descoberta de preço inicial\n"
+                    "- Pools de baixa liquidez com ineficiências de preço\n"
+                    "- Arbitragem cross-chain durante atrasos de pontes",
+                    "zh": "**为什么没有机会？**\n"
+                    "- 市场高度高效（价格快速对齐）\n"
+                    "- Gas 成本超过潜在利润空间\n"
+                    "- 滑点降低盈利能力\n"
+                    "- MEV 机器人竞争激烈\n\n"
+                    "**机会何时出现：**\n"
+                    "- 市场波动产生临时价格差距\n"
+                    "- 新代币上市时的初始价格发现\n"
+                    "- 低流动性池的价格低效\n"
+                    "- 跨链套利在桥接延迟期间",
+                }
+                response += context_msgs.get(language, context_msgs["en"])
             else:
                 response += f"{t['found']} {len(opportunities)} {t['opportunities']}\n\n"
                 for i, opp in enumerate(opportunities[:3], 1):
