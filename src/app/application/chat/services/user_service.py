@@ -72,6 +72,8 @@ class UserService:
     async def get_or_create_user(
         self,
         ip_address: str,
+        authenticated_user_id: str | None = None,
+        authenticated_email: str | None = None,
         privy_token: str | None = None,
         language: str = "en",
     ) -> ChatUser:
@@ -88,7 +90,36 @@ class UserService:
         Returns:
             ChatUser entity (new or existing)
         """
-        # 1. If Privy token provided, validate and get/create authenticated user
+        # 1. If backend-authenticated user is available (JWT session), use it.
+        # This allows /api/v1/conversations to work with the same Bearer token
+        # the frontend uses for the rest of the API.
+        if authenticated_user_id:
+            user = await self._user_repo.get_by_identifier(
+                UserType.AUTHENTICATED.value,
+                authenticated_user_id,
+            )
+            if user:
+                user.update_last_active()
+                if authenticated_email and user.email != authenticated_email:
+                    user.email = authenticated_email
+                if language != user.preferred_language:
+                    user.preferred_language = language
+                await self._user_repo.update(user)
+                return user
+
+            user = ChatUser(
+                user_type=UserType.AUTHENTICATED,
+                identifier=authenticated_user_id,
+                email=authenticated_email,
+                preferred_language=language,
+                metadata={
+                    "source": "backend_jwt",
+                    "app_user_id": authenticated_user_id,
+                },
+            )
+            return await self._user_repo.save(user)
+
+        # 2. If Privy token provided, validate and get/create authenticated user
         if privy_token and self._privy_client:
             privy_data = await self.verify_privy_token(privy_token)
             if privy_data:
@@ -109,7 +140,7 @@ class UserService:
                 )
                 return await self._user_repo.save(user)
         
-        # 2. Fallback to guest identification by IP
+        # 3. Fallback to guest identification by IP
         user = await self._user_repo.get_by_identifier("guest", ip_address)
         if user:
             user.update_last_active()
@@ -118,7 +149,7 @@ class UserService:
             await self._user_repo.update(user)
             return user
         
-        # 3. Create new guest user
+        # 4. Create new guest user
         user = ChatUser.create_guest(ip_address=ip_address, language=language)
         return await self._user_repo.save(user)
     

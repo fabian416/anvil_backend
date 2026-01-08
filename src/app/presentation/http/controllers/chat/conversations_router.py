@@ -21,6 +21,9 @@ from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
 from app.application.chat.handlers.restricted_handler import RestrictedActionHandler
 from app.application.guest.handlers.guest_handler_service import GuestHandlerService
 from app.infrastructure.adapters.chat_unified_repository_sqla import ChatMessageRepositorySqla
+from app.application.common.services.current_user import CurrentUserService
+from app.application.common.exceptions.authorization import AuthorizationError
+from app.infrastructure.auth.exceptions import AuthenticationError
 
 
 # ========================================
@@ -109,6 +112,70 @@ def create_conversations_router() -> APIRouter:
         prefix="/conversations",
         tags=["Conversations"],
     )
+
+    async def _resolve_chat_user(
+        *,
+        http_request: Request,
+        user_service: UserService,
+        current_user: CurrentUserService,
+        language: str = "en",
+    ):
+        """
+        Resolve the ChatUser for this request.
+        
+        Priority:
+        1) Backend JWT (Authorization Bearer anvil_access_token) -> authenticated ChatUser
+        2) Privy access token -> authenticated ChatUser (if Privy client configured)
+        3) IP-based guest ChatUser
+        """
+        ip_address = http_request.client.host if http_request.client else "unknown"
+        bearer_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
+
+        authenticated_user_id: str | None = None
+        authenticated_email: str | None = None
+        try:
+            app_user = await current_user.get_current_user()
+            authenticated_user_id = str(app_user.id_.value)
+            authenticated_email = app_user.email.value
+        except (AuthenticationError, AuthorizationError):
+            authenticated_user_id = None
+            authenticated_email = None
+
+        return await user_service.get_or_create_user(
+            ip_address=ip_address,
+            authenticated_user_id=authenticated_user_id,
+            authenticated_email=authenticated_email,
+            privy_token=bearer_token if bearer_token else None,
+            language=language,
+        )
+
+    def _strip_signup_prompt_for_authenticated(content: str) -> str:
+        """
+        Remove signup CTA blocks from responses when the caller is authenticated.
+        
+        /api/v1/conversations supports both guest and authenticated flows. Some demo
+        handlers include "/signup" CTA text which is correct for guests, but confusing
+        for authenticated users (already registered/logged in).
+        """
+        if "/signup" not in content:
+            return content
+
+        lines = content.splitlines()
+        # Find the first CTA-ish line that references signup and drop everything after it.
+        cutoff_idx: int | None = None
+        for i, line in enumerate(lines):
+            if "/signup" in line and ("👉" in line or "[" in line or "signup" in line.lower()):
+                cutoff_idx = i
+                break
+            if "modo demo" in line.lower() and "/signup" in content:
+                cutoff_idx = i
+                break
+
+        if cutoff_idx is None:
+            return content
+
+        trimmed = "\n".join(lines[:cutoff_idx]).rstrip()
+        return trimmed if trimmed else content
     
     # ------------------------------------------
     # CRUD Endpoints
@@ -126,16 +193,14 @@ def create_conversations_router() -> APIRouter:
         request_body: CreateConversationRequest,
         http_request: Request,
         user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
         conversation_service: FromDishka[ConversationService],
     ) -> ConversationResponse:
         """Create a new conversation."""
-        # Get user (authenticated or guest)
-        ip_address = http_request.client.host if http_request.client else "unknown"
-        privy_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
-        
-        user = await user_service.get_or_create_user(
-            ip_address=ip_address,
-            privy_token=privy_token if privy_token else None,
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
             language=request_body.language,
         )
         
@@ -168,19 +233,17 @@ def create_conversations_router() -> APIRouter:
     async def list_conversations(
         http_request: Request,
         user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
         conversation_service: FromDishka[ConversationService],
         status_filter: str = "active",
         limit: int = 20,
         offset: int = 0,
     ) -> list[ConversationResponse]:
         """List user conversations."""
-        # Get user
-        ip_address = http_request.client.host if http_request.client else "unknown"
-        privy_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
-        
-        user = await user_service.get_or_create_user(
-            ip_address=ip_address,
-            privy_token=privy_token if privy_token else None,
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
         )
         
         # List conversations
@@ -217,16 +280,14 @@ def create_conversations_router() -> APIRouter:
         conversation_id: UUID,
         http_request: Request,
         user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
         conversation_service: FromDishka[ConversationService],
     ) -> ConversationWithMessagesResponse:
         """Get conversation with messages."""
-        # Get user
-        ip_address = http_request.client.host if http_request.client else "unknown"
-        privy_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
-        
-        user = await user_service.get_or_create_user(
-            ip_address=ip_address,
-            privy_token=privy_token if privy_token else None,
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
         )
         
         # Get conversation with messages
@@ -264,6 +325,7 @@ def create_conversations_router() -> APIRouter:
         conversation_id: UUID,
         http_request: Request,
         user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
         conversation_service: FromDishka[ConversationService],
     ) -> ConversationResponse:
         """
@@ -273,13 +335,10 @@ def create_conversations_router() -> APIRouter:
         Archived conversations are excluded from the default conversation list
         (which filters by status='active').
         """
-        # Get user
-        ip_address = http_request.client.host if http_request.client else "unknown"
-        privy_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
-        
-        user = await user_service.get_or_create_user(
-            ip_address=ip_address,
-            privy_token=privy_token if privy_token else None,
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
         )
         
         # Archive conversation (instead of deleting)
@@ -317,16 +376,14 @@ def create_conversations_router() -> APIRouter:
         conversation_id: UUID,
         http_request: Request,
         user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
         conversation_service: FromDishka[ConversationService],
     ) -> ConversationResponse:
         """Archive a conversation."""
-        # Get user
-        ip_address = http_request.client.host if http_request.client else "unknown"
-        privy_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
-        
-        user = await user_service.get_or_create_user(
-            ip_address=ip_address,
-            privy_token=privy_token if privy_token else None,
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
         )
         
         # Archive conversation
@@ -382,6 +439,7 @@ def create_conversations_router() -> APIRouter:
         request_body: SendMessageRequest,
         http_request: Request,
         user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
         conversation_service: FromDishka[ConversationService],
         rate_limit_service: FromDishka[RateLimitService],
         conversation_memory: FromDishka[ConversationMemory],
@@ -391,13 +449,10 @@ def create_conversations_router() -> APIRouter:
         """Send a message to a conversation."""
         from app.domain.chat.entities.chat_message import ChatMessage
         
-        # Get user
-        ip_address = http_request.client.host if http_request.client else "unknown"
-        privy_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
-        
-        user = await user_service.get_or_create_user(
-            ip_address=ip_address,
-            privy_token=privy_token if privy_token else None,
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
             language=request_body.language,
         )
         
@@ -458,14 +513,28 @@ def create_conversations_router() -> APIRouter:
         
         # Handle based on intent
         if intent_result.is_restricted:
-            # Restricted action - return registration message
-            restricted_handler = RestrictedActionHandler()
-            handler_result = await restricted_handler.handle(
-                intent=intent_result.intent.value,
-                language=request_body.language,
-            )
-            agent_content = handler_result.content
-            registration_required = handler_result.metadata
+            # Restricted actions should only show signup CTA to guests.
+            if user.is_guest:
+                restricted_handler = RestrictedActionHandler()
+                handler_result = await restricted_handler.handle(
+                    intent=intent_result.intent.value,
+                    language=request_body.language,
+                )
+                agent_content = handler_result.content
+                registration_required = handler_result.metadata
+            else:
+                # Authenticated user: avoid confusing "signup" prompts. Provide a
+                # wallet/setup hint instead (feature may require wallet connection).
+                wallet_required_message = {
+                    "en": "🔐 **Wallet Required**\n\nThis action requires a connected wallet in your account settings.",
+                    "es": "🔐 **Billetera Requerida**\n\nEsta acción requiere una billetera conectada en la configuración de tu cuenta.",
+                    "pt": "🔐 **Carteira Necessária**\n\nEsta ação requer uma carteira conectada nas configurações da sua conta.",
+                    "zh": "🔐 **需要钱包**\n\n此操作需要在你的账户设置中连接钱包。",
+                }
+                agent_content = wallet_required_message.get(
+                    request_body.language, wallet_required_message["en"]
+                )
+                registration_required = None
         
         elif intent_result.intent.value.startswith("SWAP"):
             # Swap flow (including continuation)
@@ -492,7 +561,7 @@ def create_conversations_router() -> APIRouter:
             agent_content = handler_result.content
             enrichment = handler_result.enrichment
             pending_action = handler_result.pending_action
-            if handler_result.requires_registration:
+            if user.is_guest and handler_result.requires_registration:
                 registration_required = {
                     "required": True,
                     "reason": "action_required",
@@ -518,12 +587,17 @@ def create_conversations_router() -> APIRouter:
             )
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")
-            if handler_result.get("requires_registration"):
+            if user.is_guest and handler_result.get("requires_registration"):
                 registration_required = {
                     "required": True,
                     "reason": "action_required",
                     "signup_url": "/signup",
                 }
+
+        # For authenticated users, strip demo "signup" CTA text that some handlers embed.
+        if not user.is_guest:
+            agent_content = _strip_signup_prompt_for_authenticated(agent_content)
+            registration_required = None
         
         # Create and save user message
         user_message = ChatMessage.create_user_message(
@@ -548,7 +622,7 @@ def create_conversations_router() -> APIRouter:
             intent=intent_result.intent.value,
             intent_confidence=intent_result.confidence,
             handler=intent_result.handler,
-            is_restricted_action=intent_result.is_restricted,
+            is_restricted_action=bool(registration_required),
             language=request_body.language,
             metadata=metadata,
         )
