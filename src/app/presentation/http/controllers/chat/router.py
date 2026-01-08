@@ -454,14 +454,48 @@ def create_chat_router() -> APIRouter:
             language=request.language or "en",
         )
         
+        # Convert transaction dict to TransactionDetails if present
+        from app.presentation.http.schemas.execute import TransactionDetails, ActionStatus
+        transaction_details = None
+        if result.transaction:
+            # Convert status string to ActionStatus enum
+            tx_status_str = result.transaction.get("status", "pending")
+            try:
+                tx_status = ActionStatus(tx_status_str)
+            except ValueError:
+                tx_status = ActionStatus.PENDING
+            
+            transaction_details = TransactionDetails(
+                hash=result.transaction.get("hash"),
+                chain=result.transaction.get("chain", request.chain),
+                from_address=result.transaction.get("from_address", ""),
+                to_address=result.transaction.get("to_address", ""),
+                value=result.transaction.get("value", "0"),
+                gas_used=result.transaction.get("gas_used"),
+                gas_price=result.transaction.get("gas_price"),
+                status=tx_status,
+                block_number=result.transaction.get("block_number"),
+                timestamp=result.transaction.get("timestamp"),
+                explorer_url=result.transaction.get("explorer_url"),
+                data=result.transaction.get("data"),  # Privy signing data
+                gas_limit=result.transaction.get("gas_limit"),  # Privy signing data
+                nonce=result.transaction.get("nonce"),  # Privy signing data
+            )
+        
+        # Convert simulation dict to SimulationResult if present
+        from app.presentation.http.schemas.execute import SimulationResult
+        simulation_result = None
+        if result.simulation:
+            simulation_result = SimulationResult(**result.simulation)
+        
         return ExecuteActionResponse(
             action_id=result.action_id,
             action_type=request.action_type,
-            status=result.status,
+            status=ActionStatus(result.status) if isinstance(result.status, str) else result.status,
             requires_confirmation=result.requires_confirmation,
             confirmation_message=result.confirmation_message,
-            simulation=result.simulation,
-            transaction=result.transaction,
+            simulation=simulation_result,
+            transaction=transaction_details,
             summary=result.summary,
             enrichment=result.enrichment,
             created_at=result.created_at,

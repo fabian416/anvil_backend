@@ -256,29 +256,123 @@ class ExecuteActionCommand:
         """Handle swap action."""
         is_cross_chain = to_chain and to_chain.lower() != chain.lower()
         
+        # Helper functions for token conversion
+        def _to_wei(amount_str: str, token: str) -> str:
+            """Convert human readable amount to wei."""
+            decimals = 18
+            if token.upper() in ["USDC", "USDT"]:
+                decimals = 6
+            elif token.upper() == "WBTC":
+                decimals = 8
+            try:
+                value = float(amount_str) * (10 ** decimals)
+                return str(int(value))
+            except ValueError:
+                return "0"
+        
+        def _resolve_token_address(token: str, chain_name: str) -> str:
+            """Resolve token symbol to address."""
+            if token.startswith("0x"):
+                return token
+            
+            TOKEN_ADDRESSES = {
+                "ethereum": {
+                    "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                    "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                    "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                    "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+                },
+                "base": {
+                    "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                    "WETH": "0x4200000000000000000000000000000000000006",
+                    "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                },
+                "arbitrum": {
+                    "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                    "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+                    "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+                },
+            }
+            
+            chain_tokens = TOKEN_ADDRESSES.get(chain_name.lower(), {})
+            return chain_tokens.get(token.upper(), token)
+        
+        # Helper functions for token conversion (defined at method level)
+        def _to_wei(amount_str: str, token: str) -> str:
+            """Convert human readable amount to wei."""
+            decimals = 18
+            if token.upper() in ["USDC", "USDT"]:
+                decimals = 6
+            elif token.upper() == "WBTC":
+                decimals = 8
+            try:
+                value = float(amount_str) * (10 ** decimals)
+                return str(int(value))
+            except ValueError:
+                return "0"
+        
+        def _resolve_token_address(token: str, chain_name: str) -> str:
+            """Resolve token symbol to address."""
+            if token.startswith("0x"):
+                return token
+            
+            TOKEN_ADDRESSES = {
+                "ethereum": {
+                    "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                    "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                    "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                    "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+                },
+                "base": {
+                    "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                    "WETH": "0x4200000000000000000000000000000000000006",
+                    "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                },
+                "arbitrum": {
+                    "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                    "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+                    "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+                },
+            }
+            
+            chain_tokens = TOKEN_ADDRESSES.get(chain_name.lower(), {})
+            return chain_tokens.get(token.upper(), token)
+        
         # Get quote
+        quote = None
         try:
             if is_cross_chain and self._lifi:
-                quote = await self._lifi.get_quote(
+                # Convert amount to wei for LiFi
+                amount_wei = _to_wei(amount, from_token)
+                lifi_quote = await self._lifi.get_quote(
                     from_chain=chain,
                     to_chain=to_chain,
                     from_token=from_token,
                     to_token=to_token,
-                    from_amount=amount,
+                    from_amount=amount_wei,
                     from_address=wallet_address,
                 )
-                output_amount = quote.get("estimate", {}).get("toAmount", "0")
-                gas_estimate = quote.get("estimate", {}).get("gasCosts", [{}])[0].get("amount", "0")
+                # LiFiQuote is a dataclass, access attributes directly
+                output_amount = lifi_quote.to_amount
+                gas_estimate = int(lifi_quote.estimated_gas) if lifi_quote.estimated_gas else 200000
+                quote = lifi_quote  # Store for later use
             elif self._oneinch:
-                quote = await self._oneinch.get_swap_quote(
-                    chain=chain,
-                    from_token=from_token,
-                    to_token=to_token,
-                    amount=amount,
-                    from_address=wallet_address,
+                # OneInchClient is initialized with a specific chain
+                # Need to resolve token addresses and convert amount
+                from_token_addr = _resolve_token_address(from_token, chain)
+                to_token_addr = _resolve_token_address(to_token, chain)
+                amount_wei = _to_wei(amount, from_token)
+                
+                oneinch_quote = await self._oneinch.get_swap_quote(
+                    from_token=from_token_addr,
+                    to_token=to_token_addr,
+                    amount=amount_wei,
+                    slippage=slippage,
                 )
-                output_amount = quote.get("toAmount", "0")
-                gas_estimate = quote.get("gas", 200000)
+                # SwapQuote is a dataclass
+                output_amount = oneinch_quote.to_amount
+                gas_estimate = oneinch_quote.estimated_gas
+                quote = oneinch_quote  # Store for later use
             else:
                 # Fallback estimation
                 quote = None
@@ -333,30 +427,169 @@ class ExecuteActionCommand:
                 expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
         
-        # Execute swap (confirmed)
-        # TODO: Integrate with Privy for actual transaction signing
+        # Execute swap (confirmed) - Generate transaction for Privy signing
+        # The frontend will use Privy SDK to sign and send this transaction
+        transaction_data = None
+        tx_to_address = None
+        tx_value = "0"
+        tx_data_hex = None
+        gas_limit = int(gas_estimate) if isinstance(gas_estimate, (int, str)) else 200000
+        
+        try:
+            # Helper functions to convert amounts and resolve token addresses
+            def _to_wei(amount_str: str, token: str) -> str:
+                """Convert human readable amount to wei."""
+                decimals = 18
+                if token.upper() in ["USDC", "USDT"]:
+                    decimals = 6
+                elif token.upper() == "WBTC":
+                    decimals = 8
+                try:
+                    value = float(amount_str) * (10 ** decimals)
+                    return str(int(value))
+                except ValueError:
+                    return "0"
+            
+            def _resolve_token_address(token: str, chain_name: str) -> str:
+                """Resolve token symbol to address."""
+                if token.startswith("0x"):
+                    return token
+                
+                # Common token addresses by chain
+                TOKEN_ADDRESSES = {
+                    "ethereum": {
+                        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                        "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                        "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                        "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+                    },
+                    "base": {
+                        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                        "WETH": "0x4200000000000000000000000000000000000006",
+                        "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                    },
+                    "arbitrum": {
+                        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                        "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+                        "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+                    },
+                }
+                
+                chain_tokens = TOKEN_ADDRESSES.get(chain_name.lower(), {})
+                return chain_tokens.get(token.upper(), token)
+            
+            # Convert amount to wei for transaction building
+            amount_wei = _to_wei(amount, from_token)
+            from_token_addr = _resolve_token_address(from_token, chain)
+            to_token_addr = _resolve_token_address(to_token, chain)
+            
+            if is_cross_chain and self._lifi:
+                # For cross-chain, LiFi provides route data
+                # Frontend will use LiFi SDK to execute the route
+                # We return the route ID and parameters
+                transaction_data = {
+                    "route_id": None,  # Would come from LiFi route selection
+                    "from_chain": chain,
+                    "to_chain": to_chain,
+                    "from_token": from_token_addr,
+                    "to_token": to_token_addr,
+                    "from_amount": amount_wei,
+                }
+                tx_to_address = None  # LiFi handles routing
+            elif self._oneinch:
+                # OneInchClient is initialized with a specific chain
+                # We need to check if the client's chain matches the requested chain
+                # If not, we'll need to create a new client for the correct chain
+                # For now, assume the client is configured for the correct chain
+                # In production, you might want to create clients per chain or use a factory
+                try:
+                    swap_tx = await self._oneinch.get_swap_data(
+                        from_token=from_token_addr,
+                        to_token=to_token_addr,
+                        amount=amount_wei,
+                        from_address=wallet_address,
+                        slippage=slippage,
+                    )
+                    tx_to_address = swap_tx.tx_to
+                    tx_value = swap_tx.tx_value
+                    tx_data_hex = swap_tx.tx_data
+                    # Gas limit from simulation
+                    gas_limit = simulation.get("estimated_gas", gas_limit)
+                except Exception as e:
+                    logger.warning(f"1inch transaction generation failed (chain mismatch?): {e}")
+                    # Fallback: return transaction data without calldata
+                    # Frontend can use the quote to build transaction
+                    tx_to_address = None
+                    tx_value = "0"
+                    tx_data_hex = None
+                    transaction_data = {
+                        "from_token": from_token_addr,
+                        "to_token": to_token_addr,
+                        "from_amount": amount_wei,
+                        "chain": chain,
+                        "slippage": slippage,
+                        "aggregator": "1inch",
+                    }
+            else:
+                logger.warning("No swap aggregator available for transaction generation")
+        except Exception as e:
+            logger.error(f"Failed to generate swap transaction: {e}")
+            # Return error in transaction
+            return ActionResult(
+                action_id=action_id,
+                action_type="swap",
+                status="failed",
+                requires_confirmation=False,
+                confirmation_message=None,
+                simulation=simulation,
+                transaction={
+                    "hash": None,
+                    "chain": chain,
+                    "from_address": wallet_address,
+                    "to_address": None,
+                    "value": "0",
+                    "status": "failed",
+                    "data": None,
+                },
+                summary=f"Failed to generate transaction: {str(e)}",
+                enrichment={
+                    "error": str(e),
+                    "from_token": from_token,
+                    "to_token": to_token,
+                    "amount": amount,
+                },
+                created_at=datetime.utcnow(),
+                expires_at=None,
+            )
+        
+        # Return transaction data for Privy signing in frontend
         return ActionResult(
             action_id=action_id,
             action_type="swap",
-            status="pending",  # Would be "executing" then "success"
+            status="awaiting_signing",  # Frontend needs to sign with Privy
             requires_confirmation=False,
             confirmation_message=None,
             simulation=simulation,
             transaction={
-                "hash": None,  # TODO: Get from actual execution
+                "hash": None,  # Will be set after Privy signs and sends
                 "chain": chain,
                 "from_address": wallet_address,
-                "to_address": "0x...",  # DEX router
-                "value": "0",
-                "status": "pending",
+                "to_address": tx_to_address or "0x...",  # DEX router or LiFi contract
+                "value": tx_value,
+                "status": "awaiting_signing",
+                "data": tx_data_hex,  # Transaction calldata for Privy signing
+                "gas_limit": gas_limit,
+                "nonce": None,  # Frontend will get nonce from blockchain
             },
-            summary=f"Executing swap: {amount} {from_token} → {to_token}",
+            summary=f"Transaction ready for Privy signing: {amount} {from_token} → {to_token}",
             enrichment={
                 "from_token": from_token,
                 "to_token": to_token,
                 "amount": amount,
                 "chain": chain,
                 "output_amount": output_amount,
+                "aggregator": "lifi" if is_cross_chain else "1inch",
+                "transaction_data": transaction_data,  # Additional data for LiFi routes
             },
             created_at=datetime.utcnow(),
             expires_at=None,

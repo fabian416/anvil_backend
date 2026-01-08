@@ -31,6 +31,7 @@ class ActionStatus(str, Enum):
     SIMULATING = "simulating"
     AWAITING_CONFIRMATION = "awaiting_confirmation"
     CONFIRMED = "confirmed"
+    AWAITING_SIGNING = "awaiting_signing"  # Transaction ready, waiting for Privy signing
     EXECUTING = "executing"
     SUCCESS = "success"
     FAILED = "failed"
@@ -117,7 +118,7 @@ class ExecuteActionRequest(BaseModel):
 class TransactionDetails(BaseModel):
     """Details of a blockchain transaction."""
     
-    hash: Optional[str] = Field(default=None, description="Transaction hash")
+    hash: Optional[str] = Field(default=None, description="Transaction hash (after execution)")
     chain: str = Field(..., description="Blockchain")
     from_address: str = Field(..., description="Sender address")
     to_address: str = Field(..., description="Contract/recipient address")
@@ -128,6 +129,20 @@ class TransactionDetails(BaseModel):
     block_number: Optional[int] = Field(default=None, description="Block number")
     timestamp: Optional[datetime] = Field(default=None, description="Transaction timestamp")
     explorer_url: Optional[str] = Field(default=None, description="Block explorer URL")
+    
+    # Transaction data for Privy signing (when confirmed but not yet signed)
+    data: Optional[str] = Field(
+        default=None,
+        description="Transaction calldata (hex) - for Privy signing in frontend"
+    )
+    gas_limit: Optional[int] = Field(
+        default=None,
+        description="Gas limit for the transaction"
+    )
+    nonce: Optional[int] = Field(
+        default=None,
+        description="Transaction nonce"
+    )
 
 
 class SimulationResult(BaseModel):
