@@ -2360,6 +2360,20 @@ class UnifiedChatOrchestrator:
         elif "dai" in message_lower:
             asset = "DAI"
 
+        # Initialize execute data
+        execute_data = None
+
+        # Check if user wants to deposit (action intent)
+        is_deposit_intent = any(
+            keyword in message_lower
+            for keyword in ["deposit", "supply", "lend", "put", "add"]
+        )
+        
+        # Extract amount if present
+        import re
+        amount_match = re.search(r"(\d+\.?\d*)", content)
+        amount = amount_match.group(1) if amount_match else None
+
         try:
             if self._lending_handler:
                 # Use real Morpho data
@@ -2378,6 +2392,26 @@ class UnifiedChatOrchestrator:
                     "best_apy": result.best_apy,
                     "latency_ms": result.latency_ms,
                 }
+                
+                # Generate execute data if deposit intent and we have vaults
+                if is_deposit_intent and result.vaults and len(result.vaults) > 0:
+                    # Use best vault (first in list, highest APY)
+                    best_vault = result.vaults[0]
+                    vault_address = None
+                    if isinstance(best_vault, dict):
+                        vault_address = best_vault.get("address") or best_vault.get("vault_address")
+                    else:
+                        vault_address = getattr(best_vault, "address", None) or getattr(best_vault, "vault_address", None)
+                    
+                    if vault_address:
+                        execute_data = {
+                            "action_type": "deposit",
+                            "chain": chain,
+                            "from_token": asset,
+                            "amount": amount or "1",  # Default to 1 if not specified
+                            "protocol": "morpho",
+                            "vault_address": vault_address,
+                        }
             else:
                 # Fallback response if handler not available
                 response_content = self._get_lending_fallback_response(chain, asset)
@@ -2402,6 +2436,7 @@ class UnifiedChatOrchestrator:
                 "language": language,
             },
             "enrichment": enrichment,
+            "execute": execute_data,
         }
 
     def _get_lending_fallback_response(self, chain: str, asset: str) -> str:
@@ -2493,22 +2528,28 @@ Try: "deposit USDC on Morpho" for direct vault access.
         """Handle swap/exchange intent with i18n."""
         entities = intent_result.extracted_entities
 
+        # Initialize execute data
+        execute_data = None
+
         try:
             if self._swap_handler:
                 # Parse swap details from message
-                amount, from_token, to_token, chain = self._swap_handler.parse_swap_from_message(content)
+                amount, from_token, to_token, chain, to_chain = self._swap_handler.parse_swap_from_message(content)
 
                 # Override with entities if available
                 if entities.get("token_symbol"):
                     from_token = entities["token_symbol"]
                 if entities.get("chain"):
                     chain = entities["chain"].lower()
+                if entities.get("to_chain"):
+                    to_chain = entities["to_chain"].lower()
 
                 result = await self._swap_handler.get_swap_quote(
                     from_token=from_token,
                     to_token=to_token,
                     amount=amount,
-                    chain=chain,
+                    from_chain=chain,
+                    to_chain=to_chain if to_chain and to_chain != chain else None,
                 )
                 response_content = result.content
                 enrichment = {
@@ -2521,6 +2562,18 @@ Try: "deposit USDC on Morpho" for direct vault access.
                     "chain": result.chain,
                     "latency_ms": result.latency_ms,
                 }
+                
+                # Generate execute data for swap action
+                if result.quote:  # Only if we have a valid quote
+                    execute_data = {
+                        "action_type": "swap",
+                        "chain": chain,
+                        "from_token": from_token,
+                        "to_token": to_token,
+                        "amount": amount,
+                        "slippage": 1.0,  # Default slippage
+                        "to_chain": to_chain if to_chain and to_chain != chain else None,
+                    }
             else:
                 response_content = self._get_swap_fallback_response()
                 enrichment = {"fallback": True}
@@ -2543,6 +2596,7 @@ Try: "deposit USDC on Morpho" for direct vault access.
                 "language": language,
             },
             "enrichment": enrichment,
+            "execute": execute_data,
         }
 
     def _get_swap_fallback_response(self) -> str:

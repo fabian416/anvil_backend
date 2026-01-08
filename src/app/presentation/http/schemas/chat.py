@@ -174,6 +174,21 @@ class EnrichmentData(BaseModel):
     action: Optional[str] = None  # Bot action (start, stop, pause, resume, status)
 
 
+class ExecuteActionData(BaseModel):
+    """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
+    
+    action_type: str = Field(..., description="Type of action: swap, deposit, withdraw, transfer, approve, bridge")
+    chain: str = Field(default="base", description="Blockchain to execute on")
+    from_token: Optional[str] = Field(default=None, description="Source token symbol or address")
+    to_token: Optional[str] = Field(default=None, description="Destination token symbol (for swap)")
+    amount: Optional[str] = Field(default=None, description="Amount to execute (human readable)")
+    protocol: Optional[str] = Field(default=None, description="Protocol name (for deposit/withdraw)")
+    vault_address: Optional[str] = Field(default=None, description="Vault address (for Morpho deposits)")
+    recipient: Optional[str] = Field(default=None, description="Recipient address (for transfer)")
+    slippage: Optional[float] = Field(default=1.0, description="Slippage tolerance in percent")
+    to_chain: Optional[str] = Field(default=None, description="Destination chain (for cross-chain swap/bridge)")
+
+
 class UnifiedChatResponse(BaseModel):
     """Unified response for all chat routing handlers with source attribution."""
 
@@ -182,6 +197,10 @@ class UnifiedChatResponse(BaseModel):
     routing: RoutingMetadata  # Routing information
     enrichment: Optional[EnrichmentData] = None  # Handler-specific data
     sources: List[SourceInfoResponse] = Field(default_factory=list)  # NEW: Aggregated sources
+    execute: Optional[ExecuteActionData] = Field(
+        default=None,
+        description="Execute action data for executable intents (swap, deposit, withdraw, etc.)"
+    )
 
 
 class ConversationListResponse(BaseModel):

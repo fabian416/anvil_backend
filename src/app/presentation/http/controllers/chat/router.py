@@ -283,6 +283,13 @@ def create_chat_router() -> APIRouter:
         agent_message_data = result.get("agent_message", {})
         routing_data = result.get("routing", {})
         enrichment_data = result.get("enrichment")
+        execute_data = result.get("execute")
+
+        # Convert execute data to ExecuteActionData if present
+        from app.presentation.http.schemas.chat import ExecuteActionData
+        execute_action = None
+        if execute_data:
+            execute_action = ExecuteActionData(**execute_data)
 
         return UnifiedChatResponse(
             user_message={
@@ -310,6 +317,7 @@ def create_chat_router() -> APIRouter:
                 total_latency_ms=routing_data.get("total_latency_ms"),
             ),
             enrichment=enrichment_data,
+            execute=execute_action,
         )
     
     @router.get(
