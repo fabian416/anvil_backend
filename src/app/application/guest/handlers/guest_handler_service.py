@@ -13,6 +13,7 @@ from typing import Any
 from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
+from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.services.intent_detector import ChatIntent
 from app.application.hunter.discord_sentiment import (
     DiscordConfig,
@@ -60,10 +61,12 @@ class GuestHandlerService:
         lending_handler: LendingHandler | None = None,
         swap_handler: SwapHandler | None = None,
         money_market_handler: MoneyMarketHandler | None = None,
+        buy_handler: BuyHandler | None = None,
     ):
         self._lending_handler = lending_handler
         self._swap_handler = swap_handler
         self._money_market_handler = money_market_handler
+        self._buy_handler = buy_handler
 
     async def handle_intent(
         self,
@@ -109,6 +112,7 @@ class GuestHandlerService:
             ChatIntent.LENDING: self._handle_lending,
             ChatIntent.MONEY_MARKET: self._handle_money_market,
             ChatIntent.SWAP: self._handle_swap,
+            ChatIntent.BUY: self._handle_buy,
             # Agent Squad (Specialist Tasks & Complex Workflows)
             ChatIntent.SPECIALIST_TASK: self._handle_specialist_task,
             ChatIntent.COMPLEX_WORKFLOW: self._handle_complex_workflow,
@@ -154,6 +158,9 @@ class GuestHandlerService:
                         continuation_step,
                         previous_lending_info,
                     )
+                # Buy handler (requires user_id for authenticated users)
+                elif intent == ChatIntent.BUY:
+                    return await self._handle_buy(content, language, is_authenticated)
                 return await handler(content, language, is_authenticated)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")

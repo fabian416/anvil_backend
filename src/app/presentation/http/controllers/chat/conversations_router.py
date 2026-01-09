@@ -783,6 +783,28 @@ def create_conversations_router() -> APIRouter:
                     "signup_url": "/signup",
                 }
         
+        elif intent_result.intent.value == "BUY":
+            # Handle BUY intent (on-ramp crypto purchase)
+            from app.application.chat.services.intent_detector import ChatIntent
+            
+            context_str = conversation_memory.build_context_string(context)
+            handler_result = await handler_service.handle_intent(
+                intent=ChatIntent.BUY,
+                content=request_body.content,
+                language=request_body.language,
+                context=context_str,
+                is_authenticated=not user.is_guest,
+            )
+            agent_content = handler_result.get("content", "")
+            enrichment = handler_result.get("enrichment")
+            pending_action = handler_result.get("pending_action")
+            if user.is_guest and handler_result.get("requires_registration"):
+                registration_required = {
+                    "required": True,
+                    "reason": "action_required",
+                    "signup_url": "/signup",
+                }
+        
         else:
             # Use existing handler service for other intents
             from app.application.chat.services.intent_detector import ChatIntent

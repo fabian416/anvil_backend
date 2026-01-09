@@ -42,6 +42,7 @@ class ChatIntentV2(str, Enum):
     SWAP_CONTINUE = "SWAP_CONTINUE"  # Multi-turn continuation
     LENDING = "LENDING"
     MONEY_MARKET = "MONEY_MARKET"
+    BUY = "BUY"  # On-ramp crypto purchase
     
     # Restricted (require registration)
     BALANCE = "BALANCE"
@@ -207,6 +208,28 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
             "devo comprar", "devo vender",
         ],
     },
+    "buy": {
+        "en": [
+            "buy crypto", "buy bitcoin", "buy eth", "buy usdc",
+            "buy with card", "purchase crypto", "i want to buy crypto",
+            "i want to buy", "buy cryptocurrency", "on-ramp",
+            "fund wallet", "add funds", "deposit fiat",
+        ],
+        "es": [
+            "comprar cripto", "comprar bitcoin", "comprar eth", "comprar usdc",
+            "comprar con tarjeta", "quiero comprar cripto", "quiero comprar",
+            "comprar criptomoneda", "fondear wallet", "agregar fondos",
+        ],
+        "pt": [
+            "comprar cripto", "comprar bitcoin", "comprar eth", "comprar usdc",
+            "comprar com cartão", "quero comprar cripto", "quero comprar",
+            "comprar criptomoeda", "fundear carteira", "adicionar fundos",
+        ],
+        "zh": [
+            "购买加密货币", "购买比特币", "购买以太坊", "购买USDC",
+            "用卡购买", "我想购买加密货币", "我想购买",
+        ],
+    },
 }
 
 # Intents that require registration
@@ -263,6 +286,7 @@ class IntentDetectorV2:
             ChatIntentV2.SWAP_CONTINUE: "swap_handler",
             ChatIntentV2.LENDING: "lending_handler",
             ChatIntentV2.MONEY_MARKET: "money_market_handler",
+            ChatIntentV2.BUY: "buy_handler",
             ChatIntentV2.BALANCE: "restricted_handler",
             ChatIntentV2.PORTFOLIO: "restricted_handler",
             ChatIntentV2.ACTIVITY: "restricted_handler",
@@ -923,6 +947,16 @@ class IntentDetectorV2:
                     intent=ChatIntentV2.MONEY_MARKET,
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
+                )
+        
+        # Buy crypto patterns (on-ramp purchase)
+        buy_keywords = self._get_all_keywords("buy")
+        for kw in buy_keywords:
+            if kw in message:
+                return IntentResult(
+                    intent=ChatIntentV2.BUY,
+                    confidence=0.90,
+                    handler=self._handler_map[ChatIntentV2.BUY],
                 )
         
         return None
