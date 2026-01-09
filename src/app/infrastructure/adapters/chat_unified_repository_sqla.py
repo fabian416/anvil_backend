@@ -445,9 +445,10 @@ class ChatMessageRepositorySqla:
             result = await self._session.execute(stmt)
             new_id = result.scalar_one()
             message.id = new_id
-            await self._session.commit()
+            await self._session.flush()  # Use flush instead of commit to allow outer transaction to commit
             return message
         except SQLAlchemyError as e:
+            # Rollback on any SQL error to prevent InFailedSqlTransaction
             await self._session.rollback()
             logger.error(f"Failed to save message: {e}")
             raise DataMapperError("Failed to save message") from e
