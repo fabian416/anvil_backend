@@ -148,6 +148,14 @@ class SqlaWalletRepository(WalletRepository):
     async def get_by_user_id(self, user_id: UserId) -> list[Wallet]:
         """Get all wallets for a specific user."""
         try:
+            # Check if transaction is in failed state and rollback if needed
+            try:
+                from sqlalchemy import text
+                await self._session.execute(text("SELECT 1"))
+            except Exception:
+                # Transaction is in failed state, rollback first
+                await self._session.rollback()
+            
             table = self._get_table()
             stmt: Select = (
                 select(table)
@@ -157,6 +165,8 @@ class SqlaWalletRepository(WalletRepository):
             rows = (await self._session.execute(stmt)).mappings().all()
             return [self._row_to_wallet(dict(row)) for row in rows]
         except SQLAlchemyError as error:
+            # Rollback on error to prevent InFailedSqlTransaction
+            await self._session.rollback()
             raise DataMapperError(DB_QUERY_FAILED) from error
 
     async def get_by_user_and_address(
