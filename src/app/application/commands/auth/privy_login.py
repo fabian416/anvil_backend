@@ -330,13 +330,15 @@ class PrivyLogin:
     async def _sync_wallet_to_db(self, user: User, wallet_address: str) -> None:
         """
         Sync the user's wallet to the wallets table.
-        
+
         This ensures the wallet exists in the wallets table for portfolio
         tracking and other features that depend on wallet records.
         """
         try:
             # Determine chain type from address format
-            chain_type = "ethereum"  # Default
+            # NOTE: ChainType enum only supports: arbitrum, base, hyperliquid
+            # Using 'base' as default for EVM addresses (previously was 'ethereum')
+            chain_type = "base"  # Default for EVM addresses (0x...)
             if wallet_address.startswith("bc1") or wallet_address.startswith("tb1"):
                 chain_type = "bitcoin"
             elif wallet_address.startswith("1") or wallet_address.startswith("3"):
