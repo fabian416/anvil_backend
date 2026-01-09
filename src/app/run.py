@@ -55,6 +55,10 @@ def make_app(
     return app
 
 
+# Create app instance for uvicorn
+app = make_app()
+
+
 if __name__ == "__main__":
     import uvicorn
 

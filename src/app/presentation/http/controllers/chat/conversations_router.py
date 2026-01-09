@@ -807,7 +807,7 @@ def create_conversations_router() -> APIRouter:
                 language=request_body.language,
                 context=context_str,
                 is_authenticated=not user.is_guest,
-                user_id=None if user.is_guest else int(str(user.id)),  # Pass user_id for authenticated users
+                user_id=None if user.is_guest else int(user.identifier),  # Pass user_id for authenticated users (identifier is user_id as string)
             )
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")

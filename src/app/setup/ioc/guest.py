@@ -18,6 +18,7 @@ from app.application.guest.handlers.guest_handler_service import GuestHandlerSer
 from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
+from app.application.chat.handlers.buy_handler import BuyHandler
 from app.domain.guest.ports.guest_repository import GuestRepository
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.infrastructure.adapters.guest_repository_sqla import GuestRepositorySqla
@@ -108,21 +109,24 @@ class GuestProvider(Provider):
         self,
         lending_handler: LendingHandler,
         money_market_handler: MoneyMarketHandler,
+        buy_handler: BuyHandler,
         swap_handler: SwapHandler | None = None,
     ) -> GuestHandlerService:
         """
         Provide GuestHandlerService with real handlers.
-        
+
         Injects:
         - LendingHandler for real Morpho vault data
         - MoneyMarketHandler for real Aave/Compound rate comparisons
         - SwapHandler for real 1inch/LiFi swap quotes (if API keys configured)
+        - BuyHandler for crypto on-ramp via Privy (if configured)
         - Hunter AI and ULTRA handlers don't require DI as they are stateless.
         """
         return GuestHandlerService(
             lending_handler=lending_handler,  # Real Morpho vault data
             swap_handler=swap_handler,  # Real 1inch/LiFi data if API keys available
             money_market_handler=money_market_handler,  # Real data for comparisons
+            buy_handler=buy_handler,  # Privy on-ramp with wallet resolution
         )
 
     @provide(scope=Scope.REQUEST)

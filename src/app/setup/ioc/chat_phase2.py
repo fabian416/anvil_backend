@@ -710,7 +710,7 @@ class ChatPhase2Provider(Provider):
             privy_settings=privy_settings,
         )
 
-    @provide
+    @provide(scope=Scope.REQUEST)
     def provide_buy_handler(
         self,
         wallet_repository: WalletRepository,
