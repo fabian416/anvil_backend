@@ -324,6 +324,14 @@ class SqlaWalletRepository(WalletRepository):
         Uses PostgreSQL's ON CONFLICT to perform upsert.
         """
         try:
+            # Check if transaction is in failed state and rollback if needed
+            try:
+                from sqlalchemy import text
+                await self._session.execute(text("SELECT 1"))
+            except Exception:
+                # Transaction is in failed state, rollback first
+                await self._session.rollback()
+            
             table = self._get_table()
             now = datetime.now(UTC)
 
