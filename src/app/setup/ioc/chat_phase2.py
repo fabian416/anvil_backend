@@ -802,22 +802,48 @@ class ChatPhase2Provider(Provider):
         Provide execute action command for transaction execution.
         
         Supports:
-        - Token swaps (1inch, LiFi)
+        - Token swaps: 1inch (same-chain) + LiFi (cross-chain)
         - Deposits (Morpho, Aave)
         - Withdrawals (Morpho, Aave)
         - Transfers
         - Approvals
         - Cross-chain bridges
         
-        Note: All external clients/gateways are set to None here and
-        should be resolved lazily within the command when needed.
-        This avoids DI resolution issues with optional dependencies.
+        Requirements:
+        - ONEINCH_API_KEY: Required for same-chain swaps
+        - LiFi: No API key required (always available for cross-chain)
+        
+        NO SIMULATION: If clients cannot be created, swaps will fail with clear error.
         """
+        import os
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        # Create LiFi client (no API key required) - for cross-chain
+        lifi_client = LiFiClient()
+        logger.info("LiFiClient created for ExecuteActionCommand (cross-chain swaps)")
+        
+        # Create 1inch client - REQUIRED for same-chain swaps
+        oneinch_api_key = os.getenv("ONEINCH_API_KEY", "").strip()
+        if not oneinch_api_key:
+            logger.warning(
+                "ONEINCH_API_KEY not configured. Same-chain swaps will fail. "
+                "Get your API key from https://portal.1inch.dev/"
+            )
+            oneinch_client = None
+        else:
+            oneinch_client = OneInchClient(
+                api_key=oneinch_api_key,
+                chain="base",  # Default chain, request will specify actual chain
+            )
+            logger.info("OneInchClient created for ExecuteActionCommand (same-chain swaps)")
+        
         return ExecuteActionCommand(
             conversation_repo=conversation_repository,
             wallet_repository=wallet_repository,
-            oneinch_client=None,
-            lifi_client=None,
+            oneinch_client=oneinch_client,
+            lifi_client=lifi_client,
             morpho_gateway=None,
             aave_gateway=None,
         )

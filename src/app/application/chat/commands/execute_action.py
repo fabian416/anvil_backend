@@ -338,11 +338,32 @@ class ExecuteActionCommand:
             chain_tokens = TOKEN_ADDRESSES.get(chain_name.lower(), {})
             return chain_tokens.get(token.upper(), token)
         
-        # Get quote
+        # Get quote - STRICT routing, no simulation fallbacks
+        # Same-chain → 1inch (required)
+        # Cross-chain → LiFi (required)
         quote = None
-        try:
-            if is_cross_chain and self._lifi:
-                # Convert amount to wei for LiFi
+        aggregator_used: str | None = None
+        output_amount = "0"
+        gas_estimate = 0
+        
+        if is_cross_chain:
+            # Cross-chain: MUST use LiFi
+            if not self._lifi:
+                return ActionResult(
+                    action_id=action_id,
+                    action_type="swap",
+                    status="failed",
+                    requires_confirmation=False,
+                    confirmation_message=None,
+                    simulation={"success": False, "errors": ["LiFi client not configured. Cross-chain swaps require LiFi."]},
+                    transaction=None,
+                    summary="Cross-chain swap failed: LiFi not configured",
+                    enrichment={"error": "LIFI_NOT_CONFIGURED", "from_token": from_token, "to_token": to_token, "chain": chain, "to_chain": to_chain},
+                    created_at=datetime.utcnow(),
+                    expires_at=None,
+                )
+            
+            try:
                 amount_wei = _to_wei(amount, from_token)
                 lifi_quote = await self._lifi.get_quote(
                     from_chain=chain,
@@ -352,13 +373,43 @@ class ExecuteActionCommand:
                     from_amount=amount_wei,
                     from_address=wallet_address,
                 )
-                # LiFiQuote is a dataclass, access attributes directly
                 output_amount = lifi_quote.to_amount
                 gas_estimate = int(lifi_quote.estimated_gas) if lifi_quote.estimated_gas else 200000
-                quote = lifi_quote  # Store for later use
-            elif self._oneinch:
-                # OneInchClient is initialized with a specific chain
-                # Need to resolve token addresses and convert amount
+                quote = lifi_quote
+                aggregator_used = "lifi"
+            except Exception as e:
+                logger.error(f"LiFi quote failed for cross-chain swap: {e}")
+                return ActionResult(
+                    action_id=action_id,
+                    action_type="swap",
+                    status="failed",
+                    requires_confirmation=False,
+                    confirmation_message=None,
+                    simulation={"success": False, "errors": [f"LiFi quote failed: {str(e)}"]},
+                    transaction=None,
+                    summary=f"Cross-chain swap failed: {str(e)}",
+                    enrichment={"error": str(e), "from_token": from_token, "to_token": to_token, "chain": chain, "to_chain": to_chain},
+                    created_at=datetime.utcnow(),
+                    expires_at=None,
+                )
+        else:
+            # Same-chain: MUST use 1inch
+            if not self._oneinch:
+                return ActionResult(
+                    action_id=action_id,
+                    action_type="swap",
+                    status="failed",
+                    requires_confirmation=False,
+                    confirmation_message=None,
+                    simulation={"success": False, "errors": ["1inch client not configured. Set ONEINCH_API_KEY environment variable. Get your key at https://portal.1inch.dev/"]},
+                    transaction=None,
+                    summary="Same-chain swap failed: 1inch not configured",
+                    enrichment={"error": "ONEINCH_NOT_CONFIGURED", "from_token": from_token, "to_token": to_token, "chain": chain},
+                    created_at=datetime.utcnow(),
+                    expires_at=None,
+                )
+            
+            try:
                 from_token_addr = _resolve_token_address(from_token, chain)
                 to_token_addr = _resolve_token_address(to_token, chain)
                 amount_wei = _to_wei(amount, from_token)
@@ -369,30 +420,36 @@ class ExecuteActionCommand:
                     amount=amount_wei,
                     slippage=slippage,
                 )
-                # SwapQuote is a dataclass
                 output_amount = oneinch_quote.to_amount
                 gas_estimate = oneinch_quote.estimated_gas
-                quote = oneinch_quote  # Store for later use
-            else:
-                # Fallback estimation
-                quote = None
-                output_amount = "0"
-                gas_estimate = 200000
-        except Exception as e:
-            logger.error(f"Failed to get swap quote: {e}")
-            quote = None
-            output_amount = "0"
-            gas_estimate = 200000
+                quote = oneinch_quote
+                aggregator_used = "1inch"
+            except Exception as e:
+                logger.error(f"1inch quote failed for same-chain swap: {e}")
+                return ActionResult(
+                    action_id=action_id,
+                    action_type="swap",
+                    status="failed",
+                    requires_confirmation=False,
+                    confirmation_message=None,
+                    simulation={"success": False, "errors": [f"1inch quote failed: {str(e)}"]},
+                    transaction=None,
+                    summary=f"Same-chain swap failed: {str(e)}",
+                    enrichment={"error": str(e), "from_token": from_token, "to_token": to_token, "chain": chain},
+                    created_at=datetime.utcnow(),
+                    expires_at=None,
+                )
         
-        # Build simulation result
+        # Build simulation result - at this point we have a real quote (no simulation)
         simulation = {
-            "success": quote is not None,
+            "success": True,
             "estimated_gas": int(gas_estimate) if isinstance(gas_estimate, (int, str)) else 200000,
             "estimated_gas_usd": 0.50,  # TODO: Calculate from gas price
             "output_amount": output_amount,
             "price_impact": 0.1,  # TODO: Get from quote
             "warnings": [],
-            "errors": [] if quote else ["Could not get quote"],
+            "errors": [],
+            "aggregator": aggregator_used,  # "1inch" or "lifi"
         }
         
         # Localized confirmation message
@@ -421,7 +478,7 @@ class ExecuteActionCommand:
                     "amount": amount,
                     "chain": chain,
                     "output_amount": output_amount,
-                    "aggregator": "lifi" if is_cross_chain else "1inch",
+                    "aggregator": aggregator_used or "none",
                 },
                 created_at=datetime.utcnow(),
                 expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
@@ -483,55 +540,40 @@ class ExecuteActionCommand:
             from_token_addr = _resolve_token_address(from_token, chain)
             to_token_addr = _resolve_token_address(to_token, chain)
             
-            if is_cross_chain and self._lifi:
-                # For cross-chain, LiFi provides route data
-                # Frontend will use LiFi SDK to execute the route
-                # We return the route ID and parameters
-                transaction_data = {
-                    "route_id": None,  # Would come from LiFi route selection
-                    "from_chain": chain,
-                    "to_chain": to_chain,
-                    "from_token": from_token_addr,
-                    "to_token": to_token_addr,
-                    "from_amount": amount_wei,
-                }
-                tx_to_address = None  # LiFi handles routing
-            elif self._oneinch:
-                # OneInchClient is initialized with a specific chain
-                # We need to check if the client's chain matches the requested chain
-                # If not, we'll need to create a new client for the correct chain
-                # For now, assume the client is configured for the correct chain
-                # In production, you might want to create clients per chain or use a factory
-                try:
-                    swap_tx = await self._oneinch.get_swap_data(
-                        from_token=from_token_addr,
-                        to_token=to_token_addr,
-                        amount=amount_wei,
-                        from_address=wallet_address,
-                        slippage=slippage,
-                    )
-                    tx_to_address = swap_tx.tx_to
-                    tx_value = swap_tx.tx_value
-                    tx_data_hex = swap_tx.tx_data
-                    # Gas limit from simulation
-                    gas_limit = simulation.get("estimated_gas", gas_limit)
-                except Exception as e:
-                    logger.warning(f"1inch transaction generation failed (chain mismatch?): {e}")
-                    # Fallback: return transaction data without calldata
-                    # Frontend can use the quote to build transaction
-                    tx_to_address = None
-                    tx_value = "0"
-                    tx_data_hex = None
+            if is_cross_chain:
+                # Cross-chain: LiFi provides route data
+                # Use the quote we already obtained to build transaction data
+                if hasattr(quote, 'transaction_request') and quote.transaction_request:
+                    # LiFi quote includes transaction data
+                    tx_req = quote.transaction_request
+                    tx_to_address = tx_req.get('to')
+                    tx_value = str(tx_req.get('value', '0'))
+                    tx_data_hex = tx_req.get('data')
+                    gas_limit = int(tx_req.get('gasLimit', gas_estimate)) if tx_req.get('gasLimit') else gas_estimate
+                else:
+                    # Return route info for frontend to build transaction via LiFi SDK
                     transaction_data = {
+                        "route_id": getattr(quote, 'route_id', None),
+                        "from_chain": chain,
+                        "to_chain": to_chain,
                         "from_token": from_token_addr,
                         "to_token": to_token_addr,
                         "from_amount": amount_wei,
-                        "chain": chain,
-                        "slippage": slippage,
-                        "aggregator": "1inch",
+                        "tool": getattr(quote, 'tool', None),
                     }
             else:
-                logger.warning("No swap aggregator available for transaction generation")
+                # Same-chain: 1inch provides transaction calldata
+                swap_tx = await self._oneinch.get_swap_data(
+                    from_token=from_token_addr,
+                    to_token=to_token_addr,
+                    amount=amount_wei,
+                    from_address=wallet_address,
+                    slippage=slippage,
+                )
+                tx_to_address = swap_tx.tx_to
+                tx_value = swap_tx.tx_value
+                tx_data_hex = swap_tx.tx_data
+                gas_limit = simulation.get("estimated_gas", gas_limit)
         except Exception as e:
             logger.error(f"Failed to generate swap transaction: {e}")
             # Return error in transaction
@@ -588,7 +630,7 @@ class ExecuteActionCommand:
                 "amount": amount,
                 "chain": chain,
                 "output_amount": output_amount,
-                "aggregator": "lifi" if is_cross_chain else "1inch",
+                "aggregator": aggregator_used or "none",
                 "transaction_data": transaction_data,  # Additional data for LiFi routes
             },
             created_at=datetime.utcnow(),
