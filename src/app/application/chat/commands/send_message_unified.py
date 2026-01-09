@@ -3122,6 +3122,8 @@ Once connected, you'll get:
             # Return first available wallet
             return wallets[0].address
 
-        except Exception:
-            # Log would be helpful here but don't fail the chat
+        except Exception as e:
+            # Log error but don't fail the chat
+            # If it's a database error, it will be handled by the transaction rollback
+            logger.debug(f"Error getting wallet address for user {user_id}: {e}")
             return None
