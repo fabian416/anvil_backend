@@ -2984,7 +2984,7 @@ Your transactions are recorded when you use the app.
                 conversation_id=conversation_id,
                 content=content,
             )
-            agent_msg = Message.create_assistant_message(
+            agent_msg = Message.create_agent_message(
                 conversation_id=conversation_id,
                 content=response_content,
             )
