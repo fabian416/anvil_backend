@@ -144,6 +144,7 @@ from app.application.chat.handlers.portfolio_handler import PortfolioHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.activity_handler import ActivityHandler
 from app.application.chat.handlers.receive_handler import ReceiveHandler
+from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.domain.ports.aave_gateway import AaveGateway
@@ -698,6 +699,19 @@ class ChatPhase2Provider(Provider):
         return ReceiveHandler(wallet_repository=wallet_repository)
 
     @provide
+    def provide_buy_handler(
+        self,
+        wallet_repository: WalletRepository,
+    ) -> BuyHandler:
+        """
+        Provide buy handler for crypto on-ramp.
+
+        Uses wallet repository to fetch user's primary address.
+        Actual on-ramp is handled by Privy SDK on frontend.
+        """
+        return BuyHandler(wallet_repository=wallet_repository)
+
+    @provide
     def provide_compound_client(self) -> CompoundClient:
         """Provide Compound V3 API client."""
         return CompoundClient(timeout=30)
@@ -746,6 +760,7 @@ class ChatPhase2Provider(Provider):
         swap_handler: SwapHandler,
         activity_handler: ActivityHandler,
         receive_handler: ReceiveHandler,
+        buy_handler: BuyHandler,
         money_market_handler: MoneyMarketHandler,
         wallet_repository: WalletRepository,
         agent_squad_settings: AgentSquadSettings,
@@ -785,6 +800,7 @@ class ChatPhase2Provider(Provider):
             swap_handler=swap_handler,
             activity_handler=activity_handler,
             receive_handler=receive_handler,
+            buy_handler=buy_handler,
             money_market_handler=money_market_handler,
             wallet_repository=wallet_repository,
             # Demo mode dependencies

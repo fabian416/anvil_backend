@@ -9,6 +9,7 @@ Provides specialized handlers for common DeFi operations:
 - BalanceHandler: Wallet balance queries (via PortfolioHandler)
 - ActivityHandler: Transaction history
 - ReceiveHandler: Generate receive address/QR
+- BuyHandler: Buy crypto with fiat (on-ramp via Privy)
 """
 
 from app.application.chat.handlers.lending_handler import (
@@ -36,6 +37,10 @@ from app.application.chat.handlers.money_market_handler import (
     MoneyMarketHandler,
     MoneyMarketHandlerResult,
 )
+from app.application.chat.handlers.buy_handler import (
+    BuyHandler,
+    BuyHandlerResult,
+)
 
 __all__ = [
     # Lending
@@ -57,4 +62,7 @@ __all__ = [
     # Receive
     "ReceiveHandler",
     "ReceiveHandlerResult",
+    # Buy
+    "BuyHandler",
+    "BuyHandlerResult",
 ]

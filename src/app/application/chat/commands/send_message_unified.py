@@ -33,6 +33,7 @@ from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.application.chat.handlers.portfolio_handler import PortfolioHandler
 from app.application.chat.handlers.receive_handler import ReceiveHandler
+from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
 from app.application.chat.services.intent_detector import (
@@ -115,6 +116,7 @@ class UnifiedChatOrchestrator:
         swap_handler: SwapHandler | None = None,
         activity_handler: ActivityHandler | None = None,
         receive_handler: ReceiveHandler | None = None,
+        buy_handler: BuyHandler | None = None,
         money_market_handler: MoneyMarketHandler | None = None,
         wallet_repository: WalletRepository | None = None,
         # Demo mode dependencies
@@ -137,6 +139,7 @@ class UnifiedChatOrchestrator:
             swap_handler: Handler for token swaps
             activity_handler: Handler for transaction history
             receive_handler: Handler for wallet address/QR
+            buy_handler: Handler for crypto purchase (on-ramp via Privy)
             money_market_handler: Handler for rate comparison
             wallet_repository: Repository for wallet lookups (Privy)
             agent_squad_settings: Settings for agent squad (includes use_demo_mode flag)
@@ -154,6 +157,7 @@ class UnifiedChatOrchestrator:
         self._swap_handler = swap_handler
         self._activity_handler = activity_handler
         self._receive_handler = receive_handler
+        self._buy_handler = buy_handler
         self._money_market_handler = money_market_handler
         self._wallet_repository = wallet_repository
         # Demo mode
@@ -353,6 +357,10 @@ class UnifiedChatOrchestrator:
             )
         elif intent_result.intent == ChatIntent.RECEIVE:
             result = await self._handle_receive(
+                user_id, conversation_id, content, intent_result, language
+            )
+        elif intent_result.intent == ChatIntent.BUY:
+            result = await self._handle_buy(
                 user_id, conversation_id, content, intent_result, language
             )
         # Agent Squad & Supervisor intents
@@ -558,6 +566,7 @@ class UnifiedChatOrchestrator:
             ChatIntent.PORTFOLIO: "demo_portfolio_handler",
             ChatIntent.ACTIVITY: "demo_activity_handler",
             ChatIntent.RECEIVE: "demo_receive_handler",
+            ChatIntent.BUY: "demo_buy_handler",
             # Agent Squad
             ChatIntent.SPECIALIST_TASK: "demo_specialist_handler",
             ChatIntent.COMPLEX_WORKFLOW: "demo_workflow_handler",
@@ -741,6 +750,12 @@ class UnifiedChatOrchestrator:
             ChatIntent.RECEIVE: [
                 "receive address", "my address", "deposit address",
                 "dirección de recepción", "mi dirección",
+            ],
+            ChatIntent.BUY: [
+                "buy crypto", "buy bitcoin", "buy eth", "buy usdc",
+                "buy with card", "purchase crypto", "i want to buy crypto",
+                "comprar cripto", "comprar bitcoin", "comprar eth",
+                "quiero comprar cripto", "comprar con tarjeta",
             ],
         }
 
@@ -2916,6 +2931,88 @@ Your transactions are recorded when you use the app.
             "enrichment": enrichment,
             "pending_action": pending_action if "pending_action" in locals() else None,
         }
+
+    async def _handle_buy(
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
+    ) -> dict:
+        """Handle buy crypto intent with i18n - on-ramp via Privy/MoonPay."""
+        try:
+            if self._buy_handler:
+                result = await self._buy_handler.get_buy_info(
+                    user_id=user_id,
+                    language=language,
+                )
+                response_content = result.content
+                enrichment = {
+                    "wallet_address": result.wallet_address,
+                    "supported_assets": result.supported_assets,
+                    "supported_networks": result.supported_networks,
+                    "requires_privy_modal": result.requires_privy_modal,
+                    "latency_ms": result.latency_ms,
+                    "action": "open_fund_wallet",  # Signal to frontend
+                }
+            else:
+                # Fallback - provide basic buy info
+                wallet_address = await self._get_user_wallet_address(user_id)
+                response_content = self._format_buy_fallback_response(language, wallet_address)
+                enrichment = {
+                    "wallet_address": wallet_address,
+                    "requires_privy_modal": wallet_address is not None,
+                    "action": "open_fund_wallet" if wallet_address else None,
+                }
+        except Exception as e:
+            response_content = f"⚠️ Error: {e!s}"
+            enrichment = {"error": str(e)}
+
+        user_msg, agent_msg = await self._save_messages(
+            conversation_id, content, response_content
+        )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "buy_handler",
+                "reasoning": intent_result.reasoning,
+                "language": language,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _format_buy_fallback_response(self, language: str, wallet_address: str | None) -> str:
+        """Format fallback buy response when handler not available."""
+        if language == "es":
+            if wallet_address:
+                return f"""💳 **Comprar Cripto**
+
+Puedes comprar cripto con tarjeta, Apple Pay o Google Pay vía MoonPay/Coinbase.
+
+**Tu dirección de depósito:** `{wallet_address}`
+
+Haz clic en 'Comprar' para iniciar el proceso de compra.
+"""
+            else:
+                return """💳 **Comprar Cripto**
+
+⚠️ No se encontró una wallet. Por favor conecta o crea una wallet primero.
+"""
+        else:
+            if wallet_address:
+                return f"""💳 **Buy Crypto**
+
+You can buy crypto with card, Apple Pay or Google Pay via MoonPay/Coinbase.
+
+**Your deposit address:** `{wallet_address}`
+
+Click 'Buy' to start the purchase process.
+"""
+            else:
+                return """💳 **Buy Crypto**
+
+⚠️ No wallet found. Please connect or create a wallet first.
+"""
 
     def _format_receive_response(self, wallet_address: str, chain: str) -> str:
         """Format receive response with wallet address."""

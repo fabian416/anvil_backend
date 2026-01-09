@@ -55,6 +55,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         ChatIntent.PORTFOLIO: "portfolio_handler",
         ChatIntent.ACTIVITY: "activity_handler",
         ChatIntent.RECEIVE: "receive_handler",
+        ChatIntent.BUY: "buy_handler",
         # Squad intents
         ChatIntent.SPECIALIST_TASK: "agent_orchestrator",
         ChatIntent.COMPLEX_WORKFLOW: "agent_orchestrator",
@@ -408,6 +409,49 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 ChatIntent.RECEIVE,
                 0.94,
                 "Message contains receive/address keywords",
+                None,
+            )
+
+        # Buy crypto intent (on-ramp with fiat) - BEFORE trading signals
+        # Match specific on-ramp related patterns
+        buy_crypto_patterns = [
+            # English
+            "buy crypto",
+            "buy bitcoin",
+            "buy eth",
+            "buy usdc",
+            "buy with card",
+            "buy with fiat",
+            "purchase crypto",
+            "purchase bitcoin",
+            "how to buy crypto",
+            "how to buy eth",
+            "i want to buy crypto",
+            "want to buy crypto",
+            # Spanish
+            "comprar cripto",
+            "comprar bitcoin",
+            "comprar eth",
+            "comprar con tarjeta",
+            "quiero comprar cripto",
+            "como comprar",
+            "comprar con fiat",
+            # Portuguese
+            "comprar cripto",
+            "como comprar",
+            "quero comprar",
+            # French
+            "acheter crypto",
+            "acheter bitcoin",
+            # Chinese
+            "购买加密货币",
+            "购买比特币",
+        ]
+        if any(pattern in message for pattern in buy_crypto_patterns):
+            return (
+                ChatIntent.BUY,
+                0.95,
+                "Message contains buy crypto with fiat keywords",
                 None,
             )
 

@@ -62,6 +62,7 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
         "portfolio": "portfolio_handler",
         "activity": "activity_handler",
         "receive": "receive_handler",
+        "buy": "buy_handler",
         # Squad intents
         "specialist_task": "agent_orchestrator",
         "complex_workflow": "agent_orchestrator",
@@ -203,15 +204,19 @@ Classify the user's message into ONE of these intents:
 20. RECEIVE - User wants to receive funds (show QR, address, handle)
     Examples: "receive crypto", "show my address", "deposit address", "QR code"
 
+21. BUY - User wants to BUY crypto with fiat (credit card, bank transfer, Apple Pay)
+    Examples: "buy crypto", "buy bitcoin with card", "comprar cripto", "quiero comprar cripto", "purchase ETH", "buy with fiat"
+    Note: This is for ON-RAMP purchases with fiat currency, NOT token swaps.
+
 ## Agent Squad & Workflow Intents
 
-21. SPECIALIST_TASK - User needs specialist agent (yield, gas, security, etc.)
+22. SPECIALIST_TASK - User needs specialist agent (yield, gas, security, etc.)
    Examples: "best USDC yield", "optimize gas", "tax implications"
 
-22. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
+23. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
    Examples: "create a balanced portfolio", "comprehensive analysis of DeFi", "migration strategy"
 
-23. GENERAL_CONVERSATION - General questions, education, explanations
+24. GENERAL_CONVERSATION - General questions, education, explanations
    Examples: "what is DeFi?", "explain impermanent loss", "how does staking work?"
 
 Extract entities: protocol names, token symbols, amounts, chains, categories, etc.
