@@ -2651,6 +2651,7 @@ Please specify:
                     result = await self._portfolio_handler.get_balance(
                         wallet_address=wallet_address,
                         chain=chain,
+                        language=language,
                     )
                     response_content = result.content
                     enrichment = {
@@ -2686,6 +2687,7 @@ Please specify:
                 "language": language,
             },
             "enrichment": enrichment,
+            "pending_action": pending_action if "pending_action" in locals() else None,
         }
 
     def _get_balance_fallback_response(self) -> str:
@@ -2728,6 +2730,7 @@ Once connected, I can show you real-time balances across all chains.
                     result = await self._portfolio_handler.get_portfolio(
                         wallet_address=wallet_address,
                         chain=chain,
+                        language=language,
                     )
                     response_content = result.content
                     enrichment = {
@@ -2761,6 +2764,7 @@ Once connected, I can show you real-time balances across all chains.
                 "language": language,
             },
             "enrichment": enrichment,
+            "pending_action": pending_action if "pending_action" in locals() else None,
         }
 
     def _get_portfolio_fallback_response(self) -> str:
@@ -2806,6 +2810,7 @@ Once connected, I can show you:
                     user_id=user_id,
                     chain=chain,
                     limit=10,
+                    language=language,
                 )
                 response_content = result.content
                 enrichment = {
@@ -2815,6 +2820,7 @@ Once connected, I can show you:
                     "chain": result.chain,
                     "latency_ms": result.latency_ms,
                 }
+                pending_action = result.pending_action
             else:
                 response_content = self._get_activity_fallback_response()
                 enrichment = {"fallback": True}
@@ -2837,6 +2843,7 @@ Once connected, I can show you:
                 "language": language,
             },
             "enrichment": enrichment,
+            "pending_action": pending_action if "pending_action" in locals() else None,
         }
 
     def _get_activity_fallback_response(self) -> str:
@@ -2865,6 +2872,7 @@ Your transactions are recorded when you use the app.
                 result = await self._receive_handler.get_receive_info(
                     user_id=user_id,
                     chain=chain,
+                    language=language,
                 )
                 response_content = result.content
                 enrichment = {
@@ -2874,6 +2882,7 @@ Your transactions are recorded when you use the app.
                     "chain": result.chain,
                     "latency_ms": result.latency_ms,
                 }
+                pending_action = result.pending_action if hasattr(result, "pending_action") else None
             else:
                 # Fallback - try to get wallet address directly
                 wallet_address = await self._get_user_wallet_address(user_id)
@@ -2905,6 +2914,7 @@ Your transactions are recorded when you use the app.
                 "language": language,
             },
             "enrichment": enrichment,
+            "pending_action": pending_action if "pending_action" in locals() else None,
         }
 
     def _format_receive_response(self, wallet_address: str, chain: str) -> str:

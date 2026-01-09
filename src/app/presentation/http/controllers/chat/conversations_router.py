@@ -76,6 +76,21 @@ class ConversationWithMessagesResponse(BaseModel):
     messages: list[MessageResponse]
 
 
+class ExecuteActionData(BaseModel):
+    """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
+    
+    action_type: str = Field(..., description="Type of action: swap, deposit, withdraw, transfer, approve, bridge")
+    chain: str = Field(default="base", description="Blockchain to execute on")
+    from_token: str | None = Field(default=None, description="Source token symbol or address")
+    to_token: str | None = Field(default=None, description="Destination token symbol (for swap)")
+    amount: str | None = Field(default=None, description="Amount to execute (human readable)")
+    protocol: str | None = Field(default=None, description="Protocol name (for deposit/withdraw)")
+    vault_address: str | None = Field(default=None, description="Vault address (for Morpho deposits)")
+    recipient: str | None = Field(default=None, description="Recipient address (for transfer)")
+    slippage: float = Field(default=1.0, description="Slippage tolerance in percent")
+    to_chain: str | None = Field(default=None, description="Destination chain (for cross-chain swap/bridge)")
+
+
 class ChatResponse(BaseModel):
     """Response from sending a message."""
     
@@ -87,6 +102,10 @@ class ChatResponse(BaseModel):
     enrichment: dict[str, Any] | None = None
     registration_required: dict[str, Any] | None = None
     rate_limit_status: dict[str, Any] | None = None
+    execute: ExecuteActionData | None = Field(
+        default=None,
+        description="Execute action data for executable intents (swap, deposit, withdraw, etc.)"
+    )
 
 
 class RateLimitErrorResponse(BaseModel):
@@ -149,7 +168,7 @@ def create_conversations_router() -> APIRouter:
             language=language,
         )
 
-    def _strip_signup_prompt_for_authenticated(content: str) -> str:
+    async def _strip_signup_prompt_for_authenticated(content: str) -> str:
         """
         Remove signup CTA blocks from responses when the caller is authenticated.
         
@@ -157,25 +176,31 @@ def create_conversations_router() -> APIRouter:
         handlers include "/signup" CTA text which is correct for guests, but confusing
         for authenticated users (already registered/logged in).
         """
-        if "/signup" not in content:
+        if not content:
             return content
-
+        
+        # Remove lines containing signup CTAs
         lines = content.splitlines()
-        # Find the first CTA-ish line that references signup and drop everything after it.
-        cutoff_idx: int | None = None
-        for i, line in enumerate(lines):
-            if "/signup" in line and ("👉" in line or "[" in line or "signup" in line.lower()):
-                cutoff_idx = i
-                break
-            if "modo demo" in line.lower() and "/signup" in content:
-                cutoff_idx = i
-                break
-
-        if cutoff_idx is None:
-            return content
-
-        trimmed = "\n".join(lines[:cutoff_idx]).rstrip()
-        return trimmed if trimmed else content
+        filtered_lines = []
+        for line in lines:
+            # Skip lines with signup CTAs
+            if "/signup" in line.lower() or "👉" in line or "sign up" in line.lower():
+                # Check if this is a standalone CTA line (not part of main content)
+                if any(marker in line.lower() for marker in ["sign up", "signup", "👉", "→", "->"]):
+                    continue  # Skip this line
+            filtered_lines.append(line)
+        
+        result = "\n".join(filtered_lines).strip()
+        
+        # Also remove any trailing signup URLs or CTAs
+        result = result.split("👉")[0].strip() if "👉" in result else result
+        result = result.split("/signup")[0].strip() if "/signup" in result else result
+        
+        # Remove empty lines at the end
+        while result.endswith("\n\n"):
+            result = result.rstrip("\n")
+        
+        return result if result else content
     
     # ------------------------------------------
     # CRUD Endpoints
@@ -505,11 +530,23 @@ def create_conversations_router() -> APIRouter:
             context=context,
         )
         
+        # Debug logging for intent detection
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(
+            f"Intent detected: {intent_result.intent.value} "
+            f"(confidence: {intent_result.confidence}, "
+            f"handler: {intent_result.handler}, "
+            f"is_restricted: {intent_result.is_restricted}) "
+            f"for message: '{request_body.content[:100]}'"
+        )
+        
         # Initialize response variables
         agent_content = ""
         enrichment = None
         registration_required = None
         pending_action = None
+        execute_data = None  # Execute action data for /execute endpoint
         
         # Handle based on intent
         if intent_result.is_restricted:
@@ -523,45 +560,159 @@ def create_conversations_router() -> APIRouter:
                 agent_content = handler_result.content
                 registration_required = handler_result.metadata
             else:
-                # Authenticated user: avoid confusing "signup" prompts. Provide a
-                # wallet/setup hint instead (feature may require wallet connection).
-                wallet_required_message = {
-                    "en": "🔐 **Wallet Required**\n\nThis action requires a connected wallet in your account settings.",
-                    "es": "🔐 **Billetera Requerida**\n\nEsta acción requiere una billetera conectada en la configuración de tu cuenta.",
-                    "pt": "🔐 **Carteira Necessária**\n\nEsta ação requer uma carteira conectada nas configurações da sua conta.",
-                    "zh": "🔐 **需要钱包**\n\n此操作需要在你的账户设置中连接钱包。",
-                }
-                agent_content = wallet_required_message.get(
-                    request_body.language, wallet_required_message["en"]
+                # Authenticated user: Use actual handlers with improved formatting
+                # These intents are handled through SendMessageUnified for real data
+                from app.application.chat.commands.send_message_unified import SendMessageUnified
+                from app.setup.ioc.provider_registry import get_providers
+                from app.setup.config.settings import load_settings
+                from app.setup.ioc.container import create_async_ioc_container
+                
+                providers = get_providers()
+                settings = load_settings()
+                container = create_async_ioc_container(
+                    providers=providers,
+                    settings=settings,
                 )
-                registration_required = None
+                
+                async with container() as request_container:
+                    send_message_unified = await request_container.get(SendMessageUnified)
+                    
+                    # Call unified handler for authenticated users
+                    unified_result = await send_message_unified.execute(
+                        user_id=user.id_,
+                        conversation_id=conversation_id,
+                        content=request_body.content,
+                        intent_result=intent_result,
+                        language=request_body.language,
+                    )
+                    
+                    agent_content = unified_result.get("agent_message", {}).get("content", "")
+                    enrichment = unified_result.get("enrichment")
+                    pending_action = unified_result.get("pending_action")
+                    registration_required = None
         
         elif intent_result.intent.value.startswith("SWAP"):
             # Swap flow (including continuation)
-            swap_handler = SwapHandlerV2()
+            try:
+                swap_handler = SwapHandlerV2()
+                
+                # Check for continuation metadata
+                continuation_step = None
+                continuation_value = None
+                if intent_result.metadata:
+                    continuation_step = intent_result.metadata.get("step")
+                    continuation_value = intent_result.metadata.get("value")
+                
+                # Get previous swap info from context for multi-turn flow
+                previous_swap_info = context.pending_swap_info
+                
+                handler_result = await swap_handler.handle(
+                    message=request_body.content,
+                    context=context,
+                    language=request_body.language,
+                    continuation_step=continuation_step,
+                    continuation_value=continuation_value,
+                    previous_swap_info=previous_swap_info,
+                )
+                agent_content = handler_result.content
+                enrichment = handler_result.enrichment
+                pending_action = handler_result.pending_action
+                
+                # Extract execute data if swap is complete (no pending_action means ready to execute)
+                execute_data = None
+                if handler_result.execute_data and not pending_action:
+                    # Swap is complete and ready for execution
+                    execute_data = ExecuteActionData(**handler_result.execute_data)
+                
+                if user.is_guest and handler_result.requires_registration:
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+            except Exception as e:
+                # Log the error for debugging
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"SwapHandlerV2 error for message '{request_body.content}': {e}", exc_info=True)
+                
+                # Fallback to guest handler service for swap
+                from app.application.chat.services.intent_detector import ChatIntent
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=ChatIntent.SWAP,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=not user.is_guest,
+                )
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                if user.is_guest and handler_result.get("requires_registration"):
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+        
+        elif intent_result.intent.value == "LENDING":
+            # Handle LENDING intent with continuation support
+            from app.application.chat.services.intent_detector import ChatIntent
             
             # Check for continuation metadata
             continuation_step = None
-            continuation_value = None
+            intent_metadata = None
             if intent_result.metadata:
                 continuation_step = intent_result.metadata.get("step")
-                continuation_value = intent_result.metadata.get("value")
+                intent_metadata = intent_result.metadata
             
-            # Get previous swap info from context for multi-turn flow
-            previous_swap_info = context.pending_swap_info
+            # Get previous lending info from context
+            previous_lending_info = context.pending_lending_info
             
-            handler_result = await swap_handler.handle(
-                message=request_body.content,
-                context=context,
+            context_str = conversation_memory.build_context_string(context)
+            handler_result = await handler_service.handle_intent(
+                intent=ChatIntent.LENDING,
+                content=request_body.content,
                 language=request_body.language,
+                context=context_str,
+                is_authenticated=not user.is_guest,
                 continuation_step=continuation_step,
-                continuation_value=continuation_value,
-                previous_swap_info=previous_swap_info,
+                previous_lending_info=previous_lending_info,
             )
-            agent_content = handler_result.content
-            enrichment = handler_result.enrichment
-            pending_action = handler_result.pending_action
-            if user.is_guest and handler_result.requires_registration:
+            agent_content = handler_result.get("content", "")
+            enrichment = handler_result.get("enrichment")
+            pending_action = handler_result.get("pending_action")
+            if user.is_guest and handler_result.get("requires_registration"):
+                registration_required = {
+                    "required": True,
+                    "reason": "action_required",
+                    "signup_url": "/signup",
+                }
+        
+        elif intent_result.intent.value == "MONEY_MARKET":
+            # Handle MONEY_MARKET intent (not restricted, uses guest handler service)
+            from app.application.chat.services.intent_detector import ChatIntent
+            
+            # Check for continuation metadata
+            continuation_step = None
+            if intent_result.metadata:
+                continuation_step = intent_result.metadata.get("step")
+            
+            # Get previous money market info from context
+            previous_money_market_info = context.pending_money_market_info
+            
+            context_str = conversation_memory.build_context_string(context)
+            handler_result = await handler_service.handle_intent(
+                intent=ChatIntent.MONEY_MARKET,
+                content=request_body.content,
+                language=request_body.language,
+                context=context_str,
+                is_authenticated=not user.is_guest,
+            )
+            agent_content = handler_result.get("content", "")
+            enrichment = handler_result.get("enrichment")
+            pending_action = handler_result.get("pending_action")
+            if user.is_guest and handler_result.get("requires_registration"):
                 registration_required = {
                     "required": True,
                     "reason": "action_required",
@@ -584,9 +735,11 @@ def create_conversations_router() -> APIRouter:
                 content=request_body.content,
                 language=request_body.language,
                 context=context_str,
+                is_authenticated=not user.is_guest,
             )
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")
+            pending_action = handler_result.get("pending_action")
             if user.is_guest and handler_result.get("requires_registration"):
                 registration_required = {
                     "required": True,
@@ -596,7 +749,7 @@ def create_conversations_router() -> APIRouter:
 
         # For authenticated users, strip demo "signup" CTA text that some handlers embed.
         if not user.is_guest:
-            agent_content = _strip_signup_prompt_for_authenticated(agent_content)
+            agent_content = await _strip_signup_prompt_for_authenticated(agent_content)
             registration_required = None
         
         # Create and save user message
@@ -615,6 +768,35 @@ def create_conversations_router() -> APIRouter:
             swap_info = handler_result.metadata
             if swap_info:
                 metadata["swap_info"] = swap_info
+        # Store lending info for multi-turn lending flow persistence
+        if intent_result.intent.value == "LENDING":
+            if handler_result.get("lending_info"):
+                metadata["lending_info"] = handler_result["lending_info"]
+            elif pending_action and pending_action.startswith("lending_"):
+                # Create lending_info from handler result if not provided
+                metadata["lending_info"] = {
+                    "chain": handler_result.get("enrichment", {}).get("chain", "base"),
+                    "asset": handler_result.get("enrichment", {}).get("asset", "USDC"),
+                }
+        
+        # Store portfolio info for multi-turn portfolio flow persistence
+        if intent_result.intent.value == "PORTFOLIO" and pending_action and pending_action.startswith("portfolio_"):
+            metadata["portfolio_info"] = {
+                "chain": handler_result.get("enrichment", {}).get("chain", "base"),
+            }
+        
+        # Store activity info for multi-turn activity flow persistence
+        if intent_result.intent.value == "ACTIVITY" and pending_action and pending_action.startswith("activity_"):
+            metadata["activity_info"] = {
+                "chain": handler_result.get("enrichment", {}).get("chain"),
+            }
+        
+        # Store money market info for multi-turn money market flow persistence
+        if intent_result.intent.value == "MONEY_MARKET" and pending_action and pending_action.startswith("money_market_"):
+            metadata["money_market_info"] = {
+                "chain": handler_result.get("enrichment", {}).get("chain", "ethereum"),
+                "asset": handler_result.get("enrichment", {}).get("asset", "USDC"),
+            }
         
         assistant_message = ChatMessage.create_assistant_message(
             conversation_id=conversation_id,
@@ -673,6 +855,7 @@ def create_conversations_router() -> APIRouter:
             enrichment=enrichment,
             registration_required=registration_required,
             rate_limit_status=rate_limit_status,
+            execute=execute_data,
         )
     
     return router

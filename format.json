@@ -1,0 +1,127 @@
+{
+    "language": "en",
+    "language_name": "English",
+    "shortcuts": [
+        {
+            "intent": "lending",
+            "command": "Lend",
+            "description": "Deposit into Morpho vaults for yield",
+            "examples": [
+                "Deposit USDC on Morpho",
+                "Show best lending vaults",
+                "Earn yield on my ETH",
+                "Best lending vaults",
+                "Lending vaults",
+                "Earn yield"
+            ],
+            "icon": "🏦"
+        },
+        {
+            "intent": "money_market",
+            "command": "Compare Rates",
+            "description": "Compare Aave and Compound lending rates",
+            "examples": [
+                "Compare Aave vs Compound",
+                "Best money market rates for USDC",
+                "Compare lending rates for ETH"
+            ],
+            "icon": "📊"
+        },
+        {
+            "intent": "swap",
+            "command": "Swap",
+            "description": "Exchange tokens via 1inch, LiFi, or Hyperliquid",
+            "examples": [
+                "Swap 100 USDC for ETH",
+                "Swap USDC from Ethereum to Base",
+                "Best swap rate for ETH to USDC"
+            ],
+            "icon": "🔄"
+        },
+        {
+            "intent": "portfolio",
+            "command": "Portfolio",
+            "description": "View all your token holdings",
+            "examples": [
+                "Show my portfolio",
+                "What tokens do I have?",
+                "List my holdings",
+                "What tokens do I own?",
+                "Show my holdings",
+                "List my tokens"
+            ],
+            "icon": "💼"
+        },
+        {
+            "intent": "balance",
+            "command": "Balance",
+            "description": "Check your wallet balance in USD",
+            "examples": [
+                "What's my balance?",
+                "Check my balance",
+                "My balance",
+                "Show my balance",
+                "How much do I have?",
+                "Show my USDC balance"
+            ],
+            "icon": "💰"
+        },
+        {
+            "intent": "activity",
+            "command": "Activity",
+            "description": "View your transaction history",
+            "examples": [
+                "Show my transactions",
+                "Recent activity",
+                "What did I do today?",
+                "My activity",
+                "Transaction history",
+                "My trades"
+            ],
+            "icon": "📜"
+        },
+        {
+            "intent": "receive",
+            "command": "Receive",
+            "description": "Get your wallet address or QR code",
+            "examples": [
+                "I want to receive crypto",
+                "Receive crypto",
+                "My address",
+                "My wallet address",
+                "Deposit address",
+                "Receive address",
+                "Give me my QR code"
+            ],
+            "icon": "📥"
+        },
+        {
+            "intent": "buy",
+            "command": "Buy",
+            "description": "Buy crypto with card or bank transfer",
+            "examples": [
+                "I want to buy crypto",
+                "Buy Bitcoin with card",
+                "How to buy ETH",
+                "Buy crypto",
+                "Purchase Bitcoin",
+                "Buy with fiat"
+            ],
+            "icon": "💳"
+        },
+        {
+            "intent": "send",
+            "command": "Send",
+            "description": "Send tokens to another wallet",
+            "examples": [
+                "Send crypto to a friend",
+                "Transfer ETH to another wallet",
+                "I want to send USDC",
+                "Send tokens",
+                "Transfer crypto",
+                "Send to wallet"
+            ],
+            "icon": "📤"
+        }
+    ]
+}

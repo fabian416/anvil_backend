@@ -290,41 +290,60 @@ class IntentDetectorV2:
         """
         message_lower = message.lower().strip()
         
-        # 1. Check for pending flow continuation
+        # 1. Check for swap confirmation (when swap is complete and waiting for execution)
+        if context and context.pending_swap_info:
+            swap_info = context.pending_swap_info
+            if swap_info.get("is_complete"):
+                # Check if user is confirming execution
+                confirmation_keywords = [
+                    "1", "confirm", "yes", "sí", "sim", "execute", "ejecutar", "executar",
+                    "proceed", "proceder", "go", "vamos", "vamos lá", "best rate", "best rates",
+                    "execute swap", "ejecutar swap", "proceed with swap"
+                ]
+                if any(keyword in message_lower for keyword in confirmation_keywords):
+                    # User confirmed, return SWAP_CONTINUE with confirmation metadata
+                    return IntentResult(
+                        intent=ChatIntentV2.SWAP_CONTINUE,
+                        confidence=0.95,
+                        handler=self._handler_map[ChatIntentV2.SWAP_CONTINUE],
+                        metadata={"step": "confirm_execution", "value": message},
+                    )
+        
+        # 2. Check for pending flow continuation
         if context and context.pending_intent:
             continuation_result = self._handle_continuation(message, context)
             if continuation_result:
                 return continuation_result
         
-        # 2. Check for follow-up questions using context
+        # 3. Check for follow-up questions using context
         if context and context.has_context:
             follow_up_result = self._detect_follow_up(message_lower, context)
             if follow_up_result:
                 return follow_up_result
         
-        # 3. Check restricted intents first (security)
+        # 4. Check restricted intents first (security)
         restricted_result = self._detect_restricted(message_lower, language)
         if restricted_result:
             return restricted_result
 
-        # 4. Check analysis intents first (price/sentiment/etc.)
+        # 5. Check analysis intents first (price/sentiment/etc.)
         # Enterprise fix: prevents action keywords (e.g. "cambiar") from hijacking clear questions
         # like "¿Cuál es el precio de Bitcoin?"
         analysis_result = self._detect_analysis_intent(message_lower, language)
         if analysis_result:
             return analysis_result
 
-        # 5. Check action intents (swap, lending, etc.)
+        # 6. Check action intents (swap, lending, etc.)
         action_result = self._detect_action_intent(message_lower, language)
         if action_result:
             return action_result
-        
-        # 6. Check exploration intents (protocol search, risk, etc.)
+
+        # 7. Check exploration intents (protocol search, risk, etc.)
         exploration_result = self._detect_exploration_intent(message_lower, language)
         if exploration_result:
             return exploration_result
-        
-        # 7. Fallback to general conversation
+
+        # 8. Fallback to general conversation
         return IntentResult(
             intent=ChatIntentV2.GENERAL_CONVERSATION,
             confidence=0.5,
@@ -370,6 +389,151 @@ class IntentDetectorV2:
                 handler=self._handler_map[ChatIntentV2.SWAP_CONTINUE],
                 metadata={"step": "amount", "value": message},
             )
+        
+        # Lending flow continuations (when no vaults found)
+        if pending == "lending_no_vaults":
+            # Check if user selected a numbered option (1, 2, 3)
+            import re
+            number_match = re.search(r"^(\d+)", message_lower)
+            if number_match:
+                option_num = int(number_match.group(1))
+                if option_num == 1:
+                    # Try different asset
+                    return IntentResult(
+                        intent=ChatIntentV2.LENDING,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.LENDING],
+                        metadata={"step": "select_asset", "value": message},
+                    )
+                elif option_num == 2:
+                    # Try different chain
+                    return IntentResult(
+                        intent=ChatIntentV2.LENDING,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.LENDING],
+                        metadata={"step": "select_chain", "value": message},
+                    )
+                elif option_num == 3:
+                    # Check back later
+                    return IntentResult(
+                        intent=ChatIntentV2.LENDING,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.LENDING],
+                        metadata={"step": "check_later", "value": message},
+                    )
+            # If not a number, treat as regular lending query
+            return IntentResult(
+                intent=ChatIntentV2.LENDING,
+                confidence=0.85,
+                handler=self._handler_map[ChatIntentV2.LENDING],
+            )
+        
+        # Lending awaiting asset selection
+        if pending == "lending_awaiting_asset":
+            return IntentResult(
+                intent=ChatIntentV2.LENDING,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.LENDING],
+                metadata={"step": "select_asset", "value": message, "awaiting_asset": True},
+            )
+        
+        # Lending awaiting chain selection
+        if pending == "lending_awaiting_chain":
+            return IntentResult(
+                intent=ChatIntentV2.LENDING,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.LENDING],
+                metadata={"step": "select_chain", "value": message, "awaiting_chain": True},
+            )
+        
+        # Portfolio flow continuations (when no portfolio found)
+        if pending == "portfolio_no_portfolio":
+            import re
+            number_match = re.search(r"^(\d+)", message_lower)
+            if number_match:
+                option_num = int(number_match.group(1))
+                if option_num == 1:
+                    # Try different chain
+                    return IntentResult(
+                        intent=ChatIntentV2.PORTFOLIO,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.PORTFOLIO],
+                        metadata={"step": "select_chain", "value": message},
+                    )
+                elif option_num == 2:
+                    # Receive funds
+                    return IntentResult(
+                        intent=ChatIntentV2.RECEIVE,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.RECEIVE],
+                    )
+                elif option_num == 3:
+                    # Check back later
+                    return IntentResult(
+                        intent=ChatIntentV2.PORTFOLIO,
+                        confidence=0.85,
+                        handler=self._handler_map[ChatIntentV2.PORTFOLIO],
+                        metadata={"step": "check_later", "value": message},
+                    )
+        
+        # Activity flow continuations (when no activity found)
+        if pending == "activity_no_activity":
+            import re
+            number_match = re.search(r"^(\d+)", message_lower)
+            if number_match:
+                option_num = int(number_match.group(1))
+                if option_num == 1:
+                    # Receive funds
+                    return IntentResult(
+                        intent=ChatIntentV2.RECEIVE,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.RECEIVE],
+                    )
+                elif option_num == 2:
+                    # Make a swap
+                    return IntentResult(
+                        intent=ChatIntentV2.SWAP,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.SWAP],
+                    )
+                elif option_num == 3:
+                    # Earn yield
+                    return IntentResult(
+                        intent=ChatIntentV2.LENDING,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.LENDING],
+                    )
+        
+        # Money market flow continuations (when no rates found)
+        if pending == "money_market_no_rates":
+            import re
+            number_match = re.search(r"^(\d+)", message_lower)
+            if number_match:
+                option_num = int(number_match.group(1))
+                if option_num == 1:
+                    # Try different asset
+                    return IntentResult(
+                        intent=ChatIntentV2.MONEY_MARKET,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
+                        metadata={"step": "select_asset", "value": message},
+                    )
+                elif option_num == 2:
+                    # Try different chain
+                    return IntentResult(
+                        intent=ChatIntentV2.MONEY_MARKET,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
+                        metadata={"step": "select_chain", "value": message},
+                    )
+                elif option_num == 3:
+                    # Check back later
+                    return IntentResult(
+                        intent=ChatIntentV2.MONEY_MARKET,
+                        confidence=0.85,
+                        handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
+                        metadata={"step": "check_later", "value": message},
+                    )
         
         return None
     
@@ -616,7 +780,50 @@ class IntentDetectorV2:
         import re
 
         token_pattern = r"(ETH|USDC|USDT|DAI|WBTC|WETH|BTC|SOL|MATIC|ARB|OP|LINK|UNI|AAVE|CRV|MKR)"
+        chain_pattern = r"(ethereum|base|arbitrum|optimism|polygon|avalanche|bsc|binance|solana|fantom|avax)"
         amount_pattern = r"(\d+\.?\d*)"
+
+        # Best swap rate queries (check early, before other patterns)
+        # Examples: "Best swap rate for ETH to USDC", "Mejor tasa para ETH a USDC"
+        best_rate_patterns = [
+            rf"\b(best|top|highest|mejor|melhor)\s+(?:swap\s+)?rate(?:s)?\s+(?:for|para|por)\s+{token_pattern}\s+(?:to|for|a|para)\s+{token_pattern}\b",
+            rf"\b(best|top|highest|mejor|melhor)\s+(?:swap\s+)?rate(?:s)?\s+{token_pattern}\s+(?:to|for|a|para)\s+{token_pattern}\b",
+            rf"\b(best|top|highest|mejor|melhor)\s+(?:swap\s+)?(?:rate|price)\s+(?:for|para|por)\s+{token_pattern}\s+(?:to|for|a|para)\s+{token_pattern}\b",
+            rf"\b(?:find|show|get|buscar|mostrar|obtener)\s+(?:the\s+)?(?:best|top|highest|mejor|melhor)\s+(?:swap\s+)?rate(?:s)?\s+(?:for|para|por)?\s*{token_pattern}\s+(?:to|for|a|para)\s+{token_pattern}\b",
+        ]
+        
+        for pattern in best_rate_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                return IntentResult(
+                    intent=ChatIntentV2.SWAP,
+                    confidence=0.92,  # High confidence for rate queries
+                    handler=self._handler_map[ChatIntentV2.SWAP],
+                )
+
+        # Cross-chain swap/bridge patterns (check first, before simple swaps)
+        # Examples: "Swap USDC from Ethereum to Base", "Bridge ETH from Base to Arbitrum"
+        cross_chain_patterns = [
+            # English: swap/bridge token from chain to chain
+            rf"\b(swap|bridge|transfer|send)\b\s*{token_pattern}\s*(?:from|on)\s*{chain_pattern}\s*(?:to|on)\s*{chain_pattern}\b",
+            # English: swap/bridge amount token from chain to chain
+            rf"\b(swap|bridge|transfer|send)\b\s*{amount_pattern}\s*{token_pattern}\s*(?:from|on)\s*{chain_pattern}\s*(?:to|on)\s*{chain_pattern}\b",
+            # Spanish: cambiar/enviar token desde cadena a cadena
+            rf"\b(swap|cambiar|enviar|transferir|bridge)\b\s*{token_pattern}\s*(?:desde|de|en)\s*{chain_pattern}\s*(?:a|hacia|para|en)\s*{chain_pattern}\b",
+            # Spanish: cambiar/enviar cantidad token desde cadena a cadena
+            rf"\b(swap|cambiar|enviar|transferir|bridge)\b\s*{amount_pattern}\s*{token_pattern}\s*(?:desde|de|en)\s*{chain_pattern}\s*(?:a|hacia|para|en)\s*{chain_pattern}\b",
+            # Portuguese: trocar/enviar token de cadeia para cadeia
+            rf"\b(swap|trocar|enviar|transferir|bridge)\b\s*{token_pattern}\s*(?:de|desde|em)\s*{chain_pattern}\s*(?:para|a|em)\s*{chain_pattern}\b",
+            # Portuguese: trocar/enviar quantidade token de cadeia para cadeia
+            rf"\b(swap|trocar|enviar|transferir|bridge)\b\s*{amount_pattern}\s*{token_pattern}\s*(?:de|desde|em)\s*{chain_pattern}\s*(?:para|a|em)\s*{chain_pattern}\b",
+        ]
+        
+        for pattern in cross_chain_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                return IntentResult(
+                    intent=ChatIntentV2.SWAP,
+                    confidence=0.95,  # High confidence for cross-chain swaps
+                    handler=self._handler_map[ChatIntentV2.SWAP],
+                )
 
         # Full/structured swap commands (single-shot)
         swap_command_patterns = [

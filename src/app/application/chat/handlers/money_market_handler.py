@@ -34,6 +34,7 @@ class MoneyMarketHandlerResult:
     latency_ms: int
     language: str = "en"
     handler: str = "money_market_handler"
+    pending_action: str | None = None  # For multi-turn flows
 
 
 class MoneyMarketHandler:
@@ -172,6 +173,11 @@ class MoneyMarketHandler:
         )
 
         latency_ms = int((time.time() - start_time) * 1000)
+        
+        # Set pending_action if no rates found
+        pending_action = None
+        if not rates:
+            pending_action = "money_market_no_rates"
 
         return MoneyMarketHandlerResult(
             content=content,
@@ -183,6 +189,7 @@ class MoneyMarketHandler:
             asset=asset,
             latency_ms=latency_ms,
             language=language,
+            pending_action=pending_action,
         )
 
     def _get_aave_fallback(self, asset: str, chain: str) -> dict:
@@ -252,17 +259,67 @@ class MoneyMarketHandler:
         from app.application.chat.i18n import t
         
         if not rates:
-            # Localized "no rates found" message
+            # Localized "no rates found" message with improved formatting
             no_rates_msgs = {
-                "en": f"I couldn't find lending rates for {asset} on {chain.upper()}.",
-                "es": f"No pude encontrar tasas de préstamo para {asset} en {chain.upper()}.",
-                "fr": f"Je n'ai pas pu trouver de taux de prêt pour {asset} sur {chain.upper()}.",
-                "zh": f"在 {chain.upper()} 上找不到 {asset} 的借贷利率。",
-                "pt": f"Não consegui encontrar taxas de empréstimo para {asset} em {chain.upper()}.",
+                "en": {
+                    "title": f"Money Market Rates - {asset}",
+                    "message": f"I couldn't find lending rates for {asset} on {chain.upper()}.",
+                    "header": "What would you like to try?",
+                    "options": [
+                        ("💎", "Try a different asset", "USDC, USDT, DAI, ETH, WETH"),
+                        ("🌐", "Try a different chain", "Ethereum, Base, Arbitrum, Polygon"),
+                        ("💡", "Check back later", "Rates may be available soon")
+                    ]
+                },
+                "es": {
+                    "title": f"Tasas de Mercado Monetario - {asset}",
+                    "message": f"No pude encontrar tasas de préstamo para {asset} en {chain.upper()}.",
+                    "header": "¿Qué te gustaría intentar?",
+                    "options": [
+                        ("💎", "Probar otro activo", "USDC, USDT, DAI, ETH, WETH"),
+                        ("🌐", "Probar otra cadena", "Ethereum, Base, Arbitrum, Polygon"),
+                        ("💡", "Verificar más tarde", "Las tasas pueden estar disponibles pronto")
+                    ]
+                },
+                "pt": {
+                    "title": f"Taxas de Mercado Monetário - {asset}",
+                    "message": f"Não consegui encontrar taxas de empréstimo para {asset} em {chain.upper()}.",
+                    "header": "O que você gostaria de tentar?",
+                    "options": [
+                        ("💎", "Tentar outro ativo", "USDC, USDT, DAI, ETH, WETH"),
+                        ("🌐", "Tentar outra rede", "Ethereum, Base, Arbitrum, Polygon"),
+                        ("💡", "Verificar mais tarde", "As taxas podem estar disponíveis em breve")
+                    ]
+                },
+                "zh": {
+                    "title": f"货币市场利率 - {asset}",
+                    "message": f"在 {chain.upper()} 上找不到 {asset} 的借贷利率。",
+                    "header": "您想尝试什么？",
+                    "options": [
+                        ("💎", "尝试其他资产", "USDC, USDT, DAI, ETH, WETH"),
+                        ("🌐", "尝试其他链", "Ethereum, Base, Arbitrum, Polygon"),
+                        ("💡", "稍后查看", "利率可能很快可用")
+                    ]
+                },
             }
-            return f"""📊 **{t("money_market", "title", language, asset=asset)}**
+            
+            msgs = no_rates_msgs.get(language, no_rates_msgs["en"])
+            options_text = "\n".join([
+                f"**{i}.** {emoji} **{title}**\n   {details}" 
+                for i, (emoji, title, details) in enumerate(msgs["options"], 1)
+            ])
+            
+            return f"""📊 **{msgs["title"]}**
 
-{no_rates_msgs.get(language, no_rates_msgs["en"])}
+{msgs["message"]}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{msgs["header"]}**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{options_text}
+
+💬 **Reply with the number (1, 2, or 3) to continue.**
 """
 
         # Sort by supply APY
@@ -272,10 +329,12 @@ class MoneyMarketHandler:
             reverse=True,
         )
 
-        # Localized header
+        # Localized header with improved formatting
         response = f"""📊 **{t("money_market", "title", language, asset=asset)}**
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {t("money_market", "comparing", language, chain=chain.upper())}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 | {t("money_market", "protocol", language)} | {t("money_market", "supply_apy", language)} | {t("money_market", "borrow_apy", language)} | |
 |----------|-----------|------------|--------|

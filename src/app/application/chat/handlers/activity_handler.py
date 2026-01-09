@@ -32,6 +32,7 @@ class ActivityHandlerResult:
     latency_ms: int
     language: str = "en"
     handler: str = "activity_handler"
+    pending_action: str | None = None  # For multi-turn flows
 
 
 class ActivityHandler:
@@ -72,6 +73,7 @@ class ActivityHandler:
         chain: Optional[str] = None,
         tx_type: Optional[str] = None,
         limit: int = 10,
+        language: str = "en",
     ) -> ActivityHandlerResult:
         """
         Get transaction activity for a user.
@@ -111,9 +113,15 @@ class ActivityHandler:
                 total_count=total_count,
                 gas_spent_usd=gas_spent_usd,
                 chain=chain,
+                language=language,
             )
 
             latency_ms = int((time.time() - start_time) * 1000)
+            
+            # Set pending_action if no transactions found
+            pending_action = None
+            if not tx_list:
+                pending_action = "activity_no_activity"
 
             return ActivityHandlerResult(
                 content=content,
@@ -122,6 +130,8 @@ class ActivityHandler:
                 gas_spent_usd=gas_spent_usd,
                 chain=chain,
                 latency_ms=latency_ms,
+                language=language,
+                pending_action=pending_action,
             )
 
         except Exception as e:
@@ -134,6 +144,7 @@ class ActivityHandler:
                 gas_spent_usd=0.0,
                 chain=chain,
                 latency_ms=latency_ms,
+                language=language,
             )
 
     def _format_transaction(self, tx: Any) -> dict:
@@ -200,15 +211,51 @@ class ActivityHandler:
         total_count: int,
         gas_spent_usd: float,
         chain: Optional[str],
+        language: str = "en",
     ) -> str:
-        """Format activity data as chat response."""
+        """Format activity data as chat response with improved formatting."""
         if not transactions:
-            return self._format_no_activity_response(chain)
+            return self._format_no_activity_response(chain, language)
 
+        activity_msgs = {
+            "en": {
+                "title": "Recent Activity",
+                "last_7_days": "Last 7 Days",
+                "total_transactions": "Total Transactions",
+                "gas_spent": "Gas Spent",
+                "question": "Would you like a detailed report or specific transaction details?",
+            },
+            "es": {
+                "title": "Actividad Reciente",
+                "last_7_days": "Últimos 7 Días",
+                "total_transactions": "Total de Transacciones",
+                "gas_spent": "Gas Gastado",
+                "question": "¿Te gustaría un reporte detallado o detalles de una transacción específica?",
+            },
+            "pt": {
+                "title": "Atividade Recente",
+                "last_7_days": "Últimos 7 Dias",
+                "total_transactions": "Total de Transações",
+                "gas_spent": "Gas Gasto",
+                "question": "Gostaria de um relatório detalhado ou detalhes de uma transação específica?",
+            },
+            "zh": {
+                "title": "最近活动",
+                "last_7_days": "最近7天",
+                "total_transactions": "总交易数",
+                "gas_spent": "Gas 花费",
+                "question": "您想要详细报告还是特定交易的详细信息？",
+            },
+        }
+        
+        msgs = activity_msgs.get(language, activity_msgs["en"])
         chain_filter = f" on {chain.upper()}" if chain else ""
-        response = f"""📜 **Recent Activity{chain_filter}**
+        
+        response = f"""📜 **{msgs["title"]}{chain_filter}**
 
-**Last 7 Days:**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{msgs["last_7_days"]}**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
         # Format each transaction
@@ -235,24 +282,74 @@ class ActivityHandler:
 
         response += f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Total Transactions:** {total_count}
-**Gas Spent:** ${gas_spent_usd:.2f}
+**{msgs["total_transactions"]}:** {total_count}
+**{msgs["gas_spent"]}:** ${gas_spent_usd:.2f}
 
-Would you like a detailed report or specific transaction details?
+💡 {msgs["question"]}
 """
         return response
 
-    def _format_no_activity_response(self, chain: Optional[str]) -> str:
-        """Format response when no activity found."""
+    def _format_no_activity_response(self, chain: Optional[str], language: str = "en") -> str:
+        """Format response when no activity found with improved formatting."""
+        no_activity_msgs = {
+            "en": {
+                "title": "No Recent Activity",
+                "message": "You don't have any recorded transactions yet.",
+                "header": "To get started:",
+                "options": [
+                    ("📥", "Receive funds", "Get your deposit address to start"),
+                    ("🔄", "Make a swap", "Exchange tokens via DEX aggregators"),
+                    ("💎", "Earn yield", "Deposit into DeFi protocols for yield")
+                ]
+            },
+            "es": {
+                "title": "Sin Actividad Reciente",
+                "message": "Aún no tienes transacciones registradas.",
+                "header": "Para comenzar:",
+                "options": [
+                    ("📥", "Recibir fondos", "Obtén tu dirección de depósito para comenzar"),
+                    ("🔄", "Hacer un swap", "Intercambia tokens vía agregadores DEX"),
+                    ("💎", "Ganar rendimiento", "Deposita en protocolos DeFi para obtener rendimiento")
+                ]
+            },
+            "pt": {
+                "title": "Sem Atividade Recente",
+                "message": "Você ainda não tem transações registradas.",
+                "header": "Para começar:",
+                "options": [
+                    ("📥", "Receber fundos", "Obtenha seu endereço de depósito para começar"),
+                    ("🔄", "Fazer um swap", "Troque tokens via agregadores DEX"),
+                    ("💎", "Ganhar rendimento", "Deposite em protocolos DeFi para obter rendimento")
+                ]
+            },
+            "zh": {
+                "title": "无最近活动",
+                "message": "您还没有任何已记录的交易。",
+                "header": "开始使用:",
+                "options": [
+                    ("📥", "接收资金", "获取您的存款地址以开始"),
+                    ("🔄", "进行交换", "通过 DEX 聚合器交换代币"),
+                    ("💎", "赚取收益", "存入 DeFi 协议以获得收益")
+                ]
+            },
+        }
+        
+        msgs = no_activity_msgs.get(language, no_activity_msgs["en"])
         chain_text = f" on {chain.upper()}" if chain else ""
-        return f"""📜 **No Recent Activity{chain_text}**
+        options_text = "\n".join([
+            f"**{i}.** {emoji} **{title}**\n   {details}" 
+            for i, (emoji, title, details) in enumerate(msgs["options"], 1)
+        ])
+        
+        return f"""📜 **{msgs["title"]}{chain_text}**
 
-You don't have any recorded transactions yet.
+{msgs["message"]}
 
-**To start:**
-• Deposit funds to your wallet
-• Make a swap or transfer
-• Earn yield in DeFi protocols
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{msgs["header"]}**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Would you like to receive funds? Say "receive" to get your deposit address.
+{options_text}
+
+💬 **Reply with the number (1, 2, or 3) to continue.**
 """

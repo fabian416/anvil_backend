@@ -33,6 +33,8 @@ class LendingHandlerResult:
     latency_ms: int
     language: str = "en"
     handler: str = "lending_handler"
+    pending_action: str | None = None  # For multi-turn flows (e.g., "lending_no_vaults", "lending_awaiting_asset", "lending_awaiting_chain")
+    lending_info: dict | None = None  # Lending info for continuation (chain, asset, awaiting_asset, awaiting_chain)
 
 
 class LendingHandler:
@@ -71,6 +73,8 @@ class LendingHandler:
         asset: str = "USDC",
         whitelisted_only: bool = True,
         language: str = "en",
+        continuation_step: str | None = None,
+        previous_lending_info: dict | None = None,
     ) -> LendingHandlerResult:
         """
         Handle lending intent and return vault recommendations.
@@ -81,11 +85,50 @@ class LendingHandler:
             asset: Asset symbol (USDC, ETH, etc.)
             whitelisted_only: Only return curated vaults
             language: Response language (en, es, fr, zh, pt)
+            continuation_step: If continuing a flow, which step (select_asset, select_chain, check_later)
+            previous_lending_info: Previous lending info for continuation
         
         Returns:
             LendingHandlerResult with formatted content and vault data
         """
         start_time = time.time()
+        
+        # Handle continuation from previous lending query (when no vaults found)
+        if continuation_step and previous_lending_info:
+            if continuation_step == "select_asset":
+                # User selected option 1 from "no vaults" message
+                # Always show asset options first
+                result = self._handle_asset_selection(previous_lending_info, language)
+                return result
+            elif continuation_step == "select_chain":
+                # User selected option 2 from "no vaults" message
+                # Always show chain options first
+                result = self._handle_chain_selection(previous_lending_info, language)
+                return result
+            elif continuation_step == "check_later":
+                # User selected option 3 - check back later message
+                return self._handle_check_later(language)
+        
+        # Handle asset/chain selection continuations (when user is selecting from options)
+        # This happens when user selects an option after seeing the numbered list
+        if previous_lending_info:
+            if previous_lending_info.get("awaiting_asset"):
+                # User is selecting an asset from the options (e.g., "1" for USDC)
+                chain, asset = self._apply_asset_selection(message, previous_lending_info)
+                # Continue with new asset (fall through to fetch vaults)
+            elif previous_lending_info.get("awaiting_chain"):
+                # User is selecting a chain from the options (e.g., "1" for Ethereum)
+                chain, asset = self._apply_chain_selection(message, previous_lending_info)
+                # Continue with new chain (fall through to fetch vaults)
+            else:
+                # Use previous info as-is (for regular continuation)
+                chain = previous_lending_info.get("chain", chain)
+                asset = previous_lending_info.get("asset", asset)
+        else:
+            # Extract chain and asset from message if not provided
+            extracted_chain, extracted_asset = self._extract_params_from_message(message)
+            chain = extracted_chain if chain == "base" else chain
+            asset = extracted_asset if asset == "USDC" else asset
         
         # Fetch vaults from Morpho
         vaults = await self._morpho.get_vaults(
@@ -115,7 +158,17 @@ class LendingHandler:
         best_apy = vaults[0].apy if vaults else 0.0
         latency_ms = int((time.time() - start_time) * 1000)
         
-        return LendingHandlerResult(
+        # Set pending_action if no vaults found (for multi-turn flow)
+        pending_action = None
+        lending_info = None
+        if not vaults:
+            pending_action = "lending_no_vaults"
+            lending_info = {
+                "chain": chain,
+                "asset": asset,
+            }
+        
+        result = LendingHandlerResult(
             content=content,
             vaults=vault_data,
             chain=chain,
@@ -123,7 +176,14 @@ class LendingHandler:
             best_apy=best_apy,
             latency_ms=latency_ms,
             language=language,
+            pending_action=pending_action,
         )
+        
+        # Store lending_info in result for metadata
+        if lending_info:
+            result.lending_info = lending_info
+        
+        return result
     
     async def get_vault_details(
         self,
@@ -188,16 +248,58 @@ class LendingHandler:
         
         if not vaults:
             no_vaults_msg = t("lending", "no_vaults", language, asset=asset, chain=chain.capitalize())
-            try_msgs = {
-                "en": "Try:\n- Different asset (ETH, USDT, DAI)\n- Different chain (ethereum, base)\n- Checking back later",
-                "es": "Intenta:\n- Otro activo (ETH, USDT, DAI)\n- Otra cadena (ethereum, base)\n- Verificar más tarde",
-                "fr": "Essayez:\n- Un autre actif (ETH, USDT, DAI)\n- Une autre chaîne (ethereum, base)\n- Vérifier plus tard",
-                "zh": "尝试:\n- 其他资产 (ETH, USDT, DAI)\n- 其他链 (ethereum, base)\n- 稍后再试",
-                "pt": "Tente:\n- Outro ativo (ETH, USDT, DAI)\n- Outra rede (ethereum, base)\n- Verificar mais tarde",
+            
+            # Numbered options for user selection with improved formatting
+            options_msgs = {
+                "en": {
+                    "header": "What would you like to try?",
+                    "options": [
+                        ("💎", "Try a different asset", "USDC, USDT, DAI, ETH, WBTC"),
+                        ("🌐", "Try a different chain", "Ethereum, Base, Arbitrum"),
+                        ("⏰", "Check back later", "New vaults may be available soon")
+                    ]
+                },
+                "es": {
+                    "header": "¿Qué te gustaría intentar?",
+                    "options": [
+                        ("💎", "Probar otro activo", "USDC, USDT, DAI, ETH, WBTC"),
+                        ("🌐", "Probar otra cadena", "Ethereum, Base, Arbitrum"),
+                        ("⏰", "Verificar más tarde", "Puede haber nuevos vaults disponibles pronto")
+                    ]
+                },
+                "pt": {
+                    "header": "O que você gostaria de tentar?",
+                    "options": [
+                        ("💎", "Tentar outro ativo", "USDC, USDT, DAI, ETH, WBTC"),
+                        ("🌐", "Tentar outra rede", "Ethereum, Base, Arbitrum"),
+                        ("⏰", "Verificar mais tarde", "Novos vaults podem estar disponíveis em breve")
+                    ]
+                },
+                "zh": {
+                    "header": "您想尝试什么？",
+                    "options": [
+                        ("💎", "尝试其他资产", "USDC, USDT, DAI, ETH, WBTC"),
+                        ("🌐", "尝试其他链", "Ethereum, Base, Arbitrum"),
+                        ("⏰", "稍后查看", "可能很快会有新的金库")
+                    ]
+                },
             }
+            
+            options = options_msgs.get(language, options_msgs["en"])
+            options_text = "\n".join([
+                f"**{i}.** {emoji} **{title}**\n   {details}" 
+                for i, (emoji, title, details) in enumerate(options["options"], 1)
+            ])
+            
             return f"""🔍 **{no_vaults_msg}**
 
-{try_msgs.get(language, try_msgs["en"])}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{options["header"]}**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{options_text}
+
+💬 **Reply with the number (1, 2, or 3) to continue.**
 """
         
         chain_emoji = "🔵" if chain == "base" else "⟠"
@@ -306,3 +408,253 @@ Would you like me to help you deposit into **{best.name}**?
             asset = "USDC"  # Default to USDC
         
         return chain, asset
+    
+    def _handle_asset_selection(self, previous_info: dict, language: str) -> LendingHandlerResult:
+        """Handle asset selection after user chose option 1."""
+        asset_options = {
+            "en": {
+                "header": "Select an asset to search for vaults:",
+                "options": [
+                    ("USDC", "USD Coin - Stablecoin"),
+                    ("USDT", "Tether - Stablecoin"),
+                    ("DAI", "Dai - Decentralized stablecoin"),
+                    ("ETH", "Ethereum - Native token"),
+                    ("WBTC", "Wrapped Bitcoin - Bitcoin on Ethereum")
+                ]
+            },
+            "es": {
+                "header": "Selecciona un activo para buscar vaults:",
+                "options": [
+                    ("USDC", "USD Coin - Stablecoin"),
+                    ("USDT", "Tether - Stablecoin"),
+                    ("DAI", "Dai - Stablecoin descentralizado"),
+                    ("ETH", "Ethereum - Token nativo"),
+                    ("WBTC", "Wrapped Bitcoin - Bitcoin en Ethereum")
+                ]
+            },
+            "pt": {
+                "header": "Selecione um ativo para buscar vaults:",
+                "options": [
+                    ("USDC", "USD Coin - Stablecoin"),
+                    ("USDT", "Tether - Stablecoin"),
+                    ("DAI", "Dai - Stablecoin descentralizado"),
+                    ("ETH", "Ethereum - Token nativo"),
+                    ("WBTC", "Wrapped Bitcoin - Bitcoin no Ethereum")
+                ]
+            },
+            "zh": {
+                "header": "选择资产以搜索金库:",
+                "options": [
+                    ("USDC", "USD Coin - 稳定币"),
+                    ("USDT", "Tether - 稳定币"),
+                    ("DAI", "Dai - 去中心化稳定币"),
+                    ("ETH", "以太坊 - 原生代币"),
+                    ("WBTC", "Wrapped Bitcoin - 以太坊上的比特币")
+                ]
+            },
+        }
+        
+        options = asset_options.get(language, asset_options["en"])
+        options_text = "\n".join([
+            f"**{i}.** 💰 **{symbol}** - {description}" 
+            for i, (symbol, description) in enumerate(options["options"], 1)
+        ])
+        
+        content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{options["header"]}**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{options_text}
+
+💬 **Reply with the number (1-5) or type the asset name to continue.**
+"""
+        
+        # Mark that we're awaiting asset selection
+        lending_info = {
+            "chain": previous_info.get("chain", "base"),
+            "asset": previous_info.get("asset", "USDC"),
+            "awaiting_asset": True,
+        }
+        
+        return LendingHandlerResult(
+            content=content,
+            vaults=[],
+            chain=previous_info.get("chain", "base"),
+            asset=previous_info.get("asset", "USDC"),
+            best_apy=0.0,
+            latency_ms=0,
+            language=language,
+            pending_action="lending_awaiting_asset",
+        )
+    
+    def _apply_asset_selection(self, message: str, previous_info: dict) -> tuple[str, str]:
+        """Apply user's asset selection (number or name)."""
+        import re
+        message_upper = message.upper().strip()
+        
+        # Check if user selected a numbered option (1-5)
+        number_match = re.search(r"^(\d+)", message)
+        if number_match:
+            option_num = int(number_match.group(1))
+            assets = ["USDC", "USDT", "DAI", "ETH", "WBTC"]
+            if 1 <= option_num <= len(assets):
+                return previous_info.get("chain", "base"), assets[option_num - 1]
+        
+        # Check if message contains asset name
+        assets = ["USDC", "USDT", "DAI", "ETH", "WBTC", "WETH", "BTC"]
+        for asset in assets:
+            if asset in message_upper:
+                return previous_info.get("chain", "base"), asset
+        
+        # Default to USDC
+        return previous_info.get("chain", "base"), "USDC"
+    
+    def _handle_chain_selection(self, previous_info: dict, language: str) -> LendingHandlerResult:
+        """Handle chain selection after user chose option 2."""
+        chain_options = {
+            "en": {
+                "header": "Select a blockchain to search for vaults:",
+                "options": [
+                    ("⟠", "Ethereum", "Mainnet - Largest DeFi ecosystem"),
+                    ("🔵", "Base", "Layer 2 - Coinbase's L2 network"),
+                    ("🔷", "Arbitrum", "Layer 2 - High-performance scaling solution")
+                ]
+            },
+            "es": {
+                "header": "Selecciona una cadena para buscar vaults:",
+                "options": [
+                    ("⟠", "Ethereum", "Mainnet - Ecosistema DeFi más grande"),
+                    ("🔵", "Base", "Layer 2 - Red L2 de Coinbase"),
+                    ("🔷", "Arbitrum", "Layer 2 - Solución de escalado de alto rendimiento")
+                ]
+            },
+            "pt": {
+                "header": "Selecione uma rede para buscar vaults:",
+                "options": [
+                    ("⟠", "Ethereum", "Mainnet - Maior ecossistema DeFi"),
+                    ("🔵", "Base", "Layer 2 - Rede L2 da Coinbase"),
+                    ("🔷", "Arbitrum", "Layer 2 - Solução de escalonamento de alto desempenho")
+                ]
+            },
+            "zh": {
+                "header": "选择链以搜索金库:",
+                "options": [
+                    ("⟠", "Ethereum", "主网 - 最大的 DeFi 生态系统"),
+                    ("🔵", "Base", "Layer 2 - Coinbase 的 L2 网络"),
+                    ("🔷", "Arbitrum", "Layer 2 - 高性能扩展解决方案")
+                ]
+            },
+        }
+        
+        options = chain_options.get(language, chain_options["en"])
+        options_text = "\n".join([
+            f"**{i}.** {emoji} **{chain}** - {description}" 
+            for i, (emoji, chain, description) in enumerate(options["options"], 1)
+        ])
+        
+        content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{options["header"]}**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{options_text}
+
+💬 **Reply with the number (1-3) or type the chain name to continue.**
+"""
+        
+        # Mark that we're awaiting chain selection
+        lending_info = {
+            "chain": previous_info.get("chain", "base"),
+            "asset": previous_info.get("asset", "USDC"),
+            "awaiting_chain": True,
+        }
+        
+        return LendingHandlerResult(
+            content=content,
+            vaults=[],
+            chain=previous_info.get("chain", "base"),
+            asset=previous_info.get("asset", "USDC"),
+            best_apy=0.0,
+            latency_ms=0,
+            language=language,
+            pending_action="lending_awaiting_chain",
+        )
+    
+    def _apply_chain_selection(self, message: str, previous_info: dict) -> tuple[str, str]:
+        """Apply user's chain selection (number or name)."""
+        import re
+        message_lower = message.lower().strip()
+        
+        # Check if user selected a numbered option (1-3)
+        number_match = re.search(r"^(\d+)", message_lower)
+        if number_match:
+            option_num = int(number_match.group(1))
+            chains = ["ethereum", "base", "arbitrum"]
+            if 1 <= option_num <= len(chains):
+                return chains[option_num - 1], previous_info.get("asset", "USDC")
+        
+        # Check if message contains chain name
+        if "ethereum" in message_lower or "eth" in message_lower and "mainnet" in message_lower:
+            return "ethereum", previous_info.get("asset", "USDC")
+        elif "base" in message_lower:
+            return "base", previous_info.get("asset", "USDC")
+        elif "arbitrum" in message_lower or "arb" in message_lower:
+            return "arbitrum", previous_info.get("asset", "USDC")
+        
+        # Default to base
+        return "base", previous_info.get("asset", "USDC")
+    
+    def _handle_check_later(self, language: str) -> LendingHandlerResult:
+        """Handle check back later message after user chose option 3."""
+        messages = {
+            "en": """✅ **Noted!**
+
+I'll keep checking for new vaults. Here are some suggestions:
+
+💡 **Tips:**
+• Check back in a few hours - new vaults are added regularly
+• Try different assets (USDC, USDT, DAI often have more options)
+• Explore other chains (Ethereum, Base, Arbitrum)
+
+🔔 **Want alerts?** Sign up to get notified when new vaults become available!""",
+            "es": """✅ **¡Anotado!**
+
+Seguiré verificando nuevos vaults. Aquí tienes algunas sugerencias:
+
+💡 **Consejos:**
+• Vuelve a verificar en unas horas - se agregan nuevos vaults regularmente
+• Prueba diferentes activos (USDC, USDT, DAI suelen tener más opciones)
+• Explora otras cadenas (Ethereum, Base, Arbitrum)
+
+🔔 **¿Quieres alertas?** ¡Regístrate para recibir notificaciones cuando haya nuevos vaults disponibles!""",
+            "pt": """✅ **Anotado!**
+
+Continuarei verificando novos vaults. Aqui estão algumas sugestões:
+
+💡 **Dicas:**
+• Verifique novamente em algumas horas - novos vaults são adicionados regularmente
+• Tente diferentes ativos (USDC, USDT, DAI geralmente têm mais opções)
+• Explore outras redes (Ethereum, Base, Arbitrum)
+
+🔔 **Quer alertas?** Cadastre-se para ser notificado quando novos vaults estiverem disponíveis!""",
+            "zh": """✅ **已记录！**
+
+我会继续检查新的金库。以下是一些建议：
+
+💡 **提示:**
+• 几小时后回来查看 - 新金库会定期添加
+• 尝试不同的资产（USDC、USDT、DAI 通常有更多选项）
+• 探索其他链（Ethereum、Base、Arbitrum）
+
+🔔 **想要提醒？** 注册以在新金库可用时收到通知！""",
+        }
+        
+        return LendingHandlerResult(
+            content=messages.get(language, messages["en"]),
+            vaults=[],
+            chain="base",
+            asset="ETH",
+            best_apy=0.0,
+            latency_ms=0,
+            language=language,
+            pending_action=None,
+        )

@@ -38,6 +38,10 @@ class ConversationContext:
     detected_entities: dict[str, Any] = field(default_factory=dict)
     pending_intent: str | None = None
     pending_swap_info: dict[str, Any] | None = None
+    pending_lending_info: dict[str, Any] | None = None
+    pending_portfolio_info: dict[str, Any] | None = None
+    pending_activity_info: dict[str, Any] | None = None
+    pending_money_market_info: dict[str, Any] | None = None
     
     @property
     def has_context(self) -> bool:
@@ -87,6 +91,10 @@ class ConversationMemory:
                 detected_entities=self._extract_entities(messages),
                 pending_intent=self._get_pending_intent(messages),
                 pending_swap_info=self._get_pending_swap_info(messages),
+                pending_lending_info=self._get_pending_lending_info(messages),
+                pending_portfolio_info=self._get_pending_portfolio_info(messages),
+                pending_activity_info=self._get_pending_activity_info(messages),
+                pending_money_market_info=self._get_pending_money_market_info(messages),
             )
         except Exception as e:
             logger.warning(f"Failed to get conversation context: {e}")
@@ -186,20 +194,28 @@ class ConversationMemory:
     
     def _get_pending_swap_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
         """
-        Get swap info from the last assistant message if there's a pending swap flow.
+        Get swap info from the last assistant message if there's a pending swap flow or complete swap.
         
         This preserves the state of multi-turn swap conversations
-        (e.g., from_token, to_token already collected).
+        (e.g., from_token, to_token already collected) and also detects complete swaps waiting for confirmation.
         """
         if not messages:
             return None
         
-        # Find the most recent assistant message with pending swap action
+        # Find the most recent assistant message with swap info (pending or complete)
         for msg in reversed(messages):
             if msg.is_assistant_message:
+                # Check for pending swap action
                 pending = msg.get_pending_action()
                 if pending and pending.startswith("swap_"):
-                    return msg.get_swap_info()
+                    swap_info = msg.get_swap_info()
+                    if swap_info:
+                        return swap_info
+                
+                # Also check for complete swap in metadata (when quote was shown)
+                swap_info = msg.get_swap_info()
+                if swap_info and swap_info.get("is_complete"):
+                    return swap_info
                 break
         
         return None

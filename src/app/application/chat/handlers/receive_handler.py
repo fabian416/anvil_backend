@@ -29,6 +29,7 @@ class ReceiveHandlerResult:
     latency_ms: int
     language: str = "en"
     handler: str = "receive_handler"
+    pending_action: str | None = None  # For multi-turn flows
 
 
 class ReceiveHandler:
@@ -67,6 +68,7 @@ class ReceiveHandler:
         self,
         user_id: int,
         chain: str = "base",
+        language: str = "en",
     ) -> ReceiveHandlerResult:
         """
         Get receive information for a user.
@@ -106,12 +108,14 @@ class ReceiveHandler:
 
             if not wallet:
                 return ReceiveHandlerResult(
-                    content=self._format_no_wallet_response(),
+                    content=self._format_no_wallet_response(language),
                     wallet_address="",
                     ens_handle=None,
                     supported_networks=[n["name"] for n in self.SUPPORTED_NETWORKS],
                     chain=chain,
                     latency_ms=latency_ms,
+                    language=language,
+                    pending_action="receive_no_wallet",
                 )
 
             # Get ENS handle (if available in metadata)
@@ -122,6 +126,7 @@ class ReceiveHandler:
                 wallet_address=wallet.address,
                 ens_handle=ens_handle,
                 chain=chain,
+                language=language,
             )
 
             return ReceiveHandlerResult(
@@ -131,6 +136,7 @@ class ReceiveHandler:
                 supported_networks=[n["name"] for n in self.SUPPORTED_NETWORKS],
                 chain=chain,
                 latency_ms=latency_ms,
+                language=language,
             )
 
         except Exception as e:
@@ -143,6 +149,7 @@ class ReceiveHandler:
                 supported_networks=[],
                 chain=chain,
                 latency_ms=latency_ms,
+                language=language,
             )
 
     def _format_receive_response(
@@ -150,59 +157,180 @@ class ReceiveHandler:
         wallet_address: str,
         ens_handle: Optional[str],
         chain: str,
+        language: str = "en",
     ) -> str:
-        """Format receive info as chat response."""
+        """Format receive info as chat response with improved formatting."""
         chain_emoji = "🔵" if chain == "base" else "⟠"
+        
+        receive_msgs = {
+            "en": {
+                "title": "Receive Funds",
+                "wallet_address": "Your Wallet Address",
+                "ens_handle": "ENS Handle",
+                "qr_code": "QR Code",
+                "scan_to_deposit": "Scan to deposit",
+                "supported_networks": "Supported Networks",
+                "important": "Important",
+                "important_tips": [
+                    "Only send tokens on the **correct network** to avoid loss",
+                    "This address works for **all EVM chains** listed above",
+                    "Double-check the address before sending"
+                ],
+                "tap_to_copy": "Tap address to copy",
+                "currently_viewing": "Currently viewing",
+            },
+            "es": {
+                "title": "Recibir Fondos",
+                "wallet_address": "Tu Dirección de Billetera",
+                "ens_handle": "ENS Handle",
+                "qr_code": "Código QR",
+                "scan_to_deposit": "Escanear para depositar",
+                "supported_networks": "Redes Soportadas",
+                "important": "Importante",
+                "important_tips": [
+                    "Solo envía tokens en la **red correcta** para evitar pérdidas",
+                    "Esta dirección funciona para **todas las cadenas EVM** listadas arriba",
+                    "Verifica la dirección antes de enviar"
+                ],
+                "tap_to_copy": "Toca la dirección para copiar",
+                "currently_viewing": "Viendo actualmente",
+            },
+            "pt": {
+                "title": "Receber Fundos",
+                "wallet_address": "Seu Endereço de Carteira",
+                "ens_handle": "ENS Handle",
+                "qr_code": "Código QR",
+                "scan_to_deposit": "Escanear para depositar",
+                "supported_networks": "Redes Suportadas",
+                "important": "Importante",
+                "important_tips": [
+                    "Envie tokens apenas na **rede correta** para evitar perdas",
+                    "Este endereço funciona para **todas as redes EVM** listadas acima",
+                    "Verifique o endereço antes de enviar"
+                ],
+                "tap_to_copy": "Toque no endereço para copiar",
+                "currently_viewing": "Visualizando atualmente",
+            },
+            "zh": {
+                "title": "接收资金",
+                "wallet_address": "您的钱包地址",
+                "ens_handle": "ENS 名称",
+                "qr_code": "二维码",
+                "scan_to_deposit": "扫描以存款",
+                "supported_networks": "支持的网络",
+                "important": "重要提示",
+                "important_tips": [
+                    "仅在**正确的网络**上发送代币以避免损失",
+                    "此地址适用于上面列出的**所有 EVM 链**",
+                    "发送前请仔细检查地址"
+                ],
+                "tap_to_copy": "点击地址以复制",
+                "currently_viewing": "当前查看",
+            },
+        }
+        
+        msgs = receive_msgs.get(language, receive_msgs["en"])
 
         ens_section = ""
         if ens_handle:
             ens_section = f"""
-**ENS Handle:**
+**{msgs["ens_handle"]}:**
 `{ens_handle}`
 """
 
-        response = f"""📥 **Receive Funds**
+        response = f"""📥 **{msgs["title"]}**
 
-**Your Wallet Address:**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{msgs["wallet_address"]}:**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 `{wallet_address}`
 {ens_section}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📱 **QR Code:** [Scan to deposit]
+📱 **{msgs["qr_code"]}:** [{msgs["scan_to_deposit"]}]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Supported Networks:**
+**{msgs["supported_networks"]}:**
 """
         for network in self.SUPPORTED_NETWORKS:
             response += f"• **{network['name']}** ({network['tokens']})\n"
 
+        important_tips = "\n".join([f"• {tip}" for tip in msgs["important_tips"]])
+        
         response += f"""
-⚠️ **Important:**
-• Only send tokens on the **correct network** to avoid loss
-• This address works for **all EVM chains** listed above
-• Double-check the address before sending
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📋 *Tap address to copy*
+⚠️ **{msgs["important"]}:**
+{important_tips}
 
-{chain_emoji} Currently viewing: {chain.upper()}
+📋 *{msgs["tap_to_copy"]}*
+
+{chain_emoji} {msgs["currently_viewing"]}: {chain.upper()}
 """
         return response
 
-    def _format_no_wallet_response(self) -> str:
-        """Format response when no wallet found."""
-        return """📥 **No Wallet Found**
+    def _format_no_wallet_response(self, language: str = "en") -> str:
+        """Format response when no wallet found with improved formatting."""
+        no_wallet_msgs = {
+            "en": {
+                "title": "No Wallet Found",
+                "message": "You don't have a wallet set up yet.",
+                "header": "To get started:",
+                "options": [
+                    ("🔗", "Connect your wallet", "Link an existing wallet via the app"),
+                    ("✨", "Create embedded wallet", "Set up a new wallet automatically"),
+                    ("💡", "Get help", "Learn more about wallet setup")
+                ]
+            },
+            "es": {
+                "title": "Billetera No Encontrada",
+                "message": "Aún no tienes una billetera configurada.",
+                "header": "Para comenzar:",
+                "options": [
+                    ("🔗", "Conectar tu billetera", "Vincula una billetera existente vía la app"),
+                    ("✨", "Crear billetera integrada", "Configura una nueva billetera automáticamente"),
+                    ("💡", "Obtener ayuda", "Aprende más sobre la configuración de billetera")
+                ]
+            },
+            "pt": {
+                "title": "Carteira Não Encontrada",
+                "message": "Você ainda não tem uma carteira configurada.",
+                "header": "Para começar:",
+                "options": [
+                    ("🔗", "Conectar sua carteira", "Vincule uma carteira existente via o app"),
+                    ("✨", "Criar carteira integrada", "Configure uma nova carteira automaticamente"),
+                    ("💡", "Obter ajuda", "Saiba mais sobre a configuração de carteira")
+                ]
+            },
+            "zh": {
+                "title": "未找到钱包",
+                "message": "您还没有设置钱包。",
+                "header": "开始使用:",
+                "options": [
+                    ("🔗", "连接您的钱包", "通过应用链接现有钱包"),
+                    ("✨", "创建嵌入式钱包", "自动设置新钱包"),
+                    ("💡", "获取帮助", "了解更多关于钱包设置的信息")
+                ]
+            },
+        }
+        
+        msgs = no_wallet_msgs.get(language, no_wallet_msgs["en"])
+        options_text = "\n".join([
+            f"**{i}.** {emoji} **{title}**\n   {details}" 
+            for i, (emoji, title, details) in enumerate(msgs["options"], 1)
+        ])
+        
+        return f"""📥 **{msgs["title"]}**
 
-You don't have a wallet set up yet.
+{msgs["message"]}
 
-**To get started:**
-1. Connect your wallet via the app
-2. Or create an embedded wallet
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{msgs["header"]}**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Once connected, you'll be able to:
-• View your deposit address
-• Receive funds on multiple chains
-• Track incoming transactions
+{options_text}
 
-Would you like help setting up a wallet?
+💬 **Reply with the number (1, 2, or 3) to continue.**
 """

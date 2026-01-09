@@ -71,6 +71,9 @@ class GuestHandlerService:
         content: str,
         language: str = "en",
         context: str = "",
+        is_authenticated: bool = False,
+        continuation_step: str | None = None,
+        previous_lending_info: dict | None = None,
     ) -> dict[str, Any]:
         """
         Handle intent with real data.
@@ -80,6 +83,7 @@ class GuestHandlerService:
             content: The user's message content
             language: Language code (en, es, pt, zh)
             context: Conversation context from previous messages (for multi-turn)
+            is_authenticated: Whether the user is authenticated (no signup prompts if True)
 
         Returns:
             dict with 'content', 'enrichment', and 'requires_registration' fields
@@ -113,9 +117,9 @@ class GuestHandlerService:
         handler = handler_map.get(intent)
         if handler:
             try:
-                # Pass context to handlers that support it
+                # Pass context and is_authenticated to handlers that support it
                 if intent == ChatIntent.SWAP:
-                    return await self._handle_swap(content, language, context)
+                    return await self._handle_swap(content, language, context, is_authenticated)
                 # Hunter AI handlers can use context for follow-up questions
                 elif intent in [
                     ChatIntent.HUNTER_SENTIMENT,
@@ -124,13 +128,38 @@ class GuestHandlerService:
                     ChatIntent.HUNTER_TRADING_SIGNALS,
                     ChatIntent.HUNTER_PATTERNS,
                 ]:
-                    return await handler(content, language, context)
-                return await handler(content, language)
+                    return await handler(content, language, context, is_authenticated)
+                # Other handlers
+                elif intent in [
+                    ChatIntent.PROTOCOL_SEARCH,
+                    ChatIntent.RISK_ASSESSMENT,
+                    ChatIntent.SIMILAR_PROTOCOLS,
+                    ChatIntent.HUNTER_PORTFOLIO,
+                    ChatIntent.ULTRA_ARBITRAGE,
+                    ChatIntent.ULTRA_FLASH_LOANS,
+                    ChatIntent.ULTRA_MEV_PROTECTION,
+                    ChatIntent.ULTRA_AUTO_EXECUTOR,
+                    ChatIntent.MONEY_MARKET,
+                    ChatIntent.SPECIALIST_TASK,
+                    ChatIntent.COMPLEX_WORKFLOW,
+                ]:
+                    return await handler(content, language, is_authenticated)
+                # Lending handler with continuation support
+                elif intent == ChatIntent.LENDING:
+                    return await handler(
+                        content, 
+                        language, 
+                        context, 
+                        is_authenticated,
+                        continuation_step,
+                        previous_lending_info,
+                    )
+                return await handler(content, language, is_authenticated)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
-                return self._fallback_response(intent, language)
+                return self._fallback_response(intent, language, is_authenticated)
 
-        return self._fallback_response(intent, language)
+        return self._fallback_response(intent, language, is_authenticated)
 
     # ========================================
     # ========================================
@@ -138,7 +167,7 @@ class GuestHandlerService:
     # ========================================
 
     async def _handle_protocol_search(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle protocol search intent (demo mode with example protocols)."""
         # Demo protocols data - in production, this would query the graph
@@ -198,7 +227,7 @@ class GuestHandlerService:
         response += f"\n{t['note']}\n"
         for feature in t["features"]:
             response += f"  ✓ {feature}\n"
-        response += "\n" + self._get_registration_cta(language, for_action=False)
+        response += "\n" + self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
         return {
             "content": response,
@@ -207,11 +236,11 @@ class GuestHandlerService:
                 "demo_protocols": len(demo_protocols),
                 "full_search_requires_registration": True,
             },
-            "requires_registration": False,
+            "requires_registration": not is_authenticated,
         }
 
     async def _handle_risk_assessment(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle risk assessment intent (demo mode with example analysis)."""
         # Extract protocol name from content
@@ -300,7 +329,7 @@ class GuestHandlerService:
         response += f"{t['note']}\n"
         for feature in t["features"]:
             response += f"  ✓ {feature}\n"
-        response += "\n" + self._get_registration_cta(language, for_action=False)
+        response += "\n" + self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
         return {
             "content": response,
@@ -315,7 +344,7 @@ class GuestHandlerService:
         }
 
     async def _handle_similar_protocols(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle similar protocols search intent (demo mode)."""
         # Extract protocol name from content
@@ -375,7 +404,7 @@ class GuestHandlerService:
         response += f"\n{t['note']}\n"
         for feature in t["features"]:
             response += f"  ✓ {feature}\n"
-        response += "\n" + self._get_registration_cta(language, for_action=False)
+        response += "\n" + self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
         return {
             "content": response,
@@ -385,7 +414,7 @@ class GuestHandlerService:
                 "similar_protocols": [s[0] for s in similar],
                 "full_comparison_requires_registration": True,
             },
-            "requires_registration": False,
+            "requires_registration": not is_authenticated,
         }
 
     # ========================================
@@ -393,7 +422,7 @@ class GuestHandlerService:
     # ========================================
 
     async def _handle_sentiment(
-        self, content: str, language: str, context: str = ""
+        self, content: str, language: str, context: str = "", is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle sentiment analysis with real data."""
         # Extract token from content, using context if token not found in current message
@@ -458,7 +487,7 @@ class GuestHandlerService:
                 emoji = "🟢" if data["score"] > 60 else "🔴" if data["score"] < 40 else "🟡"
                 response += f"- {source.title()}: {emoji} {data['score']:.0f}/100\n"
 
-            response += self._get_registration_cta(language)
+            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
             # Build sources list
             from datetime import datetime
@@ -493,10 +522,10 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.warning(f"Sentiment analysis error: {e}")
-            return self._fallback_response(ChatIntent.HUNTER_SENTIMENT, language)
+            return self._fallback_response(ChatIntent.HUNTER_SENTIMENT, language, is_authenticated)
 
     async def _handle_price_prediction(
-        self, content: str, language: str, context: str = ""
+        self, content: str, language: str, context: str = "", is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle price prediction with real ML model."""
         # Extract token from content, using context if token not found in current message
@@ -588,7 +617,8 @@ class GuestHandlerService:
             response += f"{t['model']}\n"
             response += f"{t['horizon']} {prediction.horizon_hours} {t['hours']}\n"
 
-            response += self._get_registration_cta(language)
+            # Use conditional CTA helper
+            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
             return {
                 "content": response,
@@ -601,7 +631,7 @@ class GuestHandlerService:
                     "confidence": prediction.confidence,
                     "hunter_tool": "lstm_predictor",
                 },
-                "requires_registration": False,
+                "requires_registration": not is_authenticated,
             }
         except Exception as e:
             logger.error(f"Price prediction error for token {token}: {e}", exc_info=True)
@@ -633,10 +663,10 @@ class GuestHandlerService:
             except Exception as e2:
                 logger.warning(f"Failed to get fallback price: {e2}")
             
-            return self._fallback_response(ChatIntent.HUNTER_PRICE_PREDICTION, language)
+            return self._fallback_response(ChatIntent.HUNTER_PRICE_PREDICTION, language, is_authenticated)
 
     async def _handle_risk_signals(
-        self, content: str, language: str, context: str = ""
+        self, content: str, language: str, context: str = "", is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle market risk signals."""
         # Extract token from content, using context if token not found in current message
@@ -702,7 +732,7 @@ class GuestHandlerService:
             if assessment.recommendation:
                 response += f"\n**Recommendation:** {assessment.recommendation}\n"
 
-            response += self._get_registration_cta(language)
+            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
             return {
                 "content": response,
@@ -714,14 +744,14 @@ class GuestHandlerService:
                     "recommendation": assessment.recommendation,
                     "hunter_tool": "risk_analyzer",
                 },
-                "requires_registration": False,
+                "requires_registration": not is_authenticated,
             }
         except Exception as e:
             logger.error(f"Risk signals error for token {token}: {e}", exc_info=True)
-            return self._fallback_response(ChatIntent.HUNTER_RISK_SIGNALS, language)
+            return self._fallback_response(ChatIntent.HUNTER_RISK_SIGNALS, language, is_authenticated)
 
     async def _handle_trading_signals(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle trading signal generation."""
         token = self._extract_token(content) or "ETH"
@@ -812,7 +842,7 @@ class GuestHandlerService:
             response += f"- {t['prediction']} {signal.prediction_score:.0f}/100\n"
             response += f"- {t['risk']} {signal.risk_score:.0f}/100\n"
 
-            response += self._get_registration_cta(language)
+            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
             return {
                 "content": response,
@@ -830,10 +860,10 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.warning(f"Trading signals error: {e}")
-            return self._fallback_response(ChatIntent.HUNTER_TRADING_SIGNALS, language)
+            return self._fallback_response(ChatIntent.HUNTER_TRADING_SIGNALS, language, is_authenticated)
 
     async def _handle_patterns(
-        self, content: str, language: str, context: str = ""
+        self, content: str, language: str, context: str = "", is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle chart pattern recognition."""
         # Extract token from content, using context if token not found in current message
@@ -917,7 +947,7 @@ class GuestHandlerService:
                         response += f"- {t['confidence']} {signal.confidence * 100:.0f}%\n"
                         response += f"- Price: ${signal.price:,.2f}\n\n"
 
-            response += self._get_registration_cta(language)
+            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
             return {
                 "content": response,
@@ -931,10 +961,10 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.error(f"Pattern recognition error for token {token}: {e}", exc_info=True)
-            return self._fallback_response(ChatIntent.HUNTER_PATTERNS, language)
+            return self._fallback_response(ChatIntent.HUNTER_PATTERNS, language, is_authenticated)
 
     async def _handle_portfolio_optimization(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle portfolio optimization suggestions."""
         try:
@@ -996,7 +1026,7 @@ class GuestHandlerService:
             response += f"\n{t['expected_return']} {result.expected_return * 100:.1f}% {t['annual']}\n"
             response += f"{t['sharpe_ratio']} {result.sharpe_ratio:.2f}\n"
 
-            response += self._get_registration_cta(language, for_action=True)
+            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
             return {
                 "content": response,
@@ -1006,18 +1036,18 @@ class GuestHandlerService:
                     "sharpe_ratio": result.sharpe_ratio,
                     "hunter_tool": "portfolio_optimizer",
                 },
-                "requires_registration": True,  # Need wallet to apply
+                "requires_registration": not is_authenticated,  # Need wallet to apply
             }
         except Exception as e:
             logger.warning(f"Portfolio optimization error: {e}")
-            return self._fallback_response(ChatIntent.HUNTER_PORTFOLIO, language)
+            return self._fallback_response(ChatIntent.HUNTER_PORTFOLIO, language, is_authenticated)
 
     # ========================================
     # ULTRA Handlers
     # ========================================
 
     async def _handle_arbitrage(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle arbitrage opportunity discovery with REAL data."""
         try:
@@ -1206,7 +1236,7 @@ class GuestHandlerService:
                     response += f"- {t['net_profit']} ${float(opp.expected_profit_usd):,.2f}\n"
                     response += f"- {t['roi']} {float(opp.profit_percentage * 100):.2f}%\n\n"
 
-            response += self._get_registration_cta(language, for_action=True)
+            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
             return {
                 "content": response,
@@ -1215,14 +1245,14 @@ class GuestHandlerService:
                     "opportunities_found": len(opportunities),
                     "ultra_tool": "arbitrage_discovery",
                 },
-                "requires_registration": True,  # Need wallet to execute
+                "requires_registration": not is_authenticated,  # Need wallet to execute
             }
         except Exception as e:
             logger.warning(f"Arbitrage discovery error: {e}")
-            return self._fallback_response(ChatIntent.ULTRA_ARBITRAGE, language)
+            return self._fallback_response(ChatIntent.ULTRA_ARBITRAGE, language, is_authenticated)
 
     async def _handle_flash_loans(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle flash loan information."""
         try:
@@ -1287,7 +1317,7 @@ class GuestHandlerService:
             response += f"- {t['collateral']}\n"
             response += f"- {t['liquidation']}\n"
 
-            response += self._get_registration_cta(language, for_action=True)
+            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
             return {
                 "content": response,
@@ -1299,10 +1329,10 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.warning(f"Flash loans error: {e}")
-            return self._fallback_response(ChatIntent.ULTRA_FLASH_LOANS, language)
+            return self._fallback_response(ChatIntent.ULTRA_FLASH_LOANS, language, is_authenticated)
 
     async def _handle_mev_protection(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle MEV protection information."""
         try:
@@ -1390,7 +1420,7 @@ class GuestHandlerService:
             response += f"- ✅ {t['private_routing']}\n"
             response += f"- ✅ {t['backrun']}\n"
 
-            response += self._get_registration_cta(language, for_action=True)
+            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
             return {
                 "content": response,
@@ -1404,10 +1434,10 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.warning(f"MEV protection error: {e}")
-            return self._fallback_response(ChatIntent.ULTRA_MEV_PROTECTION, language)
+            return self._fallback_response(ChatIntent.ULTRA_MEV_PROTECTION, language, is_authenticated)
 
     async def _handle_auto_executor(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle auto-executor information with multi-language support."""
         translations = {
@@ -1485,7 +1515,7 @@ class GuestHandlerService:
         response += f"- {t['mev']}\n"
         response += f"- {t['multichain']}\n\n"
 
-        response += self._get_registration_cta(language, for_action=True)
+        response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
         return {
             "content": response,
@@ -1502,28 +1532,49 @@ class GuestHandlerService:
     # ========================================
 
     async def _handle_lending(
-        self, content: str, language: str, context: str = ""
+        self, 
+        content: str, 
+        language: str, 
+        context: str = "", 
+        is_authenticated: bool = False,
+        continuation_step: str | None = None,
+        previous_lending_info: dict | None = None,
     ) -> dict[str, Any]:
         """Handle lending rates with real Morpho data."""
         if self._lending_handler:
             try:
-                # Extract chain and asset from message
-                chain, asset = self._lending_handler._extract_params_from_message(content)
-                
-                # Call execute method with correct parameters
-                result = await self._lending_handler.execute(
-                    message=content,
-                    chain=chain,
-                    asset=asset,
-                    whitelisted_only=True,
-                    language=language,
-                )
+                # Handle continuation from previous lending query
+                if continuation_step and previous_lending_info:
+                    result = await self._lending_handler.execute(
+                        message=content,
+                        chain=previous_lending_info.get("chain", "base"),
+                        asset=previous_lending_info.get("asset", "USDC"),
+                        whitelisted_only=True,
+                        language=language,
+                        continuation_step=continuation_step,
+                        previous_lending_info=previous_lending_info,
+                        intent_metadata=intent_metadata,
+                    )
+                else:
+                    # Extract chain and asset from message
+                    chain, asset = self._lending_handler._extract_params_from_message(content)
+                    
+                    # Call execute method with correct parameters
+                    result = await self._lending_handler.execute(
+                        message=content,
+                        chain=chain,
+                        asset=asset,
+                        whitelisted_only=True,
+                        language=language,
+                    )
                 
                 # Convert LendingHandlerResult to dict format
                 response_content = result.content
-                response_content += self._get_registration_cta(language, for_action=True)
+                # Only add CTA if not in a continuation flow
+                if not continuation_step:
+                    response_content += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
                 
-                return {
+                response = {
                     "content": response_content,
                     "enrichment": {
                         "vaults": result.vaults,
@@ -1533,15 +1584,29 @@ class GuestHandlerService:
                         "latency_ms": result.latency_ms,
                         "hunter_tool": "lending_handler",
                     },
-                    "requires_registration": True,
+                    "requires_registration": not is_authenticated,
                 }
+                
+                # Include pending_action and lending_info if set (for multi-turn flows)
+                if result.pending_action:
+                    response["pending_action"] = result.pending_action
+                    # Use lending_info from result if available, otherwise create from result
+                    if hasattr(result, "lending_info") and result.lending_info:
+                        response["lending_info"] = result.lending_info
+                    else:
+                        response["lending_info"] = {
+                            "chain": result.chain,
+                            "asset": result.asset,
+                        }
+                
+                return response
             except Exception as e:
                 logger.error(f"Lending handler error for '{content}': {e}", exc_info=True)
 
-        return self._fallback_response(ChatIntent.LENDING, language)
+        return self._fallback_response(ChatIntent.LENDING, language, is_authenticated)
 
     async def _handle_money_market(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle money market rates with real Aave/Compound data."""
         # NOTE:
@@ -1561,7 +1626,7 @@ class GuestHandlerService:
 
             return {
                 "content": result.content
-                + self._get_registration_cta(language, for_action=True),
+                + self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated),
                 "enrichment": {
                     "asset": result.asset,
                     "chain": chain,
@@ -1572,14 +1637,14 @@ class GuestHandlerService:
                     "best_borrow_apy": result.best_borrow_apy,
                     "latency_ms": result.latency_ms,
                 },
-                "requires_registration": True,
+                "requires_registration": not is_authenticated,
             }
         except Exception as e:
             logger.warning(f"Money market handler error: {e}")
-            return self._fallback_response(ChatIntent.MONEY_MARKET, language)
+            return self._fallback_response(ChatIntent.MONEY_MARKET, language, is_authenticated)
 
     async def _handle_swap(
-        self, content: str, language: str, context: str = ""
+        self, content: str, language: str, context: str = "", is_authenticated: bool = False
     ) -> dict[str, Any]:
         """
         Handle swap quotes with real 1inch/LiFi data or demo response.
@@ -1703,7 +1768,7 @@ class GuestHandlerService:
             demo_response["content"] += f"\n\n{registration_msg}"
         # Add registration CTA if not already present
         if "👉" not in demo_response["content"] and "Sign up" not in demo_response["content"]:
-            demo_response["content"] += f"\n\n{self._get_registration_cta(language, for_action=True)}"
+            demo_response["content"] += f"\n\n{self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)}"
         demo_response["requires_registration"] = True
         return demo_response
     
@@ -2142,7 +2207,7 @@ class GuestHandlerService:
             response += f"**{t['impact']}:** ~0.12%\n"
             response += f"**{t['gas']}:** ~$0.50\n\n"
             response += f"{t['note']}\n\n"
-            response += self._get_registration_cta(language, for_action=True)
+            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
             
             return {
                 "content": response,
@@ -2197,7 +2262,7 @@ class GuestHandlerService:
     # ========================================
 
     async def _handle_specialist_task(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle specialist task requests (Agent Squad)."""
         translations = {
@@ -2281,7 +2346,7 @@ class GuestHandlerService:
         for agent_name, agent_desc in t["agents"]:
             response += f"- {agent_name}: {agent_desc}\n"
 
-        response += "\n" + self._get_registration_cta(language, for_action=True)
+        response += "\n" + self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
         return {
             "content": response,
@@ -2297,7 +2362,7 @@ class GuestHandlerService:
         }
 
     async def _handle_complex_workflow(
-        self, content: str, language: str
+        self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle complex workflow requests (Supervisor)."""
         translations = {
@@ -2385,7 +2450,7 @@ class GuestHandlerService:
         for step in t["steps"]:
             response += f"{step}\n"
 
-        response += "\n" + self._get_registration_cta(language, for_action=True)
+        response += "\n" + self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
         return {
             "content": response,
@@ -2596,8 +2661,20 @@ class GuestHandlerService:
             }
         return ctas.get(language, ctas["en"])
 
+    def _get_auth_cta_message(
+        self, language: str, for_action: bool = False, is_authenticated: bool = False
+    ) -> str:
+        """
+        Get registration CTA message based on authentication status.
+        
+        Returns empty string if user is authenticated (no signup prompts needed).
+        """
+        if is_authenticated:
+            return ""
+        return self._get_registration_cta(language, for_action)
+
     def _fallback_response(
-        self, intent: ChatIntent, language: str
+        self, intent: ChatIntent, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Generate fallback response when handler fails."""
         fallbacks = {
@@ -2642,9 +2719,13 @@ class GuestHandlerService:
 
         messages = fallbacks.get(intent, default)
         content = messages.get(language, messages.get("en", ""))
+        
+        # Add CTA only for guests
+        if not is_authenticated and intent in [ChatIntent.SWAP, ChatIntent.LENDING, ChatIntent.MONEY_MARKET]:
+            content += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
         return {
             "content": content,
             "enrichment": None,
-            "requires_registration": False,
+            "requires_registration": not is_authenticated,
         }
