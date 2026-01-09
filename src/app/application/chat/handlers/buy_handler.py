@@ -226,17 +226,39 @@ class BuyHandler:
             )
 
         except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Error getting wallet for user {user_id} in buy handler: {e}", exc_info=True)
+            
             latency_ms = int((time.time() - start_time) * 1000)
-
-            return BuyHandlerResult(
-                content=f"⚠️ **Error**\n\n{str(e)}\n\nPlease try again later.",
-                wallet_address=None,
-                supported_assets=[],
-                supported_networks=[],
-                requires_privy_modal=False,
-                latency_ms=latency_ms,
-                language=lang,
-            )
+            
+            # Provide user-friendly error message instead of technical error
+            # Check if it's a database error
+            from app.infrastructure.exceptions.gateway import DataMapperError
+            if isinstance(e, DataMapperError) or "Database query failed" in str(e):
+                # Return no_wallet message instead of error - user can still proceed
+                return BuyHandlerResult(
+                    content=msgs["no_wallet"],
+                    wallet_address=None,
+                    supported_assets=self.SUPPORTED_ASSETS,
+                    supported_networks=self.SUPPORTED_NETWORKS,
+                    requires_privy_modal=False,
+                    latency_ms=latency_ms,
+                    language=lang,
+                )
+            else:
+                # For other errors, show generic error message
+                error_content = f"⚠️ **Error**\n\n{str(e)}\n\nPlease try again later."
+                return BuyHandlerResult(
+                    content=error_content,
+                    wallet_address=None,
+                    supported_assets=self.SUPPORTED_ASSETS,
+                    supported_networks=self.SUPPORTED_NETWORKS,
+                    requires_privy_modal=False,
+                    latency_ms=latency_ms,
+                    language=lang,
+                )
 
     def _format_buy_response(
         self,
