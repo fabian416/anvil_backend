@@ -2961,12 +2961,33 @@ Your transactions are recorded when you use the app.
                     "action": "open_fund_wallet" if wallet_address else None,
                 }
         except Exception as e:
-            response_content = f"⚠️ Error: {e!s}"
-            enrichment = {"error": str(e)}
+            logger.error(f"Error in _handle_buy for user {user_id}: {e}", exc_info=True)
+            # Provide fallback response without wallet lookup
+            response_content = self._format_buy_fallback_response(language, None)
+            enrichment = {
+                "wallet_address": None,
+                "requires_privy_modal": False,
+                "action": None,
+                "error": str(e),
+            }
 
-        user_msg, agent_msg = await self._save_messages(
-            conversation_id, content, response_content
-        )
+        # Save messages - this should be in a separate try/except to handle transaction errors
+        try:
+            user_msg, agent_msg = await self._save_messages(
+                conversation_id, content, response_content
+            )
+        except Exception as e:
+            logger.error(f"Error saving messages in _handle_buy: {e}", exc_info=True)
+            # Create message objects in memory even if save fails
+            from app.domain.chat.entities.message import Message
+            user_msg = Message.create_user_message(
+                conversation_id=conversation_id,
+                content=content,
+            )
+            agent_msg = Message.create_assistant_message(
+                conversation_id=conversation_id,
+                content=response_content,
+            )
 
         return {
             "user_message": self._message_to_dict(user_msg),
