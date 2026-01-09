@@ -4,7 +4,7 @@ SQLAlchemy implementation of ConversationRepository.
 
 from typing import List, Optional
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.chat.ports.conversation_repository import ConversationRepository
@@ -215,3 +215,42 @@ class SqlaConversationRepository(ConversationRepository):
             messages.append(message)
         
         return messages
+    
+    async def delete_conversation(
+        self,
+        conversation_id: UUID,
+        user_id: int
+    ) -> bool:
+        """Delete a conversation and its messages."""
+        conversations_table = mapping_registry.metadata.tables.get("conversations")
+        messages_table = mapping_registry.metadata.tables.get("messages")
+        
+        if conversations_table is None:
+            raise RuntimeError("conversations table not found in metadata")
+        
+        # First verify the conversation belongs to the user
+        stmt = select(conversations_table).where(
+            (conversations_table.c.id == conversation_id) &
+            (conversations_table.c.user_id == user_id)
+        )
+        result = await self._session.execute(stmt)
+        row = result.fetchone()
+        
+        if not row:
+            return False
+        
+        # Delete messages first (if table exists)
+        if messages_table is not None:
+            delete_messages_stmt = delete(messages_table).where(
+                messages_table.c.conversation_id == conversation_id
+            )
+            await self._session.execute(delete_messages_stmt)
+        
+        # Delete the conversation
+        delete_conv_stmt = delete(conversations_table).where(
+            conversations_table.c.id == conversation_id
+        )
+        await self._session.execute(delete_conv_stmt)
+        await self._session.commit()
+        
+        return True

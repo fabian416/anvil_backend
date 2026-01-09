@@ -45,6 +45,12 @@ class SendMessageRequest(BaseModel):
     language: str = Field(default="en", pattern="^(en|es|pt|zh)$")
 
 
+class UpdateConversationRequest(BaseModel):
+    """Request to update a conversation."""
+    
+    title: str | None = Field(None, max_length=255, description="New title for the conversation")
+
+
 class ConversationResponse(BaseModel):
     """Response for a conversation."""
     
@@ -330,6 +336,68 @@ def create_conversations_router() -> APIRouter:
         return ConversationWithMessagesResponse(
             conversation=ConversationResponse(**result["conversation"]),
             messages=[MessageResponse(**msg) for msg in result["messages"]],
+        )
+    
+    @router.patch(
+        "/{conversation_id}",
+        response_model=ConversationResponse,
+        status_code=status.HTTP_200_OK,
+        summary="Update Conversation",
+        description="""
+        Update a conversation's title.
+        
+        This endpoint allows updating the conversation title.
+        Other fields are not currently modifiable.
+        """,
+    )
+    @inject
+    async def update_conversation(
+        conversation_id: UUID,
+        request: UpdateConversationRequest,
+        http_request: Request,
+        user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
+        conversation_service: FromDishka[ConversationService],
+    ) -> ConversationResponse:
+        """
+        Update a conversation.
+        
+        Currently supports updating the title only.
+        """
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
+        )
+        
+        if request.title is not None:
+            conversation = await conversation_service.update_title(
+                conversation_id=conversation_id,
+                user_id=user.id,
+                title=request.title,
+            )
+        else:
+            # If no fields provided, just fetch the conversation
+            conversation = await conversation_service.get(
+                conversation_id=conversation_id,
+                user_id=user.id,
+            )
+        
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        
+        return ConversationResponse(
+            id=str(conversation.id),
+            title=conversation.title,
+            status=conversation.status.value,
+            created_at=conversation.created_at.isoformat(),
+            updated_at=conversation.updated_at.isoformat(),
+            last_message_at=conversation.last_message_at.isoformat() if conversation.last_message_at else None,
+            message_count=conversation.message_count,
+            language=conversation.language,
         )
     
     @router.delete(

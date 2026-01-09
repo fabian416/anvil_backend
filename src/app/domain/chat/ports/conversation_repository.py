@@ -103,3 +103,20 @@ class ConversationRepository(Protocol):
             List of message entities, ordered by created_at (oldest first)
         """
         ...
+    
+    async def delete_conversation(
+        self,
+        conversation_id: UUID,
+        user_id: int
+    ) -> bool:
+        """
+        Delete a conversation and its messages.
+        
+        Args:
+            conversation_id: Conversation identifier
+            user_id: User identifier (for authorization check)
+        
+        Returns:
+            True if deleted, False if not found or not authorized
+        """
+        ...

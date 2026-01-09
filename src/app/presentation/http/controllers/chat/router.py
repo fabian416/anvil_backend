@@ -37,6 +37,7 @@ from app.presentation.http.schemas.chat import (
     UnifiedChatResponse,
 )
 from app.application.chat.commands.create_conversation import CreateConversation
+from app.application.chat.commands.delete_conversation import DeleteConversation
 from app.application.chat.commands.send_message import SendMessage
 from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
 from app.application.chat.commands.execute_action import ExecuteActionCommand
@@ -152,38 +153,51 @@ def create_chat_router() -> APIRouter:
     @router.delete(
         "/conversations/{conversation_id}",
         status_code=status.HTTP_200_OK,
-        response_model=ConversationResponse,
         dependencies=[Security(bearer_scheme)],
     )
     @inject
     async def delete_conversation(
         conversation_id: UUID,
         current_user: FromDishka[CurrentUserService],
-        interactor: FromDishka[GetConversation],
-    ) -> ConversationResponse:
+        delete_interactor: FromDishka[DeleteConversation],
+        get_interactor: FromDishka[GetConversation],
+    ) -> dict:
         """
-        Archive a conversation (soft delete).
+        Delete a conversation permanently.
         
-        This endpoint archives the conversation by marking it as archived.
-        Archived conversations are not shown in the default conversation list.
+        This endpoint permanently deletes the conversation and all its messages.
         
-        **Implementation Note:**
-        This endpoint redirects to the new ChatConversation system endpoint
-        at /api/v1/chat/conversations/{conversation_id} which supports archiving.
-        The old Conversation entity system doesn't support archiving natively.
+        Returns:
+            {"deleted": true} on success
+            404 if conversation not found or not authorized
         """
-        # The old Conversation system doesn't support archiving
-        # We need to use the new ChatConversation system
-        # Redirect to the conversations_router endpoint which has proper archiving support
-        raise HTTPException(
-            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-            detail=(
-                "Archive functionality is available at "
-                f"/api/v1/chat/conversations/{conversation_id}. "
-                "Please use that endpoint for archiving conversations."
-            ),
-            headers={"Location": f"/api/v1/chat/conversations/{conversation_id}"},
+        user = await current_user.get_current_user()
+        
+        # First get the conversation to return it (optional, for logging)
+        conversation = await get_interactor.execute(
+            user_id=user.id_.value,
+            conversation_id=conversation_id,
         )
+        
+        if conversation is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        
+        # Delete the conversation
+        deleted = await delete_interactor.execute(
+            user_id=user.id_.value,
+            conversation_id=conversation_id,
+        )
+        
+        if not deleted:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found or not authorized",
+            )
+        
+        return {"deleted": True, "id": str(conversation_id)}
     
     @router.post(
         "/conversations/{conversation_id}/messages",

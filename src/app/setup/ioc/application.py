@@ -2,6 +2,7 @@ from dishka import Provider, Scope, provide, provide_all
 
 # Chat interactors
 from app.application.chat.commands.create_conversation import CreateConversation
+from app.application.chat.commands.delete_conversation import DeleteConversation
 from app.application.chat.commands.send_message import SendMessage
 from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
 from app.application.chat.queries.get_conversation import GetConversation
@@ -83,6 +84,7 @@ class ApplicationProvider(Provider):
     # Chat interactors
     chat_command_interactors = provide_all(
         CreateConversation,
+        DeleteConversation,
         scope=Scope.REQUEST,
     )
     
