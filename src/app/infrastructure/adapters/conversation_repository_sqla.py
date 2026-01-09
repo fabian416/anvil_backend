@@ -142,6 +142,16 @@ class SqlaConversationRepository(ConversationRepository):
         if messages_table is None:
             raise RuntimeError("messages table not found in metadata")
         
+        # Check if transaction is in failed state and rollback if needed
+        # This prevents InFailedSqlTransaction errors
+        try:
+            # Try a simple query to check transaction state
+            from sqlalchemy import text
+            await self._session.execute(text("SELECT 1"))
+        except Exception:
+            # Transaction is in failed state, rollback first
+            await self._session.rollback()
+        
         try:
             # Insert message data
             stmt = messages_table.insert().values(
