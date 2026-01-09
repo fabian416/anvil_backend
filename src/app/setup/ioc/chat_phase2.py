@@ -64,6 +64,7 @@ from app.application.chat.graph_search_handler import ChatGraphSearchHandler
 from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
 from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
 from app.application.agent_squad.commands.execute_supervisor_workflow import ExecuteSupervisorWorkflow
+from app.application.common.services.current_user import CurrentUserService
 
 # Demo mode service (same handlers as /guest/chat)
 from app.application.guest.handlers.guest_handler_service import GuestHandlerService
