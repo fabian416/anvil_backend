@@ -1,0 +1,73 @@
+{
+    "user_message": {
+        "id": "624547e5-3144-4ca2-a80f-0c6f6e29f318",
+        "conversation_id": "892f31e9-f895-477a-8115-1f7b244e6ef5",
+        "role": "user",
+        "content": "Buy crypto",
+        "agent_type": null,
+        "created_at": "2026-01-09T20:09:24.088121+00:00"
+    },
+    "agent_message": {
+        "id": "f86440f3-8614-42f4-9898-17d129477ce6",
+        "conversation_id": "892f31e9-f895-477a-8115-1f7b244e6ef5",
+        "role": "assistant",
+        "content": "⚠️ **No Wallet Found**\n\nYou need to connect or create a wallet first to buy crypto.",
+        "agent_type": null,
+        "created_at": "2026-01-09T20:09:24.103059+00:00"
+    },
+    "routing": {
+        "intent": "buy",
+        "confidence": 0.99,
+        "handler": "buy_handler",
+        "agent_used": null,
+        "reasoning": "User wants to purchase cryptocurrency with fiat currency",
+        "total_latency_ms": 10781,
+        "language": "en"
+    },
+    "enrichment": {
+        "protocols": null,
+        "search_context": null,
+        "recommendations": null,
+        "risk_analysis": null,
+        "alternatives_count": null,
+        "base_protocol": null,
+        "similar_protocols": null,
+        "task_type": null,
+        "has_tools_used": null,
+        "tools_used": null,
+        "tokens_consumed": null,
+        "latency_ms": 5,
+        "intent_classification": null,
+        "workflow_id": null,
+        "workflow_status": null,
+        "tasks_count": null,
+        "agents_involved": null,
+        "workflow_type": null,
+        "total_latency_ms": null,
+        "hunter_tool": null,
+        "token_symbol": null,
+        "tokens": null,
+        "time_horizon": null,
+        "sources": null,
+        "risk_tolerance": null,
+        "ultra_tool": null,
+        "capital": null,
+        "arb_type": null,
+        "amount": null,
+        "protocol": null,
+        "opportunity_id": null,
+        "action": "open_fund_wallet",
+        "wallet_address": null,
+        "ens_handle": null,
+        "chain": null,
+        "supported_networks": [
+            "Ethereum",
+            "Base",
+            "Polygon",
+            "Arbitrum",
+            "Optimism"
+        ]
+    },
+    "sources": [],
+    "execute": null
+}
