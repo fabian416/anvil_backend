@@ -391,6 +391,13 @@ class SqlaWalletRepository(WalletRepository):
             return await self.get_by_user_and_address(user_id, normalized_address)  # type: ignore
 
         except SQLAlchemyError as error:
+            # Log the actual error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f"Error in wallet upsert for user {user_id.value}, address {address[:10]}...: {error}",
+                exc_info=True,
+            )
             await self._session.rollback()
             raise DataMapperError(DB_QUERY_FAILED) from error
 
