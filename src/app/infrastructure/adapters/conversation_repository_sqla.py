@@ -142,18 +142,23 @@ class SqlaConversationRepository(ConversationRepository):
         if messages_table is None:
             raise RuntimeError("messages table not found in metadata")
         
-        # Insert message data
-        stmt = messages_table.insert().values(
-            id=message.id,
-            conversation_id=message.conversation_id,
-            role=message.role.value,
-            content=message.content,
-            agent_type=message.agent_type if message.agent_type else None,
-            created_at=message.created_at
-        )
-        
-        await self._session.execute(stmt)
-        await self._session.flush()
+        try:
+            # Insert message data
+            stmt = messages_table.insert().values(
+                id=message.id,
+                conversation_id=message.conversation_id,
+                role=message.role.value,
+                content=message.content,
+                agent_type=message.agent_type if message.agent_type else None,
+                created_at=message.created_at
+            )
+            
+            await self._session.execute(stmt)
+            await self._session.flush()
+        except Exception as e:
+            # Rollback the transaction on error to prevent InFailedSqlTransaction
+            await self._session.rollback()
+            raise
     
     async def get_message(self, message_id: UUID) -> Optional[Message]:
         """Get a message by ID."""
