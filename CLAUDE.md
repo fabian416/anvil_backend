@@ -2,6 +2,31 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ IMPORTANT: Legacy System Deprecation
+
+**The legacy conversation system is DEPRECATED** and will be removed on **2026-06-01**.
+
+### Legacy System (DO NOT USE)
+- ❌ Router: `src/app/presentation/http/controllers/chat/router.py`
+- ❌ Base Path: `/api/v1/user/chat/*`
+- ❌ Tables: `conversations`, `users` (INTEGER user_id)
+
+### New System (USE THIS)
+- ✅ Router: `src/app/presentation/http/controllers/chat/conversations_router.py`
+- ✅ Base Path: `/api/v1/conversations/*`
+- ✅ Tables: `chat_conversations`, `chat_users` (UUID user_id)
+- ✅ Features: Guest support, multi-language, intent routing, metadata, status tracking
+
+### Migration Guide
+See **[docs/DEPRECATION_PLAN.md](docs/DEPRECATION_PLAN.md)** for complete migration instructions.
+
+**When developing new features**:
+- Always use the new system (`conversations_router.py`)
+- Never add features to the legacy system (`router.py`)
+- All data has been migrated - both systems currently work in parallel
+
+---
+
 ## Development Commands
 
 **Environment Setup:**

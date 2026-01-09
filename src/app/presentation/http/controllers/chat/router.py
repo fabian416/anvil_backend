@@ -1,12 +1,30 @@
 """
 Chat router for conversation and message endpoints.
+
+⚠️ DEPRECATED: This router uses the legacy conversation system (conversations table).
+Migration to new system (chat_conversations) required by 2026-06-01.
+
+New System: Use /api/v1/conversations/* endpoints instead
+Migration Guide: See docs/DEPRECATION_PLAN.md
 """
 
+import logging
+import warnings
 from uuid import UUID
 
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, status, Security
 from fastapi.exceptions import HTTPException
+
+# Legacy system deprecation warning
+warnings.warn(
+    "chat/router.py uses deprecated conversation system. "
+    "Migrate to conversations_router.py by 2026-06-01",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+logger = logging.getLogger(__name__)
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.application.common.services.current_user import CurrentUserService
@@ -58,16 +76,26 @@ from app.presentation.http.schemas.execute import (
 
 
 def create_chat_router() -> APIRouter:
+    """
+    Create legacy chat router (DEPRECATED).
+
+    ⚠️  DEPRECATED: This router will be removed on 2026-06-01
+    📚 Migration Guide: docs/DEPRECATION_PLAN.md
+    ✅ New System: Use /api/v1/conversations/* endpoints
+    """
     router = APIRouter(
         prefix="/user/chat",
-        tags=["chat"],
+        tags=["chat (DEPRECATED - use /conversations)"],
+        deprecated=True,
     )
-    
+
     @router.post(
         "/conversations",
         status_code=status.HTTP_201_CREATED,
         response_model=ConversationResponse,
         dependencies=[Security(bearer_scheme)],
+        deprecated=True,
+        description="⚠️ DEPRECATED: Use POST /api/v1/conversations instead",
     )
     @inject
     async def create_conversation(
@@ -77,15 +105,26 @@ def create_chat_router() -> APIRouter:
     ) -> ConversationResponse:
         """
         Create a new conversation.
-        
+
+        ⚠️ **DEPRECATED**: This endpoint uses the legacy conversation system.
+
+        **Migration Required**:
+        - Use `POST /api/v1/conversations` instead
+        - See docs/DEPRECATION_PLAN.md for migration guide
+        - Sunset date: 2026-06-01
+
         Requires authentication.
         """
+        logger.warning(
+            "DEPRECATED ENDPOINT USED: POST /user/chat/conversations "
+            "- Migrate to POST /api/v1/conversations by 2026-06-01"
+        )
         user = await current_user.get_current_user()
         conversation = await interactor.execute(
             user_id=user.id_.value,
             title=request.title,
         )
-        
+
         return ConversationResponse.model_validate(conversation)
     
     @router.get(
