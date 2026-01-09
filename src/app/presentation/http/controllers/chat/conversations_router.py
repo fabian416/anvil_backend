@@ -630,34 +630,30 @@ def create_conversations_router() -> APIRouter:
             else:
                 # Authenticated user: Use actual handlers with improved formatting
                 # These intents are handled through SendMessageUnified for real data
-                from app.application.chat.commands.send_message_unified import SendMessageUnified
-                from app.setup.ioc.provider_registry import get_providers
-                from app.setup.config.settings import load_settings
-                from app.setup.ioc.container import create_async_ioc_container
+                # Use guest handler service which already has the handlers configured
+                from app.application.chat.services.intent_detector import ChatIntent
                 
-                providers = get_providers()
-                settings = load_settings()
-                container = create_async_ioc_container(
-                    providers=providers,
-                    settings=settings,
+                # Map restricted intent to ChatIntent
+                intent_map = {
+                    "PORTFOLIO": ChatIntent.PORTFOLIO,
+                    "BALANCE": ChatIntent.BALANCE,
+                    "ACTIVITY": ChatIntent.ACTIVITY,
+                    "RECEIVE": ChatIntent.RECEIVE,
+                }
+                mapped_intent = intent_map.get(intent_result.intent.value, ChatIntent.GENERAL_CONVERSATION)
+                
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=mapped_intent,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=True,
                 )
-                
-                async with container() as request_container:
-                    send_message_unified = await request_container.get(SendMessageUnified)
-                    
-                    # Call unified handler for authenticated users
-                    unified_result = await send_message_unified.execute(
-                        user_id=user.id_,
-                        conversation_id=conversation_id,
-                        content=request_body.content,
-                        intent_result=intent_result,
-                        language=request_body.language,
-                    )
-                    
-                    agent_content = unified_result.get("agent_message", {}).get("content", "")
-                    enrichment = unified_result.get("enrichment")
-                    pending_action = unified_result.get("pending_action")
-                    registration_required = None
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                pending_action = handler_result.get("pending_action")
+                registration_required = None
         
         elif intent_result.intent.value.startswith("SWAP"):
             # Swap flow (including continuation)
@@ -886,6 +882,9 @@ def create_conversations_router() -> APIRouter:
         conversation.increment_messages()  # Both user and assistant
         if not conversation.title:
             conversation.auto_generate_title(request_body.content)
+        
+        # Note: Conversation updates (message_count, title) are handled by the repository
+        # when messages are saved. The conversation entity is updated in memory for response.
         
         # Build routing info
         routing = {
