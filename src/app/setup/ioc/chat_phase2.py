@@ -156,6 +156,8 @@ from app.infrastructure.adapters.external.lifi_client import LiFiClient
 from app.application.portfolio.portfolio_service import PortfolioService
 from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
+from app.domain.ports.wallet.embedded_wallet_provider import EmbeddedWalletProviderPort
+from app.setup.config.privy import PrivySettings
 
 
 class ChatPhase2Provider(Provider):
@@ -690,18 +692,29 @@ class ChatPhase2Provider(Provider):
     def provide_receive_handler(
         self,
         wallet_repository: WalletRepository,
+        current_user_service: CurrentUserService,
+        wallet_provider: EmbeddedWalletProviderPort,
+        privy_settings: PrivySettings,
     ) -> ReceiveHandler:
         """
         Provide receive handler for wallet address display.
 
         Uses wallet repository to fetch user's primary address.
         """
-        return ReceiveHandler(wallet_repository=wallet_repository)
+        return ReceiveHandler(
+            wallet_repository=wallet_repository,
+            current_user_service=current_user_service,
+            wallet_provider=wallet_provider,
+            privy_settings=privy_settings,
+        )
 
     @provide
     def provide_buy_handler(
         self,
         wallet_repository: WalletRepository,
+        current_user_service: CurrentUserService,
+        wallet_provider: EmbeddedWalletProviderPort,
+        privy_settings: PrivySettings,
     ) -> BuyHandler:
         """
         Provide buy handler for crypto on-ramp.
@@ -709,7 +722,12 @@ class ChatPhase2Provider(Provider):
         Uses wallet repository to fetch user's primary address.
         Actual on-ramp is handled by Privy SDK on frontend.
         """
-        return BuyHandler(wallet_repository=wallet_repository)
+        return BuyHandler(
+            wallet_repository=wallet_repository,
+            current_user_service=current_user_service,
+            wallet_provider=wallet_provider,
+            privy_settings=privy_settings,
+        )
 
     @provide
     def provide_compound_client(self) -> CompoundClient:

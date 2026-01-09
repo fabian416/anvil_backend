@@ -8,13 +8,23 @@ Provides wallet address information for receiving funds:
 - QR code generation (placeholder for frontend)
 """
 
+import logging
 import time
 from dataclasses import dataclass
 from typing import Optional
 
+from app.application.common.services.current_user import CurrentUserService
 from app.domain.ports.wallet.wallet_repository import WalletRepository
+from app.domain.ports.wallet.embedded_wallet_provider import (
+    EmbeddedWalletProviderPort,
+    WalletProviderError,
+)
 from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.value_objects.user_id import UserId
+from app.infrastructure.exceptions.gateway import DataMapperError
+from app.setup.config.privy import PrivySettings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -55,7 +65,13 @@ class ReceiveHandler:
         {"name": "Optimism", "symbol": "ETH", "tokens": "ETH, OP, etc."},
     ]
 
-    def __init__(self, wallet_repository: WalletRepository):
+    def __init__(
+        self,
+        wallet_repository: WalletRepository,
+        current_user_service: CurrentUserService | None = None,
+        wallet_provider: EmbeddedWalletProviderPort | None = None,
+        privy_settings: PrivySettings | None = None,
+    ):
         """
         Initialize receive handler.
 
@@ -63,6 +79,86 @@ class ReceiveHandler:
             wallet_repository: Repository for wallet data
         """
         self._wallet_repo = wallet_repository
+        self._current_user_service = current_user_service
+        self._wallet_provider = wallet_provider
+        self._privy_settings = privy_settings
+
+    async def _resolve_user_wallet_address(self, user_id: int) -> tuple[str | None, dict | None]:
+        """
+        Resolve wallet address and optional metadata (e.g. ENS) for receive flow.
+
+        Priority:
+        1) Wallets in local DB (WalletRepository)
+        2) Privy provider (if configured and user has privy_user_id)
+        3) primary_wallet_address on the user record (if set)
+        """
+        # 1) DB wallets
+        wallets = await self._wallet_repo.get_by_user_id(UserId(user_id))
+        if wallets:
+            evm_wallets = [w for w in wallets if w.address.startswith("0x")]
+            wallet = next(
+                (
+                    w
+                    for w in evm_wallets
+                    if getattr(w, "provider", None) == WalletProvider.PRIVY
+                ),
+                None,
+            )
+            if wallet is None and evm_wallets:
+                wallet = evm_wallets[0]
+            if wallet is None:
+                wallet = wallets[0]
+            if wallet:
+                meta = wallet.metadata if hasattr(wallet, "metadata") else None
+                return wallet.address, meta
+
+        # 2) Privy provider
+        if (
+            self._current_user_service
+            and self._wallet_provider
+            and self._privy_settings
+            and self._privy_settings.should_call_privy
+        ):
+            try:
+                user = await self._current_user_service.get_current_user()
+                privy_user_id = user.privy_user_id.value if user.privy_user_id else None
+                if privy_user_id:
+                    privy_wallets = await self._wallet_provider.list_user_wallets(
+                        privy_user_id
+                    )
+                    evm = [w for w in privy_wallets if w.address.startswith("0x")]
+                    if evm:
+                        if self._privy_settings.should_persist_to_db:
+                            for pw in evm:
+                                try:
+                                    await self._wallet_repo.upsert(
+                                        user_id=UserId(user_id),
+                                        address=pw.address,
+                                        provider=WalletProvider.PRIVY,
+                                        privy_wallet_id=pw.wallet_id,
+                                        chain_type=pw.chain_type.value,
+                                    )
+                                except DataMapperError:
+                                    logger.debug(
+                                        "Failed to persist privy wallet %s...",
+                                        pw.address[:10],
+                                    )
+                        return evm[0].address, evm[0].metadata
+            except WalletProviderError as e:
+                logger.warning("Privy wallet fetch failed for receive flow: %s", e)
+            except Exception as e:
+                logger.warning("Unexpected wallet fetch error for receive flow: %s", e)
+
+        # 3) primary_wallet_address fallback
+        if self._current_user_service:
+            try:
+                user = await self._current_user_service.get_current_user()
+                if user.primary_wallet_address:
+                    return user.primary_wallet_address.value, None
+            except Exception:
+                return None, None
+
+        return None, None
 
     async def get_receive_info(
         self,
@@ -83,30 +179,11 @@ class ReceiveHandler:
         start_time = time.time()
 
         try:
-            # Get user's wallets.
-            # Priority: Ethereum/EVM wallets first (not Bitcoin), then PRIVY provider.
-            wallets = await self._wallet_repo.get_by_user_id(UserId(user_id))
-            
-            # Filter to EVM wallets only (exclude Bitcoin addresses)
-            evm_wallets = [
-                w for w in wallets
-                if w.address.startswith("0x")
-            ]
-            
-            # Prefer PRIVY provider among EVM wallets
-            wallet = next(
-                (w for w in evm_wallets if getattr(w, "provider", None) == WalletProvider.PRIVY),
-                None,
-            )
-            if wallet is None and evm_wallets:
-                wallet = evm_wallets[0]
-            # Fallback to any wallet if no EVM wallet found
-            if wallet is None and wallets:
-                wallet = wallets[0]
+            wallet_address, meta = await self._resolve_user_wallet_address(user_id)
 
             latency_ms = int((time.time() - start_time) * 1000)
 
-            if not wallet:
+            if not wallet_address:
                 return ReceiveHandlerResult(
                     content=self._format_no_wallet_response(language),
                     wallet_address="",
@@ -119,11 +196,13 @@ class ReceiveHandler:
                 )
 
             # Get ENS handle (if available in metadata)
-            ens_handle = wallet.metadata.get("ens") if hasattr(wallet, "metadata") else None
+            ens_handle = None
+            if isinstance(meta, dict):
+                ens_handle = meta.get("ens")
 
             # Format response
             content = self._format_receive_response(
-                wallet_address=wallet.address,
+                wallet_address=wallet_address,
                 ens_handle=ens_handle,
                 chain=chain,
                 language=language,
@@ -131,7 +210,7 @@ class ReceiveHandler:
 
             return ReceiveHandlerResult(
                 content=content,
-                wallet_address=wallet.address,
+                wallet_address=wallet_address,
                 ens_handle=ens_handle,
                 supported_networks=[n["name"] for n in self.SUPPORTED_NETWORKS],
                 chain=chain,

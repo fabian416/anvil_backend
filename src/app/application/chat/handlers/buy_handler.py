@@ -11,13 +11,23 @@ This handler provides instructional content and signals the frontend
 to open the Privy funding modal.
 """
 
+import logging
 import time
 from dataclasses import dataclass
 from typing import Optional
 
+from app.application.common.services.current_user import CurrentUserService
 from app.domain.ports.wallet.wallet_repository import WalletRepository
+from app.domain.ports.wallet.embedded_wallet_provider import (
+    EmbeddedWalletProviderPort,
+    WalletProviderError,
+)
 from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.value_objects.user_id import UserId
+from app.infrastructure.exceptions.gateway import DataMapperError
+from app.setup.config.privy import PrivySettings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -231,7 +241,13 @@ class BuyHandler:
         "Optimism",
     ]
 
-    def __init__(self, wallet_repository: WalletRepository):
+    def __init__(
+        self,
+        wallet_repository: WalletRepository,
+        current_user_service: CurrentUserService | None = None,
+        wallet_provider: EmbeddedWalletProviderPort | None = None,
+        privy_settings: PrivySettings | None = None,
+    ):
         """
         Initialize buy handler.
 
@@ -239,6 +255,86 @@ class BuyHandler:
             wallet_repository: Repository for wallet data
         """
         self._wallet_repo = wallet_repository
+        self._current_user_service = current_user_service
+        self._wallet_provider = wallet_provider
+        self._privy_settings = privy_settings
+
+    async def _resolve_user_wallet_address(self, user_id: int) -> str | None:
+        """
+        Resolve the user's wallet address using a best-effort strategy.
+
+        Priority:
+        1) Wallets in local DB (WalletRepository)
+        2) Privy provider (if configured and user has privy_user_id)
+        3) primary_wallet_address on the user record (if set)
+        """
+        # 1) DB wallets (may be empty if running in PRIVY mode without persistence).
+        wallets = await self._wallet_repo.get_by_user_id(UserId(user_id))
+        if wallets:
+            evm_wallets = [w for w in wallets if w.address.startswith("0x")]
+            wallet = next(
+                (
+                    w
+                    for w in evm_wallets
+                    if getattr(w, "provider", None) == WalletProvider.PRIVY
+                ),
+                None,
+            )
+            if wallet is None and evm_wallets:
+                wallet = evm_wallets[0]
+            if wallet is None:
+                wallet = wallets[0]
+            return wallet.address if wallet else None
+
+        # 2) Privy provider (source of truth for embedded wallets)
+        if (
+            self._current_user_service
+            and self._wallet_provider
+            and self._privy_settings
+            and self._privy_settings.should_call_privy
+        ):
+            try:
+                user = await self._current_user_service.get_current_user()
+                privy_user_id = user.privy_user_id.value if user.privy_user_id else None
+                if privy_user_id:
+                    privy_wallets = await self._wallet_provider.list_user_wallets(
+                        privy_user_id
+                    )
+                    evm = [w for w in privy_wallets if w.address.startswith("0x")]
+                    if evm:
+                        # Best-effort persist for later DB reads (hybrid/local modes).
+                        if self._privy_settings.should_persist_to_db:
+                            for pw in evm:
+                                try:
+                                    await self._wallet_repo.upsert(
+                                        user_id=UserId(user_id),
+                                        address=pw.address,
+                                        provider=WalletProvider.PRIVY,
+                                        privy_wallet_id=pw.wallet_id,
+                                        chain_type=pw.chain_type.value,
+                                    )
+                                except DataMapperError:
+                                    # Don't fail chat flow if persistence fails.
+                                    logger.debug(
+                                        "Failed to persist privy wallet %s...",
+                                        pw.address[:10],
+                                    )
+                        return evm[0].address
+            except WalletProviderError as e:
+                logger.warning("Privy wallet fetch failed for buy flow: %s", e)
+            except Exception as e:
+                logger.warning("Unexpected wallet fetch error for buy flow: %s", e)
+
+        # 3) primary wallet address on user record (if present)
+        if self._current_user_service:
+            try:
+                user = await self._current_user_service.get_current_user()
+                if user.primary_wallet_address:
+                    return user.primary_wallet_address.value
+            except Exception:
+                return None
+
+        return None
 
     async def get_buy_info(
         self,
@@ -262,36 +358,16 @@ class BuyHandler:
         msgs = MESSAGES[lang]
 
         try:
-            # Get user's wallet to display address
-            wallets = await self._wallet_repo.get_by_user_id(UserId(user_id))
+            # Resolve wallet address using best-effort strategy (DB -> Privy -> primary_wallet_address)
+            wallet_address = await self._resolve_user_wallet_address(user_id)
             
             # Log for debugging
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.debug(f"BuyHandler: Found {len(wallets)} wallets for user {user_id}")
-
-            # Filter to EVM wallets only
-            evm_wallets = [
-                w for w in wallets
-                if w.address.startswith("0x")
-            ]
-            
-            logger.debug(f"BuyHandler: Found {len(evm_wallets)} EVM wallets for user {user_id}")
-
-            # Prefer PRIVY provider
-            wallet = next(
-                (w for w in evm_wallets if getattr(w, "provider", None) == WalletProvider.PRIVY),
-                None,
-            )
-            if wallet is None and evm_wallets:
-                wallet = evm_wallets[0]
-            if wallet is None and wallets:
-                wallet = wallets[0]
+            logger.debug(f"BuyHandler: Resolved wallet address for user {user_id}: {wallet_address[:10] + '...' if wallet_address else 'None'}")
 
             latency_ms = int((time.time() - start_time) * 1000)
 
-            if not wallet:
-                logger.warning(f"BuyHandler: No wallet found for user {user_id} (checked {len(wallets)} wallets)")
+            if not wallet_address:
+                logger.warning(f"BuyHandler: No wallet found for user {user_id} after checking DB, Privy, and primary_wallet_address")
                 return BuyHandlerResult(
                     content=msgs["no_wallet"],
                     wallet_address=None,
@@ -304,13 +380,13 @@ class BuyHandler:
 
             # Format response
             content = self._format_buy_response(
-                wallet_address=wallet.address,
+                wallet_address=wallet_address,
                 msgs=msgs,
             )
 
             return BuyHandlerResult(
                 content=content,
-                wallet_address=wallet.address,
+                wallet_address=wallet_address,
                 supported_assets=self.SUPPORTED_ASSETS,
                 supported_networks=self.SUPPORTED_NETWORKS,
                 requires_privy_modal=True,
@@ -320,15 +396,12 @@ class BuyHandler:
 
         except Exception as e:
             # Log the error for debugging
-            import logging
-            logger = logging.getLogger(__name__)
             logger.warning(f"Error getting wallet for user {user_id} in buy handler: {e}", exc_info=True)
             
             latency_ms = int((time.time() - start_time) * 1000)
             
             # Provide user-friendly error message instead of technical error
             # Check if it's a database error
-            from app.infrastructure.exceptions.gateway import DataMapperError
             if isinstance(e, DataMapperError) or "Database query failed" in str(e):
                 # Return no_wallet message instead of error - user can still proceed
                 return BuyHandlerResult(

@@ -38,6 +38,7 @@ from app.presentation.http.schemas.chat import (
 )
 from app.application.chat.commands.create_conversation import CreateConversation
 from app.application.chat.commands.delete_conversation import DeleteConversation
+from app.application.chat.commands.update_conversation_title import UpdateConversationTitle
 from app.application.chat.commands.send_message import SendMessage
 from app.application.chat.commands.send_message_unified import UnifiedChatOrchestrator
 from app.application.chat.commands.execute_action import ExecuteActionCommand
@@ -148,6 +149,59 @@ def create_chat_router() -> APIRouter:
                 detail="Conversation not found",
             )
         
+        return ConversationResponse.model_validate(conversation)
+
+    class UpdateConversationRequest(CreateConversationRequest):
+        """Request to update a conversation (currently title only)."""
+
+        # Inherit `title: Optional[str]` from CreateConversationRequest
+        pass
+
+    @router.patch(
+        "/conversations/{conversation_id}",
+        status_code=status.HTTP_200_OK,
+        response_model=ConversationResponse,
+        dependencies=[Security(bearer_scheme)],
+    )
+    @inject
+    async def update_conversation(
+        conversation_id: UUID,
+        request: UpdateConversationRequest,
+        current_user: FromDishka[CurrentUserService],
+        interactor: FromDishka[UpdateConversationTitle],
+    ) -> ConversationResponse:
+        """
+        Update a conversation (title only).
+
+        This endpoint exists for the authenticated user chat system
+        (/api/v1/user/chat/conversations). Chat System V2 uses a separate
+        router under /api/v1/conversations.
+        """
+        user = await current_user.get_current_user()
+
+        if request.title is None:
+            # No update payload; behave like GET.
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields provided to update",
+            )
+
+        try:
+            conversation = await interactor.execute(
+                user_id=user.id_.value,
+                conversation_id=conversation_id,
+                title=request.title,
+            )
+        except ValueError:
+            # Keep parity with existing user-chat behavior: hide ownership details.
+            conversation = None
+
+        if conversation is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
         return ConversationResponse.model_validate(conversation)
     
     @router.delete(
