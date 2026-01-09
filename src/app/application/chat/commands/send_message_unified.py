@@ -489,6 +489,21 @@ class UnifiedChatOrchestrator:
         # Add enrichment if present
         if enrichment:
             response["enrichment"] = enrichment
+        else:
+            response["enrichment"] = {}
+        
+        # For RECEIVE intent in demo mode, add the real wallet address
+        if intent_result.intent == ChatIntent.RECEIVE:
+            try:
+                wallet_address = await self._get_user_wallet_address(user_id)
+                if wallet_address:
+                    response["enrichment"]["wallet_address"] = wallet_address
+                    response["enrichment"]["chain"] = "base"
+                    response["enrichment"]["supported_networks"] = [
+                        "Ethereum", "Base", "Arbitrum", "Polygon", "Optimism"
+                    ]
+            except Exception as e:
+                logger.warning(f"[DEMO MODE] Failed to get wallet for receive enrichment: {e}")
             
         # Add sources if present
         if sources:

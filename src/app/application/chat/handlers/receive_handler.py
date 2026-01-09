@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from app.domain.ports.wallet.wallet_repository import WalletRepository
+from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.value_objects.user_id import UserId
 
 
@@ -80,16 +81,26 @@ class ReceiveHandler:
         start_time = time.time()
 
         try:
-            # Get user's primary wallet
-            wallet = await self._wallet_repo.get_primary_wallet_for_user(
-                UserId(user_id)
+            # Get user's wallets.
+            # Priority: Ethereum/EVM wallets first (not Bitcoin), then PRIVY provider.
+            wallets = await self._wallet_repo.get_by_user_id(UserId(user_id))
+            
+            # Filter to EVM wallets only (exclude Bitcoin addresses)
+            evm_wallets = [
+                w for w in wallets
+                if w.address.startswith("0x")
+            ]
+            
+            # Prefer PRIVY provider among EVM wallets
+            wallet = next(
+                (w for w in evm_wallets if getattr(w, "provider", None) == WalletProvider.PRIVY),
+                None,
             )
-
-            if not wallet:
-                # Try to get any wallet
-                wallets = await self._wallet_repo.get_by_user(UserId(user_id))
-                if wallets:
-                    wallet = wallets[0]
+            if wallet is None and evm_wallets:
+                wallet = evm_wallets[0]
+            # Fallback to any wallet if no EVM wallet found
+            if wallet is None and wallets:
+                wallet = wallets[0]
 
             latency_ms = int((time.time() - start_time) * 1000)
 

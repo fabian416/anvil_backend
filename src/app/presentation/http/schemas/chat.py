@@ -173,6 +173,12 @@ class EnrichmentData(BaseModel):
     opportunity_id: Optional[str] = None  # Arbitrage opportunity ID for MEV execution
     action: Optional[str] = None  # Bot action (start, stop, pause, resume, status)
 
+    # For Receive (wallet address)
+    wallet_address: Optional[str] = None  # User's wallet address for receiving funds
+    ens_handle: Optional[str] = None  # ENS handle if registered
+    chain: Optional[str] = None  # Current chain (base, ethereum, etc.)
+    supported_networks: Optional[List[str]] = None  # Networks the address supports
+
 
 class ExecuteActionData(BaseModel):
     """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
