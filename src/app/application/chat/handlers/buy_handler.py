@@ -431,9 +431,10 @@ class BuyHandler:
         wallet_address: str,
         msgs: dict,
     ) -> str:
-        """Format buy info as chat response."""
-        assets_list = ", ".join(self.SUPPORTED_ASSETS)
-        networks_list = ", ".join(self.SUPPORTED_NETWORKS)
+        """Format buy info as chat response with improved visual structure."""
+        # Format assets and networks as bullet points for better readability
+        assets_list = "\n".join([f"• {asset}" for asset in self.SUPPORTED_ASSETS])
+        networks_list = "\n".join([f"• {network}" for network in self.SUPPORTED_NETWORKS])
 
         response = f"""{msgs["title"]}
 
@@ -444,20 +445,30 @@ class BuyHandler:
 **{msgs["supported_assets"]}:**
 {assets_list}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 **{msgs["supported_networks"]}:**
 {networks_list}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **{msgs["how_to_buy"]}:**
+
 1. {msgs["step_1"]}
 2. {msgs["step_2"]}
 3. {msgs["step_3"]}
 4. {msgs["step_4"]}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 💡 **{msgs["note_title"]}:** {msgs["note_content"]}
 
-📬 **Deposit Address:** `{wallet_address}`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📬 **Your Deposit Address:**
+`{wallet_address}`
+
+📋 *Tap to copy address*
 """
         return response
 
