@@ -364,10 +364,19 @@ def create_conversations_router() -> APIRouter:
         
         Currently supports updating the title only.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         user = await _resolve_chat_user(
             http_request=http_request,
             user_service=user_service,
             current_user=current_user,
+        )
+        
+        logger.debug(
+            f"Update conversation request: conversation_id={conversation_id}, "
+            f"user_id={user.id}, user_type={user.user_type.value}, "
+            f"identifier={user.identifier}, title={request.title}"
         )
         
         if request.title is not None:
@@ -384,6 +393,10 @@ def create_conversations_router() -> APIRouter:
             )
         
         if not conversation:
+            logger.warning(
+                f"Conversation not found: conversation_id={conversation_id}, "
+                f"user_id={user.id}, user_type={user.user_type.value}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
