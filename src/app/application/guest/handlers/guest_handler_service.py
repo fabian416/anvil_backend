@@ -2736,3 +2736,51 @@ class GuestHandlerService:
             "enrichment": None,
             "requires_registration": not is_authenticated,
         }
+    
+    async def _handle_buy(
+        self, content: str, language: str, is_authenticated: bool = False
+    ) -> dict[str, Any]:
+        """Handle buy crypto intent (on-ramp via Privy/MoonPay)."""
+        # BuyHandler requires user_id, which GuestHandlerService doesn't have access to
+        # For authenticated users, this should be handled by UnifiedChatOrchestrator
+        # For guests, we provide a fallback response
+        return self._fallback_buy_response(language, is_authenticated)
+    
+    def _fallback_buy_response(self, language: str, is_authenticated: bool) -> dict[str, Any]:
+        """Fallback response when BuyHandler is not available."""
+        translations = {
+            "en": {
+                "title": "💳 **Buy Crypto**",
+                "description": "Purchase crypto with card, Apple Pay, or Google Pay via MoonPay/Coinbase.",
+                "no_wallet": "⚠️ **No Wallet Found**\n\nPlease connect or create a wallet first to buy crypto.",
+            },
+            "es": {
+                "title": "💳 **Comprar Cripto**",
+                "description": "Compra cripto con tarjeta, Apple Pay o Google Pay vía MoonPay/Coinbase.",
+                "no_wallet": "⚠️ **No se encontró Wallet**\n\nPor favor conecta o crea una wallet primero para comprar cripto.",
+            },
+            "pt": {
+                "title": "💳 **Comprar Cripto**",
+                "description": "Compre cripto com cartão, Apple Pay ou Google Pay via MoonPay/Coinbase.",
+                "no_wallet": "⚠️ **Wallet não encontrada**\n\nPor favor conecte ou crie uma wallet primeiro para comprar cripto.",
+            },
+            "zh": {
+                "title": "💳 **购买加密货币**",
+                "description": "通过MoonPay/Coinbase使用银行卡、Apple Pay或Google Pay购买加密货币。",
+                "no_wallet": "⚠️ **未找到钱包**\n\n请先连接或创建钱包才能购买加密货币。",
+            },
+        }
+        t = translations.get(language, translations["en"])
+        
+        content = f"{t['title']}\n\n{t['description']}\n\n"
+        if not is_authenticated:
+            content += t['no_wallet'] + "\n\n"
+            content += self._get_auth_cta_message(language, for_action=True, is_authenticated=False)
+        
+        return {
+            "content": content,
+            "enrichment": {
+                "action": "open_fund_wallet" if is_authenticated else None,
+            },
+            "requires_registration": not is_authenticated,
+        }
