@@ -210,12 +210,7 @@ class AgentSquadGateway(AgentGateway):
             
             # Extract text response
             # Agent Squad returns AgentResponse object
-            if hasattr(response, 'output'):
-                return response.output
-            elif isinstance(response, str):
-                return response
-            else:
-                return str(response)
+            return self._normalize_agent_response(response)
                 
         except Exception as e:
             # Log error
@@ -226,3 +221,43 @@ class AgentSquadGateway(AgentGateway):
                 "I apologize, but I encountered an error processing your request. "
                 "Please try rephrasing your message or contact support if the issue persists."
             )
+
+    def _normalize_agent_response(self, response: Any) -> str:
+        """
+        Normalize agent outputs to a plain string.
+        
+        Some providers/agents may return structured outputs like:
+        - tuple: (text, metadata)
+        - dict: { output/content/text: "..." }
+        - AgentResponse objects with `.output`
+        
+        The chat DB and API contract expect `content` to be a string.
+        """
+        if response is None:
+            return ""
+
+        # Common AgentResponse shape
+        if hasattr(response, "output"):
+            out = getattr(response, "output")
+            # Some integrations may set output as non-str; normalize recursively.
+            return self._normalize_agent_response(out)
+
+        if isinstance(response, str):
+            return response
+
+        # Handle tuple/list like (text, meta)
+        if isinstance(response, (tuple, list)) and len(response) > 0:
+            first = response[0]
+            if isinstance(first, str):
+                return first
+            return self._normalize_agent_response(first)
+
+        # Handle dict payloads
+        if isinstance(response, dict):
+            for key in ("output", "content", "text", "message"):
+                value = response.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value
+
+        # Final fallback
+        return str(response)

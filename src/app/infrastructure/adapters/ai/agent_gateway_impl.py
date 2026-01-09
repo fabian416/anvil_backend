@@ -258,7 +258,37 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
             temperature=0.7
         )
 
-        return response
+        return self._normalize_agent_response(response)
+
+    def _normalize_agent_response(self, response: Any) -> str:
+        """
+        Normalize agent outputs to a string.
+        
+        Defensive: some LLM gateways/providers can return tuples like (text, meta),
+        dict payloads, or custom objects.
+        """
+        if response is None:
+            return ""
+
+        if hasattr(response, "output"):
+            return self._normalize_agent_response(getattr(response, "output"))
+
+        if isinstance(response, str):
+            return response
+
+        if isinstance(response, (tuple, list)) and len(response) > 0:
+            first = response[0]
+            if isinstance(first, str):
+                return first
+            return self._normalize_agent_response(first)
+
+        if isinstance(response, dict):
+            for key in ("output", "content", "text", "message"):
+                value = response.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value
+
+        return str(response)
     
     async def process_message(
         self, 
@@ -315,6 +345,8 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
                     print(f"No specialized agent for intent '{intent}', using fallback")
                 
                 response = await self._generate_fallback_response(message, intent, context)
+
+            response_text = self._normalize_agent_response(response)
             
             # Step 4: Save response to storage
             # Map intent to valid AgentType enum value
@@ -323,11 +355,11 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
             await self.storage.save_message(
                 session_id=session_id,
                 role="agent",
-                content=response,
+                content=response_text,
                 agent_type=agent_type
             )
             
-            return response
+            return response_text
             
         except Exception as e:
             error_msg = f"Error processing message: {str(e)}"
