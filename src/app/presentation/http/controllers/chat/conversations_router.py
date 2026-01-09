@@ -799,7 +799,7 @@ def create_conversations_router() -> APIRouter:
         elif intent_result.intent.value == "BUY":
             # Handle BUY intent (on-ramp crypto purchase)
             from app.application.chat.services.intent_detector import ChatIntent
-            
+
             context_str = conversation_memory.build_context_string(context)
             handler_result = await handler_service.handle_intent(
                 intent=ChatIntent.BUY,
@@ -807,6 +807,7 @@ def create_conversations_router() -> APIRouter:
                 language=request_body.language,
                 context=context_str,
                 is_authenticated=not user.is_guest,
+                user_id=None if user.is_guest else int(str(user.id)),  # Pass user_id for authenticated users
             )
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")

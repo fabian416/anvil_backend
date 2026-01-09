@@ -77,6 +77,7 @@ class GuestHandlerService:
         is_authenticated: bool = False,
         continuation_step: str | None = None,
         previous_lending_info: dict | None = None,
+        user_id: int | None = None,
     ) -> dict[str, Any]:
         """
         Handle intent with real data.
@@ -87,6 +88,7 @@ class GuestHandlerService:
             language: Language code (en, es, pt, zh)
             context: Conversation context from previous messages (for multi-turn)
             is_authenticated: Whether the user is authenticated (no signup prompts if True)
+            user_id: User's database ID (required for BUY intent with authenticated users)
 
         Returns:
             dict with 'content', 'enrichment', and 'requires_registration' fields
@@ -160,7 +162,7 @@ class GuestHandlerService:
                     )
                 # Buy handler (requires user_id for authenticated users)
                 elif intent == ChatIntent.BUY:
-                    return await self._handle_buy(content, language, is_authenticated)
+                    return await self._handle_buy(content, language, is_authenticated, user_id)
                 return await handler(content, language, is_authenticated)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
@@ -2738,12 +2740,33 @@ class GuestHandlerService:
         }
     
     async def _handle_buy(
-        self, content: str, language: str, is_authenticated: bool = False
+        self, content: str, language: str, is_authenticated: bool = False, user_id: int | None = None
     ) -> dict[str, Any]:
         """Handle buy crypto intent (on-ramp via Privy/MoonPay)."""
-        # BuyHandler requires user_id, which GuestHandlerService doesn't have access to
-        # For authenticated users, this should be handled by UnifiedChatOrchestrator
-        # For guests, we provide a fallback response
+        # Use BuyHandler if available and user_id provided
+        if self._buy_handler and user_id:
+            try:
+                result = await self._buy_handler.get_buy_info(
+                    user_id=user_id,
+                    language=language,
+                )
+                return {
+                    "content": result.content,
+                    "enrichment": {
+                        "wallet_address": result.wallet_address,
+                        "supported_assets": result.supported_assets,
+                        "supported_networks": result.supported_networks,
+                        "requires_privy_modal": result.requires_privy_modal,
+                        "latency_ms": result.latency_ms,
+                        "action": "open_fund_wallet",
+                    },
+                    "requires_registration": False,
+                }
+            except Exception as e:
+                logger.warning(f"BuyHandler error: {e}")
+                # Fall through to fallback response
+
+        # Fallback for guests or if BuyHandler not available
         return self._fallback_buy_response(language, is_authenticated)
     
     def _fallback_buy_response(self, language: str, is_authenticated: bool) -> dict[str, Any]:
