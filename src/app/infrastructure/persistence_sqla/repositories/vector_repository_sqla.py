@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select, func
+from sqlalchemy.exc import ProgrammingError
 
 from app.domain.ports.vector import (
     VectorRepository,
@@ -173,8 +174,15 @@ class VectorRepositorySqla(VectorRepository):
             LIMIT 1
         """)
         
-        result = await self._session.execute(query, {"entity_id": entity_id})
-        row = result.fetchone()
+        try:
+            result = await self._session.execute(query, {"entity_id": entity_id})
+            row = result.fetchone()
+        except ProgrammingError as e:
+            # Embedding tables may not exist yet (migrations not applied)
+            msg = str(getattr(e, "orig", e))
+            if "UndefinedTable" in msg or "does not exist" in msg:
+                return None
+            raise
         
         if not row:
             return None
@@ -259,9 +267,17 @@ class VectorRepositorySqla(VectorRepository):
         
         if entity_type and entity_type != "Protocol":
             params["entity_type"] = entity_type
-        
-        result = await self._session.execute(query, params)
-        rows = result.fetchall()
+
+        try:
+            result = await self._session.execute(query, params)
+            rows = result.fetchall()
+        except ProgrammingError as e:
+            # If vector tables aren't present (e.g. migrations not applied yet),
+            # avoid failing the whole chat flow with a 500.
+            msg = str(getattr(e, "orig", e))
+            if "UndefinedTable" in msg or "does not exist" in msg:
+                return []
+            raise
         
         results = []
         for row in rows:
@@ -312,19 +328,27 @@ class VectorRepositorySqla(VectorRepository):
         
         if entity_type == "Protocol":
             query = text("SELECT COUNT(*) FROM protocol_embeddings")
-            result = await self._session.execute(query)
         elif entity_type:
             query = text("""
                 SELECT COUNT(*) FROM entity_embeddings
                 WHERE entity_type = :entity_type
             """)
-            result = await self._session.execute(query, {"entity_type": entity_type})
         else:
             query = text("""
                 SELECT 
                     (SELECT COUNT(*) FROM protocol_embeddings) +
                     (SELECT COUNT(*) FROM entity_embeddings)
             """)
-            result = await self._session.execute(query)
-        
-        return result.scalar_one()
+
+        try:
+            if entity_type and entity_type != "Protocol":
+                result = await self._session.execute(query, {"entity_type": entity_type})
+            else:
+                result = await self._session.execute(query)
+            return result.scalar_one()
+        except ProgrammingError as e:
+            # Embedding tables may not exist yet (migrations not applied)
+            msg = str(getattr(e, "orig", e))
+            if "UndefinedTable" in msg or "does not exist" in msg:
+                return 0
+            raise

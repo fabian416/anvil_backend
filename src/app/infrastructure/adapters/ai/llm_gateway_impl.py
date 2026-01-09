@@ -73,8 +73,22 @@ class LLMGatewayImpl(LLMGateway):
         )
 
         # Extract text and metadata from response
-        # TODO: Update RetryHandler to return tuple instead of dict
-        if isinstance(response_data, dict):
+        # RetryHandler returns Tuple[str, Dict[str, Any]] from LLMStrategy.generate()
+        if isinstance(response_data, tuple) and len(response_data) >= 2:
+            text, provider_metadata = response_data[0], response_data[1]
+            # Normalize text (ensure it's a string, not nested)
+            if not isinstance(text, str):
+                text = str(text)
+            metadata = {
+                "tokens_used": provider_metadata.get("input_tokens", 0) + provider_metadata.get("output_tokens", 0),
+                "model": provider_metadata.get("model", model),
+                "latency_ms": provider_metadata.get("latency_ms", 0),
+                "finish_reason": "stop",
+                "provider": provider_metadata.get("provider", "unknown"),
+                "cost_usd": provider_metadata.get("cost_usd", 0),
+            }
+            return text, metadata
+        elif isinstance(response_data, dict):
             text = response_data.get("content", "")
             metadata = {
                 "tokens_used": response_data.get("tokens_used", 0),
@@ -84,5 +98,5 @@ class LLMGatewayImpl(LLMGateway):
             }
             return text, metadata
         else:
-            # Fallback for old return format
+            # Fallback for unexpected return format
             return str(response_data), {"tokens_used": 0, "model": model, "latency_ms": 0, "finish_reason": "stop"}
