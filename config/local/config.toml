@@ -459,3 +459,11 @@ min_confidence_score = 0.7  # Minimum acceptable confidence (0.0-1.0)
 # Feature flags
 auto_detect_language = true  # Auto-detect source language
 preserve_technical_terms = true  # Preserve DeFi protocols, tokens, technical terms
+
+
+
+
+# config/local/config.toml
+[moonpay]
+MOONPAY_API_KEY = "pk_test_zJtsRVDetOru63X98XExqNoRHaFDco"
+MOONPAY_ENVIRONMENT = "sandbox"

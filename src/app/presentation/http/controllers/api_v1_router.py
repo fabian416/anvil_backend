@@ -134,6 +134,9 @@ from app.presentation.http.controllers.user.projects_router import (
 )
 from app.presentation.http.controllers.wallet.router import create_wallet_router
 
+# MoonPay Swap router (crypto-to-crypto quotes)
+from app.presentation.http.controllers.moonpay.router import create_moonpay_router
+
 # WebSocket router for real-time agent chat
 from app.presentation.http.websocket.chat_websocket import router as agno_chat_ws_router
 from app.presentation.http.websocket.graph_websocket import router as graph_ws_router
@@ -229,6 +232,8 @@ def create_api_v1_router() -> APIRouter:
         create_transaction_router(),
         # Bitcoin transaction router (for BTC-specific operations)
         create_bitcoin_router(),
+        # MoonPay Swap router (crypto-to-crypto quotes)
+        create_moonpay_router(),
     )
 
     for sub_router in sub_routers:

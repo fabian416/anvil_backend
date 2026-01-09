@@ -75,6 +75,7 @@ from app.application.chat.services.user_service import UserService
 from app.application.chat.services.rate_limit_service import RateLimitService
 from app.application.chat.services.conversation_service import ConversationService
 from app.application.chat.services.conversation_memory import ConversationMemory
+from app.application.common.services.current_user import CurrentUserService
 
 # Chat V2 Repositories (Unified Chat System)
 from app.infrastructure.adapters.chat_unified_repository_sqla import (

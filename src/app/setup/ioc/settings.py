@@ -14,6 +14,7 @@ from app.presentation.http.auth.cookie_params import CookieParams
 from app.setup.config.settings import AppSettings
 from app.setup.config.admin import AdminSettings
 from app.setup.config.privy import PrivySettings
+from app.setup.config.moonpay import MoonPaySettings
 from app.setup.config.distillation import DistillationSettings
 from app.setup.config.transaction_confirmation import TransactionConfirmationSettings
 from app.setup.config.agent_squad import AgentSquadSettings
@@ -139,3 +140,13 @@ class SettingsProvider(Provider):
         - Other agent squad configuration
         """
         return settings.agent_squad
+
+    @provide
+    def provide_moonpay_settings(self, settings: AppSettings) -> MoonPaySettings:
+        """
+        Provide MoonPay settings for on-ramp and swap operations.
+        
+        Returns default (empty) settings if not configured.
+        The MoonPaySwapClient will check is_configured before making calls.
+        """
+        return settings.moonpay
