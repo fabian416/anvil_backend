@@ -1678,7 +1678,8 @@ class GuestHandlerService:
         """
         # Parse swap parameters from content and context
         swap_info = self._parse_swap_from_context(content, context)
-        
+        logger.info(f"[SWAP] Parsed swap_info: {swap_info}")
+
         # Try to use real swap handler if available
         if self._swap_handler:
             logger.info(f"Using real SwapHandler for swap request: {content[:50]}")
@@ -1769,7 +1770,7 @@ class GuestHandlerService:
             logger.info("SwapHandler not available, using demo response")
 
         # Demo response with parsed swap info
-        demo_response = self._get_swap_demo_response(swap_info, language)
+        demo_response = self._get_swap_demo_response(swap_info, language, is_authenticated)
         # Ensure registration message is present in demo response too
         # Check if registration message is already in content (for bridge/best rate responses)
         content_lower = demo_response["content"].lower()
@@ -1930,7 +1931,7 @@ class GuestHandlerService:
         return result
     
     def _get_swap_demo_response(
-        self, swap_info: dict[str, str | None], language: str
+        self, swap_info: dict[str, str | None], language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Generate demo swap response based on parsed info."""
         from_token = swap_info.get("from_token")
@@ -1940,6 +1941,8 @@ class GuestHandlerService:
         is_bridge = swap_info.get("is_bridge", False)
         from_chain = swap_info.get("from_chain")
         to_chain = swap_info.get("to_chain")
+
+        logger.info(f"[SWAP DEMO] from_token={from_token}, to_token={to_token}, amount={amount}, is_complete={is_complete}")
         
         # Bridge swap - show bridge quote with detailed information
         if is_bridge and from_token and to_chain:
@@ -2158,6 +2161,7 @@ class GuestHandlerService:
             }
         
         if is_complete and from_token and to_token and amount:
+            logger.info(f"[SWAP DEMO] Entering complete swap block with amount={amount}")
             # Generate realistic demo quote
             demo_rates = {
                 ("USDC", "ETH"): 0.00045,
