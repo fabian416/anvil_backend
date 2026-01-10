@@ -911,6 +911,24 @@ class SendGuestMessage:
                 "在哪里供应", "应该在哪里供应", "在哪里存款",
                 "最佳供应地点", "比较利率", "最佳利率",
             ],
+            ChatIntent.SWAP_MOONPAY: [
+                # English
+                "moonpay swap", "swap via moonpay", "crypto to crypto swap",
+                "swap btc to eth", "swap eth to usdc", "swap sol to btc",
+                "exchange btc for eth", "exchange eth for sol",
+                "convert btc to usdc", "convert sol to eth",
+                # Spanish
+                "intercambio moonpay", "swap cripto a cripto",
+                "cambiar btc por eth", "convertir btc a usdc",
+                # Portuguese
+                "troca moonpay", "trocar cripto por cripto",
+                "trocar btc por eth", "converter btc para usdc",
+                # French
+                "échange moonpay", "échanger crypto contre crypto",
+                "échanger btc contre eth",
+                # Chinese
+                "moonpay交换", "加密货币互换", "兑换btc为eth",
+            ],
             ChatIntent.SWAP: [
                 # English
                 "swap", "exchange", "trade", "convert",
@@ -986,6 +1004,7 @@ class SendGuestMessage:
             ChatIntent.LENDING: "lending_handler",
             ChatIntent.MONEY_MARKET: "money_market_handler",
             ChatIntent.SWAP: "swap_handler",
+            ChatIntent.SWAP_MOONPAY: "moonpay_swap_handler",
             ChatIntent.PROTOCOL_SEARCH: "graphrag_handler",
             ChatIntent.RISK_ASSESSMENT: "graphrag_handler",
             ChatIntent.SIMILAR_PROTOCOLS: "graphrag_handler",
