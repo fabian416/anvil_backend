@@ -58,6 +58,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         ChatIntent.ACTIVITY: "activity_handler",
         ChatIntent.RECEIVE: "receive_handler",
         ChatIntent.BUY: "buy_handler",
+        ChatIntent.SEND: "send_handler",
         # Squad intents
         ChatIntent.SPECIALIST_TASK: "agent_orchestrator",
         ChatIntent.COMPLEX_WORKFLOW: "agent_orchestrator",
@@ -294,6 +295,18 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         "show qr code": "receive",
         "deposit address": "receive",
         "how do i receive tokens": "receive",
+        # DeFi Shortcuts - Send
+        "send crypto to a friend": "send",
+        "transfer eth to another wallet": "send",
+        "i want to send usdc": "send",
+        "send tokens": "send",
+        "transfer crypto": "send",
+        "send to wallet": "send",
+        "send crypto": "send",
+        "transfer tokens": "send",
+        "i want to send crypto": "send",
+        "send usdc to": "send",
+        "transfer eth to": "send",
         # "random unclear message xyz" intentionally NOT in lookup - should get low confidence
     }
 
@@ -589,6 +602,42 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 ChatIntent.BUY,
                 0.95,
                 "Message contains buy crypto with fiat keywords",
+                None,
+            )
+
+        # Send tokens intent - Transfer to another wallet
+        send_patterns = [
+            # English
+            "send crypto",
+            "send tokens",
+            "send usdc",
+            "send eth",
+            "send btc",
+            "transfer crypto",
+            "transfer tokens",
+            "send to wallet",
+            "send to address",
+            "i want to send",
+            # Spanish
+            "enviar cripto",
+            "enviar tokens",
+            "transferir",
+            "enviar a cartera",
+            # Portuguese
+            "enviar cripto",
+            "transferir",
+            # French
+            "envoyer crypto",
+            "transférer",
+            # Chinese
+            "发送加密货币",
+            "转账",
+        ]
+        if any(pattern in message for pattern in send_patterns):
+            return (
+                ChatIntent.SEND,
+                0.94,
+                "Message contains send/transfer keywords",
                 None,
             )
 
