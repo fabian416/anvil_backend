@@ -57,39 +57,48 @@ class HybridIntentDetectionAdapter(IntentDetectionPort):
         request: IntentDetectionRequest,
     ) -> IntentDetectionResult:
         """
-        Detect intent with LLM + fallback.
+        Detect intent with keyword priority + LLM fallback.
 
         Strategy:
-        1. Try LLM classification
-        2. If confidence >= threshold, return LLM result
-        3. If LLM fails or low confidence, fallback to keywords
+        1. Try keyword classification first (fast, deterministic)
+        2. If keyword confidence >= 0.9, return keyword result (exact match)
+        3. Otherwise, try LLM for semantic understanding
+        4. If LLM confidence >= threshold, return LLM result
+        5. If LLM also has low confidence, return keyword result as final fallback
         """
-        # Try LLM first
+        # Try keyword adapter first for exact matches
+        keyword_result = await self._keyword.detect_intent(request)
+
+        # If keyword has high confidence (exact match), use it
+        if keyword_result.confidence >= 0.9:
+            return keyword_result
+
+        # Try LLM for semantic understanding
         try:
             llm_result = await self._llm.detect_intent(request)
 
             if llm_result.confidence >= self._min_confidence:
                 return llm_result
 
-            # Low confidence, use fallback
+            # Low confidence from both, prefer keyword
             self._logger.warning(
                 f"LLM confidence {llm_result.confidence} < {self._min_confidence}, "
-                f"using keyword fallback"
+                f"using keyword result (confidence: {keyword_result.confidence})"
             )
+            return keyword_result
 
         except IntentDetectionError as e:
-            # LLM failed, use fallback
+            # LLM failed, use keyword
             self._logger.warning(
-                f"LLM intent detection failed: {e}, using keyword fallback"
+                f"LLM intent detection failed: {e}, using keyword result"
             )
+            return keyword_result
         except Exception as e:
-            # Unexpected error, use fallback
+            # Unexpected error, use keyword
             self._logger.error(
-                f"Unexpected error in LLM intent detection: {e}, using keyword fallback"
+                f"Unexpected error in LLM intent detection: {e}, using keyword result"
             )
-
-        # Fallback to keywords
-        return await self._keyword.detect_intent(request)
+            return keyword_result
 
     def supports_streaming(self) -> bool:
         return False

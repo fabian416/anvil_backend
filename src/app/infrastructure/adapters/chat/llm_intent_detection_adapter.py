@@ -58,6 +58,7 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
         "lending": "lending_handler",
         "money_market": "money_market_handler",
         "swap": "swap_handler",
+        "swap_moonpay": "moonpay_swap_handler",
         "balance": "balance_handler",
         "portfolio": "portfolio_handler",
         "activity": "activity_handler",
@@ -136,6 +137,21 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
 
 Classify the user's message into ONE of these intents:
 
+🚨 CRITICAL DECISION RULE - Check FIRST before classifying:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+If the user wants to SWAP/EXCHANGE tokens, check if BOTH tokens are from this list:
+• BTC (Bitcoin)
+• ETH (Ethereum)
+• SOL (Solana)
+• USDC (USD Coin)
+
+IF YES → Use SWAP_MOONPAY (intent 16)
+IF NO → Use SWAP (intent 17)
+
+Examples requiring SWAP_MOONPAY: "swap SOL to USDC", "exchange BTC for ETH", "convert ETH to SOL"
+Examples requiring SWAP: "swap DAI to USDC", "swap WBTC for ETH", "exchange MATIC for LINK"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 ## GraphRAG Intents (Protocol Discovery & Analysis)
 
 1. PROTOCOL_SEARCH - User wants to find/search for protocols
@@ -189,22 +205,31 @@ Classify the user's message into ONE of these intents:
 15. MONEY_MARKET - User wants to compare lending/supply rates across protocols
     Examples: "compare lending rates", "Aave vs Compound vs Morpho", "which has best supply APY"
 
-16. SWAP - User wants to swap/exchange tokens
-    Examples: "swap ETH for USDC", "exchange my tokens", "trade BTC for ETH"
+16. SWAP_MOONPAY - User wants to swap between BTC, ETH, SOL, or USDC (crypto-to-crypto via MoonPay)
+    ⚠️ PRIORITY: If swapping ONLY these tokens (BTC, ETH, SOL, USDC), ALWAYS use SWAP_MOONPAY
+    Examples: "swap BTC to ETH", "exchange ETH for SOL", "swap SOL to USDC", "convert USDC to BTC", "cambiar BTC por ETH", "trocar ETH por SOL"
+    Supported pairs: BTC↔ETH, BTC↔SOL, BTC↔USDC, ETH↔SOL, ETH↔USDC, SOL↔USDC (all bidirectional)
+    Multi-language: swap/exchange/convert/trade, cambiar/intercambiar, trocar, échanger, 将...换成
 
-17. BALANCE - User wants to check their balance (shows value in USDC)
+17. SWAP - User wants to swap/exchange tokens (DEX swaps via 1inch/LiFi/Hyperliquid)
+    ⚠️ CRITICAL RULE: NEVER use SWAP if BOTH tokens are from this list: BTC, ETH, SOL, USDC
+    ⚠️ If user mentions swapping BTC↔ETH, BTC↔SOL, BTC↔USDC, ETH↔SOL, ETH↔USDC, or SOL↔USDC, you MUST use SWAP_MOONPAY instead
+    Examples: "swap WBTC for DAI", "exchange MATIC for LINK", "swap DAI from Ethereum to Polygon", "best swap rate for UNI to AAVE"
+    Use for: ERC20 tokens (WBTC, DAI, LINK, UNI, AAVE, etc.), cross-chain swaps, DeFi-specific tokens
+
+18. BALANCE - User wants to check their balance (shows value in USDC)
     Examples: "show my balance", "how much do I have", "check wallet balance"
 
-18. PORTFOLIO - User wants to see their full portfolio
+19. PORTFOLIO - User wants to see their full portfolio
     Examples: "show my portfolio", "list my assets", "what's in my wallet"
 
-19. ACTIVITY - User wants transaction history
+20. ACTIVITY - User wants transaction history
     Examples: "show my activity", "transaction history", "recent transactions"
 
-20. RECEIVE - User wants to receive funds (show QR, address, handle)
+21. RECEIVE - User wants to receive funds (show QR, address, handle)
     Examples: "receive crypto", "show my address", "deposit address", "QR code"
 
-21. BUY - User wants to BUY crypto with fiat (credit card, bank transfer, Apple Pay)
+22. BUY - User wants to BUY crypto with fiat (credit card, bank transfer, Apple Pay)
     Examples: "buy crypto", "buy bitcoin with card", "comprar cripto", "quiero comprar cripto", "purchase ETH", "buy with fiat"
     Note: This is for ON-RAMP purchases with fiat currency, NOT token swaps.
 
