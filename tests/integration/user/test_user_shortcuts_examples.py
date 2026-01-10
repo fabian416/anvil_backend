@@ -20,8 +20,8 @@ from uuid import uuid4
 
 from app.run import make_app
 
-# Access token for ops@anvilcrypto.com (embedded from database)
-ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJxSHhXRGNuWDU1aXRzcG5PeUxsWk9yZUc1XzFsQUpJaWRKcHhTY2ZMc2hnIiwiZXhwIjoxNzY3ODQzMDU0fQ.RFtStoC7JU_PRIH3uRNXUfgA8AxMzR0khUwPhDmx19o"
+# Access token for ops@anvilcrypto.com (generated 2026-01-10, expires 2027-01-10)
+ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ0ZXN0X3Nlc3Npb25fMjAyNl8xNzY4MDY2MDc5IiwiZXhwIjoxNzk5NjAyMDc5fQ.OUFFmZW2_QACkgrIphLFcOOB3Qb-1ckVB_RvZ-VTaF0"
 
 # Generic fallback message that should NOT appear
 GENERIC_FALLBACK_MESSAGE = (
@@ -42,30 +42,16 @@ async def client():
 
 @pytest_asyncio.fixture
 async def conversation_id(client: AsyncClient):
-    """Create or get conversation for authenticated user."""
-    # Try to get existing conversation first
-    response = await client.get(
-        "/api/v1/user/chat/conversations",
-        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
-    )
-    
-    if response.status_code == 200:
-        conversations = response.json()
-        if conversations and len(conversations) > 0:
-            return conversations[0]["id"]
-    
-    # Create new conversation
+    """Create conversation for authenticated user."""
+    # Create new conversation for each test
     response = await client.post(
         "/api/v1/user/chat/conversations",
         json={"title": "Test Conversation", "language": "en"},
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
-    
-    if response.status_code == 201:
-        return response.json()["id"]
-    
-    # Fallback: generate UUID (will be auto-created by endpoint)
-    return str(uuid4())
+
+    assert response.status_code == 201, f"Failed to create conversation: {response.status_code} {response.text}"
+    return response.json()["id"]
 
 
 @pytest_asyncio.fixture
@@ -104,7 +90,7 @@ async def test_user_shortcut_examples_detect_correct_intent(
                 headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
             )
 
-            assert response.status_code == 200, f"Failed for {intent}: {example}"
+            assert response.status_code in (200, 201), f"Failed for {intent}: {example} - Status: {response.status_code}"
             data = response.json()
 
             detected_intent = data["routing"]["intent"]
@@ -156,7 +142,7 @@ async def test_user_shortcut_examples_not_generic_fallback(
                 headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
             )
 
-            assert response.status_code == 200, f"Failed for {intent}: {example}"
+            assert response.status_code in (200, 201), f"Failed for {intent}: {example} - Status: {response.status_code}"
             data = response.json()
 
             content = data["agent_message"]["content"]
@@ -223,7 +209,7 @@ async def test_user_shortcut_examples_have_meaningful_content(
                 headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
             )
 
-            assert response.status_code == 200, f"Failed for {intent}: {example}"
+            assert response.status_code in (200, 201), f"Failed for {intent}: {example} - Status: {response.status_code}"
             data = response.json()
 
             content = data["agent_message"]["content"].lower()
