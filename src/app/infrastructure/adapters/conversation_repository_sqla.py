@@ -186,14 +186,15 @@ class SqlaConversationRepository(ConversationRepository):
         if not row:
             return None
         
-        # Map row to entity
+        # Map row to entity - include metadata if available
         return Message(
             id=row.id,
             conversation_id=row.conversation_id,
             role=MessageRole(row.role),
             content=row.content,
             agent_type=row.agent_type,
-            created_at=row.created_at
+            created_at=row.created_at,
+            metadata=getattr(row, 'metadata', None) or {},
         )
     
     async def get_messages(
@@ -216,7 +217,7 @@ class SqlaConversationRepository(ConversationRepository):
         result = await self._session.execute(stmt)
         rows = result.fetchall()
         
-        # Map rows to entities
+        # Map rows to entities - include metadata if available
         messages = []
         for row in rows:
             message = Message(
@@ -225,7 +226,8 @@ class SqlaConversationRepository(ConversationRepository):
                 role=MessageRole(row.role),
                 content=row.content,
                 agent_type=row.agent_type,
-                created_at=row.created_at
+                created_at=row.created_at,
+                metadata=getattr(row, 'metadata', None) or {},
             )
             messages.append(message)
         
@@ -266,6 +268,72 @@ class SqlaConversationRepository(ConversationRepository):
             conversations_table.c.id == conversation_id
         )
         await self._session.execute(delete_conv_stmt)
-        await self._session.commit()
+        # Note: commit is handled by the transaction manager in DeleteConversation command
+        await self._session.flush()
         
         return True
+    
+    async def update_message_metadata(
+        self,
+        message_id: UUID,
+        metadata: dict,
+        merge: bool = True,
+    ) -> Optional[Message]:
+        """
+        Update message metadata.
+        
+        Args:
+            message_id: Message ID to update
+            metadata: New metadata dict
+            merge: If True, merge with existing metadata; if False, replace entirely
+            
+        Returns:
+            Updated Message or None if not found
+        """
+        messages_table = mapping_registry.metadata.tables.get("messages")
+        if messages_table is None:
+            raise RuntimeError("messages table not found in metadata")
+        
+        try:
+            if merge:
+                # Get existing metadata first
+                select_stmt = select(messages_table.c.metadata).where(
+                    messages_table.c.id == message_id
+                )
+                result = await self._session.execute(select_stmt)
+                existing = result.scalar()
+                if existing is None:
+                    return None
+                # Merge existing with new
+                merged_metadata = {**(existing or {}), **metadata}
+            else:
+                merged_metadata = metadata
+            
+            # Update the metadata
+            update_stmt = (
+                messages_table.update()
+                .where(messages_table.c.id == message_id)
+                .values(metadata=merged_metadata)
+                .returning(messages_table)
+            )
+            result = await self._session.execute(update_stmt)
+            row = result.fetchone()
+            
+            if not row:
+                return None
+            
+            await self._session.flush()
+            
+            # Return updated message
+            return Message(
+                id=row.id,
+                conversation_id=row.conversation_id,
+                role=MessageRole(row.role),
+                content=row.content,
+                agent_type=row.agent_type,
+                created_at=row.created_at,
+                metadata=row.metadata,
+            )
+        except Exception as e:
+            await self._session.rollback()
+            raise

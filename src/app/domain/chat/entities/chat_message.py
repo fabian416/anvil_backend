@@ -47,6 +47,7 @@ class ChatMessage:
         content: str,
         language: str = "en",
         metadata: dict[str, Any] | None = None,
+        created_at: datetime | None = None,
     ) -> "ChatMessage":
         """Create a user message."""
         return cls(
@@ -55,6 +56,7 @@ class ChatMessage:
             content=content,
             language=language,
             metadata=metadata or {},
+            created_at=created_at or datetime.utcnow(),
         )
     
     @classmethod
@@ -68,6 +70,7 @@ class ChatMessage:
         is_restricted_action: bool = False,
         language: str = "en",
         metadata: dict[str, Any] | None = None,
+        created_at: datetime | None = None,
     ) -> "ChatMessage":
         """Create an assistant message."""
         return cls(
@@ -80,6 +83,7 @@ class ChatMessage:
             is_restricted_action=is_restricted_action,
             language=language,
             metadata=metadata or {},
+            created_at=created_at or datetime.utcnow(),
         )
     
     @classmethod

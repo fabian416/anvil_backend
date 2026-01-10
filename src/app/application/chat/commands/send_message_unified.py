@@ -16,7 +16,7 @@ Supports DEMO MODE (use_demo_mode=True):
 import logging
 import time
 from decimal import Decimal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from app.application.agent_squad.commands.execute_supervisor_workflow import (
     ExecuteSupervisorWorkflow,
@@ -79,6 +79,7 @@ from app.application.ultra.flash_loan_engine import FlashLoanEngine, FlashLoanPr
 from app.application.ultra.mev_protection import MEVProtection
 from app.domain.chat.entities.message import Message
 from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.value_objects.message_role import MessageRole
 from app.domain.exceptions.chat import (
     ConversationAccessDeniedError,
     ConversationNotFoundError,
@@ -1296,11 +1297,22 @@ class UnifiedChatOrchestrator:
             agent_content: Agent message content
             agent_type: Optional agent type
             sources: Optional list of SourceInfo objects or dicts
+        
+        Note:
+            Agent message is created with a timestamp 1ms after the user message
+            to ensure correct chronological ordering in the database.
         """
-        # Create and save user message
-        user_message = Message.create_user_message(
+        from datetime import timedelta
+        from app.domain.common.datetime_utils import utc_now
+        
+        # Create user message with explicit timestamp
+        user_timestamp = utc_now()
+        user_message = Message(
+            id=uuid4(),
             conversation_id=conversation_id,
+            role=MessageRole.USER,
             content=user_content,
+            created_at=user_timestamp,
         )
         await self._conversation_repo.add_message(user_message)
 
@@ -1316,11 +1328,16 @@ class UnifiedChatOrchestrator:
                     sources_data.append(source)
             metadata["sources"] = sources_data
 
-        # Create and save agent message
-        agent_message = Message.create_agent_message(
+        # Create agent message with timestamp 1ms after user message
+        # This ensures correct ordering even if database precision is limited
+        agent_timestamp = user_timestamp + timedelta(milliseconds=1)
+        agent_message = Message(
+            id=uuid4(),
             conversation_id=conversation_id,
+            role=MessageRole.AGENT,
             content=agent_content,
             agent_type=agent_type,
+            created_at=agent_timestamp,
             metadata=metadata if metadata else None,
         )
         await self._conversation_repo.add_message(agent_message)
@@ -3011,14 +3028,27 @@ Your transactions are recorded when you use the app.
         except Exception as e:
             logger.error(f"Error saving messages in _handle_buy: {e}", exc_info=True)
             # Create message objects in memory even if save fails
+            # Use explicit timestamps to ensure correct ordering
+            from datetime import timedelta
             from app.domain.chat.entities.message import Message
-            user_msg = Message.create_user_message(
+            from app.domain.value_objects.message_role import MessageRole
+            from app.domain.common.datetime_utils import utc_now
+            
+            user_timestamp = utc_now()
+            user_msg = Message(
+                id=uuid4(),
                 conversation_id=conversation_id,
+                role=MessageRole.USER,
                 content=content,
+                created_at=user_timestamp,
             )
-            agent_msg = Message.create_agent_message(
+            agent_timestamp = user_timestamp + timedelta(milliseconds=1)
+            agent_msg = Message(
+                id=uuid4(),
                 conversation_id=conversation_id,
+                role=MessageRole.AGENT,
                 content=response_content,
+                created_at=agent_timestamp,
             )
 
         return {
@@ -3077,14 +3107,27 @@ Your transactions are recorded when you use the app.
         except Exception as e:
             logger.error(f"Error saving messages in _handle_moonpay_swap: {e}", exc_info=True)
             # Create message objects in memory even if save fails
+            # Use explicit timestamps to ensure correct ordering
+            from datetime import timedelta
             from app.domain.chat.entities.message import Message
-            user_msg = Message.create_user_message(
+            from app.domain.value_objects.message_role import MessageRole
+            from app.domain.common.datetime_utils import utc_now
+            
+            user_timestamp = utc_now()
+            user_msg = Message(
+                id=uuid4(),
                 conversation_id=conversation_id,
+                role=MessageRole.USER,
                 content=content,
+                created_at=user_timestamp,
             )
-            agent_msg = Message.create_agent_message(
+            agent_timestamp = user_timestamp + timedelta(milliseconds=1)
+            agent_msg = Message(
+                id=uuid4(),
                 conversation_id=conversation_id,
+                role=MessageRole.AGENT,
                 content=response_content,
+                created_at=agent_timestamp,
             )
 
         return {

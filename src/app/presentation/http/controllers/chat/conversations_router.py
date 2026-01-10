@@ -5,6 +5,7 @@ CRUD endpoints for conversation management.
 Supports both guest and authenticated users.
 """
 
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -20,6 +21,7 @@ from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, R
 from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
 from app.application.chat.handlers.restricted_handler import RestrictedActionHandler
 from app.application.guest.handlers.guest_handler_service import GuestHandlerService
+from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.infrastructure.adapters.chat_unified_repository_sqla import ChatMessageRepositorySqla
 from app.application.common.services.current_user import CurrentUserService
 from app.application.common.exceptions.authorization import AuthorizationError
@@ -73,6 +75,7 @@ class MessageResponse(BaseModel):
     intent: str | None = None
     is_restricted_action: bool = False
     created_at: str
+    metadata: dict[str, Any] | None = None  # Swap quote data, enrichment, etc.
 
 
 class ConversationWithMessagesResponse(BaseModel):
@@ -551,9 +554,10 @@ def create_conversations_router() -> APIRouter:
         conversation_memory: FromDishka[ConversationMemory],
         handler_service: FromDishka[GuestHandlerService],
         message_repository: FromDishka[ChatMessageRepositorySqla],
+        llm_gateway: FromDishka[LLMGateway],
     ) -> ChatResponse:
         """Send a message to a conversation."""
-        from app.domain.chat.entities.chat_message import ChatMessage
+        from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
         
         user = await _resolve_chat_user(
             http_request=http_request,
@@ -628,6 +632,8 @@ def create_conversations_router() -> APIRouter:
         registration_required = None
         pending_action = None
         execute_data = None  # Execute action data for /execute endpoint
+        used_agent_gateway = False  # Flag for when AgentGateway (LLM) was used
+        handler_result = {}  # Default empty handler result for metadata extraction
         
         # Handle based on intent
         if intent_result.is_restricted:
@@ -822,6 +828,8 @@ def create_conversations_router() -> APIRouter:
         else:
             # Use existing handler service for other intents
             from app.application.chat.services.intent_detector import ChatIntent
+            import logging
+            logger = logging.getLogger(__name__)
             
             # Map intent
             try:
@@ -829,37 +837,105 @@ def create_conversations_router() -> APIRouter:
             except KeyError:
                 mapped_intent = ChatIntent.GENERAL_CONVERSATION
             
-            context_str = conversation_memory.build_context_string(context)
-            handler_result = await handler_service.handle_intent(
-                intent=mapped_intent,
-                content=request_body.content,
-                language=request_body.language,
-                context=context_str,
-                is_authenticated=not user.is_guest,
-            )
-            agent_content = handler_result.get("content", "")
-            enrichment = handler_result.get("enrichment")
-            pending_action = handler_result.get("pending_action")
-            if user.is_guest and handler_result.get("requires_registration"):
-                registration_required = {
-                    "required": True,
-                    "reason": "action_required",
-                    "signup_url": "/signup",
-                }
+            # For authenticated users with GENERAL_CONVERSATION intent,
+            # use LLMGateway directly for real LLM response
+            if not user.is_guest and mapped_intent == ChatIntent.GENERAL_CONVERSATION:
+                try:
+                    # Build context from conversation memory
+                    context_str = conversation_memory.build_context_string(context)
+                    
+                    # Build messages for LLM
+                    system_prompt = """You are Anvil, a helpful DeFi assistant specialized in decentralized finance.
+You help users understand DeFi concepts, protocols, and strategies.
+Be concise, accurate, and friendly. If you don't know something, say so.
+Respond in the same language the user uses."""
+                    
+                    # Build user message with context if available
+                    user_prompt = request_body.content
+                    if context_str:
+                        user_prompt = f"Previous conversation:\n{context_str}\n\nUser: {request_body.content}"
+                    
+                    messages = [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ]
+                    
+                    # Using 3B model because 70B is frequently overloaded ("Model busy")
+                    raw_response = await llm_gateway.generate(
+                        model="meta-llama/Llama-3.2-3B-Instruct",
+                        messages=messages,
+                        temperature=0.7,
+                        max_tokens=500,
+                    )
+                    
+                    # Normalize response - extract text if tuple/dict returned
+                    if isinstance(raw_response, tuple):
+                        agent_content = str(raw_response[0]) if raw_response else ""
+                    elif isinstance(raw_response, dict):
+                        agent_content = raw_response.get("content", raw_response.get("text", str(raw_response)))
+                    else:
+                        agent_content = str(raw_response) if raw_response else ""
+                    
+                    enrichment = None
+                    pending_action = None
+                    
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).error(f"LLM call failed: {e}")
+                    # Fallback to handler
+                    context_str = conversation_memory.build_context_string(context)
+                    handler_result = await handler_service.handle_intent(
+                        intent=mapped_intent,
+                        content=request_body.content,
+                        language=request_body.language,
+                        context=context_str,
+                        is_authenticated=True,
+                    )
+                    agent_content = handler_result.get("content", "")
+                    enrichment = handler_result.get("enrichment")
+                    pending_action = handler_result.get("pending_action")
+            else:
+                # Use GuestHandlerService for:
+                # - Guest users (all intents)
+                # - Authenticated users with non-GENERAL_CONVERSATION intents (swap, buy, etc.)
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=mapped_intent,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=not user.is_guest,
+                )
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                pending_action = handler_result.get("pending_action")
+                if user.is_guest and handler_result.get("requires_registration"):
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
 
         # For authenticated users, strip demo "signup" CTA text that some handlers embed.
         if not user.is_guest:
             agent_content = await _strip_signup_prompt_for_authenticated(agent_content)
             registration_required = None
         
-        # Create and save user message
+        # Create user message with explicit timestamp
+        from datetime import timedelta
+        user_timestamp = datetime.utcnow()
         user_message = ChatMessage.create_user_message(
             conversation_id=conversation_id,
             content=request_body.content,
             language=request_body.language,
+            created_at=user_timestamp,
         )
         
-        # Create and save assistant message
+        # Create assistant message with timestamp 1ms after user message
+        # This ensures correct chronological ordering in the database
+        assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
+        
+        # Prepare metadata for assistant message
         metadata = {}
         if pending_action:
             metadata["pending_action"] = pending_action
@@ -898,24 +974,30 @@ def create_conversations_router() -> APIRouter:
                 "asset": handler_result.get("enrichment", {}).get("asset", "USDC"),
             }
         
+        # Determine handler name for routing info
+        handler_name = "agent_gateway_llm" if used_agent_gateway else intent_result.handler
+        
         assistant_message = ChatMessage.create_assistant_message(
             conversation_id=conversation_id,
             content=agent_content,
             intent=intent_result.intent.value,
             intent_confidence=intent_result.confidence,
-            handler=intent_result.handler,
+            handler=handler_name,
             is_restricted_action=bool(registration_required),
             language=request_body.language,
             metadata=metadata,
+            created_at=assistant_timestamp,
         )
         
         # CRITICAL: Save messages to database for multi-turn flow persistence
         await message_repository.save(user_message)
         await message_repository.save(assistant_message)
         
-        # Update conversation
+        # Update conversation message count
         conversation.increment_messages()
         conversation.increment_messages()  # Both user and assistant
+        
+        # Auto-generate title if needed
         if not conversation.title:
             conversation.auto_generate_title(request_body.content)
         
@@ -926,7 +1008,7 @@ def create_conversations_router() -> APIRouter:
         routing = {
             "intent": intent_result.intent.value,
             "confidence": intent_result.confidence,
-            "handler": intent_result.handler,
+            "handler": handler_name,
             "language": request_body.language,
             "is_demo_mode": user.is_guest,
             "user_type": user.user_type.value,
@@ -959,6 +1041,110 @@ def create_conversations_router() -> APIRouter:
             registration_required=registration_required,
             rate_limit_status=rate_limit_status,
             execute=execute_data,
+        )
+    
+    # ========================================
+    # Swap Quote Persistence Endpoint
+    # ========================================
+    
+    class SaveSwapQuoteRequest(BaseModel):
+        """Request to save swap quote data to a message."""
+        
+        swap_quote: dict[str, Any] = Field(
+            ...,
+            description="MoonPay swap quote data including fromToken, toToken, amount, rate, etc."
+        )
+        status: str = Field(
+            default="pending",
+            description="Swap status: pending, executed, cancelled, expired"
+        )
+    
+    class SaveSwapQuoteResponse(BaseModel):
+        """Response after saving swap quote."""
+        
+        message_id: str
+        metadata: dict[str, Any]
+    
+    @router.patch(
+        "/{conversation_id}/messages/{message_id}/swap-quote",
+        response_model=SaveSwapQuoteResponse,
+        status_code=status.HTTP_200_OK,
+        summary="Save Swap Quote",
+        description="""
+        Save MoonPay swap quote data to a message for persistence.
+        
+        This endpoint allows the frontend to save swap quote data after
+        receiving it from MoonPay, ensuring the swap appears in chat history.
+        
+        **Swap Status Values:**
+        - pending: Quote received, awaiting user action
+        - executed: Swap was executed successfully
+        - cancelled: User cancelled the swap
+        - expired: Quote expired before execution
+        """,
+    )
+    @inject
+    async def save_swap_quote(
+        conversation_id: UUID,
+        message_id: UUID,
+        request_body: SaveSwapQuoteRequest,
+        http_request: Request,
+        user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
+        conversation_service: FromDishka[ConversationService],
+        message_repository: FromDishka[ChatMessageRepositorySqla],
+    ) -> SaveSwapQuoteResponse:
+        """Save swap quote data to a message."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Resolve user
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
+        )
+        
+        # Verify conversation belongs to user
+        conversation = await conversation_service.get(
+            conversation_id=conversation_id,
+            user_id=user.id,
+        )
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        
+        # Build swap metadata
+        swap_metadata = {
+            "swap_info": {
+                "quote": request_body.swap_quote,
+                "status": request_body.status,
+                "saved_at": datetime.utcnow().isoformat(),
+            }
+        }
+        
+        # Update message metadata
+        updated_message = await message_repository.update_metadata(
+            message_id=message_id,
+            metadata=swap_metadata,
+            merge=True,
+        )
+        
+        if not updated_message:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Message not found",
+            )
+        
+        logger.info(
+            f"Saved swap quote for message {message_id} in conversation {conversation_id}"
+        )
+        
+        return SaveSwapQuoteResponse(
+            message_id=str(message_id),
+            metadata=updated_message.metadata,
         )
     
     return router

@@ -5,7 +5,7 @@ SQLAlchemy mapping for Message table metadata.
 from sqlalchemy import String, DateTime, Enum, ForeignKey, Text
 from sqlalchemy.orm import mapped_column
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 import uuid
 
 from app.domain.value_objects.message_role import MessageRole
@@ -32,6 +32,11 @@ def map_message_table() -> None:
         role = mapped_column(Enum(MessageRole, values_callable=lambda x: [e.value for e in x]), nullable=False)
         content = mapped_column(Text, nullable=False)
         agent_type = mapped_column(Enum(AgentType, values_callable=lambda x: [e.value for e in x]), nullable=True)
+        
+        # Metadata (for swap quotes, enrichment, etc.)
+        # Note: 'metadata' is reserved in SQLAlchemy, so we use 'extra_metadata' as attribute name
+        # but map it to 'metadata' column in the database
+        extra_metadata = mapped_column("metadata", JSONB, default={}, server_default='{}')
         
         # Timestamps
         created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))

@@ -2,12 +2,13 @@
 Send message command with Hunter AI tool integration.
 """
 
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import Optional, Dict, Any
 import asyncio
 import re
 
 from app.domain.chat.entities.message import Message
+from app.domain.value_objects.message_role import MessageRole
 from app.domain.chat.entities.conversation import Conversation
 from app.domain.projects.entities.project import Project
 from app.domain.chat.ports.conversation_repository import ConversationRepository
@@ -112,10 +113,17 @@ class SendMessage:
         if conversation.user_id != user_id:
             raise ConversationAccessDeniedError(conversation_id, user_id)
         
-        # Create and save user message
-        user_message = Message.create_user_message(
+        # Create user message with explicit timestamp for guaranteed ordering
+        from datetime import timedelta
+        from app.domain.common.datetime_utils import utc_now
+        
+        user_timestamp = utc_now()
+        user_message = Message(
+            id=uuid4(),
             conversation_id=conversation_id,
+            role=MessageRole.USER,
             content=content,
+            created_at=user_timestamp,
         )
         await self._repository.add_message(user_message)
         
@@ -147,10 +155,14 @@ class SendMessage:
         else:
             final_response = agent_response
         
-        # Create and save agent message
-        agent_message = Message.create_agent_message(
+        # Create agent message with timestamp after user message
+        # Use current time (which is after agent processing) to ensure proper order
+        agent_message = Message(
+            id=uuid4(),
             conversation_id=conversation_id,
+            role=MessageRole.AGENT,
             content=final_response,
+            created_at=utc_now(),  # Will be after user_timestamp due to agent processing time
         )
         await self._repository.add_message(agent_message)
 

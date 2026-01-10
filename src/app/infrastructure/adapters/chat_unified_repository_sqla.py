@@ -445,7 +445,7 @@ class ChatMessageRepositorySqla:
             result = await self._session.execute(stmt)
             new_id = result.scalar_one()
             message.id = new_id
-            await self._session.flush()  # Use flush instead of commit to allow outer transaction to commit
+            await self._session.commit()  # Persist message to database
             return message
         except SQLAlchemyError as e:
             # Rollback on any SQL error to prevent InFailedSqlTransaction
@@ -465,6 +465,72 @@ class ChatMessageRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to count messages: {e}")
             return 0
+    
+    async def update_metadata(
+        self,
+        message_id: UUID,
+        metadata: dict,
+        merge: bool = True,
+    ) -> ChatMessage | None:
+        """
+        Update message metadata.
+        
+        Args:
+            message_id: Message ID to update
+            metadata: New metadata dict
+            merge: If True, merge with existing metadata; if False, replace entirely
+            
+        Returns:
+            Updated ChatMessage or None if not found
+        """
+        try:
+            table = mapping_registry.metadata.tables["chat_messages"]
+            
+            if merge:
+                # Get existing metadata first
+                select_stmt = select(table.c.metadata).where(table.c.id == message_id)
+                result = await self._session.execute(select_stmt)
+                existing = result.scalar()
+                if existing is None:
+                    return None
+                # Merge existing with new
+                merged_metadata = {**(existing or {}), **metadata}
+            else:
+                merged_metadata = metadata
+            
+            # Update the metadata
+            update_stmt = (
+                table.update()
+                .where(table.c.id == message_id)
+                .values(metadata=merged_metadata)
+                .returning(table)
+            )
+            result = await self._session.execute(update_stmt)
+            row = result.fetchone()
+            
+            if not row:
+                return None
+            
+            await self._session.commit()  # Persist metadata update to database
+            return self._row_to_message(dict(row._mapping))
+        except SQLAlchemyError as e:
+            await self._session.rollback()
+            logger.error(f"Failed to update message metadata: {e}")
+            raise DataMapperError("Failed to update message metadata") from e
+    
+    async def get_by_id(self, message_id: UUID) -> ChatMessage | None:
+        """Get a message by ID."""
+        try:
+            table = mapping_registry.metadata.tables["chat_messages"]
+            stmt = select(table).where(table.c.id == message_id)
+            result = await self._session.execute(stmt)
+            row = result.fetchone()
+            if not row:
+                return None
+            return self._row_to_message(dict(row._mapping))
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to get message: {e}")
+            return None
     
     @staticmethod
     def _row_to_message(row: dict) -> ChatMessage:

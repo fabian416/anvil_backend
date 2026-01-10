@@ -158,7 +158,7 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
         # Get classification from LLM
         try:
             response = await self.llm_gateway.generate(
-                model="meta-llama/Meta-Llama-3.1-70B-Instruct",  # DeepInfra Llama model for classification
+                model="meta-llama/Llama-3.2-3B-Instruct",  # Using 3B (70B is overloaded)
                 messages=[
                     {"role": "system", "content": "You are an intent classifier. Respond only with the intent name."},
                     {"role": "user", "content": prompt},
@@ -249,7 +249,7 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
         
         # Generate response using LLM
         response = await self.llm_gateway.generate(
-            model="meta-llama/Meta-Llama-3.1-70B-Instruct",  # DeepInfra Llama model for fallback responses
+            model="meta-llama/Llama-3.2-3B-Instruct",  # Using 3B (70B is overloaded)
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": full_prompt},
@@ -348,16 +348,9 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
 
             response_text = self._normalize_agent_response(response)
             
-            # Step 4: Save response to storage
-            # Map intent to valid AgentType enum value
-            agent_type = self._intent_to_agent_type.get(intent, AgentType.CHAT.value)
-
-            await self.storage.save_message(
-                session_id=session_id,
-                role="agent",
-                content=response_text,
-                agent_type=agent_type
-            )
+            # NOTE: Message persistence is handled by SendMessage command.
+            # The gateway only generates responses; the command layer handles
+            # saving both user and agent messages to maintain proper transaction control.
             
             return response_text
             

@@ -68,6 +68,7 @@ class MessageResponse(BaseModel):
     agent_type: Optional[str]
     sources: List[SourceInfoResponse] = Field(default_factory=list)  # NEW
     created_at: datetime
+    metadata: Optional[dict] = None  # For swap quotes, enrichment data, etc.
     
     model_config = ConfigDict(from_attributes=True)
     
@@ -97,6 +98,7 @@ class MessageResponse(BaseModel):
             agent_type=message.agent_type,
             sources=sources,
             created_at=message.created_at,
+            metadata=message.metadata if message.metadata else None,
         )
 
 

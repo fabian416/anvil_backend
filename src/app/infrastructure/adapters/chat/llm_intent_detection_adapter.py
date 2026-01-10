@@ -97,7 +97,7 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
         # Call LLM
         try:
             response = await self._llm.generate(
-                model="meta-llama/Meta-Llama-3.1-70B-Instruct",
+                model="meta-llama/Llama-3.2-3B-Instruct",  # Using 3B (70B is overloaded)
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},

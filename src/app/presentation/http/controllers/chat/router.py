@@ -13,7 +13,7 @@ import warnings
 from uuid import UUID
 
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, status, Security
+from fastapi import APIRouter, status, Security, Response
 from fastapi.exceptions import HTTPException
 
 # Legacy system deprecation warning
@@ -25,6 +25,36 @@ warnings.warn(
 )
 
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# Deprecation Headers Helper
+# ============================================================================
+
+def add_deprecation_headers(response: Response, endpoint_path: str) -> None:
+    """
+    Add standard deprecation headers to response.
+    
+    Headers:
+    - Deprecation: true (RFC 8594)
+    - Sunset: 2026-06-01 (RFC 8594)
+    - Link: successor endpoint
+    """
+    response.headers["Deprecation"] = "true"
+    response.headers["Sunset"] = "Sun, 01 Jun 2026 00:00:00 GMT"
+    
+    # Map legacy endpoints to new endpoints
+    successor_map = {
+        "/conversations": "/api/v1/conversations",
+        "/messages": "/api/v1/conversations/{id}/messages",
+        "/execute": "/api/v1/conversations/{id}/messages",  # Execute via chat now
+    }
+    
+    for legacy_suffix, new_endpoint in successor_map.items():
+        if legacy_suffix in endpoint_path:
+            response.headers["Link"] = f'<{new_endpoint}>; rel="successor-version"'
+            break
+    else:
+        response.headers["Link"] = '</api/v1/conversations>; rel="successor-version"'
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.application.common.services.current_user import CurrentUserService
@@ -132,9 +162,12 @@ def create_chat_router() -> APIRouter:
         status_code=status.HTTP_200_OK,
         response_model=ConversationListResponse,
         dependencies=[Security(bearer_scheme)],
+        deprecated=True,
+        description="⚠️ DEPRECATED: Use GET /api/v1/conversations instead",
     )
     @inject
     async def list_conversations(
+        response: Response,
         current_user: FromDishka[CurrentUserService],
         limit: int = 20,
         offset: int = 0,
@@ -143,8 +176,16 @@ def create_chat_router() -> APIRouter:
         """
         List conversations for the authenticated user.
         
+        ⚠️ **DEPRECATED**: Use GET /api/v1/conversations instead.
+        Sunset date: 2026-06-01
+        
         Supports pagination via limit and offset.
         """
+        add_deprecation_headers(response, "/conversations")
+        logger.warning(
+            "DEPRECATED ENDPOINT USED: GET /user/chat/conversations "
+            "- Migrate to GET /api/v1/conversations by 2026-06-01"
+        )
         user = await current_user.get_current_user()
         conversations = await interactor.execute(
             user_id=user.id_.value,
@@ -297,11 +338,14 @@ def create_chat_router() -> APIRouter:
         status_code=status.HTTP_201_CREATED,
         response_model=UnifiedChatResponse,
         dependencies=[Security(bearer_scheme)],
+        deprecated=True,
+        description="⚠️ DEPRECATED: Use POST /api/v1/conversations/{id}/messages instead",
     )
     @inject
     async def send_message(
         conversation_id: UUID,
         request: SendMessageRequest,
+        response: Response,
         current_user: FromDishka[CurrentUserService],
         orchestrator: FromDishka[UnifiedChatOrchestrator],
     ) -> UnifiedChatResponse:
@@ -366,6 +410,13 @@ def create_chat_router() -> APIRouter:
         }
         ```
         """
+        # Add deprecation headers
+        add_deprecation_headers(response, "/conversations/{id}/messages")
+        logger.warning(
+            "DEPRECATED ENDPOINT USED: POST /user/chat/conversations/{id}/messages "
+            "- Migrate to POST /api/v1/conversations/{id}/messages by 2026-06-01"
+        )
+        
         user = await current_user.get_current_user()
 
         # Use UnifiedChatOrchestrator for intelligent intent-based routing
@@ -432,10 +483,13 @@ def create_chat_router() -> APIRouter:
         status_code=status.HTTP_200_OK,
         response_model=MessageListResponse,
         dependencies=[Security(bearer_scheme)],
+        deprecated=True,
+        description="⚠️ DEPRECATED: Use GET /api/v1/conversations/{id}/messages instead",
     )
     @inject
     async def get_messages(
         conversation_id: UUID,
+        response: Response,
         current_user: FromDishka[CurrentUserService],
         limit: int = 50,
         interactor: FromDishka[GetMessages] = None,
@@ -443,8 +497,16 @@ def create_chat_router() -> APIRouter:
         """
         Get messages for a conversation.
         
+        ⚠️ **DEPRECATED**: Use GET /api/v1/conversations/{id}/messages instead.
+        Sunset date: 2026-06-01
+        
         Messages are returned in chronological order (oldest first).
         """
+        add_deprecation_headers(response, "/conversations/{id}/messages")
+        logger.warning(
+            "DEPRECATED ENDPOINT USED: GET /user/chat/conversations/{id}/messages "
+            "- Migrate to GET /api/v1/conversations/{id}/messages by 2026-06-01"
+        )
         user = await current_user.get_current_user()
         messages = await interactor.execute(
             user_id=user.id_.value,
@@ -914,5 +976,94 @@ def create_chat_router() -> APIRouter:
         )
         
         return ListEnabledAgentsResponse(**result)
+    
+    # ========================================
+    # Swap Quote Persistence Endpoint
+    # ========================================
+    
+    from pydantic import BaseModel, Field
+    from typing import Any
+    from datetime import datetime
+    from app.infrastructure.adapters.conversation_repository_sqla import SqlaConversationRepository
+    
+    class SaveSwapQuoteRequest(BaseModel):
+        """Request to save swap quote data to a message."""
+        
+        swap_quote: dict[str, Any] = Field(
+            ...,
+            description="MoonPay swap quote data including fromToken, toToken, amount, rate, etc."
+        )
+        status: str = Field(
+            default="pending",
+            description="Swap status: pending, executed, cancelled, expired"
+        )
+    
+    class SaveSwapQuoteResponse(BaseModel):
+        """Response after saving swap quote."""
+        
+        message_id: str
+        metadata: dict[str, Any]
+    
+    @router.patch(
+        "/conversations/{conversation_id}/messages/{message_id}/swap-quote",
+        response_model=SaveSwapQuoteResponse,
+        status_code=status.HTTP_200_OK,
+        dependencies=[Security(bearer_scheme)],
+        summary="Save Swap Quote",
+        description="""
+        Save MoonPay swap quote data to a message for persistence.
+        
+        This endpoint allows the frontend to save swap quote data after
+        receiving it from MoonPay, ensuring the swap appears in chat history.
+        
+        **Swap Status Values:**
+        - pending: Quote received, awaiting user action
+        - executed: Swap was executed successfully
+        - cancelled: User cancelled the swap
+        - expired: Quote expired before execution
+        """,
+    )
+    @inject
+    async def save_swap_quote(
+        conversation_id: UUID,
+        message_id: UUID,
+        request_body: SaveSwapQuoteRequest,
+        current_user: FromDishka[CurrentUserService],
+        conversation_repository: FromDishka[SqlaConversationRepository],
+    ) -> SaveSwapQuoteResponse:
+        """Save swap quote data to a message."""
+        user = await current_user.get_current_user()
+        
+        # Build swap metadata
+        swap_metadata = {
+            "swap_info": {
+                "quote": request_body.swap_quote,
+                "status": request_body.status,
+                "saved_at": datetime.utcnow().isoformat(),
+            }
+        }
+        
+        # Update message metadata
+        updated_message = await conversation_repository.update_message_metadata(
+            message_id=message_id,
+            metadata=swap_metadata,
+            merge=True,
+        )
+        
+        if not updated_message:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Message not found",
+            )
+        
+        logger.info(
+            f"Saved swap quote for message {message_id} in conversation {conversation_id} "
+            f"for user {user.id_.value}"
+        )
+        
+        return SaveSwapQuoteResponse(
+            message_id=str(message_id),
+            metadata=updated_message.metadata,
+        )
     
     return router

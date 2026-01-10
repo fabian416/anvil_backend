@@ -1,3 +1,4 @@
+import ssl
 import time
 import aiohttp
 import orjson
@@ -34,7 +35,15 @@ class DeepInfraStrategy(LLMStrategy):
             "stream": False
         }
 
-        async with aiohttp.ClientSession() as session:
+        # Configure timeout and SSL
+        timeout = aiohttp.ClientTimeout(total=60)  # 60 second timeout for LLM calls
+        # Create SSL context that doesn't verify certificates (for development)
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+        
+        async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
             async with session.post(
                 f"{self.base_url}/chat/completions", 
                 headers=headers, 

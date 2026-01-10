@@ -171,6 +171,7 @@ class ConversationService:
                     "intent": msg.intent,
                     "is_restricted_action": msg.is_restricted_action,
                     "created_at": msg.created_at.isoformat(),
+                    "metadata": msg.metadata if msg.metadata else None,
                 }
                 for msg in messages
             ],
