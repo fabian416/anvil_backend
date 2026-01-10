@@ -11,6 +11,7 @@ This adapter is ideal for:
 """
 
 import re
+import string
 from typing import Optional
 
 from app.domain.ports.chat.intent_detection_port import (
@@ -74,15 +75,16 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         Returns:
             Intent detection result with handler and entities
         """
-        message_lower = request.message.lower()
+        # Normalize message: remove punctuation, lowercase, normalize whitespace
+        message_normalized = self._normalize_message(request.message)
 
         # Classify by keywords
         intent, confidence, reasoning, suggested_agent = self._classify_by_keywords(
-            message_lower
+            message_normalized
         )
 
         # Extract entities based on intent
-        entities = self._extract_entities(intent, message_lower, request.message)
+        entities = self._extract_entities(intent, message_normalized, request.message)
 
         # Map intent to handler
         handler = self.INTENT_TO_HANDLER.get(intent, "general_chat")
@@ -95,6 +97,32 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
             handler=handler,
             suggested_agent=suggested_agent,
         )
+
+    def _normalize_message(self, message: str) -> str:
+        """
+        Normalize message for consistent matching.
+
+        Applies three transformations:
+        1. Remove punctuation (handles "swap sol to usdc!" → "swap sol to usdc")
+        2. Convert to lowercase (handles "Swap SOL to USDC" → "swap sol to usdc")
+        3. Normalize whitespace (handles "swap  sol  to  usdc" → "swap sol to usdc")
+
+        Args:
+            message: Raw user message
+
+        Returns:
+            Normalized message ready for exact matching
+        """
+        # Remove punctuation
+        message_no_punct = message.translate(str.maketrans('', '', string.punctuation))
+
+        # Lowercase
+        message_lower = message_no_punct.lower()
+
+        # Normalize whitespace (collapse multiple spaces to single space, strip)
+        message_normalized = " ".join(message_lower.split())
+
+        return message_normalized
 
     def supports_streaming(self) -> bool:
         return False
