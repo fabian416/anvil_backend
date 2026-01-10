@@ -77,6 +77,18 @@ SHORTCUTS_DATA = {
                 "icon": "🔄",
             },
             {
+                "intent": "swap_moonpay",
+                "command": "MoonPay Swap",
+                "description": "Quick crypto-to-crypto swap via MoonPay (BTC, ETH, SOL, USDC)",
+                "examples": [
+                    "Swap BTC to ETH",
+                    "Exchange 0.5 ETH for USDC",
+                    "Convert SOL to BTC",
+                    "Swap 100 USDC to SOL",
+                ],
+                "icon": "🌙",
+            },
+            {
                 "intent": "portfolio",
                 "command": "Portfolio",
                 "description": "View all your token holdings",
@@ -200,6 +212,18 @@ SHORTCUTS_DATA = {
                 "icon": "🔄",
             },
             {
+                "intent": "swap_moonpay",
+                "command": "Swap MoonPay",
+                "description": "Intercambio rápido cripto-a-cripto vía MoonPay (BTC, ETH, SOL, USDC)",
+                "examples": [
+                    "Cambiar BTC por ETH",
+                    "Intercambiar 0.5 ETH por USDC",
+                    "Convertir SOL a BTC",
+                    "Cambiar 100 USDC por SOL",
+                ],
+                "icon": "🌙",
+            },
+            {
                 "intent": "portfolio",
                 "command": "Portafolio",
                 "description": "Ver todos tus tokens",
@@ -314,6 +338,18 @@ SHORTCUTS_DATA = {
                     "Meilleur taux pour échanger ETH vers USDC",
                 ],
                 "icon": "🔄",
+            },
+            {
+                "intent": "swap_moonpay",
+                "command": "Swap MoonPay",
+                "description": "Échange rapide crypto-à-crypto via MoonPay (BTC, ETH, SOL, USDC)",
+                "examples": [
+                    "Échanger BTC contre ETH",
+                    "Échanger 0.5 ETH contre USDC",
+                    "Convertir SOL en BTC",
+                    "Échanger 100 USDC contre SOL",
+                ],
+                "icon": "🌙",
             },
             {
                 "intent": "portfolio",
@@ -432,6 +468,18 @@ SHORTCUTS_DATA = {
                 "icon": "🔄",
             },
             {
+                "intent": "swap_moonpay",
+                "command": "MoonPay交换",
+                "description": "通过MoonPay快速加密货币互换 (BTC, ETH, SOL, USDC)",
+                "examples": [
+                    "将BTC换成ETH",
+                    "交换0.5 ETH换USDC",
+                    "将SOL转换为BTC",
+                    "交换100 USDC换SOL",
+                ],
+                "icon": "🌙",
+            },
+            {
                 "intent": "portfolio",
                 "command": "投资组合",
                 "description": "查看您所有的代币持仓",
@@ -546,6 +594,18 @@ SHORTCUTS_DATA = {
                     "Melhor taxa para trocar ETH por USDC",
                 ],
                 "icon": "🔄",
+            },
+            {
+                "intent": "swap_moonpay",
+                "command": "Swap MoonPay",
+                "description": "Troca rápida cripto-a-cripto via MoonPay (BTC, ETH, SOL, USDC)",
+                "examples": [
+                    "Trocar BTC por ETH",
+                    "Trocar 0.5 ETH por USDC",
+                    "Converter SOL para BTC",
+                    "Trocar 100 USDC por SOL",
+                ],
+                "icon": "🌙",
             },
             {
                 "intent": "portfolio",
