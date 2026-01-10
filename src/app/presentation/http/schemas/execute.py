@@ -15,8 +15,9 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class ActionType(str, Enum):
     """Types of executable actions."""
-    
+
     SWAP = "swap"
+    SWAP_MOONPAY = "swap_moonpay"  # MoonPay crypto-to-crypto swap (via Privy)
     DEPOSIT = "deposit"
     WITHDRAW = "withdraw"
     APPROVE = "approve"

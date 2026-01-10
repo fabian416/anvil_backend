@@ -38,6 +38,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.infrastructure.adapters.external.oneinch_client import OneInchClient
     from app.infrastructure.adapters.external.lifi_client import LiFiClient
+    from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
     from app.domain.ports.morpho_gateway import MorphoGateway
     from app.domain.ports.aave_gateway import AaveGateway
 
@@ -91,17 +92,19 @@ class ExecuteActionCommand:
         wallet_repository: Optional[WalletRepository] = None,
         oneinch_client: Optional["OneInchClient"] = None,
         lifi_client: Optional["LiFiClient"] = None,
+        moonpay_swap_client: Optional["MoonPaySwapClient"] = None,
         morpho_gateway: Optional["MorphoGateway"] = None,
         aave_gateway: Optional["AaveGateway"] = None,
     ):
         """
         Initialize execute action command.
-        
+
         Args:
             conversation_repo: Conversation repository
             wallet_repository: Wallet repository (Privy)
             oneinch_client: 1inch API client
             lifi_client: LiFi API client
+            moonpay_swap_client: MoonPay swap API client
             morpho_gateway: Morpho gateway
             aave_gateway: Aave gateway
         """
@@ -109,6 +112,7 @@ class ExecuteActionCommand:
         self._wallet_repository = wallet_repository
         self._oneinch = oneinch_client
         self._lifi = lifi_client
+        self._moonpay_swap = moonpay_swap_client
         self._morpho = morpho_gateway
         self._aave = aave_gateway
     
@@ -162,6 +166,16 @@ class ExecuteActionCommand:
                 chain=chain,
                 to_chain=to_chain,
                 slippage=slippage,
+                confirmed=confirmed,
+                language=language,
+            )
+        elif action_type == "swap_moonpay":
+            return await self._handle_moonpay_swap(
+                action_id=action_id,
+                wallet_address=wallet_address,
+                from_token=from_token or "BTC",
+                to_token=to_token or "ETH",
+                amount=amount or "0",
                 confirmed=confirmed,
                 language=language,
             )
@@ -1056,7 +1070,160 @@ class ExecuteActionCommand:
             created_at=datetime.utcnow(),
             expires_at=None,
         )
-    
+
+    async def _handle_moonpay_swap(
+        self,
+        action_id: UUID,
+        wallet_address: str,
+        from_token: str,
+        to_token: str,
+        amount: str,
+        confirmed: bool,
+        language: str,
+    ) -> ActionResult:
+        """
+        Handle MoonPay crypto-to-crypto swap.
+
+        MoonPay swaps are executed via Privy on the frontend.
+        This handler:
+        1. Gets a fresh quote from MoonPay
+        2. Returns quote data for frontend to open Privy modal
+        3. Frontend handles actual execution via Privy SDK
+
+        Flow:
+        - confirmed=false: Get quote, return to frontend
+        - confirmed=true: Get requote, signal Privy execution
+        """
+        # Check if MoonPay client is available
+        if not self._moonpay_swap:
+            logger.warning("MoonPay swap requested but client not available")
+            return self._unsupported_action_response(action_id, "swap_moonpay", language)
+
+        try:
+            # Build pair name (e.g., "btc-eth")
+            pair_name = f"{from_token.lower()}-{to_token.lower()}"
+
+            # Get quote from MoonPay
+            logger.info(f"Getting MoonPay quote for {pair_name}, amount: {amount}")
+            quote = await self._moonpay_swap.get_quote(pair_name, amount)
+
+            # Build enrichment data
+            enrichment = {
+                "pair_name": pair_name,
+                "base_currency": from_token.upper(),
+                "quote_currency": to_token.upper(),
+                "base_amount": quote.base_currency_amount,
+                "quote_amount": quote.quote_currency_amount,
+                "exchange_rate": quote.exchange_rate,
+                "network_fee_usd": quote.network_fee_amount_usd,
+                "extra_fee_usd": quote.extra_fee_amount_usd,
+                "base_price_usd": quote.base_currency_price_usd,
+                "quote_price_usd": quote.quote_currency_price_usd,
+                "expires_at": quote.expires_at,
+                "quote_id": quote.id,
+                "provider": "moonpay",
+                "execution_method": "privy",  # Signal to frontend to use Privy
+            }
+
+            # Build confirmation message
+            msgs = {
+                "en": f"Swap {quote.base_currency_amount} {from_token.upper()} for {quote.quote_amount} {to_token.upper()} via MoonPay?",
+                "es": f"¿Intercambiar {quote.base_currency_amount} {from_token.upper()} por {quote.quote_amount} {to_token.upper()} via MoonPay?",
+                "pt": f"Trocar {quote.base_currency_amount} {from_token.upper()} por {quote.quote_amount} {to_token.upper()} via MoonPay?",
+                "zh": f"通过MoonPay将 {quote.base_currency_amount} {from_token.upper()} 兑换为 {quote.quote_amount} {to_token.upper()}？",
+                "fr": f"Échanger {quote.base_currency_amount} {from_token.upper()} contre {quote.quote_amount} {to_token.upper()} via MoonPay?",
+            }
+
+            if not confirmed:
+                # First call - return quote for user confirmation
+                return ActionResult(
+                    action_id=action_id,
+                    action_type="swap_moonpay",
+                    status="awaiting_confirmation",
+                    requires_confirmation=True,
+                    confirmation_message=msgs.get(language, msgs["en"]),
+                    simulation={
+                        "success": True,
+                        "pair": pair_name,
+                        "input_amount": quote.base_currency_amount,
+                        "output_amount": quote.quote_currency_amount,
+                        "exchange_rate": quote.exchange_rate,
+                        "network_fee_usd": float(quote.network_fee_amount_usd),
+                        "total_fee_usd": float(quote.network_fee_amount_usd) + float(quote.extra_fee_amount_usd),
+                        "estimated_value_usd": float(quote.quote_currency_price_usd) * float(quote.quote_currency_amount),
+                        "expires_at": quote.expires_at,
+                    },
+                    transaction=None,
+                    summary=f"MoonPay Quote: {quote.base_currency_amount} {from_token.upper()} → {quote.quote_amount} {to_token.upper()}",
+                    enrichment=enrichment,
+                    created_at=datetime.utcnow(),
+                    expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                )
+            else:
+                # Second call - user confirmed, prepare for Privy execution
+                # Get fresh requote for most recent price
+                logger.info(f"Getting fresh requote for {pair_name}")
+                fresh_quote = await self._moonpay_swap.get_requote(pair_name, amount)
+
+                # Update enrichment with fresh quote
+                enrichment.update({
+                    "base_amount": fresh_quote.base_currency_amount,
+                    "quote_amount": fresh_quote.quote_currency_amount,
+                    "exchange_rate": fresh_quote.exchange_rate,
+                    "network_fee_usd": fresh_quote.network_fee_amount_usd,
+                    "extra_fee_usd": fresh_quote.extra_fee_amount_usd,
+                    "expires_at": fresh_quote.expires_at,
+                    "quote_id": fresh_quote.id,
+                })
+
+                # Return awaiting_signing status - frontend will handle Privy execution
+                return ActionResult(
+                    action_id=action_id,
+                    action_type="swap_moonpay",
+                    status="awaiting_signing",  # Signal frontend to open Privy modal
+                    requires_confirmation=False,
+                    confirmation_message=None,
+                    simulation=None,
+                    transaction={
+                        "quote_id": fresh_quote.id,
+                        "pair_name": pair_name,
+                        "base_amount": fresh_quote.base_currency_amount,
+                        "quote_amount": fresh_quote.quote_currency_amount,
+                        "exchange_rate": fresh_quote.exchange_rate,
+                        "expires_at": fresh_quote.expires_at,
+                        "status": "awaiting_signing",
+                        # No hash yet - frontend will provide after Privy execution
+                    },
+                    summary=f"Ready to execute: {fresh_quote.base_currency_amount} {from_token.upper()} → {fresh_quote.quote_amount} {to_token.upper()}",
+                    enrichment=enrichment,
+                    created_at=datetime.utcnow(),
+                    expires_at=None,
+                )
+
+        except Exception as e:
+            logger.error(f"Error handling MoonPay swap: {e}", exc_info=True)
+            error_msgs = {
+                "en": f"Failed to get MoonPay quote: {str(e)}",
+                "es": f"Error al obtener cotización de MoonPay: {str(e)}",
+                "pt": f"Falha ao obter cotação do MoonPay: {str(e)}",
+                "zh": f"获取MoonPay报价失败: {str(e)}",
+                "fr": f"Échec de l'obtention du devis MoonPay: {str(e)}",
+            }
+
+            return ActionResult(
+                action_id=action_id,
+                action_type="swap_moonpay",
+                status="failed",
+                requires_confirmation=False,
+                confirmation_message=None,
+                simulation={"success": False, "errors": [str(e)]},
+                transaction=None,
+                summary=error_msgs.get(language, error_msgs["en"]),
+                enrichment={"error": str(e), "provider": "moonpay"},
+                created_at=datetime.utcnow(),
+                expires_at=None,
+            )
+
     def _no_wallet_response(
         self,
         action_id: UUID,

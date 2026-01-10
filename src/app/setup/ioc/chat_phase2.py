@@ -879,33 +879,35 @@ class ChatPhase2Provider(Provider):
         self,
         conversation_repository: ConversationRepository,
         wallet_repository: WalletRepository,
+        moonpay_swap_client: MoonPaySwapClient,
     ) -> ExecuteActionCommand:
         """
         Provide execute action command for transaction execution.
-        
+
         Supports:
-        - Token swaps: 1inch (same-chain) + LiFi (cross-chain)
+        - Token swaps: 1inch (same-chain) + LiFi (cross-chain) + MoonPay (crypto-to-crypto)
         - Deposits (Morpho, Aave)
         - Withdrawals (Morpho, Aave)
         - Transfers
         - Approvals
         - Cross-chain bridges
-        
+
         Requirements:
         - ONEINCH_API_KEY: Required for same-chain swaps
         - LiFi: No API key required (always available for cross-chain)
-        
+        - MOONPAY_API_KEY: Required for MoonPay swaps (crypto-to-crypto)
+
         NO SIMULATION: If clients cannot be created, swaps will fail with clear error.
         """
         import os
         import logging
-        
+
         logger = logging.getLogger(__name__)
-        
+
         # Create LiFi client (no API key required) - for cross-chain
         lifi_client = LiFiClient()
         logger.info("LiFiClient created for ExecuteActionCommand (cross-chain swaps)")
-        
+
         # Create 1inch client - REQUIRED for same-chain swaps
         oneinch_api_key = os.getenv("ONEINCH_API_KEY", "").strip()
         if not oneinch_api_key:
@@ -920,12 +922,15 @@ class ChatPhase2Provider(Provider):
                 chain="base",  # Default chain, request will specify actual chain
             )
             logger.info("OneInchClient created for ExecuteActionCommand (same-chain swaps)")
-        
+
+        logger.info("MoonPaySwapClient injected into ExecuteActionCommand (crypto-to-crypto swaps)")
+
         return ExecuteActionCommand(
             conversation_repo=conversation_repository,
             wallet_repository=wallet_repository,
             oneinch_client=oneinch_client,
             lifi_client=lifi_client,
+            moonpay_swap_client=moonpay_swap_client,
             morpho_gateway=None,
             aave_gateway=None,
         )
