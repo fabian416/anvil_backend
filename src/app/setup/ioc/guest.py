@@ -19,10 +19,12 @@ from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
+from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.domain.guest.ports.guest_repository import GuestRepository
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.infrastructure.adapters.guest_repository_sqla import GuestRepositorySqla
 from app.infrastructure.adapters.types import MainAsyncSession
+from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
 
 
 class GuestProvider(Provider):
@@ -104,12 +106,48 @@ class GuestProvider(Provider):
             logger.warning(f"Failed to create SwapHandler: {e}", exc_info=True)
             return None
 
+    @provide(scope=Scope.APP)
+    def provide_moonpay_swap_client(self) -> MoonPaySwapClient:
+        """
+        Provide MoonPay Swap API client for guest chat.
+
+        Configured with:
+        - MoonPay publishable API key
+        - Sandbox or production environment
+        - 12 supported swap pairs (BTC, ETH, SOL, USDC)
+        """
+        import os
+
+        api_key = os.getenv("MOONPAY_API_KEY", "pk_test_zJtsRVDetOru63X98XExqNoRHaFDco")
+        environment = os.getenv("MOONPAY_ENVIRONMENT", "sandbox")
+
+        return MoonPaySwapClient(
+            api_key=api_key,
+            environment=environment,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_moonpay_swap_handler(
+        self,
+        swap_client: MoonPaySwapClient,
+    ) -> MoonPaySwapHandler:
+        """
+        Provide MoonPay swap handler for guest chat.
+
+        Supports:
+        - 12 swap pairs (BTC, ETH, SOL, USDC bidirectional)
+        - Real-time swap quotes with pricing
+        - Multi-language support (en, es, pt, zh, fr)
+        """
+        return MoonPaySwapHandler(swap_client=swap_client)
+
     @provide(scope=Scope.REQUEST)
     def provide_guest_handler_service(
         self,
         lending_handler: LendingHandler,
         money_market_handler: MoneyMarketHandler,
         buy_handler: BuyHandler,
+        moonpay_swap_handler: MoonPaySwapHandler,
         swap_handler: SwapHandler | None = None,
     ) -> GuestHandlerService:
         """
@@ -120,6 +158,7 @@ class GuestProvider(Provider):
         - MoneyMarketHandler for real Aave/Compound rate comparisons
         - SwapHandler for real 1inch/LiFi swap quotes (if API keys configured)
         - BuyHandler for crypto on-ramp via Privy (if configured)
+        - MoonPaySwapHandler for MoonPay crypto-to-crypto swaps
         - Hunter AI and ULTRA handlers don't require DI as they are stateless.
         """
         return GuestHandlerService(
@@ -127,6 +166,7 @@ class GuestProvider(Provider):
             swap_handler=swap_handler,  # Real 1inch/LiFi data if API keys available
             money_market_handler=money_market_handler,  # Real data for comparisons
             buy_handler=buy_handler,  # Privy on-ramp with wallet resolution
+            moonpay_swap_handler=moonpay_swap_handler,  # MoonPay swap quotes
         )
 
     @provide(scope=Scope.REQUEST)

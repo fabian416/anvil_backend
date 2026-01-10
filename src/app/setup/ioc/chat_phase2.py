@@ -148,6 +148,7 @@ from app.application.chat.handlers.activity_handler import ActivityHandler
 from app.application.chat.handlers.receive_handler import ReceiveHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
+from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.ports.compound_gateway import CompoundGateway
@@ -155,6 +156,7 @@ from app.infrastructure.adapters.external.compound_client import CompoundClient
 from app.infrastructure.adapters.external.compound_adapter import CompoundAdapter
 from app.infrastructure.adapters.external.oneinch_client import OneInchClient
 from app.infrastructure.adapters.external.lifi_client import LiFiClient
+from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
 from app.application.portfolio.portfolio_service import PortfolioService
 from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
 from app.domain.ports.wallet.wallet_repository import WalletRepository
@@ -731,6 +733,47 @@ class ChatPhase2Provider(Provider):
             privy_settings=privy_settings,
         )
 
+    @provide(scope=Scope.APP)
+    def provide_moonpay_swap_client(self) -> MoonPaySwapClient:
+        """
+        Provide MoonPay Swap API client.
+
+        Configured with:
+        - MoonPay publishable API key
+        - Sandbox or production environment
+        - 12 supported swap pairs (BTC, ETH, SOL, USDC)
+
+        Used for crypto-to-crypto swap quotes only.
+        Actual swap execution is handled by Privy SDK on frontend.
+        """
+        import os
+
+        api_key = os.getenv("MOONPAY_API_KEY", "pk_test_zJtsRVDetOru63X98XExqNoRHaFDco")
+        environment = os.getenv("MOONPAY_ENVIRONMENT", "sandbox")
+
+        return MoonPaySwapClient(
+            api_key=api_key,
+            environment=environment,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_moonpay_swap_handler(
+        self,
+        swap_client: MoonPaySwapClient,
+    ) -> MoonPaySwapHandler:
+        """
+        Provide MoonPay swap handler for chat integration.
+
+        Supports:
+        - 12 swap pairs (BTC, ETH, SOL, USDC bidirectional)
+        - Real-time swap quotes with pricing
+        - Multi-language support (en, es, pt, zh, fr)
+        - Frontend execution via Privy modal
+
+        Uses MoonPaySwapClient for API calls.
+        """
+        return MoonPaySwapHandler(swap_client=swap_client)
+
     @provide
     def provide_compound_client(self) -> CompoundClient:
         """Provide Compound V3 API client."""
@@ -782,6 +825,7 @@ class ChatPhase2Provider(Provider):
         receive_handler: ReceiveHandler,
         buy_handler: BuyHandler,
         money_market_handler: MoneyMarketHandler,
+        moonpay_swap_handler: MoonPaySwapHandler,
         wallet_repository: WalletRepository,
         agent_squad_settings: AgentSquadSettings,
     ) -> UnifiedChatOrchestrator:
@@ -805,8 +849,9 @@ class ChatPhase2Provider(Provider):
             lending_handler=lending_handler,
             swap_handler=swap_handler,
             money_market_handler=money_market_handler,
+            moonpay_swap_handler=moonpay_swap_handler,
         )
-        
+
         return UnifiedChatOrchestrator(
             conversation_repo=conversation_repository,
             intent_detector=intent_detector_service,
@@ -822,6 +867,7 @@ class ChatPhase2Provider(Provider):
             receive_handler=receive_handler,
             buy_handler=buy_handler,
             money_market_handler=money_market_handler,
+            moonpay_swap_handler=moonpay_swap_handler,
             wallet_repository=wallet_repository,
             # Demo mode dependencies
             agent_squad_settings=agent_squad_settings,

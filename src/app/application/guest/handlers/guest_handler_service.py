@@ -14,6 +14,7 @@ from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
+from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.application.chat.services.intent_detector import ChatIntent
 from app.application.hunter.discord_sentiment import (
     DiscordConfig,
@@ -62,11 +63,13 @@ class GuestHandlerService:
         swap_handler: SwapHandler | None = None,
         money_market_handler: MoneyMarketHandler | None = None,
         buy_handler: BuyHandler | None = None,
+        moonpay_swap_handler: MoonPaySwapHandler | None = None,
     ):
         self._lending_handler = lending_handler
         self._swap_handler = swap_handler
         self._money_market_handler = money_market_handler
         self._buy_handler = buy_handler
+        self._moonpay_swap_handler = moonpay_swap_handler
 
     async def handle_intent(
         self,
@@ -114,6 +117,7 @@ class GuestHandlerService:
             ChatIntent.LENDING: self._handle_lending,
             ChatIntent.MONEY_MARKET: self._handle_money_market,
             ChatIntent.SWAP: self._handle_swap,
+            ChatIntent.SWAP_MOONPAY: self._handle_moonpay_swap,
             ChatIntent.BUY: self._handle_buy,
             # Agent Squad (Specialist Tasks & Complex Workflows)
             ChatIntent.SPECIALIST_TASK: self._handle_specialist_task,
@@ -163,6 +167,9 @@ class GuestHandlerService:
                 # Buy handler (requires user_id for authenticated users)
                 elif intent == ChatIntent.BUY:
                     return await self._handle_buy(content, language, is_authenticated, user_id)
+                # MoonPay swap handler
+                elif intent == ChatIntent.SWAP_MOONPAY:
+                    return await self._handle_moonpay_swap(content, language, is_authenticated)
                 return await handler(content, language, is_authenticated)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
@@ -2804,6 +2811,77 @@ class GuestHandlerService:
             "content": content,
             "enrichment": {
                 "action": "open_fund_wallet" if is_authenticated else None,
+            },
+            "requires_registration": not is_authenticated,
+        }
+
+    async def _handle_moonpay_swap(
+        self, content: str, language: str, is_authenticated: bool = False
+    ) -> dict[str, Any]:
+        """Handle MoonPay crypto-to-crypto swap intent."""
+        # Use MoonPaySwapHandler if available
+        if self._moonpay_swap_handler:
+            try:
+                # Check if user is asking for a quote or just info
+                # For now, just show available pairs
+                result = await self._moonpay_swap_handler.get_available_pairs(language=language)
+                return {
+                    "content": result.content,
+                    "enrichment": {
+                        "pairs": result.pairs,
+                        "quote": result.quote,
+                        "latency_ms": result.latency_ms,
+                        "action": result.action,
+                        "handler": result.handler,
+                    },
+                    "requires_registration": not is_authenticated,
+                }
+            except Exception as e:
+                logger.warning(f"MoonPaySwapHandler error: {e}")
+                # Fall through to fallback response
+
+        # Fallback for guests or if MoonPaySwapHandler not available
+        return self._fallback_moonpay_swap_response(language, is_authenticated)
+
+    def _fallback_moonpay_swap_response(self, language: str, is_authenticated: bool) -> dict[str, Any]:
+        """Fallback response when MoonPaySwapHandler is not available."""
+        translations = {
+            "en": {
+                "title": "🌙 **MoonPay Swap**",
+                "description": "Quick crypto-to-crypto swap with competitive rates",
+                "unavailable": "⚠️ **Service Temporarily Unavailable**\n\nMoonPay swap service is currently unavailable. Please try again later.",
+            },
+            "es": {
+                "title": "🌙 **Swap MoonPay**",
+                "description": "Intercambio rápido cripto-a-cripto con tasas competitivas",
+                "unavailable": "⚠️ **Servicio Temporalmente No Disponible**\n\nEl servicio de swap MoonPay no está disponible actualmente. Por favor intente más tarde.",
+            },
+            "pt": {
+                "title": "🌙 **Swap MoonPay**",
+                "description": "Troca rápida cripto-a-cripto com taxas competitivas",
+                "unavailable": "⚠️ **Serviço Temporariamente Indisponível**\n\nO serviço de swap MoonPay está temporariamente indisponível. Por favor tente novamente mais tarde.",
+            },
+            "zh": {
+                "title": "🌙 **MoonPay交换**",
+                "description": "快速加密货币互换，汇率优惠",
+                "unavailable": "⚠️ **服务暂时不可用**\n\nMoonPay交换服务当前不可用。请稍后再试。",
+            },
+            "fr": {
+                "title": "🌙 **Swap MoonPay**",
+                "description": "Échange rapide crypto-à-crypto avec taux compétitifs",
+                "unavailable": "⚠️ **Service Temporairement Indisponible**\n\nLe service de swap MoonPay est temporairement indisponible. Veuillez réessayer plus tard.",
+            },
+        }
+        t = translations.get(language, translations["en"])
+
+        content = f"{t['title']}\n\n{t['description']}\n\n{t['unavailable']}\n\n"
+        if not is_authenticated:
+            content += self._get_auth_cta_message(language, for_action=True, is_authenticated=False)
+
+        return {
+            "content": content,
+            "enrichment": {
+                "action": "open_swap_modal" if is_authenticated else None,
             },
             "requires_registration": not is_authenticated,
         }

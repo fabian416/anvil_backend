@@ -51,6 +51,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         ChatIntent.LENDING: "lending_handler",
         ChatIntent.MONEY_MARKET: "money_market_handler",
         ChatIntent.SWAP: "swap_handler",
+        ChatIntent.SWAP_MOONPAY: "moonpay_swap_handler",
         ChatIntent.BALANCE: "balance_handler",
         ChatIntent.PORTFOLIO: "portfolio_handler",
         ChatIntent.ACTIVITY: "activity_handler",
@@ -452,6 +453,47 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 ChatIntent.BUY,
                 0.95,
                 "Message contains buy crypto with fiat keywords",
+                None,
+            )
+
+        # MoonPay swap intent (crypto-to-crypto swaps) - Before complex workflow
+        # Match specific MoonPay swap patterns
+        moonpay_swap_patterns = [
+            # English
+            "moonpay swap",
+            "swap via moonpay",
+            "crypto to crypto swap",
+            "swap btc to eth",
+            "swap eth to usdc",
+            "swap sol to btc",
+            "exchange btc for eth",
+            "exchange eth for sol",
+            "convert btc to usdc",
+            "convert sol to eth",
+            # Spanish
+            "intercambio moonpay",
+            "swap cripto a cripto",
+            "cambiar btc por eth",
+            "convertir btc a usdc",
+            # Portuguese
+            "troca moonpay",
+            "trocar cripto por cripto",
+            "trocar btc por eth",
+            "converter btc para usdc",
+            # French
+            "échange moonpay",
+            "échanger crypto contre crypto",
+            "échanger btc contre eth",
+            # Chinese
+            "moonpay交换",
+            "加密货币互换",
+            "兑换btc为eth",
+        ]
+        if any(pattern in message for pattern in moonpay_swap_patterns):
+            return (
+                ChatIntent.SWAP_MOONPAY,
+                0.95,
+                "Message contains MoonPay swap keywords",
                 None,
             )
 

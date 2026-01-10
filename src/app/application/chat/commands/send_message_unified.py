@@ -35,6 +35,7 @@ from app.application.chat.handlers.portfolio_handler import PortfolioHandler
 from app.application.chat.handlers.receive_handler import ReceiveHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
+from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
 from app.application.chat.services.intent_detector import (
     ChatIntent,
@@ -117,6 +118,7 @@ class UnifiedChatOrchestrator:
         activity_handler: ActivityHandler | None = None,
         receive_handler: ReceiveHandler | None = None,
         buy_handler: BuyHandler | None = None,
+        moonpay_swap_handler: MoonPaySwapHandler | None = None,
         money_market_handler: MoneyMarketHandler | None = None,
         wallet_repository: WalletRepository | None = None,
         # Demo mode dependencies
@@ -140,6 +142,7 @@ class UnifiedChatOrchestrator:
             activity_handler: Handler for transaction history
             receive_handler: Handler for wallet address/QR
             buy_handler: Handler for crypto purchase (on-ramp via Privy)
+            moonpay_swap_handler: Handler for MoonPay crypto-to-crypto swaps
             money_market_handler: Handler for rate comparison
             wallet_repository: Repository for wallet lookups (Privy)
             agent_squad_settings: Settings for agent squad (includes use_demo_mode flag)
@@ -158,6 +161,7 @@ class UnifiedChatOrchestrator:
         self._activity_handler = activity_handler
         self._receive_handler = receive_handler
         self._buy_handler = buy_handler
+        self._moonpay_swap_handler = moonpay_swap_handler
         self._money_market_handler = money_market_handler
         self._wallet_repository = wallet_repository
         # Demo mode
@@ -166,6 +170,8 @@ class UnifiedChatOrchestrator:
             lending_handler=lending_handler,
             swap_handler=swap_handler,
             money_market_handler=money_market_handler,
+            buy_handler=buy_handler,
+            moonpay_swap_handler=moonpay_swap_handler,
         )
 
     # Supported languages for i18n responses
@@ -361,6 +367,10 @@ class UnifiedChatOrchestrator:
             )
         elif intent_result.intent == ChatIntent.BUY:
             result = await self._handle_buy(
+                user_id, conversation_id, content, intent_result, language
+            )
+        elif intent_result.intent == ChatIntent.SWAP_MOONPAY:
+            result = await self._handle_moonpay_swap(
                 user_id, conversation_id, content, intent_result, language
             )
         # Agent Squad & Supervisor intents
@@ -567,6 +577,7 @@ class UnifiedChatOrchestrator:
             ChatIntent.ACTIVITY: "demo_activity_handler",
             ChatIntent.RECEIVE: "demo_receive_handler",
             ChatIntent.BUY: "demo_buy_handler",
+            ChatIntent.SWAP_MOONPAY: "demo_moonpay_swap_handler",
             # Agent Squad
             ChatIntent.SPECIALIST_TASK: "demo_specialist_handler",
             ChatIntent.COMPLEX_WORKFLOW: "demo_workflow_handler",
@@ -728,6 +739,15 @@ class UnifiedChatOrchestrator:
                 "1inch", "uniswap",
                 "cambiar", "intercambiar", "convertir", "canjear",
                 "quiero swap", "hacer swap", "swap de",
+            ],
+            ChatIntent.SWAP_MOONPAY: [
+                "moonpay swap", "swap via moonpay", "crypto to crypto swap",
+                "swap btc to eth", "swap eth to usdc", "swap sol to btc",
+                "exchange btc for eth", "convert btc to usdc",
+                "intercambio moonpay", "swap cripto a cripto",
+                "cambiar btc por eth", "convertir btc a usdc",
+                "troca moonpay", "trocar cripto por cripto",
+                "échange moonpay", "moonpay交换", "加密货币互换",
             ],
         }
 
@@ -3013,6 +3033,143 @@ Your transactions are recorded when you use the app.
             },
             "enrichment": enrichment,
         }
+
+    async def _handle_moonpay_swap(
+        self, user_id, conversation_id, content, intent_result, language: str = "en"
+    ) -> dict:
+        """Handle MoonPay crypto-to-crypto swap intent with i18n."""
+        # Handle MoonPay swap logic and get response content
+        try:
+            if self._moonpay_swap_handler:
+                # Check if user is asking for available pairs or a quote
+                # For now, show available pairs (future: parse swap details from message)
+                result = await self._moonpay_swap_handler.get_available_pairs(language=language)
+                response_content = result.content
+                enrichment = {
+                    "pairs": result.pairs,
+                    "quote": result.quote,
+                    "latency_ms": result.latency_ms,
+                    "action": result.action,  # "open_moonpay_swap" signal for frontend
+                    "handler": result.handler,
+                }
+            else:
+                # Fallback - provide basic MoonPay swap info
+                response_content = self._format_moonpay_swap_fallback_response(language)
+                enrichment = {
+                    "pairs": [],
+                    "action": None,
+                }
+        except Exception as e:
+            logger.error(f"Error in _handle_moonpay_swap for user {user_id}: {e}", exc_info=True)
+            # Provide fallback response
+            response_content = self._format_moonpay_swap_fallback_response(language)
+            enrichment = {
+                "pairs": [],
+                "action": None,
+                "error": str(e),
+            }
+
+        # Save messages
+        try:
+            user_msg, agent_msg = await self._save_messages(
+                conversation_id, content, response_content
+            )
+        except Exception as e:
+            logger.error(f"Error saving messages in _handle_moonpay_swap: {e}", exc_info=True)
+            # Create message objects in memory even if save fails
+            from app.domain.chat.entities.message import Message
+            user_msg = Message.create_user_message(
+                conversation_id=conversation_id,
+                content=content,
+            )
+            agent_msg = Message.create_agent_message(
+                conversation_id=conversation_id,
+                content=response_content,
+            )
+
+        return {
+            "user_message": self._message_to_dict(user_msg),
+            "agent_message": self._message_to_dict(agent_msg),
+            "routing": {
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence,
+                "handler": "moonpay_swap_handler",
+                "reasoning": intent_result.reasoning,
+                "language": language,
+            },
+            "enrichment": enrichment,
+        }
+
+    def _format_moonpay_swap_fallback_response(self, language: str) -> str:
+        """Format fallback MoonPay swap response when handler not available."""
+        translations = {
+            "en": """🌙 **MoonPay Swap**
+
+Quick crypto-to-crypto swap with competitive rates.
+
+⚠️ **Service Temporarily Unavailable**
+
+MoonPay swap service is currently unavailable. Please try again later.
+
+**Supported Pairs:**
+• BTC ↔ ETH, SOL, USDC
+• ETH ↔ BTC, SOL, USDC
+• SOL ↔ BTC, ETH, USDC
+• USDC ↔ BTC, ETH, SOL""",
+            "es": """🌙 **Swap MoonPay**
+
+Intercambio rápido cripto-a-cripto con tasas competitivas.
+
+⚠️ **Servicio Temporalmente No Disponible**
+
+El servicio de swap MoonPay no está disponible actualmente. Por favor intente más tarde.
+
+**Pares Soportados:**
+• BTC ↔ ETH, SOL, USDC
+• ETH ↔ BTC, SOL, USDC
+• SOL ↔ BTC, ETH, USDC
+• USDC ↔ BTC, ETH, SOL""",
+            "pt": """🌙 **Swap MoonPay**
+
+Troca rápida cripto-a-cripto com taxas competitivas.
+
+⚠️ **Serviço Temporariamente Indisponível**
+
+O serviço de swap MoonPay está temporariamente indisponível. Por favor tente novamente mais tarde.
+
+**Pares Suportados:**
+• BTC ↔ ETH, SOL, USDC
+• ETH ↔ BTC, SOL, USDC
+• SOL ↔ BTC, ETH, USDC
+• USDC ↔ BTC, ETH, SOL""",
+            "zh": """🌙 **MoonPay交换**
+
+快速加密货币互换，汇率优惠。
+
+⚠️ **服务暂时不可用**
+
+MoonPay交换服务当前不可用。请稍后再试。
+
+**支持的交易对:**
+• BTC ↔ ETH, SOL, USDC
+• ETH ↔ BTC, SOL, USDC
+• SOL ↔ BTC, ETH, USDC
+• USDC ↔ BTC, ETH, SOL""",
+            "fr": """🌙 **Swap MoonPay**
+
+Échange rapide crypto-à-crypto avec taux compétitifs.
+
+⚠️ **Service Temporairement Indisponible**
+
+Le service de swap MoonPay est temporairement indisponible. Veuillez réessayer plus tard.
+
+**Paires Supportées:**
+• BTC ↔ ETH, SOL, USDC
+• ETH ↔ BTC, SOL, USDC
+• SOL ↔ BTC, ETH, USDC
+• USDC ↔ BTC, ETH, SOL""",
+        }
+        return translations.get(language, translations["en"])
 
     def _format_buy_fallback_response(self, language: str, wallet_address: str | None) -> str:
         """Format fallback buy response when handler not available."""
