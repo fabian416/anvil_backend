@@ -124,29 +124,25 @@ class MoonPaySwapClient:
             response.raise_for_status()
             data = response.json()
 
+            # Log first pair for debugging
+            if data:
+                logger.info(f"MoonPay API response sample: {data[0]}")
+
             pairs = []
             for pair_data in data:
+                # MoonPay API returns flat structure, not nested
+                base_code = pair_data.get("baseCurrencyCode", "").upper()
+                quote_code = pair_data.get("quoteCurrencyCode", "").upper()
+
                 pairs.append(
                     MoonPaySwapPair(
                         pair_name=pair_data.get("pairName", ""),
-                        base_currency_code=pair_data.get("baseCurrency", {}).get(
-                            "code", ""
-                        ),
-                        quote_currency_code=pair_data.get("quoteCurrency", {}).get(
-                            "code", ""
-                        ),
-                        base_currency_name=pair_data.get("baseCurrency", {}).get(
-                            "name", ""
-                        ),
-                        quote_currency_name=pair_data.get("quoteCurrency", {}).get(
-                            "name", ""
-                        ),
-                        min_base_amount=pair_data.get("baseCurrency", {}).get(
-                            "minBuyAmount"
-                        ),
-                        max_base_amount=pair_data.get("baseCurrency", {}).get(
-                            "maxBuyAmount"
-                        ),
+                        base_currency_code=base_code,
+                        quote_currency_code=quote_code,
+                        base_currency_name=base_code,  # API doesn't provide full names
+                        quote_currency_name=quote_code,
+                        min_base_amount=float(pair_data.get("minSwapAmount", 0)) if pair_data.get("minSwapAmount") else None,
+                        max_base_amount=float(pair_data.get("maxSwapAmount", 0)) if pair_data.get("maxSwapAmount") else None,
                     )
                 )
 
