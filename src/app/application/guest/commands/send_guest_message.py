@@ -65,6 +65,8 @@ REAL_HANDLER_INTENTS = {
     ChatIntent.LENDING,
     ChatIntent.MONEY_MARKET,
     ChatIntent.SWAP,
+    ChatIntent.SWAP_MOONPAY,
+    ChatIntent.BUY,
     # Agent Squad
     ChatIntent.SPECIALIST_TASK,
     ChatIntent.COMPLEX_WORKFLOW,
