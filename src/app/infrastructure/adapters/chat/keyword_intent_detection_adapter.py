@@ -168,12 +168,81 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         "compare aave vs compound vs morpho": "money_market",
         "which protocol has the best supply apy": "money_market",
         "money market comparison": "money_market",
-        # DeFi Shortcuts - Swap
-        "swap eth for usdc": "swap",
-        "exchange 1 eth to usdc": "swap",
-        "trade btc for eth": "swap",
+        # DeFi Shortcuts - Swap (generic DEX swaps)
+        "swap wbtc for dai": "swap",
+        "exchange weth to usdc": "swap",
         "i want to swap my tokens": "swap",
-        "convert usdc to eth": "swap",
+        # MoonPay Swap - All 12 supported pairs (exact matches)
+        "swap btc to eth": "swap_moonpay",
+        "swap btc to sol": "swap_moonpay",
+        "swap btc to usdc": "swap_moonpay",
+        "swap eth to btc": "swap_moonpay",
+        "swap eth to sol": "swap_moonpay",
+        "swap eth to usdc": "swap_moonpay",
+        "swap sol to btc": "swap_moonpay",
+        "swap sol to eth": "swap_moonpay",
+        "swap sol to usdc": "swap_moonpay",
+        "swap usdc to btc": "swap_moonpay",
+        "swap usdc to eth": "swap_moonpay",
+        "swap usdc to sol": "swap_moonpay",
+        "exchange btc for eth": "swap_moonpay",
+        "exchange btc for sol": "swap_moonpay",
+        "exchange eth for usdc": "swap_moonpay",
+        "convert sol to btc": "swap_moonpay",
+        "convert usdc to eth": "swap_moonpay",
+        "trade btc for eth": "swap_moonpay",
+        # MoonPay Swap - Spanish patterns
+        "cambiar btc por eth": "swap_moonpay",
+        "cambiar btc por sol": "swap_moonpay",
+        "cambiar btc por usdc": "swap_moonpay",
+        "cambiar eth por btc": "swap_moonpay",
+        "cambiar eth por sol": "swap_moonpay",
+        "cambiar eth por usdc": "swap_moonpay",
+        "cambiar sol por btc": "swap_moonpay",
+        "cambiar sol por eth": "swap_moonpay",
+        "cambiar sol por usdc": "swap_moonpay",
+        "cambiar usdc por btc": "swap_moonpay",
+        "cambiar usdc por eth": "swap_moonpay",
+        "cambiar usdc por sol": "swap_moonpay",
+        # MoonPay Swap - Portuguese patterns
+        "trocar btc por eth": "swap_moonpay",
+        "trocar btc por sol": "swap_moonpay",
+        "trocar btc por usdc": "swap_moonpay",
+        "trocar eth por btc": "swap_moonpay",
+        "trocar eth por sol": "swap_moonpay",
+        "trocar eth por usdc": "swap_moonpay",
+        "trocar sol por btc": "swap_moonpay",
+        "trocar sol por eth": "swap_moonpay",
+        "trocar sol por usdc": "swap_moonpay",
+        "trocar usdc por btc": "swap_moonpay",
+        "trocar usdc por eth": "swap_moonpay",
+        "trocar usdc por sol": "swap_moonpay",
+        # MoonPay Swap - French patterns
+        "échanger btc contre eth": "swap_moonpay",
+        "échanger btc contre sol": "swap_moonpay",
+        "échanger btc contre usdc": "swap_moonpay",
+        "échanger eth contre btc": "swap_moonpay",
+        "échanger eth contre sol": "swap_moonpay",
+        "échanger eth contre usdc": "swap_moonpay",
+        "échanger sol contre btc": "swap_moonpay",
+        "échanger sol contre eth": "swap_moonpay",
+        "échanger sol contre usdc": "swap_moonpay",
+        "échanger usdc contre btc": "swap_moonpay",
+        "échanger usdc contre eth": "swap_moonpay",
+        "échanger usdc contre sol": "swap_moonpay",
+        # MoonPay Swap - Chinese patterns
+        "将btc换成eth": "swap_moonpay",
+        "将btc换成sol": "swap_moonpay",
+        "将btc换成usdc": "swap_moonpay",
+        "将eth换成btc": "swap_moonpay",
+        "将eth换成sol": "swap_moonpay",
+        "将eth换成usdc": "swap_moonpay",
+        "将sol换成btc": "swap_moonpay",
+        "将sol换成eth": "swap_moonpay",
+        "将sol换成usdc": "swap_moonpay",
+        "将usdc换成btc": "swap_moonpay",
+        "将usdc换成eth": "swap_moonpay",
+        "将usdc换成sol": "swap_moonpay",
         # DeFi Shortcuts - Balance
         "show my balance": "balance",
         "what's my balance": "balance",
@@ -315,7 +384,49 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 None,
             )
         
-        # Swap intent
+        # MoonPay swap intent (crypto-to-crypto swaps) - Check BEFORE generic swap
+        # Detect token pairs for MoonPay supported tokens: BTC, ETH, SOL, USDC
+        moonpay_tokens = ["btc", "eth", "sol", "usdc", "bitcoin", "ethereum", "solana"]
+        moonpay_swap_patterns = [
+            # Direct MoonPay mentions
+            "moonpay swap",
+            "swap via moonpay",
+            "via moonpay",
+            # Spanish
+            "intercambio moonpay",
+            "swap moonpay",
+            # Portuguese
+            "troca moonpay",
+            # French
+            "échange moonpay",
+            # Chinese
+            "moonpay交换",
+        ]
+
+        # Check for explicit MoonPay patterns
+        if any(pattern in message for pattern in moonpay_swap_patterns):
+            return (
+                ChatIntent.SWAP_MOONPAY,
+                0.95,
+                "Message contains explicit MoonPay swap keywords",
+                None,
+            )
+
+        # Check for token pair patterns (swap/exchange/convert TOKEN to/for TOKEN)
+        # where both tokens are MoonPay supported
+        has_swap_action = any(action in message for action in ["swap", "exchange", "convert", "trade", "cambiar", "trocar", "échanger", "交换", "兑换"])
+        has_moonpay_tokens = sum(1 for token in moonpay_tokens if token in message) >= 2
+        has_direction = any(dir in message for dir in [" to ", " for ", " por ", " para ", " contre ", " a ", "为", "到"])
+
+        if has_swap_action and has_moonpay_tokens and has_direction:
+            return (
+                ChatIntent.SWAP_MOONPAY,
+                0.93,
+                "Message contains crypto-to-crypto swap with MoonPay supported tokens",
+                None,
+            )
+
+        # Generic swap intent (for DEX swaps via 1inch/LiFi/Hyperliquid)
         if any(
             word in message
             for word in [
@@ -323,15 +434,12 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "exchange",
                 "trade",
                 "convert",
-                "eth for usdc",
-                "usdc for eth",
-                "btc for eth",
             ]
         ):
             return (
                 ChatIntent.SWAP,
-                0.93,
-                "Message contains swap/exchange keywords",
+                0.85,
+                "Message contains generic swap/exchange keywords",
                 None,
             )
         
@@ -453,47 +561,6 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 ChatIntent.BUY,
                 0.95,
                 "Message contains buy crypto with fiat keywords",
-                None,
-            )
-
-        # MoonPay swap intent (crypto-to-crypto swaps) - Before complex workflow
-        # Match specific MoonPay swap patterns
-        moonpay_swap_patterns = [
-            # English
-            "moonpay swap",
-            "swap via moonpay",
-            "crypto to crypto swap",
-            "swap btc to eth",
-            "swap eth to usdc",
-            "swap sol to btc",
-            "exchange btc for eth",
-            "exchange eth for sol",
-            "convert btc to usdc",
-            "convert sol to eth",
-            # Spanish
-            "intercambio moonpay",
-            "swap cripto a cripto",
-            "cambiar btc por eth",
-            "convertir btc a usdc",
-            # Portuguese
-            "troca moonpay",
-            "trocar cripto por cripto",
-            "trocar btc por eth",
-            "converter btc para usdc",
-            # French
-            "échange moonpay",
-            "échanger crypto contre crypto",
-            "échanger btc contre eth",
-            # Chinese
-            "moonpay交换",
-            "加密货币互换",
-            "兑换btc为eth",
-        ]
-        if any(pattern in message for pattern in moonpay_swap_patterns):
-            return (
-                ChatIntent.SWAP_MOONPAY,
-                0.95,
-                "Message contains MoonPay swap keywords",
                 None,
             )
 

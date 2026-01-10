@@ -160,13 +160,18 @@ class MoonPaySwapHandler:
         Returns:
             Handler result with pairs list
         """
+        logger.info(f"[MoonPaySwapHandler] get_available_pairs called - language: {language}")
+        logger.info(f"[MoonPaySwapHandler] Swap client available: {self._swap_client is not None}")
+
         start_time = time.time()
         lang = language if language in SWAP_MESSAGES else "en"
         msgs = SWAP_MESSAGES[lang]
 
         try:
             # Fetch pairs from MoonPay API
+            logger.info(f"[MoonPaySwapHandler] Calling swap_client.get_pairs()")
             pairs = await self._swap_client.get_pairs()
+            logger.info(f"[MoonPaySwapHandler] Received {len(pairs)} pairs from API")
 
             # Format pairs for response
             pairs_data = [

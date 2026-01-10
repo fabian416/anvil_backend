@@ -2825,12 +2825,17 @@ class GuestHandlerService:
         self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle MoonPay crypto-to-crypto swap intent."""
+        logger.info(f"[MoonPay Swap] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[MoonPay Swap] Handler available: {self._moonpay_swap_handler is not None}")
+
         # Use MoonPaySwapHandler if available
         if self._moonpay_swap_handler:
             try:
+                logger.info(f"[MoonPay Swap] Calling get_available_pairs() with language={language}")
                 # Check if user is asking for a quote or just info
                 # For now, just show available pairs
                 result = await self._moonpay_swap_handler.get_available_pairs(language=language)
+                logger.info(f"[MoonPay Swap] Handler returned successfully - action: {result.action}")
                 return {
                     "content": result.content,
                     "enrichment": {
@@ -2843,8 +2848,10 @@ class GuestHandlerService:
                     "requires_registration": not is_authenticated,
                 }
             except Exception as e:
-                logger.warning(f"MoonPaySwapHandler error: {e}")
+                logger.error(f"[MoonPay Swap] Handler error: {e}", exc_info=True)
                 # Fall through to fallback response
+        else:
+            logger.warning("[MoonPay Swap] Handler not available - using fallback response")
 
         # Fallback for guests or if MoonPaySwapHandler not available
         return self._fallback_moonpay_swap_response(language, is_authenticated)
