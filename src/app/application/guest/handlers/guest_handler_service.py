@@ -2724,6 +2724,12 @@ class GuestHandlerService:
                 "pt": "🏦 Posso comparar taxas do mercado monetário! Tente perguntar:\n• 'comparar Aave vs Compound'\n• 'taxas de mercado para USDC'\n• 'melhores taxas de empréstimo'",
                 "zh": "🏦 我可以比较货币市场利率！尝试询问：\n• '比较 Aave 和 Compound'\n• 'USDC 货币市场利率'\n• '最佳借贷利率'",
             },
+            ChatIntent.SWAP_MOONPAY: {
+                "en": "🌙 **MoonPay Swap**\n\nQuick crypto-to-crypto swap with competitive rates.\n\n⚠️ Service temporarily unavailable. Please try again later.\n\n**Supported Pairs:**\n• BTC ↔ ETH, SOL, USDC\n• ETH ↔ BTC, SOL, USDC\n• SOL ↔ BTC, ETH, USDC\n• USDC ↔ BTC, ETH, SOL",
+                "es": "🌙 **Swap MoonPay**\n\nIntercambio rápido cripto-a-cripto con tasas competitivas.\n\n⚠️ Servicio temporalmente no disponible. Por favor intente más tarde.\n\n**Pares Soportados:**\n• BTC ↔ ETH, SOL, USDC\n• ETH ↔ BTC, SOL, USDC\n• SOL ↔ BTC, ETH, USDC\n• USDC ↔ BTC, ETH, SOL",
+                "pt": "🌙 **Swap MoonPay**\n\nTroca rápida cripto-a-cripto com taxas competitivas.\n\n⚠️ Serviço temporariamente indisponível. Por favor tente novamente mais tarde.\n\n**Pares Suportados:**\n• BTC ↔ ETH, SOL, USDC\n• ETH ↔ BTC, SOL, USDC\n• SOL ↔ BTC, ETH, USDC\n• USDC ↔ BTC, ETH, SOL",
+                "zh": "🌙 **MoonPay交换**\n\n快速加密货币互换，汇率优惠。\n\n⚠️ 服务暂时不可用。请稍后再试。\n\n**支持的交易对:**\n• BTC ↔ ETH, SOL, USDC\n• ETH ↔ BTC, SOL, USDC\n• SOL ↔ BTC, ETH, USDC\n• USDC ↔ BTC, ETH, SOL",
+            },
         }
 
         default = {
@@ -2735,9 +2741,9 @@ class GuestHandlerService:
 
         messages = fallbacks.get(intent, default)
         content = messages.get(language, messages.get("en", ""))
-        
+
         # Add CTA only for guests
-        if not is_authenticated and intent in [ChatIntent.SWAP, ChatIntent.LENDING, ChatIntent.MONEY_MARKET]:
+        if not is_authenticated and intent in [ChatIntent.SWAP, ChatIntent.SWAP_MOONPAY, ChatIntent.LENDING, ChatIntent.MONEY_MARKET]:
             content += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
         return {
