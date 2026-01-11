@@ -35,6 +35,7 @@ class GuestMessage:
     confidence: float | None = None
     language: str = "en"
     is_restricted_action: bool = False
+    metadata: dict | None = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
 
     @classmethod
@@ -62,6 +63,7 @@ class GuestMessage:
         confidence: float | None = None,
         language: str = "en",
         is_restricted_action: bool = False,
+        metadata: dict | None = None,
     ) -> "GuestMessage":
         """Create an assistant message."""
         return cls(
@@ -73,4 +75,5 @@ class GuestMessage:
             confidence=confidence,
             language=language,
             is_restricted_action=is_restricted_action,
+            metadata=metadata or {},
         )

@@ -98,6 +98,9 @@ def _map_guest_messages_table() -> None:
         confidence = mapped_column(Float, nullable=True)
         language = mapped_column(String(5), default="en")
         is_restricted_action = mapped_column(Boolean, default=False)
+        # Note: 'metadata' is reserved in SQLAlchemy, so we use 'extra_metadata' as attribute name
+        # but map it to 'metadata' column in the database
+        extra_metadata = mapped_column("metadata", JSONB, default={}, server_default='{}')
         created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
 
 
