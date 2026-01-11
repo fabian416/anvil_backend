@@ -42,6 +42,7 @@ class ConversationContext:
     pending_portfolio_info: dict[str, Any] | None = None
     pending_activity_info: dict[str, Any] | None = None
     pending_money_market_info: dict[str, Any] | None = None
+    pending_buy_info: dict[str, Any] | None = None
     
     @property
     def has_context(self) -> bool:
@@ -95,6 +96,7 @@ class ConversationMemory:
                 pending_portfolio_info=self._get_pending_portfolio_info(messages),
                 pending_activity_info=self._get_pending_activity_info(messages),
                 pending_money_market_info=self._get_pending_money_market_info(messages),
+                pending_buy_info=self._get_pending_buy_info(messages),
             )
         except Exception as e:
             logger.warning(f"Failed to get conversation context: {e}")
@@ -216,6 +218,113 @@ class ConversationMemory:
                 swap_info = msg.get_swap_info()
                 if swap_info and swap_info.get("is_complete"):
                     return swap_info
+                break
+        
+        return None
+    
+    def _get_pending_buy_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+        """
+        Get buy info from the last assistant message if there's a pending buy flow.
+        
+        This preserves the state of multi-turn buy conversations
+        (e.g., amount already collected, awaiting crypto selection).
+        """
+        if not messages:
+            return None
+        
+        # Find the most recent assistant message with buy info
+        for msg in reversed(messages):
+            if msg.is_assistant_message:
+                # Check for pending buy action
+                pending = msg.get_pending_action()
+                if pending and pending.startswith("buy_"):
+                    buy_info = msg.get_buy_info()
+                    if buy_info:
+                        return buy_info
+                break
+        
+        return None
+    
+    def _get_pending_lending_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+        """
+        Get lending info from the last assistant message if there's a pending lending flow.
+        
+        This preserves the state of multi-turn lending conversations.
+        """
+        if not messages:
+            return None
+        
+        # Find the most recent assistant message with lending info
+        for msg in reversed(messages):
+            if msg.is_assistant_message:
+                pending = msg.get_pending_action()
+                if pending and pending.startswith("lending_"):
+                    lending_info = msg.metadata.get("lending_info")
+                    if lending_info:
+                        return lending_info
+                break
+        
+        return None
+    
+    def _get_pending_portfolio_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+        """
+        Get portfolio info from the last assistant message if there's a pending portfolio flow.
+        
+        This preserves the state of multi-turn portfolio conversations.
+        """
+        if not messages:
+            return None
+        
+        # Find the most recent assistant message with portfolio info
+        for msg in reversed(messages):
+            if msg.is_assistant_message:
+                pending = msg.get_pending_action()
+                if pending and pending.startswith("portfolio_"):
+                    portfolio_info = msg.metadata.get("portfolio_info")
+                    if portfolio_info:
+                        return portfolio_info
+                break
+        
+        return None
+    
+    def _get_pending_activity_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+        """
+        Get activity info from the last assistant message if there's a pending activity flow.
+        
+        This preserves the state of multi-turn activity conversations.
+        """
+        if not messages:
+            return None
+        
+        # Find the most recent assistant message with activity info
+        for msg in reversed(messages):
+            if msg.is_assistant_message:
+                pending = msg.get_pending_action()
+                if pending and pending.startswith("activity_"):
+                    activity_info = msg.metadata.get("activity_info")
+                    if activity_info:
+                        return activity_info
+                break
+        
+        return None
+    
+    def _get_pending_money_market_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+        """
+        Get money market info from the last assistant message if there's a pending money market flow.
+        
+        This preserves the state of multi-turn money market conversations.
+        """
+        if not messages:
+            return None
+        
+        # Find the most recent assistant message with money market info
+        for msg in reversed(messages):
+            if msg.is_assistant_message:
+                pending = msg.get_pending_action()
+                if pending and pending.startswith("money_market_"):
+                    money_market_info = msg.metadata.get("money_market_info")
+                    if money_market_info:
+                        return money_market_info
                 break
         
         return None

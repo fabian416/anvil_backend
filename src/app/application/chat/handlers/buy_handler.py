@@ -5,16 +5,18 @@ Provides information for buying crypto with fiat via Privy on-ramp:
 - MoonPay/Coinbase integration (via Privy)
 - Supported assets and networks
 - Frontend-triggered flow (Privy modal)
+- Multi-turn conversational flow for collecting buy parameters
 
 Note: The actual on-ramp flow is handled by Privy SDK on the frontend.
-This handler provides instructional content and signals the frontend
-to open the Privy funding modal.
+This handler provides instructional content, collects buy parameters,
+and signals the frontend to open the Privy funding modal with pre-configured data.
 """
 
 import logging
+import re
 import time
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Any, Optional
 
 from app.application.common.services.current_user import CurrentUserService
 from app.domain.ports.wallet.wallet_repository import WalletRepository
@@ -30,6 +32,58 @@ from app.setup.config.privy import PrivySettings
 logger = logging.getLogger(__name__)
 
 
+# ============================================================================
+# Data Classes
+# ============================================================================
+
+
+@dataclass
+class BuyInfo:
+    """Information for a buy operation."""
+
+    amount: str | None = None  # Amount in fiat (e.g., "100")
+    fiat_currency: str = "USD"  # Fiat currency
+    crypto_currency: str | None = None  # Crypto to buy (ETH, USDC, etc.)
+
+    # Cryptos supported by MoonPay
+    SUPPORTED_CRYPTOS: list[str] = field(
+        default_factory=lambda: ["ETH", "USDC", "USDT", "BTC", "MATIC"]
+    )
+
+    @property
+    def is_complete(self) -> bool:
+        """Check if we have all required info."""
+        return bool(self.amount and self.crypto_currency)
+
+    @property
+    def next_step(self) -> str | None:
+        """Get the next step needed."""
+        if not self.amount:
+            return "amount"
+        if not self.crypto_currency:
+            return "crypto_currency"
+        return None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "amount": self.amount,
+            "fiat_currency": self.fiat_currency,
+            "crypto_currency": self.crypto_currency,
+            "is_complete": self.is_complete,
+            "next_step": self.next_step,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "BuyInfo":
+        """Create from dictionary."""
+        return cls(
+            amount=data.get("amount"),
+            fiat_currency=data.get("fiat_currency", "USD"),
+            crypto_currency=data.get("crypto_currency"),
+        )
+
+
 @dataclass
 class BuyHandlerResult:
     """Result from buy handler."""
@@ -42,6 +96,10 @@ class BuyHandlerResult:
     latency_ms: int
     language: str = "en"
     handler: str = "buy_handler"
+    # Multi-turn flow fields
+    pending_action: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    execute_data: dict[str, Any] | None = None
 
 
 # Localized messages
@@ -205,6 +263,81 @@ Une fois votre wallet connecté, vous pourrez :
 
 💡 **Astuce :** Si vous utilisez Privy, votre wallet devrait être créé automatiquement lors de l'inscription.""",
         "open_privy": "Ouverture du flux d'achat de cryptos...",
+    },
+}
+
+
+# Messages for multi-turn buy flow
+BUY_FLOW_MESSAGES = {
+    "en": {
+        "ask_amount": "💵 How much would you like to buy?\n\nEnter an amount in USD (e.g., 50, 100, 500)\n\n💡 *Minimum purchase: $30*",
+        "ask_crypto": "🪙 Which cryptocurrency would you like to buy?\n\n{options}\n\nReply with the number or name.",
+        "confirm_buy": """✅ **Ready to buy {crypto_currency}**
+
+💵 **Amount:** ${amount} USD
+🪙 **Crypto:** {crypto_currency}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Continue** to complete your purchase with MoonPay.""",
+        "invalid_amount": "❌ Please enter a valid amount (minimum $30).\n\nExample: 50, 100, or 500",
+        "invalid_crypto": "❌ Please select a valid cryptocurrency from the list.\n\n{options}",
+    },
+    "es": {
+        "ask_amount": "💵 ¿Cuánto deseas comprar?\n\nIngresa un monto en USD (ej: 50, 100, 500)\n\n💡 *Compra mínima: $30*",
+        "ask_crypto": "🪙 ¿Qué criptomoneda deseas comprar?\n\n{options}\n\nResponde con el número o nombre.",
+        "confirm_buy": """✅ **Listo para comprar {crypto_currency}**
+
+💵 **Monto:** ${amount} USD
+🪙 **Crypto:** {crypto_currency}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Haz clic en **Continuar** para completar tu compra con MoonPay.""",
+        "invalid_amount": "❌ Por favor ingresa un monto válido (mínimo $30).\n\nEjemplo: 50, 100, o 500",
+        "invalid_crypto": "❌ Por favor selecciona una criptomoneda válida de la lista.\n\n{options}",
+    },
+    "pt": {
+        "ask_amount": "💵 Quanto você gostaria de comprar?\n\nDigite um valor em USD (ex: 50, 100, 500)\n\n💡 *Compra mínima: $30*",
+        "ask_crypto": "🪙 Qual criptomoeda você gostaria de comprar?\n\n{options}\n\nResponda com o número ou nome.",
+        "confirm_buy": """✅ **Pronto para comprar {crypto_currency}**
+
+💵 **Valor:** ${amount} USD
+🪙 **Crypto:** {crypto_currency}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Clique em **Continuar** para completar sua compra com MoonPay.""",
+        "invalid_amount": "❌ Por favor digite um valor válido (mínimo $30).\n\nExemplo: 50, 100, ou 500",
+        "invalid_crypto": "❌ Por favor selecione uma criptomoeda válida da lista.\n\n{options}",
+    },
+    "zh": {
+        "ask_amount": "💵 您想购买多少？\n\n输入美元金额（例如：50、100、500）\n\n💡 *最低购买金额：$30*",
+        "ask_crypto": "🪙 您想购买哪种加密货币？\n\n{options}\n\n请回复数字或名称。",
+        "confirm_buy": """✅ **准备购买 {crypto_currency}**
+
+💵 **金额：** ${amount} USD
+🪙 **加密货币：** {crypto_currency}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+点击 **继续** 使用 MoonPay 完成购买。""",
+        "invalid_amount": "❌ 请输入有效金额（最低 $30）。\n\n示例：50、100 或 500",
+        "invalid_crypto": "❌ 请从列表中选择有效的加密货币。\n\n{options}",
+    },
+    "fr": {
+        "ask_amount": "💵 Combien souhaitez-vous acheter ?\n\nEntrez un montant en USD (ex: 50, 100, 500)\n\n💡 *Achat minimum : $30*",
+        "ask_crypto": "🪙 Quelle cryptomonnaie souhaitez-vous acheter ?\n\n{options}\n\nRépondez avec le numéro ou le nom.",
+        "confirm_buy": """✅ **Prêt à acheter {crypto_currency}**
+
+💵 **Montant :** ${amount} USD
+🪙 **Crypto :** {crypto_currency}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cliquez sur **Continuer** pour finaliser votre achat avec MoonPay.""",
+        "invalid_amount": "❌ Veuillez entrer un montant valide (minimum $30).\n\nExemple : 50, 100, ou 500",
+        "invalid_crypto": "❌ Veuillez sélectionner une cryptomonnaie valide dans la liste.\n\n{options}",
     },
 }
 
@@ -471,4 +604,284 @@ class BuyHandler:
 📋 *Tap to copy address*
 """
         return response
+
+    # ========================================================================
+    # Multi-turn Flow Methods
+    # ========================================================================
+
+    def _parse_amount(self, message: str) -> str | None:
+        """
+        Extract amount from user message.
+
+        Args:
+            message: User's message
+
+        Returns:
+            Amount as string if valid, None otherwise
+        """
+        # Remove currency symbols and common words
+        cleaned = message.lower().replace("$", "").replace("usd", "").strip()
+
+        # Try to find a number
+        match = re.search(r"(\d+(?:\.\d{1,2})?)", cleaned)
+        if match:
+            amount = float(match.group(1))
+            # MoonPay minimum is $30
+            if amount >= 30:
+                return str(amount)
+        return None
+
+    def _parse_crypto(self, message: str, supported: list[str]) -> str | None:
+        """
+        Extract crypto from user message.
+
+        Args:
+            message: User's message
+            supported: List of supported cryptocurrencies
+
+        Returns:
+            Crypto symbol if found, None otherwise
+        """
+        message_upper = message.upper().strip()
+
+        # Direct match
+        if message_upper in supported:
+            return message_upper
+
+        # Number selection (1, 2, 3, etc.)
+        if message.strip().isdigit():
+            index = int(message.strip()) - 1
+            if 0 <= index < len(supported):
+                return supported[index]
+
+        # Partial match
+        for crypto in supported:
+            if crypto in message_upper:
+                return crypto
+
+        return None
+
+    def _format_crypto_options(self, cryptos: list[str]) -> str:
+        """Format crypto options as numbered list."""
+        return "\n".join([f"{i + 1}. {crypto}" for i, crypto in enumerate(cryptos)])
+
+    async def process_buy_flow(
+        self,
+        buy_info: BuyInfo,
+        language: str,
+        wallet_address: str,
+    ) -> BuyHandlerResult:
+        """
+        Process the buy flow step by step.
+
+        Args:
+            buy_info: Current buy info state
+            language: Language code for messages
+            wallet_address: User's wallet address
+
+        Returns:
+            BuyHandlerResult with appropriate content and state
+        """
+        logger.info(f"[BUY_DEBUG] process_buy_flow() called")
+        logger.info(f"[BUY_DEBUG] buy_info.amount: {buy_info.amount}")
+        logger.info(f"[BUY_DEBUG] buy_info.crypto_currency: {buy_info.crypto_currency}")
+        logger.info(f"[BUY_DEBUG] buy_info.is_complete: {buy_info.is_complete}")
+        logger.info(f"[BUY_DEBUG] buy_info.next_step: {buy_info.next_step}")
+        
+        msgs = BUY_FLOW_MESSAGES.get(language, BUY_FLOW_MESSAGES["en"])
+        options = self._format_crypto_options(buy_info.SUPPORTED_CRYPTOS)
+
+        # Step 1: Ask for amount
+        if not buy_info.amount:
+            logger.info(f"[BUY_DEBUG] Step 1: Asking for amount, pending_action=buy_awaiting_amount")
+            return BuyHandlerResult(
+                content=msgs["ask_amount"],
+                wallet_address=wallet_address,
+                supported_assets=buy_info.SUPPORTED_CRYPTOS,
+                supported_networks=self.SUPPORTED_NETWORKS,
+                requires_privy_modal=False,
+                latency_ms=0,
+                language=language,
+                pending_action="buy_awaiting_amount",
+                metadata=buy_info.to_dict(),
+            )
+
+        # Step 2: Ask for crypto
+        if not buy_info.crypto_currency:
+            logger.info(f"[BUY_DEBUG] Step 2: Asking for crypto, pending_action=buy_awaiting_crypto")
+            return BuyHandlerResult(
+                content=msgs["ask_crypto"].format(options=options),
+                wallet_address=wallet_address,
+                supported_assets=buy_info.SUPPORTED_CRYPTOS,
+                supported_networks=self.SUPPORTED_NETWORKS,
+                requires_privy_modal=False,
+                latency_ms=0,
+                language=language,
+                pending_action="buy_awaiting_crypto",
+                metadata=buy_info.to_dict(),
+            )
+
+        # Step 3: All data collected - Generate execute_data
+        logger.info(f"[BUY_DEBUG] Step 3: All data collected, generating execute_data")
+        execute_data = {
+            "action_type": "buy",
+            "chain": "base",
+            "from_token": buy_info.fiat_currency,
+            "to_token": buy_info.crypto_currency,
+            "amount": buy_info.amount,
+        }
+        logger.info(f"[BUY_DEBUG] execute_data: {execute_data}")
+
+        return BuyHandlerResult(
+            content=msgs["confirm_buy"].format(
+                amount=buy_info.amount,
+                crypto_currency=buy_info.crypto_currency,
+            ),
+            wallet_address=wallet_address,
+            supported_assets=buy_info.SUPPORTED_CRYPTOS,
+            supported_networks=self.SUPPORTED_NETWORKS,
+            requires_privy_modal=True,
+            latency_ms=0,
+            language=language,
+            pending_action=None,  # Flow complete
+            metadata=buy_info.to_dict(),
+            execute_data=execute_data,
+        )
+
+    async def handle_buy_continuation(
+        self,
+        user_id: int,
+        message: str,
+        step: str,
+        previous_buy_info: BuyInfo | None,
+        language: str = "en",
+    ) -> BuyHandlerResult:
+        """
+        Handle continuation of the buy flow.
+
+        Args:
+            user_id: User's database ID
+            message: User's message
+            step: Current step (amount, crypto)
+            previous_buy_info: Previous buy info state
+            language: Language code for messages
+
+        Returns:
+            BuyHandlerResult with next step or confirmation
+        """
+        start_time = time.time()
+        msgs = BUY_FLOW_MESSAGES.get(language, BUY_FLOW_MESSAGES["en"])
+
+        # Get wallet address
+        wallet_address = await self._resolve_user_wallet_address(user_id)
+        if not wallet_address:
+            lang = language if language in MESSAGES else "en"
+            return BuyHandlerResult(
+                content=MESSAGES[lang]["no_wallet"],
+                wallet_address=None,
+                supported_assets=self.SUPPORTED_ASSETS,
+                supported_networks=self.SUPPORTED_NETWORKS,
+                requires_privy_modal=False,
+                latency_ms=int((time.time() - start_time) * 1000),
+                language=language,
+            )
+
+        # Initialize or restore buy info
+        buy_info = previous_buy_info or BuyInfo()
+        options = self._format_crypto_options(buy_info.SUPPORTED_CRYPTOS)
+
+        # Process based on step
+        if step == "amount":
+            amount = self._parse_amount(message)
+            if amount:
+                buy_info.amount = amount
+            else:
+                # Invalid amount - ask again
+                return BuyHandlerResult(
+                    content=msgs["invalid_amount"],
+                    wallet_address=wallet_address,
+                    supported_assets=buy_info.SUPPORTED_CRYPTOS,
+                    supported_networks=self.SUPPORTED_NETWORKS,
+                    requires_privy_modal=False,
+                    latency_ms=int((time.time() - start_time) * 1000),
+                    language=language,
+                    pending_action="buy_awaiting_amount",
+                    metadata=buy_info.to_dict(),
+                )
+
+        elif step == "crypto":
+            crypto = self._parse_crypto(message, buy_info.SUPPORTED_CRYPTOS)
+            if crypto:
+                buy_info.crypto_currency = crypto
+            else:
+                # Invalid crypto - ask again
+                return BuyHandlerResult(
+                    content=msgs["invalid_crypto"].format(options=options),
+                    wallet_address=wallet_address,
+                    supported_assets=buy_info.SUPPORTED_CRYPTOS,
+                    supported_networks=self.SUPPORTED_NETWORKS,
+                    requires_privy_modal=False,
+                    latency_ms=int((time.time() - start_time) * 1000),
+                    language=language,
+                    pending_action="buy_awaiting_crypto",
+                    metadata=buy_info.to_dict(),
+                )
+
+        # Continue the flow with updated info
+        result = await self.process_buy_flow(buy_info, language, wallet_address)
+        result.latency_ms = int((time.time() - start_time) * 1000)
+        return result
+
+    async def start_buy_flow(
+        self,
+        user_id: int,
+        message: str,
+        language: str = "en",
+    ) -> BuyHandlerResult:
+        """
+        Start a new buy flow, optionally extracting info from initial message.
+
+        Args:
+            user_id: User's database ID
+            message: User's initial message
+            language: Language code for messages
+
+        Returns:
+            BuyHandlerResult with first step or confirmation if all info provided
+        """
+        logger.info(f"[BUY_DEBUG] start_buy_flow() called with user_id={user_id}, message='{message}', language={language}")
+        start_time = time.time()
+
+        # Get wallet address first
+        wallet_address = await self._resolve_user_wallet_address(user_id)
+        logger.info(f"[BUY_DEBUG] wallet_address resolved: {wallet_address}")
+        if not wallet_address:
+            lang = language if language in MESSAGES else "en"
+            return BuyHandlerResult(
+                content=MESSAGES[lang]["no_wallet"],
+                wallet_address=None,
+                supported_assets=self.SUPPORTED_ASSETS,
+                supported_networks=self.SUPPORTED_NETWORKS,
+                requires_privy_modal=False,
+                latency_ms=int((time.time() - start_time) * 1000),
+                language=language,
+            )
+
+        # Try to extract info from initial message
+        buy_info = BuyInfo()
+
+        # Try to extract amount
+        amount = self._parse_amount(message)
+        if amount:
+            buy_info.amount = amount
+
+        # Try to extract crypto
+        crypto = self._parse_crypto(message, buy_info.SUPPORTED_CRYPTOS)
+        if crypto:
+            buy_info.crypto_currency = crypto
+
+        # Process the flow with extracted info
+        result = await self.process_buy_flow(buy_info, language, wallet_address)
+        result.latency_ms = int((time.time() - start_time) * 1000)
+        return result
 
