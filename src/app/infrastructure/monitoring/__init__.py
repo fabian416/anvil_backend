@@ -1,66 +1,32 @@
-"""
-Comprehensive Monitoring & Alerting Infrastructure.
+"""Infrastructure monitoring module.
 
-Production-ready monitoring system for chat features with:
-- Prometheus-compatible metrics collection
-- Intelligent alerting with multiple thresholds
-- Comprehensive health checks
-- Structured logging with correlation IDs
-- Auto-instrumentation for FastAPI
-- Background health check tasks
+Provides error tracking (Sentry) and metrics collection (CloudWatch)
+for the guest chat system and overall application.
 """
-
-from app.infrastructure.monitoring.metrics_collector import (
-    ChatMetricsCollector,
-    MetricType,
-    get_metrics_collector,
+from .sentry_config import (
+    SentryConfig,
+    GuestChatMonitoring,
 )
-from app.infrastructure.monitoring.alerting import (
-    AlertManager,
-    AlertRule,
-    AlertSeverity,
-    AlertCondition,
-    PerformanceAlert,
-    BudgetAlert,
-    ErrorSpikeAlert,
-    CacheEfficiencyAlert,
-    AgentAvailabilityAlert,
-    get_alert_manager,
-)
-from app.infrastructure.monitoring.health_checks import (
-    HealthCheckService,
-    HealthStatus,
-    ComponentHealth,
-    DatabaseHealthCheck,
-    RedisHealthCheck,
-    ExternalAPIHealthCheck,
-    WebSocketHealthCheck,
-    get_health_service,
+from .cloudwatch_metrics import (
+    CloudWatchMetrics,
+    init_metrics,
+    get_metrics,
+    track_response_time,
+    track_cache_hit,
+    track_hunter_ai_error,
+    track_rate_limit_violation,
 )
 
 __all__ = [
-    # Metrics
-    "ChatMetricsCollector",
-    "MetricType",
-    "get_metrics_collector",
-    # Alerting
-    "AlertManager",
-    "AlertRule",
-    "AlertSeverity",
-    "AlertCondition",
-    "PerformanceAlert",
-    "BudgetAlert",
-    "ErrorSpikeAlert",
-    "CacheEfficiencyAlert",
-    "AgentAvailabilityAlert",
-    "get_alert_manager",
-    # Health Checks
-    "HealthCheckService",
-    "HealthStatus",
-    "ComponentHealth",
-    "DatabaseHealthCheck",
-    "RedisHealthCheck",
-    "ExternalAPIHealthCheck",
-    "WebSocketHealthCheck",
-    "get_health_service",
+    # Sentry
+    "SentryConfig",
+    "GuestChatMonitoring",
+    # CloudWatch
+    "CloudWatchMetrics",
+    "init_metrics",
+    "get_metrics",
+    "track_response_time",
+    "track_cache_hit",
+    "track_hunter_ai_error",
+    "track_rate_limit_violation",
 ]
