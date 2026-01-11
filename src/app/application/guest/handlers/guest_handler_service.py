@@ -70,7 +70,10 @@ class GuestHandlerService:
         money_market_handler: MoneyMarketHandler | None = None,
         buy_handler: BuyHandler | None = None,
         moonpay_swap_handler: MoonPaySwapHandler | None = None,
+        morpho_gateway: "MorphoGateway | None" = None,
     ):
+        from app.domain.ports.morpho_gateway import MorphoGateway as MorphoGatewayType
+        
         self._lending_handler = lending_handler
         self._swap_handler = swap_handler
         self._money_market_handler = money_market_handler
@@ -83,7 +86,7 @@ class GuestHandlerService:
         # Multi-step buy flow handler
         self._buy_multistep = BuyMultiStepHandler()
         # Multi-step lending flow handler
-        self._lending_multistep = LendingMultiStepHandler()
+        self._lending_multistep = LendingMultiStepHandler(morpho_gateway=morpho_gateway)
         # Portfolio and activity handlers (demo for guests)
         self._portfolio_multistep = PortfolioMultiStepHandler()
         self._activity_multistep = ActivityMultiStepHandler()

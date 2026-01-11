@@ -13,7 +13,7 @@ Guest experience with demo Morpho vault data.
 import logging
 from typing import Any
 
-from app.infrastructure.adapters.defi.morpho_gateway import MorphoGateway
+from app.domain.ports.morpho_gateway import MorphoGateway
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class LendingMultiStepHandler:
 
     def __init__(self, morpho_gateway: MorphoGateway | None = None):
         """Initialize lending multi-step handler with real Morpho data."""
-        self._morpho = morpho_gateway or MorphoGateway()
+        self._morpho = morpho_gateway
 
     async def handle_flow(
         self,
@@ -223,19 +223,47 @@ class LendingMultiStepHandler:
 
     async def _get_best_apy(self, asset: str, chain: str = "ethereum") -> float:
         """Get real APY from Morpho vaults."""
+        if not self._morpho:
+            # Fallback to approximate APYs if gateway not available
+            fallback_apys = {
+                "USDC": 8.5,
+                "USDT": 7.8,
+                "DAI": 9.2,
+                "ETH": 5.4,
+                "WBTC": 4.2,
+            }
+            return fallback_apys.get(asset, 5.0)
+        
         try:
-            # Fetch top vaults for asset on specified chain
-            vaults = await self._morpho.get_top_vaults(
+            # Fetch vaults for asset on specified chain
+            vaults = await self._morpho.get_vaults(
                 asset=asset,
                 chain=chain,
-                limit=3  # Top 3 vaults per CEO spec
             )
 
             if vaults and len(vaults) > 0:
-                # Return highest APY
-                best_vault = max(vaults, key=lambda v: v.net_apy)
-                logger.info(f"Fetched real Morpho APY for {asset}: {best_vault.net_apy:.2f}%")
-                return best_vault.net_apy
+                # Sort by APY and get top vault
+                # Get APY for each vault and find the best one
+                vault_apys = []
+                for vault in vaults[:10]:  # Limit to first 10 for performance
+                    try:
+                        apy_data = await self._morpho.get_vault_apy(
+                            vault_address=vault.address,
+                            chain=chain,
+                        )
+                        vault_apys.append((vault, apy_data.net_apy))
+                    except Exception:
+                        # Skip vaults where we can't get APY
+                        continue
+                
+                if vault_apys:
+                    # Return highest APY
+                    best_vault, best_apy = max(vault_apys, key=lambda x: x[1])
+                    logger.info(f"Fetched real Morpho APY for {asset}: {best_apy:.2f}%")
+                    return float(best_apy)
+                else:
+                    logger.warning(f"Could not get APY for any vaults for {asset} on {chain}")
+                    return 5.0  # Fallback
             else:
                 logger.warning(f"No Morpho vaults found for {asset} on {chain}")
                 return 5.0  # Fallback

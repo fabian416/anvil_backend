@@ -148,6 +148,7 @@ class GuestProvider(Provider):
         money_market_handler: MoneyMarketHandler,
         buy_handler: BuyHandler,
         moonpay_swap_handler: MoonPaySwapHandler,
+        morpho_gateway: MorphoGateway,
         swap_handler: SwapHandler | None = None,
     ) -> GuestHandlerService:
         """
@@ -159,6 +160,7 @@ class GuestProvider(Provider):
         - SwapHandler for real 1inch/LiFi swap quotes (if API keys configured)
         - BuyHandler for crypto on-ramp via Privy (if configured)
         - MoonPaySwapHandler for MoonPay crypto-to-crypto swaps
+        - MorphoGateway for LendingMultiStepHandler to fetch real APY data
         - Hunter AI and ULTRA handlers don't require DI as they are stateless.
         """
         return GuestHandlerService(
@@ -167,6 +169,7 @@ class GuestProvider(Provider):
             money_market_handler=money_market_handler,  # Real data for comparisons
             buy_handler=buy_handler,  # Privy on-ramp with wallet resolution
             moonpay_swap_handler=moonpay_swap_handler,  # MoonPay swap quotes
+            morpho_gateway=morpho_gateway,  # Morpho gateway for multi-step lending flow
         )
 
     @provide(scope=Scope.REQUEST)

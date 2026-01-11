@@ -826,6 +826,7 @@ class ChatPhase2Provider(Provider):
         buy_handler: BuyHandler,
         money_market_handler: MoneyMarketHandler,
         moonpay_swap_handler: MoonPaySwapHandler,
+        morpho_gateway: MorphoGateway,
         wallet_repository: WalletRepository,
         agent_squad_settings: AgentSquadSettings,
     ) -> UnifiedChatOrchestrator:
@@ -850,6 +851,7 @@ class ChatPhase2Provider(Provider):
             swap_handler=swap_handler,
             money_market_handler=money_market_handler,
             moonpay_swap_handler=moonpay_swap_handler,
+            morpho_gateway=morpho_gateway,
         )
 
         return UnifiedChatOrchestrator(
