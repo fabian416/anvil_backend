@@ -802,28 +802,127 @@ def create_conversations_router() -> APIRouter:
                     "signup_url": "/signup",
                 }
         
-        elif intent_result.intent.value == "BUY":
-            # Handle BUY intent (on-ramp crypto purchase)
-            from app.application.chat.services.intent_detector import ChatIntent
-
-            context_str = conversation_memory.build_context_string(context)
-            handler_result = await handler_service.handle_intent(
-                intent=ChatIntent.BUY,
-                content=request_body.content,
-                language=request_body.language,
-                context=context_str,
-                is_authenticated=not user.is_guest,
-                user_id=None if user.is_guest else int(user.identifier),  # Pass user_id for authenticated users (identifier is user_id as string)
-            )
-            agent_content = handler_result.get("content", "")
-            enrichment = handler_result.get("enrichment")
-            pending_action = handler_result.get("pending_action")
-            if user.is_guest and handler_result.get("requires_registration"):
-                registration_required = {
-                    "required": True,
-                    "reason": "action_required",
-                    "signup_url": "/signup",
-                }
+        elif intent_result.intent.value.startswith("BUY"):
+            # Handle BUY and BUY_CONTINUE intents (on-ramp crypto purchase with multi-turn flow)
+            from app.application.chat.handlers.buy_handler import BuyHandler, BuyInfo
+            
+            # [BUY_DEBUG] Log entry to BUY handler
+            logger.info(f"[BUY_DEBUG] Entering BUY handler section")
+            logger.info(f"[BUY_DEBUG] Intent: {intent_result.intent.value}")
+            logger.info(f"[BUY_DEBUG] User is_guest: {user.is_guest}")
+            logger.info(f"[BUY_DEBUG] User identifier: {user.identifier}")
+            
+            # For guests, use the old informative flow
+            if user.is_guest:
+                from app.application.chat.services.intent_detector import ChatIntent
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=ChatIntent.BUY,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=False,
+                    user_id=None,
+                )
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                pending_action = handler_result.get("pending_action")
+                if handler_result.get("requires_registration"):
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+            else:
+                # Authenticated users get the multi-turn conversational flow
+                logger.info(f"[BUY_DEBUG] User is authenticated, using multi-turn flow")
+                try:
+                    # Get dependencies for BuyHandler
+                    from app.domain.ports.wallet.wallet_repository import WalletRepository
+                    from dishka import AsyncContainer
+                    
+                    container: AsyncContainer = http_request.state.dishka_container
+                    wallet_repo = await container.get(WalletRepository)
+                    
+                    buy_handler = BuyHandler(
+                        wallet_repository=wallet_repo,
+                        current_user_service=current_user,
+                    )
+                    
+                    # Check for continuation metadata
+                    continuation_step = None
+                    continuation_value = None
+                    if intent_result.metadata:
+                        continuation_step = intent_result.metadata.get("step")
+                        continuation_value = intent_result.metadata.get("value")
+                    
+                    logger.info(f"[BUY_DEBUG] continuation_step: {continuation_step}")
+                    logger.info(f"[BUY_DEBUG] continuation_value: {continuation_value}")
+                    
+                    # Get previous buy info from context for multi-turn flow
+                    previous_buy_info = None
+                    if context.pending_buy_info:
+                        previous_buy_info = BuyInfo.from_dict(context.pending_buy_info)
+                        logger.info(f"[BUY_DEBUG] previous_buy_info: {previous_buy_info}")
+                    else:
+                        logger.info(f"[BUY_DEBUG] No previous_buy_info in context")
+                    
+                    # Handle based on whether it's a continuation or new buy request
+                    if continuation_step and continuation_value:
+                        # Continuation of multi-turn flow
+                        logger.info(f"[BUY_DEBUG] Calling handle_buy_continuation()")
+                        handler_result = await buy_handler.handle_buy_continuation(
+                            user_id=int(user.identifier),
+                            message=continuation_value,
+                            step=continuation_step,
+                            previous_buy_info=previous_buy_info,
+                            language=request_body.language,
+                        )
+                    else:
+                        # New buy request - start the flow
+                        logger.info(f"[BUY_DEBUG] Calling start_buy_flow()")
+                        handler_result = await buy_handler.start_buy_flow(
+                            user_id=int(user.identifier),
+                            message=request_body.content,
+                            language=request_body.language,
+                        )
+                    
+                    logger.info(f"[BUY_DEBUG] handler_result.content: {handler_result.content[:100] if handler_result.content else 'None'}...")
+                    logger.info(f"[BUY_DEBUG] handler_result.pending_action: {handler_result.pending_action}")
+                    agent_content = handler_result.content
+                    enrichment = {
+                        "wallet_address": handler_result.wallet_address,
+                        "supported_assets": handler_result.supported_assets,
+                        "supported_networks": handler_result.supported_networks,
+                        "requires_privy_modal": handler_result.requires_privy_modal,
+                        "action_type": "fund_wallet" if handler_result.requires_privy_modal else None,
+                    }
+                    pending_action = handler_result.pending_action
+                    
+                    # Extract execute data if buy is complete (no pending_action means ready to execute)
+                    if handler_result.execute_data and not pending_action:
+                        execute_data = ExecuteActionData(**handler_result.execute_data)
+                    
+                except Exception as e:
+                    # Log the error and fallback to old handler
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"BuyHandler error for message '{request_body.content}': {e}", exc_info=True)
+                    
+                    # Fallback to old handler service
+                    from app.application.chat.services.intent_detector import ChatIntent
+                    context_str = conversation_memory.build_context_string(context)
+                    handler_result = await handler_service.handle_intent(
+                        intent=ChatIntent.BUY,
+                        content=request_body.content,
+                        language=request_body.language,
+                        context=context_str,
+                        is_authenticated=True,
+                        user_id=int(user.identifier),
+                    )
+                    agent_content = handler_result.get("content", "")
+                    enrichment = handler_result.get("enrichment")
+                    pending_action = handler_result.get("pending_action")
         
         else:
             # Use existing handler service for other intents
@@ -973,6 +1072,12 @@ Respond in the same language the user uses."""
                 "chain": handler_result.get("enrichment", {}).get("chain", "ethereum"),
                 "asset": handler_result.get("enrichment", {}).get("asset", "USDC"),
             }
+        
+        # Store buy info for multi-turn buy flow persistence
+        if intent_result.intent.value.startswith("BUY") and hasattr(handler_result, "metadata"):
+            buy_info = handler_result.metadata
+            if buy_info:
+                metadata["buy_info"] = buy_info
         
         # Determine handler name for routing info
         handler_name = "agent_gateway_llm" if used_agent_gateway else intent_result.handler

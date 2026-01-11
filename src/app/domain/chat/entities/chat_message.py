@@ -117,6 +117,14 @@ class ChatMessage:
         """Get swap info from metadata."""
         return self.metadata.get("swap_info")
     
+    def set_buy_info(self, buy_info: dict[str, Any]) -> None:
+        """Store buy info for multi-turn buy flow."""
+        self.metadata["buy_info"] = buy_info
+    
+    def get_buy_info(self) -> dict[str, Any] | None:
+        """Get buy info from metadata."""
+        return self.metadata.get("buy_info")
+    
     def set_extracted_entities(self, entities: dict[str, Any]) -> None:
         """Store extracted entities (tokens, amounts, etc.)."""
         self.metadata["entities"] = entities

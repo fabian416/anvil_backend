@@ -281,16 +281,17 @@ default_model = "gemini-2.0-flash-exp"
 [llm_provider.deepinfra]
 # Uses credentials from [deepinfra] section in .secrets.toml
 # Available models:
-#   - meta-llama/Llama-3.2-3B-Instruct       (fast, 3B params)
+#   - meta-llama/Llama-3.2-3B-Instruct       (fast, 3B params) ← USING THIS (70B is overloaded)
 #   - meta-llama/Meta-Llama-3.1-70B-Instruct (standard, 70B params)
 #   - meta-llama/Meta-Llama-3.1-405B-Instruct (premium, 405B params)
-default_model = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+default_model = "meta-llama/Llama-3.2-3B-Instruct"
 
 # Model mapping: Vertex AI names -> DeepInfra equivalents (for fallback)
+# NOTE: Using 3B model because 70B is frequently overloaded ("Model busy")
 [llm_provider.deepinfra.model_mapping]
-"gemini-2.0-flash-exp" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
-"gemini-1.5-flash" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
-"gemini-1.5-pro" = "meta-llama/Meta-Llama-3.1-405B-Instruct"
+"gemini-2.0-flash-exp" = "meta-llama/Llama-3.2-3B-Instruct"
+"gemini-1.5-flash" = "meta-llama/Llama-3.2-3B-Instruct"
+"gemini-1.5-pro" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 # Privy Configuration
 [privy]

@@ -43,6 +43,7 @@ class ChatIntentV2(str, Enum):
     LENDING = "LENDING"
     MONEY_MARKET = "MONEY_MARKET"
     BUY = "BUY"  # On-ramp crypto purchase
+    BUY_CONTINUE = "BUY_CONTINUE"  # Multi-turn continuation for buy flow
     
     # Restricted (require registration)
     BALANCE = "BALANCE"
@@ -287,6 +288,7 @@ class IntentDetectorV2:
             ChatIntentV2.LENDING: "lending_handler",
             ChatIntentV2.MONEY_MARKET: "money_market_handler",
             ChatIntentV2.BUY: "buy_handler",
+            ChatIntentV2.BUY_CONTINUE: "buy_handler",
             ChatIntentV2.BALANCE: "restricted_handler",
             ChatIntentV2.PORTFOLIO: "restricted_handler",
             ChatIntentV2.ACTIVITY: "restricted_handler",
@@ -313,6 +315,13 @@ class IntentDetectorV2:
             IntentResult with intent, confidence, and metadata
         """
         message_lower = message.lower().strip()
+        
+        # [BUY_DEBUG] Log incoming message and context
+        logger.info(f"[BUY_DEBUG] detect() called with message: '{message}'")
+        logger.info(f"[BUY_DEBUG] Language: {language}")
+        if context:
+            logger.info(f"[BUY_DEBUG] Context pending_intent: {context.pending_intent}")
+            logger.info(f"[BUY_DEBUG] Context pending_buy_info: {context.pending_buy_info}")
         
         # 1. Check for swap confirmation (when swap is complete and waiting for execution)
         if context and context.pending_swap_info:
@@ -360,14 +369,17 @@ class IntentDetectorV2:
         # 6. Check action intents (swap, lending, etc.)
         action_result = self._detect_action_intent(message_lower, language)
         if action_result:
+            logger.info(f"[BUY_DEBUG] Action intent detected: {action_result.intent.value}, handler: {action_result.handler}")
             return action_result
 
         # 7. Check exploration intents (protocol search, risk, etc.)
         exploration_result = self._detect_exploration_intent(message_lower, language)
         if exploration_result:
+            logger.info(f"[BUY_DEBUG] Exploration intent detected: {exploration_result.intent.value}")
             return exploration_result
 
         # 8. Fallback to general conversation
+        logger.info("[BUY_DEBUG] Fallback to GENERAL_CONVERSATION")
         return IntentResult(
             intent=ChatIntentV2.GENERAL_CONVERSATION,
             confidence=0.5,
@@ -412,6 +424,25 @@ class IntentDetectorV2:
                 confidence=0.95,
                 handler=self._handler_map[ChatIntentV2.SWAP_CONTINUE],
                 metadata={"step": "amount", "value": message},
+            )
+        
+        # Buy flow continuations
+        if pending == "buy_awaiting_amount":
+            logger.info(f"[BUY_DEBUG] Detected buy_awaiting_amount continuation, returning BUY_CONTINUE")
+            return IntentResult(
+                intent=ChatIntentV2.BUY_CONTINUE,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.BUY_CONTINUE],
+                metadata={"step": "amount", "value": message},
+            )
+        
+        if pending == "buy_awaiting_crypto":
+            logger.info(f"[BUY_DEBUG] Detected buy_awaiting_crypto continuation, returning BUY_CONTINUE")
+            return IntentResult(
+                intent=ChatIntentV2.BUY_CONTINUE,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.BUY_CONTINUE],
+                metadata={"step": "crypto", "value": message},
             )
         
         # Lending flow continuations (when no vaults found)
