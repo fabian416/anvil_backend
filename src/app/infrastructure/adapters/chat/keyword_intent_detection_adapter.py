@@ -478,13 +478,20 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         has_moonpay_tokens = sum(1 for token in moonpay_tokens if token in message) >= 2
         has_direction = any(dir in message for dir in [" to ", " for ", " por ", " para ", " contre ", " a ", "为", "到"])
 
-        if has_swap_action and has_moonpay_tokens and has_direction:
-            return (
-                ChatIntent.SWAP_MOONPAY,
-                0.93,
-                "Message contains crypto-to-crypto swap with MoonPay supported tokens",
-                None,
-            )
+        # Also check for implicit swap patterns: "TOKEN to TOKEN AMOUNT" or "AMOUNT TOKEN to TOKEN"
+        # Example: "USDC to eth 1", "1 BTC to ETH", "bitcoin to usdc 100"
+        if has_moonpay_tokens and has_direction:
+            # Check if there's a number (amount) in the message
+            import re
+            has_amount = bool(re.search(r'\b\d+\.?\d*\b', message))
+
+            if has_swap_action or has_amount:
+                return (
+                    ChatIntent.SWAP_MOONPAY,
+                    0.93 if has_swap_action else 0.88,
+                    "Message contains crypto-to-crypto swap with MoonPay supported tokens",
+                    None,
+                )
 
         # Generic swap intent (for DEX swaps via 1inch/LiFi/Hyperliquid)
         if any(

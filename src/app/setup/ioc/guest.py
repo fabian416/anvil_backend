@@ -20,9 +20,13 @@ from app.application.chat.handlers.money_market_handler import MoneyMarketHandle
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
+from app.application.chat.services.intent_detector import IntentDetectorService
 from app.domain.guest.ports.guest_repository import GuestRepository
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.infrastructure.adapters.guest_repository_sqla import GuestRepositorySqla
+from app.infrastructure.adapters.chat.keyword_intent_detection_adapter import (
+    KeywordIntentDetectionAdapter,
+)
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
 
@@ -172,22 +176,51 @@ class GuestProvider(Provider):
             morpho_gateway=morpho_gateway,  # Morpho gateway for multi-step lending flow
         )
 
+    @provide(scope=Scope.APP)
+    def provide_keyword_intent_adapter(self) -> KeywordIntentDetectionAdapter:
+        """
+        Provide keyword-based intent detection adapter for guest users.
+
+        Uses pattern matching to detect intents without LLM calls:
+        - MoonPay swap detection (BTC, ETH, SOL, USDC pairs)
+        - Generic swap detection
+        - DeFi intents (lending, money market)
+        """
+        return KeywordIntentDetectionAdapter()
+
+    @provide(scope=Scope.REQUEST)
+    def provide_guest_intent_detector(
+        self,
+        keyword_adapter: KeywordIntentDetectionAdapter,
+    ) -> IntentDetectorService:
+        """
+        Provide intent detector for guest users.
+
+        Uses only keyword-based detection (no LLM calls) for:
+        - Fast response times
+        - Zero cost
+        - Deterministic results
+        """
+        return IntentDetectorService(intent_port=keyword_adapter)
+
     @provide(scope=Scope.REQUEST)
     def provide_send_guest_message(
         self,
         guest_repository: GuestRepository,
         handler_service: GuestHandlerService,
+        intent_detector: IntentDetectorService,
     ) -> SendGuestMessage:
         """
-        Provide SendGuestMessage command with real handler service.
-        
-        Note: IntentDetectorService is not injected here to avoid
-        Dishka resolution issues with optional dependencies.
-        The command handles None intent_detector gracefully.
+        Provide SendGuestMessage command with real handlers and intent detection.
+
+        Now includes KeywordIntentDetectionAdapter for:
+        - Proper MoonPay swap detection (handles amounts like "swap 0.5 BTC to ETH")
+        - Multi-token pair detection
+        - Better pattern matching than simple keyword checks
         """
         return SendGuestMessage(
             guest_repository=guest_repository,
-            intent_detector=None,
+            intent_detector=intent_detector,
             handler_service=handler_service,
         )
 
