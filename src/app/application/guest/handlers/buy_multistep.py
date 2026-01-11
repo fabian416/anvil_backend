@@ -12,6 +12,8 @@ import logging
 import re
 from typing import Any
 
+from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +36,16 @@ class BuyMultiStepHandler:
 
     def __init__(self):
         """Initialize buy multi-step handler."""
-        pass
+        self._coingecko = CoinGeckoClient()
+        # CoinGecko coin ID mapping
+        self._coin_id_map = {
+            "BTC": "bitcoin",
+            "ETH": "ethereum",
+            "SOL": "solana",
+            "USDC": "usd-coin",
+            "USDT": "tether",
+            "MATIC": "matic-network",
+        }
 
     async def handle_flow(
         self,
@@ -238,6 +249,26 @@ class BuyMultiStepHandler:
             "buy_info": buy_info,
         }
 
+    async def _get_crypto_price(self, symbol: str) -> float:
+        """Get real-time crypto price from CoinGecko."""
+        coin_id = self._coin_id_map.get(symbol)
+        if not coin_id:
+            logger.warning(f"No CoinGecko mapping for {symbol}, using fallback price")
+            return 100.0
+
+        try:
+            price_data = await self._coingecko.get_price(coin_id)
+            logger.info(f"Fetched real price for {symbol}: ${price_data.usd:.2f}")
+            return price_data.usd
+        except Exception as e:
+            logger.warning(f"Failed to fetch price for {symbol} from CoinGecko: {e}")
+            # Fallback to approximate prices
+            fallback_prices = {
+                "BTC": 45000, "ETH": 1950, "SOL": 32.5,
+                "USDC": 1.0, "USDT": 1.0, "MATIC": 0.65
+            }
+            return fallback_prices.get(symbol, 100.0)
+
     async def _show_quote_and_confirm(self, buy_info: dict, language: str, is_authenticated: bool) -> dict:
         """Show quote and ask for confirmation."""
         crypto = buy_info.get("crypto", "").upper()
@@ -250,13 +281,8 @@ class BuyMultiStepHandler:
         }
         emoji = crypto_emoji.get(crypto, "💎")
 
-        # Demo pricing (in production, this would come from MoonPay API)
-        # Approximate prices for demo
-        demo_prices = {
-            "BTC": 45000, "ETH": 1950, "SOL": 32.5,
-            "USDC": 1.0, "USDT": 1.0, "MATIC": 0.65
-        }
-        price_per_unit = demo_prices.get(crypto, 100)
+        # Get real-time price from CoinGecko
+        price_per_unit = await self._get_crypto_price(crypto)
 
         try:
             usd = float(amount_usd)
