@@ -17,6 +17,8 @@ from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.application.guest.handlers.moonpay_swap_multistep import MoonPaySwapMultiStepHandler
 from app.application.guest.handlers.send_multistep import SendMultiStepHandler
+from app.application.guest.handlers.buy_multistep import BuyMultiStepHandler
+from app.application.guest.handlers.lending_multistep import LendingMultiStepHandler
 from app.application.chat.services.intent_detector import ChatIntent
 from app.application.hunter.discord_sentiment import (
     DiscordConfig,
@@ -76,6 +78,10 @@ class GuestHandlerService:
         self._moonpay_multistep = MoonPaySwapMultiStepHandler(moonpay_swap_handler) if moonpay_swap_handler else None
         # Multi-step send flow handler
         self._send_multistep = SendMultiStepHandler()
+        # Multi-step buy flow handler
+        self._buy_multistep = BuyMultiStepHandler()
+        # Multi-step lending flow handler
+        self._lending_multistep = LendingMultiStepHandler()
 
     async def handle_intent(
         self,
@@ -88,6 +94,7 @@ class GuestHandlerService:
         previous_lending_info: dict | None = None,
         previous_swap_info: dict | None = None,
         previous_send_info: dict | None = None,
+        previous_buy_info: dict | None = None,
         user_id: int | None = None,
     ) -> dict[str, Any]:
         """
@@ -182,9 +189,16 @@ class GuestHandlerService:
                         continuation_step,
                         previous_lending_info,
                     )
-                # Buy handler (requires user_id for authenticated users)
+                # Buy handler (supports multi-step flow)
                 elif intent == ChatIntent.BUY:
-                    return await self._handle_buy(content, language, is_authenticated, user_id)
+                    return await self._handle_buy(
+                        content,
+                        language,
+                        is_authenticated,
+                        user_id,
+                        continuation_step,
+                        previous_buy_info,
+                    )
                 # MoonPay swap handler (supports multi-step flow)
                 elif intent == ChatIntent.SWAP_MOONPAY:
                     return await self._handle_moonpay_swap(
@@ -1581,16 +1595,45 @@ class GuestHandlerService:
     # ========================================
 
     async def _handle_lending(
-        self, 
-        content: str, 
-        language: str, 
-        context: str = "", 
+        self,
+        content: str,
+        language: str,
+        context: str = "",
         is_authenticated: bool = False,
         continuation_step: str | None = None,
         previous_lending_info: dict | None = None,
     ) -> dict[str, Any]:
-        """Handle lending rates with real Morpho data."""
-        if self._lending_handler:
+        """
+        Handle lending/deposit intent with multi-step flow.
+
+        Flow states:
+        - lending_awaiting_asset: Need asset to deposit
+        - lending_awaiting_amount: Need deposit amount
+        - lending_awaiting_confirmation: Show vault quote, await confirmation
+        """
+        logger.info(f"[Lending] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[Lending] Continuation step: {continuation_step}")
+        logger.info(f"[Lending] Previous lending info: {previous_lending_info}")
+
+        # For guests, use multi-step flow
+        if not is_authenticated:
+            if self._lending_multistep:
+                try:
+                    result = await self._lending_multistep.handle_flow(
+                        content=content,
+                        language=language,
+                        is_authenticated=is_authenticated,
+                        continuation_step=continuation_step,
+                        previous_lending_info=previous_lending_info,
+                    )
+                    logger.info(f"[Lending] Multi-step handler returned: {result.keys()}")
+                    return result
+                except Exception as e:
+                    logger.error(f"[Lending] Multi-step handler error: {e}", exc_info=True)
+                    # Fall through to fallback
+
+        # For authenticated users, use real LendingHandler (Morpho API)
+        if self._lending_handler and is_authenticated:
             try:
                 # Handle continuation from previous lending query
                 if continuation_step and previous_lending_info:
@@ -1602,12 +1645,11 @@ class GuestHandlerService:
                         language=language,
                         continuation_step=continuation_step,
                         previous_lending_info=previous_lending_info,
-                        intent_metadata=intent_metadata,
                     )
                 else:
                     # Extract chain and asset from message
                     chain, asset = self._lending_handler._extract_params_from_message(content)
-                    
+
                     # Call execute method with correct parameters
                     result = await self._lending_handler.execute(
                         message=content,
@@ -1616,13 +1658,13 @@ class GuestHandlerService:
                         whitelisted_only=True,
                         language=language,
                     )
-                
+
                 # Convert LendingHandlerResult to dict format
                 response_content = result.content
                 # Only add CTA if not in a continuation flow
                 if not continuation_step:
                     response_content += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
-                
+
                 response = {
                     "content": response_content,
                     "enrichment": {
@@ -1635,7 +1677,7 @@ class GuestHandlerService:
                     },
                     "requires_registration": not is_authenticated,
                 }
-                
+
                 # Include pending_action and lending_info if set (for multi-turn flows)
                 if result.pending_action:
                     response["pending_action"] = result.pending_action
@@ -1647,7 +1689,7 @@ class GuestHandlerService:
                             "chain": result.chain,
                             "asset": result.asset,
                         }
-                
+
                 return response
             except Exception as e:
                 logger.error(f"Lending handler error for '{content}': {e}", exc_info=True)
@@ -2811,10 +2853,44 @@ class GuestHandlerService:
         }
     
     async def _handle_buy(
-        self, content: str, language: str, is_authenticated: bool = False, user_id: int | None = None
+        self,
+        content: str,
+        language: str,
+        is_authenticated: bool = False,
+        user_id: int | None = None,
+        continuation_step: str | None = None,
+        previous_buy_info: dict | None = None,
     ) -> dict[str, Any]:
-        """Handle buy crypto intent (on-ramp via Privy/MoonPay)."""
-        # Use BuyHandler if available and user_id provided
+        """
+        Handle buy crypto intent with multi-step flow.
+
+        Flow states:
+        - buy_awaiting_crypto: Need crypto to buy
+        - buy_awaiting_amount: Need USD amount
+        - buy_awaiting_confirmation: Show quote, await confirmation
+        """
+        logger.info(f"[Buy] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[Buy] Continuation step: {continuation_step}")
+        logger.info(f"[Buy] Previous buy info: {previous_buy_info}")
+
+        # For guests, use multi-step flow
+        if not is_authenticated or not user_id:
+            if self._buy_multistep:
+                try:
+                    result = await self._buy_multistep.handle_flow(
+                        content=content,
+                        language=language,
+                        is_authenticated=is_authenticated,
+                        continuation_step=continuation_step,
+                        previous_buy_info=previous_buy_info,
+                    )
+                    logger.info(f"[Buy] Multi-step handler returned: {result.keys()}")
+                    return result
+                except Exception as e:
+                    logger.error(f"[Buy] Multi-step handler error: {e}", exc_info=True)
+                    # Fall through to fallback
+
+        # For authenticated users with user_id, use BuyHandler
         if self._buy_handler and user_id:
             try:
                 result = await self._buy_handler.get_buy_info(
