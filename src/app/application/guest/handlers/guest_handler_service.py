@@ -19,6 +19,8 @@ from app.application.guest.handlers.moonpay_swap_multistep import MoonPaySwapMul
 from app.application.guest.handlers.send_multistep import SendMultiStepHandler
 from app.application.guest.handlers.buy_multistep import BuyMultiStepHandler
 from app.application.guest.handlers.lending_multistep import LendingMultiStepHandler
+from app.application.guest.handlers.portfolio_multistep import PortfolioMultiStepHandler
+from app.application.guest.handlers.activity_multistep import ActivityMultiStepHandler
 from app.application.chat.services.intent_detector import ChatIntent
 from app.application.hunter.discord_sentiment import (
     DiscordConfig,
@@ -82,6 +84,9 @@ class GuestHandlerService:
         self._buy_multistep = BuyMultiStepHandler()
         # Multi-step lending flow handler
         self._lending_multistep = LendingMultiStepHandler()
+        # Portfolio and activity handlers (demo for guests)
+        self._portfolio_multistep = PortfolioMultiStepHandler()
+        self._activity_multistep = ActivityMultiStepHandler()
 
     async def handle_intent(
         self,
@@ -137,6 +142,8 @@ class GuestHandlerService:
             ChatIntent.SEND: self._handle_send,
             ChatIntent.BALANCE: self._handle_balance,
             ChatIntent.RECEIVE: self._handle_receive,
+            ChatIntent.PORTFOLIO: self._handle_portfolio,
+            ChatIntent.ACTIVITY: self._handle_activity,
             # Agent Squad (Specialist Tasks & Complex Workflows)
             ChatIntent.SPECIALIST_TASK: self._handle_specialist_task,
             ChatIntent.COMPLEX_WORKFLOW: self._handle_complex_workflow,
@@ -3480,3 +3487,47 @@ class GuestHandlerService:
             },
             "requires_registration": not is_authenticated,
         }
+
+    async def _handle_portfolio(
+        self,
+        content: str,
+        language: str,
+        is_authenticated: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Handle portfolio inquiry.
+
+        For guests: Show demo portfolio with sample holdings
+        For authenticated: Delegate to actual portfolio handler
+        """
+        logger.info(f"[Portfolio] Handler called - language: {language}, authenticated: {is_authenticated}")
+
+        # For guests, always show demo portfolio
+        # For authenticated users, could delegate to real portfolio handler in the future
+        return await self._portfolio_multistep.handle_flow(
+            content=content,
+            language=language,
+            is_authenticated=is_authenticated,
+        )
+
+    async def _handle_activity(
+        self,
+        content: str,
+        language: str,
+        is_authenticated: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Handle activity/transaction history inquiry.
+
+        For guests: Show demo transaction history
+        For authenticated: Delegate to actual activity handler
+        """
+        logger.info(f"[Activity] Handler called - language: {language}, authenticated: {is_authenticated}")
+
+        # For guests, always show demo activity
+        # For authenticated users, could delegate to real activity handler in the future
+        return await self._activity_multistep.handle_flow(
+            content=content,
+            language=language,
+            is_authenticated=is_authenticated,
+        )
