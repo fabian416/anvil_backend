@@ -40,6 +40,8 @@ class ChatIntentV2(str, Enum):
     # DeFi Actions
     SWAP = "SWAP"
     SWAP_CONTINUE = "SWAP_CONTINUE"  # Multi-turn continuation
+    MOONPAY_SWAP = "MOONPAY_SWAP"  # MoonPay swap flow
+    MOONPAY_SWAP_CONTINUE = "MOONPAY_SWAP_CONTINUE"  # MoonPay swap multi-turn continuation
     LENDING = "LENDING"
     MONEY_MARKET = "MONEY_MARKET"
     BUY = "BUY"  # On-ramp crypto purchase
@@ -285,6 +287,8 @@ class IntentDetectorV2:
             ChatIntentV2.SIMILAR_PROTOCOLS: "graphrag_handler",
             ChatIntentV2.SWAP: "swap_handler",
             ChatIntentV2.SWAP_CONTINUE: "swap_handler",
+            ChatIntentV2.MOONPAY_SWAP: "moonpay_swap_flow_handler",
+            ChatIntentV2.MOONPAY_SWAP_CONTINUE: "moonpay_swap_flow_handler",
             ChatIntentV2.LENDING: "lending_handler",
             ChatIntentV2.MONEY_MARKET: "money_market_handler",
             ChatIntentV2.BUY: "buy_handler",
@@ -425,7 +429,32 @@ class IntentDetectorV2:
                 handler=self._handler_map[ChatIntentV2.SWAP_CONTINUE],
                 metadata={"step": "amount", "value": message},
             )
-        
+
+        # MoonPay Swap flow continuations
+        if pending == "moonpay_swap_awaiting_from_token":
+            return IntentResult(
+                intent=ChatIntentV2.MOONPAY_SWAP_CONTINUE,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP_CONTINUE],
+                metadata={"step": "from_token", "value": message},
+            )
+
+        if pending == "moonpay_swap_awaiting_to_token":
+            return IntentResult(
+                intent=ChatIntentV2.MOONPAY_SWAP_CONTINUE,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP_CONTINUE],
+                metadata={"step": "to_token", "value": message},
+            )
+
+        if pending == "moonpay_swap_awaiting_amount":
+            return IntentResult(
+                intent=ChatIntentV2.MOONPAY_SWAP_CONTINUE,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP_CONTINUE],
+                metadata={"step": "amount", "value": message},
+            )
+
         # Buy flow continuations
         if pending == "buy_awaiting_amount":
             logger.info(f"[BUY_DEBUG] Detected buy_awaiting_amount continuation, returning BUY_CONTINUE")
@@ -435,7 +464,7 @@ class IntentDetectorV2:
                 handler=self._handler_map[ChatIntentV2.BUY_CONTINUE],
                 metadata={"step": "amount", "value": message},
             )
-        
+
         if pending == "buy_awaiting_crypto":
             logger.info(f"[BUY_DEBUG] Detected buy_awaiting_crypto continuation, returning BUY_CONTINUE")
             return IntentResult(
@@ -444,7 +473,7 @@ class IntentDetectorV2:
                 handler=self._handler_map[ChatIntentV2.BUY_CONTINUE],
                 metadata={"step": "crypto", "value": message},
             )
-        
+
         # Lending flow continuations (when no vaults found)
         if pending == "lending_no_vaults":
             # Check if user selected a numbered option (1, 2, 3)
@@ -729,27 +758,27 @@ class IntentDetectorV2:
         # Check for partial swap commands in context
         context_text = context.summary.lower()
         swap_keywords = ["swap", "cambiar", "intercambiar", "exchange", "trocar"]
-        
+
         if any(kw in context_text for kw in swap_keywords):
             # Check if message is a token or amount
             tokens = ["eth", "usdc", "usdt", "dai", "wbtc", "weth", "btc", "sol", "matic", "arb", "op"]
-            
+
             # Token mentioned
             if any(token in message for token in tokens):
                 return IntentResult(
-                    intent=ChatIntentV2.SWAP,
+                    intent=ChatIntentV2.MOONPAY_SWAP,
                     confidence=0.90,
-                    handler=self._handler_map[ChatIntentV2.SWAP],
+                    handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
-            
+
             # Amount pattern
             if re.match(r"^\d+\.?\d*$", message.strip()):
                 return IntentResult(
-                    intent=ChatIntentV2.SWAP,
+                    intent=ChatIntentV2.MOONPAY_SWAP,
                     confidence=0.90,
-                    handler=self._handler_map[ChatIntentV2.SWAP],
+                    handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
-            
+
             # Partial patterns like "de USDC" or "a ETH"
             partial_patterns = [
                 r"^(?:de|from|del)\s+\w+",
@@ -758,9 +787,9 @@ class IntentDetectorV2:
             for pattern in partial_patterns:
                 if re.match(pattern, message, re.IGNORECASE):
                     return IntentResult(
-                        intent=ChatIntentV2.SWAP,
+                        intent=ChatIntentV2.MOONPAY_SWAP,
                         confidence=0.90,
-                        handler=self._handler_map[ChatIntentV2.SWAP],
+                        handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                     )
         
         return None
@@ -850,9 +879,9 @@ class IntentDetectorV2:
         for pattern in best_rate_patterns:
             if re.search(pattern, message, flags=re.IGNORECASE):
                 return IntentResult(
-                    intent=ChatIntentV2.SWAP,
+                    intent=ChatIntentV2.MOONPAY_SWAP,
                     confidence=0.92,  # High confidence for rate queries
-                    handler=self._handler_map[ChatIntentV2.SWAP],
+                    handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
 
         # Cross-chain swap/bridge patterns (check first, before simple swaps)
@@ -875,9 +904,9 @@ class IntentDetectorV2:
         for pattern in cross_chain_patterns:
             if re.search(pattern, message, flags=re.IGNORECASE):
                 return IntentResult(
-                    intent=ChatIntentV2.SWAP,
+                    intent=ChatIntentV2.MOONPAY_SWAP,
                     confidence=0.95,  # High confidence for cross-chain swaps
-                    handler=self._handler_map[ChatIntentV2.SWAP],
+                    handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
 
         # Full/structured swap commands (single-shot)
@@ -895,9 +924,9 @@ class IntentDetectorV2:
         for pattern in swap_command_patterns:
             if re.search(pattern, message, flags=re.IGNORECASE):
                 return IntentResult(
-                    intent=ChatIntentV2.SWAP,
+                    intent=ChatIntentV2.MOONPAY_SWAP,
                     confidence=0.90,
-                    handler=self._handler_map[ChatIntentV2.SWAP],
+                    handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
 
         # Multi-turn swap initiation (intentionally incomplete)
@@ -911,9 +940,9 @@ class IntentDetectorV2:
         for pattern in swap_initiation_patterns:
             if re.search(pattern, message, flags=re.IGNORECASE):
                 return IntentResult(
-                    intent=ChatIntentV2.SWAP,
+                    intent=ChatIntentV2.MOONPAY_SWAP,
                     confidence=0.85,
-                    handler=self._handler_map[ChatIntentV2.SWAP],
+                    handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
         
         # Lending patterns (improved to handle amounts and variations)

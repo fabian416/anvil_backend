@@ -284,6 +284,7 @@ class MoonPaySwapHandler:
 
             # Format quote data
             quote_data = {
+                "id": swap_quote.id,  # Quote ID from MoonPay
                 "pair_name": pair_name,
                 "base": base.upper(),
                 "quote": quote.upper(),

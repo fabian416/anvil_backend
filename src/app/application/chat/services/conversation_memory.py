@@ -38,6 +38,7 @@ class ConversationContext:
     detected_entities: dict[str, Any] = field(default_factory=dict)
     pending_intent: str | None = None
     pending_swap_info: dict[str, Any] | None = None
+    pending_moonpay_swap_info: dict[str, Any] | None = None  # MoonPay swap flow
     pending_lending_info: dict[str, Any] | None = None
     pending_portfolio_info: dict[str, Any] | None = None
     pending_activity_info: dict[str, Any] | None = None
@@ -92,6 +93,7 @@ class ConversationMemory:
                 detected_entities=self._extract_entities(messages),
                 pending_intent=self._get_pending_intent(messages),
                 pending_swap_info=self._get_pending_swap_info(messages),
+                pending_moonpay_swap_info=self._get_pending_moonpay_swap_info(messages),
                 pending_lending_info=self._get_pending_lending_info(messages),
                 pending_portfolio_info=self._get_pending_portfolio_info(messages),
                 pending_activity_info=self._get_pending_activity_info(messages),
@@ -245,6 +247,39 @@ class ConversationMemory:
 
         return None
     
+    def _get_pending_moonpay_swap_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+        """
+        Get MoonPay swap info from the last assistant message if there's a pending swap flow.
+
+        This preserves the state of multi-turn MoonPay swap conversations
+        (e.g., from_token, to_token already collected).
+        """
+        if not messages:
+            return None
+
+        # Find the most recent assistant message with MoonPay swap info (messages are newest-first)
+        for msg in messages:
+            if msg.is_assistant_message:
+                # Check for pending MoonPay swap action
+                pending = msg.get_pending_action()
+                if pending and pending.startswith("moonpay_swap_"):
+                    # Get swap info from metadata
+                    moonpay_swap_info = msg.metadata.get("moonpay_swap_info") if msg.metadata else None
+                    if moonpay_swap_info:
+                        return moonpay_swap_info
+                    # Also check for swap_info in metadata (fallback)
+                    swap_info = msg.get_swap_info()
+                    if swap_info:
+                        return swap_info
+
+                # Also check for complete MoonPay swap in metadata (when quote was shown)
+                swap_info = msg.get_swap_info()
+                if swap_info and swap_info.get("is_complete"):
+                    return swap_info
+                break
+
+        return None
+
     def _get_pending_lending_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
         """
         Get lending info from the last assistant message if there's a pending lending flow.

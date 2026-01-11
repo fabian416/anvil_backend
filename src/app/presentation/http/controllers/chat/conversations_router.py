@@ -19,6 +19,8 @@ from app.application.chat.services.rate_limit_service import RateLimitService
 from app.application.chat.services.conversation_memory import ConversationMemory
 from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, RESTRICTED_INTENTS
 from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
+from app.application.chat.handlers.moonpay_swap_flow_handler import MoonPaySwapFlowHandler
+from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.application.chat.handlers.restricted_handler import RestrictedActionHandler
 from app.application.guest.handlers.guest_handler_service import GuestHandlerService
 from app.domain.ports.ai.llm_gateway import LLMGateway
@@ -555,6 +557,7 @@ def create_conversations_router() -> APIRouter:
         handler_service: FromDishka[GuestHandlerService],
         message_repository: FromDishka[ChatMessageRepositorySqla],
         llm_gateway: FromDishka[LLMGateway],
+        moonpay_swap_handler: FromDishka[MoonPaySwapHandler],
     ) -> ChatResponse:
         """Send a message to a conversation."""
         from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
@@ -737,21 +740,87 @@ def create_conversations_router() -> APIRouter:
                         "reason": "action_required",
                         "signup_url": "/signup",
                     }
-        
+
+        elif intent_result.intent.value.startswith("MOONPAY_SWAP"):
+            # MoonPay Swap flow (including continuation)
+            try:
+                moonpay_swap_flow_handler = MoonPaySwapFlowHandler(
+                    moonpay_swap_handler=moonpay_swap_handler
+                )
+
+                # Check for continuation metadata
+                continuation_step = None
+                continuation_value = None
+                if intent_result.metadata:
+                    continuation_step = intent_result.metadata.get("step")
+                    continuation_value = intent_result.metadata.get("value")
+
+                # Get previous swap info from context for multi-turn flow
+                previous_swap_info = context.pending_moonpay_swap_info
+
+                handler_result = await moonpay_swap_flow_handler.handle(
+                    message=request_body.content,
+                    context=context,
+                    language=request_body.language,
+                    continuation_step=continuation_step,
+                    continuation_value=continuation_value,
+                    previous_swap_info=previous_swap_info,
+                )
+                agent_content = handler_result.content
+                enrichment = handler_result.enrichment
+                pending_action = handler_result.pending_action
+
+                # Extract execute data if swap is complete (no pending_action means ready to execute)
+                execute_data = None
+                if handler_result.execute_data and not pending_action:
+                    # Swap is complete and ready for execution - show banner
+                    execute_data = ExecuteActionData(**handler_result.execute_data)
+
+                if user.is_guest and handler_result.requires_registration:
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+            except Exception as e:
+                # Log the error for debugging
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"MoonPaySwapFlowHandler error for message '{request_body.content}': {e}", exc_info=True)
+
+                # Fallback to guest handler service for swap
+                from app.application.chat.services.intent_detector import ChatIntent
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=ChatIntent.SWAP,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=not user.is_guest,
+                )
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                if user.is_guest and handler_result.get("requires_registration"):
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+
         elif intent_result.intent.value == "LENDING":
             # Handle LENDING intent with continuation support
             from app.application.chat.services.intent_detector import ChatIntent
-            
+
             # Check for continuation metadata
             continuation_step = None
             intent_metadata = None
             if intent_result.metadata:
                 continuation_step = intent_result.metadata.get("step")
                 intent_metadata = intent_result.metadata
-            
+
             # Get previous lending info from context
             previous_lending_info = context.pending_lending_info
-            
+
             context_str = conversation_memory.build_context_string(context)
             handler_result = await handler_service.handle_intent(
                 intent=ChatIntent.LENDING,
@@ -1043,6 +1112,13 @@ Respond in the same language the user uses."""
             swap_info = handler_result.metadata
             if swap_info:
                 metadata["swap_info"] = swap_info
+        # Store MoonPay swap info for multi-turn flow persistence
+        if intent_result.intent.value.startswith("MOONPAY_SWAP") and hasattr(handler_result, "metadata"):
+            moonpay_swap_info = handler_result.metadata
+            if moonpay_swap_info:
+                metadata["moonpay_swap_info"] = moonpay_swap_info
+                # Also store in swap_info for compatibility
+                metadata["swap_info"] = moonpay_swap_info
         # Store lending info for multi-turn lending flow persistence
         if intent_result.intent.value == "LENDING":
             if handler_result.get("lending_info"):
