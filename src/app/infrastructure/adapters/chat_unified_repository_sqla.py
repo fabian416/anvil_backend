@@ -380,10 +380,11 @@ class ChatMessageRepositorySqla:
         conversation_id: UUID,
         limit: int = 10,
     ) -> list[ChatMessage]:
-        """Get recent messages from conversation (oldest first)."""
+        """Get recent messages from conversation (newest first for continuation detection)."""
         try:
             table = mapping_registry.metadata.tables["chat_messages"]
-            # Get most recent N, then reverse for chronological order
+            # Get most recent N messages (newest first)
+            # This ensures continuation state is always retrieved even with >10 total messages
             stmt = (
                 select(table)
                 .where(table.c.conversation_id == conversation_id)
@@ -393,7 +394,7 @@ class ChatMessageRepositorySqla:
             result = await self._session.execute(stmt)
             rows = result.mappings().all()
             messages = [self._row_to_message(row) for row in rows]
-            return list(reversed(messages))  # Chronological order
+            return messages  # Return newest-first (DESC order)
         except SQLAlchemyError as e:
             logger.error(f"Failed to get messages: {e}")
             raise DataMapperError("Failed to get messages") from e

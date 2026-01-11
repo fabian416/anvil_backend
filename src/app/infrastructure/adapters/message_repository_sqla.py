@@ -87,15 +87,15 @@ class SqlaMessageRepository(MessageRepository):
         conversation_id: UUID,
         limit: int = 50
     ) -> List[Message]:
-        """Get messages for a conversation."""
+        """Get messages for a conversation (newest first for continuation detection)."""
         messages_table = mapping_registry.metadata.tables.get("messages")
         if not messages_table:
             raise RuntimeError("messages table not found in metadata")
-        
+
         stmt = (
             select(messages_table)
             .where(messages_table.c.conversation_id == conversation_id)
-            .order_by(messages_table.c.created_at.asc())  # Oldest first
+            .order_by(messages_table.c.created_at.desc())  # Newest first
             .limit(limit)
         )
         

@@ -177,35 +177,35 @@ class ConversationMemory:
     def _get_pending_intent(self, messages: list[ChatMessage]) -> str | None:
         """
         Detect if there's a pending/incomplete flow.
-        
+
         Checks the last assistant message for pending_action metadata
         (e.g., swap awaiting confirmation).
         """
         if not messages:
             return None
-        
-        # Find the most recent assistant message
-        for msg in reversed(messages):
+
+        # Find the most recent assistant message (messages are newest-first)
+        for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
                 if pending:
                     return pending
                 break
-        
+
         return None
     
     def _get_pending_swap_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
         """
         Get swap info from the last assistant message if there's a pending swap flow or complete swap.
-        
+
         This preserves the state of multi-turn swap conversations
         (e.g., from_token, to_token already collected) and also detects complete swaps waiting for confirmation.
         """
         if not messages:
             return None
-        
-        # Find the most recent assistant message with swap info (pending or complete)
-        for msg in reversed(messages):
+
+        # Find the most recent assistant message with swap info (messages are newest-first)
+        for msg in messages:
             if msg.is_assistant_message:
                 # Check for pending swap action
                 pending = msg.get_pending_action()
@@ -213,27 +213,27 @@ class ConversationMemory:
                     swap_info = msg.get_swap_info()
                     if swap_info:
                         return swap_info
-                
+
                 # Also check for complete swap in metadata (when quote was shown)
                 swap_info = msg.get_swap_info()
                 if swap_info and swap_info.get("is_complete"):
                     return swap_info
                 break
-        
+
         return None
     
     def _get_pending_buy_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
         """
         Get buy info from the last assistant message if there's a pending buy flow.
-        
+
         This preserves the state of multi-turn buy conversations
         (e.g., amount already collected, awaiting crypto selection).
         """
         if not messages:
             return None
-        
-        # Find the most recent assistant message with buy info
-        for msg in reversed(messages):
+
+        # Find the most recent assistant message with buy info (messages are newest-first)
+        for msg in messages:
             if msg.is_assistant_message:
                 # Check for pending buy action
                 pending = msg.get_pending_action()
@@ -242,20 +242,20 @@ class ConversationMemory:
                     if buy_info:
                         return buy_info
                 break
-        
+
         return None
     
     def _get_pending_lending_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
         """
         Get lending info from the last assistant message if there's a pending lending flow.
-        
+
         This preserves the state of multi-turn lending conversations.
         """
         if not messages:
             return None
-        
-        # Find the most recent assistant message with lending info
-        for msg in reversed(messages):
+
+        # Find the most recent assistant message with lending info (messages are newest-first)
+        for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
                 if pending and pending.startswith("lending_"):
@@ -263,20 +263,20 @@ class ConversationMemory:
                     if lending_info:
                         return lending_info
                 break
-        
+
         return None
-    
+
     def _get_pending_portfolio_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
         """
         Get portfolio info from the last assistant message if there's a pending portfolio flow.
-        
+
         This preserves the state of multi-turn portfolio conversations.
         """
         if not messages:
             return None
-        
-        # Find the most recent assistant message with portfolio info
-        for msg in reversed(messages):
+
+        # Find the most recent assistant message with portfolio info (messages are newest-first)
+        for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
                 if pending and pending.startswith("portfolio_"):
@@ -284,20 +284,20 @@ class ConversationMemory:
                     if portfolio_info:
                         return portfolio_info
                 break
-        
+
         return None
-    
+
     def _get_pending_activity_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
         """
         Get activity info from the last assistant message if there's a pending activity flow.
-        
+
         This preserves the state of multi-turn activity conversations.
         """
         if not messages:
             return None
-        
-        # Find the most recent assistant message with activity info
-        for msg in reversed(messages):
+
+        # Find the most recent assistant message with activity info (messages are newest-first)
+        for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
                 if pending and pending.startswith("activity_"):
@@ -305,20 +305,20 @@ class ConversationMemory:
                     if activity_info:
                         return activity_info
                 break
-        
+
         return None
-    
+
     def _get_pending_money_market_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
         """
         Get money market info from the last assistant message if there's a pending money market flow.
-        
+
         This preserves the state of multi-turn money market conversations.
         """
         if not messages:
             return None
-        
-        # Find the most recent assistant message with money market info
-        for msg in reversed(messages):
+
+        # Find the most recent assistant message with money market info (messages are newest-first)
+        for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
                 if pending and pending.startswith("money_market_"):
@@ -326,7 +326,7 @@ class ConversationMemory:
                     if money_market_info:
                         return money_market_info
                 break
-        
+
         return None
     
     def build_context_string(self, context: ConversationContext) -> str:

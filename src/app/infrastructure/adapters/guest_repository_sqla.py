@@ -299,7 +299,7 @@ class GuestRepositorySqla(GuestRepository):
             stmt = (
                 select(table)
                 .where(table.c.conversation_id == conversation_id)
-                .order_by(table.c.created_at.asc())
+                .order_by(table.c.created_at.desc())  # Changed to DESC to get most recent first
                 .limit(limit)
                 .offset(offset)
             )
@@ -326,6 +326,7 @@ class GuestRepositorySqla(GuestRepository):
                     confidence=message.confidence,
                     language=message.language,
                     is_restricted_action=message.is_restricted_action,
+                    metadata=message.metadata or {},
                     created_at=message.created_at,
                 )
                 .returning(table.c.id)
@@ -473,5 +474,6 @@ class GuestRepositorySqla(GuestRepository):
             confidence=row.get("confidence"),
             language=row.get("language", "en"),
             is_restricted_action=row.get("is_restricted_action", False),
+            metadata=row.get("metadata", {}),
             created_at=row["created_at"],
         )

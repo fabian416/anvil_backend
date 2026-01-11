@@ -184,10 +184,36 @@ class SendGuestMessage:
         # 4. Get conversation history for context (conversational memory)
         context = await self._build_conversation_context(conversation.id)
 
-        # 5. Detect intent with context
-        intent, confidence, handler = await self._detect_intent_with_context(
-            content, context, language
+        # 4a. Get continuation state from last message (for multi-step flows)
+        continuation_step, previous_swap_info, previous_lending_info = await self._get_continuation_state(
+            conversation.id
         )
+
+        # 5. Detect intent with context
+        # If we have a continuation_step, we're in the middle of a multi-step flow
+        # Use the intent from that flow instead of detecting a new one
+        if continuation_step:
+            # Determine intent from continuation step
+            if "swap" in continuation_step:
+                intent = ChatIntent.SWAP_MOONPAY
+                handler = "moonpay_swap"
+                confidence = 1.0
+                logger.info(f"[Continuation] Using swap intent from pending action: {continuation_step}")
+            elif "lending" in continuation_step:
+                intent = ChatIntent.LENDING_RATE
+                handler = "lending"
+                confidence = 1.0
+                logger.info(f"[Continuation] Using lending intent from pending action: {continuation_step}")
+            else:
+                # Unknown continuation step, fall back to intent detection
+                intent, confidence, handler = await self._detect_intent_with_context(
+                    content, context, language
+                )
+        else:
+            # No continuation, detect intent normally
+            intent, confidence, handler = await self._detect_intent_with_context(
+                content, context, language
+            )
 
         # 6. Check if restricted
         is_restricted, reason = self._is_restricted_action(intent)
@@ -217,9 +243,15 @@ class SendGuestMessage:
             enrichment = None
         elif intent in REAL_HANDLER_INTENTS:
             # Use real handlers for Hunter AI, ULTRA, and DeFi intents
-            # Pass context for conversational memory
+            # Pass context for conversational memory and continuation state for multi-step flows
             handler_result = await self._handler_service.handle_intent(
-                intent, content, language, context=context
+                intent,
+                content,
+                language,
+                context=context,
+                continuation_step=continuation_step,
+                previous_swap_info=previous_swap_info,
+                previous_lending_info=previous_lending_info,
             )
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")
@@ -241,6 +273,15 @@ class SendGuestMessage:
             else:
                 registration_required = None
 
+            # Build metadata for continuation state (multi-step flows)
+            message_metadata = {}
+            if handler_result.get("pending_action"):
+                message_metadata["pending_action"] = handler_result["pending_action"]
+            if "swap_info" in handler_result:
+                message_metadata["swap_info"] = handler_result["swap_info"]
+            if "lending_info" in handler_result:
+                message_metadata["lending_info"] = handler_result["lending_info"]
+
             agent_message = GuestMessage.create_assistant_message(
                 conversation_id=conversation.id,
                 content=agent_content,
@@ -249,6 +290,7 @@ class SendGuestMessage:
                 confidence=confidence,
                 language=language,
                 is_restricted_action=handler_result.get("requires_registration", False),
+                metadata=message_metadata if message_metadata else None,
             )
         else:
             # Fallback to demo response for other intents
@@ -409,7 +451,7 @@ class SendGuestMessage:
     async def _build_conversation_context(self, conversation_id: UUID) -> str:
         """
         Build conversation context from recent messages.
-        
+
         Returns a formatted string of recent messages for use in intent detection
         and response generation.
         """
@@ -417,21 +459,58 @@ class SendGuestMessage:
             messages = await self._guest_repo.get_messages(
                 conversation_id, limit=MAX_CONTEXT_MESSAGES
             )
-            
+
             if not messages:
                 return ""
-            
+
             context_lines = []
             for msg in messages:
                 role = "User" if msg.role.value == "user" else "Assistant"
                 # Truncate long messages in context
                 content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
                 context_lines.append(f"{role}: {content}")
-            
+
             return "\n".join(context_lines)
         except Exception as e:
             logger.warning(f"Failed to build conversation context: {e}")
             return ""
+
+    async def _get_continuation_state(self, conversation_id: UUID) -> tuple[str | None, dict | None, dict | None]:
+        """
+        Get continuation state from the last assistant message.
+
+        Returns:
+            (continuation_step, previous_swap_info, previous_lending_info)
+        """
+        try:
+            # Get recent messages (ordered newest to oldest - DESC)
+            # We need the MOST RECENT message, so take the first one
+            messages = await self._guest_repo.get_messages(conversation_id, limit=10)
+
+            if not messages:
+                return None, None, None
+
+            # Get the most recent assistant message (first in DESC order)
+            last_assistant_message = None
+            for msg in messages:  # No need to reverse - already in DESC order
+                if msg.role.value == "assistant":
+                    last_assistant_message = msg
+                    break
+
+            if not last_assistant_message:
+                return None, None, None
+
+            metadata = last_assistant_message.metadata or {}
+
+            continuation_step = metadata.get("pending_action")
+            previous_swap_info = metadata.get("swap_info")
+            previous_lending_info = metadata.get("lending_info")
+
+            logger.info(f"[Continuation] Found state: step={continuation_step}, swap_info={previous_swap_info}")
+            return continuation_step, previous_swap_info, previous_lending_info
+        except Exception as e:
+            logger.warning(f"Failed to get continuation state: {e}")
+            return None, None, None
 
     async def _detect_intent_with_context(
         self, content: str, context: str, language: str
@@ -494,7 +573,8 @@ class SendGuestMessage:
                             logger.info(f"Overriding general_conversation with price prediction follow-up: {content}")
                             return ChatIntent.HUNTER_PRICE_PREDICTION, 0.90, "hunter_prediction_handler"
                 
-                return result.intent, result.confidence, result.handler
+                handler = self._get_handler_for_intent(result.intent)
+                return result.intent, result.confidence, handler
             except Exception as e:
                 logger.warning(f"Intent detection failed: {e}")
 
@@ -509,7 +589,8 @@ class SendGuestMessage:
         if self._intent_detector:
             try:
                 result = await self._intent_detector.detect_intent(content)
-                return result.intent, result.confidence, result.handler
+                handler = self._get_handler_for_intent(result.intent)
+                return result.intent, result.confidence, handler
             except Exception as e:
                 logger.warning(f"Intent detection failed: {e}")
 
@@ -914,22 +995,19 @@ class SendGuestMessage:
                 "最佳供应地点", "比较利率", "最佳利率",
             ],
             ChatIntent.SWAP_MOONPAY: [
-                # English
-                "moonpay swap", "swap via moonpay", "crypto to crypto swap",
-                "swap btc to eth", "swap eth to usdc", "swap sol to btc",
-                "exchange btc for eth", "exchange eth for sol",
-                "convert btc to usdc", "convert sol to eth",
+                # This pattern should be checked by external detector (keyword_intent_detection_adapter.py)
+                # which properly handles: swap_action + 2 MoonPay tokens (btc/eth/sol/usdc) + direction
+                # These keywords force explicit MoonPay routing
+                "moonpay swap", "swap via moonpay", "via moonpay",
+                "moonpay", "moon pay",
                 # Spanish
                 "intercambio moonpay", "swap cripto a cripto",
-                "cambiar btc por eth", "convertir btc a usdc",
                 # Portuguese
                 "troca moonpay", "trocar cripto por cripto",
-                "trocar btc por eth", "converter btc para usdc",
                 # French
                 "échange moonpay", "échanger crypto contre crypto",
-                "échanger btc contre eth",
                 # Chinese
-                "moonpay交换", "加密货币互换", "兑换btc为eth",
+                "moonpay交换", "加密货币互换",
             ],
             ChatIntent.SWAP: [
                 # English
