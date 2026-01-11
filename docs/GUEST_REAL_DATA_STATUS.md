@@ -1,7 +1,8 @@
 # Guest Handler Real Data Status
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-01-11 (Updated after real data integration)
 **Directive:** Guests should always see **real data**, not demo/mock data
+**Status:** ✅ **All handlers now use real data where applicable**
 
 ## Current Status Summary
 
@@ -12,6 +13,8 @@
 | `SWAP` | SwapHandler + Multi-step | 1inch API (real quotes) | ✅ Real |
 | `MONEY_MARKET` | MoneyMarketHandler | Aave/Compound APIs (real APY) | ✅ Real |
 | `SWAP_MOONPAY` | MoonPaySwapMultiStepHandler | MoonPaySwapHandler (real prices) | ✅ Real |
+| `BUY` | BuyMultiStepHandler | CoinGeckoClient API (real prices) | ✅ Real |
+| `LENDING` | LendingMultiStepHandler | MorphoGateway API (real APY) | ✅ Real |
 | `HUNTER_SENTIMENT` | Hunter AI | Real Twitter/Reddit/Discord/News | ✅ Real |
 | `HUNTER_PRICE_PREDICTION` | LSTM Predictor | CoinGecko historical data | ✅ Real |
 | `HUNTER_RISK_SIGNALS` | Risk Analyzer | Real market data | ✅ Real |
@@ -23,14 +26,12 @@
 | `ULTRA_MEV_PROTECTION` | MEV Protector | Real mempool data | ✅ Real |
 | `PROTOCOL_SEARCH` | GraphRAG | Real protocol data | ✅ Real |
 
-### ⚠️ Handlers Using Demo Data (Needs Update)
+### 📝 Handlers Using Demo Data (Intentional for Preview)
 
-| Intent | Handler | Current Data | Should Use | Priority |
-|--------|---------|--------------|------------|----------|
-| `BUY` | BuyMultiStepHandler | Demo prices (hardcoded) | CoinGeckoClient API | **HIGH** |
-| `LENDING` | LendingMultiStepHandler | Demo APY (hardcoded) | MorphoGateway API | **HIGH** |
-| `PORTFOLIO` | PortfolioMultiStepHandler | Demo holdings | N/A (see note) | **LOW** |
-| `ACTIVITY` | ActivityMultiStepHandler | Demo transactions | N/A (see note) | **LOW** |
+| Intent | Handler | Current Data | Reason | Status |
+|--------|---------|--------------|--------|--------|
+| `PORTFOLIO` | PortfolioMultiStepHandler | Demo holdings | Guests don't have wallets - educational preview | ✅ OK |
+| `ACTIVITY` | ActivityMultiStepHandler | Demo transactions | Guests don't have history - educational preview | ✅ OK |
 
 ### 📝 Special Cases
 
@@ -45,13 +46,13 @@
 - Show guidance on how to use features (no real data needed)
 - **Status:** Appropriate for guests
 
-## Required Updates
+## ✅ Completed Updates (2026-01-11)
 
-### 1. BuyMultiStepHandler (`buy_multistep.py`)
+### 1. BuyMultiStepHandler (`buy_multistep.py`) - COMPLETED
 
-**Current Implementation:**
+**Previous Implementation (Demo Data):**
 ```python
-# Line 254-259
+# Hardcoded demo prices
 demo_prices = {
     "BTC": 45000, "ETH": 1950, "SOL": 32.5,
     "USDC": 1.0, "USDT": 1.0, "MATIC": 0.65
@@ -59,7 +60,7 @@ demo_prices = {
 price_per_unit = demo_prices.get(crypto, 100)
 ```
 
-**Required Change:**
+**New Implementation (Real Data):**
 ```python
 # Add to imports
 from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
@@ -94,11 +95,11 @@ async def _get_crypto_price(self, symbol: str) -> float:
 price_per_unit = await self._get_crypto_price(crypto)
 ```
 
-### 2. LendingMultiStepHandler (`lending_multistep.py`)
+### 2. LendingMultiStepHandler (`lending_multistep.py`) - COMPLETED
 
-**Current Implementation:**
+**Previous Implementation (Demo Data):**
 ```python
-# Line 31-37
+# Hardcoded demo APY rates
 DEMO_APYS = {
     "USDC": 8.5,
     "USDT": 7.8,
@@ -108,7 +109,7 @@ DEMO_APYS = {
 }
 ```
 
-**Required Change:**
+**New Implementation (Real Data):**
 ```python
 # Add to imports
 from app.application.chat.handlers.lending_handler import LendingHandler
@@ -137,11 +138,11 @@ async def _get_best_apy(self, asset: str, chain: str = "ethereum") -> float:
 apy = await self._get_best_apy(asset, chain="ethereum")
 ```
 
-## Implementation Priority
+## Implementation Status
 
-1. **HIGH:** Update `BuyMultiStepHandler` to use CoinGeckoClient
-2. **HIGH:** Update `LendingMultiStepHandler` to use MorphoGateway
-3. **LOW:** Review Portfolio/Activity handlers (likely keep demo for preview)
+1. ✅ **COMPLETED:** `BuyMultiStepHandler` now uses CoinGeckoClient for real prices
+2. ✅ **COMPLETED:** `LendingMultiStepHandler` now uses MorphoGateway for real APY
+3. ✅ **REVIEWED:** Portfolio/Activity handlers use demo data intentionally (educational preview)
 
 ## Testing Requirements
 
