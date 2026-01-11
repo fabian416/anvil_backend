@@ -829,10 +829,11 @@ class GuestHandlerService:
             return self._fallback_response(ChatIntent.HUNTER_RISK_SIGNALS, language, is_authenticated)
 
     async def _handle_trading_signals(
-        self, content: str, language: str, is_authenticated: bool = False
+        self, content: str, language: str, context: str = "", is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle trading signal generation."""
-        token = self._extract_token(content) or "ETH"
+        # Extract token from content, using context if token not found in current message
+        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
 
         try:
             generator = TradingSignalGenerator()
