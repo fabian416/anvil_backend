@@ -29,7 +29,7 @@ class LendingMultiStepHandler:
         "wbtc": {"symbol": "WBTC", "name": "Wrapped Bitcoin", "emoji": "₿"},
     }
 
-    def __init__(self, morpho_gateway: MorphoGateway | None = None):
+    def __init__(self, morpho_gateway: MorphoGateway):
         """Initialize lending multi-step handler with real Morpho data."""
         self._morpho = morpho_gateway
 
