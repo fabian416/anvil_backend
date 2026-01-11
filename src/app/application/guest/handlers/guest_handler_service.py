@@ -581,11 +581,16 @@ class GuestHandlerService:
                     metadata={"score": data["score"], "classification": data["classification"]},
                 ))
             
+            # Normalize score from 0-100 to -1 to 1 range for API consistency
+            # 0 → -1 (bearish), 50 → 0 (neutral), 100 → 1 (bullish)
+            normalized_score = (aggregated.overall_score - 50) / 50
+
             return {
                 "content": response,
                 "enrichment": {
                     "token": token,
-                    "overall_score": aggregated.overall_score,
+                    "overall_score": normalized_score,
+                    "overall_score_percentage": aggregated.overall_score,  # Keep original for display
                     "classification": aggregated.classification.value,
                     "sources": breakdown,
                     "hunter_tool": "sentiment_aggregator",
