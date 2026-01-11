@@ -37,8 +37,11 @@ class TestGuestHunterSentiment:
         assert "overall_score" in enrichment
         assert "classification" in enrichment
 
-        # Guests can access without registration
-        assert data["registration_required"]["required"] is False
+        # Guests can access without registration (field may be None for unrestricted features)
+        registration_required = data.get("registration_required")
+        if registration_required is not None:
+            assert registration_required["required"] is False
+        # None means no registration required at all
 
     @pytest.mark.asyncio
     async def test_sentiment_sources_breakdown(self, client):

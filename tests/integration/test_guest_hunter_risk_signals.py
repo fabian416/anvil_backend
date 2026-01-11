@@ -226,7 +226,7 @@ class TestGuestHunterRiskSignalsStorytellingQuality:
         # Should have structured sections
         assert "\n\n" in content or "\n" in content  # Line breaks
 
-    @pytest:mark.asyncio
+    @pytest.mark.asyncio
     async def test_risk_signals_clear_severity_indicators(self, client):
         """Test that severity is clearly communicated."""
 
