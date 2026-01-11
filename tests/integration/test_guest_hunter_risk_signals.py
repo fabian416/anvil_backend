@@ -1,0 +1,255 @@
+"""
+Integration tests for guest Hunter AI risk signals.
+
+Tests the market risk warning and indicator feature for guest users with real data.
+"""
+
+import pytest
+
+
+class TestGuestHunterRiskSignals:
+    """Test Hunter AI risk signals for guests."""
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_basic(self, client):
+        """Test basic risk signals request."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "What are the risk signals for BTC?", "language": "en"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        # Verify response structure
+        assert "agent_message" in data
+        content = data["agent_message"]["content"]
+
+        # Should show risk analysis
+        assert any(word in content.lower() for word in ["risk", "warning", "signal", "alert"])
+        assert "BTC" in content
+
+        # Should have enrichment
+        assert "enrichment" in data
+        enrichment = data["enrichment"]
+        assert "token" in enrichment
+        assert enrichment["token"] == "BTC"
+        assert "risk_level" in enrichment or "signals" in enrichment
+
+        # Guests can access without registration
+        assert data["registration_required"]["required"] is False
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_severity_levels(self, client):
+        """Test that risk signals show severity levels."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "ETH risk signals", "language": "en"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        enrichment = data["enrichment"]
+        content = data["agent_message"]["content"]
+
+        # Should have risk level classification
+        assert "risk_level" in enrichment
+
+        # Should be one of: low, medium, high, critical
+        valid_risk_levels = ["low", "medium", "high", "critical"]
+        assert enrichment["risk_level"].lower() in valid_risk_levels
+
+        # Should mention severity in content
+        severity_keywords = ["low", "medium", "high", "critical", "risk", "warning"]
+        assert any(keyword in content.lower() for keyword in severity_keywords)
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_multiple_indicators(self, client):
+        """Test that risk signals show multiple indicators."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "risk analysis for BTC", "language": "en"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        enrichment = data["enrichment"]
+        content = data["agent_message"]["content"]
+
+        # Should have multiple risk indicators
+        assert "signals" in enrichment or "indicators" in enrichment
+
+        # Should mention various risk factors
+        risk_factors = ["volatility", "liquidation", "market", "volume", "correlation"]
+        assert any(factor in content.lower() for factor in risk_factors)
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_multiple_tokens(self, client):
+        """Test risk signals for different tokens."""
+
+        tokens = ["BTC", "ETH", "SOL"]
+
+        for token in tokens:
+            response = await client.post(
+                "/api/v1/guest/chat",
+                json={"content": f"risk signals for {token}", "language": "en"}
+            )
+            assert response.status_code == 200
+            data = response.json()
+
+            enrichment = data["enrichment"]
+            assert enrichment["token"] == token
+            assert "risk_level" in enrichment
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_market_conditions(self, client):
+        """Test that risk signals include market conditions."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "BTC risk warnings", "language": "en"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        enrichment = data["enrichment"]
+        content = data["agent_message"]["content"]
+
+        # Should have market condition metrics
+        assert "market_conditions" in enrichment or "signals" in enrichment
+
+        # Should mention market context
+        market_keywords = ["market", "volatility", "trend", "conditions", "environment"]
+        assert any(keyword in content.lower() for keyword in market_keywords)
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_actionable_recommendations(self, client):
+        """Test that risk signals provide actionable recommendations."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "ETH risk analysis", "language": "en"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        enrichment = data["enrichment"]
+        content = data["agent_message"]["content"]
+
+        # Should have recommendations
+        assert "recommendations" in enrichment or "actions" in enrichment
+
+        # Should mention actions to take
+        action_keywords = ["consider", "monitor", "watch", "caution", "avoid", "reduce"]
+        assert any(keyword in content.lower() for keyword in action_keywords)
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_hunter_tool_tag(self, client):
+        """Test that response includes hunter_tool tag."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "SOL risk signals", "language": "en"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        enrichment = data["enrichment"]
+        assert "hunter_tool" in enrichment
+        assert enrichment["hunter_tool"] == "risk_signal_analyzer"
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_uses_real_data(self, client):
+        """Test that risk signals use real market data."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "BTC risk warnings", "language": "en"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        enrichment = data["enrichment"]
+
+        # Should have real data indicators
+        assert "signals" in enrichment or "indicators" in enrichment
+        assert isinstance(enrichment.get("signals") or enrichment.get("indicators"), (list, dict))
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_multilingual_spanish(self, client):
+        """Test risk signals in Spanish."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "señales de riesgo para ETH", "language": "es"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        content = data["agent_message"]["content"]
+
+        # Should contain Spanish or English text (fallback)
+        assert any(word in content for word in ["Riesgo", "Risk", "Señales", "Signals", "Alerta", "Alert"])
+
+
+class TestGuestHunterRiskSignalsStorytellingQuality:
+    """Test storytelling and UX quality of risk signal responses."""
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_uses_emojis(self, client):
+        """Test that risk signals use emojis for visual appeal."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "BTC risk signals", "language": "en"}
+        )
+        content = response.json()["agent_message"]["content"]
+
+        # Should have emoji indicators
+        assert any(emoji in content for emoji in ["⚠️", "🚨", "⚡", "📊", "🔴", "🟡", "🟢"])
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_clear_formatting(self, client):
+        """Test that risk signals have clear visual formatting."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "ETH risk analysis", "language": "en"}
+        )
+        content = response.json()["agent_message"]["content"]
+
+        # Should use markdown formatting
+        assert "**" in content  # Bold text
+
+        # Should have structured sections
+        assert "\n\n" in content or "\n" in content  # Line breaks
+
+    @pytest:mark.asyncio
+    async def test_risk_signals_clear_severity_indicators(self, client):
+        """Test that severity is clearly communicated."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "SOL risk warnings", "language": "en"}
+        )
+        content = response.json()["agent_message"]["content"]
+
+        # Should clearly indicate severity level
+        severity_indicators = ["low risk", "medium risk", "high risk", "critical", "warning", "caution"]
+        assert any(indicator in content.lower() for indicator in severity_indicators)
+
+    @pytest.mark.asyncio
+    async def test_risk_signals_educational_context(self, client):
+        """Test that risk signals provide educational context."""
+
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "BTC risk signals", "language": "en"}
+        )
+        content = response.json()["agent_message"]["content"]
+
+        # Should explain what the signals mean
+        educational_keywords = ["means", "indicates", "suggests", "because", "due to"]
+        assert any(keyword in content.lower() for keyword in educational_keywords)
