@@ -1706,7 +1706,7 @@ class GuestHandlerService:
     async def _handle_money_market(
         self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
-        """Handle money market rates with real Aave/Compound data."""
+        """Handle money market rates with real Aave/Compound/Morpho data."""
         # NOTE:
         # MoneyMarketHandler exposes `compare_rates()` (not `.handle()`).
         # Calling `.handle()` forces an exception and makes the guest endpoint
