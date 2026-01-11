@@ -1164,6 +1164,129 @@ Respond in the same language the user uses."""
             description="Swap status: pending, executed, cancelled, expired"
         )
     
+    # ========================================
+    # System Message Endpoint (Skip LLM)
+    # ========================================
+    
+    class CreateSystemMessageRequest(BaseModel):
+        """Request to create a system/assistant message without triggering LLM."""
+        
+        content: str = Field(..., min_length=1, max_length=5000, description="Message content")
+        metadata: dict[str, Any] | None = Field(
+            default=None,
+            description="Optional metadata (type, transaction_id, etc.)"
+        )
+        language: str = Field(default="en", pattern="^(en|es|pt|zh)$")
+    
+    class SystemMessageResponse(BaseModel):
+        """Response for a created system message."""
+        
+        id: str
+        role: str
+        content: str
+        created_at: str
+        metadata: dict[str, Any] | None = None
+    
+    @router.post(
+        "/{conversation_id}/system-message",
+        response_model=SystemMessageResponse,
+        status_code=status.HTTP_201_CREATED,
+        summary="Create System Message",
+        description="""
+        Create an assistant message without triggering LLM response.
+        
+        **Use Cases:**
+        - Transaction confirmations (MoonPay, swap execution)
+        - System notifications
+        - Status updates
+        
+        **Key Features:**
+        - Message is saved with role="assistant"
+        - NO LLM is invoked
+        - Message appears on the left side (assistant) in chat UI
+        - Persists in conversation history
+        
+        **Metadata Types:**
+        - moonpay_confirmation: MoonPay purchase confirmation
+        - swap_confirmation: Swap execution confirmation
+        - system_notification: General system notification
+        """,
+    )
+    @inject
+    async def create_system_message(
+        conversation_id: UUID,
+        request_body: CreateSystemMessageRequest,
+        http_request: Request,
+        user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
+        conversation_service: FromDishka[ConversationService],
+        message_repository: FromDishka[ChatMessageRepositorySqla],
+    ) -> SystemMessageResponse:
+        """
+        Create an assistant message without triggering LLM.
+        
+        This endpoint is used for transaction confirmations and system notifications
+        that should appear as assistant messages but don't need LLM processing.
+        """
+        from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Resolve user
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
+            language=request_body.language,
+        )
+        
+        # Verify conversation belongs to user
+        conversation = await conversation_service.get(
+            conversation_id=conversation_id,
+            user_id=user.id,
+        )
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        
+        # Build metadata
+        metadata = request_body.metadata or {}
+        metadata["system_message"] = True  # Mark as system-generated
+        metadata["skip_llm"] = True  # Indicate LLM was not used
+        
+        # Create assistant message directly (no LLM invocation)
+        assistant_message = ChatMessage.create_assistant_message(
+            conversation_id=conversation_id,
+            content=request_body.content,
+            intent="SYSTEM_MESSAGE",
+            intent_confidence=1.0,
+            handler="system_message_handler",
+            is_restricted_action=False,
+            language=request_body.language,
+            metadata=metadata,
+        )
+        
+        # Save to database
+        await message_repository.save(assistant_message)
+        
+        # Update conversation message count
+        conversation.increment_messages()
+        
+        logger.info(
+            f"Created system message {assistant_message.id} in conversation {conversation_id} "
+            f"for user {user.id} (type: {metadata.get('type', 'unknown')})"
+        )
+        
+        return SystemMessageResponse(
+            id=str(assistant_message.id),
+            role=assistant_message.role.value,
+            content=assistant_message.content,
+            created_at=assistant_message.created_at.isoformat(),
+            metadata=assistant_message.metadata,
+        )
+    
     class SaveSwapQuoteResponse(BaseModel):
         """Response after saving swap quote."""
         
