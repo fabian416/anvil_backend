@@ -9,6 +9,9 @@ import logging
 from decimal import Decimal
 from typing import Any
 
+# Caching
+from app.infrastructure.caching.guest_cache import GuestCache
+
 # DeFi Handler imports
 from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
@@ -71,9 +74,10 @@ class GuestHandlerService:
         buy_handler: BuyHandler | None = None,
         moonpay_swap_handler: MoonPaySwapHandler | None = None,
         morpho_gateway: "MorphoGateway | None" = None,
+        guest_cache: GuestCache | None = None,
     ):
         from app.domain.ports.morpho_gateway import MorphoGateway as MorphoGatewayType
-        
+
         self._lending_handler = lending_handler
         self._swap_handler = swap_handler
         self._money_market_handler = money_market_handler
@@ -90,6 +94,8 @@ class GuestHandlerService:
         # Portfolio and activity handlers (demo for guests)
         self._portfolio_multistep = PortfolioMultiStepHandler()
         self._activity_multistep = ActivityMultiStepHandler()
+        # Cache layer for Hunter AI responses
+        self._cache = guest_cache or GuestCache()
 
     async def handle_intent(
         self,
@@ -501,6 +507,12 @@ class GuestHandlerService:
         # Extract token from content, using context if token not found in current message
         token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
 
+        # Check cache first
+        cached = await self._cache.get_hunter_response("sentiment", token, language)
+        if cached:
+            logger.debug(f"Cache HIT for sentiment: {token}/{language}")
+            return cached
+
         try:
             # Initialize analyzers
             twitter = TwitterSentimentAnalyzer(TwitterConfig(enabled=True))
@@ -585,7 +597,7 @@ class GuestHandlerService:
             # 0 → -1 (bearish), 50 → 0 (neutral), 100 → 1 (bullish)
             normalized_score = (aggregated.overall_score - 50) / 50
 
-            return {
+            result = {
                 "content": response,
                 "enrichment": {
                     "token": token,
@@ -598,6 +610,11 @@ class GuestHandlerService:
                 "sources": [s.to_dict() for s in sources],  # NEW
                 "requires_registration": False,
             }
+
+            # Cache the successful response
+            await self._cache.set_hunter_response("sentiment", token, language, result)
+
+            return result
         except Exception as e:
             logger.warning(f"Sentiment analysis error: {e}")
             return self._fallback_response(ChatIntent.HUNTER_SENTIMENT, language, is_authenticated)
@@ -608,6 +625,12 @@ class GuestHandlerService:
         """Handle price prediction with real ML model."""
         # Extract token from content, using context if token not found in current message
         token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+
+        # Check cache first
+        cached = await self._cache.get_hunter_response("price_prediction", token, language)
+        if cached:
+            logger.debug(f"Cache HIT for price_prediction: {token}/{language}")
+            return cached
 
         try:
             predictor = LSTMPricePredictor()
@@ -698,7 +721,7 @@ class GuestHandlerService:
             # Use conditional CTA helper
             response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
-            return {
+            result = {
                 "content": response,
                 "enrichment": {
                     "token": token,
@@ -711,6 +734,11 @@ class GuestHandlerService:
                 },
                 "requires_registration": not is_authenticated,
             }
+
+            # Cache the successful response
+            await self._cache.set_hunter_response("price_prediction", token, language, result)
+
+            return result
         except Exception as e:
             logger.error(f"Price prediction error for token {token}: {e}", exc_info=True)
             # Try to provide a helpful response even on error
@@ -749,6 +777,12 @@ class GuestHandlerService:
         """Handle market risk signals."""
         # Extract token from content, using context if token not found in current message
         token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+
+        # Check cache first
+        cached = await self._cache.get_hunter_response("risk_signals", token, language)
+        if cached:
+            logger.debug(f"Cache HIT for risk_signals: {token}/{language}")
+            return cached
 
         try:
             analyzer = RiskAnalyzer()
@@ -812,7 +846,7 @@ class GuestHandlerService:
 
             response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
-            return {
+            result = {
                 "content": response,
                 "enrichment": {
                     "token": token,
@@ -824,6 +858,11 @@ class GuestHandlerService:
                 },
                 "requires_registration": not is_authenticated,
             }
+
+            # Cache the successful response
+            await self._cache.set_hunter_response("risk_signals", token, language, result)
+
+            return result
         except Exception as e:
             logger.error(f"Risk signals error for token {token}: {e}", exc_info=True)
             return self._fallback_response(ChatIntent.HUNTER_RISK_SIGNALS, language, is_authenticated)
@@ -834,6 +873,12 @@ class GuestHandlerService:
         """Handle trading signal generation."""
         # Extract token from content, using context if token not found in current message
         token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+
+        # Check cache first
+        cached = await self._cache.get_hunter_response("trading_signals", token, language)
+        if cached:
+            logger.debug(f"Cache HIT for trading_signals: {token}/{language}")
+            return cached
 
         try:
             generator = TradingSignalGenerator()
@@ -923,7 +968,7 @@ class GuestHandlerService:
 
             response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
-            return {
+            result = {
                 "content": response,
                 "enrichment": {
                     "token": token,
@@ -937,6 +982,11 @@ class GuestHandlerService:
                 },
                 "requires_registration": False,
             }
+
+            # Cache the successful response
+            await self._cache.set_hunter_response("trading_signals", token, language, result)
+
+            return result
         except Exception as e:
             logger.warning(f"Trading signals error: {e}")
             return self._fallback_response(ChatIntent.HUNTER_TRADING_SIGNALS, language, is_authenticated)
@@ -947,6 +997,12 @@ class GuestHandlerService:
         """Handle chart pattern recognition."""
         # Extract token from content, using context if token not found in current message
         token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+
+        # Check cache first
+        cached = await self._cache.get_hunter_response("patterns", token, language)
+        if cached:
+            logger.debug(f"Cache HIT for patterns: {token}/{language}")
+            return cached
 
         try:
             recognizer = PatternRecognizer()
@@ -1028,7 +1084,7 @@ class GuestHandlerService:
 
             response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
-            return {
+            result = {
                 "content": response,
                 "enrichment": {
                     "token": token,
@@ -1038,6 +1094,11 @@ class GuestHandlerService:
                 },
                 "requires_registration": False,
             }
+
+            # Cache the successful response
+            await self._cache.set_hunter_response("patterns", token, language, result)
+
+            return result
         except Exception as e:
             logger.error(f"Pattern recognition error for token {token}: {e}", exc_info=True)
             return self._fallback_response(ChatIntent.HUNTER_PATTERNS, language, is_authenticated)
@@ -1046,6 +1107,12 @@ class GuestHandlerService:
         self, content: str, language: str, is_authenticated: bool = False
     ) -> dict[str, Any]:
         """Handle portfolio optimization suggestions."""
+        # Check cache first (using demo portfolio as cache key)
+        cached = await self._cache.get_hunter_response("portfolio", "demo", language)
+        if cached:
+            logger.debug(f"Cache HIT for portfolio: demo/{language}")
+            return cached
+
         try:
             optimizer = PortfolioOptimizer()
 
@@ -1107,7 +1174,7 @@ class GuestHandlerService:
 
             response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
 
-            return {
+            result_dict = {
                 "content": response,
                 "enrichment": {
                     "allocation": result.allocation,
@@ -1117,6 +1184,11 @@ class GuestHandlerService:
                 },
                 "requires_registration": not is_authenticated,  # Need wallet to apply
             }
+
+            # Cache the successful response
+            await self._cache.set_hunter_response("portfolio", "demo", language, result_dict)
+
+            return result_dict
         except Exception as e:
             logger.warning(f"Portfolio optimization error: {e}")
             return self._fallback_response(ChatIntent.HUNTER_PORTFOLIO, language, is_authenticated)
