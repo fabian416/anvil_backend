@@ -15,6 +15,8 @@ from app.application.chat.handlers.money_market_handler import MoneyMarketHandle
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
+from app.application.guest.handlers.moonpay_swap_multistep import MoonPaySwapMultiStepHandler
+from app.application.guest.handlers.send_multistep import SendMultiStepHandler
 from app.application.chat.services.intent_detector import ChatIntent
 from app.application.hunter.discord_sentiment import (
     DiscordConfig,
@@ -70,6 +72,10 @@ class GuestHandlerService:
         self._money_market_handler = money_market_handler
         self._buy_handler = buy_handler
         self._moonpay_swap_handler = moonpay_swap_handler
+        # Multi-step swap flow handler
+        self._moonpay_multistep = MoonPaySwapMultiStepHandler(moonpay_swap_handler) if moonpay_swap_handler else None
+        # Multi-step send flow handler
+        self._send_multistep = SendMultiStepHandler()
 
     async def handle_intent(
         self,
@@ -80,6 +86,8 @@ class GuestHandlerService:
         is_authenticated: bool = False,
         continuation_step: str | None = None,
         previous_lending_info: dict | None = None,
+        previous_swap_info: dict | None = None,
+        previous_send_info: dict | None = None,
         user_id: int | None = None,
     ) -> dict[str, Any]:
         """
@@ -119,6 +127,9 @@ class GuestHandlerService:
             ChatIntent.SWAP: self._handle_swap,
             ChatIntent.SWAP_MOONPAY: self._handle_moonpay_swap,
             ChatIntent.BUY: self._handle_buy,
+            ChatIntent.SEND: self._handle_send,
+            ChatIntent.BALANCE: self._handle_balance,
+            ChatIntent.RECEIVE: self._handle_receive,
             # Agent Squad (Specialist Tasks & Complex Workflows)
             ChatIntent.SPECIALIST_TASK: self._handle_specialist_task,
             ChatIntent.COMPLEX_WORKFLOW: self._handle_complex_workflow,
@@ -129,7 +140,14 @@ class GuestHandlerService:
             try:
                 # Pass context and is_authenticated to handlers that support it
                 if intent == ChatIntent.SWAP:
-                    return await self._handle_swap(content, language, context, is_authenticated)
+                    return await self._handle_swap(
+                        content,
+                        language,
+                        context,
+                        is_authenticated,
+                        continuation_step,
+                        previous_swap_info,
+                    )
                 # Hunter AI handlers can use context for follow-up questions
                 elif intent in [
                     ChatIntent.HUNTER_SENTIMENT,
@@ -167,9 +185,24 @@ class GuestHandlerService:
                 # Buy handler (requires user_id for authenticated users)
                 elif intent == ChatIntent.BUY:
                     return await self._handle_buy(content, language, is_authenticated, user_id)
-                # MoonPay swap handler
+                # MoonPay swap handler (supports multi-step flow)
                 elif intent == ChatIntent.SWAP_MOONPAY:
-                    return await self._handle_moonpay_swap(content, language, is_authenticated)
+                    return await self._handle_moonpay_swap(
+                        content,
+                        language,
+                        is_authenticated,
+                        continuation_step,
+                        previous_swap_info,
+                    )
+                # Send handler (supports multi-step flow)
+                elif intent == ChatIntent.SEND:
+                    return await self._handle_send(
+                        content,
+                        language,
+                        is_authenticated,
+                        continuation_step,
+                        previous_send_info,
+                    )
                 return await handler(content, language, is_authenticated)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
@@ -1660,23 +1693,44 @@ class GuestHandlerService:
             return self._fallback_response(ChatIntent.MONEY_MARKET, language, is_authenticated)
 
     async def _handle_swap(
-        self, content: str, language: str, context: str = "", is_authenticated: bool = False
+        self, content: str, language: str, context: str = "", is_authenticated: bool = False,
+        continuation_step: str | None = None,
+        previous_swap_info: dict | None = None,
     ) -> dict[str, Any]:
         """
         Handle swap quotes with real 1inch/LiFi data or demo response.
-        
+
         Supports multi-turn conversations:
         - "quiero swap" → "de USDC" → "a ETH" → "100 tokens"
         - "Swap 100 USDC for ETH"
         - "Bridge USDC from Ethereum to Base"
         - "Best swap rate for ETH to USDC"
-        
+
         Args:
             content: User message
             language: Language code
             context: Previous conversation context for multi-turn support
+            continuation_step: Pending action from previous message
+            previous_swap_info: Accumulated swap parameters from multi-step flow
         """
-        # Parse swap parameters from content and context
+        # For guest users without specific tokens, use multi-step MoonPay flow
+        # This provides a guided experience: swap → from token → to token → amount → confirm
+        if self._moonpay_multistep:
+            # Parse to see if we have tokens from the message
+            swap_info = self._parse_swap_from_context(content, context)
+
+            # If no tokens specified OR we're in a continuation flow, use multi-step handler
+            if not swap_info.get("from_token") or continuation_step:
+                logger.info(f"[SWAP] Delegating to multi-step MoonPay flow (continuation={continuation_step})")
+                return await self._moonpay_multistep.handle_flow(
+                    content=content,
+                    language=language,
+                    is_authenticated=is_authenticated,
+                    continuation_step=continuation_step,
+                    previous_swap_info=previous_swap_info,
+                )
+
+        # Parse swap parameters from content and context for non-multistep flow
         swap_info = self._parse_swap_from_context(content, context)
         logger.info(f"[SWAP] Parsed swap_info: {swap_info}")
 
@@ -2826,19 +2880,134 @@ class GuestHandlerService:
         }
 
     async def _handle_moonpay_swap(
-        self, content: str, language: str, is_authenticated: bool = False
+        self,
+        content: str,
+        language: str,
+        is_authenticated: bool = False,
+        continuation_step: str | None = None,
+        previous_swap_info: dict | None = None,
     ) -> dict[str, Any]:
-        """Handle MoonPay crypto-to-crypto swap intent."""
-        logger.info(f"[MoonPay Swap] Handler called - language: {language}, authenticated: {is_authenticated}")
-        logger.info(f"[MoonPay Swap] Handler available: {self._moonpay_swap_handler is not None}")
+        """
+        Handle MoonPay crypto-to-crypto swap intent with multi-step flow.
 
-        # Use MoonPaySwapHandler if available
+        Flow states:
+        - swap_awaiting_from_token: Need FROM token
+        - swap_awaiting_to_token: Need TO token
+        - swap_awaiting_amount: Need amount
+        - swap_awaiting_confirmation: Show quote, await confirmation
+        - swap_edit: User editing parameters
+        """
+        logger.info(f"[MoonPay Swap] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[MoonPay Swap] Continuation step: {continuation_step}")
+        logger.info(f"[MoonPay Swap] Previous swap info: {previous_swap_info}")
+        logger.info(f"[MoonPay Swap] Multi-step handler available: {self._moonpay_multistep is not None}")
+        logger.info(f"[MoonPay Swap] Message content: {content}")
+
+        # Use multi-step flow handler if available
+        if self._moonpay_multistep:
+            try:
+                result = await self._moonpay_multistep.handle_flow(
+                    content=content,
+                    language=language,
+                    is_authenticated=is_authenticated,
+                    continuation_step=continuation_step,
+                    previous_swap_info=previous_swap_info,
+                )
+                logger.info(f"[MoonPay Swap] Multi-step handler returned: {result.keys()}")
+                return result
+            except Exception as e:
+                logger.error(f"[MoonPay Swap] Multi-step handler error: {e}", exc_info=True)
+                # Fall through to fallback
+
+        # Fallback: original single-step handler
         if self._moonpay_swap_handler:
             try:
-                logger.info(f"[MoonPay Swap] Calling get_available_pairs() with language={language}")
-                # Check if user is asking for a quote or just info
-                # For now, just show available pairs
-                result = await self._moonpay_swap_handler.get_available_pairs(language=language)
+                # Parse tokens from content
+                content_lower = content.lower()
+
+                # MoonPay supported tokens
+                moonpay_tokens = {
+                    "btc": "btc",
+                    "bitcoin": "btc",
+                    "eth": "eth",
+                    "ethereum": "eth",
+                    "ether": "eth",
+                    "sol": "sol",
+                    "solana": "sol",
+                    "usdc": "usdc",
+                }
+
+                # Extract from_token and to_token
+                from_token = None
+                to_token = None
+                amount = "1"  # Default amount
+
+                # Pattern 1: swap/exchange/convert [AMOUNT] TOKEN1 to/for TOKEN2
+                # Pattern 2: TOKEN1 to/for TOKEN2 AMOUNT  (implicit swap)
+                # Pattern 3: AMOUNT TOKEN1 to/for TOKEN2  (implicit swap)
+                import re
+
+                # Try explicit swap pattern first: "swap 100 BTC to ETH"
+                swap_pattern = re.compile(
+                    r'(?:swap|exchange|convert|trade)\s+(?:(\d+\.?\d*)\s+)?(\w+)\s+(?:to|for|into)\s+(\w+)',
+                    re.IGNORECASE
+                )
+                match = swap_pattern.search(content)
+
+                if match:
+                    if match.group(1):  # Amount specified
+                        amount = match.group(1)
+                    token1 = match.group(2).lower()
+                    token2 = match.group(3).lower()
+
+                    # Map to MoonPay tokens
+                    from_token = moonpay_tokens.get(token1)
+                    to_token = moonpay_tokens.get(token2)
+
+                # Try implicit patterns: "USDC to eth 1" or "1 BTC to SOL"
+                if not from_token or not to_token:
+                    # Pattern: TOKEN1 to TOKEN2 AMOUNT or AMOUNT TOKEN1 to TOKEN2
+                    implicit_pattern = re.compile(
+                        r'(?:(\d+\.?\d*)\s+)?(\w+)\s+(?:to|for|into)\s+(\w+)(?:\s+(\d+\.?\d*))?',
+                        re.IGNORECASE
+                    )
+                    match = implicit_pattern.search(content)
+
+                    if match:
+                        # Check if amount is at beginning or end
+                        amount_start = match.group(1)
+                        token1 = match.group(2).lower()
+                        token2 = match.group(3).lower()
+                        amount_end = match.group(4)
+
+                        # Use whichever amount is present
+                        if amount_start:
+                            amount = amount_start
+                        elif amount_end:
+                            amount = amount_end
+
+                        # Map to MoonPay tokens
+                        from_token = moonpay_tokens.get(token1)
+                        to_token = moonpay_tokens.get(token2)
+
+                if from_token and to_token:
+                    logger.info(f"[MoonPay Swap] Parsed: from={from_token}, to={to_token}, amount={amount}")
+
+                # If both tokens are specified, get quote
+                if from_token and to_token:
+                    logger.info(f"[MoonPay Swap] Getting quote for {from_token} → {to_token}, amount={amount}")
+                    result = await self._moonpay_swap_handler.get_swap_quote(
+                        from_currency=from_token,
+                        to_currency=to_token,
+                        amount=amount,
+                        language=language
+                    )
+                    logger.info(f"[MoonPay Swap] Quote returned successfully")
+                else:
+                    # Show available pairs if tokens not specified
+                    logger.info(f"[MoonPay Swap] Tokens not fully specified, showing available pairs")
+                    result = await self._moonpay_swap_handler.get_available_pairs(language=language)
+
                 logger.info(f"[MoonPay Swap] Handler returned successfully - action: {result.action}")
                 return {
                     "content": result.content,
@@ -2859,6 +3028,339 @@ class GuestHandlerService:
 
         # Fallback for guests or if MoonPaySwapHandler not available
         return self._fallback_moonpay_swap_response(language, is_authenticated)
+
+    async def _handle_send(
+        self,
+        content: str,
+        language: str,
+        is_authenticated: bool = False,
+        continuation_step: str | None = None,
+        previous_send_info: dict | None = None,
+    ) -> dict[str, Any]:
+        """
+        Handle send tokens intent with multi-step flow.
+
+        Flow states:
+        - send_awaiting_token: Need token to send
+        - send_awaiting_amount: Need amount to send
+        - send_awaiting_address: Need destination address
+        - send_awaiting_confirmation: Show review, await confirmation
+        - send_edit: User editing parameters
+        """
+        logger.info(f"[Send] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[Send] Continuation step: {continuation_step}")
+        logger.info(f"[Send] Previous send info: {previous_send_info}")
+        logger.info(f"[Send] Message content: {content}")
+
+        # Use multi-step flow handler if available
+        if self._send_multistep:
+            try:
+                result = await self._send_multistep.handle_flow(
+                    content=content,
+                    language=language,
+                    is_authenticated=is_authenticated,
+                    continuation_step=continuation_step,
+                    previous_send_info=previous_send_info,
+                )
+                logger.info(f"[Send] Multi-step handler returned: {result.keys()}")
+                return result
+            except Exception as e:
+                logger.error(f"[Send] Multi-step handler error: {e}", exc_info=True)
+                # Fall through to fallback
+
+        # Fallback response
+        return self._fallback_send_response(language, is_authenticated)
+
+    def _fallback_send_response(self, language: str, is_authenticated: bool) -> dict[str, Any]:
+        """Fallback response when send handler is not available."""
+        translations = {
+            "en": {
+                "title": "📤 **Send Crypto**",
+                "description": "Send crypto to any wallet address",
+                "unavailable": "⚠️ **Send Feature**\n\nSend feature requires you to be signed in with a wallet.",
+                "cta": "Sign up to send crypto securely.",
+            },
+            "es": {
+                "title": "📤 **Enviar Cripto**",
+                "description": "Envía cripto a cualquier dirección de wallet",
+                "unavailable": "⚠️ **Función de Envío**\n\nLa función de envío requiere que inicies sesión con una wallet.",
+                "cta": "Regístrate para enviar cripto de forma segura.",
+            },
+            "pt": {
+                "title": "📤 **Enviar Cripto**",
+                "description": "Envie cripto para qualquer endereço de carteira",
+                "unavailable": "⚠️ **Recurso de Envio**\n\nO recurso de envio requer que você faça login com uma carteira.",
+                "cta": "Cadastre-se para enviar cripto com segurança.",
+            },
+            "zh": {
+                "title": "📤 **发送加密货币**",
+                "description": "向任何钱包地址发送加密货币",
+                "unavailable": "⚠️ **发送功能**\n\n发送功能需要您使用钱包登录。",
+                "cta": "注册以安全发送加密货币。",
+            },
+            "fr": {
+                "title": "📤 **Envoyer Crypto**",
+                "description": "Envoyez de la crypto vers n'importe quelle adresse de portefeuille",
+                "unavailable": "⚠️ **Fonction d'Envoi**\n\nLa fonction d'envoi nécessite que vous soyez connecté avec un portefeuille.",
+                "cta": "Inscrivez-vous pour envoyer de la crypto en toute sécurité.",
+            },
+        }
+        t = translations.get(language, translations["en"])
+
+        content = f"{t['title']}\n\n{t['description']}\n\n{t['unavailable']}\n\n"
+        if not is_authenticated:
+            content += f"👉 **{t['cta']}**\n"
+
+        return {
+            "content": content,
+            "enrichment": {},
+            "requires_registration": not is_authenticated,
+        }
+
+    async def _handle_balance(
+        self,
+        content: str,
+        language: str,
+        is_authenticated: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Handle balance inquiry with enhanced storytelling.
+
+        For guests: Show sample balances with signup CTA
+        For authenticated: Show real wallet balances
+        """
+        logger.info(f"[Balance] Handler called - language: {language}, authenticated: {is_authenticated}")
+
+        translations = {
+            "en": {
+                "title": "💰 **Your Crypto Balance**",
+                "greeting": "Let me show you your crypto holdings!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **Demo Mode** - Example balances shown below\n\n",
+                "total_label": "📊 **Total Portfolio Value:**",
+                "balances_label": "**Token Balances:**",
+                "zero_balance": "💭 Your wallet is empty. Time to start your crypto journey!\n\n",
+                "cta_title": "**Get Started**",
+                "cta_body": "Sign up to connect your wallet and see your real balances.",
+                "learn_more": "💡 *With Anvil, you can track balances across multiple chains and protocols.*",
+            },
+            "es": {
+                "title": "💰 **Tu Saldo de Cripto**",
+                "greeting": "¡Déjame mostrarte tus tenencias de cripto!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **Modo Demo** - Saldos de ejemplo mostrados abajo\n\n",
+                "total_label": "📊 **Valor Total del Portafolio:**",
+                "balances_label": "**Saldos de Tokens:**",
+                "zero_balance": "💭 Tu wallet está vacía. ¡Hora de comenzar tu viaje cripto!\n\n",
+                "cta_title": "**Comienza**",
+                "cta_body": "Regístrate para conectar tu wallet y ver tus saldos reales.",
+                "learn_more": "💡 *Con Anvil, puedes seguir saldos a través de múltiples cadenas y protocolos.*",
+            },
+            "pt": {
+                "title": "💰 **Seu Saldo de Cripto**",
+                "greeting": "Deixe-me mostrar suas posses de cripto!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **Modo Demo** - Saldos de exemplo mostrados abaixo\n\n",
+                "total_label": "📊 **Valor Total do Portfólio:**",
+                "balances_label": "**Saldos de Tokens:**",
+                "zero_balance": "💭 Sua carteira está vazia. Hora de começar sua jornada cripto!\n\n",
+                "cta_title": "**Comece**",
+                "cta_body": "Cadastre-se para conectar sua carteira e ver seus saldos reais.",
+                "learn_more": "💡 *Com Anvil, você pode rastrear saldos em várias chains e protocolos.*",
+            },
+            "zh": {
+                "title": "💰 **您的加密货币余额**",
+                "greeting": "让我向您展示您的加密货币持仓!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **演示模式** - 以下显示示例余额\n\n",
+                "total_label": "📊 **投资组合总价值:**",
+                "balances_label": "**代币余额:**",
+                "zero_balance": "💭 您的钱包是空的。是时候开始您的加密货币之旅了!\n\n",
+                "cta_title": "**开始**",
+                "cta_body": "注册以连接您的钱包并查看您的真实余额。",
+                "learn_more": "💡 *使用Anvil，您可以跨多个链和协议跟踪余额。*",
+            },
+            "fr": {
+                "title": "💰 **Votre Solde Crypto**",
+                "greeting": "Laissez-moi vous montrer vos avoirs en crypto!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **Mode Démo** - Soldes d'exemple affichés ci-dessous\n\n",
+                "total_label": "📊 **Valeur Totale du Portefeuille:**",
+                "balances_label": "**Soldes de Tokens:**",
+                "zero_balance": "💭 Votre portefeuille est vide. Il est temps de commencer votre voyage crypto!\n\n",
+                "cta_title": "**Commencer**",
+                "cta_body": "Inscrivez-vous pour connecter votre portefeuille et voir vos soldes réels.",
+                "learn_more": "💡 *Avec Anvil, vous pouvez suivre les soldes sur plusieurs chaînes et protocoles.*",
+            },
+        }
+        t = translations.get(language, translations["en"])
+
+        # Demo balances for guests
+        demo_balances = [
+            {"token": "USDC", "amount": "1,250.00", "value_usd": "$1,250.00", "emoji": "💵"},
+            {"token": "ETH", "amount": "0.5", "value_usd": "$975.00", "emoji": "Ξ"},
+            {"token": "BTC", "amount": "0.01", "value_usd": "$450.00", "emoji": "₿"},
+            {"token": "SOL", "amount": "10.0", "value_usd": "$325.00", "emoji": "◎"},
+        ]
+        total_value = "$3,000.00"
+
+        # Build response
+        content = f"{t['title']}\n\n{t['greeting']}{t['divider']}"
+
+        if not is_authenticated:
+            content += f"{t['guest_note']}"
+
+        content += f"{t['total_label']} **{total_value}**\n\n"
+        content += f"{t['balances_label']}\n"
+
+        for balance in demo_balances:
+            content += f"• {balance['emoji']} **{balance['token']}**: {balance['amount']} (~{balance['value_usd']})\n"
+
+        content += f"\n{t['divider']}"
+
+        if not is_authenticated:
+            content += f"{t['cta_title']}\n\n{t['cta_body']}\n\n👉 **[Sign Up Now](/signup)**\n\n"
+
+        content += t["learn_more"]
+
+        return {
+            "content": content,
+            "enrichment": {
+                "balances": demo_balances if not is_authenticated else [],
+                "total_value": total_value,
+            },
+            "requires_registration": not is_authenticated,
+        }
+
+    async def _handle_receive(
+        self,
+        content: str,
+        language: str,
+        is_authenticated: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Handle receive/deposit inquiry with enhanced storytelling.
+
+        For guests: Show sample addresses with signup CTA
+        For authenticated: Show real wallet addresses
+        """
+        logger.info(f"[Receive] Handler called - language: {language}, authenticated: {is_authenticated}")
+
+        translations = {
+            "en": {
+                "title": "📥 **Receive Crypto**",
+                "greeting": "Ready to receive crypto? Here's how!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **Demo Mode** - Sample addresses shown below\n\n",
+                "instructions": "**How to Receive:**\n\n1️⃣ Share your wallet address with the sender\n2️⃣ Wait for the transaction to confirm\n3️⃣ Funds will appear in your balance\n\n",
+                "addresses_label": "**Your Wallet Addresses:**",
+                "ethereum": "🔷 **Ethereum (ETH, USDC, DAI):**",
+                "bitcoin": "₿ **Bitcoin (BTC):**",
+                "solana": "◎ **Solana (SOL, USDC):**",
+                "demo_eth": "`0x1234...5678` (example)",
+                "demo_btc": "`bc1q1234...5678` (example)",
+                "demo_sol": "`A1B2C3...XYZ` (example)",
+                "warning": "⚠️ **Important:** Always verify the network before sending crypto!",
+                "cta_title": "**Get Your Real Addresses**",
+                "cta_body": "Sign up to get your actual wallet addresses and receive crypto securely.",
+            },
+            "es": {
+                "title": "📥 **Recibir Cripto**",
+                "greeting": "¿Listo para recibir cripto? ¡Así es como!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **Modo Demo** - Direcciones de ejemplo mostradas abajo\n\n",
+                "instructions": "**Cómo Recibir:**\n\n1️⃣ Comparte tu dirección de wallet con el remitente\n2️⃣ Espera a que la transacción se confirme\n3️⃣ Los fondos aparecerán en tu saldo\n\n",
+                "addresses_label": "**Tus Direcciones de Wallet:**",
+                "ethereum": "🔷 **Ethereum (ETH, USDC, DAI):**",
+                "bitcoin": "₿ **Bitcoin (BTC):**",
+                "solana": "◎ **Solana (SOL, USDC):**",
+                "demo_eth": "`0x1234...5678` (ejemplo)",
+                "demo_btc": "`bc1q1234...5678` (ejemplo)",
+                "demo_sol": "`A1B2C3...XYZ` (ejemplo)",
+                "warning": "⚠️ **Importante:** ¡Siempre verifica la red antes de enviar cripto!",
+                "cta_title": "**Obtén Tus Direcciones Reales**",
+                "cta_body": "Regístrate para obtener tus direcciones de wallet reales y recibir cripto de forma segura.",
+            },
+            "pt": {
+                "title": "📥 **Receber Cripto**",
+                "greeting": "Pronto para receber cripto? Veja como!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **Modo Demo** - Endereços de exemplo mostrados abaixo\n\n",
+                "instructions": "**Como Receber:**\n\n1️⃣ Compartilhe seu endereço de carteira com o remetente\n2️⃣ Aguarde a confirmação da transação\n3️⃣ Os fundos aparecerão no seu saldo\n\n",
+                "addresses_label": "**Seus Endereços de Carteira:**",
+                "ethereum": "🔷 **Ethereum (ETH, USDC, DAI):**",
+                "bitcoin": "₿ **Bitcoin (BTC):**",
+                "solana": "◎ **Solana (SOL, USDC):**",
+                "demo_eth": "`0x1234...5678` (exemplo)",
+                "demo_btc": "`bc1q1234...5678` (exemplo)",
+                "demo_sol": "`A1B2C3...XYZ` (exemplo)",
+                "warning": "⚠️ **Importante:** Sempre verifique a rede antes de enviar cripto!",
+                "cta_title": "**Obtenha Seus Endereços Reais**",
+                "cta_body": "Cadastre-se para obter seus endereços de carteira reais e receber cripto com segurança.",
+            },
+            "zh": {
+                "title": "📥 **接收加密货币**",
+                "greeting": "准备接收加密货币？方法如下！\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **演示模式** - 以下显示示例地址\n\n",
+                "instructions": "**如何接收:**\n\n1️⃣ 与发送方分享您的钱包地址\n2️⃣ 等待交易确认\n3️⃣ 资金将显示在您的余额中\n\n",
+                "addresses_label": "**您的钱包地址:**",
+                "ethereum": "🔷 **以太坊 (ETH, USDC, DAI):**",
+                "bitcoin": "₿ **比特币 (BTC):**",
+                "solana": "◎ **Solana (SOL, USDC):**",
+                "demo_eth": "`0x1234...5678` (示例)",
+                "demo_btc": "`bc1q1234...5678` (示例)",
+                "demo_sol": "`A1B2C3...XYZ` (示例)",
+                "warning": "⚠️ **重要提示:** 发送加密货币前务必验证网络！",
+                "cta_title": "**获取您的真实地址**",
+                "cta_body": "注册以获取您的实际钱包地址并安全接收加密货币。",
+            },
+            "fr": {
+                "title": "📥 **Recevoir Crypto**",
+                "greeting": "Prêt à recevoir de la crypto? Voici comment!\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "guest_note": "🎮 **Mode Démo** - Adresses d'exemple affichées ci-dessous\n\n",
+                "instructions": "**Comment Recevoir:**\n\n1️⃣ Partagez votre adresse de portefeuille avec l'expéditeur\n2️⃣ Attendez la confirmation de la transaction\n3️⃣ Les fonds apparaîtront dans votre solde\n\n",
+                "addresses_label": "**Vos Adresses de Portefeuille:**",
+                "ethereum": "🔷 **Ethereum (ETH, USDC, DAI):**",
+                "bitcoin": "₿ **Bitcoin (BTC):**",
+                "solana": "◎ **Solana (SOL, USDC):**",
+                "demo_eth": "`0x1234...5678` (exemple)",
+                "demo_btc": "`bc1q1234...5678` (exemple)",
+                "demo_sol": "`A1B2C3...XYZ` (exemple)",
+                "warning": "⚠️ **Important:** Vérifiez toujours le réseau avant d'envoyer de la crypto!",
+                "cta_title": "**Obtenez Vos Adresses Réelles**",
+                "cta_body": "Inscrivez-vous pour obtenir vos adresses de portefeuille réelles et recevoir de la crypto en toute sécurité.",
+            },
+        }
+        t = translations.get(language, translations["en"])
+
+        # Build response
+        content = f"{t['title']}\n\n{t['greeting']}{t['divider']}"
+
+        if not is_authenticated:
+            content += f"{t['guest_note']}"
+
+        content += f"{t['instructions']}{t['addresses_label']}\n\n"
+        content += f"{t['ethereum']}\n{t['demo_eth']}\n\n"
+        content += f"{t['bitcoin']}\n{t['demo_btc']}\n\n"
+        content += f"{t['solana']}\n{t['demo_sol']}\n\n"
+        content += f"{t['divider']}{t['warning']}\n\n"
+
+        if not is_authenticated:
+            content += f"{t['cta_title']}\n\n{t['cta_body']}\n\n👉 **[Sign Up Now](/signup)**\n"
+
+        return {
+            "content": content,
+            "enrichment": {
+                "addresses": {
+                    "ethereum": "0x1234...5678" if not is_authenticated else None,
+                    "bitcoin": "bc1q1234...5678" if not is_authenticated else None,
+                    "solana": "A1B2C3...XYZ" if not is_authenticated else None,
+                }
+            },
+            "requires_registration": not is_authenticated,
+        }
 
     def _fallback_moonpay_swap_response(self, language: str, is_authenticated: bool) -> dict[str, Any]:
         """Fallback response when MoonPaySwapHandler is not available."""

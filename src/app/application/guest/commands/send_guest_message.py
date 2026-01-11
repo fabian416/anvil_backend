@@ -185,7 +185,7 @@ class SendGuestMessage:
         context = await self._build_conversation_context(conversation.id)
 
         # 4a. Get continuation state from last message (for multi-step flows)
-        continuation_step, previous_swap_info, previous_lending_info = await self._get_continuation_state(
+        continuation_step, previous_swap_info, previous_lending_info, previous_send_info = await self._get_continuation_state(
             conversation.id
         )
 
@@ -252,6 +252,7 @@ class SendGuestMessage:
                 continuation_step=continuation_step,
                 previous_swap_info=previous_swap_info,
                 previous_lending_info=previous_lending_info,
+                previous_send_info=previous_send_info,
             )
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")
@@ -281,6 +282,8 @@ class SendGuestMessage:
                 message_metadata["swap_info"] = handler_result["swap_info"]
             if "lending_info" in handler_result:
                 message_metadata["lending_info"] = handler_result["lending_info"]
+            if "send_info" in handler_result:
+                message_metadata["send_info"] = handler_result["send_info"]
 
             agent_message = GuestMessage.create_assistant_message(
                 conversation_id=conversation.id,
@@ -475,12 +478,12 @@ class SendGuestMessage:
             logger.warning(f"Failed to build conversation context: {e}")
             return ""
 
-    async def _get_continuation_state(self, conversation_id: UUID) -> tuple[str | None, dict | None, dict | None]:
+    async def _get_continuation_state(self, conversation_id: UUID) -> tuple[str | None, dict | None, dict | None, dict | None]:
         """
         Get continuation state from the last assistant message.
 
         Returns:
-            (continuation_step, previous_swap_info, previous_lending_info)
+            (continuation_step, previous_swap_info, previous_lending_info, previous_send_info)
         """
         try:
             # Get recent messages (ordered newest to oldest - DESC)
@@ -498,19 +501,20 @@ class SendGuestMessage:
                     break
 
             if not last_assistant_message:
-                return None, None, None
+                return None, None, None, None
 
             metadata = last_assistant_message.metadata or {}
 
             continuation_step = metadata.get("pending_action")
             previous_swap_info = metadata.get("swap_info")
             previous_lending_info = metadata.get("lending_info")
+            previous_send_info = metadata.get("send_info")
 
-            logger.info(f"[Continuation] Found state: step={continuation_step}, swap_info={previous_swap_info}")
-            return continuation_step, previous_swap_info, previous_lending_info
+            logger.info(f"[Continuation] Found state: step={continuation_step}, swap_info={previous_swap_info}, send_info={previous_send_info}")
+            return continuation_step, previous_swap_info, previous_lending_info, previous_send_info
         except Exception as e:
             logger.warning(f"Failed to get continuation state: {e}")
-            return None, None, None
+            return None, None, None, None
 
     async def _detect_intent_with_context(
         self, content: str, context: str, language: str
