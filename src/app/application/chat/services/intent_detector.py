@@ -59,8 +59,9 @@ class ChatIntent(Enum):
     SPECIALIST_TASK = "specialist_task"
     COMPLEX_WORKFLOW = "complex_workflow"
 
-    # Fallback intent
-    GENERAL_CONVERSATION = "general_conversation"
+    # Fallback intents
+    OUT_OF_SCOPE = "out_of_scope"  # For non-Anvil, off-topic queries (weather, jokes, etc.)
+    GENERAL_CONVERSATION = "general_conversation"  # Contextual questions about chat history, clarifications
 
 
 @dataclass

@@ -159,6 +159,8 @@ class GuestHandlerService:
             # Agent Squad (Specialist Tasks & Complex Workflows)
             ChatIntent.SPECIALIST_TASK: self._handle_specialist_task,
             ChatIntent.COMPLEX_WORKFLOW: self._handle_complex_workflow,
+            # Out of scope (reject non-crypto topics)
+            ChatIntent.OUT_OF_SCOPE: self._handle_out_of_scope,
         }
 
         handler = handler_map.get(intent)
@@ -3998,3 +4000,102 @@ class GuestHandlerService:
             language=language,
             is_authenticated=is_authenticated,
         )
+
+    async def _handle_out_of_scope(
+        self,
+        content: str,
+        language: str,
+        is_authenticated: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Handle out-of-scope queries (non-crypto, non-DeFi topics).
+
+        Politely decline and redirect user to Anvil's DeFi capabilities.
+        """
+        logger.info(f"[OutOfScope] Declining off-topic query - language: {language}, content: {content[:50]}...")
+
+        translations = {
+            "en": {
+                "title": "⚠️ **Outside My Expertise**",
+                "message": "I'm Anvil, a specialized DeFi assistant focused on:\n\n"
+                          "💰 **Portfolio Management** - Check balances, view holdings\n"
+                          "📊 **Market Intelligence** - Hunter AI sentiment, price predictions\n"
+                          "🔄 **DeFi Operations** - Swap, lend, stake, bridge\n"
+                          "⚡ **ULTRA Tools** - Arbitrage, flash loans, MEV protection\n"
+                          "🤖 **Agent Squad** - Specialist agents for yield, risk, security\n\n"
+                          "I can't help with questions outside crypto and DeFi.\n\n"
+                          "**Try asking:**\n"
+                          "• \"What's my portfolio worth?\"\n"
+                          "• \"Show me USDC lending rates\"\n"
+                          "• \"Find arbitrage opportunities\"\n"
+                          "• \"Analyze ETH sentiment\"",
+            },
+            "es": {
+                "title": "⚠️ **Fuera de Mi Experiencia**",
+                "message": "Soy Anvil, un asistente DeFi especializado en:\n\n"
+                          "💰 **Gestión de Portafolio** - Verificar saldos, ver tenencias\n"
+                          "📊 **Inteligencia de Mercado** - Sentimiento Hunter AI, predicciones\n"
+                          "🔄 **Operaciones DeFi** - Intercambiar, prestar, stakear, puentear\n"
+                          "⚡ **Herramientas ULTRA** - Arbitraje, préstamos flash, protección MEV\n"
+                          "🤖 **Escuadrón de Agentes** - Agentes especialistas\n\n"
+                          "No puedo ayudar con preguntas fuera de cripto y DeFi.\n\n"
+                          "**Intenta preguntar:**\n"
+                          "• \"¿Cuánto vale mi portafolio?\"\n"
+                          "• \"Muéstrame tasas de préstamo USDC\"\n"
+                          "• \"Encuentra oportunidades de arbitraje\"",
+            },
+            "pt": {
+                "title": "⚠️ **Fora da Minha Expertise**",
+                "message": "Sou Anvil, um assistente DeFi especializado em:\n\n"
+                          "💰 **Gestão de Portfólio** - Verificar saldos, ver holdings\n"
+                          "📊 **Inteligência de Mercado** - Sentimento Hunter AI, previsões\n"
+                          "🔄 **Operações DeFi** - Trocar, emprestar, stake, bridge\n"
+                          "⚡ **Ferramentas ULTRA** - Arbitragem, flash loans, proteção MEV\n"
+                          "🤖 **Equipe de Agentes** - Agentes especialistas\n\n"
+                          "Não posso ajudar com perguntas fora de cripto e DeFi.\n\n"
+                          "**Tente perguntar:**\n"
+                          "• \"Quanto vale meu portfólio?\"\n"
+                          "• \"Mostre taxas de empréstimo USDC\"\n"
+                          "• \"Encontre oportunidades de arbitragem\"",
+            },
+            "zh": {
+                "title": "⚠️ **超出我的专业范围**",
+                "message": "我是Anvil，专注于DeFi的助手：\n\n"
+                          "💰 **投资组合管理** - 检查余额，查看持仓\n"
+                          "📊 **市场情报** - Hunter AI情绪，价格预测\n"
+                          "🔄 **DeFi操作** - 交换，借贷，质押，跨链\n"
+                          "⚡ **ULTRA工具** - 套利，闪电贷，MEV保护\n"
+                          "🤖 **代理小队** - 专业代理\n\n"
+                          "我无法帮助加密和DeFi之外的问题。\n\n"
+                          "**尝试问：**\n"
+                          "• \"我的投资组合值多少？\"\n"
+                          "• \"显示USDC借贷利率\"\n"
+                          "• \"寻找套利机会\"",
+            },
+            "fr": {
+                "title": "⚠️ **Hors de Mon Expertise**",
+                "message": "Je suis Anvil, un assistant DeFi spécialisé dans:\n\n"
+                          "💰 **Gestion de Portefeuille** - Vérifier soldes, voir holdings\n"
+                          "📊 **Intelligence du Marché** - Sentiment Hunter AI, prédictions\n"
+                          "🔄 **Opérations DeFi** - Échanger, prêter, staker, bridge\n"
+                          "⚡ **Outils ULTRA** - Arbitrage, flash loans, protection MEV\n"
+                          "🤖 **Équipe d'Agents** - Agents spécialistes\n\n"
+                          "Je ne peux pas aider avec des questions hors crypto et DeFi.\n\n"
+                          "**Essayez de demander:**\n"
+                          "• \"Quelle est la valeur de mon portefeuille?\"\n"
+                          "• \"Montrez les taux de prêt USDC\"\n"
+                          "• \"Trouvez des opportunités d'arbitrage\"",
+            },
+        }
+        t = translations.get(language, translations["en"])
+
+        content = f"{t['title']}\n\n{t['message']}"
+
+        return {
+            "content": content,
+            "enrichment": {
+                "intent": "out_of_scope",
+                "suggested_topics": ["portfolio", "swap", "lending", "arbitrage", "sentiment"],
+            },
+            "requires_registration": False,
+        }

@@ -67,8 +67,9 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
         # Squad intents
         "specialist_task": "agent_orchestrator",
         "complex_workflow": "agent_orchestrator",
-        # Fallback
-        "general_conversation": "general_chat",
+        # Fallback intents
+        "general_conversation": "general_chat",  # Chat history, DeFi education, clarifications
+        "out_of_scope": "out_of_scope_handler",  # Non-crypto topics (rejected)
     }
 
     def __init__(self, llm_gateway: LLMGateway):
@@ -133,7 +134,11 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
 
     def _build_classification_prompt(self) -> str:
         """Build system prompt for intent classification."""
-        return """You are an intent classifier for a DeFi chat interface.
+        return """You are an intent classifier for Anvil - a specialized DeFi trading and portfolio management platform.
+
+⚠️ CRITICAL SCOPE RESTRICTION:
+Anvil ONLY handles DeFi operations, crypto trading, portfolio management, and blockchain analytics.
+If the user's query is NOT related to these topics, classify as OUT_OF_SCOPE.
 
 Classify the user's message into ONE of these intents:
 
@@ -241,8 +246,28 @@ Examples requiring SWAP: "swap DAI to USDC", "swap WBTC for ETH", "exchange MATI
 23. COMPLEX_WORKFLOW - User needs multi-step analysis or strategy
    Examples: "create a balanced portfolio", "comprehensive analysis of DeFi", "migration strategy"
 
-24. GENERAL_CONVERSATION - General questions, education, explanations
-   Examples: "what is DeFi?", "explain impermanent loss", "how does staking work?"
+24. GENERAL_CONVERSATION - Contextual questions about chat history, DeFi education, or clarifications
+   ✅ USE THIS FOR:
+   • Chat history questions: "what did we discuss?", "remind me about that swap", "what was the last price?"
+   • Follow-up questions: "tell me more", "can you explain that again?", "what do you mean?"
+   • DeFi education: "what is impermanent loss?", "explain yield farming", "how does staking work?"
+   • Crypto concepts: "what's a liquidity pool?", "define APY", "explain gas fees"
+   • Contextual clarifications: "which protocol?", "on what chain?", "how much was that?"
+
+   This is for LEGITIMATE Anvil-related conversations and follow-ups.
+
+25. OUT_OF_SCOPE - Query is NOT related to DeFi, crypto, trading, or portfolio management
+   ⚠️ CRITICAL: Use this ONLY for NON-CRYPTO topics. Anvil is a DeFi platform, NOT a general assistant.
+
+   Examples of OUT_OF_SCOPE (REJECT these):
+   • General knowledge: "what is the capital of France?", "who won the World Cup?"
+   • Non-crypto topics: "weather forecast", "movie recommendations", "recipe for pasta"
+   • Personal advice: "how to get fit?", "relationship advice", "career guidance"
+   • Random off-topic: "tell me a joke", "what's 2+2?", "write me a poem"
+   • Basic greetings ONLY: "hello", "hi", "hey" (single message with no context)
+
+   Decision Rule: If the query mentions crypto, DeFi, blockchain, tokens, trading, or portfolio → NOT out_of_scope
+   If unsure, prefer GENERAL_CONVERSATION over OUT_OF_SCOPE for crypto-adjacent topics.
 
 Extract entities: protocol names, token symbols, amounts, chains, categories, etc.
 
