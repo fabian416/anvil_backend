@@ -22,53 +22,51 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Add performance indexes for guest system queries."""
     # Guest users indexes
+    # For rate limiting queries by last_seen_at
     op.create_index(
         "idx_guest_users_last_seen_at",
         "guest_users",
         ["last_seen_at"],
-        comment="For rate limiting queries by last_seen_at",
     )
+    # For filtering blocked users
     op.create_index(
         "idx_guest_users_is_blocked",
         "guest_users",
         ["is_blocked"],
-        comment="For filtering blocked users",
     )
 
     # Guest conversations indexes
+    # For sorting conversations by creation time
     op.create_index(
         "idx_guest_conversations_created_at",
         "guest_conversations",
         ["created_at"],
-        comment="For sorting conversations by creation time",
     )
-    # Composite index for most common query: get_active_conversation
+    # Composite index for active conversation queries with ordering
     op.create_index(
         "idx_guest_conversations_user_status_created",
         "guest_conversations",
         ["guest_user_id", "status", "created_at"],
-        comment="Composite index for active conversation queries with ordering",
     )
 
     # Guest messages indexes
+    # For sorting messages chronologically
     op.create_index(
         "idx_guest_messages_created_at",
         "guest_messages",
         ["created_at"],
-        comment="For sorting messages chronologically",
     )
+    # For intent-based analytics queries
     op.create_index(
         "idx_guest_messages_intent",
         "guest_messages",
         ["intent"],
-        comment="For intent-based analytics queries",
     )
-    # Composite index for conversation messages query
+    # For retrieving conversation messages in chronological order
     op.create_index(
         "idx_guest_messages_conversation_created",
         "guest_messages",
         ["conversation_id", "created_at"],
-        comment="For retrieving conversation messages in chronological order",
     )
 
 
