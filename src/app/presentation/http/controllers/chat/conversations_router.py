@@ -705,6 +705,7 @@ def create_conversations_router() -> APIRouter:
                     context=context_str,
                     is_authenticated=True,
                     wallet_address=wallet_address,
+                    user_id=int(user.id) if user.id else None,
                 )
                 agent_content = handler_result.get("content", "")
                 enrichment = handler_result.get("enrichment")

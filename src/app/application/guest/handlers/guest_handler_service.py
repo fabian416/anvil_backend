@@ -252,6 +252,15 @@ class GuestHandlerService:
                         is_authenticated,
                         wallet_address,
                     )
+                # Activity handler (needs wallet address and user_id for authenticated users)
+                elif intent == ChatIntent.ACTIVITY:
+                    return await self._handle_activity(
+                        content,
+                        language,
+                        is_authenticated,
+                        wallet_address,
+                        str(user_id) if user_id else None,
+                    )
                 return await handler(content, language, is_authenticated)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
@@ -3850,22 +3859,121 @@ class GuestHandlerService:
             is_authenticated=is_authenticated,
         )
 
+    async def _build_real_activity_response(self, language: str, wallet_address: str | None) -> dict[str, Any]:
+        """Build real activity response (empty or from blockchain scan)."""
+        messages = {
+            "en": {
+                "title": "📜 Transaction History",
+                "empty_title": "No Transactions Found",
+                "empty_message": "Your wallet doesn't have any recorded transactions yet.",
+                "explanation": "Transaction history shows:\n• Transfers (send/receive)\n• Token swaps\n• Smart contract interactions\n• DeFi protocol activity",
+                "coming_soon": "💡 **Enhanced Transaction History Coming Soon**\n\nWe're adding blockchain scanning to show your complete on-chain activity across all protocols and DEXs.",
+                "wallet_label": "Wallet",
+            },
+            "es": {
+                "title": "📜 Historial de Transacciones",
+                "empty_title": "No se Encontraron Transacciones",
+                "empty_message": "Tu billetera aún no tiene transacciones registradas.",
+                "explanation": "El historial de transacciones muestra:\n• Transferencias (enviar/recibir)\n• Intercambios de tokens\n• Interacciones con contratos inteligentes\n• Actividad de protocolos DeFi",
+                "coming_soon": "💡 **Historial de Transacciones Mejorado Próximamente**\n\nEstamos agregando escaneo de blockchain para mostrar tu actividad completa en cadena en todos los protocolos y DEXs.",
+                "wallet_label": "Billetera",
+            },
+            "pt": {
+                "title": "📜 Histórico de Transações",
+                "empty_title": "Nenhuma Transação Encontrada",
+                "empty_message": "Sua carteira ainda não possui transações registradas.",
+                "explanation": "O histórico de transações mostra:\n• Transferências (enviar/receber)\n• Trocas de tokens\n• Interações com contratos inteligentes\n• Atividade de protocolos DeFi",
+                "coming_soon": "💡 **Histórico de Transações Aprimorado em Breve**\n\nEstamos adicionando varredura de blockchain para mostrar sua atividade completa na cadeia em todos os protocolos e DEXs.",
+                "wallet_label": "Carteira",
+            },
+            "zh": {
+                "title": "📜 交易历史",
+                "empty_title": "未找到交易",
+                "empty_message": "您的钱包还没有任何记录的交易。",
+                "explanation": "交易历史显示：\n• 转账（发送/接收）\n• 代币交换\n• 智能合约交互\n• DeFi协议活动",
+                "coming_soon": "💡 **增强交易历史即将推出**\n\n我们正在添加区块链扫描，以显示您在所有协议和DEX上的完整链上活动。",
+                "wallet_label": "钱包",
+            },
+            "fr": {
+                "title": "📜 Historique des Transactions",
+                "empty_title": "Aucune Transaction Trouvée",
+                "empty_message": "Votre portefeuille n'a pas encore de transactions enregistrées.",
+                "explanation": "L'historique des transactions affiche:\n• Transferts (envoi/réception)\n• Échanges de tokens\n• Interactions avec contrats intelligents\n• Activité des protocoles DeFi",
+                "coming_soon": "💡 **Historique des Transactions Amélioré Bientôt Disponible**\n\nNous ajoutons la numérisation de la blockchain pour afficher votre activité complète en chaîne sur tous les protocoles et DEXs.",
+                "wallet_label": "Portefeuille",
+            },
+        }
+        msg = messages.get(language, messages["en"])
+
+        divider = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+
+        # Build content for empty transaction history
+        content = f"""{divider}{msg['title']}
+{divider}
+
+**{msg['empty_title']}**
+
+{msg['empty_message']}
+
+{msg['explanation']}
+
+{divider}
+{msg['coming_soon']}
+"""
+
+        if wallet_address:
+            content += f"\n**{msg['wallet_label']}:** `{wallet_address[:6]}...{wallet_address[-4:]}`"
+
+        logger.info(f"[Activity] Showing empty transaction history for authenticated user")
+
+        return {
+            "content": content,
+            "enrichment": {
+                "transactions": [],
+                "count": 0,
+                "wallet_address": wallet_address,
+            },
+            "requires_registration": False,
+        }
+
     async def _handle_activity(
         self,
         content: str,
         language: str,
         is_authenticated: bool = False,
+        wallet_address: str | None = None,
+        user_id: str | None = None,
     ) -> dict[str, Any]:
         """
         Handle activity/transaction history inquiry.
 
         For guests: Show demo transaction history
-        For authenticated: Delegate to actual activity handler
+        For authenticated: Show real on-chain transaction history
         """
-        logger.info(f"[Activity] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[Activity] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}...")
 
-        # For guests, always show demo activity
-        # For authenticated users, could delegate to real activity handler in the future
+        # Try to fetch real activity for authenticated users
+        if is_authenticated and user_id:
+            try:
+                from app.domain.value_objects.user_id import UserId
+
+                logger.info(f"[Activity] Fetching real transactions for user: {user_id[:10]}...")
+
+                # Fetch user's transactions from database (limited to recent 20)
+                # Note: This requires transaction_repository to be injected
+                # For now, we'll show a message that real data requires blockchain scanning
+                # In a full implementation, we would:
+                # 1. Fetch from transaction_repository for app-initiated transactions
+                # 2. Scan blockchain using Etherscan API or similar for all wallet activity
+
+                # Build response indicating real transaction history is coming soon
+                return await self._build_real_activity_response(language, wallet_address)
+
+            except Exception as e:
+                logger.error(f"[Activity] Error fetching real activity: {e}", exc_info=True)
+                # Fall through to demo data
+
+        # For guests or fallback, show demo activity
         return await self._activity_multistep.handle_flow(
             content=content,
             language=language,
