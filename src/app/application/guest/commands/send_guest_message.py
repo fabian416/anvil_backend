@@ -200,7 +200,7 @@ class SendGuestMessage:
                 confidence = 1.0
                 logger.info(f"[Continuation] Using swap intent from pending action: {continuation_step}")
             elif "lending" in continuation_step:
-                intent = ChatIntent.LENDING_RATE
+                intent = ChatIntent.LENDING
                 handler = "lending"
                 confidence = 1.0
                 logger.info(f"[Continuation] Using lending intent from pending action: {continuation_step}")
