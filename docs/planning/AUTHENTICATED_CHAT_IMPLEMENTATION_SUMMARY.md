@@ -13,7 +13,7 @@ Successfully implemented a unified chat system that serves both guest and authen
 ### Context Abstraction Pattern
 
 Polymorphic `UserContext` interface with two implementations:
-- **GuestContext**: IP-based identification, 20 msg/hr limit, 90-day retention
+- **GuestContext**: IP-based identification, 800 msg/hr limit, 90-day retention
 - **AuthenticatedContext**: Legacy INTEGER user_id, 1000-10000 msg/hr, permanent retention
 
 ### Feature Flag System
@@ -688,12 +688,12 @@ X-Forwarded-For: 203.0.113.42
 
 ### Rate Limiting
 
-**Guest**: 20 msg/hr (IP-based)
+**Guest**: 800 msg/hr (IP-based)
 **Free**: 1,000 msg/hr (user-based)
 **Premium**: 10,000 msg/hr
 **Enterprise**: 10,000 msg/hr
 
-**Impact**: 50x higher rate limit for free users reduces rate limit errors.
+**Impact**: Higher rate limits for all user tiers reduces rate limit errors.
 
 ## Security Considerations
 
@@ -768,7 +768,7 @@ X-Forwarded-For: 203.0.113.42
 - [ ] Guest request (no JWT)
 - [ ] Authenticated request (valid JWT)
 - [ ] Invalid JWT (graceful degradation)
-- [ ] Rate limiting (20 vs 1000 msg/hr)
+- [ ] Rate limiting (800 vs 1000 msg/hr)
 - [ ] Feature flag enforcement
 
 **Cache**:

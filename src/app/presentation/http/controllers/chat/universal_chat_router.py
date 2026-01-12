@@ -241,7 +241,7 @@ async def get_client_ip(request: Request) -> str:
             "content": {
                 "application/json": {
                     "example": {
-                        "detail": "Rate limit exceeded. Guest users: 20 messages/hour. Please register for higher limits."
+                        "detail": "Rate limit exceeded. Guest users: 800 messages/hour. Please register for higher limits."
                     }
                 }
             },
@@ -267,7 +267,7 @@ async def universal_chat(
     """Universal chat endpoint for guest and authenticated users.
 
     This single endpoint serves both user types through context abstraction:
-    - Guest users (no JWT): Basic features, IP-based tracking, 20 msg/hour limit
+    - Guest users (no JWT): Basic features, IP-based tracking, 800 msg/hour limit
     - Authenticated users (JWT): Premium features, persistent storage, 1000+ msg/hour
 
     Args:
@@ -290,7 +290,7 @@ async def universal_chat(
         Guest request (no JWT):
             POST /api/v1/chat
             {"content": "What's BTC sentiment?", "language": "en"}
-            → Basic features, IP tracking, 20/hour limit
+            → Basic features, IP tracking, 800/hour limit
 
         Authenticated request (with JWT):
             POST /api/v1/chat

@@ -9,10 +9,10 @@ The Authenticated Chat API provides unified chat functionality for both guest an
 **Authentication**: Optional JWT Bearer token (graceful degradation to guest mode)
 
 **Rate Limits**:
-- **Guest Users**: 20 messages per hour per IP address
-- **Free Tier**: 100 messages per day
-- **Premium Tier**: 1,000 messages per day
-- **Enterprise Tier**: Unlimited
+- **Guest Users**: 800 messages per hour per IP address
+- **Free Tier**: 1,000 messages per hour
+- **Premium Tier**: 10,000 messages per hour
+- **Enterprise Tier**: 10,000 messages per hour
 
 ---
 
@@ -406,7 +406,7 @@ class ChatResponse(BaseModel):
 | **Export Conversations** | ❌ | ❌ | ❌ | ✅ |
 | **API Access** | ❌ | ❌ | ❌ | ✅ |
 | **Priority Support** | ❌ | ❌ | ❌ | ✅ |
-| **Message Limit** | 20/hour | 100/day | 1,000/day | Unlimited |
+| **Message Limit** | 800/hour | 1,000/hour | 10,000/hour | 10,000/hour |
 | **Conversation History** | ❌ | ✅ (30 days) | ✅ (1 year) | ✅ (Forever) |
 
 ### Feature Flags Implementation

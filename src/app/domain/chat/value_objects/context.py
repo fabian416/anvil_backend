@@ -70,7 +70,7 @@ class GuestContext(UserContext):
 
     Immutable context for guest users with:
     - IP-based identification
-    - 20 messages/hour rate limit
+    - 800 messages/hour rate limit
     - 90-day data retention
     - Basic feature access
     """
@@ -86,8 +86,8 @@ class GuestContext(UserContext):
         return False
 
     def get_rate_limit(self) -> tuple[int, int]:
-        """Guest rate limit: 20 messages per hour."""
-        return (20, 3600)
+        """Guest rate limit: 800 messages per hour."""
+        return (800, 3600)
 
     def get_retention_days(self) -> Optional[int]:
         """Guest data retention: 90 days."""

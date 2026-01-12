@@ -539,9 +539,9 @@ def create_conversations_router() -> APIRouter:
         - Rate limiting based on user type
         
         **User Types:**
-        - Guest: 20 messages/hour, 50/day
-        - Authenticated: 200 messages/hour, 1000/day
-        - Premium: Unlimited
+        - Guest: 800 messages/hour
+        - Authenticated: 1000 messages/hour
+        - Premium: 10,000 messages/hour
         """,
     )
     @inject
