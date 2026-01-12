@@ -203,12 +203,13 @@ class GuestHandlerService:
                 # Lending handler with continuation support
                 elif intent == ChatIntent.LENDING:
                     return await handler(
-                        content, 
-                        language, 
-                        context, 
+                        content,
+                        language,
+                        context,
                         is_authenticated,
                         continuation_step,
                         previous_lending_info,
+                        wallet_address,
                     )
                 # Buy handler (supports multi-step flow)
                 elif intent == ChatIntent.BUY:
@@ -1728,6 +1729,7 @@ class GuestHandlerService:
         is_authenticated: bool = False,
         continuation_step: str | None = None,
         previous_lending_info: dict | None = None,
+        wallet_address: str | None = None,
     ) -> dict[str, Any]:
         """
         Handle lending/deposit intent with multi-step flow.
