@@ -261,6 +261,14 @@ class GuestHandlerService:
                         wallet_address,
                         str(user_id) if user_id else None,
                     )
+                # Receive handler (needs wallet address for authenticated users)
+                elif intent == ChatIntent.RECEIVE:
+                    return await self._handle_receive(
+                        content,
+                        language,
+                        is_authenticated,
+                        wallet_address,
+                    )
                 return await handler(content, language, is_authenticated)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
@@ -3507,6 +3515,7 @@ class GuestHandlerService:
         content: str,
         language: str,
         is_authenticated: bool = False,
+        wallet_address: str | None = None,
     ) -> dict[str, Any]:
         """
         Handle receive/deposit inquiry with enhanced storytelling.
@@ -3514,7 +3523,7 @@ class GuestHandlerService:
         For guests: Show sample addresses with signup CTA
         For authenticated: Show real wallet addresses
         """
-        logger.info(f"[Receive] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[Receive] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}...")
 
         translations = {
             "en": {
@@ -3612,9 +3621,19 @@ class GuestHandlerService:
             content += f"{t['guest_note']}"
 
         content += f"{t['instructions']}{t['addresses_label']}\n\n"
-        content += f"{t['ethereum']}\n{t['demo_eth']}\n\n"
-        content += f"{t['bitcoin']}\n{t['demo_btc']}\n\n"
-        content += f"{t['solana']}\n{t['demo_sol']}\n\n"
+
+        # Show real or demo addresses based on authentication
+        if is_authenticated and wallet_address:
+            # Show real wallet address for authenticated users
+            content += f"{t['ethereum']}\n`{wallet_address}`\n\n"
+            content += f"💡 **Note:** This is your EVM-compatible address (works for Ethereum, Base, Polygon, etc.)\n\n"
+            logger.info(f"[Receive] Showing real wallet address: {wallet_address[:10]}...")
+        else:
+            # Show demo addresses for guests
+            content += f"{t['ethereum']}\n{t['demo_eth']}\n\n"
+            content += f"{t['bitcoin']}\n{t['demo_btc']}\n\n"
+            content += f"{t['solana']}\n{t['demo_sol']}\n\n"
+
         content += f"{t['divider']}{t['warning']}\n\n"
 
         if not is_authenticated:
@@ -3624,7 +3643,7 @@ class GuestHandlerService:
             "content": content,
             "enrichment": {
                 "addresses": {
-                    "ethereum": "0x1234...5678" if not is_authenticated else None,
+                    "ethereum": wallet_address if is_authenticated and wallet_address else ("0x1234...5678" if not is_authenticated else None),
                     "bitcoin": "bc1q1234...5678" if not is_authenticated else None,
                     "solana": "A1B2C3...XYZ" if not is_authenticated else None,
                 }
