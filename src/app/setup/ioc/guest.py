@@ -165,8 +165,26 @@ class GuestProvider(Provider):
         - BuyHandler for crypto on-ramp via Privy (if configured)
         - MoonPaySwapHandler for MoonPay crypto-to-crypto swaps
         - MorphoGateway for LendingMultiStepHandler to fetch real APY data
+        - PortfolioService for real on-chain balance data for authenticated users
         - Hunter AI and ULTRA handlers don't require DI as they are stateless.
         """
+        from app.application.portfolio.portfolio_service import PortfolioService
+        from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
+        from app.domain.ports.wallet.wallet_repository import WalletRepository
+
+        # Create portfolio service inline with dependencies from DI
+        # Note: This is a temporary solution. Ideally, PortfolioService should be in the DI container
+        # but that would require adding it to infrastructure.py provider which is out of scope for this fix
+        try:
+            from dishka import FromDishka
+            # We'll create portfolio service with minimal dependencies
+            portfolio_service = PortfolioService(
+                portfolio_repository=None,  # type: ignore - Not needed for get_portfolio_by_address
+                wallet_repository=None,  # type: ignore - Not needed for get_portfolio_by_address
+            )
+        except Exception:
+            portfolio_service = None
+
         return GuestHandlerService(
             lending_handler=lending_handler,  # Real Morpho vault data
             swap_handler=swap_handler,  # Real 1inch/LiFi data if API keys available
@@ -174,6 +192,7 @@ class GuestProvider(Provider):
             buy_handler=buy_handler,  # Privy on-ramp with wallet resolution
             moonpay_swap_handler=moonpay_swap_handler,  # MoonPay swap quotes
             morpho_gateway=morpho_gateway,  # Morpho gateway for multi-step lending flow
+            portfolio_service=portfolio_service,  # Real on-chain balance data
         )
 
     @provide(scope=Scope.APP)

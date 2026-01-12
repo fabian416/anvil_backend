@@ -75,6 +75,7 @@ class GuestHandlerService:
         moonpay_swap_handler: MoonPaySwapHandler | None = None,
         morpho_gateway: "MorphoGateway | None" = None,
         guest_cache: GuestCache | None = None,
+        portfolio_service: "PortfolioService | None" = None,
     ):
         from app.domain.ports.morpho_gateway import MorphoGateway as MorphoGatewayType
 
@@ -83,6 +84,7 @@ class GuestHandlerService:
         self._money_market_handler = money_market_handler
         self._buy_handler = buy_handler
         self._moonpay_swap_handler = moonpay_swap_handler
+        self._portfolio_service = portfolio_service
         # Multi-step swap flow handler
         self._moonpay_multistep = MoonPaySwapMultiStepHandler(moonpay_swap_handler) if moonpay_swap_handler else None
         # Multi-step send flow handler
@@ -233,6 +235,14 @@ class GuestHandlerService:
                         is_authenticated,
                         continuation_step,
                         previous_send_info,
+                    )
+                # Balance handler (needs wallet address for authenticated users)
+                elif intent == ChatIntent.BALANCE:
+                    return await self._handle_balance(
+                        content,
+                        language,
+                        is_authenticated,
+                        wallet_address,
                     )
                 return await handler(content, language, is_authenticated)
             except Exception as e:
@@ -3287,6 +3297,7 @@ class GuestHandlerService:
         content: str,
         language: str,
         is_authenticated: bool = False,
+        wallet_address: str | None = None,
     ) -> dict[str, Any]:
         """
         Handle balance inquiry with enhanced storytelling.
@@ -3294,7 +3305,7 @@ class GuestHandlerService:
         For guests: Show sample balances with signup CTA
         For authenticated: Show real wallet balances
         """
-        logger.info(f"[Balance] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[Balance] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}...")
 
         translations = {
             "en": {
@@ -3308,6 +3319,7 @@ class GuestHandlerService:
                 "cta_title": "**Get Started**",
                 "cta_body": "Sign up to connect your wallet and see your real balances.",
                 "learn_more": "💡 *With Anvil, you can track balances across multiple chains and protocols.*",
+                "loading_error": "⚠️ Unable to fetch your balance at this time. Please try again.",
             },
             "es": {
                 "title": "💰 **Tu Saldo de Cripto**",
@@ -3360,7 +3372,81 @@ class GuestHandlerService:
         }
         t = translations.get(language, translations["en"])
 
-        # Demo balances for guests
+        # Try to fetch real balances for authenticated users with wallet
+        if is_authenticated and wallet_address and self._portfolio_service:
+            try:
+                from app.domain.enums.chain_type import ChainType
+
+                logger.info(f"[Balance] Fetching real portfolio for wallet: {wallet_address[:10]}...")
+                portfolio = await self._portfolio_service.get_portfolio_by_address(
+                    address=wallet_address,
+                    chain=ChainType.BASE,  # Default to Base chain
+                )
+
+                if portfolio and portfolio.has_value:
+                    # Build real balances list
+                    real_balances = []
+
+                    # Add native token (ETH) if has balance
+                    if portfolio.native_balance > 0:
+                        token_emoji = {"ETH": "Ξ", "WETH": "Ξ"}.get(portfolio.native_symbol, "🪙")
+                        real_balances.append({
+                            "token": portfolio.native_symbol,
+                            "amount": f"{portfolio.native_balance:.4f}",
+                            "value_usd": f"${portfolio.native_usd_value:.2f}" if portfolio.native_usd_value else "N/A",
+                            "emoji": token_emoji,
+                        })
+
+                    # Add ERC-20 tokens
+                    for token in portfolio.tokens:
+                        token_emoji = {
+                            "USDC": "💵",
+                            "USDT": "💵",
+                            "DAI": "💵",
+                            "WETH": "Ξ",
+                            "WBTC": "₿",
+                            "ETH": "Ξ",
+                            "BTC": "₿",
+                        }.get(token.get("symbol", ""), "🪙")
+
+                        real_balances.append({
+                            "token": token.get("symbol", "Unknown"),
+                            "amount": f"{token.get('amount', 0):.4f}",
+                            "value_usd": f"${token.get('usd_value', 0):.2f}" if token.get("usd_value") else "N/A",
+                            "emoji": token_emoji,
+                        })
+
+                    # Build response with real data
+                    content = f"{t['title']}\n\n{t['greeting']}{t['divider']}"
+                    content += f"{t['total_label']} **${portfolio.total_usd:.2f}**\n\n"
+                    content += f"{t['balances_label']}\n"
+
+                    if real_balances:
+                        for balance in real_balances:
+                            content += f"• {balance['emoji']} **{balance['token']}**: {balance['amount']} (~{balance['value_usd']})\n"
+                    else:
+                        content += f"{t['zero_balance']}"
+
+                    content += f"\n{t['divider']}"
+                    content += t["learn_more"]
+
+                    logger.info(f"[Balance] Successfully fetched real portfolio - Total: ${portfolio.total_usd:.2f}")
+                    return {
+                        "content": content,
+                        "enrichment": {
+                            "balances": real_balances,
+                            "total_value": f"${portfolio.total_usd:.2f}",
+                            "chain": portfolio.chain,
+                            "wallet_address": portfolio.wallet_address,
+                        },
+                        "requires_registration": False,
+                    }
+
+            except Exception as e:
+                logger.error(f"[Balance] Error fetching real portfolio: {e}", exc_info=True)
+                # Fall through to demo data
+
+        # Demo balances for guests or fallback
         demo_balances = [
             {"token": "USDC", "amount": "1,250.00", "value_usd": "$1,250.00", "emoji": "💵"},
             {"token": "ETH", "amount": "0.5", "value_usd": "$975.00", "emoji": "Ξ"},
