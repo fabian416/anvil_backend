@@ -244,6 +244,14 @@ class GuestHandlerService:
                         is_authenticated,
                         wallet_address,
                     )
+                # Portfolio handler (needs wallet address for authenticated users)
+                elif intent == ChatIntent.PORTFOLIO:
+                    return await self._handle_portfolio(
+                        content,
+                        language,
+                        is_authenticated,
+                        wallet_address,
+                    )
                 return await handler(content, language, is_authenticated)
             except Exception as e:
                 logger.warning(f"Handler error for {intent}: {e}")
@@ -3658,22 +3666,184 @@ class GuestHandlerService:
             "requires_registration": not is_authenticated,
         }
 
+    async def _build_real_portfolio_response(self, portfolio, language: str) -> dict[str, Any]:
+        """Build real portfolio response from on-chain data."""
+        messages = {
+            "en": {
+                "title": "💼 Your Portfolio",
+                "total_value": "Total Portfolio Value",
+                "holdings_title": "Holdings",
+                "empty_portfolio": "Your portfolio is empty. Time to start investing!",
+                "learn_more": "💡 *Track your portfolio in real-time across multiple chains and protocols.*",
+                "assets": "assets",
+            },
+            "es": {
+                "title": "💼 Tu Portafolio",
+                "total_value": "Valor Total del Portafolio",
+                "holdings_title": "Holdings",
+                "empty_portfolio": "Tu portafolio está vacío. ¡Es hora de comenzar a invertir!",
+                "learn_more": "💡 *Rastrea tu portafolio en tiempo real en múltiples cadenas y protocolos.*",
+                "assets": "activos",
+            },
+            "pt": {
+                "title": "💼 Seu Portfólio",
+                "total_value": "Valor Total do Portfólio",
+                "holdings_title": "Holdings",
+                "empty_portfolio": "Seu portfólio está vazio. Hora de começar a investir!",
+                "learn_more": "💡 *Rastreie seu portfólio em tempo real em várias chains e protocolos.*",
+                "assets": "ativos",
+            },
+            "zh": {
+                "title": "💼 您的投资组合",
+                "total_value": "投资组合总价值",
+                "holdings_title": "持仓",
+                "empty_portfolio": "您的投资组合是空的。是时候开始投资了！",
+                "learn_more": "💡 *跨多个链和协议实时追踪您的投资组合。*",
+                "assets": "资产",
+            },
+            "fr": {
+                "title": "💼 Votre Portefeuille",
+                "total_value": "Valeur Totale du Portefeuille",
+                "holdings_title": "Holdings",
+                "empty_portfolio": "Votre portefeuille est vide. Il est temps de commencer à investir!",
+                "learn_more": "💡 *Suivez votre portefeuille en temps réel sur plusieurs chaînes et protocoles.*",
+                "assets": "actifs",
+            },
+        }
+        msg = messages.get(language, messages["en"])
+
+        # Build real holdings list
+        real_holdings = []
+
+        # Add native token (ETH) if has balance
+        if portfolio.native_balance > 0:
+            token_emoji = {"ETH": "Ξ", "WETH": "Ξ"}.get(portfolio.native_symbol, "🪙")
+            allocation_pct = (portfolio.native_usd_value / portfolio.total_usd * 100) if portfolio.total_usd > 0 else 0
+            real_holdings.append({
+                "token": portfolio.native_symbol,
+                "symbol": portfolio.native_symbol,
+                "amount": portfolio.native_balance,
+                "value_usd": portfolio.native_usd_value,
+                "emoji": token_emoji,
+                "allocation_pct": allocation_pct,
+            })
+
+        # Add ERC-20 tokens
+        for token in portfolio.tokens:
+            token_symbol = token.get("symbol", "Unknown")
+            token_emoji = {
+                "USDC": "💵",
+                "USDT": "💵",
+                "DAI": "💵",
+                "WETH": "Ξ",
+                "WBTC": "₿",
+                "ETH": "Ξ",
+                "BTC": "₿",
+            }.get(token_symbol, "🪙")
+
+            token_value = token.get("usd_value", 0)
+            allocation_pct = (token_value / portfolio.total_usd * 100) if portfolio.total_usd > 0 else 0
+
+            real_holdings.append({
+                "token": token.get("name", token_symbol),
+                "symbol": token_symbol,
+                "amount": token.get("amount", 0),
+                "value_usd": token_value,
+                "emoji": token_emoji,
+                "allocation_pct": allocation_pct,
+            })
+
+        # Build holdings text
+        holdings_text = ""
+        if real_holdings:
+            for holding in real_holdings:
+                holdings_text += f"""
+{holding["emoji"]} **{holding["token"]} ({holding["symbol"]})**
+   • Amount: {holding["amount"]:,.4f} {holding["symbol"]}
+   • Value: ${holding["value_usd"]:,.2f}
+   • Allocation: {holding["allocation_pct"]:.1f}%
+"""
+
+        # Build content
+        divider = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        content = f"""{divider}{msg['title']}
+{divider}
+**📊 {msg['total_value']}**
+{divider}
+
+💰 **${portfolio.total_usd:,.2f}**
+
+{divider}**💎 {msg['holdings_title']}** ({len(real_holdings)} {msg['assets']})
+{divider}"""
+
+        if real_holdings:
+            content += holdings_text
+        else:
+            content += f"\n{msg['empty_portfolio']}\n"
+
+        content += f"\n{divider}\n{msg['learn_more']}"
+
+        logger.info(f"[Portfolio] Successfully fetched real portfolio - Total: ${portfolio.total_usd:.2f}, Holdings: {len(real_holdings)}")
+
+        return {
+            "content": content,
+            "enrichment": {
+                "portfolio": {
+                    "total_value_usd": portfolio.total_usd,
+                    "holdings_count": len(real_holdings),
+                    "chain": portfolio.chain,
+                    "wallet_address": portfolio.wallet_address,
+                },
+                "balances": [
+                    {
+                        "token": h["symbol"],
+                        "amount": h["amount"],
+                        "value_usd": h["value_usd"],
+                    }
+                    for h in real_holdings
+                ],
+                "total_value": portfolio.total_usd,
+            },
+            "requires_registration": False,
+        }
+
     async def _handle_portfolio(
         self,
         content: str,
         language: str,
         is_authenticated: bool = False,
+        wallet_address: str | None = None,
     ) -> dict[str, Any]:
         """
         Handle portfolio inquiry.
 
         For guests: Show demo portfolio with sample holdings
-        For authenticated: Delegate to actual portfolio handler
+        For authenticated: Show real on-chain portfolio with actual holdings
         """
-        logger.info(f"[Portfolio] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(f"[Portfolio] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}...")
 
-        # For guests, always show demo portfolio
-        # For authenticated users, could delegate to real portfolio handler in the future
+        # Try to fetch real portfolio for authenticated users with wallet
+        if is_authenticated and wallet_address and self._portfolio_service:
+            try:
+                from app.domain.enums.chain_type import ChainType
+
+                logger.info(f"[Portfolio] Fetching real portfolio for wallet: {wallet_address[:10]}...")
+                portfolio = await self._portfolio_service.get_portfolio_by_address(
+                    address=wallet_address,
+                    chain=ChainType.BASE,  # Default to Base chain
+                )
+
+                logger.info(f"[Portfolio] Portfolio result: {portfolio is not None}, has_value: {portfolio.has_value if portfolio else 'N/A'}, total_usd: {portfolio.total_usd if portfolio else 'N/A'}")
+
+                if portfolio:
+                    # Build real portfolio response
+                    return await self._build_real_portfolio_response(portfolio, language)
+
+            except Exception as e:
+                logger.error(f"[Portfolio] Error fetching real portfolio: {e}", exc_info=True)
+                # Fall through to demo data
+
+        # For guests or fallback, show demo portfolio
         return await self._portfolio_multistep.handle_flow(
             content=content,
             language=language,
