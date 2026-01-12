@@ -807,3 +807,498 @@ class TestAuthenticatedErrorHandling:
 
         # Should return 404 or handle gracefully
         assert response.status_code in [404, 400, 422]
+
+
+# ============================================================================
+# PHASE 1: CORE INTENT COVERAGE
+# ============================================================================
+
+
+@pytest.mark.integration
+@pytest.mark.chat
+class TestAuthenticatedHunterAI:
+    """Test Hunter AI intents for authenticated users."""
+
+    @pytest_asyncio.fixture
+    async def test_user(self, async_db_session: AsyncSession):
+        """Create a test user in the database."""
+        user, token = await AuthHelper.create_test_user_in_db(
+            db_session=async_db_session,
+            role="user",
+            email="test_hunter@example.com",
+        )
+        return user, token
+
+    @pytest_asyncio.fixture
+    async def auth_headers(self, test_user):
+        """Get authentication headers for test user."""
+        user, token = test_user
+        return AuthHelper.get_auth_headers(token)
+
+    @pytest_asyncio.fixture
+    async def conversation_id(self, test_user, async_db_session: AsyncSession):
+        """Create a new conversation for testing."""
+        user, token = test_user
+        conversation_id = str(uuid4())
+
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {
+                "id": conversation_id,
+                "user_id": user.id,
+                "title": "Hunter AI Test",
+                "status": "active",
+                "language": "en"
+            }
+        )
+        await async_db_session.commit()
+
+        return conversation_id
+
+    @pytest.mark.asyncio
+    async def test_sentiment_analysis(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test Hunter AI sentiment analysis intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "What's the sentiment for BTC?", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+
+            # Check routing
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "hunter" in intent or "sentiment" in intent
+
+    @pytest.mark.asyncio
+    async def test_price_prediction(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test Hunter AI price prediction intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Predict ETH price", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "hunter" in intent or "price" in intent or "prediction" in intent
+
+    @pytest.mark.asyncio
+    async def test_risk_signals(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test Hunter AI risk signals intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Risk signals for SOL", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "hunter" in intent or "risk" in intent
+
+    @pytest.mark.asyncio
+    async def test_trading_signals(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test Hunter AI trading signals intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Should I buy BTC?", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "hunter" in intent or "trading" in intent or "signal" in intent
+
+    @pytest.mark.asyncio
+    async def test_pattern_recognition(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test Hunter AI pattern recognition intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Chart patterns for ETH", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "hunter" in intent or "pattern" in intent
+
+    @pytest.mark.asyncio
+    async def test_portfolio_optimization(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test Hunter AI portfolio optimization intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Optimize my portfolio", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "hunter" in intent or "portfolio" in intent or "optimi" in intent
+
+
+@pytest.mark.integration
+@pytest.mark.chat
+class TestAuthenticatedULTRA:
+    """Test ULTRA intents for authenticated users."""
+
+    @pytest_asyncio.fixture
+    async def test_user(self, async_db_session: AsyncSession):
+        """Create a test user in the database."""
+        user, token = await AuthHelper.create_test_user_in_db(
+            db_session=async_db_session,
+            role="user",
+            email="test_ultra@example.com",
+        )
+        return user, token
+
+    @pytest_asyncio.fixture
+    async def auth_headers(self, test_user):
+        """Get authentication headers for test user."""
+        user, token = test_user
+        return AuthHelper.get_auth_headers(token)
+
+    @pytest_asyncio.fixture
+    async def conversation_id(self, test_user, async_db_session: AsyncSession):
+        """Create a new conversation for testing."""
+        user, token = test_user
+        conversation_id = str(uuid4())
+
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {
+                "id": conversation_id,
+                "user_id": user.id,
+                "title": "ULTRA Test",
+                "status": "active",
+                "language": "en"
+            }
+        )
+        await async_db_session.commit()
+
+        return conversation_id
+
+    @pytest.mark.asyncio
+    async def test_arbitrage_discovery(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test ULTRA arbitrage discovery intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Find arbitrage opportunities", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "ultra" in intent or "arbitrage" in intent
+
+    @pytest.mark.asyncio
+    async def test_flash_loans(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test ULTRA flash loans intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Best flash loan for USDC", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "ultra" in intent or "flash" in intent or "loan" in intent
+
+    @pytest.mark.asyncio
+    async def test_mev_protection(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test ULTRA MEV protection intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Execute with Flashbots", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "ultra" in intent or "mev" in intent or "flashbots" in intent
+
+    @pytest.mark.asyncio
+    async def test_auto_executor(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test ULTRA auto executor intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Start trading bot", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "ultra" in intent or "auto" in intent or "executor" in intent or "bot" in intent
+
+
+@pytest.mark.integration
+@pytest.mark.chat
+class TestAuthenticatedGraphRAG:
+    """Test GraphRAG intents for authenticated users."""
+
+    @pytest_asyncio.fixture
+    async def test_user(self, async_db_session: AsyncSession):
+        """Create a test user in the database."""
+        user, token = await AuthHelper.create_test_user_in_db(
+            db_session=async_db_session,
+            role="user",
+            email="test_graphrag@example.com",
+        )
+        return user, token
+
+    @pytest_asyncio.fixture
+    async def auth_headers(self, test_user):
+        """Get authentication headers for test user."""
+        user, token = test_user
+        return AuthHelper.get_auth_headers(token)
+
+    @pytest_asyncio.fixture
+    async def conversation_id(self, test_user, async_db_session: AsyncSession):
+        """Create a new conversation for testing."""
+        user, token = test_user
+        conversation_id = str(uuid4())
+
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {
+                "id": conversation_id,
+                "user_id": user.id,
+                "title": "GraphRAG Test",
+                "status": "active",
+                "language": "en"
+            }
+        )
+        await async_db_session.commit()
+
+        return conversation_id
+
+    @pytest.mark.asyncio
+    async def test_protocol_search(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test GraphRAG protocol search intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Find low-risk staking protocols", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "protocol" in intent or "search" in intent
+
+    @pytest.mark.asyncio
+    async def test_risk_assessment(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test GraphRAG risk assessment intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Is Aave safe?", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "risk" in intent or "assessment" in intent or "safe" in intent.lower()
+
+    @pytest.mark.asyncio
+    async def test_similar_protocols(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test GraphRAG similar protocols intent."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Protocols like Uniswap", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                intent = routing.get("intent", "").lower()
+                assert "similar" in intent or "protocol" in intent or "alternative" in intent
+
+
+@pytest.mark.integration
+@pytest.mark.chat
+class TestAuthenticatedAgentSquad:
+    """Test Agent Squad orchestration for authenticated users."""
+
+    @pytest_asyncio.fixture
+    async def test_user(self, async_db_session: AsyncSession):
+        """Create a test user in the database."""
+        user, token = await AuthHelper.create_test_user_in_db(
+            db_session=async_db_session,
+            role="user",
+            email="test_squad@example.com",
+        )
+        return user, token
+
+    @pytest_asyncio.fixture
+    async def auth_headers(self, test_user):
+        """Get authentication headers for test user."""
+        user, token = test_user
+        return AuthHelper.get_auth_headers(token)
+
+    @pytest_asyncio.fixture
+    async def conversation_id(self, test_user, async_db_session: AsyncSession):
+        """Create a new conversation for testing."""
+        user, token = test_user
+        conversation_id = str(uuid4())
+
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {
+                "id": conversation_id,
+                "user_id": user.id,
+                "title": "Agent Squad Test",
+                "status": "active",
+                "language": "en"
+            }
+        )
+        await async_db_session.commit()
+
+        return conversation_id
+
+    @pytest.mark.asyncio
+    async def test_specialist_task(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test specialist agent routing."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Best USDC yield strategy", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                # Should route to specialist or yield-related handler
+                intent = routing.get("intent", "").lower()
+                handler = routing.get("handler", "").lower()
+                assert any(word in intent + handler for word in ["specialist", "yield", "defi", "lending"])
+
+    @pytest.mark.asyncio
+    async def test_complex_workflow(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """Test complex workflow orchestration."""
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Create balanced portfolio strategy", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        if response.status_code in [200, 201]:
+            data = response.json()
+            routing = data.get("routing", {})
+            if routing:
+                # Should route to complex workflow or portfolio handler
+                intent = routing.get("intent", "").lower()
+                handler = routing.get("handler", "").lower()
+                assert any(word in intent + handler for word in ["portfolio", "complex", "workflow", "strategy"])
