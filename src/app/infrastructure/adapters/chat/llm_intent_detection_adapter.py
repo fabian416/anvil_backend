@@ -138,7 +138,12 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
 
 ⚠️ CRITICAL SCOPE RESTRICTION:
 Anvil ONLY handles DeFi operations, crypto trading, portfolio management, and blockchain analytics.
-If the user's query is NOT related to these topics, classify as OUT_OF_SCOPE.
+If the user's query is NOT explicitly related to these topics, classify as OUT_OF_SCOPE.
+
+⚠️ AMBIGUITY RULE:
+Single unclear words or phrases with NO crypto context → OUT_OF_SCOPE
+Examples: "bomb", "bake", "apple", "tree" → OUT_OF_SCOPE (do NOT interpret charitably)
+Must EXPLICITLY mention: crypto, DeFi, blockchain, tokens, protocols, trading, etc.
 
 Classify the user's message into ONE of these intents:
 
@@ -257,17 +262,26 @@ Examples requiring SWAP: "swap DAI to USDC", "swap WBTC for ETH", "exchange MATI
    This is for LEGITIMATE Anvil-related conversations and follow-ups.
 
 25. OUT_OF_SCOPE - Query is NOT related to DeFi, crypto, trading, or portfolio management
-   ⚠️ CRITICAL: Use this ONLY for NON-CRYPTO topics. Anvil is a DeFi platform, NOT a general assistant.
+   ⚠️ CRITICAL: Use this for ALL NON-CRYPTO topics. Anvil is a DeFi platform, NOT a general assistant.
 
    Examples of OUT_OF_SCOPE (REJECT these):
    • General knowledge: "what is the capital of France?", "who won the World Cup?"
-   • Non-crypto topics: "weather forecast", "movie recommendations", "recipe for pasta"
+   • Non-crypto topics: "weather forecast", "movie recommendations", "recipe for pasta", "bake", "cooking"
    • Personal advice: "how to get fit?", "relationship advice", "career guidance"
    • Random off-topic: "tell me a joke", "what's 2+2?", "write me a poem"
+   • Ambiguous single words: "bomb", "apple", "tree", "car" (unless clearly crypto context)
    • Basic greetings ONLY: "hello", "hi", "hey" (single message with no context)
+   • Dangerous/inappropriate: Any potentially harmful content
 
-   Decision Rule: If the query mentions crypto, DeFi, blockchain, tokens, trading, or portfolio → NOT out_of_scope
-   If unsure, prefer GENERAL_CONVERSATION over OUT_OF_SCOPE for crypto-adjacent topics.
+   ⚠️ CRITICAL RULE FOR AMBIGUOUS QUERIES:
+   If a query is a single unclear word or phrase with NO crypto context, classify as OUT_OF_SCOPE.
+   Example: "bomb" → OUT_OF_SCOPE (not "bomb cake" or trying to be helpful)
+   Example: "bake" → OUT_OF_SCOPE (not DeFi related)
+   Example: "apple" → OUT_OF_SCOPE (unless clearly about $AAPL token or Apple Pay)
+
+   Decision Rule: Query must EXPLICITLY mention crypto, DeFi, blockchain, tokens, trading, or portfolio.
+   If ambiguous or unclear → OUT_OF_SCOPE
+   Do NOT make charitable interpretations of non-crypto words.
 
 Extract entities: protocol names, token symbols, amounts, chains, categories, etc.
 
