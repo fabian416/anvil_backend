@@ -43,6 +43,7 @@ from app.domain.ports.ai.agent_gateway import AgentGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.domain.ports.audit_log_repository import AuditLogRepository
 from app.domain.ports.auth_gateway import AuthGateway
+from app.domain.ports.moonpay_token_repository import MoonPayTokenRepository
 from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.chat.ports.message_repository import MessageRepository
@@ -104,6 +105,9 @@ from app.infrastructure.adapters.user_data_mapper_sqla import (
 from app.infrastructure.adapters.user_reader_sqla import SqlaUserReader
 from app.infrastructure.adapters.wallet_reader_sqla import SqlaWalletReader
 from app.infrastructure.adapters.wallet_repository_sqla import SqlaWalletRepository
+from app.infrastructure.adapters.moonpay_token_repository_sqla import (
+    SqlaMoonPayTokenRepository,
+)
 from app.infrastructure.agents.agent_factory import AgentFactory, create_agent_factory
 from app.infrastructure.atlas.handlers.init_cities import InitCitiesHandler
 from app.infrastructure.atlas.handlers.init_countries import InitCountriesHandler
@@ -363,6 +367,13 @@ class InfrastructureProvider(Provider):
     audit_log_repo = provide(
         source=AuditLogRepositoryAdapter,
         provides=AuditLogRepository,
+        scope=Scope.REQUEST,
+    )
+
+    # MoonPay Token Repository (for storing MoonPay auth tokens after KYC)
+    moonpay_token_repo = provide(
+        source=SqlaMoonPayTokenRepository,
+        provides=MoonPayTokenRepository,
         scope=Scope.REQUEST,
     )
 

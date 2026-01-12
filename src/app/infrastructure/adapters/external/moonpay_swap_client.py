@@ -34,6 +34,14 @@ class MoonPaySwapPair:
     max_base_amount: float | None
 
 
+class MoonPayQuoteError(Exception):
+    """Error when getting a swap quote from MoonPay API."""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
+
+
 @dataclass
 class MoonPaySwapQuote:
     """Swap quote from MoonPay."""
@@ -52,6 +60,9 @@ class MoonPaySwapQuote:
     base_currency_price_usd: str
     quote_currency_price_usd: str
     expires_at: str
+    # New fields for swap execution flow
+    signature: str = ""  # Encrypted signature for execute_quote API
+    kyc_required: bool = False  # True if constraints include KycDataRequired
 
 
 class MoonPaySwapClient:
@@ -245,6 +256,15 @@ class MoonPaySwapClient:
                 except (ValueError, TypeError, ZeroDivisionError):
                     pass
 
+            # Extract signature and constraints from MoonPay response
+            signature = data.get("signature", "")
+            constraints = data.get("constraints", [])
+            kyc_required = any(
+                c.get("type") == "KycDataRequired" 
+                for c in constraints 
+                if isinstance(c, dict)
+            )
+            
             quote = MoonPaySwapQuote(
                 id=data.get("id", ""),
                 pair_name=data.get("pairName", pair_name),
@@ -260,6 +280,8 @@ class MoonPaySwapClient:
                 base_currency_price_usd=data.get("baseCurrencyPriceInUsd", "0"),
                 quote_currency_price_usd=data.get("quoteCurrencyPriceInUsd", "0"),
                 expires_at=data.get("expiresAt", ""),
+                signature=signature,
+                kyc_required=kyc_required,
             )
 
             logger.info(
@@ -285,7 +307,14 @@ class MoonPaySwapClient:
             logger.error(
                 f"MoonPay API error getting quote: {e.response.status_code} - {e.response.text}"
             )
-            raise
+            # Extract the specific error message from MoonPay's response
+            try:
+                error_data = e.response.json()
+                moonpay_message = error_data.get("message", str(e))
+            except Exception:
+                moonpay_message = str(e)
+            # Raise a more descriptive error
+            raise MoonPayQuoteError(moonpay_message) from e
         except Exception as e:
             logger.error(f"MoonPay quote request failed: {e}")
             raise
@@ -329,56 +358,79 @@ class MoonPaySwapClient:
         """
         return f"{from_token.lower()}-{to_token.lower()}"
 
-    async def execute_swap(
+    async def execute_quote(
         self,
-        quote_id: str,
-        wallet_address: str,
+        customer_token: str,
         signature: str,
+        base_wallet_address: str,
+        quote_wallet_address: str,
+        refund_wallet_address: str | None = None,
         external_transaction_id: str | None = None,
     ) -> dict:
         """
-        Execute a swap using a quote.
+        Execute a swap using a quote signature and customer token.
 
-        Note: This endpoint requires MoonPay customer authentication.
-        In production, this would be called from the frontend with the
-        customer's MoonPay auth token.
-
-        For backend-initiated swaps (if supported), this provides the structure.
+        This is the OFFICIAL MoonPay swap execution endpoint that requires
+        the customer's authentication token obtained from the swapsCustomerSetup flow.
 
         Args:
-            quote_id: The ID of the quote to execute
-            wallet_address: The wallet address for the swap
+            customer_token: Bearer token from MoonPay swapsCustomerSetup onAuthToken
             signature: The signature from the quote response
+            base_wallet_address: Wallet address for the base currency (sending from)
+            quote_wallet_address: Wallet address for the quote currency (receiving to)
+            refund_wallet_address: Wallet address for refunds (optional, defaults to base)
             external_transaction_id: Optional external transaction ID for tracking
 
         Returns:
-            Swap execution response with transaction details
+            Swap execution response with:
+            - transactionId: The swap transaction ID
+            - status: Current status
+            - depositWalletAddress: Address to send the deposit to
+            - baseCurrencyAmount: Amount to deposit
+            - quoteCurrencyAmount: Amount to receive
+
+        Raises:
+            httpx.HTTPStatusError: If the API returns an error (401 = invalid token)
         """
         try:
             payload = {
                 "signature": signature,
                 "walletAddresses": {
-                    "depositAddress": wallet_address,
-                    "withdrawAddress": wallet_address,
+                    "baseCurrency": {
+                        "address": base_wallet_address,
+                        "tag": None,
+                    },
+                    "quoteCurrency": {
+                        "address": quote_wallet_address,
+                        "tag": None,
+                    },
+                    "refund": {
+                        "address": refund_wallet_address or base_wallet_address,
+                        "tag": None,
+                    },
                 },
             }
 
             if external_transaction_id:
                 payload["externalTransactionId"] = external_transaction_id
 
-            # Note: MoonPay's execute_quote endpoint requires customer auth
-            # This is a placeholder for the API structure
+            logger.info(f"[MoonPay] Executing quote with signature: {signature[:20]}...")
+
             response = await self._client.post(
                 "/swap/execute_quote",
                 json=payload,
                 headers={
-                    "Authorization": f"Bearer {self._api_key}",  # Would need customer token
+                    "Authorization": f"Bearer {customer_token}",
                 },
             )
             response.raise_for_status()
             data = response.json()
 
-            logger.info(f"MoonPay swap executed: {data.get('transactionId', 'unknown')}")
+            logger.info(
+                f"[MoonPay] Swap executed successfully: "
+                f"transactionId={data.get('transactionId', 'unknown')}, "
+                f"depositAddress={data.get('depositWalletAddress', {}).get('address', 'unknown')}"
+            )
             return data
 
         except httpx.HTTPStatusError as e:
@@ -390,32 +442,46 @@ class MoonPaySwapClient:
             logger.error(f"MoonPay swap execution failed: {e}")
             raise
 
-    async def get_swap_status(self, swap_id: str) -> dict:
+    async def get_transaction(
+        self,
+        customer_token: str,
+        transaction_id: str,
+    ) -> dict:
         """
         Get the status of a swap transaction.
 
         Args:
-            swap_id: The ID of the swap transaction
+            customer_token: Bearer token from MoonPay swapsCustomerSetup
+            transaction_id: The ID of the swap transaction
 
         Returns:
-            Swap status with transaction details
+            Transaction details including:
+            - id: Transaction ID
+            - status: Current status (pending, waitingForDeposit, executingSwap, completed, failed)
+            - baseCurrencyAmount: Amount sent
+            - quoteCurrencyAmount: Amount to receive
+            - depositWalletAddress: Address where deposit was sent
+            - createdAt: Creation timestamp
+            - updatedAt: Last update timestamp
         """
         try:
             response = await self._client.get(
-                f"/swap/transactions/{swap_id}",
-                params={"apiKey": self._api_key},
+                f"/swap/transaction/{transaction_id}",
+                headers={
+                    "Authorization": f"Bearer {customer_token}",
+                },
             )
             response.raise_for_status()
             data = response.json()
 
-            logger.info(f"MoonPay swap status: {swap_id} -> {data.get('status', 'unknown')}")
+            logger.info(f"[MoonPay] Transaction status: {transaction_id} -> {data.get('status', 'unknown')}")
             return data
 
         except httpx.HTTPStatusError as e:
             logger.error(
-                f"MoonPay API error getting swap status: {e.response.status_code} - {e.response.text}"
+                f"MoonPay API error getting transaction: {e.response.status_code} - {e.response.text}"
             )
             raise
         except Exception as e:
-            logger.error(f"MoonPay swap status request failed: {e}")
+            logger.error(f"MoonPay transaction request failed: {e}")
             raise

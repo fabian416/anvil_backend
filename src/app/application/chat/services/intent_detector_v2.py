@@ -944,6 +944,39 @@ class IntentDetectorV2:
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
+
+        # Swap patterns with token mention (without full command structure)
+        # Examples: "intercambiar USDC", "cambiar ETH", "swap bitcoin", "convertir usdt"
+        # These should trigger the multi-turn MoonPay swap flow
+        swap_with_token_patterns = [
+            # Spanish: intercambiar/cambiar/convertir + token
+            rf"\b(intercambiar|cambiar|convertir|canjear)\s+{token_pattern}\b",
+            rf"\b(quiero|necesito)\s+(intercambiar|cambiar|convertir)\s+{token_pattern}\b",
+            # English: swap/exchange/convert + token (single token, triggers multi-turn)
+            rf"\b(swap|exchange|convert|trade)\s+{token_pattern}\b",
+            rf"\b(i want to|want to|wanna)\s+(swap|exchange|convert)\s+{token_pattern}\b",
+            # Portuguese: trocar/converter + token
+            rf"\b(trocar|converter)\s+{token_pattern}\b",
+            rf"\b(quero|preciso)\s+(trocar|converter)\s+{token_pattern}\b",
+        ]
+        for pattern in swap_with_token_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                return IntentResult(
+                    intent=ChatIntentV2.MOONPAY_SWAP,
+                    confidence=0.88,
+                    handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
+                )
+
+        # Generic swap keywords (lowest priority, catches "intercambiar", "swap", etc.)
+        # These trigger multi-turn flow when user mentions swap action without details
+        swap_generic_keywords = self._get_all_keywords("swap")
+        for kw in swap_generic_keywords:
+            if kw in message:
+                return IntentResult(
+                    intent=ChatIntentV2.MOONPAY_SWAP,
+                    confidence=0.80,
+                    handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
+                )
         
         # Lending patterns (improved to handle amounts and variations)
         # Use regex patterns to allow numbers and intermediate words
