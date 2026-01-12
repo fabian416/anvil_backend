@@ -110,6 +110,7 @@ class GuestHandlerService:
         previous_send_info: dict | None = None,
         previous_buy_info: dict | None = None,
         user_id: int | None = None,
+        wallet_address: str | None = None,
     ) -> dict[str, Any]:
         """
         Handle intent with real data.
@@ -1703,24 +1704,24 @@ class GuestHandlerService:
         logger.info(f"[Lending] Continuation step: {continuation_step}")
         logger.info(f"[Lending] Previous lending info: {previous_lending_info}")
 
-        # For guests, use multi-step flow
-        if not is_authenticated:
-            if self._lending_multistep:
-                try:
-                    result = await self._lending_multistep.handle_flow(
-                        content=content,
-                        language=language,
-                        is_authenticated=is_authenticated,
-                        continuation_step=continuation_step,
-                        previous_lending_info=previous_lending_info,
-                    )
-                    logger.info(f"[Lending] Multi-step handler returned: {result.keys()}")
-                    return result
-                except Exception as e:
-                    logger.error(f"[Lending] Multi-step handler error: {e}", exc_info=True)
-                    # Fall through to fallback
+        # Use multi-step flow for both guests and authenticated users
+        if self._lending_multistep:
+            try:
+                result = await self._lending_multistep.handle_flow(
+                    content=content,
+                    language=language,
+                    is_authenticated=is_authenticated,
+                    continuation_step=continuation_step,
+                    previous_lending_info=previous_lending_info,
+                    wallet_address=wallet_address,
+                )
+                logger.info(f"[Lending] Multi-step handler returned: {result.keys()}")
+                return result
+            except Exception as e:
+                logger.error(f"[Lending] Multi-step handler error: {e}", exc_info=True)
+                # Fall through to fallback
 
-        # For authenticated users, use real LendingHandler (Morpho API)
+        # Fallback: For authenticated users, use real LendingHandler (Morpho API)
         if self._lending_handler and is_authenticated:
             try:
                 # Handle continuation from previous lending query

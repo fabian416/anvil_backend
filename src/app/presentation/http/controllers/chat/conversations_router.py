@@ -568,7 +568,18 @@ def create_conversations_router() -> APIRouter:
             current_user=current_user,
             language=request_body.language,
         )
-        
+
+        # Get wallet address for authenticated users
+        wallet_address = None
+        if user.is_authenticated:
+            try:
+                app_user = await current_user.get_current_user()
+                if app_user.primary_wallet_address:
+                    wallet_address = str(app_user.primary_wallet_address.value)
+            except (AuthenticationError, AuthorizationError):
+                # No wallet address available
+                pass
+
         # Check if user is blocked
         if user.is_blocked:
             raise HTTPException(
@@ -830,6 +841,7 @@ def create_conversations_router() -> APIRouter:
                 is_authenticated=not user.is_guest,
                 continuation_step=continuation_step,
                 previous_lending_info=previous_lending_info,
+                wallet_address=wallet_address,
             )
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")

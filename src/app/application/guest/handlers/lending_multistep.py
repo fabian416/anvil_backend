@@ -40,6 +40,7 @@ class LendingMultiStepHandler:
         is_authenticated: bool,
         continuation_step: str | None = None,
         previous_lending_info: dict | None = None,
+        wallet_address: str | None = None,
     ) -> dict[str, Any]:
         """
         Handle multi-step lending flow.
@@ -84,7 +85,7 @@ class LendingMultiStepHandler:
             confirmation = self._parse_confirmation(content)
 
             if confirmation:
-                return await self._execute_deposit(asset, amount, language, is_authenticated)
+                return await self._execute_deposit(asset, amount, language, is_authenticated, wallet_address)
             elif confirmation is False:  # Explicit cancellation
                 return await self._cancel_deposit(language)
             else:
@@ -401,7 +402,7 @@ class LendingMultiStepHandler:
         }
 
     async def _execute_deposit(
-        self, asset: str, amount: str, language: str, is_authenticated: bool
+        self, asset: str, amount: str, language: str, is_authenticated: bool, wallet_address: str | None = None
     ) -> dict[str, Any]:
         """Step 4: Execute deposit (requires authentication)."""
         asset_info = next(
@@ -409,6 +410,84 @@ class LendingMultiStepHandler:
         )
         emoji = asset_info["emoji"] if asset_info else "💰"
 
+        # For authenticated users with wallet, show transaction details
+        if is_authenticated and wallet_address:
+            messages = {
+                "en": {
+                    "title": f"✅ Ready to Deposit!",
+                    "summary": f"You're depositing **{amount} {asset}** into a Morpho vault.",
+                    "wallet_label": "Your Wallet",
+                    "next_steps": "Transaction Details",
+                    "step1": "Approve the vault contract to spend your {asset}",
+                    "step2": "Deposit {amount} {asset} into the vault",
+                    "step3": "Start earning yield immediately",
+                    "cta": "Ready to execute the transaction!",
+                },
+                "es": {
+                    "title": f"✅ ¡Listo para Depositar!",
+                    "summary": f"Vas a depositar **{amount} {asset}** en un vault de Morpho.",
+                    "wallet_label": "Tu Billetera",
+                    "next_steps": "Detalles de Transacción",
+                    "step1": "Aprobar el contrato del vault para gastar tu {asset}",
+                    "step2": "Depositar {amount} {asset} en el vault",
+                    "step3": "Comenzar a ganar rendimiento inmediatamente",
+                    "cta": "¡Listo para ejecutar la transacción!",
+                },
+                "pt": {
+                    "title": f"✅ Pronto para Depositar!",
+                    "summary": f"Você está depositando **{amount} {asset}** em um vault Morpho.",
+                    "wallet_label": "Sua Carteira",
+                    "next_steps": "Detalhes da Transação",
+                    "step1": "Aprovar o contrato do vault para gastar seu {asset}",
+                    "step2": "Depositar {amount} {asset} no vault",
+                    "step3": "Começar a ganhar rendimento imediatamente",
+                    "cta": "Pronto para executar a transação!",
+                },
+                "zh": {
+                    "title": f"✅ 准备存款!",
+                    "summary": f"您将存入 **{amount} {asset}** 到 Morpho 金库。",
+                    "wallet_label": "您的钱包",
+                    "next_steps": "交易详情",
+                    "step1": "批准金库合约使用您的 {asset}",
+                    "step2": "存入 {amount} {asset} 到金库",
+                    "step3": "立即开始赚取收益",
+                    "cta": "准备执行交易!",
+                },
+            }
+
+            msg = messages.get(language, messages["en"])
+
+            content = f"""🎉 {msg['title']}
+
+{msg['summary']}
+
+**{msg['wallet_label']}:** `{wallet_address[:6]}...{wallet_address[-4:]}`
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**{msg['next_steps']}**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ {msg['step1'].format(asset=asset)}
+2. 💰 {msg['step2'].format(amount=amount, asset=asset)}
+3. {emoji} {msg['step3']}
+
+👉 **{msg['cta']}**
+"""
+
+            return {
+                "content": content,
+                "pending_action": None,
+                "lending_info": None,
+                "enrichment": {
+                    "lending_flow": "execution_authenticated",
+                    "asset": asset,
+                    "amount": amount,
+                    "wallet_address": wallet_address,
+                },
+                "requires_registration": False,
+            }
+
+        # For guests, show signup CTA
         messages = {
             "en": {
                 "title": f"✅ Deposit Confirmed!",
