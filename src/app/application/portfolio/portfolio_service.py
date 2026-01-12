@@ -492,13 +492,13 @@ class PortfolioService:
         Returns:
             PortfolioDTO or None.
         """
-        # Try to find wallet by address
-        wallet = await self._wallet_repo.get_by_address(address)
-
-        if wallet:
-            return await self.get_current_portfolio(
-                wallet.id_, chain, save_snapshot=save_snapshot
-            )
+        # Try to find wallet by address (if wallet_repo is available)
+        if self._wallet_repo:
+            wallet = await self._wallet_repo.get_by_address(address)
+            if wallet:
+                return await self.get_current_portfolio(
+                    wallet.id_, chain, save_snapshot=save_snapshot
+                )
 
         # Calculate without wallet (no persistence)
         rpc_url = self._get_rpc_url(chain)
