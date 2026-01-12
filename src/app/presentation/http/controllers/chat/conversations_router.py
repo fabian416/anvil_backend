@@ -309,7 +309,16 @@ def create_conversations_router() -> APIRouter:
         response_model=ConversationWithMessagesResponse,
         status_code=status.HTTP_200_OK,
         summary="Get Conversation",
-        description="Get a conversation with its messages.",
+        description="""
+        Get a conversation with its messages.
+
+        **Query Parameters:**
+        - `limit`: Optional. Maximum number of messages to return (default: 50, max: 100)
+
+        **Example:**
+        - `GET /api/v1/conversations/{id}` - Returns conversation with last 50 messages
+        - `GET /api/v1/conversations/{id}?limit=10` - Returns conversation with last 10 messages
+        """,
     )
     @inject
     async def get_conversation(
@@ -318,18 +327,31 @@ def create_conversations_router() -> APIRouter:
         user_service: FromDishka[UserService],
         current_user: FromDishka[CurrentUserService],
         conversation_service: FromDishka[ConversationService],
+        limit: int = 50,
     ) -> ConversationWithMessagesResponse:
-        """Get conversation with messages."""
+        """Get conversation with messages.
+
+        Args:
+            conversation_id: The conversation UUID
+            limit: Maximum number of messages to return (default: 50, max: 100)
+        """
+        # Validate and cap the limit
+        if limit < 1:
+            limit = 1
+        elif limit > 100:
+            limit = 100
+
         user = await _resolve_chat_user(
             http_request=http_request,
             user_service=user_service,
             current_user=current_user,
         )
-        
+
         # Get conversation with messages
         result = await conversation_service.get_with_messages(
             conversation_id=conversation_id,
             user_id=user.id,
+            message_limit=limit,
         )
         
         if not result:
