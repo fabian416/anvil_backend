@@ -3383,8 +3383,10 @@ class GuestHandlerService:
                     chain=ChainType.BASE,  # Default to Base chain
                 )
 
-                if portfolio and portfolio.has_value:
-                    # Build real balances list
+                logger.info(f"[Balance] Portfolio result: {portfolio is not None}, has_value: {portfolio.has_value if portfolio else 'N/A'}, total_usd: {portfolio.total_usd if portfolio else 'N/A'}")
+
+                if portfolio:
+                    # Build real balances list (even if empty for authenticated users)
                     real_balances = []
 
                     # Add native token (ETH) if has balance

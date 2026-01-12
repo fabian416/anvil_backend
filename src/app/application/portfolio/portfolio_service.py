@@ -503,11 +503,18 @@ class PortfolioService:
         # Calculate without wallet (no persistence)
         rpc_url = self._get_rpc_url(chain)
         if not rpc_url:
+            logger.warning(f"No RPC URL for chain {chain.value}")
             return None
+
+        logger.info(f"Fetching portfolio for {address[:10]}... on {chain.value} via {rpc_url}")
 
         # Fetch native balance
         native_balance = await self._fetch_native_balance(rpc_url, address)
+        logger.info(f"Native balance: {native_balance} {chain.value}")
+
         eth_price = await self._fetch_eth_price()
+        logger.info(f"ETH price: ${eth_price}")
+
         native_usd_value = float(native_balance * eth_price) if eth_price else None
 
         # Get token configs
