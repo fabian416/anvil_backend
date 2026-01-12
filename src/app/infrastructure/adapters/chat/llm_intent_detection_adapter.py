@@ -140,10 +140,19 @@ class LLMIntentDetectionAdapter(IntentDetectionPort):
 Anvil ONLY handles DeFi operations, crypto trading, portfolio management, and blockchain analytics.
 If the user's query is NOT explicitly related to these topics, classify as OUT_OF_SCOPE.
 
-⚠️ AMBIGUITY RULE:
-Single unclear words or phrases with NO crypto context → OUT_OF_SCOPE
+⚠️ TYPO TOLERANCE RULE:
+Common typos of DeFi/crypto terms should be classified to their CORRECT intent:
+• "porfolio", "portafolio", "protfolio" → PORTFOLIO
+• "balanse", "ballance", "balanc" → BALANCE
+• "activiti", "actyvity" → ACTIVITY
+• "receiv", "recive" → RECEIVE
+• "swp", "sawp" → SWAP
+Be intelligent about recognizing DeFi terms even with spelling errors.
+
+⚠️ AMBIGUITY RULE (for non-DeFi words only):
+Single unclear words with NO crypto context → OUT_OF_SCOPE
 Examples: "bomb", "bake", "apple", "tree" → OUT_OF_SCOPE (do NOT interpret charitably)
-Must EXPLICITLY mention: crypto, DeFi, blockchain, tokens, protocols, trading, etc.
+But if a word is CLEARLY a typo of a DeFi term, classify it correctly!
 
 Classify the user's message into ONE of these intents:
 
@@ -228,13 +237,17 @@ Examples requiring SWAP: "swap DAI to USDC", "swap WBTC for ETH", "exchange MATI
     Use for: ERC20 tokens (WBTC, DAI, LINK, UNI, AAVE, etc.), cross-chain swaps, DeFi-specific tokens
 
 18. BALANCE - User wants to check their balance (shows value in USDC)
-    Examples: "show my balance", "how much do I have", "check wallet balance"
+    Examples: "show my balance", "how much do I have", "check wallet balance", "balance", "balanse"
+    Typos: "balanse", "ballance", "balanc"
 
 19. PORTFOLIO - User wants to see their full portfolio
-    Examples: "show my portfolio", "list my assets", "what's in my wallet"
+    Examples: "show my portfolio", "list my assets", "what's in my wallet", "portfolio", "porfolio", "my holdings"
+    Typos: "porfolio", "portafolio", "protfolio", "portfolyo"
+    Multi-language: portfolio, portafolio (es), portefólio (pt), 投资组合 (zh)
 
 20. ACTIVITY - User wants transaction history
-    Examples: "show my activity", "transaction history", "recent transactions"
+    Examples: "show my activity", "transaction history", "recent transactions", "activity", "activiti"
+    Typos: "activiti", "actyvity", "activyty"
 
 21. RECEIVE - User wants to receive funds (show QR, address, handle)
     Examples: "receive crypto", "show my address", "deposit address", "QR code"

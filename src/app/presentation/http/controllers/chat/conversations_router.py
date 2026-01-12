@@ -1057,11 +1057,16 @@ def create_conversations_router() -> APIRouter:
 - Do NOT engage with: general knowledge, baking, cooking, weather, jokes, personal advice, or any non-crypto topics
 - Be strict about scope - when in doubt, decline politely
 
+⚠️ CONTEXT ISOLATION:
+- If conversation history contains previous OUT_OF_SCOPE rejections (non-crypto topics), IGNORE them completely
+- Do NOT reference or connect current query to previous rejected topics
+- Treat each DeFi query independently - do not mix crypto questions with previous off-topic context
+
 For valid DeFi/crypto questions:
 - Be concise, accurate, and friendly
 - If you don't know something, say so
 - Respond in the same language the user uses
-- Use conversation history for context"""
+- Use conversation history for context ONLY for DeFi-related exchanges"""
                     
                     # Build user message with context if available
                     user_prompt = request_body.content
