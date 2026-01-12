@@ -5,6 +5,7 @@ authenticated users through context detection and polymorphic handling.
 """
 import logging
 from typing import Optional, Annotated
+from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Depends, Header, Request
 from pydantic import BaseModel, Field
 
@@ -14,7 +15,7 @@ from app.domain.chat.value_objects import (
     UserContext,
 )
 from app.application.chat.handlers.unified_chat_handler import UnifiedChatHandler
-from app.domain.user.entities import User
+from app.domain.entities.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -185,29 +186,6 @@ async def get_client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-async def get_unified_chat_handler(
-    # Dependencies will be injected here by Dishka
-    # For now, this is a placeholder that will be implemented in Day 2-3
-) -> UnifiedChatHandler:
-    """Get unified chat handler with all dependencies injected.
-
-    This dependency will be properly configured with Dishka dependency
-    injection in Day 2-3 implementation phase.
-
-    Returns:
-        Configured UnifiedChatHandler instance
-
-    TODO: Implement Dishka dependency injection:
-        - Get guest command handlers from container
-        - Get authenticated command handlers from container
-        - Get cache from container
-        - Get Hunter AI service from container
-    """
-    # TODO: Replace with Dishka container resolution
-    raise NotImplementedError(
-        "UnifiedChatHandler dependency injection not yet configured. "
-        "Will be implemented in Day 2-3 with Dishka integration."
-    )
 
 
 # ============================================================================
@@ -278,12 +256,13 @@ async def get_unified_chat_handler(
         },
     },
 )
+@inject
 async def universal_chat(
     request_data: ChatRequest,
     request: Request,
     user: Annotated[Optional[User], Depends(get_optional_user)],
     ip_address: Annotated[str, Depends(get_client_ip)],
-    handler: Annotated[UnifiedChatHandler, Depends(get_unified_chat_handler)],
+    handler: FromDishka[UnifiedChatHandler],
 ) -> ChatResponse:
     """Universal chat endpoint for guest and authenticated users.
 
@@ -334,8 +313,11 @@ async def universal_chat(
     context: UserContext
     if user:
         # Authenticated user - create authenticated context
+        # Handle UserId value object (extract integer value)
+        user_id_int = user.id.value if hasattr(user.id, 'value') else int(user.id)
+
         context = AuthenticatedContext(
-            user_id=user.id,
+            user_id=user_id_int,
             email=user.email,
             subscription_tier=getattr(user, "subscription_tier", "free"),
         )
@@ -343,7 +325,7 @@ async def universal_chat(
         logger.debug(
             f"Created authenticated context",
             extra={
-                "user_id": str(user.id),
+                "user_id": user_id_int,
                 "email": user.email,
                 "subscription_tier": context.subscription_tier,
             },
@@ -393,11 +375,12 @@ async def universal_chat(
     ),
     deprecated=True,
 )
+@inject
 async def guest_chat_legacy(
     request_data: ChatRequest,
     request: Request,
     ip_address: Annotated[str, Depends(get_client_ip)],
-    handler: Annotated[UnifiedChatHandler, Depends(get_unified_chat_handler)],
+    handler: FromDishka[UnifiedChatHandler],
 ) -> ChatResponse:
     """Legacy guest chat endpoint for backward compatibility.
 

@@ -100,16 +100,19 @@ class GuestContext(UserContext):
 
 @dataclass(frozen=True)
 class AuthenticatedContext(UserContext):
-    """Authenticated user context (UUID-based identification).
+    """Authenticated user context (legacy INTEGER user_id).
 
     Immutable context for authenticated users with:
-    - UUID-based identification
+    - Legacy INTEGER user_id (from users table)
     - Higher rate limits (1000-10000 messages/hour)
     - Permanent data retention
     - Premium feature access based on subscription tier
+
+    Note: This stores the legacy INTEGER user_id from the users table.
+    The chat_users table creates a UUID bridge to this legacy ID.
     """
 
-    user_id: UUID
+    user_id: int  # Legacy users table ID (INTEGER)
     email: str
     subscription_tier: str = "free"  # free, premium, enterprise
 

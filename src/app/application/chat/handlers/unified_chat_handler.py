@@ -14,13 +14,15 @@ from app.domain.chat.value_objects import (
     AuthenticatedContext,
     FeatureFlags,
 )
-from app.application.guest.commands.get_or_create_user import (
-    GetOrCreateGuestUserCommand,
+from app.application.chat.commands.get_or_create_chat_user import (
+    GetOrCreateChatUserCommand,
 )
-from app.application.guest.commands.get_or_create_conversation import (
-    GetOrCreateActiveConversationCommand,
+from app.application.chat.commands.get_or_create_chat_conversation import (
+    GetOrCreateChatConversationCommand,
 )
-from app.application.guest.commands.create_message import CreateGuestMessageCommand
+from app.application.chat.commands.create_chat_message import (
+    CreateChatMessageCommand,
+)
 from app.infrastructure.caching.guest_cache import GuestCache
 
 logger = logging.getLogger(__name__)
@@ -49,38 +51,41 @@ class UnifiedChatHandler:
 
     def __init__(
         self,
-        # Command handlers for guest storage
-        get_or_create_guest_user: GetOrCreateGuestUserCommand,
-        get_or_create_guest_conversation: GetOrCreateActiveConversationCommand,
-        create_guest_message: CreateGuestMessageCommand,
+        # Command handlers for guest storage (optional - for backward compatibility)
+        get_or_create_guest_user: Any = None,
+        get_or_create_guest_conversation: Any = None,
+        create_guest_message: Any = None,
 
-        # TODO: Add command handlers for authenticated storage
-        # get_or_create_chat_user: GetOrCreateChatUserCommand,
-        # get_or_create_chat_conversation: GetOrCreateChatConversationCommand,
-        # create_chat_message: CreateChatMessageCommand,
+        # Command handlers for authenticated storage
+        get_or_create_chat_user: Optional[GetOrCreateChatUserCommand] = None,
+        get_or_create_chat_conversation: Optional[GetOrCreateChatConversationCommand] = None,
+        create_chat_message: Optional[CreateChatMessageCommand] = None,
 
         # Shared infrastructure
-        cache: GuestCache,
-        hunter_service: Any,  # GuestHandlerService for Hunter AI processing
+        cache: Any = None,  # GuestCache
+        hunter_service: Any = None,  # GuestHandlerService for Hunter AI processing
     ):
         """Initialize unified chat handler.
 
         Args:
-            get_or_create_guest_user: Guest user command handler
-            get_or_create_guest_conversation: Guest conversation command
-            create_guest_message: Guest message command
+            get_or_create_guest_user: Guest user command handler (optional)
+            get_or_create_guest_conversation: Guest conversation command (optional)
+            create_guest_message: Guest message command (optional)
+            get_or_create_chat_user: Authenticated user command handler
+            get_or_create_chat_conversation: Authenticated conversation command
+            create_chat_message: Authenticated message command
             cache: Redis cache for Hunter AI responses
             hunter_service: Hunter AI processing service
         """
-        # Guest storage handlers
+        # Guest storage handlers (optional)
         self._get_or_create_guest_user = get_or_create_guest_user
         self._get_or_create_guest_conversation = get_or_create_guest_conversation
         self._create_guest_message = create_guest_message
 
-        # TODO: Authenticated storage handlers
-        # self._get_or_create_chat_user = get_or_create_chat_user
-        # self._get_or_create_chat_conversation = get_or_create_chat_conversation
-        # self._create_chat_message = create_chat_message
+        # Authenticated storage handlers
+        self._get_or_create_chat_user = get_or_create_chat_user
+        self._get_or_create_chat_conversation = get_or_create_chat_conversation
+        self._create_chat_message = create_chat_message
 
         # Shared infrastructure
         self._cache = cache
@@ -280,11 +285,26 @@ class UnifiedChatHandler:
 
         elif isinstance(context, AuthenticatedContext):
             # Authenticated user - use chat storage
-            # TODO: Implement authenticated storage handlers
-            raise NotImplementedError(
-                "Authenticated user storage not yet implemented. "
-                "Will be added in Day 2-3 implementation phase."
+            if not self._get_or_create_chat_user or not self._get_or_create_chat_conversation:
+                raise NotImplementedError(
+                    "Authenticated chat handlers not configured. "
+                    "Ensure get_or_create_chat_user and get_or_create_chat_conversation "
+                    "are provided during initialization."
+                )
+
+            # Get or create chat user (bridge to legacy users table)
+            chat_user = await self._get_or_create_chat_user.execute(
+                user_id=context.user_id,  # Legacy INTEGER user_id
+                email=context.email,
+                subscription_tier=context.subscription_tier,
             )
+
+            # Get or create conversation
+            conversation = await self._get_or_create_chat_conversation.execute(
+                chat_user.id_, language
+            )
+
+            return conversation.id_
 
         else:
             raise ValueError(f"Unknown context type: {type(context)}")
@@ -328,10 +348,21 @@ class UnifiedChatHandler:
 
         elif isinstance(context, AuthenticatedContext):
             # Authenticated user - use chat storage
-            # TODO: Implement authenticated storage
-            raise NotImplementedError(
-                "Authenticated user storage not yet implemented"
+            if not self._create_chat_message:
+                raise NotImplementedError(
+                    "Authenticated chat message handler not configured. "
+                    "Ensure create_chat_message is provided during initialization."
+                )
+
+            message = await self._create_chat_message.execute(
+                conversation_id=conversation_id,
+                role=role,
+                content=content,
+                intent=intent,
+                enrichment=enrichment,
             )
+
+            return str(message.id_)
 
         else:
             raise ValueError(f"Unknown context type: {type(context)}")
