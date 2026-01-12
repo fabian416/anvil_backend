@@ -415,23 +415,50 @@ class MoonPaySwapFlowHandler:
         msgs = SWAP_FLOW_MESSAGES.get(language, SWAP_FLOW_MESSAGES["en"])
 
         try:
+            quote = {}
+            use_demo_quote = False
+            
             # Get quote from MoonPay
             if self._moonpay_handler:
                 logger.info(f"[MOONPAY_SWAP] Calling MoonPay API for quote: {swap_info.from_token} -> {swap_info.to_token}, amount: {swap_info.amount}")
-                quote_result = await self._moonpay_handler.get_swap_quote(
-                    from_currency=swap_info.from_token.lower(),
-                    to_currency=swap_info.to_token.lower(),
-                    amount=swap_info.amount,
-                    language=language,
-                )
-                # MoonPaySwapHandler returns quote dict with these fields:
-                # quote_amount, exchange_rate, network_fee_usd, expires_at
-                quote = quote_result.quote if hasattr(quote_result, "quote") and quote_result.quote else {}
-                logger.info(f"[MOONPAY_SWAP] MoonPay quote received: {quote}")
+                try:
+                    quote_result = await self._moonpay_handler.get_swap_quote(
+                        from_currency=swap_info.from_token.lower(),
+                        to_currency=swap_info.to_token.lower(),
+                        amount=swap_info.amount,
+                        language=language,
+                    )
+                    # MoonPaySwapHandler returns quote dict with these fields:
+                    # quote_amount, exchange_rate, network_fee_usd, expires_at
+                    quote = quote_result.quote if hasattr(quote_result, "quote") and quote_result.quote else {}
+                    logger.info(f"[MOONPAY_SWAP] MoonPay quote received: {quote}")
+                    
+                    # Validate the quote has meaningful data
+                    quote_amount_raw = quote.get("quote_amount") or quote.get("quoteCurrencyAmount") or "0"
+                    try:
+                        quote_amount_float = float(quote_amount_raw)
+                        if quote_amount_float == 0:
+                            logger.warning(
+                                f"[MOONPAY_SWAP] MoonPay returned 0 quote amount for {swap_info.from_token}->{swap_info.to_token}. "
+                                "Using demo quote as fallback."
+                            )
+                            use_demo_quote = True
+                    except (ValueError, TypeError):
+                        logger.warning(f"[MOONPAY_SWAP] Invalid quote_amount: {quote_amount_raw}. Using demo quote.")
+                        use_demo_quote = True
+                        
+                except Exception as api_error:
+                    logger.warning(f"[MOONPAY_SWAP] MoonPay API error: {api_error}. Using demo quote as fallback.")
+                    use_demo_quote = True
             else:
                 # Demo quote if no handler available
                 logger.warning("[MOONPAY_SWAP] No MoonPay handler available, using demo quote")
+                use_demo_quote = True
+
+            # Use demo quote if needed
+            if use_demo_quote:
                 quote = self._get_demo_quote(swap_info)
+                logger.info(f"[MOONPAY_SWAP] Using demo quote: {quote}")
 
             # Extract quote data - handle both MoonPay API format and demo format
             # MoonPaySwapHandler returns: quote_amount, exchange_rate, network_fee_usd
@@ -453,6 +480,19 @@ class MoonPaySwapFlowHandler:
             )
             quote_id = quote.get("id", f"quote-{datetime.utcnow().timestamp()}")
             expires_at = quote.get("expires_at") or quote.get("expiresAt") or (datetime.utcnow() + timedelta(minutes=1)).isoformat()
+            
+            # Final validation - ensure we have valid amounts
+            try:
+                quote_amount_float = float(quote_amount)
+                if quote_amount_float <= 0:
+                    # Force recalculation using demo rate
+                    quote_amount = self._calculate_demo_output(swap_info)
+                    exchange_rate = self._get_demo_rate(swap_info.from_token, swap_info.to_token)
+                    logger.warning(f"[MOONPAY_SWAP] Forced demo calculation: {quote_amount} at rate {exchange_rate}")
+            except (ValueError, TypeError):
+                quote_amount = self._calculate_demo_output(swap_info)
+                exchange_rate = self._get_demo_rate(swap_info.from_token, swap_info.to_token)
+                logger.warning(f"[MOONPAY_SWAP] Invalid quote amount, using demo: {quote_amount}")
 
             # Format the response
             content = msgs["quote_ready"].format(

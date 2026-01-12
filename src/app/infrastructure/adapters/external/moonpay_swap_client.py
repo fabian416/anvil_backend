@@ -176,8 +176,16 @@ class MoonPaySwapClient:
         Example:
             >>> quote = await client.get_quote("eth-usdc", "1")
             >>> print(f"1 ETH = {quote.quote_currency_amount} USDC")
+        
+        Raises:
+            ValueError: If the quote response contains invalid data (zero amount, missing fields)
+            httpx.HTTPStatusError: If the API returns an error status
         """
         try:
+            logger.info(
+                f"[MoonPay] Requesting quote for pair={pair_name}, amount={base_amount}"
+            )
+            
             response = await self._client.get(
                 f"/swap/{pair_name}/quote",
                 params={
@@ -187,15 +195,64 @@ class MoonPaySwapClient:
             )
             response.raise_for_status()
             data = response.json()
+            
+            # Log raw response for debugging
+            logger.info(f"[MoonPay] Raw quote response: {data}")
+
+            # Extract and validate quote currency amount
+            quote_currency_amount = data.get("quoteCurrencyAmount", "0")
+            exchange_rate = data.get("exchangeRate", "0")
+            
+            # Validate the response has meaningful data
+            try:
+                quote_amount_float = float(quote_currency_amount) if quote_currency_amount else 0
+                exchange_rate_float = float(exchange_rate) if exchange_rate else 0
+            except (ValueError, TypeError):
+                quote_amount_float = 0
+                exchange_rate_float = 0
+            
+            # If MoonPay returns 0 or empty values, calculate from exchange rate
+            if quote_amount_float == 0 and exchange_rate_float > 0:
+                try:
+                    base_amount_float = float(base_amount)
+                    quote_amount_float = base_amount_float * exchange_rate_float
+                    quote_currency_amount = str(quote_amount_float)
+                    logger.info(
+                        f"[MoonPay] Calculated quote_amount from exchange_rate: "
+                        f"{base_amount} * {exchange_rate} = {quote_currency_amount}"
+                    )
+                except (ValueError, TypeError):
+                    pass
+            
+            # If still no valid quote, try to calculate from USD prices
+            if quote_amount_float == 0:
+                base_price_usd = data.get("baseCurrencyPriceInUsd", "0")
+                quote_price_usd = data.get("quoteCurrencyPriceInUsd", "0")
+                try:
+                    base_price = float(base_price_usd) if base_price_usd else 0
+                    quote_price = float(quote_price_usd) if quote_price_usd else 0
+                    if base_price > 0 and quote_price > 0:
+                        base_amount_float = float(base_amount)
+                        # Calculate: (base_amount * base_price_usd) / quote_price_usd
+                        quote_amount_float = (base_amount_float * base_price) / quote_price
+                        quote_currency_amount = str(quote_amount_float)
+                        # Also calculate exchange rate
+                        exchange_rate = str(base_price / quote_price)
+                        logger.info(
+                            f"[MoonPay] Calculated from USD prices: "
+                            f"{base_amount} * {base_price}/{quote_price} = {quote_currency_amount}"
+                        )
+                except (ValueError, TypeError, ZeroDivisionError):
+                    pass
 
             quote = MoonPaySwapQuote(
                 id=data.get("id", ""),
                 pair_name=data.get("pairName", pair_name),
-                base_currency_code=data.get("baseCurrency", {}).get("code", ""),
-                quote_currency_code=data.get("quoteCurrency", {}).get("code", ""),
+                base_currency_code=data.get("baseCurrency", {}).get("code", "") or pair_name.split("-")[0],
+                quote_currency_code=data.get("quoteCurrency", {}).get("code", "") or pair_name.split("-")[1] if "-" in pair_name else "",
                 base_currency_amount=data.get("baseCurrencyAmount", base_amount),
-                quote_currency_amount=data.get("quoteCurrencyAmount", "0"),
-                exchange_rate=data.get("exchangeRate", "0"),
+                quote_currency_amount=quote_currency_amount,
+                exchange_rate=exchange_rate,
                 network_fee_amount=data.get("networkFeeAmount", "0"),
                 network_fee_amount_usd=data.get("networkFeeAmountInUSD", "0"),
                 extra_fee_amount=data.get("extraFeeAmount", "0"),
@@ -206,9 +263,22 @@ class MoonPaySwapClient:
             )
 
             logger.info(
-                f"MoonPay quote: {base_amount} {quote.base_currency_code} → "
-                f"{quote.quote_currency_amount} {quote.quote_currency_code}"
+                f"[MoonPay] Quote result: {base_amount} {quote.base_currency_code} → "
+                f"{quote.quote_currency_amount} {quote.quote_currency_code} "
+                f"(rate: {quote.exchange_rate})"
             )
+            
+            # Validate we have a meaningful quote
+            try:
+                final_quote_amount = float(quote.quote_currency_amount)
+                if final_quote_amount == 0:
+                    logger.warning(
+                        f"[MoonPay] Warning: Quote returned 0 for {pair_name}. "
+                        f"This pair may not be available or the amount is too small."
+                    )
+            except (ValueError, TypeError):
+                pass
+            
             return quote
 
         except httpx.HTTPStatusError as e:
