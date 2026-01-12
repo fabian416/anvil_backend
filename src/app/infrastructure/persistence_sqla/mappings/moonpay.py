@@ -8,7 +8,7 @@ These tokens are used to execute swaps via the MoonPay API.
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, String, text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -30,7 +30,7 @@ def map_moonpay_customer_tokens_table() -> None:
 
         Attributes:
             id: Primary key UUID
-            user_id: Foreign key to users table (unique - one token per user)
+            user_id: Foreign key to users table (INTEGER - matches users.id)
             moonpay_token: The Bearer token for MoonPay API calls
             moonpay_csrf_token: CSRF token received from MoonPay
             created_at: When the tokens were first stored
@@ -46,8 +46,8 @@ def map_moonpay_customer_tokens_table() -> None:
             primary_key=True,
             default=uuid4,
         )
-        user_id: Mapped[uuid4] = mapped_column(
-            UUID(as_uuid=True),
+        user_id: Mapped[int] = mapped_column(
+            Integer,
             ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
             unique=True,

@@ -15,7 +15,7 @@ class MoonPayTokenData:
     def __init__(
         self,
         id: UUID,
-        user_id: UUID,
+        user_id: int,
         moonpay_token: str,
         moonpay_csrf_token: str,
         created_at: datetime,
@@ -46,12 +46,12 @@ class MoonPayTokenRepository(Protocol):
     swaps via the MoonPay API.
     """
 
-    async def get_by_user_id(self, user_id: UUID) -> MoonPayTokenData | None:
+    async def get_by_user_id(self, user_id: int) -> MoonPayTokenData | None:
         """
         Get MoonPay tokens for a user.
 
         Args:
-            user_id: The user's UUID
+            user_id: The user's INTEGER ID (matches users.id)
 
         Returns:
             MoonPayTokenData if tokens exist, None otherwise
@@ -60,7 +60,7 @@ class MoonPayTokenRepository(Protocol):
 
     async def upsert(
         self,
-        user_id: UUID,
+        user_id: int,
         moonpay_token: str,
         moonpay_csrf_token: str,
         expires_at: datetime | None = None,
@@ -72,28 +72,28 @@ class MoonPayTokenRepository(Protocol):
         Otherwise, new tokens will be inserted.
 
         Args:
-            user_id: The user's UUID
+            user_id: The user's INTEGER ID (matches users.id)
             moonpay_token: The Bearer token for MoonPay API calls
             moonpay_csrf_token: The CSRF token from MoonPay
             expires_at: Optional expiration time for the tokens
         """
         ...
 
-    async def delete_by_user_id(self, user_id: UUID) -> None:
+    async def delete_by_user_id(self, user_id: int) -> None:
         """
         Delete MoonPay tokens for a user.
 
         Args:
-            user_id: The user's UUID
+            user_id: The user's INTEGER ID (matches users.id)
         """
         ...
 
-    async def has_valid_tokens(self, user_id: UUID) -> bool:
+    async def has_valid_tokens(self, user_id: int) -> bool:
         """
         Check if a user has valid (non-expired) MoonPay tokens.
 
         Args:
-            user_id: The user's UUID
+            user_id: The user's INTEGER ID (matches users.id)
 
         Returns:
             True if the user has valid tokens, False otherwise

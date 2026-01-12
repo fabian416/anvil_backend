@@ -35,7 +35,7 @@ class SqlaMoonPayTokenRepository(MoonPayTokenRepository):
         """Get the moonpay_customer_tokens table."""
         return mapping_registry.metadata.tables["moonpay_customer_tokens"]
 
-    async def get_by_user_id(self, user_id: UUID) -> MoonPayTokenData | None:
+    async def get_by_user_id(self, user_id: int) -> MoonPayTokenData | None:
         """Get MoonPay tokens for a user."""
         try:
             table = self._get_table()
@@ -60,7 +60,7 @@ class SqlaMoonPayTokenRepository(MoonPayTokenRepository):
 
     async def upsert(
         self,
-        user_id: UUID,
+        user_id: int,
         moonpay_token: str,
         moonpay_csrf_token: str,
         expires_at: datetime | None = None,
@@ -98,7 +98,7 @@ class SqlaMoonPayTokenRepository(MoonPayTokenRepository):
             await self._session.rollback()
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def delete_by_user_id(self, user_id: UUID) -> None:
+    async def delete_by_user_id(self, user_id: int) -> None:
         """Delete MoonPay tokens for a user."""
         try:
             table = self._get_table()
@@ -109,7 +109,7 @@ class SqlaMoonPayTokenRepository(MoonPayTokenRepository):
             await self._session.rollback()
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def has_valid_tokens(self, user_id: UUID) -> bool:
+    async def has_valid_tokens(self, user_id: int) -> bool:
         """Check if a user has valid (non-expired) MoonPay tokens."""
         token_data = await self.get_by_user_id(user_id)
         if token_data is None:
