@@ -189,6 +189,89 @@ class SendGuestMessage:
             conversation.id
         )
 
+        # 4b. ✨ COMPOUND INTENT DETECTION ✨
+        # Check if user wants to cancel current flow and start a new query
+        # Example: "cancel, tell me the price of btc" while in a swap flow
+        if continuation_step:
+            from app.application.chat.services.flow_cancellation_detector import FlowCancellationDetector
+
+            detector = FlowCancellationDetector()
+
+            # Check for explicit cancellation keywords (cancel, stop, abort, etc.)
+            # These keywords indicate user wants to exit current flow
+            cancellation_keywords = {
+                "en": ["cancel", "stop", "abort", "forget it", "never mind", "quit"],
+                "es": ["cancelar", "parar", "abortar", "olvidalo", "déjalo"],
+                "pt": ["cancelar", "parar", "abortar", "esquecer"],
+                "zh": ["取消", "停止", "放弃"],
+            }
+
+            keywords_for_lang = cancellation_keywords.get(language, cancellation_keywords["en"])
+            content_lower = content.lower().strip()
+
+            matched_keyword = None
+            for keyword in keywords_for_lang:
+                if keyword in content_lower:
+                    matched_keyword = keyword
+                    break
+
+            if matched_keyword:
+                # Extract content after cancellation keyword
+                remaining_content = FlowCancellationDetector.extract_post_cancellation_content(
+                    content,
+                    matched_keyword,
+                    language,
+                )
+
+                if remaining_content:
+                    # Compound intent detected: "cancel, [new query]"
+                    logger.info(
+                        "🔄 Compound intent detected - cancelling flow and processing new query",
+                        extra={
+                            "ip_address": ip_address,
+                            "conversation_id": str(conversation.id),
+                            "original_content": content[:100],
+                            "extracted_content": remaining_content[:100],
+                            "cancelled_flow": continuation_step,
+                            "keyword": matched_keyword,
+                        }
+                    )
+
+                    # Clear the flow state
+                    continuation_step = None
+                    previous_swap_info = None
+                    previous_lending_info = None
+                    previous_send_info = None
+                    previous_buy_info = None
+
+                    # Update content to just the extracted query
+                    content = remaining_content
+
+                    logger.info(
+                        "🔄 Flow cancelled - detecting intent for new query",
+                        extra={
+                            "new_content": content[:100],
+                        }
+                    )
+                else:
+                    # Just cancellation, no new query
+                    logger.info(
+                        "🔄 Flow cancelled by user",
+                        extra={
+                            "ip_address": ip_address,
+                            "conversation_id": str(conversation.id),
+                            "cancelled_flow": continuation_step,
+                            "keyword": matched_keyword,
+                        }
+                    )
+
+                    # Clear the flow state
+                    continuation_step = None
+                    previous_swap_info = None
+                    previous_lending_info = None
+                    previous_send_info = None
+                    previous_buy_info = None
+
         # 5. Detect intent with context
         # If we have a continuation_step, we're in the middle of a multi-step flow
         # Use the intent from that flow instead of detecting a new one
