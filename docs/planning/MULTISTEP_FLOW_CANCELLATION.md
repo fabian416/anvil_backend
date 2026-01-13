@@ -332,6 +332,57 @@ from datetime import datetime, timedelta  # ✅ Single source of truth
 **Location:** `conversations_router.py:8`
 **Commit:** `aa22397`
 
+### Bug #4: Invalid 'intent' Parameter in create_user_message() (Fixed: 2026-01-13)
+
+**Issue:** 500 Internal Server Error:
+```
+TypeError: ChatMessage.create_user_message() got an unexpected keyword argument 'intent'
+```
+
+**Cause:** In the Bug #2 fix (commit 48388fc), the cancellation confirmation code called `create_user_message()` with an `intent` parameter, but this method doesn't accept that parameter.
+
+**Method Signature Mismatch:**
+```python
+# Actual signature:
+create_user_message(
+    conversation_id: UUID,
+    content: str,
+    language: str = "en",
+    metadata: dict | None = None,
+    created_at: datetime | None = None,
+)
+# ❌ No 'intent' parameter!
+
+# Bug #2 fix attempted:
+user_message = ChatMessage.create_user_message(
+    conversation_id=conversation_id,
+    content=request_body.content,
+    language=request_body.language,
+    intent=intent_result.intent.value,  # ❌ Invalid parameter
+    created_at=user_timestamp,
+)
+```
+
+**Fix:**
+Removed the invalid `intent` parameter from line 734:
+
+```python
+# ✅ Correct call:
+user_message = ChatMessage.create_user_message(
+    conversation_id=conversation_id,
+    content=request_body.content,
+    language=request_body.language,
+    created_at=user_timestamp,
+)
+```
+
+**Reason:** User messages don't need intent classification - only assistant messages have `intent`, `intent_confidence`, and `handler` parameters. This aligns with the domain model where intent is detected from user input and attached to the assistant's response.
+
+**Result:** No more TypeError. Server reloaded successfully. Endpoint handles cancellation requests properly.
+
+**Location:** `conversations_router.py:730-735`
+**Commit:** `8fa2545`
+
 ## Related Files
 
 - **Detector:** `src/app/application/chat/services/flow_cancellation_detector.py`
