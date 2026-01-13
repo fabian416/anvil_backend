@@ -800,29 +800,26 @@ class IntentDetectorV2:
         language: str,
     ) -> IntentResult | None:
         """Detect restricted action intents."""
-        # Balance keywords
-        balance_keywords = self._get_all_keywords("balance")
-        for kw in balance_keywords:
-            if kw in message:
+        # Check specific patterns first before general keywords
+
+        # Receive address patterns (check before balance - more specific)
+        receive_patterns = [
+            "receive", "receive address", "my address", "deposit address", "wallet address",
+            "show address", "dirección de recepción", "mi dirección",
+            "endereço de recebimento", "meu endereço",
+        ]
+        for pattern in receive_patterns:
+            if pattern in message:
                 return IntentResult(
-                    intent=ChatIntentV2.BALANCE,
+                    intent=ChatIntentV2.RECEIVE,
                     confidence=0.95,
-                    handler=self._handler_map[ChatIntentV2.BALANCE],
+                    handler=self._handler_map[ChatIntentV2.RECEIVE],
                 )
-        
-        # Portfolio keywords
-        portfolio_keywords = self._get_all_keywords("portfolio")
-        for kw in portfolio_keywords:
-            if kw in message:
-                return IntentResult(
-                    intent=ChatIntentV2.PORTFOLIO,
-                    confidence=0.95,
-                    handler=self._handler_map[ChatIntentV2.PORTFOLIO],
-                )
-        
-        # Activity patterns
+
+        # Activity patterns (check before balance - more specific)
         activity_patterns = [
-            "my activity", "transaction history", "my transactions",
+            "activity", "transaction history", "my transactions",
+            "recent activity", "show activity", "wallet activity",
             "mi actividad", "historial de transacciones",
             "minha atividade", "histórico de transações",
         ]
@@ -833,21 +830,27 @@ class IntentDetectorV2:
                     confidence=0.95,
                     handler=self._handler_map[ChatIntentV2.ACTIVITY],
                 )
-        
-        # Receive address patterns
-        receive_patterns = [
-            "receive address", "my address", "deposit address", "wallet address",
-            "dirección de recepción", "mi dirección",
-            "endereço de recebimento", "meu endereço",
-        ]
-        for pattern in receive_patterns:
-            if pattern in message:
+
+        # Balance keywords (after more specific checks)
+        balance_keywords = self._get_all_keywords("balance")
+        for kw in balance_keywords:
+            if kw in message:
                 return IntentResult(
-                    intent=ChatIntentV2.RECEIVE,
+                    intent=ChatIntentV2.BALANCE,
                     confidence=0.95,
-                    handler=self._handler_map[ChatIntentV2.RECEIVE],
+                    handler=self._handler_map[ChatIntentV2.BALANCE],
                 )
-        
+
+        # Portfolio keywords
+        portfolio_keywords = self._get_all_keywords("portfolio")
+        for kw in portfolio_keywords:
+            if kw in message:
+                return IntentResult(
+                    intent=ChatIntentV2.PORTFOLIO,
+                    confidence=0.95,
+                    handler=self._handler_map[ChatIntentV2.PORTFOLIO],
+                )
+
         return None
     
     def _detect_action_intent(
