@@ -759,15 +759,40 @@ def create_conversations_router() -> APIRouter:
                     )
                     await message_repository.save(assistant_message)
 
+                    # Build rate limit status for response
+                    rate_limit_status = {
+                        "user_type": user.user_type.value,
+                        "remaining_hourly": rate_result.remaining_hourly,
+                        "remaining_daily": rate_result.remaining_daily,
+                    }
+
                     # Return early with cancellation confirmation
                     return ChatResponse(
+                        conversation_id=str(conversation_id),
                         message_id=str(assistant_message.id),
-                        content=cancellation_content,
-                        conversation_id=conversation_id,
-                        intent=None,
+                        user_message={
+                            "id": str(user_message.id),
+                            "role": user_message.role.value,
+                            "content": user_message.content,
+                            "created_at": user_message.created_at.isoformat(),
+                        },
+                        agent_message={
+                            "id": str(assistant_message.id),
+                            "role": assistant_message.role.value,
+                            "content": assistant_message.content,
+                            "created_at": assistant_message.created_at.isoformat(),
+                        },
+                        routing={
+                            "intent": "FLOW_CANCELLATION",
+                            "confidence": 1.0,
+                            "handler": "flow_cancellation",
+                            "language": request_body.language,
+                            "user_type": user.user_type.value,
+                        },
                         enrichment=None,
-                        pending_action=None,
-                        execute_data=None,
+                        registration_required=None,
+                        rate_limit_status=rate_limit_status,
+                        execute=None,
                     )
 
         # Initialize response variables
