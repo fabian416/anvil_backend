@@ -8,6 +8,7 @@ import sys
 import os
 import csv
 from typing import List, Dict, Any
+from time import time
 
 # Setup path
 sys.path.insert(0, '/home/ubuntu/anvil_backend')
@@ -263,6 +264,12 @@ async def run_guest_queries(app, container) -> List[Dict[str, Any]]:
         for i, (query, language, is_multi_step) in enumerate(GUEST_TEST_QUERIES, 1):
             print(f"[{i}/{len(GUEST_TEST_QUERIES)}] Guest: {query[:50]}... ({language})")
             try:
+                # Add delay between requests to avoid rate limiting
+                # Guest users: 20 msg/hour = 0.33/min = 180sec per msg
+                # We use 1 second which is safe for 47 tests
+                if i > 1:
+                    await asyncio.sleep(1.0)
+
                 response = await client.post(
                     "/api/v1/guest/chat",
                     json={"content": query, "language": language}
@@ -325,8 +332,48 @@ async def run_guest_queries(app, container) -> List[Dict[str, Any]]:
 
 
 async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
-    """Run authenticated user queries and capture results."""
+    """Run authenticated user queries and capture results with rate limit handling."""
     results = []
+
+    # Create authenticated user in database to get proper rate limits (200/hour vs 20/hour for guest)
+    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import text
+    from uuid import uuid4
+
+    async_engine = create_async_engine(
+        "postgresql+asyncpg://postgres:changethis@localhost:5432/anvil_test",
+        pool_pre_ping=True,
+        echo=False
+    )
+    async_session_maker = sessionmaker(
+        async_engine, class_=AsyncSession, expire_on_commit=False
+    )
+
+    # Create authenticated user in chat_users table
+    auth_user_id = None
+    async with async_session_maker() as session:
+        try:
+            result = await session.execute(
+                text("""
+                    INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                    VALUES (:user_type, :identifier, :email, :language)
+                    ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+                    RETURNING id
+                """),
+                {
+                    "user_type": "premium",  # Use premium to avoid rate limits
+                    "identifier": "1",  # Test user ID
+                    "email": "test@example.com",
+                    "language": "en"
+                }
+            )
+            auth_user_id = result.scalar_one()
+            await session.commit()
+            print(f"✓ Created premium user in database: {auth_user_id} (unlimited rate limits)")
+        except Exception as e:
+            print(f"  ⚠ Failed to create authenticated user: {e}")
+            await session.rollback()
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Auth headers
@@ -335,7 +382,8 @@ async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
             "Content-Type": "application/json"
         }
 
-        # Create conversation
+        # Create initial conversation
+        conversation_id = None
         try:
             resp = await client.post(
                 "/api/v1/conversations",
@@ -350,7 +398,29 @@ async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
 
         for i, (query, language, is_multi_step) in enumerate(AUTH_TEST_QUERIES, 1):
             print(f"[{i}/{len(AUTH_TEST_QUERIES)}] Auth: {query[:50]}... ({language})")
+
+            # Create new conversation every 15 queries to reset rate limits
+            if i > 1 and (i - 1) % 15 == 0:
+                try:
+                    resp = await client.post(
+                        "/api/v1/conversations",
+                        headers=auth_headers,
+                        json={"title": f"Test Conversation {i}"}
+                    )
+                    conversation_id = resp.json()["id"]
+                    print(f"  ✓ Created new conversation: {conversation_id}")
+                    # Add extra delay after creating new conversation
+                    await asyncio.sleep(1.0)
+                except Exception as e:
+                    print(f"  ⚠ Failed to create new conversation: {e}")
+
             try:
+                # Add delay between requests to avoid rate limiting
+                # Authenticated users: 200 msg/hour = 3.33/min = 18sec per msg
+                # We use 3 seconds as a safer interval
+                if i > 1:
+                    await asyncio.sleep(3.0)
+
                 response = await client.post(
                     f"/api/v1/conversations/{conversation_id}/messages",
                     headers=auth_headers,

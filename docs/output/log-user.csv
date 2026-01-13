@@ -45,8 +45,8 @@ Here are some top DeFi protocols matching your criteria:
 • **C...",,,,,,,PASS
 query,pytest,NO,What is the price of Bitcoin?,"📈 **Price Prediction for BTC**
 
-**Current Price:** $93,477.37
-**7-Day Forecast:** $96,281.69
+**Current Price:** $93,659.15
+**7-Day Forecast:** $96,468.92
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -58,8 +58,8 @@ query,pytest,NO,What is the price of Bitcoin?,"📈 **Price Prediction for BTC**
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
 query,pytest,NO,How much is Ethereum?,"📈 **Price Prediction for ETH**
 
-**Current Price:** $3,184.83
-**7-Day Forecast:** $3,280.38
+**Current Price:** $3,194.37
+**7-Day Forecast:** $3,290.20
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -71,8 +71,8 @@ query,pytest,NO,How much is Ethereum?,"📈 **Price Prediction for ETH**
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
 query,pytest,NO,ETH price,"📈 **Price Prediction for ETH**
 
-**Current Price:** $3,184.83
-**7-Day Forecast:** $3,280.38
+**Current Price:** $3,194.37
+**7-Day Forecast:** $3,290.20
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -84,8 +84,8 @@ query,pytest,NO,ETH price,"📈 **Price Prediction for ETH**
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
 query,pytest,NO,BTC price prediction,"📈 **Price Prediction for BTC**
 
-**Current Price:** $93,477.37
-**7-Day Forecast:** $96,281.69
+**Current Price:** $93,659.15
+**7-Day Forecast:** $96,468.92
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -97,8 +97,8 @@ query,pytest,NO,BTC price prediction,"📈 **Price Prediction for BTC**
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
 query,pytest,NO,What are the prices of BTC and ETH?,"📈 **Price Prediction for BTC**
 
-**Current Price:** $93,477.37
-**7-Day Forecast:** $96,281.69
+**Current Price:** $93,659.15
+**7-Day Forecast:** $96,468.92
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -110,40 +110,40 @@ query,pytest,NO,What are the prices of BTC and ETH?,"📈 **Price Prediction for
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
 query,pytest,NO,What do people think about Bitcoin?,"📊 **Sentiment Analysis for BTC**
 
-**Overall:** Bullish (64.9/100)
+**Overall:** Bullish (64.7/100)
 **Confidence:** 50%
-
-**By Source:**
-- Twitter: 🟢 63/100
-- Reddit: 🟢 72/100
-- Discord: 🟢 92/100
-- News: 🟡 51/100
-
-
-👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
-query,pytest,NO,Bitcoin sentiment,"📊 **Sentiment Analysis for BTC**
-
-**Overall:** Bullish (64.9/100)
-**Confidence:** 50%
-
-**By Source:**
-- Twitter: 🟢 63/100
-- Reddit: 🟢 72/100
-- Discord: 🟢 92/100
-- News: 🟡 51/100
-
-
-👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
-query,pytest,NO,ETH sentiment analysis,"📊 **Sentiment Analysis for ETH**
-
-**Overall:** Bullish (65.9/100)
-**Confidence:** 44%
 
 **By Source:**
 - Twitter: 🟢 63/100
 - Reddit: 🟢 72/100
 - Discord: 🟢 92/100
 - News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,Bitcoin sentiment,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.7/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,ETH sentiment analysis,"📊 **Sentiment Analysis for ETH**
+
+**Overall:** Bullish (65.5/100)
+**Confidence:** 44%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 47/100
 
 
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
@@ -179,44 +179,33 @@ Examples: 100, 1000, 5000 ETH
 
 💬 Enter the amount to continue
 ",,,,,,,PASS
-query,pytest,YES,Swap 100 USDC for ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Ξ Morpho Vault Quote
+query,pytest,YES,Swap 100 USDC for ETH,"✅ **Swap Ready to Execute**
+
+🔄 **Intercambio:** 100 USDC → 0.029485 ETH
+📊 **Rate:** 1 USDC = 0.000295 ETH
+💸 **Network Fee:** ~$0.0296206164
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Best Vault (Real-Time APY)**
+Click **Confirm** to execute the swap.",,,,,,,PASS
+query,pytest,YES,Swap USDC from Ethereum to Base,"✅ **Swap Ready to Execute**
 
-📊 **Deposit Amount**: 100.0 ETH
-📈 **Current APY**: 5.00%
-💰 **Monthly Earnings**: ~0.42 ETH/month
-💵 **Yearly Earnings**: ~5.00 ETH/year
+🔄 **Intercambio:** 100 USDC → 0.029485 ETH
+📊 **Rate:** 1 USDC = 0.000295 ETH
+💸 **Network Fee:** ~$0.0296206164
 
-━━━━━━━━━━━━━...",,,,,,,PASS
-query,pytest,YES,Swap USDC from Ethereum to Base,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Ξ Morpho Vault Quote
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-❌ Unclear response. Please confirm or cancel.
+Click **Confirm** to execute the swap.",,,,,,,PASS
+query,pytest,NO,Best swap rate for ETH to USDC,"✅ **Swap Ready to Execute**
 
+🔄 **Intercambio:** 100 USDC → 0.029485 ETH
+📊 **Rate:** 1 USDC = 0.000295 ETH
+💸 **Network Fee:** ~$0.0296206164
 
-**Best Vault (Real-Time APY)**
-
-📊 **Deposit Amount**: 100.0 ETH
-📈 **Current APY**: 5.00%
-💰 **Monthly Earnings**: ~0.42 ETH/month
-💵 **...",,,,,,,PASS
-query,pytest,NO,Best swap rate for ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Ξ Morpho Vault Quote
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-❌ Unclear response. Please confirm or cancel.
-
-
-**Best Vault (Real-Time APY)**
-
-📊 **Deposit Amount**: 100.0 ETH
-📈 **Current APY**: 5.00%
-💰 **Monthly Earnings**: ~0.42 ETH/month
-💵 **...",,,,,,,PASS
+Click **Confirm** to execute the swap.",,,,,,,PASS
 query,pytest,NO,Show my portfolio,"🔒 **Account Required**
 
 To view your portfolio, please sign up or log in.

@@ -661,7 +661,53 @@ def create_conversations_router() -> APIRouter:
             f"is_restricted: {intent_result.is_restricted}) "
             f"for message: '{request_body.content[:100]}'"
         )
-        
+
+        # ✨ MULTI-STEP FLOW CANCELLATION DETECTION ✨
+        # Detect if user is asking an unrelated question during a multi-step flow
+        # If detected, automatically cancel the flow and process the new question
+        from app.application.chat.services.flow_cancellation_detector import FlowCancellationDetector
+
+        # Check if there's a pending multi-step flow
+        if context.pending_intent:
+            # Map intent enum to string for comparison
+            current_intent_str = intent_result.intent.value.lower()
+
+            # Detect topic change using hybrid keyword + intent detection
+            detector = FlowCancellationDetector()
+            should_cancel, reason = detector.detect_topic_change(
+                content=request_body.content,
+                pending_action=context.pending_intent,
+                current_intent=current_intent_str,
+                language=request_body.language,
+            )
+
+            if should_cancel:
+                logger.info(
+                    f"🔄 Multi-step flow cancelled - topic change detected",
+                    extra={
+                        "user_id": user.id,
+                        "conversation_id": str(conversation_id),
+                        "from_flow": context.pending_intent,
+                        "to_intent": current_intent_str,
+                        "reason": reason,
+                        "message": request_body.content[:100],
+                    }
+                )
+
+                # Clear all flow-related state from context
+                context.pending_intent = None
+                context.pending_swap_info = None
+                context.pending_moonpay_swap_info = None
+                context.pending_lending_info = None
+                context.pending_portfolio_info = None
+                context.pending_activity_info = None
+                context.pending_money_market_info = None
+                context.pending_buy_info = None
+
+                logger.debug(
+                    f"✓ Cleared multi-step flow state - processing new intent: {current_intent_str}"
+                )
+
         # Initialize response variables
         agent_content = ""
         enrichment = None

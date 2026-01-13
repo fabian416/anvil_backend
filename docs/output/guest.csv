@@ -5,8 +5,8 @@ query,pytest,NO,What is DeFi?,"I'm your AI assistant for DeFi! I can help with m
 query,pytest,NO,What is USDC?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
 query,pytest,NO,What is the price of Bitcoin?,"📈 **Price Prediction for BTC**
 
-**Current Price:** $93,477.37
-**7-Day Forecast:** $96,281.69
+**Current Price:** $93,659.15
+**7-Day Forecast:** $96,468.92
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -19,8 +19,8 @@ query,pytest,NO,What is the price of Bitcoin?,"📈 **Price Prediction for BTC**
 query,pytest,NO,How much is Ethereum?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
 query,pytest,NO,ETH price,"📈 **Price Prediction for ETH**
 
-**Current Price:** $3,184.83
-**7-Day Forecast:** $3,280.38
+**Current Price:** $3,194.37
+**7-Day Forecast:** $3,290.20
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -32,8 +32,8 @@ query,pytest,NO,ETH price,"📈 **Price Prediction for ETH**
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
 query,pytest,NO,BTC price prediction,"📈 **Price Prediction for BTC**
 
-**Current Price:** $93,477.37
-**7-Day Forecast:** $96,281.69
+**Current Price:** $93,659.15
+**7-Day Forecast:** $96,468.92
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -45,8 +45,8 @@ query,pytest,NO,BTC price prediction,"📈 **Price Prediction for BTC**
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
 query,pytest,NO,What are the prices of BTC and ETH?,"📈 **Price Prediction for BTC**
 
-**Current Price:** $93,477.37
-**7-Day Forecast:** $96,281.69
+**Current Price:** $93,659.15
+**7-Day Forecast:** $96,468.92
 **Expected Change:** 🟢 +3.0%
 **Direction:** UP
 **Confidence:** 75%
@@ -59,27 +59,27 @@ query,pytest,NO,What are the prices of BTC and ETH?,"📈 **Price Prediction for
 query,pytest,NO,What do people think about Bitcoin?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
 query,pytest,NO,Bitcoin sentiment,"📊 **Sentiment Analysis for BTC**
 
-**Overall:** Bullish (64.9/100)
+**Overall:** Bullish (64.7/100)
 **Confidence:** 50%
 
 **By Source:**
 - Twitter: 🟢 63/100
 - Reddit: 🟢 72/100
 - Discord: 🟢 92/100
-- News: 🟡 51/100
+- News: 🟡 50/100
 
 
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
 query,pytest,NO,ETH sentiment analysis,"📊 **Sentiment Analysis for ETH**
 
-**Overall:** Bullish (65.9/100)
+**Overall:** Bullish (65.5/100)
 **Confidence:** 44%
 
 **By Source:**
 - Twitter: 🟢 63/100
 - Reddit: 🟢 72/100
 - Discord: 🟢 92/100
-- News: 🟡 50/100
+- News: 🟡 47/100
 
 
 👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
