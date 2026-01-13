@@ -1,0 +1,374 @@
+Type,device,is multi step,input 1,output 1,input 2,output 2,input 3,output 3,input 4,output 4,test pass
+query,pytest,NO,What is Bitcoin?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,What is Ethereum?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,What is DeFi?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,What is USDC?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,What is the price of Bitcoin?,"📈 **Price Prediction for BTC**
+
+**Current Price:** $93,477.37
+**7-Day Forecast:** $96,281.69
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,How much is Ethereum?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,ETH price,"📈 **Price Prediction for ETH**
+
+**Current Price:** $3,184.83
+**7-Day Forecast:** $3,280.38
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,BTC price prediction,"📈 **Price Prediction for BTC**
+
+**Current Price:** $93,477.37
+**7-Day Forecast:** $96,281.69
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,What are the prices of BTC and ETH?,"📈 **Price Prediction for BTC**
+
+**Current Price:** $93,477.37
+**7-Day Forecast:** $96,281.69
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,What do people think about Bitcoin?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,Bitcoin sentiment,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.9/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 51/100
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,ETH sentiment analysis,"📊 **Sentiment Analysis for ETH**
+
+**Overall:** Bullish (65.9/100)
+**Confidence:** 44%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,YES,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT*...",,,,,,,PASS
+query,pytest,NO,Show best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue...",,,,,,,PASS
+query,pytest,YES,Earn yield on my ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",,,,,,,PASS
+query,pytest,NO,Best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Ent...",,,,,,,PASS
+query,pytest,YES,Swap 100 USDC for ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━...",,,,,,,PASS
+query,pytest,YES,Swap USDC from Ethereum to Base,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **...",,,,,,,PASS
+query,pytest,NO,Best swap rate for ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **...",,,,,,,PASS
+query,pytest,YES,Swap BTC to ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **...",,,,,,,PASS
+query,pytest,NO,Show my portfolio,"🎉 ✅ Deposit Confirmed!
+
+You're depositing **100.0 ETH** into a Morpho vault.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Ξ Sign up to connect your wallet
+2. ✅ Approve the vault contract
+3. 💰 Complete the deposit transaction
+
+👉 ...",,,,,,,PASS
+query,pytest,NO,What tokens do I have?,"💼 **Unlock Your Complete Portfolio Dashboard**
+
+Track all your DeFi positions in one place! With a free account, you'll get:
+
+✨ **Real-time Portfolio Tracking**
+• View all your assets across multiple chains
+• Monitor your total portfolio value
+• Track performance over time
+
+📊 **Advanced Analytics...",,,,,,,PASS
+query,pytest,NO,List my holdings,"💼 **Unlock Your Complete Portfolio Dashboard**
+
+Track all your DeFi positions in one place! With a free account, you'll get:
+
+✨ **Real-time Portfolio Tracking**
+• View all your assets across multiple chains
+• Monitor your total portfolio value
+• Track performance over time
+
+📊 **Advanced Analytics...",,,,,,,PASS
+query,pytest,NO,What's my balance?,"🔐 **Wallet Access Required**
+
+To view your balance and wallet holdings, you need to create an account and connect your wallet.
+
+Sign up to:
+• View real-time balances
+• Track your holdings
+• Monitor your positions
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,Check my balance,"🔐 **Wallet Access Required**
+
+To view your balance and wallet holdings, you need to create an account and connect your wallet.
+
+Sign up to:
+• View real-time balances
+• Track your holdings
+• Monitor your positions
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,Show my USDC balance,"🔐 **Wallet Access Required**
+
+To view your balance and wallet holdings, you need to create an account and connect your wallet.
+
+Sign up to:
+• View real-time balances
+• Track your holdings
+• Monitor your positions
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,Show my transactions,"🔐 **Account Required**
+
+To view your transaction history and past activity, you need to create an account.
+
+Sign up to:
+• View all transactions
+• Track your trading history
+• Export transaction records
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,Recent activity,"🔐 **Account Required**
+
+To view your transaction history and past activity, you need to create an account.
+
+Sign up to:
+• View all transactions
+• Track your trading history
+• Export transaction records
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,Transaction history,"🔐 **Account Required**
+
+To view your transaction history and past activity, you need to create an account.
+
+Sign up to:
+• View all transactions
+• Track your trading history
+• Export transaction records
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,I want to receive crypto,"🔐 **Wallet Required**
+
+To get your deposit address, you need to create an account and set up your wallet.
+
+Sign up to:
+• Get your personal wallet address
+• Receive crypto deposits
+• Manage multiple chains
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,My wallet address,"🔐 **Wallet Required**
+
+To get your deposit address, you need to create an account and set up your wallet.
+
+Sign up to:
+• Get your personal wallet address
+• Receive crypto deposits
+• Manage multiple chains
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,Give me my QR code,"🔐 **Wallet Required**
+
+To get your deposit address, you need to create an account and set up your wallet.
+
+Sign up to:
+• Get your personal wallet address
+• Receive crypto deposits
+• Manage multiple chains
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,YES,I want to buy crypto,"🔐 **Account Required**
+
+To buy crypto with fiat, you need to create an account and complete verification.
+
+Sign up to:
+• Buy crypto with card or bank transfer
+• Access multiple on-ramp providers
+• Get the best rates
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,YES,Buy Bitcoin with card,"🔐 **Account Required**
+
+To buy crypto with fiat, you need to create an account and complete verification.
+
+Sign up to:
+• Buy crypto with card or bank transfer
+• Access multiple on-ramp providers
+• Get the best rates
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,YES,How to buy ETH,"🔐 **Account Required**
+
+To buy crypto with fiat, you need to create an account and complete verification.
+
+Sign up to:
+• Buy crypto with card or bank transfer
+• Access multiple on-ramp providers
+• Get the best rates
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,YES,Send crypto to a friend,"🔐 **Wallet Required**
+
+To send crypto to another wallet, you need to create an account and connect your wallet.
+
+Sign up to:
+• Send tokens to any address
+• Transfer across multiple chains
+• Track your transfers
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,YES,Transfer ETH to another wallet,"🔐 **Wallet Required**
+
+To send crypto to another wallet, you need to create an account and connect your wallet.
+
+Sign up to:
+• Send tokens to any address
+• Transfer across multiple chains
+• Track your transfers
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,YES,I want to send USDC,"🔐 **Wallet Required**
+
+To send crypto to another wallet, you need to create an account and connect your wallet.
+
+Sign up to:
+• Send tokens to any address
+• Transfer across multiple chains
+• Track your transfers
+
+👉 Sign Up Free: /signup",,,,,,,PASS
+query,pytest,NO,¿Cuál es el precio de Bitcoin?,"¡Soy tu asistente de IA para DeFi! Puedo ayudar con análisis de mercado (Hunter AI), trading automatizado (ULTRA), tasas de préstamo, swaps y más. Pregúntame sobre protocolos, rendimientos, riesgos o cómo empezar. Regístrate para acceso completo.",,,,,,,PASS
+query,pytest,NO,O que é Ethereum?,"Sou seu assistente de IA para DeFi! Posso ajudar com análise de mercado (Hunter AI), trading automatizado (ULTRA), taxas de empréstimo, swaps e mais. Pergunte-me sobre protocolos, rendimentos, riscos ou como começar. Cadastre-se para acesso completo.",,,,,,,PASS
+query,pytest,NO,什么是比特币?,我是您的 DeFi AI 助手！我可以帮助进行市场分析（Hunter AI）、自动交易（ULTRA）、借贷利率、交换等。问我关于协议、收益、风险或如何开始。注册以获得完整功能访问。,,,,,,,PASS
+query,pytest,YES,Échanger 100 USDC contre ETH,Error: HTTP 422,,,,,,,FAIL
+query,pytest,NO,What is UNKNOWNTOKEN123?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,what is BITCOIN?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,Waht is Etherem?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,What's the weather today?,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+query,pytest,NO,Tell me a joke,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS

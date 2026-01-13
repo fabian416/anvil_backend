@@ -1,0 +1,255 @@
+Type,device,is multi step,input 1,output 1,input 2,output 2,input 3,output 3,input 4,output 4,test pass
+query,pytest,NO,What is Bitcoin?,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **C...",,,,,,,PASS
+query,pytest,NO,What is Ethereum?,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **C...",,,,,,,PASS
+query,pytest,NO,What is DeFi?,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **C...",,,,,,,PASS
+query,pytest,NO,What is USDC?,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **C...",,,,,,,PASS
+query,pytest,NO,What is the price of Bitcoin?,"📈 **Price Prediction for BTC**
+
+**Current Price:** $93,477.37
+**7-Day Forecast:** $96,281.69
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,How much is Ethereum?,"📈 **Price Prediction for ETH**
+
+**Current Price:** $3,184.83
+**7-Day Forecast:** $3,280.38
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,ETH price,"📈 **Price Prediction for ETH**
+
+**Current Price:** $3,184.83
+**7-Day Forecast:** $3,280.38
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,BTC price prediction,"📈 **Price Prediction for BTC**
+
+**Current Price:** $93,477.37
+**7-Day Forecast:** $96,281.69
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,What are the prices of BTC and ETH?,"📈 **Price Prediction for BTC**
+
+**Current Price:** $93,477.37
+**7-Day Forecast:** $96,281.69
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,What do people think about Bitcoin?,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.9/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 51/100
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,Bitcoin sentiment,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.9/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 51/100
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,NO,ETH sentiment analysis,"📊 **Sentiment Analysis for ETH**
+
+**Overall:** Bullish (65.9/100)
+**Confidence:** 44%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+query,pytest,YES,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT*...",,,,,,,PASS
+query,pytest,NO,Show best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue...",,,,,,,PASS
+query,pytest,YES,Earn yield on my ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",,,,,,,PASS
+query,pytest,YES,Swap 100 USDC for ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━...",,,,,,,PASS
+query,pytest,YES,Swap USDC from Ethereum to Base,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **...",,,,,,,PASS
+query,pytest,NO,Best swap rate for ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **...",,,,,,,PASS
+query,pytest,NO,Show my portfolio,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",,,,,,,PASS
+query,pytest,NO,What tokens do I have?,Service temporarily unavailable. Please try again or sign up for full access.,,,,,,,PASS
+query,pytest,NO,List my holdings,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,What's my balance?,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Check my balance,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Show my USDC balance,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Show my transactions,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Recent activity,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Transaction history,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,I want to receive crypto,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,My wallet address,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Give me my QR code,Error: HTTP 429,,,,,,,FAIL
+query,pytest,YES,I want to buy crypto,Error: HTTP 429,,,,,,,FAIL
+query,pytest,YES,Buy Bitcoin with card,Error: HTTP 429,,,,,,,FAIL
+query,pytest,YES,How to buy ETH,Error: HTTP 429,,,,,,,FAIL
+query,pytest,YES,Send crypto to a friend,Error: HTTP 429,,,,,,,FAIL
+query,pytest,YES,Transfer ETH to another wallet,Error: HTTP 429,,,,,,,FAIL
+query,pytest,YES,I want to send USDC,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Compare Aave vs Compound,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Best money market rates for USDC,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Compare lending rates for ETH,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,¿Cuál es el precio de Bitcoin?,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,O que é Ethereum?,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,什么是比特币?,Error: HTTP 429,,,,,,,FAIL
+query,pytest,YES,Échanger 100 USDC contre ETH,Error: HTTP 422,,,,,,,FAIL
+query,pytest,NO,What is UNKNOWNTOKEN123?,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,what is BITCOIN?,Error: HTTP 429,,,,,,,FAIL
+query,pytest,NO,Waht is Etherem?,Error: HTTP 429,,,,,,,FAIL
