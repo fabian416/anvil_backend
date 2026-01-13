@@ -95,6 +95,31 @@ class ConversationStateManager:
                 )
                 return True, f"cancellation_keyword:{keyword}"
 
+        # 1b. Check for explicit off-topic intent keywords
+        # These indicate user wants information, not to continue an action flow
+        off_topic_intent_keywords = [
+            "price", "precio", "preço", "价格",
+            "what is", "qué es", "o que é", "什么是",
+            "tell me", "cuéntame", "me fale", "告诉我",
+            "how does", "cómo funciona", "como funciona", "如何",
+            "explain", "explica", "explicar", "解释",
+        ]
+
+        # Only check these for action flows (swap, buy, lend, send)
+        # Don't clear if user is in an information flow
+        if any(action in context.pending_intent for action in ["swap", "buy", "lend", "send", "moonpay"]):
+            for keyword in off_topic_intent_keywords:
+                if keyword in message_lower:
+                    logger.info(
+                        f"Auto-clearing flow: off-topic intent keyword '{keyword}' detected",
+                        extra={
+                            "pending_intent": context.pending_intent,
+                            "keyword": keyword,
+                            "message": current_message[:100],
+                        },
+                    )
+                    return True, f"off_topic_intent:{keyword}"
+
         # 2. Check for flow timeout
         if hasattr(context, "pending_intent_timestamp") and context.pending_intent_timestamp:
             elapsed = datetime.now() - context.pending_intent_timestamp
@@ -191,6 +216,29 @@ class ConversationStateManager:
 
         # Extract base flow type (remove "_awaiting_..." suffix)
         base_flow = pending_intent.split("_awaiting")[0]
+
+        # ⚠️ IMPORTANT: Check for off-topic intents FIRST (before checking tokens)
+        # Messages about price, sentiment, general questions are NOT relevant to action flows
+        off_topic_keywords = [
+            # Price/analysis queries
+            "price", "precio", "preço", "价格", "cost", "value", "worth",
+            "sentiment", "analysis", "prediction", "forecast",
+            # General questions
+            "what is", "qué es", "o que é", "什么是",
+            "tell me about", "cuéntame", "me fale sobre", "告诉我",
+            "explain", "explica", "explicar", "解释",
+            "how does", "cómo funciona", "como funciona", "如何",
+            # Information requests
+            "information", "info", "details", "detalles", "detalhes", "信息",
+        ]
+
+        for off_topic_kw in off_topic_keywords:
+            if off_topic_kw in message_lower:
+                logger.debug(
+                    f"Message is off-topic: contains '{off_topic_kw}' (not relevant to {base_flow} flow)",
+                    extra={"message": message[:50], "pending_intent": pending_intent}
+                )
+                return False  # ← Message is asking for information, not continuing flow
 
         # Get keywords for this flow type
         flow_keywords = self.FLOW_KEYWORDS.get(base_flow, [])
