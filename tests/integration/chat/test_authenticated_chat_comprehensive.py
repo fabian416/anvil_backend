@@ -50,6 +50,16 @@ class TestAuthenticatedChatEndpoint:
 
         await async_db_session.execute(
             text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
+        await async_db_session.execute(
+            text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
                 VALUES (:id, :user_id, :title, :status, :language, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
@@ -119,6 +129,16 @@ class TestAuthenticatedMultiStepFlows:
 
         conversation_id = str(uuid4())
 
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
         await async_db_session.execute(
             text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
@@ -234,6 +254,16 @@ class TestAuthenticatedVsGuestBehavior:
 
         conversation_id = str(uuid4())
 
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
         await async_db_session.execute(
             text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
@@ -398,6 +428,16 @@ class TestAuthenticatedIntents:
 
         await async_db_session.execute(
             text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
+        await async_db_session.execute(
+            text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
                 VALUES (:id, :user_id, :title, :status, :language, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
@@ -533,6 +573,16 @@ class TestAuthenticatedMultiLanguage:
 
         await async_db_session.execute(
             text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
+        await async_db_session.execute(
+            text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
                 VALUES (:id, :user_id, :title, :status, :language, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
@@ -628,6 +678,16 @@ class TestAuthenticatedDatabasePersistence:
 
         await async_db_session.execute(
             text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
+        await async_db_session.execute(
+            text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
                 VALUES (:id, :user_id, :title, :status, :language, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
@@ -680,6 +740,16 @@ class TestAuthenticatedDatabasePersistence:
         # Create conversation
         conversation_id = str(uuid4())
 
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
         await async_db_session.execute(
             text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
@@ -748,6 +818,16 @@ class TestAuthenticatedErrorHandling:
 
         conversation_id = str(uuid4())
 
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
         await async_db_session.execute(
             text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
@@ -841,6 +921,16 @@ class TestAuthenticatedHunterAI:
         user, token = test_user
         conversation_id = str(uuid4())
 
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
         await async_db_session.execute(
             text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
@@ -1011,6 +1101,16 @@ class TestAuthenticatedULTRA:
 
         await async_db_session.execute(
             text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
+        await async_db_session.execute(
+            text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
@@ -1137,6 +1237,16 @@ class TestAuthenticatedGraphRAG:
 
         await async_db_session.execute(
             text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
+        await async_db_session.execute(
+            text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
@@ -1241,6 +1351,16 @@ class TestAuthenticatedAgentSquad:
         user, token = test_user
         conversation_id = str(uuid4())
 
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_users (id, email, created_at, updated_at)
+                VALUES (:user_id, :user_email, NOW(), NOW())
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {"user_id": user.id, "user_email": user.email}
+        )
+
+        # Create conversation
         await async_db_session.execute(
             text("""
                 INSERT INTO chat_conversations (id, user_id, title, status, language, created_at, updated_at)
