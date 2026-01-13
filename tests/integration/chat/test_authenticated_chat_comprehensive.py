@@ -71,8 +71,8 @@ class TestAuthenticatedChatEndpoint:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -80,7 +80,8 @@ class TestAuthenticatedChatEndpoint:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -165,8 +166,8 @@ class TestAuthenticatedMultiStepFlows:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -174,7 +175,8 @@ class TestAuthenticatedMultiStepFlows:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -303,8 +305,8 @@ class TestAuthenticatedVsGuestBehavior:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -312,7 +314,8 @@ class TestAuthenticatedVsGuestBehavior:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -488,8 +491,8 @@ class TestAuthenticatedIntents:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -497,7 +500,8 @@ class TestAuthenticatedIntents:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -646,8 +650,8 @@ class TestAuthenticatedMultiLanguage:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -655,7 +659,8 @@ class TestAuthenticatedMultiLanguage:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -924,8 +929,8 @@ class TestAuthenticatedErrorHandling:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -933,7 +938,8 @@ class TestAuthenticatedErrorHandling:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -1040,8 +1046,8 @@ class TestAuthenticatedHunterAI:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -1049,7 +1055,8 @@ class TestAuthenticatedHunterAI:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -1231,8 +1238,8 @@ class TestAuthenticatedULTRA:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -1240,7 +1247,8 @@ class TestAuthenticatedULTRA:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -1380,8 +1388,8 @@ class TestAuthenticatedGraphRAG:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -1389,7 +1397,8 @@ class TestAuthenticatedGraphRAG:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
@@ -1509,8 +1518,8 @@ class TestAuthenticatedAgentSquad:
         # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, user_id, title, status, language)
-                VALUES (:id, :user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
@@ -1518,7 +1527,8 @@ class TestAuthenticatedAgentSquad:
                 "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
+                "language": "en",
+                "message_count": 0
             }
         )
         await async_db_session.commit()
