@@ -682,12 +682,15 @@ def create_conversations_router() -> APIRouter:
             )
 
             if should_cancel:
+                # Save the cancelled flow name before clearing
+                cancelled_flow = context.pending_intent
+
                 logger.info(
                     f"🔄 Multi-step flow cancelled - topic change detected",
                     extra={
                         "user_id": user.id,
                         "conversation_id": str(conversation_id),
-                        "from_flow": context.pending_intent,
+                        "from_flow": cancelled_flow,
                         "to_intent": current_intent_str,
                         "reason": reason,
                         "user_message": request_body.content[:100],  # Changed from "message" to avoid LogRecord conflict
@@ -704,9 +707,70 @@ def create_conversations_router() -> APIRouter:
                 context.pending_money_market_info = None
                 context.pending_buy_info = None
 
-                logger.debug(
-                    f"✓ Cleared multi-step flow state - processing new intent: {current_intent_str}"
+                # ⚠️ CRITICAL: Re-detect intent WITHOUT flow context
+                # The first detection was influenced by pending_intent, so we need to
+                # re-classify the message as a fresh query to get the correct intent
+                intent_result = intent_detector.detect(
+                    message=request_body.content,
+                    language=request_body.language,
+                    context=context,  # Now has cleared flow state
                 )
+
+                logger.debug(
+                    f"✓ Cleared multi-step flow state - re-detected intent: {intent_result.intent.value}"
+                )
+
+                # If the cancellation was triggered by an explicit keyword (cancel, stop, etc.),
+                # provide a friendly confirmation message instead of processing as a new query
+                if "keyword_match:" in reason and any(kw in reason for kw in ["cancel", "stop", "abort", "forget", "never mind", "cancelar", "parar"]):
+                    from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
+                    from datetime import datetime, timedelta
+
+                    # Create user message
+                    user_timestamp = datetime.utcnow()
+                    user_message = ChatMessage.create_user_message(
+                        conversation_id=conversation_id,
+                        content=request_body.content,
+                        language=request_body.language,
+                        intent=intent_result.intent.value,
+                        created_at=user_timestamp,
+                    )
+                    await message_repository.save(user_message)
+
+                    # Create friendly cancellation response
+                    cancellation_messages = {
+                        "en": "✓ Cancelled. How else can I help you?",
+                        "es": "✓ Cancelado. ¿En qué más puedo ayudarte?",
+                        "pt": "✓ Cancelado. Como posso ajudá-lo?",
+                        "zh": "✓ 已取消。我还能帮您什么？",
+                        "fr": "✓ Annulé. Comment puis-je vous aider?",
+                    }
+                    cancellation_content = cancellation_messages.get(request_body.language, cancellation_messages["en"])
+
+                    # Create assistant message
+                    assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
+                    assistant_message = ChatMessage.create_assistant_message(
+                        conversation_id=conversation_id,
+                        content=cancellation_content,
+                        intent=None,
+                        handler="flow_cancellation",
+                        is_restricted_action=False,
+                        language=request_body.language,
+                        metadata={"flow_cancelled": True, "cancelled_flow": cancelled_flow},
+                        created_at=assistant_timestamp,
+                    )
+                    await message_repository.save(assistant_message)
+
+                    # Return early with cancellation confirmation
+                    return ChatResponse(
+                        message_id=str(assistant_message.id),
+                        content=cancellation_content,
+                        conversation_id=conversation_id,
+                        intent=None,
+                        enrichment=None,
+                        pending_action=None,
+                        execute_data=None,
+                    )
 
         # Initialize response variables
         agent_content = ""

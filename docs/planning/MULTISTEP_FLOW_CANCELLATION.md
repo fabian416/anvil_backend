@@ -229,10 +229,75 @@ logger.info(
    - Customizable sensitivity (strict vs relaxed)
    - Per-flow cancellation settings
 
+## Bug Fixes & Improvements
+
+### Bug #1: LogRecord KeyError (Fixed: 2026-01-13)
+
+**Issue:** 500 Internal Server Error when flow cancellation was detected:
+```
+KeyError: "Attempt to overwrite 'message' in LogRecord"
+```
+
+**Cause:** Python's `logging.LogRecord` has a reserved `"message"` attribute. Using it in the `extra` dict caused a conflict.
+
+**Fix:** Renamed logging field from `"message"` to `"user_message"`:
+```python
+# Before (BROKEN):
+logger.info("...", extra={"message": content})
+
+# After (FIXED):
+logger.info("...", extra={"user_message": content})
+```
+
+**Location:** `conversations_router.py:696`
+
+### Bug #2: Explicit Cancellation Keywords Not Working (Fixed: 2026-01-13)
+
+**Issue:** User typed "cancel" during buy flow but received:
+```
+❌ Please enter a valid amount (minimum $30).
+```
+
+**Cause:** Intent was classified as `BUY_CONTINUE` BEFORE cancellation detection ran. Even though flow state was cleared, the handler still received the original intent and tried to process "cancel" as amount input.
+
+**Fix (3-part solution):**
+
+1. **Save cancelled flow before clearing state:**
+```python
+cancelled_flow = context.pending_intent  # Save before clearing
+```
+
+2. **Re-detect intent AFTER clearing flow state:**
+```python
+# Clear all flow state
+context.pending_intent = None
+# ... clear all flow_info dicts
+
+# ⚠️ CRITICAL: Re-detect intent WITHOUT flow context
+intent_result = intent_detector.detect(
+    message=request_body.content,
+    language=request_body.language,
+    context=context,  # Now has cleared flow state
+)
+```
+
+3. **Add explicit cancellation response for keywords:**
+```python
+# If explicit cancellation keyword detected, return friendly message
+if "keyword_match:" in reason and any(kw in reason for kw in ["cancel", "stop", ...]):
+    # Create user + assistant messages
+    # Return "✓ Cancelled. How else can I help you?" in user's language
+    # Return early without processing through handler
+```
+
+**Result:** Users can now type "cancel", "stop", "never mind", etc. in any language to exit flows immediately with a friendly confirmation message.
+
+**Location:** `conversations_router.py:710-773`
+
 ## Related Files
 
 - **Detector:** `src/app/application/chat/services/flow_cancellation_detector.py`
-- **Integration:** `src/app/presentation/http/controllers/chat/conversations_router.py` (lines 665-709)
+- **Integration:** `src/app/presentation/http/controllers/chat/conversations_router.py` (lines 665-773)
 - **Tests:** `tests/unit/application/chat/services/test_flow_cancellation_detector.py`
 - **Documentation:** This file
 
