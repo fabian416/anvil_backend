@@ -342,6 +342,21 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
             "automação de fluxo", "multi agente", "estratégia de portfólio",
         ],
     },
+    "lending": {
+        "en": [
+            "lending", "lend", "deposit", "earn yield", "supply", "provide liquidity",
+            "lending rates", "deposit rates", "best apy", "earn on", "stake",
+            "lending protocol", "deposit protocol", "where to lend",
+        ],
+        "es": [
+            "préstamo", "prestar", "depositar", "ganar rendimiento", "proveer liquidez",
+            "tasas de préstamo", "mejores apy", "ganar con", "protocolo de préstamo",
+        ],
+        "pt": [
+            "empréstimo", "emprestar", "depositar", "ganhar rendimento", "prover liquidez",
+            "taxas de empréstimo", "melhores apy", "ganhar com", "protocolo de empréstimo",
+        ],
+    },
 }
 
 # Intents that require registration
@@ -1025,6 +1040,16 @@ class IntentDetectorV2:
                 return IntentResult(
                     intent=ChatIntentV2.LENDING,
                     confidence=0.88,
+                    handler=self._handler_map[ChatIntentV2.LENDING],
+                )
+
+        # Lending: Check for lending/deposit keywords
+        lending_keywords = self._get_all_keywords("lending")
+        for kw in lending_keywords:
+            if kw in message:
+                return IntentResult(
+                    intent=ChatIntentV2.LENDING,
+                    confidence=0.90,
                     handler=self._handler_map[ChatIntentV2.LENDING],
                 )
 
