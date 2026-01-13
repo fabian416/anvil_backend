@@ -721,79 +721,110 @@ def create_conversations_router() -> APIRouter:
                 )
 
                 # If the cancellation was triggered by an explicit keyword (cancel, stop, etc.),
-                # provide a friendly confirmation message instead of processing as a new query
+                # check for compound intent (e.g., "cancel, tell me what is bitcoin")
                 if "keyword_match:" in reason and any(kw in reason for kw in ["cancel", "stop", "abort", "forget", "never mind", "cancelar", "parar"]):
-                    from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
+                    # Extract the matched keyword from reason
+                    keyword = reason.split(":")[1]
 
-                    # Create user message
-                    user_timestamp = datetime.utcnow()
-                    user_message = ChatMessage.create_user_message(
-                        conversation_id=conversation_id,
-                        content=request_body.content,
-                        language=request_body.language,
-                        created_at=user_timestamp,
+                    # Check if there's additional content after cancellation keyword
+                    remaining_content = FlowCancellationDetector.extract_post_cancellation_content(
+                        request_body.content,
+                        keyword,
+                        request_body.language,
                     )
-                    await message_repository.save(user_message)
 
-                    # Create friendly cancellation response
-                    cancellation_messages = {
-                        "en": "✓ Cancelled. How else can I help you?",
-                        "es": "✓ Cancelado. ¿En qué más puedo ayudarte?",
-                        "pt": "✓ Cancelado. Como posso ajudá-lo?",
-                        "zh": "✓ 已取消。我还能帮您什么？",
-                        "fr": "✓ Annulé. Comment puis-je vous aider?",
-                    }
-                    cancellation_content = cancellation_messages.get(request_body.language, cancellation_messages["en"])
+                    if remaining_content:
+                        # Compound intent detected: user wants to cancel AND ask something
+                        logger.info(
+                            "🔄 Compound intent detected - processing new query after cancellation",
+                            extra={
+                                "user_id": user.id,
+                                "conversation_id": str(conversation_id),
+                                "original_content": request_body.content[:100],
+                                "extracted_content": remaining_content[:100],
+                                "cancelled_flow": cancelled_flow,
+                                "keyword": keyword,
+                            }
+                        )
 
-                    # Create assistant message
-                    assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
-                    assistant_message = ChatMessage.create_assistant_message(
-                        conversation_id=conversation_id,
-                        content=cancellation_content,
-                        intent=None,
-                        handler="flow_cancellation",
-                        is_restricted_action=False,
-                        language=request_body.language,
-                        metadata={"flow_cancelled": True, "cancelled_flow": cancelled_flow},
-                        created_at=assistant_timestamp,
-                    )
-                    await message_repository.save(assistant_message)
+                        # Update request content to the extracted query
+                        request_body.content = remaining_content
 
-                    # Build rate limit status for response
-                    rate_limit_status = {
-                        "user_type": user.user_type.value,
-                        "remaining_hourly": rate_result.remaining_hourly,
-                        "remaining_daily": rate_result.remaining_daily,
-                    }
+                        # Continue to normal flow processing below
+                        # The flow state is already cleared, so this will process as a fresh query
+                    else:
+                        # Simple cancellation: show confirmation
+                        from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
 
-                    # Return early with cancellation confirmation
-                    return ChatResponse(
-                        conversation_id=str(conversation_id),
-                        message_id=str(assistant_message.id),
-                        user_message={
-                            "id": str(user_message.id),
-                            "role": user_message.role.value,
-                            "content": user_message.content,
-                            "created_at": user_message.created_at.isoformat(),
-                        },
-                        agent_message={
-                            "id": str(assistant_message.id),
-                            "role": assistant_message.role.value,
-                            "content": assistant_message.content,
-                            "created_at": assistant_message.created_at.isoformat(),
-                        },
-                        routing={
-                            "intent": "FLOW_CANCELLATION",
-                            "confidence": 1.0,
-                            "handler": "flow_cancellation",
-                            "language": request_body.language,
+                        # Create user message
+                        user_timestamp = datetime.utcnow()
+                        user_message = ChatMessage.create_user_message(
+                            conversation_id=conversation_id,
+                            content=request_body.content,
+                            language=request_body.language,
+                            created_at=user_timestamp,
+                        )
+                        await message_repository.save(user_message)
+
+                        # Create friendly cancellation response
+                        cancellation_messages = {
+                            "en": "✓ Cancelled. How else can I help you?",
+                            "es": "✓ Cancelado. ¿En qué más puedo ayudarte?",
+                            "pt": "✓ Cancelado. Como posso ajudá-lo?",
+                            "zh": "✓ 已取消。我还能帮您什么？",
+                            "fr": "✓ Annulé. Comment puis-je vous aider?",
+                        }
+                        cancellation_content = cancellation_messages.get(request_body.language, cancellation_messages["en"])
+
+                        # Create assistant message
+                        assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
+                        assistant_message = ChatMessage.create_assistant_message(
+                            conversation_id=conversation_id,
+                            content=cancellation_content,
+                            intent=None,
+                            handler="flow_cancellation",
+                            is_restricted_action=False,
+                            language=request_body.language,
+                            metadata={"flow_cancelled": True, "cancelled_flow": cancelled_flow},
+                            created_at=assistant_timestamp,
+                        )
+                        await message_repository.save(assistant_message)
+
+                        # Build rate limit status for response
+                        rate_limit_status = {
                             "user_type": user.user_type.value,
-                        },
-                        enrichment=None,
-                        registration_required=None,
-                        rate_limit_status=rate_limit_status,
-                        execute=None,
-                    )
+                            "remaining_hourly": rate_result.remaining_hourly,
+                            "remaining_daily": rate_result.remaining_daily,
+                        }
+
+                        # Return early with cancellation confirmation
+                        return ChatResponse(
+                            conversation_id=str(conversation_id),
+                            message_id=str(assistant_message.id),
+                            user_message={
+                                "id": str(user_message.id),
+                                "role": user_message.role.value,
+                                "content": user_message.content,
+                                "created_at": user_message.created_at.isoformat(),
+                            },
+                            agent_message={
+                                "id": str(assistant_message.id),
+                                "role": assistant_message.role.value,
+                                "content": assistant_message.content,
+                                "created_at": assistant_message.created_at.isoformat(),
+                            },
+                            routing={
+                                "intent": "FLOW_CANCELLATION",
+                                "confidence": 1.0,
+                                "handler": "flow_cancellation",
+                                "language": request_body.language,
+                                "user_type": user.user_type.value,
+                            },
+                            enrichment=None,
+                            registration_required=None,
+                            rate_limit_status=rate_limit_status,
+                            execute=None,
+                        )
 
         # Initialize response variables
         agent_content = ""

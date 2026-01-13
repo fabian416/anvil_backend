@@ -205,6 +205,92 @@ class FlowCancellationDetector:
         return (False, "continuing_flow")
 
     @staticmethod
+    def extract_post_cancellation_content(
+        content: str,
+        keyword: str,
+        language: Literal["en", "es", "pt", "zh", "fr"] = "en",
+    ) -> str | None:
+        """
+        Extract content after cancellation keyword for compound intents.
+
+        Handles cases like:
+        - "cancel, tell me what is bitcoin" → "tell me what is bitcoin"
+        - "stop then show my portfolio" → "show my portfolio"
+        - "never mind, how do I buy crypto?" → "how do I buy crypto?"
+        - "cancel" → None (no remaining content)
+
+        Args:
+            content: Original user message
+            keyword: The cancellation keyword that was matched
+            language: User's language for separator patterns
+
+        Returns:
+            Extracted content after keyword, or None if no meaningful content
+
+        Examples:
+            >>> extract_post_cancellation_content("cancel, what is BTC?", "cancel", "en")
+            "what is BTC?"
+
+            >>> extract_post_cancellation_content("cancel", "cancel", "en")
+            None
+        """
+        content_lower = content.lower()
+        keyword_lower = keyword.lower()
+
+        # Find keyword position
+        keyword_pos = content_lower.find(keyword_lower)
+        if keyword_pos == -1:
+            return None
+
+        # Extract everything after the keyword
+        remaining = content[keyword_pos + len(keyword):].strip()
+
+        if not remaining:
+            return None
+
+        # Define separators by language
+        # Common patterns: comma, period, semicolon, "then", "and"
+        separators = {
+            "en": [",", ".", ";", " then ", " and ", " - ", ":", " but ", " though "],
+            "es": [",", ".", ";", " entonces ", " y ", " - ", ":", " pero ", " aunque "],
+            "pt": [",", ".", ";", " então ", " e ", " - ", ":", " mas ", " embora "],
+            "zh": ["，", "。", "；", "然后", "和", "-", "：", "但是"],
+            "fr": [",", ".", ";", " puis ", " et ", " - ", ":", " mais ", " bien que "],
+        }
+
+        # Get separators for language (default to English)
+        lang_separators = separators.get(language, separators["en"])
+
+        # Remove leading separator
+        for sep in lang_separators:
+            if remaining.lower().startswith(sep.strip()):
+                remaining = remaining[len(sep):].strip()
+                break
+
+        # Must have meaningful content (> 5 characters)
+        # This filters out cases like "cancel." or "cancel, ."
+        if len(remaining) <= 5:
+            return None
+
+        # Additional validation: must contain at least one letter
+        # Filters out cases like "cancel, 123"
+        has_letter = any(c.isalpha() for c in remaining)
+        if not has_letter:
+            return None
+
+        logger.debug(
+            f"Extracted post-cancellation content",
+            extra={
+                "original": content,
+                "keyword": keyword,
+                "extracted": remaining,
+                "language": language,
+            }
+        )
+
+        return remaining
+
+    @staticmethod
     def clear_flow_metadata(metadata: dict) -> dict:
         """
         Clear all multi-step flow metadata from conversation.
