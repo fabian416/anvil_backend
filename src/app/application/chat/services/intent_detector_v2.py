@@ -474,6 +474,31 @@ class IntentDetectorV2:
                 metadata={"step": "crypto", "value": message},
             )
 
+        # Lending flow continuations (standard multi-step flow)
+        if pending == "lending_awaiting_asset":
+            return IntentResult(
+                intent=ChatIntentV2.LENDING,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.LENDING],
+                metadata={"step": "select_asset", "value": message},
+            )
+
+        if pending == "lending_awaiting_amount":
+            return IntentResult(
+                intent=ChatIntentV2.LENDING,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.LENDING],
+                metadata={"step": "enter_amount", "value": message},
+            )
+
+        if pending == "lending_awaiting_confirmation":
+            return IntentResult(
+                intent=ChatIntentV2.LENDING,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.LENDING],
+                metadata={"step": "confirm", "value": message},
+            )
+
         # Lending flow continuations (when no vaults found)
         if pending == "lending_no_vaults":
             # Check if user selected a numbered option (1, 2, 3)
