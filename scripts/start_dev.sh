@@ -38,6 +38,12 @@ declare -a ALL_PIDS=()
 
 # Función para limpiar procesos al salir
 cleanup() {
+    # Prevent multiple cleanup calls
+    if [ -n "${CLEANUP_DONE:-}" ]; then
+        return
+    fi
+    CLEANUP_DONE=1
+
     echo -e "\n${YELLOW}════════════════════════════════════════════════════════════${NC}"
     echo -e "${YELLOW}🛑 Deteniendo todos los servicios de desarrollo...${NC}"
     echo -e "${YELLOW}════════════════════════════════════════════════════════════${NC}"
@@ -59,17 +65,16 @@ cleanup() {
     pkill -f "celery.*worker" 2>/dev/null || true
     pkill -f "celery.*beat" 2>/dev/null || true
     pkill -f "flower" 2>/dev/null || true
-    
+
     # Kill any tail processes from log viewing
     pkill -f "tail -f.*logs/" 2>/dev/null || true
 
     sleep 1
-    
+
     # Clean up PID file
     rm -f "$PID_FILE"
-    
+
     echo -e "${GREEN}✅ Todos los servicios detenidos${NC}"
-    exit 0
 }
 
 # Trap multiple signals for proper cleanup
