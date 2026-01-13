@@ -690,7 +690,7 @@ def create_conversations_router() -> APIRouter:
                         "from_flow": context.pending_intent,
                         "to_intent": current_intent_str,
                         "reason": reason,
-                        "message": request_body.content[:100],
+                        "user_message": request_body.content[:100],  # Changed from "message" to avoid LogRecord conflict
                     }
                 )
 
