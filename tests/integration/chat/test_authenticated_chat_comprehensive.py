@@ -183,49 +183,210 @@ class TestAuthenticatedMultiStepFlows:
 
         return conversation_id
 
+    # ===== LENDING FLOW TESTS (5 steps) =====
+
     @pytest.mark.asyncio
-    async def test_authenticated_lending_flow(
+    async def test_lending_step1_initiate(
         self, client: AsyncClient, auth_headers, conversation_id
     ):
         """
-        Test LENDING flow for authenticated user.
+        LENDING Step 1: User initiates lending flow.
 
-        Validates:
-        - Flow completes without signup prompts
-        - Authenticated users see real wallet data
-        - No demo data shown
+        Expected: System asks for asset to deposit.
         """
-        # Step 1: Initiate lending
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Deposit USDC", "language": "en"}
+            json={"content": "I want to lend my crypto", "language": "en"}
         )
 
-        # Should succeed
         assert response.status_code in [200, 201], f"Status: {response.status_code}"
+        data = response.json()
 
-        if response.status_code in [200, 201]:
-            data = response.json()
+        # Extract response content
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
 
-            # Validate response structure
-            assert "agent_message" in data or "message" in data
-
-            # Should NOT require registration (authenticated user)
-            requires_reg = data.get("registration_required") or data.get("requires_registration")
-            if requires_reg is not None:
-                assert requires_reg is False, "Authenticated users shouldn't require registration"
+        # Should ask for asset
+        assert any(word in content.lower() for word in ["asset", "token", "usdc", "eth", "dai"]), \
+            f"Step 1 should ask for asset: {content[:200]}"
 
     @pytest.mark.asyncio
-    async def test_authenticated_swap_flow(
+    async def test_lending_step2_select_asset(
         self, client: AsyncClient, auth_headers, conversation_id
     ):
         """
-        Test SWAP flow for authenticated user.
+        LENDING Step 2: User selects asset (USDC).
 
-        Validates:
-        - Authenticated users can initiate swap
-        - No signup prompts shown
+        Expected: System asks for amount to deposit.
+        """
+        # Step 1: Initiate
+        await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "lending", "language": "en"}
+        )
+
+        # Step 2: Select asset
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "USDC", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should ask for amount
+        assert any(word in content.lower() for word in ["amount", "how much", "deposit"]), \
+            f"Step 2 should ask for amount: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_lending_step3_enter_amount(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        LENDING Step 3: User enters amount (1000 USDC).
+
+        Expected: System shows vault options with APY quotes.
+        """
+        # Step 1: Initiate
+        await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "lending", "language": "en"}
+        )
+
+        # Step 2: Select asset
+        await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "USDC", "language": "en"}
+        )
+
+        # Step 3: Enter amount
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "1000", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should show vault options with APY
+        assert any(word in content.lower() for word in ["apy", "vault", "earn", "yield"]), \
+            f"Step 3 should show vault options: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_lending_step4_confirm_deposit(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        LENDING Step 4: User confirms deposit.
+
+        Expected: For authenticated users, should proceed without signup prompt.
+        """
+        # Complete flow to confirmation
+        await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "lending", "language": "en"}
+        )
+        await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "USDC", "language": "en"}
+        )
+        await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "1000", "language": "en"}
+        )
+
+        # Step 4: Confirm
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "yes, confirm", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+
+        # Should NOT require signup (authenticated user)
+        requires_reg = data.get("registration_required") or data.get("requires_registration")
+        if requires_reg is not None:
+            assert requires_reg is False, "Authenticated users shouldn't need signup"
+
+    @pytest.mark.asyncio
+    async def test_lending_no_signup_prompt_for_auth(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        LENDING Step 5: Validate no signup prompts shown to authenticated users.
+
+        Expected: Full flow completes without "sign up" messages.
+        """
+        # Complete full lending flow
+        responses = []
+
+        responses.append(await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "deposit USDC", "language": "en"}
+        ))
+
+        responses.append(await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "1000", "language": "en"}
+        ))
+
+        # Check all responses for signup prompts
+        for response in responses:
+            if response.status_code in [200, 201]:
+                data = response.json()
+                content = str(data).lower()
+
+                # Should NOT contain signup language
+                assert "sign up" not in content, "Authenticated users shouldn't see signup prompts"
+                assert "create account" not in content, "Authenticated users shouldn't see account creation prompts"
+
+    # ===== SWAP FLOW TESTS (4 steps) =====
+
+    @pytest.mark.asyncio
+    async def test_swap_step1_initiate(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        SWAP Step 1: User initiates swap.
+
+        Expected: System asks for source token and target token.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "swap", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should ask for swap details
+        assert any(word in content.lower() for word in ["swap", "exchange", "token", "from", "to"]), \
+            f"Step 1 should ask for swap details: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_swap_step2_get_quote(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        SWAP Step 2: User provides swap details (100 USDC to ETH).
+
+        Expected: System shows quote with exchange rate.
         """
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
@@ -233,23 +394,208 @@ class TestAuthenticatedMultiStepFlows:
             json={"content": "Swap 100 USDC to ETH", "language": "en"}
         )
 
-        assert response.status_code in [200, 201], f"Status: {response.status_code}"
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
 
-        if response.status_code in [200, 201]:
-            data = response.json()
+        # Should show quote/rate information
+        assert any(word in content.lower() for word in ["rate", "quote", "price", "receive", "eth"]), \
+            f"Step 2 should show quote: {content[:200]}"
 
-            # Should have swap-related content
-            if "agent_message" in data:
-                content = data["agent_message"]["content"]
-            elif "message" in data:
-                content = data["message"]["content"]
-            else:
-                content = str(data)
+    @pytest.mark.asyncio
+    async def test_swap_step3_confirm(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        SWAP Step 3: User confirms swap.
 
-            # Verify swap context (flexible assertions)
-            assert any(
-                word in content.lower() for word in ["swap", "exchange", "usdc", "eth", "trade"]
-            ), f"No swap context in response: {content[:200]}"
+        Expected: For authenticated users, proceeds without signup.
+        """
+        # Get quote
+        await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Swap 100 USDC to ETH", "language": "en"}
+        )
+
+        # Confirm
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "confirm swap", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+
+        # Should NOT require signup
+        requires_reg = data.get("registration_required") or data.get("requires_registration")
+        if requires_reg is not None:
+            assert requires_reg is False, "Authenticated users shouldn't need signup for swap"
+
+    @pytest.mark.asyncio
+    async def test_swap_no_signup_prompt(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        SWAP Step 4: Validate no signup prompts in swap flow.
+
+        Expected: Authenticated users complete swap without signup prompts.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Swap 50 USDC to ETH", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = str(data).lower()
+
+        # Should NOT contain signup language
+        assert "sign up" not in content, "Swap flow shouldn't prompt signup for authenticated users"
+        assert "create account" not in content
+
+    # ===== SWAP_MOONPAY FLOW TESTS (3 steps) =====
+
+    @pytest.mark.asyncio
+    async def test_moonpay_swap_step1_initiate(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        MOONPAY SWAP Step 1: User initiates fiat-to-crypto swap via MoonPay.
+
+        Expected: System explains MoonPay integration and asks for details.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "buy crypto with card", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should mention MoonPay or fiat purchase
+        assert any(word in content.lower() for word in ["moonpay", "card", "buy", "purchase", "fiat"]), \
+            f"Step 1 should explain MoonPay option: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_moonpay_swap_step2_get_quote(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        MOONPAY SWAP Step 2: User requests quote for fiat purchase.
+
+        Expected: System shows MoonPay quote with fees.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Buy 100 USD of ETH with card", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should show quote or pricing info
+        assert any(word in content.lower() for word in ["price", "fee", "total", "eth", "receive"]), \
+            f"Step 2 should show quote: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_moonpay_swap_no_signup_for_auth(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        MOONPAY SWAP Step 3: Validate authenticated users can proceed.
+
+        Expected: No signup prompts, direct MoonPay integration.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Buy 50 USD ETH with card", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = str(data).lower()
+
+        # Should NOT require signup
+        assert "sign up" not in content, "MoonPay flow shouldn't prompt signup for authenticated users"
+
+    # ===== BUY FLOW TESTS (3 steps) =====
+
+    @pytest.mark.asyncio
+    async def test_buy_step1_initiate(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        BUY Step 1: User initiates token purchase.
+
+        Expected: System asks which token to buy.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "buy tokens", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should ask for token details
+        assert any(word in content.lower() for word in ["buy", "token", "crypto", "which", "what"]), \
+            f"Step 1 should ask for token: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_buy_step2_show_options(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        BUY Step 2: User specifies token (ETH).
+
+        Expected: System shows buying options (DEX, CEX, MoonPay).
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Buy ETH", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should show buying options or proceed with purchase
+        assert any(word in content.lower() for word in ["eth", "buy", "purchase", "swap"]), \
+            f"Step 2 should handle ETH purchase: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_buy_no_signup_for_auth(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        BUY Step 3: Validate no signup prompts for authenticated users.
+
+        Expected: Buy flow completes without signup requirements.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "I want to buy 0.1 ETH", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = str(data).lower()
+
+        # Should NOT contain signup language
+        assert "sign up" not in content, "Buy flow shouldn't prompt signup for authenticated users"
+        assert "create account" not in content
 
 
 @pytest.mark.integration
