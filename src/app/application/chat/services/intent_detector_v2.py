@@ -214,23 +214,23 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
     },
     "buy": {
         "en": [
-            "buy crypto", "buy bitcoin", "buy eth", "buy usdc",
+            "buy", "buy tokens", "buy token", "buy crypto", "buy bitcoin", "buy eth", "buy usdc",
             "buy with card", "purchase crypto", "i want to buy crypto",
             "i want to buy", "buy cryptocurrency", "on-ramp",
-            "fund wallet", "add funds", "deposit fiat",
+            "fund wallet", "add funds", "deposit fiat", "purchase tokens",
         ],
         "es": [
-            "comprar cripto", "comprar bitcoin", "comprar eth", "comprar usdc",
+            "comprar", "comprar tokens", "comprar token", "comprar cripto", "comprar bitcoin", "comprar eth", "comprar usdc",
             "comprar con tarjeta", "quiero comprar cripto", "quiero comprar",
             "comprar criptomoneda", "fondear wallet", "agregar fondos",
         ],
         "pt": [
-            "comprar cripto", "comprar bitcoin", "comprar eth", "comprar usdc",
+            "comprar", "comprar tokens", "comprar token", "comprar cripto", "comprar bitcoin", "comprar eth", "comprar usdc",
             "comprar com cartão", "quero comprar cripto", "quero comprar",
             "comprar criptomoeda", "fundear carteira", "adicionar fundos",
         ],
         "zh": [
-            "购买加密货币", "购买比特币", "购买以太坊", "购买USDC",
+            "购买", "购买代币", "购买加密货币", "购买比特币", "购买以太坊", "购买USDC",
             "用卡购买", "我想购买加密货币", "我想购买",
         ],
     },
