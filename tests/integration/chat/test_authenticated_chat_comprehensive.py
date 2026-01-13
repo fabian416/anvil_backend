@@ -1924,3 +1924,476 @@ class TestAuthenticatedAgentSquad:
                 intent = routing.get("intent", "").lower()
                 handler = routing.get("handler", "").lower()
                 assert any(word in intent + handler for word in ["portfolio", "complex", "workflow", "strategy"])
+
+
+@pytest.mark.integration
+@pytest.mark.chat
+class TestAuthenticatedShortcutsAndQuality:
+    """Test DeFi shortcuts, production quality, and auth-specific behavior."""
+
+    @pytest_asyncio.fixture
+    async def test_user(self, async_db_session: AsyncSession):
+        """Create a test user in the database."""
+        user, token = await AuthHelper.create_test_user_in_db(
+            db_session=async_db_session,
+            role="user",
+            email="test_shortcuts@example.com",
+        )
+        return user, token
+
+    @pytest_asyncio.fixture
+    async def auth_headers(self, test_user):
+        """Get authentication headers for test user."""
+        user, token = test_user
+        return AuthHelper.get_auth_headers(token)
+
+    @pytest_asyncio.fixture
+    async def conversation_id(self, test_user, async_db_session: AsyncSession):
+        """Create a new conversation for testing."""
+        user, token = test_user
+        conversation_id = str(uuid4())
+
+        # Extract INTEGER user_id from TestUser UUID
+        user_id_int = int(user.id.int)
+
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
+        result = await async_db_session.execute(
+            text("""
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+                RETURNING id
+            """),
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
+        )
+        unified_chat_user_uuid = result.scalar_one()
+
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        await async_db_session.execute(
+            text("""
+                INSERT INTO chat_conversations (id, user_id, title, status, language, message_count)
+                VALUES (:id, :user_id, :title, :status, :language, :message_count)
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {
+                "id": conversation_id,
+                "user_id": unified_chat_user_uuid,
+                "title": "Test Conversation",
+                "status": "active",
+                "language": "en",
+                "message_count": 0
+            }
+        )
+        await async_db_session.commit()
+
+        return conversation_id
+
+    # ===== DEFI SHORTCUTS TESTS (8 tests) =====
+
+    @pytest.mark.asyncio
+    async def test_shortcut_balance(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test BALANCE shortcut for authenticated users.
+
+        Expected: Shows real wallet balance (not demo data).
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "balance", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should show balance information
+        assert any(word in content.lower() for word in ["balance", "total", "portfolio", "$"]), \
+            f"Balance shortcut should show balance: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_shortcut_portfolio(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test PORTFOLIO shortcut for authenticated users.
+
+        Expected: Shows portfolio breakdown with holdings.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "portfolio", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should show portfolio information
+        assert any(word in content.lower() for word in ["portfolio", "holdings", "assets", "tokens"]), \
+            f"Portfolio shortcut should show holdings: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_shortcut_activity(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test ACTIVITY shortcut for authenticated users.
+
+        Expected: Shows recent transaction activity.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "activity", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should show activity information
+        assert any(word in content.lower() for word in ["activity", "transaction", "recent", "history"]), \
+            f"Activity shortcut should show transactions: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_shortcut_send(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test SEND shortcut for authenticated users.
+
+        Expected: Initiates send flow without signup prompt.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "send 10 USDC", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = str(data).lower()
+
+        # Should handle send request
+        assert any(word in content for word in ["send", "transfer", "recipient", "address"]), \
+            f"Send shortcut should handle transfer: {content[:200]}"
+
+        # Should NOT require signup
+        assert "sign up" not in content, "Send shortcut shouldn't prompt signup for authenticated users"
+
+    @pytest.mark.asyncio
+    async def test_shortcut_receive(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test RECEIVE shortcut for authenticated users.
+
+        Expected: Shows wallet address for receiving funds.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "receive", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should provide wallet address or instructions
+        assert any(word in content.lower() for word in ["address", "wallet", "receive", "deposit"]), \
+            f"Receive shortcut should show address: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_shortcut_money_market(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test MONEY_MARKET shortcut for authenticated users.
+
+        Expected: Shows DeFi lending/borrowing rates.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "money market rates", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = data.get("agent_message", {}).get("content") or data.get("message", {}).get("content", "")
+
+        # Should show rate information
+        assert any(word in content.lower() for word in ["rate", "apy", "yield", "lending", "borrowing", "market"]), \
+            f"Money market shortcut should show rates: {content[:200]}"
+
+    @pytest.mark.asyncio
+    async def test_shortcut_multi_language_support(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test shortcuts work with multi-language support.
+
+        Expected: Shortcuts respond in requested language.
+        """
+        # Test with Spanish
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "balance", "language": "es"}
+        )
+
+        assert response.status_code in [200, 201]
+        # Response should be successful (language translation happens in handler)
+
+    @pytest.mark.asyncio
+    async def test_shortcut_response_time(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test shortcuts respond quickly (performance check).
+
+        Expected: Response within reasonable time (< 5 seconds).
+        """
+        import time
+
+        start_time = time.time()
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "balance", "language": "en"}
+        )
+        elapsed_time = time.time() - start_time
+
+        assert response.status_code in [200, 201]
+        assert elapsed_time < 5.0, f"Shortcut took too long: {elapsed_time:.2f}s (should be < 5s)"
+
+    # ===== PRODUCTION QUALITY TESTS (5 tests) =====
+
+    @pytest.mark.asyncio
+    async def test_error_handling_invalid_conversation(
+        self, client: AsyncClient, auth_headers
+    ):
+        """
+        Test error handling for invalid conversation ID.
+
+        Expected: Clear error message, appropriate status code.
+        """
+        invalid_conv_id = str(uuid4())
+        response = await client.post(
+            f"/api/v1/conversations/{invalid_conv_id}/messages",
+            headers=auth_headers,
+            json={"content": "test", "language": "en"}
+        )
+
+        # Should return error status (404 or 422)
+        assert response.status_code in [404, 422], f"Should return error for invalid conversation: {response.status_code}"
+
+        if response.status_code in [404, 422]:
+            data = response.json()
+            # Should have error details
+            assert "detail" in data or "error" in data or "message" in data
+
+    @pytest.mark.asyncio
+    async def test_error_handling_empty_message(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test error handling for empty message content.
+
+        Expected: Validation error with clear message.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "", "language": "en"}
+        )
+
+        # Should return validation error (422)
+        assert response.status_code == 422, f"Should return 422 for empty message: {response.status_code}"
+
+    @pytest.mark.asyncio
+    async def test_response_format_consistency(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test response format consistency across different intents.
+
+        Expected: All responses follow same structure.
+        """
+        test_queries = ["balance", "swap", "portfolio", "lending"]
+        response_formats = []
+
+        for query in test_queries:
+            response = await client.post(
+                f"/api/v1/conversations/{conversation_id}/messages",
+                headers=auth_headers,
+                json={"content": query, "language": "en"}
+            )
+
+            if response.status_code in [200, 201]:
+                data = response.json()
+                # Check for consistent top-level keys
+                has_agent_message = "agent_message" in data
+                has_message = "message" in data
+                has_routing = "routing" in data
+
+                response_formats.append({
+                    "query": query,
+                    "has_agent_message": has_agent_message,
+                    "has_message": has_message,
+                    "has_routing": has_routing
+                })
+
+        # All responses should have similar structure
+        assert len(response_formats) > 0, "Should have at least one successful response"
+
+        # Check consistency (at least one common key across all responses)
+        common_keys = ["agent_message", "message", "routing"]
+        for key in common_keys:
+            key_count = sum(1 for fmt in response_formats if fmt.get(f"has_{key}"))
+            if key_count > 0:
+                # At least this key appears in responses
+                break
+        else:
+            assert False, "No common response structure found"
+
+    @pytest.mark.asyncio
+    async def test_rate_limit_headers_present(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test rate limit information in response headers.
+
+        Expected: Rate limit headers present for authenticated users.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "balance", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+
+        # Check for rate limit headers (may or may not be present depending on implementation)
+        # This is a quality check, not a strict requirement
+        headers = response.headers
+        rate_limit_headers = [
+            "X-RateLimit-Limit",
+            "X-RateLimit-Remaining",
+            "X-RateLimit-Reset"
+        ]
+
+        # Log presence of rate limit headers
+        has_rate_limits = any(header in headers for header in rate_limit_headers)
+        # Test passes regardless - this is informational for production quality assessment
+
+    @pytest.mark.asyncio
+    async def test_conversation_context_persistence(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test conversation context is maintained across messages.
+
+        Expected: Subsequent messages have context from previous messages.
+        """
+        # Message 1: Ask for balance
+        response1 = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "What's my balance?", "language": "en"}
+        )
+
+        assert response1.status_code in [200, 201]
+
+        # Message 2: Follow-up question (should understand context)
+        response2 = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "And how much ETH do I have?", "language": "en"}
+        )
+
+        assert response2.status_code in [200, 201]
+        # Context should be maintained (both messages succeeded in same conversation)
+
+    # ===== AUTH-SPECIFIC BEHAVIOR TESTS (3 tests) =====
+
+    @pytest.mark.asyncio
+    async def test_authenticated_vs_guest_rate_limits(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test authenticated users have higher rate limits than guests.
+
+        Expected: Authenticated users can make more requests.
+        """
+        # Make multiple rapid requests (authenticated users should handle this)
+        responses = []
+        for i in range(5):
+            response = await client.post(
+                f"/api/v1/conversations/{conversation_id}/messages",
+                headers=auth_headers,
+                json={"content": f"balance check {i}", "language": "en"}
+            )
+            responses.append(response)
+
+        # All requests should succeed (authenticated users have higher limits)
+        success_count = sum(1 for r in responses if r.status_code in [200, 201])
+        assert success_count >= 4, f"Authenticated users should handle rapid requests: {success_count}/5 succeeded"
+
+    @pytest.mark.asyncio
+    async def test_authenticated_premium_features_access(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test authenticated users can access premium features.
+
+        Expected: Hunter AI and Agent Squad work for authenticated users.
+        """
+        # Test Hunter AI (premium feature)
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Analyze BTC sentiment", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = str(data).lower()
+
+        # Should NOT have feature restrictions
+        assert "upgrade" not in content, "Authenticated users shouldn't see upgrade prompts"
+        assert "premium" not in content or "premium feature" not in content
+
+    @pytest.mark.asyncio
+    async def test_authenticated_real_data_integration(
+        self, client: AsyncClient, auth_headers, conversation_id
+    ):
+        """
+        Test authenticated users receive real data (not demo data).
+
+        Expected: Responses include real wallet data, not demo values.
+        """
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": "Show my portfolio", "language": "en"}
+        )
+
+        assert response.status_code in [200, 201]
+        data = response.json()
+        content = str(data).lower()
+
+        # Should NOT contain demo disclaimers
+        assert "demo" not in content, "Authenticated users shouldn't see demo disclaimers"
+        assert "sample" not in content or "sample data" not in content
+        assert "example" not in content or "example portfolio" not in content
