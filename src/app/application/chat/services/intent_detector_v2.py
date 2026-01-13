@@ -103,6 +103,32 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
             "vai subir", "vai cair",
         ],
     },
+    "token_info": {
+        "en": [
+            "what is bitcoin", "what is ethereum", "what is btc", "what is eth",
+            "what is usdc", "what is usdt", "what is solana", "what is sol",
+            "what is bnb", "what is cardano", "what is ada", "what is polygon",
+            "what is matic", "what is avalanche", "what is avax", "what is chainlink",
+            "what is link", "what is uniswap", "what is uni", "what is aave",
+            "tell me about bitcoin", "tell me about ethereum", "tell me about",
+            "what is defi", "what is nft", "what is dao", "what is stablecoin",
+            "explain bitcoin", "explain ethereum", "explain defi",
+        ],
+        "es": [
+            "qué es bitcoin", "qué es ethereum", "qué es btc", "qué es eth",
+            "qué es usdc", "qué es usdt", "qué es solana", "qué es defi",
+            "cuéntame sobre bitcoin", "háblame de ethereum", "explica bitcoin",
+        ],
+        "pt": [
+            "o que é bitcoin", "o que é ethereum", "o que é btc", "o que é eth",
+            "o que é usdc", "o que é usdt", "o que é solana", "o que é defi",
+            "fale sobre bitcoin", "me conte sobre ethereum", "explique bitcoin",
+        ],
+        "zh": [
+            "什么是比特币", "什么是以太坊", "什么是btc", "什么是eth",
+            "告诉我关于比特币", "解释比特币",
+        ],
+    },
     "swap": {
         "en": [
             "swap", "exchange", "convert", "trade", "change",
@@ -1257,6 +1283,18 @@ class IntentDetectorV2:
         language: str,
     ) -> IntentResult | None:
         """Detect analysis intents (sentiment, prediction, etc.)."""
+        # Token info queries (What is Bitcoin?, Tell me about Ethereum, etc.)
+        # Check this FIRST to prevent false matches with price/prediction patterns
+        token_info_keywords = self._get_all_keywords("token_info")
+        for kw in token_info_keywords:
+            if kw in message:
+                return IntentResult(
+                    intent=ChatIntentV2.PROTOCOL_SEARCH,
+                    confidence=0.90,
+                    handler=self._handler_map[ChatIntentV2.PROTOCOL_SEARCH],
+                    metadata={"query_type": "token_info"},
+                )
+
         # Sentiment keywords
         sentiment_keywords = self._get_all_keywords("sentiment")
         for kw in sentiment_keywords:
