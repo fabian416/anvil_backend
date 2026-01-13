@@ -294,6 +294,44 @@ if "keyword_match:" in reason and any(kw in reason for kw in ["cancel", "stop", 
 
 **Location:** `conversations_router.py:710-773`
 
+### Bug #3: UnboundLocalError from Import Conflict (Fixed: 2026-01-13)
+
+**Issue:** 500 Internal Server Error:
+```
+UnboundLocalError: cannot access local variable 'datetime' where it is not associated with a value
+```
+
+**Cause:** Redundant local imports of `datetime` and `timedelta` inside the `send_message()` function created scope conflicts with the module-level import. When Fix #2 added local imports at lines 727 and 1253, they shadowed the module-level import, causing later code that used `datetime.utcnow()` to fail.
+
+**Python Scoping Issue:**
+```python
+# Module level (line 8):
+from datetime import datetime
+
+# Inside function (line 727):
+from datetime import datetime, timedelta  # ❌ Creates local scope conflict
+
+# Later in function (line 1254):
+user_timestamp = datetime.utcnow()  # ❌ UnboundLocalError - which datetime?
+```
+
+**Fix:**
+Consolidated all datetime imports at module level following PEP 8 best practices:
+
+```python
+# Module level (line 8):
+from datetime import datetime, timedelta  # ✅ Single source of truth
+
+# Removed redundant imports at:
+# - Line 727 (cancellation fix)
+# - Line 1253 (message creation)
+```
+
+**Result:** No more import conflicts. Server reloaded successfully. Endpoint returns proper responses.
+
+**Location:** `conversations_router.py:8`
+**Commit:** `aa22397`
+
 ## Related Files
 
 - **Detector:** `src/app/application/chat/services/flow_cancellation_detector.py`
