@@ -5,7 +5,7 @@ CRUD endpoints for conversation management.
 Supports both guest and authenticated users.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -724,7 +724,6 @@ def create_conversations_router() -> APIRouter:
                 # provide a friendly confirmation message instead of processing as a new query
                 if "keyword_match:" in reason and any(kw in reason for kw in ["cancel", "stop", "abort", "forget", "never mind", "cancelar", "parar"]):
                     from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
-                    from datetime import datetime, timedelta
 
                     # Create user message
                     user_timestamp = datetime.utcnow()
@@ -1250,7 +1249,6 @@ For valid DeFi/crypto questions:
             registration_required = None
         
         # Create user message with explicit timestamp
-        from datetime import timedelta
         user_timestamp = datetime.utcnow()
         user_message = ChatMessage.create_user_message(
             conversation_id=conversation_id,
