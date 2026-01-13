@@ -731,7 +731,6 @@ def create_conversations_router() -> APIRouter:
                         conversation_id=conversation_id,
                         content=request_body.content,
                         language=request_body.language,
-                        intent=intent_result.intent.value,
                         created_at=user_timestamp,
                     )
                     await message_repository.save(user_message)
