@@ -32,7 +32,12 @@ def _map_chat_users_table() -> None:
         __tablename__ = "chat_users"
         __table_args__ = {"extend_existing": True}
 
-        id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+        id = mapped_column(
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text('gen_random_uuid()'),
+            default=uuid.uuid4
+        )
         user_id = mapped_column(
             Integer,
             ForeignKey("users.id", ondelete="CASCADE"),
@@ -71,7 +76,12 @@ def _map_chat_conversations_table() -> None:
         __tablename__ = "chat_conversations"
         __table_args__ = {"extend_existing": True}
 
-        id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+        id = mapped_column(
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text('gen_random_uuid()'),
+            default=uuid.uuid4
+        )
         chat_user_id = mapped_column(
             UUID(as_uuid=True),
             ForeignKey("chat_users.id", ondelete="CASCADE"),
@@ -101,7 +111,12 @@ def _map_chat_messages_table() -> None:
         __tablename__ = "chat_messages"
         __table_args__ = {"extend_existing": True}
 
-        id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+        id = mapped_column(
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text('gen_random_uuid()'),
+            default=uuid.uuid4
+        )
         conversation_id = mapped_column(
             UUID(as_uuid=True),
             ForeignKey("chat_conversations.id", ondelete="CASCADE"),
