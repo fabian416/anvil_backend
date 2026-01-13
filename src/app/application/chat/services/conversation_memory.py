@@ -184,16 +184,20 @@ class ConversationMemory:
         (e.g., swap awaiting confirmation).
         """
         if not messages:
+            logger.debug("[CONV_MEM] No messages, pending_intent = None")
             return None
 
         # Find the most recent assistant message (messages are newest-first)
         for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
+                logger.debug(f"[CONV_MEM] Found assistant message, pending_action = {pending}, metadata = {msg.metadata}")
                 if pending:
+                    logger.info(f"[CONV_MEM] Returning pending_intent: {pending}")
                     return pending
                 break
 
+        logger.debug("[CONV_MEM] No pending_intent found")
         return None
     
     def _get_pending_swap_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
@@ -287,18 +291,22 @@ class ConversationMemory:
         This preserves the state of multi-turn lending conversations.
         """
         if not messages:
+            logger.debug("[CONV_MEM] No messages for lending_info")
             return None
 
         # Find the most recent assistant message with lending info (messages are newest-first)
         for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
+                logger.debug(f"[CONV_MEM] Checking lending_info - pending_action: {pending}, metadata keys: {list(msg.metadata.keys())}")
                 if pending and pending.startswith("lending_"):
                     lending_info = msg.metadata.get("lending_info")
+                    logger.info(f"[CONV_MEM] Found lending_info: {lending_info}")
                     if lending_info:
                         return lending_info
                 break
 
+        logger.debug("[CONV_MEM] No lending_info found")
         return None
 
     def _get_pending_portfolio_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:

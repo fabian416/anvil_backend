@@ -51,18 +51,28 @@ class LendingMultiStepHandler:
         3. User: "1000" → Show vault quote, ask confirmation
         4. User: "confirm" → Execute (requires auth)
         """
+        logger.info(f"[LENDING_MULTISTEP] handle_flow called")
+        logger.info(f"[LENDING_MULTISTEP] content: {content}")
+        logger.info(f"[LENDING_MULTISTEP] continuation_step: {continuation_step}")
+        logger.info(f"[LENDING_MULTISTEP] previous_lending_info: {previous_lending_info}")
+
         # Step 1: Ask for asset (initial request)
         if not continuation_step and not previous_lending_info:
+            logger.info("[LENDING_MULTISTEP] Step 1: Asking for asset (no continuation)")
             return await self._ask_for_asset(language)
 
         # Step 2: Process asset selection
         if continuation_step == "lending_awaiting_asset" or (
             previous_lending_info and not previous_lending_info.get("asset")
         ):
+            logger.info("[LENDING_MULTISTEP] Step 2: Processing asset selection")
             asset = self._parse_asset(content)
+            logger.info(f"[LENDING_MULTISTEP] Parsed asset: {asset}")
             if not asset:
                 # Invalid asset, re-ask
+                logger.info("[LENDING_MULTISTEP] Invalid asset, re-asking")
                 return await self._ask_for_asset(language, error=True)
+            logger.info(f"[LENDING_MULTISTEP] Asset valid, asking for amount")
             return await self._ask_for_amount(asset, language)
 
         # Step 3: Process amount selection
@@ -93,6 +103,7 @@ class LendingMultiStepHandler:
                 return await self._show_vault_quote(asset, amount, language, error=True)
 
         # Fallback: restart flow
+        logger.info("[LENDING_MULTISTEP] Fallback: restarting flow (no step matched)")
         return await self._ask_for_asset(language)
 
     async def _ask_for_asset(self, language: str, error: bool = False) -> dict[str, Any]:
