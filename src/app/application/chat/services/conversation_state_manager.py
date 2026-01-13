@@ -11,9 +11,10 @@ Part of the resilient intent detection system.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from app.domain.chat.value_objects.conversation_context import ConversationContext
+# Import moved to avoid circular dependency
+# ConversationContext will be imported from conversation_memory at runtime
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class ConversationStateManager:
 
     def should_clear_pending_flow(
         self,
-        context: ConversationContext,
+        context: "ConversationContext",
         current_message: str,
         language: str = "en",
     ) -> tuple[bool, str]:
@@ -125,7 +126,7 @@ class ConversationStateManager:
 
     def track_message_relevance(
         self,
-        context: ConversationContext,
+        context: "ConversationContext",
         current_message: str,
     ) -> None:
         """
@@ -239,7 +240,7 @@ class ConversationStateManager:
 
         return False
 
-    def clear_flow_state(self, context: ConversationContext) -> None:
+    def clear_flow_state(self, context: "ConversationContext") -> None:
         """
         Clear all flow-related state from context.
 
@@ -283,7 +284,7 @@ class ConversationStateManager:
         if hasattr(context, "pending_intent_timestamp"):
             context.pending_intent_timestamp = None
 
-    def init_flow_state(self, context: ConversationContext) -> None:
+    def init_flow_state(self, context: "ConversationContext") -> None:
         """
         Initialize flow tracking state when a new flow starts.
 
