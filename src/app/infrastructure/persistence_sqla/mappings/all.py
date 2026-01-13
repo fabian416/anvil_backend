@@ -49,7 +49,6 @@ from app.infrastructure.persistence_sqla.mappings.portfolio_snapshot import map_
 from app.infrastructure.persistence_sqla.mappings.policy import map_policy_tables
 from app.infrastructure.persistence_sqla.mappings.guest import map_guest_tables
 from app.infrastructure.persistence_sqla.mappings.chat_unified import map_unified_chat_tables
-from app.infrastructure.persistence_sqla.mappings.chat import map_chat_tables
 from app.infrastructure.persistence_sqla.mappings.moonpay import map_moonpay_customer_tokens_table
 
 
@@ -85,9 +84,7 @@ def map_tables() -> None:
     map_portfolio_snapshot_tables()
     # Guest Chat
     map_guest_tables()
-    # Authenticated Chat (legacy bridge system) - Must run BEFORE unified_chat
-    map_chat_tables()
-    # Unified Chat (guest + authenticated) - Skips if chat_users already exists
+    # Unified Chat (guest + authenticated) - Primary chat system
     map_unified_chat_tables()
     # MoonPay Customer Tokens
     map_moonpay_customer_tokens_table()

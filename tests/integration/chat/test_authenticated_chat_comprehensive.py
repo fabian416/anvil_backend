@@ -50,28 +50,34 @@ class TestAuthenticatedChatEndpoint:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -138,28 +144,34 @@ class TestAuthenticatedMultiStepFlows:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -270,28 +282,34 @@ class TestAuthenticatedVsGuestBehavior:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -449,28 +467,34 @@ class TestAuthenticatedIntents:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -601,28 +625,34 @@ class TestAuthenticatedMultiLanguage:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -710,28 +740,33 @@ class TestAuthenticatedDatabasePersistence:
         # Extract INTEGER user_id from TestUser UUID
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with chat_user_id
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "DB Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -750,7 +785,7 @@ class TestAuthenticatedDatabasePersistence:
             # Verify conversation in database with correct chat_user_id
             result = await async_db_session.execute(
                 text("""
-                    SELECT chat_user_id FROM chat_conversations
+                    SELECT user_id FROM chat_conversations
                     WHERE id = :conv_id
                 """),
                 {"conv_id": conversation_id}
@@ -758,7 +793,7 @@ class TestAuthenticatedDatabasePersistence:
             row = result.fetchone()
 
             assert row is not None, "Conversation not found in database"
-            assert row[0] == chat_user_uuid, "Conversation has wrong chat_user_id"
+            assert row[0] == unified_chat_user_uuid, "Conversation has wrong chat_user_id"
 
     @pytest.mark.asyncio
     async def test_messages_stored_with_user_id(
@@ -778,28 +813,33 @@ class TestAuthenticatedDatabasePersistence:
         # Extract INTEGER user_id from TestUser UUID
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with chat_user_id
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Message DB Test",
                 "status": "active",
                 "language": "en"
@@ -863,28 +903,34 @@ class TestAuthenticatedErrorHandling:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -973,28 +1019,34 @@ class TestAuthenticatedHunterAI:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -1158,28 +1210,34 @@ class TestAuthenticatedULTRA:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -1301,28 +1359,34 @@ class TestAuthenticatedGraphRAG:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
@@ -1424,28 +1488,34 @@ class TestAuthenticatedAgentSquad:
         # TestUser.id is UUID(int=users.id), so we get the int back
         user_id_int = int(user.id.int)
 
-        # Insert into chat_users and get the auto-generated UUID
+        # Insert into unified chat_users (with user_type) and get auto-generated UUID
         result = await async_db_session.execute(
             text("""
-                INSERT INTO chat_users (user_id, email)
-                VALUES (:user_id, :email)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+                VALUES (:user_type, :identifier, :email, :language)
+                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
                 RETURNING id
             """),
-            {"user_id": user_id_int, "email": user.email}
+            {
+                "user_type": "authenticated",
+                "identifier": str(user_id_int),
+                "email": user.email,
+                "language": "en"
+            }
         )
-        chat_user_uuid = result.scalar_one()
+        unified_chat_user_uuid = result.scalar_one()
 
-        # Create conversation with chat_user_id (UUID FK to chat_users.id)
+        # Create conversation with user_id (UUID FK to chat_users.id)
+        # NOTE: Unified chat uses 'user_id', not 'chat_user_id'
         await async_db_session.execute(
             text("""
-                INSERT INTO chat_conversations (id, chat_user_id, title, status, language)
-                VALUES (:id, :chat_user_id, :title, :status, :language)
+                INSERT INTO chat_conversations (id, user_id, title, status, language)
+                VALUES (:id, :user_id, :title, :status, :language)
                 ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": conversation_id,
-                "chat_user_id": chat_user_uuid,
+                "user_id": unified_chat_user_uuid,
                 "title": "Test Conversation",
                 "status": "active",
                 "language": "en"
