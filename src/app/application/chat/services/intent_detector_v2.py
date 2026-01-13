@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Any
 
 from app.application.chat.services.conversation_memory import ConversationContext
+from app.application.chat.services.conversation_state_manager import ConversationStateManager
 
 logger = logging.getLogger(__name__)
 
@@ -421,6 +422,9 @@ class IntentDetectorV2:
     """
     
     def __init__(self):
+        # Initialize conversation state manager for auto-clearing flows
+        self.state_manager = ConversationStateManager()
+
         self._handler_map = {
             ChatIntentV2.HUNTER_SENTIMENT: "hunter_sentiment_handler",
             ChatIntentV2.HUNTER_PRICE_PREDICTION: "hunter_prediction_handler",
@@ -476,7 +480,31 @@ class IntentDetectorV2:
         if context:
             logger.info(f"[BUY_DEBUG] Context pending_intent: {context.pending_intent}")
             logger.info(f"[BUY_DEBUG] Context pending_buy_info: {context.pending_buy_info}")
-        
+
+        # 0. AUTO-CLEARING STATE MANAGEMENT (Preventive Layer)
+        # Check if pending flow should be automatically cleared due to:
+        # - Timeout (5 min inactivity)
+        # - Consecutive off-topic messages (2+)
+        # - Explicit cancellation keywords
+        if context and context.pending_intent:
+            should_clear, reason = self.state_manager.should_clear_pending_flow(
+                context, message, language
+            )
+
+            if should_clear:
+                logger.info(
+                    f"🧹 Auto-clearing stale flow: {reason}",
+                    extra={
+                        "pending_intent": context.pending_intent,
+                        "reason": reason,
+                        "message": message[:100],
+                    },
+                )
+                self.state_manager.clear_flow_state(context)
+            else:
+                # Track message relevance for off-topic counter
+                self.state_manager.track_message_relevance(context, message)
+
         # 1. Check for swap confirmation (when swap is complete and waiting for execution)
         if context and context.pending_swap_info:
             swap_info = context.pending_swap_info
@@ -516,9 +544,12 @@ class IntentDetectorV2:
         # 5. Check analysis intents first (price/sentiment/etc.)
         # Enterprise fix: prevents action keywords (e.g. "cambiar") from hijacking clear questions
         # like "¿Cuál es el precio de Bitcoin?"
+        logger.info(f"[INTENT_DEBUG] Step 5: Checking analysis intents for: '{message_lower[:50]}'")
         analysis_result = self._detect_analysis_intent(message_lower, language)
         if analysis_result:
+            logger.info(f"[INTENT_DEBUG] ✅ Analysis intent found: {analysis_result.intent.value}")
             return analysis_result
+        logger.info(f"[INTENT_DEBUG] ❌ No analysis intent found, continuing to action intents")
 
         # 6. Check action intents (swap, lending, etc.)
         action_result = self._detect_action_intent(message_lower, language)
@@ -1309,13 +1340,21 @@ class IntentDetectorV2:
         price_keywords = self._get_all_keywords("price")
         prediction_keywords = self._get_all_keywords("prediction")
         all_price = price_keywords + prediction_keywords
+
+        # DEBUG: Log price keyword detection
+        logger.debug(f"[PRICE_DEBUG] Checking price keywords in message: '{message[:50]}'")
+        logger.debug(f"[PRICE_DEBUG] Price keywords: {price_keywords}")
+
         for kw in all_price:
             if kw in message:
+                logger.info(f"[PRICE_DEBUG] ✅ PRICE keyword matched: '{kw}' in message")
                 return IntentResult(
                     intent=ChatIntentV2.HUNTER_PRICE_PREDICTION,
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.HUNTER_PRICE_PREDICTION],
                 )
+
+        logger.debug(f"[PRICE_DEBUG] ❌ No price keywords matched")
         
         # Trading signals
         signal_keywords = self._get_all_keywords("trading_signals")
