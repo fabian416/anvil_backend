@@ -383,6 +383,95 @@ user_message = ChatMessage.create_user_message(
 **Location:** `conversations_router.py:730-735`
 **Commit:** `8fa2545`
 
+### Bug #5: ChatResponse Validation Error (Fixed: 2026-01-13)
+
+**Issue:** 500 Internal Server Error when user sends "cancel":
+```
+pydantic_core._pydantic_core.ValidationError: 4 validation errors for ChatResponse
+- conversation_id: Input should be a valid string (got UUID object)
+- user_message: Field required (was missing)
+- agent_message: Field required (was missing)
+- routing: Field required (was missing)
+```
+
+**Cause:** The cancellation confirmation return statement (Bug #2 fix) used wrong field names that don't match the `ChatResponse` Pydantic schema.
+
+**Schema Mismatch:**
+```python
+# Bug #2 fix attempted (WRONG):
+return ChatResponse(
+    message_id=str(assistant_message.id),
+    content=cancellation_content,         # ❌ Not a top-level field
+    conversation_id=conversation_id,      # ❌ UUID object, needs str()
+    intent=None,                          # ❌ Goes in routing dict
+    enrichment=None,
+    pending_action=None,                  # ❌ Not in schema
+    execute_data=None,                    # ❌ Wrong name (should be 'execute')
+)
+
+# Actual ChatResponse schema:
+class ChatResponse(BaseModel):
+    conversation_id: str                  # ✅ Must be string!
+    message_id: str
+    user_message: dict[str, Any]          # ✅ Required
+    agent_message: dict[str, Any]         # ✅ Required
+    routing: dict[str, Any]               # ✅ Required
+    enrichment: dict | None
+    registration_required: dict | None
+    rate_limit_status: dict | None
+    execute: ExecuteActionData | None     # ✅ Correct name
+```
+
+**Fix:**
+Updated cancellation return to match schema exactly:
+
+```python
+return ChatResponse(
+    conversation_id=str(conversation_id),  # ✅ Convert UUID to string
+    message_id=str(assistant_message.id),
+    user_message={                         # ✅ Required dict
+        "id": str(user_message.id),
+        "role": user_message.role.value,
+        "content": user_message.content,
+        "created_at": user_message.created_at.isoformat(),
+    },
+    agent_message={                        # ✅ Required dict
+        "id": str(assistant_message.id),
+        "role": assistant_message.role.value,
+        "content": assistant_message.content,
+        "created_at": assistant_message.created_at.isoformat(),
+    },
+    routing={                              # ✅ Required dict
+        "intent": "FLOW_CANCELLATION",
+        "confidence": 1.0,
+        "handler": "flow_cancellation",
+        "language": request_body.language,
+        "user_type": user.user_type.value,
+    },
+    enrichment=None,
+    registration_required=None,
+    rate_limit_status={                    # ✅ Built from rate_result
+        "user_type": user.user_type.value,
+        "remaining_hourly": rate_result.remaining_hourly,
+        "remaining_daily": rate_result.remaining_daily,
+    },
+    execute=None,                          # ✅ Correct field name
+)
+```
+
+**Key Changes:**
+1. Convert `conversation_id` from UUID to string
+2. Add required `user_message` dict with proper structure
+3. Add required `agent_message` dict with proper structure
+4. Add required `routing` dict with intent/handler info
+5. Build `rate_limit_status` from `rate_result`
+6. Remove invalid fields (`content`, `intent`, `pending_action`, `execute_data`)
+
+**Result:** Pydantic validation passes. "cancel" requests return 200 with friendly confirmation message in user's language.
+
+**Location:** `conversations_router.py:770-796`
+**Commit:** `5be3b90`
+
 ## Related Files
 
 - **Detector:** `src/app/application/chat/services/flow_cancellation_detector.py`
