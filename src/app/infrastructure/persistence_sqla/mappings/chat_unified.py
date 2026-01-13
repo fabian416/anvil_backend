@@ -39,7 +39,12 @@ def _map_chat_users_table() -> None:
             {"extend_existing": True}
         )
         
-        id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+        id = mapped_column(
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text('gen_random_uuid()'),
+            default=uuid.uuid4
+        )
         user_type = mapped_column(String(20), nullable=False, index=True)  # guest | authenticated | premium
         identifier = mapped_column(String(255), nullable=False)  # IP for guest, privy_id for authenticated
         privy_id = mapped_column(String(255), nullable=True)
@@ -63,8 +68,13 @@ def _map_chat_conversations_table() -> None:
             sa.Index("idx_chat_conversations_user_status", "user_id", "status"),
             {"extend_existing": True}
         )
-        
-        id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+        id = mapped_column(
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text('gen_random_uuid()'),
+            default=uuid.uuid4
+        )
         user_id = mapped_column(
             UUID(as_uuid=True),
             ForeignKey("chat_users.id", ondelete="CASCADE"),
@@ -93,8 +103,13 @@ def _map_chat_messages_table() -> None:
             sa.Index("idx_chat_messages_conversation", "conversation_id", "created_at"),
             {"extend_existing": True}
         )
-        
-        id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+        id = mapped_column(
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text('gen_random_uuid()'),
+            default=uuid.uuid4
+        )
         conversation_id = mapped_column(
             UUID(as_uuid=True),
             ForeignKey("chat_conversations.id", ondelete="CASCADE"),
@@ -124,8 +139,13 @@ def _map_chat_rate_limits_table() -> None:
             sa.UniqueConstraint("user_id", "window_type", "window_start", name="uq_rate_limits_user_window"),
             {"extend_existing": True}
         )
-        
-        id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+        id = mapped_column(
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text('gen_random_uuid()'),
+            default=uuid.uuid4
+        )
         user_id = mapped_column(
             UUID(as_uuid=True),
             ForeignKey("chat_users.id", ondelete="CASCADE"),
