@@ -593,6 +593,70 @@ logger.info(
 
 **Status:** ✅ Implemented and working in production
 
+#### Bug Fix #1: Intent Re-detection for Compound Queries (Fixed: 2026-01-13)
+
+**Issue:** Compound intent extraction worked, but wrong handler was invoked.
+
+**User Report:**
+```json
+{
+  "content": "cancel, tell me the price of btc",
+  "language": "en"
+}
+```
+**Expected:** Price/sentiment response about BTC
+**Actual:** Swap flow response ("Let's Start Your Swap!")
+
+**Diagnosis from Logs:**
+```
+[21:29:58.429] Intent detected: MOONPAY_SWAP for message: 'cancel, tell me the price of btc'
+[21:29:58.429] Compound intent detected - processing new query after cancellation
+[21:29:58.429] Extracted post-cancellation content
+[21:29:58.430] handle() called with message: 'tell me the price of btc'
+[21:29:58.430] [MOONPAY_SWAP] handle() called  ← WRONG HANDLER
+```
+
+**Root Cause:**
+1. Intent detected on full message "cancel, tell me the price of btc" → MOONPAY_SWAP
+2. Content extracted correctly: "tell me the price of btc"
+3. Content updated but intent NOT re-detected
+4. Wrong handler invoked (MOONPAY_SWAP instead of PREDICTION)
+
+**Fix:**
+Added intent re-detection AFTER extracting content (lines 753-770):
+
+```python
+# Update request content to the extracted query
+request_body.content = remaining_content
+
+# CRITICAL: Re-detect intent on the EXTRACTED content
+intent_result = intent_detector.detect(
+    message=remaining_content,  # "tell me the price of btc"
+    language=request_body.language,
+    context=context,  # Flow state already cleared
+)
+
+logger.info(
+    "🔄 Re-detected intent for compound query",
+    extra={
+        "extracted_content": remaining_content[:100],
+        "new_intent": intent_result.intent.value,  # Now: PREDICTION
+        "confidence": intent_result.confidence,
+        "handler": intent_result.handler,
+    }
+)
+
+# Continue to normal flow processing with CORRECTED intent
+```
+
+**Result:**
+- ✅ "cancel, tell me the price of btc" → Answers about BTC price (PREDICTION handler)
+- ✅ "stop then show portfolio" → Shows portfolio (PORTFOLIO handler)
+- ✅ Intent now matches extracted content, not original message
+
+**Location:** `conversations_router.py:753-770`
+**Commit:** [Intent re-detection fix - 2026-01-13]
+
 ## Related Files
 
 - **Detector:** `src/app/application/chat/services/flow_cancellation_detector.py`

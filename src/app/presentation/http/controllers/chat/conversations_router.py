@@ -750,7 +750,26 @@ def create_conversations_router() -> APIRouter:
                         # Update request content to the extracted query
                         request_body.content = remaining_content
 
-                        # Continue to normal flow processing below
+                        # CRITICAL: Re-detect intent on the EXTRACTED content
+                        # The previous intent was detected on "cancel, tell me X"
+                        # We need to detect intent on just "tell me X" for correct routing
+                        intent_result = intent_detector.detect(
+                            message=remaining_content,
+                            language=request_body.language,
+                            context=context,  # Flow state already cleared
+                        )
+
+                        logger.info(
+                            "🔄 Re-detected intent for compound query",
+                            extra={
+                                "extracted_content": remaining_content[:100],
+                                "new_intent": intent_result.intent.value,
+                                "confidence": intent_result.confidence,
+                                "handler": intent_result.handler,
+                            }
+                        )
+
+                        # Continue to normal flow processing below with corrected intent
                         # The flow state is already cleared, so this will process as a fresh query
                     else:
                         # Simple cancellation: show confirmation

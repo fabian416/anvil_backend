@@ -179,13 +179,66 @@ logger.info(
 ✅ Server starts without errors
 ✅ Backward compatible (simple cancellations still work)
 
+## Bug Fix #1: Intent Re-detection for Compound Queries (Fixed: 2026-01-13)
+
+**Issue:** After extracting compound intent content, system used wrong intent for routing.
+
+**User Report:**
+```json
+{
+  "content": "cancel, tell me the price of btc",
+  "language": "en"
+}
+```
+**Expected:** Price/sentiment response about BTC
+**Actual:** Swap flow initiated ("Let's Start Your Swap!")
+
+**Root Cause:**
+Intent was detected on the full message "cancel, tell me the price of btc" → MOONPAY_SWAP
+After extraction, content became "tell me the price of btc" but intent remained MOONPAY_SWAP
+
+**Flow Before Fix:**
+1. Line 710: Re-detect intent on "cancel, tell me X" → MOONPAY_SWAP
+2. Line 730: Extract "tell me X"
+3. Line 751: Update content to "tell me X"
+4. Line 800+: Route to MOONPAY_SWAP handler (WRONG!)
+
+**Fix Applied (lines 753-770):**
+```python
+# After updating content to extracted query
+request_body.content = remaining_content
+
+# CRITICAL: Re-detect intent on the EXTRACTED content
+intent_result = intent_detector.detect(
+    message=remaining_content,  # "tell me the price of btc"
+    language=request_body.language,
+    context=context,  # Flow state already cleared
+)
+
+logger.info("🔄 Re-detected intent for compound query", extra={
+    "extracted_content": remaining_content[:100],
+    "new_intent": intent_result.intent.value,  # Now: PREDICTION
+    "confidence": intent_result.confidence,
+})
+```
+
+**Result:**
+- "cancel, tell me the price of btc" → Cancels flow + Shows BTC price ✅
+- "stop then show portfolio" → Cancels flow + Shows portfolio ✅
+- Intent now correctly matches the extracted query content ✅
+
+**Location:** `conversations_router.py:753-770`
+**Commit:** [Intent re-detection fix - 2026-01-13]
+
 ## Deployment Status
 
 - ✅ Code implemented
+- ✅ Bug #1 fixed (intent re-detection)
 - ✅ Server restarted successfully
 - ✅ No errors in startup logs
 - ✅ All services running (FastAPI, MCP, Celery, Flower)
 - ✅ Documentation updated
+- ✅ Ready for user testing
 - ⏳ Awaiting production deployment approval
 
 ## References
