@@ -86,7 +86,7 @@ def _map_chat_conversations_table() -> None:
         created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
         updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
         last_message_at = mapped_column(DateTime(timezone=True), nullable=True)
-        message_count = mapped_column(Integer, default=0)
+        message_count = mapped_column(Integer, server_default=sa.text('0'), default=0)
         language = mapped_column(String(5), default="en")
         extra_metadata = mapped_column("metadata", JSONB, default={})
 
