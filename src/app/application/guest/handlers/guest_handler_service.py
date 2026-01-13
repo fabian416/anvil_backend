@@ -3475,9 +3475,26 @@ class GuestHandlerService:
 
             except Exception as e:
                 logger.error(f"[Balance] Error fetching real portfolio: {e}", exc_info=True)
-                # Fall through to demo data
+                # Fall through to demo data for guests, but show wallet not connected for authenticated users
 
-        # Demo balances for guests or fallback
+        # For authenticated users without wallet data, show wallet connection message
+        if is_authenticated:
+            content = f"{t['title']}\n\n{t['greeting']}{t['divider']}"
+            content += "💼 **No Wallet Connected**\n\n"
+            content += "To view your crypto balance, please connect your wallet through your account settings.\n\n"
+            content += f"{t['divider']}"
+            content += "💡 *Once connected, you'll see your real-time balances across all supported chains.*"
+
+            return {
+                "content": content,
+                "enrichment": {
+                    "balances": [],
+                    "total_value": "$0.00",
+                },
+                "requires_registration": False,
+            }
+
+        # Demo balances for guests only
         demo_balances = [
             {"token": "USDC", "amount": "1,250.00", "value_usd": "$1,250.00", "emoji": "💵"},
             {"token": "ETH", "amount": "0.5", "value_usd": "$975.00", "emoji": "Ξ"},
@@ -3486,12 +3503,9 @@ class GuestHandlerService:
         ]
         total_value = "$3,000.00"
 
-        # Build response
+        # Build response for guests
         content = f"{t['title']}\n\n{t['greeting']}{t['divider']}"
-
-        if not is_authenticated:
-            content += f"{t['guest_note']}"
-
+        content += f"{t['guest_note']}"
         content += f"{t['total_label']} **{total_value}**\n\n"
         content += f"{t['balances_label']}\n"
 
@@ -3499,19 +3513,16 @@ class GuestHandlerService:
             content += f"• {balance['emoji']} **{balance['token']}**: {balance['amount']} (~{balance['value_usd']})\n"
 
         content += f"\n{t['divider']}"
-
-        if not is_authenticated:
-            content += f"{t['cta_title']}\n\n{t['cta_body']}\n\n👉 **[Sign Up Now](/signup)**\n\n"
-
+        content += f"{t['cta_title']}\n\n{t['cta_body']}\n\n👉 **[Sign Up Now](/signup)**\n\n"
         content += t["learn_more"]
 
         return {
             "content": content,
             "enrichment": {
-                "balances": demo_balances if not is_authenticated else [],
+                "balances": demo_balances,
                 "total_value": total_value,
             },
-            "requires_registration": not is_authenticated,
+            "requires_registration": True,
         }
 
     async def _handle_receive(
@@ -3873,9 +3884,69 @@ class GuestHandlerService:
 
             except Exception as e:
                 logger.error(f"[Portfolio] Error fetching real portfolio: {e}", exc_info=True)
-                # Fall through to demo data
+                # Fall through to demo data for guests, but show wallet not connected for authenticated users
 
-        # For guests or fallback, show demo portfolio
+        # For authenticated users without wallet data, show wallet connection message
+        if is_authenticated:
+            messages = {
+                "en": {
+                    "title": "📊 Portfolio Overview",
+                    "greeting": "**Your Crypto Portfolio**\n\n",
+                    "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
+                    "no_wallet": "💼 **No Wallet Connected**\n\n"
+                                "To view your crypto portfolio, please connect your wallet through your account settings.\n\n",
+                    "hint": "💡 *Once connected, you'll see your complete portfolio with real-time values across all supported chains.*",
+                },
+                "es": {
+                    "title": "📊 Resumen de Cartera",
+                    "greeting": "**Tu Cartera de Criptomonedas**\n\n",
+                    "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
+                    "no_wallet": "💼 **Sin Cartera Conectada**\n\n"
+                                "Para ver tu cartera de criptomonedas, conecta tu cartera en la configuración de tu cuenta.\n\n",
+                    "hint": "💡 *Una vez conectada, verás tu cartera completa con valores en tiempo real en todas las cadenas compatibles.*",
+                },
+                "pt": {
+                    "title": "📊 Visão Geral da Carteira",
+                    "greeting": "**Sua Carteira de Criptomoedas**\n\n",
+                    "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
+                    "no_wallet": "💼 **Nenhuma Carteira Conectada**\n\n"
+                                "Para visualizar sua carteira de criptomoedas, conecte sua carteira nas configurações da sua conta.\n\n",
+                    "hint": "💡 *Uma vez conectada, você verá sua carteira completa com valores em tempo real em todas as cadeias suportadas.*",
+                },
+                "zh": {
+                    "title": "📊 投资组合概览",
+                    "greeting": "**您的加密货币投资组合**\n\n",
+                    "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
+                    "no_wallet": "💼 **未连接钱包**\n\n"
+                                "要查看您的加密货币投资组合，请通过帐户设置连接您的钱包。\n\n",
+                    "hint": "💡 *连接后，您将看到所有支持链上的完整投资组合及实时价值。*",
+                },
+                "fr": {
+                    "title": "📊 Aperçu du Portefeuille",
+                    "greeting": "**Votre Portefeuille Crypto**\n\n",
+                    "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
+                    "no_wallet": "💼 **Aucun Portefeuille Connecté**\n\n"
+                                "Pour voir votre portefeuille crypto, connectez votre portefeuille dans les paramètres de votre compte.\n\n",
+                    "hint": "💡 *Une fois connecté, vous verrez votre portefeuille complet avec des valeurs en temps réel sur toutes les chaînes prises en charge.*",
+                },
+            }
+            t = messages.get(language, messages["en"])
+
+            content = f"{t['title']}\n\n{t['greeting']}{t['divider']}"
+            content += t['no_wallet']
+            content += f"{t['divider']}"
+            content += t['hint']
+
+            return {
+                "content": content,
+                "enrichment": {
+                    "portfolio": [],
+                    "total_value": "$0.00",
+                },
+                "requires_registration": False,
+            }
+
+        # For guests, show demo portfolio
         return await self._portfolio_multistep.handle_flow(
             content=content,
             language=language,

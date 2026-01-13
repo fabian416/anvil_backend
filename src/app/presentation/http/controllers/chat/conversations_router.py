@@ -1241,9 +1241,12 @@ For valid DeFi/crypto questions:
             "confidence": intent_result.confidence,
             "handler": handler_name,
             "language": request_body.language,
-            "is_demo_mode": user.is_guest,
             "user_type": user.user_type.value,
         }
+
+        # Only include demo mode flag for guest users
+        if user.is_guest:
+            routing["is_demo_mode"] = True
         
         # Build rate limit status
         rate_limit_status = {
