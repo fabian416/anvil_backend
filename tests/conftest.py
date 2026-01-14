@@ -497,3 +497,60 @@ def mock_websocket_message():
         "risk_score": 7.8,
         "timestamp": 1701388800,
     }
+
+
+# AI Test Validation fixtures
+@pytest.fixture
+def llm_validator():
+    """
+    LLM test validator fixture.
+
+    Provides AI-powered semantic validation for test responses.
+    Automatically enabled if ENABLE_LLM_VALIDATION=true and DEEPINFRA_API_KEY is set.
+
+    Usage:
+        async def test_with_validation(client, llm_validator):
+            response = await client.post(...)
+            if llm_validator.enabled:
+                validation = await llm_validator.validate_single_response(...)
+    """
+    from tests.helpers.llm_test_validator import LLMTestValidator
+
+    return LLMTestValidator()
+
+
+@pytest.fixture
+def log_analyzer():
+    """
+    Log analyzer fixture.
+
+    Provides automated error analysis from application logs.
+    Automatically enabled if ENABLE_LOG_ANALYSIS=true on localhost.
+
+    Usage:
+        async def test_with_analysis(client, log_analyzer):
+            if not test_passed and log_analyzer.enabled:
+                analysis = log_analyzer.analyze_error(...)
+    """
+    from tests.helpers.log_analyzer import LogAnalyzer
+
+    return LogAnalyzer()
+
+
+@pytest.fixture
+def csv_writer(tmp_path):
+    """
+    Enhanced CSV writer fixture.
+
+    Writes test results with AI analysis columns.
+    Creates a temporary CSV file in the test's tmp_path.
+
+    Usage:
+        async def test_with_csv(client, csv_writer):
+            result = EnhancedTestResult(...)
+            csv_writer.write_single_result(result)
+    """
+    from tests.helpers.enhanced_csv_writer import EnhancedCSVWriter
+
+    output_file = tmp_path / "test_results.csv"
+    return EnhancedCSVWriter(str(output_file))
