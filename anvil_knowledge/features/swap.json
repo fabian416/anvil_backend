@@ -1,0 +1,269 @@
+{
+  "feature_name": "Token Swap",
+  "category": "trading_execution",
+  "description": "Execute instant token swaps across multiple DEX aggregators with automatic best-rate selection and slippage protection",
+
+  "how_it_works": {
+    "step_1": "User requests swap: 'swap 100 USDC to ETH'",
+    "step_2": "Anvil queries multiple DEX aggregators in parallel (1inch, Hyperliquid, UniswapX)",
+    "step_3": "Compares rates and finds best execution price",
+    "step_4": "Displays swap details: rate, gas cost, slippage, total cost",
+    "step_5": "User confirms and transaction executes with MEV protection"
+  },
+
+  "supported_aggregators": [
+    {
+      "name": "1inch",
+      "description": "Leading DEX aggregator with smart routing across 100+ liquidity sources",
+      "supported_chains": ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Base"],
+      "typical_gas": "Medium",
+      "mcp_server": "mcp.oneinch"
+    },
+    {
+      "name": "Hyperliquid",
+      "description": "High-performance perpetual futures exchange with sub-second execution",
+      "supported_chains": ["Hyperliquid L1"],
+      "typical_gas": "None (no gas fees)",
+      "mcp_server": "mcp.hyperliquid",
+      "unique_features": ["20,000+ TPS", "Native order book", "No gas fees"]
+    },
+    {
+      "name": "UniswapX",
+      "description": "Uniswap's Dutch auction-based swap protocol with automatic routing",
+      "supported_chains": ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+      "typical_gas": "Low (gasless for some routes)",
+      "mcp_server": "mcp.oneinch"
+    }
+  ],
+
+  "supported_tokens": {
+    "major_tokens": ["BTC", "WBTC", "ETH", "USDC", "USDT", "DAI", "SOL", "MATIC", "AVAX", "LINK"],
+    "stablecoins": ["USDC", "USDT", "DAI", "FRAX", "LUSD"],
+    "layer2_tokens": ["ARB", "OP", "MATIC"],
+    "defi_tokens": ["AAVE", "UNI", "COMP", "CRV", "SNX"],
+    "total_supported": "100+ tokens across multiple chains"
+  },
+
+  "command_formats": {
+    "english": [
+      "swap [amount] [from_token] to [to_token]",
+      "exchange [amount] [from_token] for [to_token]",
+      "convert [amount] [from_token] to [to_token]",
+      "trade [amount] [from_token] to [to_token]"
+    ],
+    "spanish": [
+      "cambiar [cantidad] [token_origen] a [token_destino]",
+      "intercambiar [cantidad] [token_origen] por [token_destino]",
+      "convertir [cantidad] [token_origen] a [token_destino]"
+    ],
+    "portuguese": [
+      "trocar [quantidade] [token_origem] para [token_destino]",
+      "cambiar [quantidade] [token_origem] para [token_destino]"
+    ],
+    "chinese": [
+      "兑换 [数量] [代币] 到 [代币]",
+      "交换 [数量] [代币] 到 [代币]"
+    ]
+  },
+
+  "natural_language_examples": {
+    "english": [
+      "swap 100 USDC to ETH",
+      "exchange 0.5 BTC for SOL",
+      "convert 1000 USDT to USDC",
+      "trade 50 DAI for MATIC",
+      "I want to swap 100 dollars to bitcoin"
+    ],
+    "spanish": [
+      "cambiar 100 USDC a ETH",
+      "intercambiar 0.5 BTC por SOL",
+      "convertir 1000 USDT a BTC"
+    ],
+    "portuguese": [
+      "trocar 100 USDC para ETH",
+      "converter 0.5 BTC em SOL"
+    ],
+    "chinese": [
+      "兑换100 USDC到ETH",
+      "交换0.5 BTC为SOL"
+    ]
+  },
+
+  "features": {
+    "best_rate_guarantee": {
+      "description": "Automatically finds the best rate across all aggregators",
+      "example": "If 1inch offers 0.045 ETH and Hyperliquid offers 0.048 ETH for 100 USDC, Anvil routes to Hyperliquid"
+    },
+
+    "slippage_protection": {
+      "description": "Configurable slippage tolerance to protect against front-running",
+      "default": "0.5% for stablecoins, 1% for volatile assets",
+      "user_configurable": true
+    },
+
+    "mev_protection": {
+      "description": "Transactions protected from MEV attacks through ULTRA agent integration",
+      "methods": ["Flashbots RPC", "Private mempool", "Slippage limits"]
+    },
+
+    "gas_optimization": {
+      "description": "Automatic gas price optimization based on network congestion",
+      "strategies": ["Dynamic gas pricing", "Transaction batching", "Layer 2 routing"]
+    }
+  },
+
+  "usage_patterns": {
+    "basic_swap": {
+      "user_input": "swap 100 USDC to ETH",
+      "anvil_interpretation": {
+        "action": "swap",
+        "from_token": "USDC",
+        "to_token": "ETH",
+        "amount": 100,
+        "currency": "USDC"
+      },
+      "anvil_response": "🔄 Let's swap 100 USDC to ETH!\n\n**Best Rate Found:**\n1inch: 0.0345 ETH (~$103.50)\nRate: 1 USDC = 0.000345 ETH\nSlippage: 0.5%\nGas: ~$2.50\n\n**Total Cost:** $100 USDC → 0.0345 ETH\n\nConfirm to execute?"
+    },
+
+    "advanced_features": {
+      "rate_comparison": {
+        "description": "Automatically compares rates across all aggregators",
+        "benefit": "Ensures you always get the best price",
+        "example": "1inch: 0.0368 ETH | Hyperliquid: 0.0371 ETH ← Best rate!"
+      },
+      "slippage_protection": {
+        "description": "Configurable slippage tolerance to prevent unfavorable execution",
+        "default": "0.5%",
+        "adjustable": true,
+        "command": "Set slippage to 1% for this swap"
+      },
+      "gas_optimization": {
+        "description": "Automatically selects route with best net outcome (rate - gas cost)",
+        "example": "May route through Hyperliquid (no gas) instead of 1inch (higher gas) if net result is better"
+      },
+      "mev_protection": {
+        "description": "Protects against front-running and sandwich attacks",
+        "method": "Private mempool submission via Flashbots/MEV Blocker"
+      }
+    },
+
+  "supported_flows": {
+    "basic_swap": {
+      "input": "swap [amount] [from_token] to [to_token]",
+      "examples": [
+        "swap 100 USDC to ETH",
+        "exchange 0.5 BTC for SOL",
+        "trade 1000 USDT for MATIC"
+      ],
+      "multi_language": {
+        "spanish": "cambiar 100 USDC a ETH",
+        "portuguese": "trocar 100 USDC por ETH",
+        "chinese": "兌換 100 USDC 到 ETH"
+      }
+    },
+
+    "moonpay_swap": {
+      "description": "Crypto-to-crypto swaps via MoonPay for major assets",
+      "supported_assets": ["BTC", "ETH", "SOL", "USDC", "USDT"],
+      "unique_feature": "No wallet connection required for some swaps",
+      "input": "moonpay swap [amount] [from] to [to]"
+    },
+
+    "multi_step_flow": {
+      "description": "Interactive flow for incomplete requests",
+      "example_conversation": [
+        "User: I want to swap BTC",
+        "Anvil: Great! How much BTC do you want to swap?",
+        "User: 0.5 BTC",
+        "Anvil: Perfect! Which token would you like to receive?",
+        "User: ETH",
+        "Anvil: [Shows rate and confirms swap]"
+      ]
+    }
+  },
+
+  "rate_comparison_example": {
+    "query": "swap 1000 USDC to ETH",
+    "aggregator_quotes": [
+      {
+        "aggregator": "1inch",
+        "output_amount": "0.4523 ETH",
+        "gas_cost": "$8.50",
+        "total_cost": "1000 USDC + $8.50 gas"
+      },
+      {
+        "aggregator": "Hyperliquid",
+        "output_amount": "0.4531 ETH",
+        "gas_cost": "$0 (no gas fees)",
+        "total_cost": "1000 USDC"
+      },
+      {
+        "aggregator": "UniswapX",
+        "output_amount": "0.4518 ETH",
+        "gas_cost": "$3.20 (subsidized)",
+        "total_cost": "1000 USDC + $3.20 gas"
+      }
+    ],
+    "anvil_selection": "Hyperliquid (best rate + no gas)",
+    "user_savings": "$8.50 in gas + 0.0008 ETH better rate"
+  },
+
+  "safety_features": {
+    "slippage_protection": "Maximum 1% slippage by default (configurable)",
+    "price_impact_warning": "Warns if trade moves market >2%",
+    "liquidity_check": "Ensures sufficient liquidity before execution",
+    "timeout_protection": "Cancels if execution takes >30 seconds",
+    "wallet_balance_check": "Verifies sufficient balance before confirming"
+  },
+
+  "fees": {
+    "anvil_fee": "0.25% platform fee on executed swaps",
+    "aggregator_fees": "Included in quoted rate",
+    "gas_fees": "Variable by chain (shown before confirmation)",
+    "total_transparency": "All fees displayed upfront, no hidden costs"
+  },
+
+  "implementation_details": {
+    "handler": "unified_chat_handler.py -> swap_flow_handler()",
+    "mcp_integrations": [
+      "mcp.oneinch - 1inch API integration",
+      "mcp.hyperliquid - Hyperliquid API integration"
+    ],
+    "database_tables": [
+      "chat_messages (metadata.swap_info)",
+      "pending_actions (swap flow state)"
+    ],
+    "state_management": "Multi-turn conversation state in context.pending_swap_info"
+  },
+
+  "common_questions": {
+    "q1": {
+      "question": "How does Anvil get the best rate?",
+      "answer": "Anvil queries multiple DEX aggregators in parallel, compares all quotes, and automatically selects the best rate considering both output amount and gas costs."
+    },
+    "q2": {
+      "question": "Is my wallet safe?",
+      "answer": "Yes. Anvil is non-custodial, meaning you always control your assets. We never have access to your private keys. Transactions require your explicit approval in your wallet."
+    },
+    "q3": {
+      "question": "What happens if the price moves during the swap?",
+      "answer": "Anvil uses slippage protection (default 1%). If the price moves more than the slippage tolerance, the transaction automatically reverts and your funds are safe."
+    },
+    "q4": {
+      "question": "Can I swap any token?",
+      "answer": "Anvil supports 100+ major tokens. If a token has sufficient liquidity on supported DEXs, you can swap it. Exotic tokens may not be available."
+    },
+    "q5": {
+      "question": "How long does a swap take?",
+      "answer": "Most swaps execute in 10-30 seconds. Hyperliquid swaps are sub-second. Time depends on blockchain confirmation speed and network congestion."
+    }
+  },
+
+  "investor_highlights": {
+    "market_size": "DEX aggregation is $100B+ annual volume market",
+    "competitive_edge": "AI-powered routing beats manual DEX selection by 2-5% on average",
+    "user_experience": "Natural language removes technical barrier (no need to understand DEXs, slippage, gas)",
+    "network_effects": "More users → more volume → better rates through aggregator partnerships",
+    "monetization": "0.25% fee on swaps + premium features subscription model"
+  }
+}

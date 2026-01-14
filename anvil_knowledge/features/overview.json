@@ -1,0 +1,192 @@
+{
+  "feature_name": "Anvil Overview",
+  "description": "Anvil is a comprehensive DeFi assistant that brings together trading, portfolio management, market intelligence, and automated strategies into one powerful AI-powered platform.",
+  "tagline": "Your AI-Powered Gateway to Decentralized Finance",
+
+  "core_capabilities": {
+    "trading_execution": {
+      "title": "💱 Trading & Swaps",
+      "description": "Execute token swaps across multiple DEX aggregators with best-rate optimization",
+      "features": [
+        "Multi-DEX aggregation (1inch, Hyperliquid, UniswapX)",
+        "Real-time rate comparison and slippage analysis",
+        "Support for 100+ tokens (BTC, ETH, SOL, USDC, USDT, etc.)",
+        "Cross-chain swaps via LayerZero",
+        "Gas optimization and MEV protection"
+      ],
+      "example_commands": [
+        "swap 100 USDC to ETH",
+        "exchange 0.5 BTC for SOL",
+        "cambiar 1000 USDT a BTC"
+      ]
+    },
+
+    "market_intelligence": {
+      "title": "📊 Hunter AI - Market Intelligence",
+      "description": "Advanced AI agent for real-time market analysis, sentiment tracking, and price predictions",
+      "features": [
+        "Multi-source sentiment analysis (Twitter, Reddit, Discord, News)",
+        "AI-powered price predictions with confidence scores",
+        "Risk signal detection and market warnings",
+        "Chart pattern recognition and trading signals",
+        "Portfolio optimization recommendations"
+      ],
+      "example_commands": [
+        "what's the sentiment for BTC?",
+        "predict ETH price for next week",
+        "show me risk signals for AAVE",
+        "analyze trading patterns for SOL"
+      ]
+    },
+
+    "defi_automation": {
+      "title": "⚡ ULTRA - DeFi Automation",
+      "description": "Specialized agent squad for advanced DeFi strategies and automated execution",
+      "features": [
+        "Arbitrage opportunity detection across DEXs",
+        "Automated yield farming optimization",
+        "Flash loan protocol selection",
+        "MEV-protected execution",
+        "Automated trading bot control"
+      ],
+      "example_commands": [
+        "find arbitrage opportunities for ETH",
+        "optimize my yield farming",
+        "protect my swap from MEV",
+        "automate USDC staking"
+      ]
+    },
+
+    "lending_borrowing": {
+      "title": "🏦 Lending & Borrowing",
+      "description": "Access lending protocols like Aave, Compound, and Morpho for earning yield or borrowing assets",
+      "features": [
+        "Multi-protocol rate comparison",
+        "One-click deposit to highest APY",
+        "Collateral health monitoring",
+        "Automated rebalancing"
+      ],
+      "example_commands": [
+        "lend 1000 USDC on Aave",
+        "compare lending rates for USDT",
+        "show my collateral health",
+        "borrow 500 DAI using ETH"
+      ]
+    },
+
+    "portfolio_management": {
+      "title": "💼 Portfolio Management",
+      "description": "Complete view of your DeFi positions, balances, and transaction history",
+      "features": [
+        "Multi-chain portfolio tracking",
+        "Real-time balance updates",
+        "Transaction history with categorization",
+        "PnL calculations and performance metrics",
+        "Tax reporting support"
+      ],
+      "example_commands": [
+        "show my portfolio",
+        "what's my balance?",
+        "show transaction history",
+        "calculate my PnL for BTC"
+      ]
+    }
+  },
+
+  "unique_features": {
+    "multi_language_support": {
+      "description": "Native support for English, Spanish, Portuguese, and Chinese",
+      "languages": ["English", "Español", "Português", "中文"]
+    },
+
+    "agent_squad": {
+      "description": "18 specialized AI agents working together for optimal results",
+      "agents": [
+        "Chat Agent - Natural conversation",
+        "Hunter AI - Market intelligence",
+        "Research Agent - Deep analysis",
+        "Execution Agent - Trade execution",
+        "Risk Analyzer - Safety assessment",
+        "Portfolio Agent - Asset management",
+        "Tax Optimizer - Tax efficiency",
+        "DeFi Yield Agent - Yield optimization",
+        "Security Auditor - Contract security",
+        "Gas Optimizer - Transaction cost optimization",
+        "Bridge Agent - Cross-chain operations",
+        "Lending Agent - Lending protocol management",
+        "NFT Manager - NFT portfolio",
+        "DAO Governance - Governance participation"
+      ]
+    },
+
+    "cost_efficiency": {
+      "description": "99% cost savings compared to traditional solutions",
+      "details": "$0.10 per 1M tokens (Vertex AI) vs $30/1M tokens (OpenAI)",
+      "models": ["Gemini Pro", "Claude 3.5 Sonnet", "DeepInfra fallback"]
+    }
+  },
+
+  "supported_protocols": {
+    "dex_aggregators": ["1inch", "Hyperliquid", "UniswapX", "Curve"],
+    "lending_protocols": ["Aave", "Compound", "Morpho"],
+    "bridges": ["LayerZero", "Stargate"],
+    "chains": ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Base", "Solana"]
+  },
+
+  "getting_started": {
+    "for_users": {
+      "step_1": "Connect your wallet (MetaMask, WalletConnect, Coinbase Wallet)",
+      "step_2": "Start chatting naturally: 'swap 100 USDC to ETH'",
+      "step_3": "Review transaction details and confirm",
+      "step_4": "Track your portfolio and positions"
+    },
+
+    "for_investors": {
+      "value_proposition": [
+        "AI-first approach to DeFi simplifies complex operations",
+        "Multi-protocol integration reduces platform fragmentation",
+        "Advanced market intelligence provides edge in trading",
+        "Automated strategies maximize returns while minimizing risk",
+        "Enterprise-grade security with hexagonal architecture"
+      ],
+      "competitive_advantages": [
+        "18 specialized AI agents vs single-purpose competitors",
+        "99% cost reduction through Vertex AI integration",
+        "Real-time Hunter AI data (not demo data like competitors)",
+        "Multi-language native support (not translations)",
+        "Hexagonal architecture enables rapid feature deployment"
+      ],
+      "market_position": "Positioned as the intelligent layer between users and DeFi protocols, similar to how ChatGPT became the intelligent layer for information retrieval"
+    }
+  },
+
+  "security_features": {
+    "smart_contract_security": "All protocols audited by top security firms",
+    "user_security": "Non-custodial - you always control your assets",
+    "transaction_security": "MEV protection and slippage limits on all trades",
+    "data_security": "End-to-end encryption for sensitive data"
+  },
+
+  "pricing": {
+    "free_tier": {
+      "limits": "20 messages per hour, basic features",
+      "access": "Guest users via IP tracking"
+    },
+    "authenticated_tier": {
+      "limits": "Unlimited messages, all features",
+      "access": "Registered users with wallet connection"
+    }
+  },
+
+  "example_use_cases": {
+    "beginner": "I want to buy $100 of Bitcoin → Anvil executes swap from fiat to BTC",
+    "intermediate": "Show me the best yield for my 10,000 USDC → Anvil compares rates across Aave, Compound, Morpho",
+    "advanced": "Find arbitrage opportunities between Uniswap and Hyperliquid for ETH → ULTRA agent scans and executes",
+    "investor": "What's the overall sentiment for DeFi sector? → Hunter AI analyzes cross-platform sentiment"
+  },
+
+  "call_to_action": {
+    "for_users": "Start with: 'what is the price of BTC?' or 'swap 100 USDC to ETH'",
+    "for_investors": "Ask: 'explain Anvil's competitive advantages' or 'show me market intelligence capabilities'"
+  }
+}

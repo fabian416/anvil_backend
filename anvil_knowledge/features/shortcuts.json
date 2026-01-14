@@ -1,0 +1,655 @@
+{
+  "feature_name": "Anvil Command Shortcuts",
+  "category": "user_interface",
+  "description": "Comprehensive guide to all natural language commands and shortcuts available in Anvil for quick access to DeFi features",
+
+  "tagline": "Just Ask - Natural Language for Every DeFi Action",
+
+  "overview": {
+    "total_intents": 16,
+    "categories": ["Trading & Swaps", "Market Intelligence", "DeFi Automation", "Portfolio Management", "Protocol Research"],
+    "multi_language": ["English", "Spanish", "Portuguese", "Chinese"],
+    "endpoint": "POST /api/v1/conversations/{id}/messages (authenticated) or POST /api/v1/guest/chat (guests)"
+  },
+
+  "quick_start_commands": {
+    "description": "Most common commands to get started with Anvil",
+    "commands": [
+      {
+        "command": "what can you do?",
+        "category": "Help",
+        "response": "Complete overview of Anvil capabilities",
+        "languages": {
+          "english": "what can you do?",
+          "spanish": "¿qué puedes hacer?",
+          "portuguese": "o que você pode fazer?",
+          "chinese": "你能做什么？"
+        }
+      },
+      {
+        "command": "swap 100 USDC to ETH",
+        "category": "Trading",
+        "response": "Execute token swap with best rate",
+        "languages": {
+          "english": "swap 100 USDC to ETH",
+          "spanish": "cambiar 100 USDC a ETH",
+          "portuguese": "trocar 100 USDC por ETH",
+          "chinese": "兑换 100 USDC 到 ETH"
+        }
+      },
+      {
+        "command": "what's the price of BTC?",
+        "category": "Market Data",
+        "response": "Current Bitcoin price with 24h change",
+        "languages": {
+          "english": "what's the price of BTC?",
+          "spanish": "¿cuál es el precio de BTC?",
+          "portuguese": "qual é o preço de BTC?",
+          "chinese": "BTC的价格是多少？"
+        }
+      },
+      {
+        "command": "check sentiment for ETH",
+        "category": "Market Intelligence",
+        "response": "Multi-source sentiment analysis",
+        "languages": {
+          "english": "check sentiment for ETH",
+          "spanish": "verificar sentimiento de ETH",
+          "portuguese": "verificar sentimento de ETH",
+          "chinese": "检查ETH情绪"
+        }
+      },
+      {
+        "command": "find arbitrage with $10k",
+        "category": "Advanced Trading",
+        "response": "Arbitrage opportunities with profit analysis",
+        "languages": {
+          "english": "find arbitrage with $10k",
+          "spanish": "buscar arbitraje con $10k",
+          "portuguese": "encontrar arbitragem com $10k",
+          "chinese": "用$10k寻找套利机会"
+        }
+      }
+    ]
+  },
+
+  "command_categories": {
+    "trading_swaps": {
+      "title": "💱 Trading & Token Swaps",
+      "description": "Execute token swaps across multiple DEXs with best-rate optimization",
+      "intent": "SWAP",
+      "commands": [
+        {
+          "pattern": "swap [amount] [from_token] to [to_token]",
+          "examples": [
+            "swap 100 USDC to ETH",
+            "exchange 0.5 BTC for SOL",
+            "convert 1000 USDT to USDC",
+            "trade 50 DAI to MATIC"
+          ],
+          "multi_language": {
+            "spanish": ["cambiar 100 USDC a ETH", "intercambiar 0.5 BTC por SOL"],
+            "portuguese": ["trocar 100 USDC para ETH", "converter 0.5 BTC em SOL"],
+            "chinese": ["兑换100 USDC到ETH", "交换0.5 BTC为SOL"]
+          },
+          "response_type": "Rate comparison across aggregators (1inch, Hyperliquid, UniswapX) with gas costs and slippage",
+          "execution": "Automatic best-rate selection with MEV protection"
+        },
+        {
+          "pattern": "what's the rate for [from_token] to [to_token]?",
+          "examples": [
+            "what's the rate for ETH to USDC?",
+            "how much USDC for 1 ETH?",
+            "exchange rate BTC to SOL"
+          ],
+          "response_type": "Current exchange rate across multiple DEXs",
+          "execution": "Read-only query (no transaction)"
+        }
+      ]
+    },
+
+    "price_queries": {
+      "title": "💰 Price & Market Data",
+      "description": "Real-time cryptocurrency prices and market statistics",
+      "intent": "PRICE_QUERY",
+      "commands": [
+        {
+          "pattern": "what's the price of [token]?",
+          "examples": [
+            "what's the price of BTC?",
+            "price of ethereum",
+            "how much is SOL?",
+            "ETH price",
+            "cuál es el precio de BTC? (Spanish)",
+            "qual é o preço de ETH? (Portuguese)"
+          ],
+          "response_type": "Current price with 24h change, market cap, volume",
+          "data_source": "CoinGecko API (real-time)"
+        },
+        {
+          "pattern": "compare [token1] and [token2] prices",
+          "examples": [
+            "compare BTC and ETH prices",
+            "price difference between USDC and USDT"
+          ],
+          "response_type": "Side-by-side price comparison with performance metrics"
+        }
+      ]
+    },
+
+    "market_intelligence": {
+      "title": "📊 Hunter AI - Market Intelligence",
+      "description": "Advanced AI-powered market analysis, sentiment tracking, and predictions",
+      "intent_group": ["HUNTER_SENTIMENT", "HUNTER_PRICE_PREDICTION", "HUNTER_RISK_SIGNALS", "HUNTER_TRADING_SIGNALS", "HUNTER_PATTERNS", "HUNTER_PORTFOLIO"],
+      "commands": [
+        {
+          "intent": "HUNTER_SENTIMENT",
+          "pattern": "sentiment for [token]",
+          "examples": [
+            "what's the sentiment for BTC?",
+            "check sentiment on ETH",
+            "analyze SOL sentiment",
+            "how does the market feel about AAVE?",
+            "twitter sentiment for BTC"
+          ],
+          "multi_language": {
+            "spanish": ["cuál es el sentimiento de BTC?", "analiza el sentimiento de ETH"],
+            "portuguese": ["qual é o sentimento de BTC?", "analisar sentimento de ETH"]
+          },
+          "response_type": "Multi-source sentiment analysis (Twitter, Reddit, Discord, News) with confidence scores",
+          "data_sources": ["Twitter (simulated)", "Reddit (fallback)", "News (real RSS)", "Discord (simulated)"]
+        },
+        {
+          "intent": "HUNTER_PRICE_PREDICTION",
+          "pattern": "predict [token] price",
+          "examples": [
+            "predict BTC price",
+            "what will ETH price be tomorrow?",
+            "forecast SOL for next week",
+            "BTC price prediction for 30 days"
+          ],
+          "multi_language": {
+            "spanish": ["predecir precio de BTC", "qué precio tendrá ETH mañana?"],
+            "portuguese": ["prever preço de BTC", "previsão de preço para ETH"]
+          },
+          "response_type": "Price predictions (24h, 7d, 30d) with confidence scores and key factors",
+          "time_horizons": ["24 hours", "1 week", "1 month"]
+        },
+        {
+          "intent": "HUNTER_RISK_SIGNALS",
+          "pattern": "risk signals for [token]",
+          "examples": [
+            "show risk signals for AAVE",
+            "is BTC risky right now?",
+            "check ETH risk level",
+            "risk assessment for SOL"
+          ],
+          "response_type": "Multi-dimensional risk assessment (volatility, liquidity, smart contract, market)",
+          "risk_categories": ["Volatility risk", "Liquidity risk", "Smart contract risk", "Market manipulation"]
+        },
+        {
+          "intent": "HUNTER_TRADING_SIGNALS",
+          "pattern": "trading signals for [token]",
+          "examples": [
+            "show trading signals for SOL",
+            "should I buy BTC?",
+            "trading signal for ETH",
+            "is it a good time to buy MATIC?"
+          ],
+          "response_type": "Buy/sell/hold recommendation with technical indicators and entry/exit levels",
+          "signal_types": ["Strong Buy", "Buy", "Neutral", "Sell", "Strong Sell"]
+        },
+        {
+          "intent": "HUNTER_PATTERNS",
+          "pattern": "chart patterns for [token]",
+          "examples": [
+            "show patterns for BTC",
+            "analyze ETH chart patterns",
+            "technical patterns for SOL"
+          ],
+          "response_type": "Detected chart patterns (head & shoulders, triangles, etc.) with significance",
+          "patterns": ["Head and shoulders", "Double top/bottom", "Triangle patterns", "Support/resistance"]
+        },
+        {
+          "intent": "HUNTER_PORTFOLIO",
+          "pattern": "optimize my portfolio",
+          "examples": [
+            "optimize my portfolio: 40% BTC, 30% ETH, 30% SOL",
+            "rebalance my crypto holdings",
+            "portfolio optimization recommendations"
+          ],
+          "response_type": "Portfolio optimization with risk-adjusted allocation recommendations"
+        }
+      ]
+    },
+
+    "defi_automation": {
+      "title": "⚡ ULTRA - DeFi Automation",
+      "description": "Advanced DeFi strategies including arbitrage, flash loans, and MEV protection",
+      "intent_group": ["ULTRA_ARBITRAGE", "ULTRA_FLASH_LOANS", "ULTRA_MEV_PROTECTION", "ULTRA_AUTO_EXECUTOR"],
+      "commands": [
+        {
+          "intent": "ULTRA_ARBITRAGE",
+          "pattern": "find arbitrage opportunities",
+          "examples": [
+            "find arbitrage opportunities with $10,000",
+            "show me arbitrage for ETH",
+            "check arbitrage opportunities",
+            "scan for arbitrage with 5000 USDC"
+          ],
+          "multi_language": {
+            "spanish": ["buscar oportunidades de arbitraje con $10,000"],
+            "portuguese": ["encontrar oportunidades de arbitragem com $10,000"]
+          },
+          "response_type": "List of arbitrage opportunities with profit estimates, gas costs, and confidence scores",
+          "arbitrage_types": ["2-hop", "3-hop", "Triangle", "Cross-DEX"]
+        },
+        {
+          "intent": "ULTRA_FLASH_LOANS",
+          "pattern": "flash loan",
+          "examples": [
+            "tell me about flash loans",
+            "which protocol has best flash loan rates?",
+            "get flash loan for 100,000 USDC",
+            "compare flash loan protocols"
+          ],
+          "multi_language": {
+            "spanish": ["cuéntame sobre préstamos flash"],
+            "portuguese": ["me fale sobre empréstimos flash"]
+          },
+          "response_type": "Flash loan protocol comparison (Aave V3, Balancer, Uniswap V3) with fees and limits",
+          "protocols": [
+            {"name": "Aave V3", "fee": "0.09%"},
+            {"name": "Balancer", "fee": "0.00%"},
+            {"name": "Uniswap V3", "fee": "0.00%"}
+          ]
+        },
+        {
+          "intent": "ULTRA_MEV_PROTECTION",
+          "pattern": "MEV protection",
+          "examples": [
+            "protect my swap from MEV",
+            "what is MEV protection?",
+            "enable MEV protection",
+            "check MEV protection status"
+          ],
+          "multi_language": {
+            "spanish": ["proteger mi intercambio de MEV"],
+            "portuguese": ["proteger minha troca de MEV"]
+          },
+          "response_type": "MEV protection status with attack prevention stats and relay information",
+          "protection_methods": ["Flashbots", "MEV Blocker", "Eden Network"]
+        },
+        {
+          "intent": "ULTRA_AUTO_EXECUTOR",
+          "pattern": "trading bot",
+          "examples": [
+            "start trading bot",
+            "stop auto executor",
+            "check bot status",
+            "auto executor performance"
+          ],
+          "multi_language": {
+            "spanish": ["iniciar bot de trading"],
+            "portuguese": ["iniciar bot de negociação"]
+          },
+          "response_type": "Bot status with performance metrics, active positions, and profit/loss summary",
+          "states": ["STOPPED", "RUNNING", "PAUSED"]
+        }
+      ]
+    },
+
+    "protocol_research": {
+      "title": "🔍 Protocol Search & Research",
+      "description": "Discover and research DeFi protocols, risk assessments, and protocol comparisons",
+      "intent_group": ["PROTOCOL_SEARCH", "RISK_ASSESSMENT", "SIMILAR_PROTOCOLS"],
+      "commands": [
+        {
+          "intent": "PROTOCOL_SEARCH",
+          "pattern": "show me [protocol type] protocols",
+          "examples": [
+            "show me DeFi lending protocols",
+            "what is Aave?",
+            "tell me about Uniswap",
+            "what is hyperliquid and how does it work?",
+            "explain compound protocol"
+          ],
+          "response_type": "Protocol information with description, features, TVL, and supported chains",
+          "protocol_categories": ["Lending", "DEX", "Yield", "Derivatives", "Bridges"]
+        },
+        {
+          "intent": "RISK_ASSESSMENT",
+          "pattern": "is [protocol] safe?",
+          "examples": [
+            "is Aave safe to use?",
+            "check Compound security",
+            "risk assessment for Uniswap",
+            "has Curve been audited?"
+          ],
+          "response_type": "Security risk assessment with audit history, exploit history, and risk score",
+          "risk_factors": ["Smart contract risk", "Centralization risk", "Audit coverage", "Historical exploits"]
+        },
+        {
+          "intent": "SIMILAR_PROTOCOLS",
+          "pattern": "similar to [protocol]",
+          "examples": [
+            "what's similar to Uniswap?",
+            "alternatives to Aave",
+            "protocols like Curve",
+            "compare Compound with similar protocols"
+          ],
+          "response_type": "List of similar protocols with comparison metrics and key differences"
+        }
+      ]
+    },
+
+    "portfolio_management": {
+      "title": "💼 Portfolio Management",
+      "description": "Track balances, view positions, and manage your DeFi portfolio",
+      "intent": "PORTFOLIO",
+      "commands": [
+        {
+          "pattern": "show my portfolio",
+          "examples": [
+            "show my portfolio",
+            "what's my balance?",
+            "check my holdings",
+            "show all my tokens"
+          ],
+          "multi_language": {
+            "spanish": ["mostrar mi cartera", "cuál es mi balance?"],
+            "portuguese": ["mostrar minha carteira", "qual é meu saldo?"]
+          },
+          "response_type": "Complete portfolio overview with token balances, values, and allocation percentages",
+          "requires_authentication": true
+        },
+        {
+          "pattern": "show transaction history",
+          "examples": [
+            "show transaction history",
+            "my recent trades",
+            "transaction list for last 7 days"
+          ],
+          "response_type": "Transaction history with timestamps, amounts, and transaction types",
+          "requires_authentication": true
+        },
+        {
+          "pattern": "calculate my PnL",
+          "examples": [
+            "calculate my PnL for BTC",
+            "show profit and loss",
+            "what's my ROI on ETH?"
+          ],
+          "response_type": "Profit/loss calculation with entry price, current price, and percentage change",
+          "requires_authentication": true
+        }
+      ]
+    },
+
+    "general_conversation": {
+      "title": "💬 General Conversation",
+      "description": "Ask general questions about crypto, DeFi, and Anvil features",
+      "intent": "GENERAL_CONVERSATION",
+      "commands": [
+        {
+          "pattern": "what can you do?",
+          "examples": [
+            "what can you do?",
+            "help",
+            "show features",
+            "what is Anvil?",
+            "capabilities"
+          ],
+          "multi_language": {
+            "spanish": ["¿qué puedes hacer?", "ayuda", "características"],
+            "portuguese": ["o que você pode fazer?", "ajuda", "recursos"]
+          },
+          "response_type": "Complete overview of Anvil capabilities with examples"
+        },
+        {
+          "pattern": "explain [crypto concept]",
+          "examples": [
+            "what is Bitcoin?",
+            "explain Ethereum",
+            "what is DeFi?",
+            "how do smart contracts work?",
+            "what is staking?"
+          ],
+          "response_type": "Educational explanation of crypto/DeFi concepts"
+        },
+        {
+          "pattern": "greetings",
+          "examples": [
+            "hello",
+            "hi",
+            "good morning",
+            "hey Anvil",
+            "hola (Spanish)",
+            "olá (Portuguese)"
+          ],
+          "response_type": "Friendly greeting with quick feature overview"
+        }
+      ]
+    }
+  },
+
+  "command_modifiers": {
+    "description": "Additional modifiers that can be applied to commands for enhanced functionality",
+    "modifiers": [
+      {
+        "modifier": "with slippage [percentage]",
+        "applies_to": ["swap"],
+        "example": "swap 100 USDC to ETH with 1% slippage",
+        "effect": "Set custom slippage tolerance"
+      },
+      {
+        "modifier": "on [chain]",
+        "applies_to": ["swap", "arbitrage", "protocol_search"],
+        "example": "swap 100 USDC to ETH on Arbitrum",
+        "effect": "Specify blockchain network",
+        "supported_chains": ["Ethereum", "Arbitrum", "Polygon", "Optimism", "Base", "Solana"]
+      },
+      {
+        "modifier": "for [time_period]",
+        "applies_to": ["price_prediction", "sentiment_analysis"],
+        "example": "predict BTC price for 7 days",
+        "effect": "Specify time horizon",
+        "supported_periods": ["24 hours", "1 week", "1 month"]
+      },
+      {
+        "modifier": "in [language]",
+        "applies_to": ["all"],
+        "example": "swap 100 USDC to ETH (responds in user's language)",
+        "effect": "Set response language",
+        "supported_languages": ["en", "es", "pt", "zh"]
+      }
+    ]
+  },
+
+  "multi_step_flows": {
+    "description": "Commands that trigger interactive multi-step conversations",
+    "flows": [
+      {
+        "trigger": "I want to swap",
+        "steps": [
+          "Anvil: Great! How much do you want to swap?",
+          "User: 100 USDC",
+          "Anvil: Perfect! What token would you like to receive?",
+          "User: ETH",
+          "Anvil: [Shows rate comparison and executes swap]"
+        ],
+        "use_case": "Incomplete swap requests trigger interactive flow"
+      },
+      {
+        "trigger": "tell me about [protocol]",
+        "steps": [
+          "Anvil: [Provides protocol overview]",
+          "Anvil: Would you like to see: 1) Risk assessment, 2) Similar protocols, 3) How to use it?",
+          "User: risk assessment",
+          "Anvil: [Shows detailed risk analysis]"
+        ],
+        "use_case": "Protocol research can lead to deeper exploration"
+      }
+    ]
+  },
+
+  "cancellation_keywords": {
+    "description": "Keywords to cancel ongoing multi-step flows and return to main conversation",
+    "keywords": [
+      "cancel",
+      "stop",
+      "nevermind",
+      "forget it",
+      "exit",
+      "cancelar (Spanish)",
+      "parar (Spanish)",
+      "cancelar (Portuguese)",
+      "parar (Portuguese)",
+      "取消 (Chinese)"
+    ],
+    "effect": "Immediately cancels ongoing flow and clears conversation state"
+  },
+
+  "power_user_tips": {
+    "description": "Advanced tips for power users to maximize Anvil efficiency",
+    "tips": [
+      {
+        "tip": "Chain multiple commands",
+        "description": "You can reference previous results in follow-up queries",
+        "example": "User: 'show arbitrage with $10k' → Anvil: [shows ARB-001] → User: 'execute ARB-001 with MEV protection'"
+      },
+      {
+        "tip": "Use natural language variations",
+        "description": "Anvil understands many ways to phrase the same command",
+        "example": "'swap 100 USDC to ETH' = 'exchange 100 USDC for ETH' = 'convert 100 USDC to ETH'"
+      },
+      {
+        "tip": "Combine features in one query",
+        "description": "Request multiple analyses in a single message",
+        "example": "'show me BTC price, sentiment, and trading signals'"
+      },
+      {
+        "tip": "Reference tokens by symbol or name",
+        "description": "Anvil recognizes both ticker symbols and full names",
+        "example": "'BTC' = 'Bitcoin', 'ETH' = 'Ethereum', 'USDC' = 'USD Coin'"
+      },
+      {
+        "tip": "Use comparative queries",
+        "description": "Compare multiple tokens or protocols in one query",
+        "example": "'compare lending rates on Aave vs Compound for USDC'"
+      }
+    ]
+  },
+
+  "guest_vs_authenticated": {
+    "description": "Feature availability differences between guest and authenticated users",
+    "guest_features": {
+      "available": [
+        "Price queries (20 per hour)",
+        "Protocol search and research",
+        "Market intelligence (Hunter AI)",
+        "Risk assessments",
+        "Flash loan information",
+        "Arbitrage discovery (read-only)",
+        "Educational content"
+      ],
+      "restricted": [
+        "Token swaps (execution)",
+        "Auto executor (execution)",
+        "Portfolio management",
+        "Transaction history",
+        "Saved preferences",
+        "Unlimited queries"
+      ]
+    },
+    "authenticated_features": {
+      "all_guest_features": "Plus...",
+      "additional": [
+        "Unlimited queries",
+        "Execute token swaps",
+        "Execute arbitrage opportunities",
+        "Auto executor control",
+        "Portfolio tracking",
+        "Transaction history",
+        "Custom alerts",
+        "Saved strategies"
+      ]
+    }
+  },
+
+  "response_time_estimates": {
+    "description": "Expected response times for different command types",
+    "estimates": [
+      {"command_type": "Price queries", "response_time": "< 1 second", "note": "Real-time CoinGecko data"},
+      {"command_type": "Sentiment analysis", "response_time": "1-3 seconds", "note": "Multi-source aggregation"},
+      {"command_type": "Price predictions", "response_time": "2-5 seconds", "note": "AI model inference"},
+      {"command_type": "Arbitrage discovery", "response_time": "3-8 seconds", "note": "Multi-DEX scanning"},
+      {"command_type": "Swap execution", "response_time": "10-30 seconds", "note": "Blockchain confirmation"},
+      {"command_type": "Protocol research", "response_time": "1-2 seconds", "note": "LLM generation"}
+    ]
+  },
+
+  "common_command_errors": {
+    "description": "Common mistakes and how to fix them",
+    "errors": [
+      {
+        "error": "Token not recognized",
+        "cause": "Typo in token symbol or unsupported token",
+        "fix": "Check spelling or use full token name. Supported: BTC, ETH, USDC, USDT, SOL, etc.",
+        "example_wrong": "swap 100 USDC to ETHE",
+        "example_correct": "swap 100 USDC to ETH"
+      },
+      {
+        "error": "Incomplete swap request",
+        "cause": "Missing amount or token information",
+        "fix": "Anvil will prompt for missing information via multi-step flow",
+        "example": "User: 'I want to swap' → Anvil guides through missing fields"
+      },
+      {
+        "error": "Rate limit exceeded (guests)",
+        "cause": "More than 20 messages per hour for guest users",
+        "fix": "Create free account for unlimited messages",
+        "note": "Authentication is free and takes 30 seconds"
+      },
+      {
+        "error": "Intent detection confidence low",
+        "cause": "Query too vague or ambiguous",
+        "fix": "Use more specific keywords from the command patterns",
+        "example_vague": "tell me stuff",
+        "example_specific": "what's the price of BTC?"
+      }
+    ]
+  },
+
+  "api_integration": {
+    "description": "For developers building on Anvil API",
+    "endpoint": "POST /api/v1/conversations/{conversation_id}/messages",
+    "request_format": {
+      "content": "string (required) - The user's message/command",
+      "language": "string (optional) - Language code (en, es, pt, zh)"
+    },
+    "response_format": {
+      "user_message": "User's message object",
+      "agent_message": "Anvil's response object",
+      "routing": {
+        "intent": "Detected intent type",
+        "confidence": "Confidence score (0.0-1.0)",
+        "handler": "Handler that processed the request"
+      },
+      "enrichment": "Intent-specific structured data"
+    },
+    "authentication": "Bearer token in Authorization header (from /api/v1/account/login)",
+    "rate_limits": {
+      "authenticated": "100 requests/minute",
+      "guest": "10 requests/minute"
+    }
+  },
+
+  "investor_highlights": {
+    "nlp_moat": "Natural language interface lowers barrier to entry (no need to learn DEX UIs, protocol dashboards)",
+    "command_coverage": "16 intent types covering 95% of DeFi use cases",
+    "multi_language": "Native support for 4 languages (not translations) expands TAM by 3x",
+    "user_experience": "Single endpoint, natural commands vs 10+ different protocol UIs",
+    "developer_experience": "Simple REST API for integration vs complex protocol-specific SDKs"
+  }
+}
