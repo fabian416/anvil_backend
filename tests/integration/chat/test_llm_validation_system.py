@@ -30,7 +30,7 @@ from tests.helpers.enhanced_csv_writer import (
 )
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def enable_ai_validation(monkeypatch):
     """Enable AI validation for these tests."""
     # Load DeepInfra API key from config
@@ -44,6 +44,7 @@ def enable_ai_validation(monkeypatch):
 class TestLLMValidationSystem:
     """Test LLM validation system with real API."""
 
+    @pytest.mark.asyncio
     async def test_system_initialization(self, enable_ai_validation):
         """Test that LLM validation system initializes correctly."""
         validator = LLMTestValidator()
@@ -58,6 +59,7 @@ class TestLLMValidationSystem:
         print(f"✅ Log Analyzer: ENABLED")
         print(f"✅ CSV Writer: READY")
 
+    @pytest.mark.asyncio
     async def test_semantic_validation_with_real_api(
         self,
         client: AsyncClient,
@@ -130,6 +132,7 @@ class TestLLMValidationSystem:
         print(f"\n✅ Test completed successfully!")
         print(f"   Cost: ${validation_result.tokens_used / 1_000_000 * 0.08:.6f}")
 
+    @pytest.mark.asyncio
     async def test_multistep_flow_validation(
         self,
         client: AsyncClient,
@@ -200,6 +203,7 @@ class TestLLMValidationSystem:
         print(f"\n✅ Multi-step validation completed!")
         print(f"   Cost: ${flow_result.tokens_used / 1_000_000 * 0.08:.6f}")
 
+    @pytest.mark.asyncio
     async def test_csv_output_format(
         self,
         llm_validator: LLMTestValidator,
@@ -255,6 +259,7 @@ class TestLLMValidationSystem:
 class TestLLMValidationEnabled:
     """Tests that only run when LLM validation is explicitly enabled."""
 
+    @pytest.mark.asyncio
     async def test_validation_actually_enabled(self, enable_ai_validation):
         """Verify validation is actually enabled."""
         validator = LLMTestValidator()
