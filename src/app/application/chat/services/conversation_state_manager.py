@@ -90,7 +90,7 @@ class ConversationStateManager:
                     extra={
                         "pending_intent": context.pending_intent,
                         "keyword": keyword,
-                        "message": current_message[:100],
+                        "user_message": current_message[:100],
                     },
                 )
                 return True, f"cancellation_keyword:{keyword}"
@@ -115,7 +115,7 @@ class ConversationStateManager:
                         extra={
                             "pending_intent": context.pending_intent,
                             "keyword": keyword,
-                            "message": current_message[:100],
+                            "user_message": current_message[:100],
                         },
                     )
                     return True, f"off_topic_intent:{keyword}"
@@ -236,7 +236,7 @@ class ConversationStateManager:
             if off_topic_kw in message_lower:
                 logger.debug(
                     f"Message is off-topic: contains '{off_topic_kw}' (not relevant to {base_flow} flow)",
-                    extra={"message": message[:50], "pending_intent": pending_intent}
+                    extra={"user_message": message[:50], "pending_intent": pending_intent}
                 )
                 return False  # ← Message is asking for information, not continuing flow
 
