@@ -1,0 +1,6 @@
+Feature,Guest Tests,User Tests,Edge Cases,Priority,Status,Gap Analysis
+Get History,2,5,0,P2,50%,Add edge case tests
+Pagination,0,3,0,P2,30%,Add guest tests
+Archive Conversation,0,7,2,P2,45%,Add guest tests
+Delete Conversation,1,4,0,P2,40%,Add edge cases
+Conversation Lifecycle,0,12,3,P2,50%,Add guest tests

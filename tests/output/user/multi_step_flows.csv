@@ -1,0 +1,6 @@
+Flow Type,Guest Tests,User Tests,Cancel Tests,Malicious Tests,Priority,Status,Gap Analysis
+Swap Multi-Step,3,8,2,0,P2,65%,Add malicious interruption tests
+Lending Multi-Step,0,6,1,0,P1,35%,CRITICAL: Add guest tests
+Portfolio Multi-Step,0,4,0,0,P1,20%,CRITICAL: Add guest + cancel tests
+Buy Crypto Multi-Step,2,3,0,0,P2,40%,Add cancellation tests
+Activity Multi-Step,0,2,0,0,P1,15%,CRITICAL: Add guest tests

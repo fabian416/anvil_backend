@@ -1,0 +1,7 @@
+Module,Guest Tests,User Tests,Compression Tests,Token Tests,Priority,Status,Gap Analysis
+Overview,2,3,15,5,P3,80%,Minor improvements only
+Hunter AI,8,12,18,8,P3,85%,Well covered
+ULTRA,6,9,16,6,P3,80%,Well covered
+Swap,4,7,12,4,P3,75%,Minor improvements
+Shortcuts,3,5,10,3,P3,70%,Minor improvements
+Agent Squad,0,19,0,0,P2,40%,Add guest + compression tests

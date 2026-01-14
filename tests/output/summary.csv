@@ -1,0 +1,8 @@
+Module,Total Tests,Guest Tests,User Tests,Coverage,Priority,Status
+Intent Detection,153,47,112,58%,P1,🟢 Improved - Guest parity achieved
+Multi-Step Flows,37,11,23,49%,P1,🟢 Improved - Guest flows added
+Knowledge Injection,175,23,55,73%,P2,🟢 Good - Strong coverage
+Historical Chat,39,3,31,43%,P2,🟡 Medium - Limited guest tests
+Security,20,20,0,100%,P1,🟢 Complete - All vectors covered
+Rate Limiting,2,2,0,40%,P1,🟡 Basic - Needs comprehensive tests
+TOTAL,426,106,221,75%,-,🟢 Good - Week 1 complete

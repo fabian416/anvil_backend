@@ -1,0 +1,18 @@
+Intent Type,Guest Tests,User Tests,Malicious Tests,Priority,Status,Gap Analysis
+GENERAL_CONVERSATION,16,24,0,P2,70%,Add malicious input tests
+HUNTER_SENTIMENT,5,8,0,P2,65%,Add malicious input tests
+HUNTER_PREDICTION,3,5,0,P2,60%,Add guest + malicious tests
+HUNTER_TRADING_SIGNALS,2,4,0,P2,55%,Add guest + malicious tests
+HUNTER_RISK_SIGNALS,0,3,0,P1,30%,CRITICAL: Add guest tests
+HUNTER_PATTERN,0,2,0,P1,25%,CRITICAL: Add guest tests
+ULTRA_ARBITRAGE,4,6,0,P2,60%,Add malicious input tests
+ULTRA_FLASH_LOAN,2,4,0,P2,55%,Add guest + malicious tests
+ULTRA_MEV_PROTECTION,0,3,0,P1,30%,CRITICAL: Add guest tests
+ULTRA_AUTO_EXECUTOR,0,2,0,P1,25%,CRITICAL: Add guest tests
+SWAP_EXECUTE,3,8,0,P2,60%,Add malicious input tests
+SWAP_QUOTE,2,5,0,P2,50%,Add guest + malicious tests
+PORTFOLIO_VIEW,0,12,0,P1,40%,CRITICAL: Add guest tests
+PORTFOLIO_BALANCE,0,8,0,P1,35%,CRITICAL: Add guest tests
+LENDING_RATES,2,6,0,P2,50%,Add malicious input tests
+LENDING_DEPOSIT,0,7,0,P1,35%,CRITICAL: Add guest tests
+BUY_CRYPTO,2,5,0,P2,50%,Add malicious input tests

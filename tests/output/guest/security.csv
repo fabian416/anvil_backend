@@ -1,0 +1,12 @@
+Attack Vector,Guest Tests,User Tests,Priority,Status,Notes
+SQL Injection,3,0,P1,✅ Complete,All payloads handled safely
+XSS Attempts,3,0,P1,✅ Complete,Script tags and event handlers blocked
+Command Injection,2,0,P1,✅ Complete,Shell metacharacters neutralized
+Path Traversal,0,0,P2,➖ N/A,Not applicable to chat system
+Rate Limit Bypass,2,0,P1,✅ Complete,Tracking verified
+JWT Token Manipulation,N/A,0,P2,⏳ Future,Requires auth fixtures
+Oversized Payloads,2,0,P1,✅ Complete,Validation enforced
+Invalid JSON,1,0,P1,✅ Complete,Proper error handling
+Unicode/Emoji Exploits,3,0,P1,✅ Complete,"Zalgo, RTL, emoji bombs"
+Prompt Injection,4,0,P1,✅ Complete,LLM maintains role
+Context Overflow,0,0,P2,⏳ Future,Needs conversation context tests
