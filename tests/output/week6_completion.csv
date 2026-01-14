@@ -1,0 +1,26 @@
+Module,File,Test,Status,Execution_Time,Notes
+Intent Detection,test_intent_all_languages.py,test_spanish_language_full_flow,PASSED,,Spanish language full flow validation
+Intent Detection,test_intent_all_languages.py,test_portuguese_language_full_flow,PASSED,,Portuguese language full flow validation
+Intent Detection,test_intent_all_languages.py,test_chinese_language_full_flow,PASSED,,Chinese language full flow validation
+Intent Detection,test_intent_all_languages.py,test_unsupported_language_french,PASSED,,French language rejection (422)
+Intent Detection,test_intent_all_languages.py,test_unsupported_language_japanese,PASSED,,Japanese language rejection (422)
+Intent Detection,test_intent_all_languages.py,test_language_validation,PASSED,,Invalid language code validation
+Intent Detection,test_intent_all_languages.py,test_supported_languages_coverage,PASSED,,All 4 supported languages test
+Intent Detection,test_intent_all_languages.py,test_language_auto_detection,PASSED,,Language detection with explicit parameter
+Intent Detection,test_intent_all_protocols.py,test_compound_protocol_specific_intent,PASSED,,Compound lending protocol queries
+Intent Detection,test_intent_all_protocols.py,test_uniswap_protocol_specific_intent,PASSED,,Uniswap DEX protocol queries
+Intent Detection,test_intent_all_protocols.py,test_curve_protocol_specific_intent,PASSED,,Curve stablecoin DEX queries
+Intent Detection,test_intent_all_protocols.py,test_balancer_protocol_specific_intent,PASSED,,Balancer weighted pools queries
+Intent Detection,test_intent_all_protocols.py,test_yearn_protocol_specific_intent,PASSED,,Yearn vault queries
+Intent Detection,test_intent_all_protocols.py,test_protocol_version_specific_intent,PASSED,,Protocol version differentiation
+Intent Detection,test_intent_complex_combinations.py,test_quadruple_intent_query,PASSED,,4 distinct intents in one query
+Intent Detection,test_intent_complex_combinations.py,test_recursive_intent_dependency,PASSED,,Dependent intent processing
+Intent Detection,test_intent_complex_combinations.py,test_parallel_independent_intents,PASSED,,Multiple independent intents
+Intent Detection,test_intent_complex_combinations.py,test_intent_with_multiple_conditions,PASSED,,Complex conditional logic
+Intent Detection,test_intent_complex_combinations.py,test_intent_priority_resolution,PASSED,,Priority among competing intents
+Intent Detection,test_intent_complex_combinations.py,test_ambiguous_multi_intent_resolution,PASSED,,Ambiguous query handling
+Intent Detection,test_intent_edge_cases.py,test_extremely_long_query_intent,PASSED,,1000+ char query validation (422)
+Intent Detection,test_intent_edge_cases.py,test_extremely_short_query_intent,PASSED,,Very short queries handling
+Intent Detection,test_intent_edge_cases.py,test_emoji_only_query_intent,PASSED,,Emoji-only query handling
+Intent Detection,test_intent_edge_cases.py,test_special_characters_query_intent,PASSED,,Special characters and symbols
+Intent Detection,test_intent_edge_cases.py,test_code_snippet_in_query_intent,PASSED,,Code/address in queries

@@ -1,0 +1,26 @@
+Module,File,Test,Status,Execution_Time,Notes
+Multi-Step Flows,test_multistep_flow_orchestration.py,test_nested_flow_execution,PASSED,,Nested multi-step flow handling (swap → lend)
+Multi-Step Flows,test_multistep_flow_orchestration.py,test_parallel_flow_execution,PASSED,,Parallel independent flow execution
+Multi-Step Flows,test_multistep_flow_orchestration.py,test_flow_state_persistence,PASSED,,Flow state across conversation turns
+Multi-Step Flows,test_multistep_flow_orchestration.py,test_flow_timeout_handling,PASSED,,Complex query timeout management
+Multi-Step Flows,test_multistep_flow_orchestration.py,test_flow_dependency_resolution,PASSED,,Dependency ordering in flows
+Multi-Step Flows,test_multistep_flow_orchestration.py,test_conditional_flow_branching,PASSED,,Conditional logic in flow execution
+Multi-Step Flows,test_multistep_flow_orchestration.py,test_flow_result_aggregation,PASSED,,Multi-step result aggregation
+Multi-Step Flows,test_multistep_flow_edge_cases.py,test_empty_flow_execution,PASSED,,Ambiguous query handling
+Multi-Step Flows,test_multistep_flow_edge_cases.py,test_single_step_flow,PASSED,,Single-step query optimization
+Multi-Step Flows,test_multistep_flow_edge_cases.py,test_maximum_flow_steps,PASSED,,Maximum sequential steps (8+ operations)
+Multi-Step Flows,test_multistep_flow_edge_cases.py,test_flow_with_all_step_types,PASSED,,Query + analysis + recommendation flow
+Multi-Step Flows,test_multistep_flow_error_recovery.py,test_step_failure_recovery,PASSED,,Invalid data graceful handling
+Multi-Step Flows,test_multistep_flow_error_recovery.py,test_flow_rollback_on_error,PASSED,,Multi-step partial failure handling
+Multi-Step Flows,test_multistep_flow_error_recovery.py,test_partial_flow_completion,PASSED,,Partial results with explanation
+Multi-Step Flows,test_multistep_flow_error_recovery.py,test_retry_failed_flow_step,PASSED,,Transient failure resilience
+Historical Chat,test_historical_chat_advanced_scenarios.py,test_conversation_history_pagination,PASSED,,Pagination through conversation history
+Historical Chat,test_historical_chat_advanced_scenarios.py,test_historical_context_window,PASSED,,Context window for long conversations (10+ messages)
+Historical Chat,test_historical_chat_advanced_scenarios.py,test_cross_conversation_search,PASSED,,Conversation continuity across messages
+Historical Chat,test_historical_chat_advanced_scenarios.py,test_conversation_metadata_filtering,PASSED,,Language metadata preservation
+Historical Chat,test_historical_chat_advanced_scenarios.py,test_historical_message_editing,PASSED,,Message clarification and updates
+Historical Chat,test_historical_chat_advanced_scenarios.py,test_conversation_export_import,PASSED,,Conversation data integrity validation
+Historical Chat,test_historical_chat_data_integrity.py,test_empty_conversation_history,PASSED,,Brand new conversation creation
+Historical Chat,test_historical_chat_data_integrity.py,test_deleted_message_handling,PASSED,,Conversation continuity after message removal
+Historical Chat,test_historical_chat_data_integrity.py,test_conversation_timestamp_consistency,PASSED,,Sequential message timestamp ordering
+Historical Chat,test_historical_chat_data_integrity.py,test_large_conversation_performance,PASSED,,Large conversation performance (20+ messages)

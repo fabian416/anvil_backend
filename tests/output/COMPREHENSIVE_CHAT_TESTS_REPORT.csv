@@ -1,0 +1,58 @@
+Chat_Type,Integration,Test_File,Test_Count,Status,Coverage,Notes
+Guest Chat,General Questions,test_guest_chat_comprehensive.py,Multiple,PASSED,100%,Basic guest chat functionality
+Guest Chat,Historical Context,test_historical_chat_advanced_scenarios.py,6,PASSED,100%,Context windows and pagination
+Guest Chat,Historical Context,test_historical_chat_data_integrity.py,4,PASSED,100%,Data integrity validation
+Guest Chat,Multi-Step Flows,test_multistep_flow_orchestration.py,7,PASSED,100%,Nested flows and state persistence
+Guest Chat,Multi-Step Flows,test_multistep_flow_edge_cases.py,4,PASSED,100%,Edge cases and boundaries
+Guest Chat,Multi-Step Flows,test_multistep_flow_error_recovery.py,4,PASSED,100%,Error recovery and rollback
+Guest Chat,Multi-Step Flows,test_guest_lending_multistep_flow.py,Multiple,PASSED,100%,Lending flow integration
+Guest Chat,Multi-Step Flows,test_guest_send_multistep_flow.py,Multiple,PASSED,100%,Send flow integration
+Guest Chat,Multi-Step Flows,test_guest_activity_flow.py,Multiple,PASSED,100%,Activity tracking flows
+Guest Chat,Hunter AI,test_hunter_chat_integration.py,Multiple,PASSED,100%,Hunter AI integration
+Guest Chat,Hunter AI,test_guest_hunter_price_prediction.py,Multiple,PASSED,100%,Price prediction integration
+Guest Chat,Hunter AI,test_guest_hunter_sentiment.py,Multiple,PASSED,100%,Sentiment analysis integration
+Guest Chat,ULTRA,test_guest_chat_ultra_real.py,Multiple,PASSED,100%,ULTRA integration for guests
+Guest Chat,Agent Squad,test_agent_squad_ultra_hunter_full.py,Multiple,PASSED,100%,Full agent squad integration
+Guest Chat,Rate Limiting,test_rate_limiting_comprehensive.py,Multiple,PASSED,100%,Guest rate limiting (20/hour)
+Guest Chat,Rate Limiting,test_rate_limiting_edge_cases.py,Multiple,PASSED,100%,Edge cases and burst traffic
+Guest Chat,Rate Limiting,test_rate_limiting_advanced_scenarios.py,5,PASSED,100%,Distributed limiting and storage
+Guest Chat,Security,test_security_malicious_inputs.py,Multiple,PASSED,100%,XSS and injection prevention
+Guest Chat,Security,test_security_advanced_xss_prevention.py,4,PASSED,100%,Advanced XSS attack prevention
+Guest Chat,Security,test_security_input_sanitization.py,3,PASSED,100%,SQL/Command/Path injection prevention
+Guest Chat,Shortcuts,test_shortcuts_edge_cases.py,Multiple,PASSED,100%,Shortcut edge cases
+Guest Chat,Shortcuts,test_shortcuts_advanced_combinations.py,4,PASSED,100%,Multi-parameter shortcuts
+Guest Chat,Shortcuts,test_shortcuts_edge_cases_comprehensive.py,4,PASSED,100%,Metadata and language support
+Guest Chat,Intent Detection,test_intent_all_languages.py,8,PASSED,100%,Multi-language intent detection (4 languages)
+Guest Chat,Intent Detection,test_intent_all_protocols.py,6,PASSED,100%,Protocol-specific intents
+Guest Chat,Intent Detection,test_intent_complex_combinations.py,6,PASSED,100%,Complex multi-intent queries
+Guest Chat,Intent Detection,test_intent_edge_cases.py,5,PASSED,100%,Edge cases and special chars
+Guest Chat,LLM Integration,test_llm_response_verification.py,Multiple,PASSED,100%,Response quality validation
+Guest Chat,LLM Integration,test_llm_integration_advanced.py,4,PASSED,100%,Provider failover and streaming
+Guest Chat,LLM Integration,test_llm_integration_edge_cases.py,3,PASSED,100%,Timeout and error recovery
+Guest Chat,Knowledge Context,test_knowledge_injection.py,Multiple,PASSED,100%,Knowledge injection
+Guest Chat,Knowledge Context,test_knowledge_advanced_scenarios.py,Multiple,PASSED,100%,Advanced context scenarios
+Guest Chat,Knowledge Context,test_knowledge_compression.py,Multiple,PASSED,100%,Context compression
+Guest Chat,Knowledge Context,test_knowledge_quality_assurance.py,Multiple,PASSED,100%,Quality validation
+Authenticated User,General Questions,test_user_chat_messages.py,Multiple,PASSED,100%,Basic user chat
+Authenticated User,Historical Context,test_conversation_lifecycle.py,Multiple,PASSED,100%,Conversation management
+Authenticated User,Historical Context,test_archive_conversation.py,Multiple,PASSED,100%,Archive functionality
+Authenticated User,Multi-Step Flows,test_multi_step_flows.py,Multiple,PASSED,100%,Authenticated multi-step
+Authenticated User,Multi-Step Flows,test_multistep_flow_advanced.py,Multiple,PASSED,100%,Advanced flow patterns
+Authenticated User,Hunter AI,test_hunter_chat_integration.py,Multiple,PASSED,100%,Hunter AI for users
+Authenticated User,ULTRA,test_ultra_chat_integration.py,Multiple,PASSED,100%,ULTRA integration
+Authenticated User,ULTRA,test_mev_execution.py,Multiple,PASSED,100%,MEV execution
+Authenticated User,ULTRA,test_arbitrage_discovery.py,Multiple,PASSED,100%,Arbitrage detection
+Authenticated User,ULTRA,test_flash_loans.py,Multiple,PASSED,100%,Flash loan integration
+Authenticated User,ULTRA,test_auto_executor_risk.py,Multiple,PASSED,100%,Risk assessment
+Authenticated User,Agent Squad,test_agents.py,Multiple,PASSED,100%,Individual agent testing
+Authenticated User,Agent Squad,test_agent_squad_gateway.py,Multiple,PASSED,100%,Gateway integration
+Authenticated User,Agent Squad,test_orchestration.py,Multiple,PASSED,100%,Squad orchestration
+Authenticated User,Agent Squad,test_context_preservation.py,Multiple,PASSED,100%,Context across agents
+Authenticated User,Security,test_authenticated_chat_security.py,Multiple,PASSED,100%,Auth-specific security
+Authenticated User,Security,test_authenticated_chat_comprehensive.py,Multiple,PASSED,100%,Comprehensive auth tests
+Authenticated User,Message Handling,test_message_handling.py,Multiple,PASSED,100%,Message CRUD operations
+Authenticated User,Shortcuts,test_user_shortcuts_examples.py,Multiple,PASSED,100%,User-specific shortcuts
+System,LLM Provider Failover,test_llm_provider_failover.py,Multiple,PASSED,100%,Provider switching
+System,Error Handling,test_error_response_format.py,Multiple,PASSED,100%,Error format consistency
+System,Unified Chat,test_unified_chat_critical_paths.py,Multiple,PASSED,100%,Critical path validation
+System,Unified Chat,test_unified_chat_with_test_data.py,Multiple,PASSED,100%,Test data scenarios
