@@ -1322,6 +1322,21 @@ class IntentDetectorV2:
         
         return None
     
+    def _match_keyword_with_word_boundary(self, keyword: str, message: str) -> bool:
+        """
+        Match keyword with word boundary to prevent false positives.
+
+        Examples:
+        - "hype" matches "check the hype" ✓
+        - "hype" does NOT match "hyperliquid" ✗
+        - "liquid" matches "liquid staking" ✓
+        - "liquid" does NOT match "hyperliquid" ✗
+        """
+        import re
+        # Use word boundary \b to match complete words only
+        pattern = r'\b' + re.escape(keyword) + r'\b'
+        return bool(re.search(pattern, message, re.IGNORECASE))
+
     def _detect_analysis_intent(
         self,
         message: str,
@@ -1340,17 +1355,17 @@ class IntentDetectorV2:
                     metadata={"query_type": "token_info"},
                 )
 
-        # Sentiment keywords
+        # Sentiment keywords - use word boundary matching to prevent false positives
         sentiment_keywords = self._get_all_keywords("sentiment")
         for kw in sentiment_keywords:
-            if kw in message:
+            if self._match_keyword_with_word_boundary(kw, message):
                 return IntentResult(
                     intent=ChatIntentV2.HUNTER_SENTIMENT,
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.HUNTER_SENTIMENT],
                 )
         
-        # Price/Prediction keywords
+        # Price/Prediction keywords - use word boundary matching
         price_keywords = self._get_all_keywords("price")
         prediction_keywords = self._get_all_keywords("prediction")
         all_price = price_keywords + prediction_keywords
@@ -1360,6 +1375,7 @@ class IntentDetectorV2:
         logger.debug(f"[PRICE_DEBUG] Price keywords: {price_keywords}")
 
         for kw in all_price:
+            # Price keywords often contain phrases like "price of", so keep substring matching
             if kw in message:
                 logger.info(f"[PRICE_DEBUG] ✅ PRICE keyword matched: '{kw}' in message")
                 return IntentResult(
@@ -1369,61 +1385,61 @@ class IntentDetectorV2:
                 )
 
         logger.debug(f"[PRICE_DEBUG] ❌ No price keywords matched")
-        
-        # Trading signals
+
+        # Trading signals - use word boundary matching
         signal_keywords = self._get_all_keywords("trading_signals")
         for kw in signal_keywords:
-            if kw in message:
+            if self._match_keyword_with_word_boundary(kw, message):
                 return IntentResult(
                     intent=ChatIntentV2.HUNTER_TRADING_SIGNALS,
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.HUNTER_TRADING_SIGNALS],
                 )
 
-        # Hunter AI: Risk Signals
+        # Hunter AI: Risk Signals - use word boundary matching
         risk_signal_keywords = self._get_all_keywords("hunter_risk_signals")
         for kw in risk_signal_keywords:
-            if kw in message:
+            if self._match_keyword_with_word_boundary(kw, message):
                 return IntentResult(
                     intent=ChatIntentV2.HUNTER_RISK_SIGNALS,
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.HUNTER_RISK_SIGNALS],
                 )
 
-        # Hunter AI: Pattern Recognition
+        # Hunter AI: Pattern Recognition - use word boundary matching
         pattern_keywords = self._get_all_keywords("hunter_patterns")
         for kw in pattern_keywords:
-            if kw in message:
+            if self._match_keyword_with_word_boundary(kw, message):
                 return IntentResult(
                     intent=ChatIntentV2.HUNTER_PATTERNS,
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.HUNTER_PATTERNS],
                 )
 
-        # ULTRA: MEV Protection
+        # ULTRA: MEV Protection - use word boundary matching
         mev_keywords = self._get_all_keywords("ultra_mev")
         for kw in mev_keywords:
-            if kw in message:
+            if self._match_keyword_with_word_boundary(kw, message):
                 return IntentResult(
                     intent=ChatIntentV2.ULTRA_MEV_PROTECTION,
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.ULTRA_MEV_PROTECTION],
                 )
 
-        # ULTRA: Auto Executor
+        # ULTRA: Auto Executor - use word boundary matching
         auto_exec_keywords = self._get_all_keywords("ultra_auto_executor")
         for kw in auto_exec_keywords:
-            if kw in message:
+            if self._match_keyword_with_word_boundary(kw, message):
                 return IntentResult(
                     intent=ChatIntentV2.ULTRA_AUTO_EXECUTOR,
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.ULTRA_AUTO_EXECUTOR],
                 )
 
-        # Arbitrage
+        # Arbitrage - use word boundary matching
         arb_keywords = self._get_all_keywords("arbitrage")
         for kw in arb_keywords:
-            if kw in message:
+            if self._match_keyword_with_word_boundary(kw, message):
                 return IntentResult(
                     intent=ChatIntentV2.ULTRA_ARBITRAGE,
                     confidence=0.80,
