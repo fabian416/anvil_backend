@@ -96,6 +96,131 @@ llm_response = await llm_gateway.generate_response(
 
 ---
 
+## Step 2.5: Token Optimization (Optional but Recommended)
+
+The knowledge base can be compressed to reduce token usage by 60-80% while maintaining essential information. This is especially important for:
+- Long conversations approaching token limits
+- Cost-sensitive applications
+- Reducing latency
+
+### Compression Levels
+
+```python
+from app.application.chat.services.knowledge_injector import inject_knowledge
+
+# Default: MEDIUM compression (60% token reduction) - Recommended
+enhanced_system_prompt = inject_knowledge(
+    user_query=message.content,
+    detected_intent=mapped_intent.name,
+    user_type=user_type,
+    compression_level="medium"  # Default, can be omitted
+)
+
+# AGGRESSIVE compression (80% token reduction) - For long conversations
+enhanced_system_prompt = inject_knowledge(
+    user_query=message.content,
+    detected_intent=mapped_intent.name,
+    user_type=user_type,
+    compression_level="aggressive"  # Most compact
+)
+
+# LIGHT compression (30% token reduction) - More detail
+enhanced_system_prompt = inject_knowledge(
+    user_query=message.content,
+    detected_intent=mapped_intent.name,
+    user_type=user_type,
+    compression_level="light"  # Preserves more detail
+)
+
+# NO compression - Full knowledge
+enhanced_system_prompt = inject_knowledge(
+    user_query=message.content,
+    detected_intent=mapped_intent.name,
+    user_type=user_type,
+    compression_level="none"  # Complete knowledge base
+)
+```
+
+### Compression Example - Hunter AI Sentiment
+
+**Without compression (full knowledge):**
+```json
+{
+  "capability": {
+    "name": "Sentiment Analysis",
+    "intent": "HUNTER_SENTIMENT",
+    "description": "Multi-source sentiment analysis aggregating Twitter, Reddit, Discord, and news outlets to gauge market sentiment and predict price movements.",
+    "data_sources": ["Twitter API", "Reddit API", "Discord", "RSS News Feeds"],
+    "accuracy": "82% correlation with price movements"
+  }
+}
+```
+**~150 tokens**
+
+**With MEDIUM compression (60% reduction):**
+```
+HUNTER AI - SENTIMENT:
+• Multi-source: Twitter, Reddit, Discord, News (RSS feeds real-time)
+• Accuracy: 82% correlation w/ price movements
+• Update freq: News 5min, Social 1hr
+• Confidence: 0-100% per analysis
+```
+**~60 tokens (60% reduction)**
+
+**With AGGRESSIVE compression (80% reduction):**
+```
+HUNTER AI - SENTIMENT:
+• 82% acc, multi-source (Twitter/Reddit/News)
+• Real CoinGecko/RSS, simulated Twitter/Discord
+```
+**~30 tokens (80% reduction)**
+
+### Dynamic Compression Based on Context
+
+You can dynamically adjust compression based on conversation length:
+
+```python
+# Calculate conversation token count
+conversation_tokens = sum(len(msg.content) // 4 for msg in conversation_history)
+
+# Adjust compression level based on token usage
+if conversation_tokens > 8000:  # Approaching limit
+    compression_level = "aggressive"
+elif conversation_tokens > 5000:
+    compression_level = "medium"
+else:
+    compression_level = "light"
+
+# Use dynamic compression
+enhanced_system_prompt = inject_knowledge(
+    user_query=message.content,
+    detected_intent=mapped_intent.name,
+    user_type=user_type,
+    compression_level=compression_level
+)
+```
+
+### Token Savings Summary
+
+| Compression Level | Token Reduction | Use Case |
+|------------------|-----------------|----------|
+| **none** | 0% (baseline) | Critical investor queries requiring all details |
+| **light** | ~30% | General queries, preserves most detail |
+| **medium** (default) | ~60% | Recommended for most use cases |
+| **aggressive** | ~80% | Long conversations, token-constrained scenarios |
+
+**Example Savings (Hunter AI query):**
+- Full knowledge: ~40,000 tokens
+- Medium compression: ~16,000 tokens (60% reduction)
+- Aggressive compression: ~8,000 tokens (80% reduction)
+
+**Cost Impact:**
+- Without compression: $0.40 per query (40K tokens × $0.10/1M)
+- With medium compression: $0.16 per query (60% savings)
+- With aggressive compression: $0.08 per query (80% savings)
+
+---
+
 ## Step 3: Test the Integration
 
 ### Test Case 1: User Asking "What can you do?"

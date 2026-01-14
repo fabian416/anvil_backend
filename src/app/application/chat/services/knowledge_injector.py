@@ -271,7 +271,8 @@ class KnowledgeInjector:
         user_query: str,
         detected_intent: str,
         user_type: str = "user",
-        base_system_prompt: Optional[str] = None
+        base_system_prompt: Optional[str] = None,
+        compression_level: str = "medium"
     ) -> str:
         """
         Create enhanced system prompt with injected knowledge.
@@ -281,14 +282,30 @@ class KnowledgeInjector:
             detected_intent: Intent detected by intent_detector_v2
             user_type: "user" for end users, "investor" for investor queries
             base_system_prompt: Optional base system prompt to enhance
+            compression_level: Token compression level - "none", "light", "medium", or "aggressive"
+                             - none: Full knowledge (baseline)
+                             - light: ~30% token reduction
+                             - medium: ~60% token reduction (recommended)
+                             - aggressive: ~80% token reduction
 
         Returns:
             Enhanced system prompt with knowledge injection
         """
         knowledge = self.get_knowledge_for_intent(user_query, detected_intent, user_type)
 
-        # Format knowledge as structured text
-        knowledge_text = self._format_knowledge(knowledge)
+        # Apply compression if requested
+        if compression_level != "none":
+            from app.application.chat.services.knowledge_compressor import compress_knowledge
+            compressed_text, estimated_tokens = compress_knowledge(
+                knowledge=knowledge,
+                intent=detected_intent,
+                user_query=user_query,
+                level=compression_level
+            )
+            knowledge_text = compressed_text
+        else:
+            # Format knowledge as structured text (no compression)
+            knowledge_text = self._format_knowledge(knowledge)
 
         if base_system_prompt is None:
             base_system_prompt = """You are Anvil, a specialized DeFi assistant focused on decentralized finance,
@@ -418,25 +435,48 @@ def inject_knowledge(
     user_query: str,
     detected_intent: str,
     user_type: str = "user",
-    base_system_prompt: Optional[str] = None
+    base_system_prompt: Optional[str] = None,
+    compression_level: str = "medium"
 ) -> str:
     """
-    Convenience function to inject knowledge into system prompt.
+    Convenience function to inject knowledge into system prompt with token optimization.
 
     Args:
         user_query: The user's original message
         detected_intent: Intent detected by intent_detector_v2
         user_type: "user" for end users, "investor" for investor queries
         base_system_prompt: Optional base system prompt to enhance
+        compression_level: Token compression level - "none", "light", "medium", or "aggressive"
+                         - medium (default): 60% token reduction, recommended for most cases
+                         - aggressive: 80% reduction for token-constrained scenarios
+                         - light: 30% reduction, preserves more detail
+                         - none: Full knowledge without compression
 
     Returns:
         Enhanced system prompt with knowledge injection
 
-    Example:
+    Examples:
+        # Default usage with 60% token reduction
         enhanced_prompt = inject_knowledge(
             user_query="What is Hunter AI?",
             detected_intent="GENERAL_CONVERSATION",
             user_type="user"
+        )
+
+        # Aggressive compression for long conversations
+        enhanced_prompt = inject_knowledge(
+            user_query="Tell me about arbitrage",
+            detected_intent="ULTRA_ARBITRAGE",
+            user_type="user",
+            compression_level="aggressive"
+        )
+
+        # No compression for critical queries
+        enhanced_prompt = inject_knowledge(
+            user_query="Detailed comparison of all features",
+            detected_intent="GENERAL_CONVERSATION",
+            user_type="investor",
+            compression_level="none"
         )
     """
     injector = get_knowledge_injector()
@@ -444,5 +484,6 @@ def inject_knowledge(
         user_query=user_query,
         detected_intent=detected_intent,
         user_type=user_type,
-        base_system_prompt=base_system_prompt
+        base_system_prompt=base_system_prompt,
+        compression_level=compression_level
     )
