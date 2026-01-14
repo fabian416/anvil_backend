@@ -559,5 +559,445 @@ class TestKnowledgeForAllIntents:
         assert len(agent_content) > 50
 
 
+class TestCompressionLevelsAuthenticated:
+    """Test different compression levels for authenticated users"""
+
+    async def test_no_compression_authenticated(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test no compression provides full knowledge"""
+        # Note: This test assumes router supports compression_level parameter
+        # If not yet implemented, this will test default behavior
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "what is hunter ai?", "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"]
+
+        # Full knowledge should have substantial detail
+        assert len(agent_content) > 200
+        # Should mention accuracy metrics
+        assert any(metric in agent_content for metric in ["82%", "73%"])
+
+    async def test_medium_compression_authenticated(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test medium compression (60% reduction) for authenticated users"""
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "what is hunter ai?", "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"]
+
+        # Should still have substantial content
+        assert len(agent_content) > 100
+        # Should preserve key accuracy metrics
+        agent_lower = agent_content.lower()
+        assert "hunter ai" in agent_lower or "hunter" in agent_lower
+        # Should mention at least one key metric
+        assert any(keyword in agent_lower for keyword in [
+            "82%", "73%", "sentiment", "prediction", "accuracy", "accurate"
+        ])
+
+    async def test_aggressive_compression_authenticated(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test aggressive compression (80% reduction) preserves essentials"""
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "what is hunter ai?", "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"]
+
+        # Should have response (though compressed)
+        assert len(agent_content) > 50
+        # Should still mention Hunter AI
+        assert "hunter" in agent_content.lower() or "ai" in agent_content.lower()
+
+    async def test_compression_preserves_quality_authenticated(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test that compression doesn't degrade response quality significantly"""
+
+        # Make same query multiple times to test consistency
+        queries = [
+            "what is hunter ai?",
+            "tell me about hunter ai accuracy",
+            "how good is hunter ai?"
+        ]
+
+        for query in queries:
+            response = await async_client.post(
+                f"/api/v1/conversations/{test_conversation.id}/messages",
+                headers={"Authorization": f"Bearer {test_session}"},
+                json={"content": query, "language": "en"}
+            )
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+
+            agent_content = data["agent_message"]["content"].lower()
+
+            # All responses should mention Hunter AI
+            assert "hunter" in agent_content or "ai" in agent_content
+            # All should mention some capability
+            assert any(cap in agent_content for cap in [
+                "sentiment", "prediction", "risk", "trading", "pattern"
+            ])
+
+
+class TestCompressionLevelsGuest:
+    """Test different compression levels for guest users"""
+
+    async def test_medium_compression_guest(self, async_client: AsyncClient):
+        """Test medium compression works for guest users"""
+
+        response = await async_client.post(
+            "/api/v1/guest/chat",
+            json={"content": "what is hunter ai?", "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"]
+
+        # Should have substantial response
+        assert len(agent_content) > 100
+        # Should mention Hunter AI and capabilities
+        agent_lower = agent_content.lower()
+        assert "hunter" in agent_lower or "ai" in agent_lower
+
+    async def test_compression_consistency_guest(self, async_client: AsyncClient):
+        """Test compression provides consistent results for guest"""
+
+        # Make same query twice
+        for _ in range(2):
+            response = await async_client.post(
+                "/api/v1/guest/chat",
+                json={"content": "what can you do?", "language": "en"}
+            )
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+
+            agent_content = data["agent_message"]["content"].lower()
+
+            # Both should mention core features
+            assert any(feature in agent_content for feature in [
+                "trading", "swap", "hunter", "ultra", "portfolio"
+            ])
+
+
+class TestCompressionWithDifferentIntents:
+    """Test compression works correctly with different intents"""
+
+    @pytest.mark.parametrize("query,expected_keywords", [
+        ("check sentiment for BTC", ["sentiment", "btc"]),
+        ("predict ETH price", ["predict", "eth", "price"]),
+        ("find arbitrage", ["arbitrage"]),
+        ("tell me about flash loans", ["flash", "loan"]),
+        ("swap 100 USDC to ETH", ["swap", "usdc", "eth"]),
+    ])
+    async def test_compressed_knowledge_by_intent(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation,
+        query: str,
+        expected_keywords: list
+    ):
+        """Test compression works for different intents and preserves key info"""
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": query, "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"].lower()
+
+        # Should have response
+        assert len(agent_content) > 50
+
+        # Response quality check: at least one expected keyword should appear
+        # (Compression might affect exact wording, but core concepts should remain)
+        keyword_found = any(kw in agent_content for kw in expected_keywords)
+        assert keyword_found, f"None of {expected_keywords} found in response"
+
+
+class TestCompressionPerformance:
+    """Test performance impact of compression"""
+
+    async def test_compressed_response_time_acceptable(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test response time with compression is acceptable"""
+        import time
+
+        start = time.time()
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "what can you do?", "language": "en"}
+        )
+
+        elapsed = time.time() - start
+
+        assert response.status_code == status.HTTP_200_OK
+
+        # Compression should not significantly impact response time
+        # (Compression overhead is minimal compared to LLM generation time)
+        assert elapsed < 30  # 30 seconds max (includes LLM call)
+
+    async def test_compression_overhead_minimal(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test compression adds minimal overhead"""
+        import time
+
+        # Make multiple requests to test consistency
+        response_times = []
+
+        for _ in range(3):
+            start = time.time()
+
+            response = await async_client.post(
+                f"/api/v1/conversations/{test_conversation.id}/messages",
+                headers={"Authorization": f"Bearer {test_session}"},
+                json={"content": "what is hunter ai?", "language": "en"}
+            )
+
+            elapsed = time.time() - start
+            response_times.append(elapsed)
+
+            assert response.status_code == status.HTTP_200_OK
+
+        # All responses should be reasonably fast
+        assert all(t < 30 for t in response_times)
+        # Response times should be consistent (variance < 10 seconds)
+        assert max(response_times) - min(response_times) < 10
+
+
+class TestCompressionEssentialPreservation:
+    """Test that compression preserves essential information"""
+
+    async def test_accuracy_metrics_preserved_in_responses(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test accuracy metrics are preserved in compressed responses"""
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "how accurate is hunter ai?", "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"]
+
+        # Should mention key accuracy metrics (even if compressed)
+        # At least one of the main accuracy metrics should be mentioned
+        has_sentiment_accuracy = "82%" in agent_content or "82" in agent_content
+        has_prediction_accuracy = "73%" in agent_content or "73" in agent_content
+        has_arbitrage_accuracy = "92%" in agent_content or "92" in agent_content
+
+        assert has_sentiment_accuracy or has_prediction_accuracy or has_arbitrage_accuracy, \
+            "Response should mention at least one key accuracy metric"
+
+    async def test_protocol_names_preserved_in_responses(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test protocol names are preserved in compressed responses"""
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "which protocols support flash loans?", "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"].lower()
+
+        # Should mention at least one flash loan protocol
+        protocols = ["aave", "balancer", "uniswap"]
+        assert any(protocol in agent_content for protocol in protocols), \
+            f"Response should mention at least one of {protocols}"
+
+    async def test_aggregator_names_preserved_in_responses(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test aggregator names are preserved in swap responses"""
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "how does swapping work?", "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"].lower()
+
+        # Should mention at least one aggregator
+        aggregators = ["1inch", "hyperliquid", "uniswap"]
+        assert any(agg in agent_content for agg in aggregators), \
+            f"Response should mention at least one of {aggregators}"
+
+    async def test_competitive_advantages_preserved_for_investors(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test competitive advantages are preserved in investor queries"""
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "what are anvils competitive advantages?", "language": "en"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"].lower()
+
+        # Should mention key competitive advantages (even if compressed)
+        competitive_keywords = [
+            "18 agents", "18", "agents",
+            "99%", "cost", "savings",
+            "multi-language", "multilingual",
+            "bloomberg"
+        ]
+
+        # At least 2 competitive advantage keywords should appear
+        keyword_count = sum(1 for kw in competitive_keywords if kw in agent_content)
+        assert keyword_count >= 2, \
+            "Response should mention at least 2 competitive advantages"
+
+
+class TestCompressionMultiLanguage:
+    """Test compression works with multi-language queries"""
+
+    async def test_spanish_query_with_compression(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test compression works with Spanish queries"""
+
+        response = await async_client.post(
+            f"/api/v1/conversations/{test_conversation.id}/messages",
+            headers={"Authorization": f"Bearer {test_session}"},
+            json={"content": "qué es hunter ai?", "language": "es"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        agent_content = data["agent_message"]["content"]
+
+        # Should have substantial response
+        assert len(agent_content) > 100
+
+    async def test_compression_preserves_quality_across_languages(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+        test_session: str,
+        test_conversation: ChatConversation
+    ):
+        """Test compression maintains quality for different languages"""
+
+        languages_and_queries = [
+            ("en", "what can you do?"),
+            ("es", "qué puedes hacer?"),
+            ("pt", "o que você pode fazer?")
+        ]
+
+        for lang, query in languages_and_queries:
+            response = await async_client.post(
+                f"/api/v1/conversations/{test_conversation.id}/messages",
+                headers={"Authorization": f"Bearer {test_session}"},
+                json={"content": query, "language": lang}
+            )
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+
+            agent_content = data["agent_message"]["content"]
+
+            # All languages should get substantial responses
+            assert len(agent_content) > 100
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

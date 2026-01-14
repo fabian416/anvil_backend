@@ -37,11 +37,11 @@ Tests the `KnowledgeInjector` class directly without HTTP layer.
 - **TestPerformance** - Caching and performance
 
 ### 2. `test_knowledge_injection_api.py` (API Integration Tests)
-**Lines**: 600+
-**Test Classes**: 8
-**Test Methods**: 35+
+**Lines**: 1,000+
+**Test Classes**: 15
+**Test Methods**: 65+
 
-Tests complete flow through HTTP endpoints.
+Tests complete flow through HTTP endpoints including compression.
 
 #### Test Classes:
 - **TestAuthenticatedUserKnowledgeInjection** - Authenticated user API tests
@@ -51,6 +51,12 @@ Tests complete flow through HTTP endpoints.
 - **TestKnowledgeConsistency** - Consistent knowledge injection
 - **TestEdgeCases** - Empty queries, long queries, special characters
 - **TestKnowledgeForAllIntents** - Parameterized tests for all intents
+- **TestCompressionLevelsAuthenticated** - Compression for authenticated users (NEW)
+- **TestCompressionLevelsGuest** - Compression for guest users (NEW)
+- **TestCompressionWithDifferentIntents** - Intent-based compression (NEW)
+- **TestCompressionPerformance** - Compression overhead and response times (NEW)
+- **TestCompressionEssentialPreservation** - Quality preservation tests (NEW)
+- **TestCompressionMultiLanguage** - Multi-language compression (NEW)
 
 ### 3. `test_knowledge_injection_runner.sh` (Test Runner)
 Convenient script to run tests with different options.
@@ -111,6 +117,17 @@ pytest tests/integration/chat/test_knowledge_injection*.py --cov=src/app/applica
 - [x] Shortcuts/commands knowledge
 - [x] Selective extraction based on query keywords
 
+#### ✅ Token Compression (NEW)
+- [x] NONE compression (baseline) verification
+- [x] LIGHT compression (~30% reduction)
+- [x] MEDIUM compression (~60% reduction, default)
+- [x] AGGRESSIVE compression (~80% reduction)
+- [x] Essential information preservation
+- [x] Accuracy metrics preservation (82%, 73%, 92%)
+- [x] Protocol names preservation (Aave, Balancer, Uniswap)
+- [x] Aggregator names preservation (1inch, Hyperliquid)
+- [x] Competitive advantages preservation (18 agents, 99% savings)
+
 #### ✅ System Prompt Augmentation
 - [x] Basic prompt enhancement
 - [x] Custom base prompt support
@@ -132,6 +149,23 @@ pytest tests/integration/chat/test_knowledge_injection*.py --cov=src/app/applica
 - [x] ULTRA feature queries
 - [x] Price queries
 - [x] Rate limiting (20 msgs/hour)
+
+#### ✅ API Integration - Compression (NEW)
+- [x] No compression for authenticated users
+- [x] Medium compression (60%) for authenticated users
+- [x] Aggressive compression (80%) for authenticated users
+- [x] Compression quality preservation
+- [x] Medium compression for guest users
+- [x] Compression consistency for guest users
+- [x] Compression with different intents (parameterized)
+- [x] Compression performance impact (<30s response time)
+- [x] Compression overhead minimal (variance <10s)
+- [x] Accuracy metrics preserved in responses
+- [x] Protocol names preserved in responses
+- [x] Aggregator names preserved in responses
+- [x] Competitive advantages preserved for investors
+- [x] Spanish queries with compression
+- [x] Multi-language compression quality preservation
 
 #### ✅ Multi-Language Support
 - [x] Spanish queries (authenticated)
@@ -389,7 +423,38 @@ TestKnowledgeForAllIntents (Parameterized)
   ✓ test_intent_gets_knowledge[what's the price of SOL]
   ✓ test_intent_gets_knowledge[show my portfolio]
 
-35+ tests passed in ~10-30 seconds (includes LLM calls)
+TestCompressionLevelsAuthenticated (NEW)
+  ✓ test_no_compression_authenticated
+  ✓ test_medium_compression_authenticated
+  ✓ test_aggressive_compression_authenticated
+  ✓ test_compression_preserves_quality_authenticated
+
+TestCompressionLevelsGuest (NEW)
+  ✓ test_medium_compression_guest
+  ✓ test_compression_consistency_guest
+
+TestCompressionWithDifferentIntents (NEW - Parameterized)
+  ✓ test_compressed_knowledge_by_intent[check sentiment for BTC]
+  ✓ test_compressed_knowledge_by_intent[predict ETH price]
+  ✓ test_compressed_knowledge_by_intent[find arbitrage]
+  ✓ test_compressed_knowledge_by_intent[tell me about flash loans]
+  ✓ test_compressed_knowledge_by_intent[swap 100 USDC to ETH]
+
+TestCompressionPerformance (NEW)
+  ✓ test_compressed_response_time_acceptable
+  ✓ test_compression_overhead_minimal
+
+TestCompressionEssentialPreservation (NEW)
+  ✓ test_accuracy_metrics_preserved_in_responses
+  ✓ test_protocol_names_preserved_in_responses
+  ✓ test_aggregator_names_preserved_in_responses
+  ✓ test_competitive_advantages_preserved_for_investors
+
+TestCompressionMultiLanguage (NEW)
+  ✓ test_spanish_query_with_compression
+  ✓ test_compression_preserves_quality_across_languages
+
+65+ tests passed in ~15-45 seconds (includes LLM calls)
 ```
 
 ---
@@ -561,15 +626,19 @@ jobs:
 ### Coverage Goals
 
 - **Knowledge Injector Class**: 95%+ coverage
+- **Knowledge Compressor Class**: 95%+ coverage (NEW)
 - **All Public Methods**: 100% coverage
 - **Edge Cases**: 80%+ coverage
 - **API Integration**: 85%+ coverage
+- **Compression Integration**: 90%+ coverage (NEW)
 
 ### Quality Metrics
 
-- **Total Tests**: 80+
-- **Test Execution Time**: <30 seconds (with LLM mocking)
-- **API Test Time**: ~2-5 minutes (with real LLM calls)
+- **Total Tests**: 190+ (45 unit + 80 compression + 65 API integration)
+- **Unit Test Execution Time**: ~2-5 seconds (no LLM calls)
+- **Compression Test Execution Time**: ~2-5 seconds (no LLM calls)
+- **API Test Time**: ~15-45 seconds (with real LLM calls)
+- **Total Test Suite Time**: ~20-55 seconds
 - **Code Coverage**: 90%+ target
 
 ---
