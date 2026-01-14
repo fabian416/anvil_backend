@@ -1224,9 +1224,15 @@ def create_conversations_router() -> APIRouter:
             except KeyError:
                 mapped_intent = ChatIntent.GENERAL_CONVERSATION
             
-            # For authenticated users with GENERAL_CONVERSATION intent,
-            # use LLMGateway directly for real LLM response
-            if not user.is_guest and mapped_intent == ChatIntent.GENERAL_CONVERSATION:
+            # For authenticated users with informational intents (GENERAL_CONVERSATION, PROTOCOL_SEARCH, etc.),
+            # use LLMGateway directly for real LLM response instead of demo data
+            llm_intents = [
+                ChatIntent.GENERAL_CONVERSATION,
+                ChatIntent.PROTOCOL_SEARCH,  # "what is btc?", "tell me about ethereum"
+                ChatIntent.RISK_ASSESSMENT,  # Risk analysis queries
+                ChatIntent.SIMILAR_PROTOCOLS,  # Protocol comparison queries
+            ]
+            if not user.is_guest and mapped_intent in llm_intents:
                 try:
                     # Build context from conversation memory
                     context_str = conversation_memory.build_context_string(context)
