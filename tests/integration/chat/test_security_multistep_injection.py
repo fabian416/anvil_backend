@@ -153,6 +153,50 @@ class TestXSSMultiStepInjection:
         assert "onerror" not in agent_content.lower()
         assert "document.cookie" not in agent_content.lower()
 
+    async def test_xss_swap_flow(self, client: AsyncClient):
+        """Test XSS injection in swap flow at step 2."""
+        # Step 1: Initiate swap
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "Swap ETH to USDC", "language": "en"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        conv_id = response.json()["conversation_id"]
+
+        # Step 2: XSS in amount field
+        response = await client.post(
+            f"/api/v1/guest/chat?conversation_id={conv_id}",
+            json={"content": "1<svg onload=alert('XSS')>", "language": "en"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        agent_content = response.json()["agent_message"]["content"]
+
+        # Verify XSS is sanitized
+        assert "onload" not in agent_content.lower()
+        assert "<svg>" not in agent_content.lower()
+
+    async def test_xss_buy_flow(self, client: AsyncClient):
+        """Test XSS injection in buy flow at step 2."""
+        # Step 1: Initiate buy
+        response = await client.post(
+            "/api/v1/guest/chat",
+            json={"content": "Buy Bitcoin", "language": "en"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        conv_id = response.json()["conversation_id"]
+
+        # Step 2: XSS with style injection
+        response = await client.post(
+            f"/api/v1/guest/chat?conversation_id={conv_id}",
+            json={"content": "yes<style>body{background:url('javascript:alert(1)')}</style>", "language": "en"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        agent_content = response.json()["agent_message"]["content"]
+
+        # Verify XSS is sanitized
+        assert "<style>" not in agent_content.lower()
+        assert "javascript:" not in agent_content.lower()
+
     async def test_xss_with_cancel_step2(self, client: AsyncClient):
         """Test XSS injection followed by cancellation at step 2."""
         # Step 1: Normal request
