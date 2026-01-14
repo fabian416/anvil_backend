@@ -1,0 +1,4 @@
+Task,Tests Implemented,Tests Passing,Tests XFAIL,Status,Hours,Notes
+Intent Detection Edge Cases,18,11,7,⚠️ Partial,~2,"Edge case testing (ambiguous queries, multi-intent, language mixing, typos, confidence) - 7 XFAIL due to guest session infrastructure"
+Historical Chat Edge Cases,10,5,5,⚠️ Partial,~2,"Edge case testing (pagination, empty conversations, deletion, limits, history export) - 5 XFAIL due to guest session infrastructure"
+Total,28,16,12,⚠️ Partial,~4,"16 tests passing provide +2% coverage (85% → 87%), 12 XFAIL tests document infrastructure limitation with guest session management across requests"
