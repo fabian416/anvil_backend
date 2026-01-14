@@ -166,24 +166,6 @@ guest_chat_comprehensive_moonpay_swap_complete_request_parsing,chrome,NO,Test qu
 **Gas Fee:** ~$12.50
 
 ⚠️ Sign up to execute → /signup",,,,,,,PASS
-guest_chat_comprehensive_lending_shortcuts,chrome,NO,Test query for lending shortcuts,"💰 **Aave Lending Rates**
-
-**Supply APY:**
-• USDC: 5.2% APY
-• DAI: 4.8% APY
-• USDT: 4.5% APY
-
-**Best Rate:** USDC @ 5.2%",,,,,,,PASS
-guest_chat_comprehensive_swap_shortcuts,chrome,NO,Test query for swap shortcuts,"💱 **Swap Quote**
-
-**From:** 1 ETH
-**To:** ~3,290 USDC
-**Rate:** 1 ETH = 3,290.42 USDC
-**Gas Fee:** ~$12.50
-
-⚠️ Sign up to execute → /signup",,,,,,,PASS
-guest_chat_comprehensive_balance_shortcut,chrome,NO,Test query for balance shortcut,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started.",,,,,,,PASS
-guest_chat_comprehensive_portfolio_shortcut,chrome,NO,Test query for portfolio shortcut,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started.",,,,,,,PASS
 rate_limiting_comprehensive_guest_rate_limit_messages_remaining_countdown,chrome,NO,What is Bitcoin price? [rate limit test],"📈 **Price Prediction for BTC**
 
 **Current Price:** $95,041.53
@@ -951,110 +933,6 @@ agent_squad_ultra_hunter_full_price_prediction_routing,chrome,NO,Predict Ethereu
 **7-Day Forecast:** $97,892.77
 **Expected Change:** 🟢 +3.0%
 **Confidence:** 75%",,,,,,,PASS
-shortcuts_advanced_combinations_shortcut_with_multiple_parameters,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_advanced_combinations_nested_shortcut_resolution,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_advanced_combinations_shortcut_dynamic_generation,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_advanced_combinations_shortcut_performance_optimization,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_comprehensive_shortcut_with_invalid_parameters,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_comprehensive_shortcut_not_found_fallback,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_comprehensive_shortcut_metadata_validation,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_comprehensive_shortcut_language_support,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_case_sensitivity_guest,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_whitespace_tolerance_guest,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_punctuation_handling_guest,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_multi_language_support_guest,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
-shortcuts_edge_cases_emojis_handling_guest,chrome,NO,Deposit USDC on Morpho [4-step flow],"💰 **Earn Yield on Your Crypto**
-
-Deposit into Morpho vaults to earn passive income.
-
-**Select an asset:**
-1. 💵 USDC - ~8.5% APY
-2. 💵 USDT - ~7.8% APY
-3. 💰 DAI - ~9.2% APY",,,,,,,PASS
 llm_integration_advanced_provider_failover_multiple_providers,chrome,NO,Test LLM provider failover,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started.",,,,,,,PASS
 llm_integration_advanced_streaming_response_interruption,chrome,NO,Long response for streaming test,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started.",,,,,,,PASS
 llm_integration_advanced_token_limit_handling_comprehensive,chrome,NO,LLM integration test query,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started.",,,,,,,PASS
@@ -1127,3 +1005,294 @@ protocol_convex_boosting,chrome,NO,Convex Finance CRV boosting,🚀 **Convex** B
 protocol_frax_stablecoin,chrome,NO,FRAX stablecoin mechanism,💵 **FRAX** Fractional-algorithmic...,,,,,,,PASS
 protocol_lido_staking,chrome,NO,Lido ETH staking benefits,💎 **Lido** Liquid staking...,,,,,,,PASS
 protocol_rocketpool_nodes,chrome,NO,Rocket Pool node operators,🚀 **Rocket Pool** Decentralized staking...,,,,,,,PASS
+shortcut_deposit_morpho_multistep,chrome,YES,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with the number (1-5) or type the asset name",1,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Deposit USDC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **USDC** (USD Coin) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 USDC
+
+💬 Enter the amount to continue",100,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 USDC
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 USDC/month
+💵 **Yearly Earnings**: ~5.00 USDC/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to deposit?**
+
+Reply ""confirm"" or ""yes"" to proceed
+Reply ""cancel"" to abort
+
+⚠️ You'll need to sign up to complete the deposit",yes,"🎉 ✅ Deposit Confirmed!
+
+You're depositing **100.0 USDC** into a Morpho vault.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign up to connect your wallet
+2. ✅ Approve the vault contract
+3. 💰 Complete the deposit transaction
+
+👉 **Sign up now to start earning!** /signup",PASS
+shortcut_lend_aave_multistep,chrome,YES,Lend USDC on Aave,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Aave Lending
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Asset:** USDC
+**Current APY:** 5.2%
+
+**How much USDC would you like to lend?**
+
+Examples: 100, 500, 1000, 5000 USDC
+
+💬 Enter the amount to continue",500,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Aave Lending Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Supply Amount**: 500 USDC
+**Current APY**: 5.2%
+
+**Projected Earnings:**
+• Monthly: ~2.17 USDC/month
+• Yearly: ~26.00 USDC/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to supply?**
+
+Reply ""confirm"" or ""yes"" to proceed
+
+⚠️ You'll need to sign up to execute",confirm,"✅ **Supply Confirmed!**
+
+You're supplying **500 USDC** to Aave V3.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign up to connect your wallet
+2. ✅ Approve Aave contract
+3. 💰 Complete supply transaction
+
+👉 **Sign up now!** /signup",,,PASS
+shortcut_swap_eth_usdc_multistep,chrome,YES,Swap ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💱 Swap ETH to USDC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Current Rate:** 1 ETH = 3,290.42 USDC
+
+**How much ETH would you like to swap?**
+
+Examples: 0.1, 0.5, 1, 2 ETH
+
+💬 Enter the amount to continue",0.5,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💱 Swap Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**From:** 0.5 ETH ($1,649.57)
+**To:** ~1,645.21 USDC
+
+**Rate:** 1 ETH = 3,290.42 USDC
+**Price Impact:** 0.15%
+**Gas Fee:** ~$8.50
+
+**Best Route:** 1inch Aggregator
+• Uniswap V3 (60%)
+• Curve (40%)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready to execute?
+
+Reply ""confirm"" to proceed
+
+⚠️ Sign up required",confirm,"✅ **Swap Confirmed!**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign up to connect wallet
+2. ✅ Approve token spending
+3. 💱 Execute swap transaction
+
+👉 **Sign up now!** /signup",,,PASS
+shortcut_buy_btc_multistep,chrome,YES,Buy Bitcoin,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Buy Bitcoin
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Current BTC Price:** $95,041.53
+
+**How much would you like to spend?**
+
+Examples: $100, $500, $1000
+
+💬 Enter USD amount to continue",100,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 BTC Purchase Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Amount:** $100
+**You'll Receive:** ~0.00105 BTC
+
+**Price:** $95,041.53 per BTC
+**Fee:** ~$2.50 (2.5%)
+**Total Cost:** $102.50
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Confirm purchase?
+
+⚠️ Sign up required",yes,"✅ **Purchase Confirmed!**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign up / Login
+2. 💳 Add payment method
+3. ₿ Complete BTC purchase
+
+👉 **Get started!** /signup",,,PASS
+shortcut_lend_info,chrome,NO,Lend,"💰 **Lending Rates**
+
+**Top Lending Platforms:**
+
+**Aave V3:**
+• USDC: 5.2% APY
+• DAI: 4.8% APY
+• USDT: 4.5% APY
+
+**Compound V3:**
+• USDC: 4.8% APY
+• DAI: 4.3% APY
+
+**Morpho:**
+• USDC: 6.5% APY ⭐ Best Rate
+• DAI: 5.9% APY
+
+💬 Say ""Lend [amount] [asset] on [protocol]"" to start lending",,,,,,,PASS
+shortcut_swap_info,chrome,NO,Swap,"💱 **Swap Information**
+
+**Popular Pairs:**
+• ETH/USDC: 1 ETH = 3,290.42 USDC
+• BTC/USDC: 1 BTC = 95,041.53 USDC
+• ETH/BTC: 1 ETH = 0.0346 BTC
+
+**Best DEX Aggregators:**
+• 1inch - Best rates ⭐
+• Uniswap V3 - Deep liquidity
+• Curve - Stablecoin swaps
+
+💬 Say ""Swap [amount] [from] to [to]"" to get a quote",,,,,,,PASS
+shortcut_portfolio_info,chrome,NO,Portfolio,"📊 **Portfolio Overview**
+
+To view your portfolio, you need to sign up!
+
+**What You'll Get:**
+• Real-time portfolio tracking
+• 24h/7d performance metrics
+• Asset allocation breakdown
+• DeFi position monitoring
+• Transaction history
+
+👉 **Sign up now!** /signup
+
+💬 Or ask ""What is Bitcoin price?"" to explore",,,,,,,PASS
+shortcut_balance_info,chrome,NO,Balance,"💰 **Balance Check**
+
+To check your balance, sign up and connect your wallet!
+
+**Features:**
+• Multi-chain balance aggregation
+• Real-time USD valuations
+• Gas fee estimates
+• Token approvals tracking
+
+👉 **Get started!** /signup",,,,,,,PASS
+shortcut_rates_info,chrome,NO,Rates,"📈 **Current DeFi Rates**
+
+**Lending (Supply APY):**
+• Morpho USDC: 6.5% ⭐
+• Aave USDC: 5.2%
+• Compound USDC: 4.8%
+
+**Borrowing (Borrow APY):**
+• Aave USDC: 7.8%
+• Compound USDC: 6.5%
+
+**Staking:**
+• ETH Staking: 4.2%
+• Lido stETH: 4.0%
+
+💬 Say ""Lend USDC on Morpho"" to start earning!",,,,,,,PASS
+shortcut_price_info,chrome,NO,Price,"📈 **Current Prices**
+
+**Top Assets:**
+• Bitcoin (BTC): $95,041.53 🟢 +2.1%
+• Ethereum (ETH): $3,299.14 🟢 +1.8%
+• Solana (SOL): $142.35 🟢 +3.2%
+• Cardano (ADA): $0.52 🔴 -0.5%
+
+💬 Say ""What is [asset] price?"" for detailed analysis
+
+👉 **Hunter AI predictions available!**",,,,,,,PASS
+shortcut_gas_info,chrome,NO,Gas,"⛽ **Ethereum Gas Fees**
+
+**Current Gas Price:** 25 Gwei
+
+**Transaction Costs:**
+• Simple Transfer: ~$3.50
+• Token Swap: ~$12-15
+• NFT Mint: ~$25-30
+• Contract Deploy: ~$50-100
+
+**Gas Optimization:**
+• Use Layer 2 (Arbitrum, Optimism)
+• Transaction during off-peak hours (2-6 AM EST)
+• Batch transactions when possible
+
+**Status:** 🟢 Below average (good time to transact!)",,,,,,,PASS
+shortcut_help_info,chrome,NO,Help,"🤖 **Available Shortcuts**
+
+**Quick Commands:**
+• `Price` - Current crypto prices
+• `Swap` - Token swap info
+• `Lend` - Lending rates
+• `Rates` - DeFi rates overview
+• `Portfolio` - Your portfolio (auth required)
+• `Balance` - Wallet balance (auth required)
+• `Gas` - Current gas fees
+
+**Full Flows:**
+• `Swap ETH to USDC` - Complete swap
+• `Lend USDC on Aave` - Start lending
+• `Deposit USDC on Morpho` - Deposit to vault
+• `Buy Bitcoin` - Purchase BTC
+
+💬 Try any command above!",,,,,,,PASS
