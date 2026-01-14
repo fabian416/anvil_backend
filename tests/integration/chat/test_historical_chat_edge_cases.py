@@ -21,7 +21,6 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.historic
 class TestLargeConversationPagination:
     """Test handling of very large conversation histories."""
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_conversation_with_100_messages(self, client: AsyncClient):
         """Test creating and retrieving large conversation with 100+ messages."""
         # Create a conversation by sending first message
@@ -110,7 +109,6 @@ class TestLargeConversationPagination:
         assert data.get("conversation_id") == conversation_id
         assert "agent_message" in data
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_large_conversation_performance(self, client: AsyncClient):
         """Test performance with moderately large conversation."""
         # Create conversation
@@ -203,7 +201,6 @@ class TestEmptyConversationHandling:
 class TestDeletedMessageHandling:
     """Test handling of deleted or missing messages."""
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_retrieve_conversation_with_deleted_messages(self, client: AsyncClient):
         """Test conversation continues after theoretical message deletion."""
         # Create conversation with multiple messages
@@ -307,7 +304,6 @@ class TestConversationLimitTesting:
         # Verify all conversations were created successfully
         assert len(conversation_ids) >= 1
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_message_per_conversation_limit(self, client: AsyncClient):
         """Test adding many messages to single conversation."""
         # Create conversation
@@ -343,7 +339,6 @@ class TestConversationLimitTesting:
 class TestHistoryExportRetrieval:
     """Test retrieving full conversation history."""
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_export_full_conversation_history(self, client: AsyncClient):
         """Test retrieving complete conversation history."""
         # Create conversation with multiple messages

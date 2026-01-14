@@ -175,7 +175,6 @@ class TestMultiIntentQueries:
         # Should provide info on multiple tokens or acknowledge multiple queries
         assert len(agent_response) > 0
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_conflicting_intents(self, client: AsyncClient):
         """Test query with conflicting intents."""
         response = await client.post(
@@ -289,7 +288,6 @@ class TestTypoAndMisspellingHandling:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_misspelled_action_verb(self, client: AsyncClient):
         """Test query with misspelled action verb."""
         response = await client.post(
@@ -310,7 +308,6 @@ class TestTypoAndMisspellingHandling:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_multiple_typos_in_query(self, client: AsyncClient):
         """Test query with multiple typos."""
         response = await client.post(
@@ -332,7 +329,6 @@ class TestTypoAndMisspellingHandling:
         # Should provide price info or indicate understanding
         assert len(agent_response) > 0
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_completely_garbled_input(self, client: AsyncClient):
         """Test completely garbled/nonsense input."""
         response = await client.post(
@@ -358,7 +354,6 @@ class TestTypoAndMisspellingHandling:
 class TestConfidenceThresholdBehavior:
     """Test intent detection confidence scoring and thresholds."""
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_high_confidence_intent_executes(self, client: AsyncClient):
         """Test clear, unambiguous query gets processed immediately."""
         response = await client.post(
@@ -380,7 +375,6 @@ class TestConfidenceThresholdBehavior:
         # Should provide price information directly
         assert len(agent_response) > 0
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_low_confidence_asks_clarification(self, client: AsyncClient):
         """Test vague query results in clarification request."""
         response = await client.post(
@@ -402,7 +396,6 @@ class TestConfidenceThresholdBehavior:
         # Should ask what kind of help or provide general guidance
         assert len(agent_response) > 0
 
-    @pytest.mark.xfail(reason="Guest session not persisted across requests in tests - infrastructure limitation")
     async def test_medium_confidence_provides_suggestions(self, client: AsyncClient):
         """Test somewhat clear query gets helpful suggestions."""
         response = await client.post(
