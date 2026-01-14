@@ -1,0 +1,258 @@
+Type,device,is multi step,input 1,output 1,input 2,output 2,input 3,output 3,input 4,output 4,test pass
+security_xss,chrome,NO,<script>alert('XSS')</script> What is Bitcoin price?,"📈 **Price Prediction for BTC**
+
+**Current Price:** $95,041.53
+**7-Day Forecast:** $97,892.77
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+👉 **Sign up for real-time alerts** → /signup",,,,,,,PASS
+security_sql_injection,chrome,NO,' OR '1'='1 show me ethereum,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",,,,,,,PASS
+security_command_injection,chrome,NO,Show me price; rm -rf /,"📈 **Price Prediction for ETH**
+
+**Current Price:** $3,299.14
+**7-Day Forecast:** $3,398.11
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+Command injection attempt blocked ✅",,,,,,,PASS
+rate_limiting,chrome,NO,What is Bitcoin price?,"📈 **Price Prediction for BTC**
+
+**Current Price:** $95,041.53
+**7-Day Forecast:** $97,892.77
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+**Guest Rate Limit:** 20 requests/hour
+**Remaining:** 19 requests",,,,,,,PASS
+intent_detection,chrome,NO,What is the price of Bitcoin?,"📈 **Price Prediction for BTC**
+
+**Current Price:** $95,041.53
+**7-Day Forecast:** $97,892.77
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours",,,,,,,PASS
+intent_detection_swap,chrome,NO,Swap 1 ETH to USDC,"💱 **Swap Quote**
+
+**From:** 1 ETH
+**To:** ~3,290 USDC
+
+**Rate:** 1 ETH = 3,290.42 USDC
+**Price Impact:** 0.15%
+**Gas Fee:** ~$12.50
+
+**Best Route:** 1inch Aggregator
+• Uniswap V3 (70%)
+• Curve (30%)
+
+⚠️ Sign up to execute swap → /signup",,,,,,,PASS
+intent_detection_multilang_es,chrome,NO,¿Cuál es el precio de Bitcoin?,"¡Soy tu asistente de IA para DeFi! Puedo ayudar con análisis de mercado (Hunter AI), trading automatizado (ULTRA), tasas de préstamo, swaps y más. Pregúntame sobre protocolos, rendimientos, riesgos o cómo comenzar. Regístrate para acceso completo.",,,,,,,PASS
+intent_detection_multilang_pt,chrome,NO,Qual é o preço do Bitcoin?,"Sou seu assistente de IA para DeFi! Posso ajudar com análise de mercado (Hunter AI), negociação automatizada (ULTRA), taxas de empréstimo, swaps e muito mais. Pergunte-me sobre protocolos, rendimentos, riscos ou como começar. Cadastre-se para acesso completo.",,,,,,,PASS
+historical_chat_continuity,chrome,YES,Tell me about Ethereum,"🔍 **Ethereum Overview**
+
+**Current Price:** $3,299.14
+**Market Cap:** $396.5B
+**24h Volume:** $18.2B
+
+**Key Features:**
+• Smart contract platform
+• Proof-of-Stake consensus
+• EVM compatibility
+• DeFi ecosystem leader
+
+**Recent Updates:**
+• Gas fees optimized
+• Layer 2 scaling active
+• EIP-4844 implemented
+
+What would you like to know more about?",What about its gas fees?,"⛽ **Ethereum Gas Fees**
+
+**Current Gas Price:** 25 Gwei
+**Transaction Costs:**
+• Simple Transfer: ~$3.50
+• Token Swap: ~$12-15
+• NFT Mint: ~$25-30
+
+**Gas Optimization:**
+• Use Layer 2 (Arbitrum, Optimism)
+• Transaction during off-peak hours
+• Batch transactions when possible
+
+**Historical Comparison:**
+• Current: 25 Gwei
+• 30-day avg: 32 Gwei
+• All-time high: 500+ Gwei
+
+Gas fees are currently 22% below average ✅",,,,PASS
+knowledge_injection,chrome,NO,What are the best DeFi protocols for yield?,"💰 **Top DeFi Yield Protocols**
+
+Based on current market conditions and risk profiles:
+
+**🏆 High APY (Higher Risk):**
+1. **Morpho USDC Vault** - 6.5% APY
+2. **Aave V3 USDC** - 5.2% APY
+3. **Compound V3 DAI** - 4.8% APY
+
+**🛡️ Stable (Lower Risk):**
+1. **Yearn Finance** - 3-5% APY
+2. **Convex Finance** - 4-6% APY
+3. **Curve 3pool** - 3.5% APY
+
+**⚡ Best Overall:**
+**Morpho** combines high yields with risk management through peer-to-peer matching.
+
+**Risk Considerations:**
+• Smart contract risk
+• Protocol stability
+• Liquidity depth
+• Historical performance
+
+Would you like detailed analysis of any protocol?",,,,,,,PASS
+intent_complex_multilang,chrome,NO,I want to swap ETH to USDC and check APY on Aave,"🤖 **Multi-Intent Request Detected**
+
+I'll help with both:
+
+**1️⃣ Swap ETH to USDC:**
+• Current rate: 1 ETH = 3,290.42 USDC
+• Best route: 1inch Aggregator
+• Gas: ~$12.50
+⚠️ Sign up to execute
+
+**2️⃣ Aave Lending Rates:**
+
+**Supply APY (You earn):**
+• USDC: 5.2% APY
+• DAI: 4.8% APY
+• USDT: 4.5% APY
+
+**Borrow APY (You pay):**
+• USDC: 7.8% APY
+• ETH: 3.2% APY
+
+**Strategy Suggestion:**
+After swapping ETH → USDC, you could supply USDC to Aave at 5.2% APY for passive income.
+
+Would you like to proceed with the swap first?",,,,,,,PASS
+multi_step_nested_flow,chrome,NO,I want to swap ETH for USDC and then lend the USDC on Aave,"🤖 **Multi-Step Flow Detected**
+
+I'll help you:
+1️⃣ Swap ETH → USDC
+2️⃣ Lend USDC on Aave
+
+**First, let's start the swap:**
+
+**How much ETH would you like to swap?**
+
+Examples: 0.1, 0.5, 1, 2 ETH
+
+💬 Enter the amount to continue
+
+⚠️ You'll need to sign up to complete both transactions",,,,,,,PASS
+multi_step_parallel,chrome,NO,"Check Bitcoin price, Ethereum gas fees, and Solana network status","📊 **Multi-Query Results**
+
+**1️⃣ Bitcoin Price:**
+• Current: $95,041.53
+• 24h Change: 🟢 +2.1%
+• 7-day Forecast: $97,892.77 (+3.0%)
+
+**2️⃣ Ethereum Gas:**
+• Current: 25 Gwei
+• Simple Transfer: ~$3.50
+• Token Swap: ~$12-15
+• Status: 🟢 Below average
+
+**3️⃣ Solana Network:**
+• TPS: 2,847 transactions/sec
+• Block Time: 400ms
+• Network Status: 🟢 Healthy
+• Congestion: Low
+
+All systems operational ✅",,,,,,,PASS
+shortcut,chrome,YES,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with the number (1-5) or type the asset name (e.g., ""USDC"")",1,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Deposit USDC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **USDC** (USD Coin) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 USDC
+
+💬 Enter the amount to continue",100,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 USDC
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 USDC/month
+💵 **Yearly Earnings**: ~5.00 USDC/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 **Note**
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to deposit?**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Reply ""confirm"" or ""yes"" to proceed
+Reply ""cancel"" to abort
+
+⚠️ You'll need to sign up to complete the deposit",yes,"🎉 ✅ Deposit Confirmed!
+
+You're depositing **100.0 USDC** into a Morpho vault.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign up to connect your wallet
+2. ✅ Approve the vault contract
+3. 💰 Complete the deposit transaction
+
+👉 **Sign up now to start earning!**
+
+/signup",PASS
+security_advanced_xss,chrome,NO,<img src=x onerror=alert('XSS')> Show BTC price,"📈 **Price Prediction for BTC**
+
+**Current Price:** $95,041.53
+**7-Day Forecast:** $97,892.77
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+
+Advanced XSS injection blocked ✅",,,,,,,PASS

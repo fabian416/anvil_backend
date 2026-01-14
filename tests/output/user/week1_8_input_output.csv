@@ -1,0 +1,84 @@
+Type,device,is multi step,input 1,output 1,input 2,output 2,input 3,output 3,input 4,output 4,test pass
+shorcut,chrome,YES,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 Earn Yield on Your Crypto
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+Select an asset to continue:
+
+1. 💵 USDC (USD Coin) - ~8.5% APY
+
+2. 💵 USDT (Tether) - ~7.8% APY
+
+3. 💰 DAI (Dai) - ~9.2% APY
+
+4. Ξ ETH (Ethereum) - ~5.4% APY
+
+5. ₿ WBTC (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with the number (1-5) or type the asset name (e.g., ""USDC"")",1,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💵 Deposit USDC
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing USDC (USD Coin) into a Morpho vault.
+
+How much would you like to deposit?
+
+Examples: 100, 1000, 5000 USDC
+
+💬 Enter the amount to continue",100,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💵 Morpho Vault Quote
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Best Vault (Real-Time APY)
+
+📊 Deposit Amount: 100.0 USDC
+
+📈 Current APY: 5.00%
+
+💰 Monthly Earnings: ~0.42 USDC/month
+
+💵 Yearly Earnings: ~5.00 USDC/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready to deposit?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Reply ""confirm"" or ""yes"" to proceed
+
+Reply ""cancel"" to abort
+
+⚠️ You'll need to sign up to complete the deposit",yes,"🎉 ✅ Deposit Confirmed!
+
+You're depositing 100.0 USDC into a Morpho vault.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Next Steps
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign up to connect your wallet
+
+2. ✅ Approve the vault contract
+
+3. 💰 Complete the deposit transaction
+
+👉 Sign up now to start earning!
+
+/signup",PASS
