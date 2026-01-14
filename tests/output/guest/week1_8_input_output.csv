@@ -1486,3 +1486,100 @@ Swapping Ξ **ETH** → 💵 **USDC**
 
 💱 **Exchange Rate:** N/A
 ⚡ *",,,,,PASS
+security_multistep_sql_step1_or_injection,chrome,YES,' OR '1'='1 Deposit USDC on Morpho,"🌙 **MoonPay Swap**
+
+Quick crypto-to-crypto swap with competitive rates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Available Swap Pairs:**
+BTC, ETH, SOL, USDC
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",1,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",100,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",,,FAIL
+security_multistep_sql_step2_union_injection,chrome,YES,Lend USDC on Aave,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",1' UNION SELECT * FROM users--,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",100,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",,,PASS
+security_multistep_sql_step3_drop_injection,chrome,YES,Swap ETH to USDC,"🎯 **Almost There!**
+
+Swapping Ξ **ETH** → 💵 **USDC**
+
+**Step 3 of 4:** How much ETH would you like to swap?
+
+💡 *Just enter a number, like:*
+• `1` (one ETH)
+• `0.5` (half a ETH)
+• `100` (one hundred ET",1'; DROP TABLE conversations--,"🌙 **Your MoonPay Swap Quote**
+
+**Step 4 of 4:** Review and confirm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📤 **You Send:** 1 ETH Ξ
+📥 **You Receive:** ~N/A USDC 💵
+
+💱 **Exchange Rate:** N/A
+⚡ *",,,,,PASS
+security_multistep_sql_step4_comment_injection,chrome,YES,Deposit USDC on Morpho,"🌙 **MoonPay Swap**
+
+Quick crypto-to-crypto swap with competitive rates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Available Swap Pairs:**
+BTC, ETH, SOL, USDC
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",1,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",100,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",yes'--,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",PASS
+security_multistep_sql_deposit_with_cancel,chrome,YES,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like",1' OR '1'='1,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vau",cancel,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",,,PASS
+security_multistep_sql_lend_with_topic_change,chrome,YES,Lend USDC on Aave,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",100' UNION SELECT password FROM users--,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",What is Bitcoin price?,"📈 **Price Prediction for BTC**
+
+**Current Price:** $97,298.89
+**7-Day Forecast:** $100,217.86
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horiz",,,PASS
+security_multistep_sql_in_amount_field,chrome,YES,Buy Bitcoin,"🔐 **Account Required**
+
+To buy crypto with fiat, you need to create an account and complete verification.
+
+Sign up to:
+• Buy crypto with card or bank transfer
+• Access multiple on-ramp providers
+• Get",100'; DELETE FROM chat_conversations WHERE '1'='1'--,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",,,,,PASS
+security_multistep_sql_admin_bypass_attempt,chrome,YES,Swap ETH to USDC,"🎯 **Almost There!**
+
+Swapping Ξ **ETH** → 💵 **USDC**
+
+**Step 3 of 4:** How much ETH would you like to swap?
+
+💡 *Just enter a number, like:*
+• `1` (one ETH)
+• `0.5` (half a ETH)
+• `100` (one hundred ET",admin'--,"❌ Hmm, that doesn't look like a valid amount. Let's try again!
+
+Swapping Ξ **ETH** → 💵 **USDC**
+
+**Step 3 of 4:** How much ETH would you like to swap?
+
+💡 *Just enter a number, like:*
+• `1` (one ETH)
+•",What is gas price?,"❌ Hmm, that doesn't look like a valid amount. Let's try again!
+
+Swapping Ξ **ETH** → 💵 **USDC**
+
+**Step 3 of 4:** How much ETH would you like to swap?
+
+💡 *Just enter a number, like:*
+• `1` (one ETH)
+•",,,PASS

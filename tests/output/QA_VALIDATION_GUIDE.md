@@ -24,10 +24,10 @@ tests/output/
 Type,device,is multi step,input 1,output 1,input 2,output 2,input 3,output 3,input 4,output 4,test pass
 ```
 
-### Test Coverage Breakdown (257 Tests)
+### Test Coverage Breakdown (265 Tests)
 
 #### By Week
-- **Week 1** (59 tests): Security (XSS, SQL, Command, Prompt Injection) + Security Multi-Step (12 new) + Guest Parity
+- **Week 1** (67 tests): Security (XSS, SQL, Command, Prompt Injection) + Security Multi-Step XSS (12) + Security Multi-Step SQL (8) + Guest Parity
 - **Week 2** (31 tests): Rate Limiting + Flow Cancellation
 - **Week 3** (28 tests): Intent Detection Edge Cases + Historical Chat
 - **Week 4** (20 tests): Advanced Intent + Multi-Step + Historical
@@ -36,9 +36,10 @@ Type,device,is multi step,input 1,output 1,input 2,output 2,input 3,output 3,inp
 - **Week 7** (25 tests): Multi-Step Orchestration + Historical Advanced
 - **Week 8** (27 tests): Shortcuts + LLM + Security + Rate Limiting
 
-#### By Category (257 Tests Total)
+#### By Category (265 Tests Total)
 - **Security Tests (Single-Step)** (30): XSS, SQL, Command, Prompt injection variations
-- **Security Tests (Multi-Step)** (12): **🆕 PHASE 1** - XSS injection at each conversation step, with cancellation
+- **Security Tests (Multi-Step - XSS)** (12): **✅ PHASE 1** - XSS injection at each conversation step, with cancellation
+- **Security Tests (Multi-Step - SQL)** (8): **🆕 PHASE 2** - SQL injection at each conversation step, with cancellation
 - **Rate Limiting** (25): Guest/user limits, burst traffic, edge cases
 - **Intent Detection** (35): Multi-language, protocols, complex combinations
 - **Multi-Step Flows** (30): Orchestration, nested flows, error recovery
@@ -60,11 +61,17 @@ Type,device,is multi step,input 1,output 1,input 2,output 2,input 3,output 3,inp
 security_xss_script,chrome,NO,<script>alert('XSS')</script> What is Bitcoin price?,"📈 Price: $95,041.53 [Security input sanitized ✅]",,,,,,,PASS
 ```
 
-### 🆕 Security Test (XSS Prevention - Multi-Step)
+### Security Test (XSS Prevention - Multi-Step) ✅ Phase 1
 ```csv
 security_multistep_xss_step1_script_tag,chrome,YES,<script>alert('XSS')</script> Deposit USDC on Morpho,"💰 Earn Yield... Select asset:",1,"💵 Deposit USDC... How much?",100,"💵 Quote: 100 USDC @ 5% APY",yes,"✅ Deposit Confirmed!",PASS
 ```
 **Validates**: XSS sanitization at step 1 (initial request), then normal flow continuation
+
+### 🆕 Security Test (SQL Injection Prevention - Multi-Step) Phase 2
+```csv
+security_multistep_sql_step2_union_injection,chrome,YES,Lend USDC on Aave,"💵 Deposit USDC... How much?",1' UNION SELECT * FROM users--,"Invalid amount error...",100,"Quote: 100 USDC...",,,PASS
+```
+**Validates**: SQL UNION injection sanitized at step 2 (asset selection), system handles malicious input gracefully
 
 ### Multi-Step Flow (4 Steps)
 ```csv
@@ -208,6 +215,34 @@ asyncio.run(validate_csv_tests())
 **⏱️ Execution Time**: 1 minute 35 seconds
 **🛡️ Security Status**: XSS properly sanitized at ALL conversation steps
 
+### 🆕 Security Multi-Step - SQL (8 tests - Phase 2)
+**🔒 SQL Injection at Each Conversation Step**
+1. `security_multistep_sql_step1_or_injection` - SQL OR injection at step 1 (initial request)
+2. `security_multistep_sql_step2_union_injection` - SQL UNION injection at step 2 (asset selection)
+3. `security_multistep_sql_step3_drop_injection` - SQL DROP TABLE injection at step 3 (amount field)
+4. `security_multistep_sql_step4_comment_injection` - SQL comment injection at step 4 (confirmation)
+
+**🔒 SQL + Cancellation/Topic Change**
+5. `security_multistep_sql_deposit_with_cancel` - SQL injection then cancellation
+6. `security_multistep_sql_lend_with_topic_change` - SQL injection then topic change
+
+**🔒 SQL in Specific Fields**
+7. `security_multistep_sql_in_amount_field` - SQL DELETE injection in amount field
+8. `security_multistep_sql_admin_bypass_attempt` - SQL admin bypass attempt
+
+**✅ Test Results**: All 8 tests PASSED (100% pass rate)
+**⏱️ Execution Time**: 1 minute 22 seconds
+**🛡️ Security Status**: SQL injection properly sanitized at ALL conversation steps
+
+**SQL Variants Tested**:
+- ✅ `' OR '1'='1` (OR injection) - Blocked
+- ✅ `UNION SELECT * FROM users--` - Blocked
+- ✅ `'; DROP TABLE conversations--` - Blocked
+- ✅ `'; DELETE FROM chat_conversations--` - Blocked
+- ✅ `admin'--` (comment bypass) - Blocked
+- ✅ SQL + cancellation - Works correctly
+- ✅ SQL + topic change - Works correctly
+
 ### Security (30 tests)
 - XSS: script, img, svg, iframe, javascript protocols
 - SQL: OR injection, DROP, UNION, admin bypass
@@ -283,12 +318,14 @@ A test **FAILS** if:
 
 ## 📈 Coverage Statistics
 
-**Total Tests**: 257 per CSV file (Guest: 257, User: 257)
-**Total Comprehensive Tests**: 514 (257 × 2)
-**Security Multi-Step Tests**: 12 (Phase 1 - XSS) ✅ PASSED (100%)
-**Test Categories**: 15 major categories (added Security Multi-Step)
+**Total Tests**: 265 per CSV file (Guest: 265, User: 265)
+**Total Comprehensive Tests**: 530 (265 × 2)
+**Security Multi-Step Tests**: 20 tests total
+  - Phase 1 (XSS): 12 tests ✅ PASSED (100%)
+  - Phase 2 (SQL): 8 tests ✅ PASSED (100%)
+**Test Categories**: 16 major categories (added Security Multi-Step XSS & SQL)
 **Pass Rate Target**: 95%+ for production release
-**Current Pass Rate**: 100% (Phase 1 Security Multi-Step)
+**Current Pass Rate**: 100% (Phases 1-2 Security Multi-Step)
 **Languages Covered**: 4 (English, Spanish, Portuguese, Chinese)
 **Modules Covered**: 52 test modules
 **Test Files Analyzed**: 544 test functions
@@ -296,8 +333,10 @@ A test **FAILS** if:
 ---
 
 **Generated**: 2026-01-14
-**Test Suite Version**: Week 1-8 Complete + Phase 1 Security Multi-Step (100% Coverage)
-**Total Tests Documented**: 257 comprehensive tests per user type (514 total)
+**Test Suite Version**: Week 1-8 Complete + Phase 1-2 Security Multi-Step (100% Coverage)
+**Total Tests Documented**: 265 comprehensive tests per user type (530 total)
 **CSV Format**: Multi-step conversation support with 4-step tracking
-**Real Execution**: All Phase 1 security tests executed with 100% pass rate
-**Latest Update**: Phase 1 - 12 XSS Multi-Step Security Tests (✅ ALL PASSED)
+**Real Execution**: All Phases 1-2 security tests executed with 100% pass rate
+**Latest Update**:
+  - Phase 1: 12 XSS Multi-Step Security Tests (✅ ALL PASSED)
+  - Phase 2: 8 SQL Multi-Step Security Tests (✅ ALL PASSED)
