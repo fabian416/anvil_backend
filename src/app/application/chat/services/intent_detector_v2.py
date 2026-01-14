@@ -497,7 +497,7 @@ class IntentDetectorV2:
                     extra={
                         "pending_intent": context.pending_intent,
                         "reason": reason,
-                        "message": message[:100],
+                        "user_message": message[:100],
                     },
                 )
                 self.state_manager.clear_flow_state(context)
