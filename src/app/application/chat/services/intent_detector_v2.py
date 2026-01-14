@@ -966,6 +966,20 @@ class IntentDetectorV2:
         swap_keywords = ["swap", "cambiar", "intercambiar", "exchange", "trocar"]
 
         if any(kw in context_text for kw in swap_keywords):
+            # ⚠️ IMPORTANT: Check for off-topic intent keywords FIRST
+            # If user is asking for information (not continuing swap), don't treat as swap
+            off_topic_keywords = [
+                "price", "precio", "preço", "价格",
+                "what is", "qué es", "o que é", "什么是",
+                "tell me", "cuéntame", "me fale", "告诉我",
+                "explain", "explica", "explicar", "解释",
+                "how does", "cómo funciona", "como funciona", "如何",
+            ]
+
+            # If message contains off-topic keywords, it's NOT a swap continuation
+            if any(keyword in message for keyword in off_topic_keywords):
+                return None  # Let it be detected as fresh intent (price prediction, etc.)
+
             # Check if message is a token or amount
             tokens = ["eth", "usdc", "usdt", "dai", "wbtc", "weth", "btc", "sol", "matic", "arb", "op"]
 
