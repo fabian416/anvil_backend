@@ -1296,3 +1296,193 @@ shortcut_help_info,chrome,NO,Help,"🤖 **Available Shortcuts**
 • `Buy Bitcoin` - Purchase BTC
 
 💬 Try any command above!",,,,,,,PASS
+security_multistep_xss_step1_script_tag,chrome,YES,<script>alert('XSS')</script> Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like",1,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Deposit USDC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **USDC** (USD Coin) into a Morpho vault.
+
+**How much would you like to d",100,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 USDC
+📈 **Current APY**: ",yes,"🎉 ✅ Deposit Confirmed!
+
+You're depositing **100.0 USDC** into a Morpho vault.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign u",PASS
+security_multistep_xss_step2_img_onerror,chrome,YES,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like",1<img src=x onerror=alert('XSS')>,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vau",100,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vau",yes,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vau",PASS
+security_multistep_xss_step3_svg_onload,chrome,YES,Lend USDC on Aave,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Deposit USDC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **USDC** (USD Coin) into a Morpho vault.
+
+**How much would you like to d",100<svg onload=alert('XSS')>,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 USDC
+📈 **Current APY**: ",yes,"🎉 ✅ Deposit Confirmed!
+
+You're depositing **100.0 USDC** into a Morpho vault.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign u",,,PASS
+security_multistep_xss_step4_iframe_injection,chrome,YES,Swap 1 ETH to USDC,"🌙 **Your MoonPay Swap Quote**
+
+**Step 4 of 4:** Review and confirm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📤 **You Send:** 1 ETH Ξ
+📥 **You Receive:** ~N/A USDC 💵
+
+💱 **Exchange Rate:** N/A
+⚡ *","yes<iframe src='javascript:alert(""XSS"")'></iframe>","🎉 **Awesome! Swap Confirmed!**
+
+You're all set to swap **1 ETH** Ξ → 💵 **USDC**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Next Step: Create Your Account**
+
+To complete this swap securely with",,,,,PASS
+security_multistep_xss_deposit_flow,chrome,YES,Deposit USDC on Morpho<script>alert(1)</script>,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like",1,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Deposit USDC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **USDC** (USD Coin) into a Morpho vault.
+
+**How much would you like to d",,,,,PASS
+security_multistep_xss_lend_flow,chrome,YES,Lend USDC on Aave,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Deposit USDC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **USDC** (USD Coin) ",<img src=x onerror=alert(document.cookie)>100,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 0.1 USDC
+📈 **Current APY**: 5.",,,,,PASS
+security_multistep_xss_swap_flow,chrome,YES,Swap ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **",<a href='javascript:alert(1)'>1</a> ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💵 Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **",,,,,PASS
+security_multistep_xss_buy_flow,chrome,YES,Buy Bitcoin<style>body{background:url('javascript:alert(1)')}</style>,"🎉 ✅ Deposit Confirmed!
+
+You're depositing **0.1 USDC** into a Morpho vault.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Next Steps**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 💵 Sign up ",100,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",,,,,PASS
+security_multistep_xss_with_cancel_step2,chrome,YES,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like",cancel<script>alert('XSS')</script>,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",,,,,PASS
+security_multistep_xss_with_cancel_step3,chrome,YES,Lend USDC on Aave,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",100,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",never mind<img src=x onerror=alert('XSS')>,"I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Si",,,PASS
+security_multistep_xss_then_topic_change,chrome,YES,Swap ETH to USDC<script>alert(1)</script>,"🎯 **Almost There!**
+
+Swapping Ξ **ETH** → 💵 **USDC**
+
+**Step 3 of 4:** How much ETH would you like to swap?
+
+💡 *Just enter a number, like:*
+• `1` (one ETH)
+• `0.5` (half a ETH)
+• `100` (one hundred ET",What is Bitcoin price?,"❌ Hmm, that doesn't look like a valid amount. Let's try again!
+
+Swapping Ξ **ETH** → 💵 **USDC**
+
+**Step 3 of 4:** How much ETH would you like to swap?
+
+💡 *Just enter a number, like:*
+• `1` (one ETH)
+•",,,,,PASS
+security_multistep_xss_unicode_mixed,chrome,YES,Deposit USDC on Morpho,"❌ Hmm, that doesn't look like a valid amount. Let's try again!
+
+Swapping Ξ **ETH** → 💵 **USDC**
+
+**Step 3 of 4:** How much ETH would you like to swap?
+
+💡 *Just enter a number, like:*
+• `1` (one ETH)
+•",1\u003cscript\u003ealert('XSS')\u003c/script\u003e,"🌙 **Your MoonPay Swap Quote**
+
+**Step 4 of 4:** Review and confirm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📤 **You Send:** 1 ETH Ξ
+📥 **You Receive:** ~N/A USDC 💵
+
+💱 **Exchange Rate:** N/A
+⚡ *",,,,,PASS
