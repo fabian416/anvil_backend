@@ -11,11 +11,8 @@ Tests complete flow for:
 import pytest
 from httpx import AsyncClient
 from fastapi import status
-from app.main import app
-from app.domain.user.entities import User
-from app.domain.chat.value_objects import ChatConversation
-from tests.fixtures.user_fixtures import test_user, test_session
-from tests.fixtures.chat_fixtures import test_conversation
+from app.domain.entities.user import User
+from app.domain.chat.entities.chat_conversation import ChatConversation
 
 
 pytestmark = pytest.mark.asyncio
