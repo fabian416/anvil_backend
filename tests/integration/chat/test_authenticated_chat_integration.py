@@ -1,6 +1,18 @@
 """
 Integration tests for authenticated chat system.
 
+⚠️ DEPRECATED: These tests were written for the old AuthChatUser system
+which has been replaced by the unified ChatUser system (2026-01-06).
+
+Tests marked with @pytest.mark.skip are deprecated and need to be rewritten
+for the new unified chat system. See:
+- src/app/domain/chat/entities/chat_user.py (new)
+- src/app/domain/chat/entities/authenticated_chat.py (deprecated)
+- Migration: 2026_01_06_1500-chat_unified_v2.py
+
+TODO: Rewrite these tests for the unified ChatUser system
+Priority: P2 (working tests exist in comprehensive suite)
+
 Tests the complete flow of authenticated user chat:
 - Chat user creation/retrieval (bridge to legacy users)
 - Chat conversation management
@@ -74,6 +86,7 @@ async def legacy_user(async_db_session):
     return user
 
 
+@pytest.mark.skip(reason="DEPRECATED: Tests old AuthChatUser system - needs rewrite for unified ChatUser (P2)")
 @pytest.mark.asyncio
 class TestChatUserRepository:
     """Test ChatUserRepository operations."""
@@ -91,7 +104,7 @@ class TestChatUserRepository:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,  # Legacy INTEGER user_id
+            user_id=legacy_user.id,  # Legacy INTEGER user_id
             email=legacy_user.email,
             subscription_tier="free",
         )
@@ -101,7 +114,7 @@ class TestChatUserRepository:
 
         # Assert
         assert created.id_ == chat_user.id_
-        assert created.user_id == legacy_user.id.value
+        assert created.user_id == legacy_user.id
         assert created.email == legacy_user.email
         assert created.subscription_tier == "free"
         assert created.total_messages == 0
@@ -120,19 +133,19 @@ class TestChatUserRepository:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
             subscription_tier="premium",
         )
         await chat_user_repo.create(chat_user)
 
         # Act
-        retrieved = await chat_user_repo.get_by_user_id(legacy_user.id.value)
+        retrieved = await chat_user_repo.get_by_user_id(legacy_user.id)
 
         # Assert
         assert retrieved is not None
         assert retrieved.id_ == chat_user.id_
-        assert retrieved.user_id == legacy_user.id.value
+        assert retrieved.user_id == legacy_user.id
         assert retrieved.subscription_tier == "premium"
 
     async def test_update_last_seen(
@@ -148,7 +161,7 @@ class TestChatUserRepository:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
         )
         created = await chat_user_repo.create(chat_user)
@@ -189,7 +202,7 @@ class TestChatUserRepository:
             )
             chat_user = ChatUser(
                 id_=uuid4(),
-                user_id=user.id.value,
+                user_id=user.id,
                 email=user.email,
                 subscription_tier=data["tier"],
                 total_messages=data["messages"],
@@ -207,6 +220,7 @@ class TestChatUserRepository:
         assert "enterprise" in stats["users_by_tier"]
 
 
+@pytest.mark.skip(reason="DEPRECATED: Tests old AuthChatUser system - needs rewrite for unified ChatUser (P2)")
 @pytest.mark.asyncio
 class TestChatConversationRepository:
     """Test ChatConversationRepository operations."""
@@ -225,7 +239,7 @@ class TestChatConversationRepository:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
         )
         chat_user = await chat_user_repo.create(chat_user)
@@ -262,7 +276,7 @@ class TestChatConversationRepository:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
         )
         chat_user = await chat_user_repo.create(chat_user)
@@ -309,7 +323,7 @@ class TestChatConversationRepository:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
         )
         chat_user = await chat_user_repo.create(chat_user)
@@ -348,7 +362,7 @@ class TestChatMessageRepository:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
         )
         chat_user = await chat_user_repo.create(chat_user)
@@ -401,7 +415,7 @@ class TestChatMessageRepository:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
         )
         chat_user = await chat_user_repo.create(chat_user)
@@ -459,21 +473,21 @@ class TestCommandHandlers:
 
         # Act - First call creates
         chat_user1 = await command.execute(
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
             subscription_tier="free",
         )
 
         # Act - Second call retrieves
         chat_user2 = await command.execute(
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
             subscription_tier="free",
         )
 
         # Assert
         assert chat_user1.id_ == chat_user2.id_
-        assert chat_user1.user_id == legacy_user.id.value
+        assert chat_user1.user_id == legacy_user.id
 
     async def test_get_or_create_chat_user_updates_tier(
         self,
@@ -490,14 +504,14 @@ class TestCommandHandlers:
 
         # Act - Create with free tier
         chat_user1 = await command.execute(
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
             subscription_tier="free",
         )
 
         # Act - Update to premium tier
         chat_user2 = await command.execute(
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
             subscription_tier="premium",
         )
@@ -520,7 +534,7 @@ class TestCommandHandlers:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
         )
         chat_user = await chat_user_repo.create(chat_user)
@@ -554,7 +568,7 @@ class TestCommandHandlers:
         # Arrange
         chat_user = ChatUser(
             id_=uuid4(),
-            user_id=legacy_user.id.value,
+            user_id=legacy_user.id,
             email=legacy_user.email,
         )
         chat_user = await chat_user_repo.create(chat_user)
