@@ -67,7 +67,7 @@ class TestInterruptionFlows:
         )
         assert response1.status_code == 200
         data1 = response1.json()
-        assert "swap" in data1.get("message", "").lower() or "quote" in data1.get("message", "").lower()
+        assert "swap" in data1.get("agent_message", {}).get("content", "").lower() or "quote" in data1.get("agent_message", {}).get("content", "").lower()
 
         # Step 2: Interrupt with unrelated question
         response2 = await client.post(
@@ -81,7 +81,7 @@ class TestInterruptionFlows:
         assert response2.status_code == 200
         data2 = response2.json()
         # Should answer the question about Bitcoin
-        assert "bitcoin" in data2.get("message", "").lower() or "btc" in data2.get("message", "").lower()
+        assert "bitcoin" in data2.get("agent_message", {}).get("content", "").lower() or "btc" in data2.get("agent_message", {}).get("content", "").lower()
 
         # Step 3: Resume swap flow (continue or cancel)
         response3 = await client.post(
@@ -122,7 +122,7 @@ class TestInterruptionFlows:
         assert response1.status_code == 200
         data1 = response1.json()
         # Should start lending flow
-        assert any(keyword in data1.get("message", "").lower() for keyword in ["deposit", "vault", "yield", "lend"])
+        assert any(keyword in data1.get("agent_message", {}).get("content", "").lower() for keyword in ["deposit", "vault", "yield", "lend"])
 
         # Step 2: Interrupt with price check
         response2 = await client.post(
@@ -136,7 +136,7 @@ class TestInterruptionFlows:
         assert response2.status_code == 200
         data2 = response2.json()
         # Should provide ETH price
-        assert any(keyword in data2.get("message", "").lower() for keyword in ["eth", "ethereum", "price"])
+        assert any(keyword in data2.get("agent_message", {}).get("content", "").lower() for keyword in ["eth", "ethereum", "price"])
 
         # Step 3: Try to resume lending flow
         response3 = await client.post(
@@ -178,7 +178,7 @@ class TestInterruptionFlows:
             headers={"X-Forwarded-For": "1.2.3.6"},
         )
         assert response2.status_code == 200
-        assert "defi" in response2.json().get("message", "").lower()
+        assert "defi" in response2.json().get("agent_message", {}).get("content", "").lower()
 
         # Interruption 2: Price check
         response3 = await client.post(
@@ -226,7 +226,7 @@ class TestInterruptionFlows:
         assert response2.status_code == 200
         data2 = response2.json()
         # Should provide risk signals
-        assert any(keyword in data2.get("message", "").lower() for keyword in ["risk", "signal", "eth", "ethereum"])
+        assert any(keyword in data2.get("agent_message", {}).get("content", "").lower() for keyword in ["risk", "signal", "eth", "ethereum"])
 
         # Original swap flow should be cancelled or pausable
         response3 = await client.post(
@@ -339,7 +339,7 @@ class TestInterruptionFlows:
         )
         assert response1.status_code == 200
         data1 = response1.json()
-        assert "swap" in data1.get("message", "").lower() or "quote" in data1.get("message", "").lower()
+        assert "swap" in data1.get("agent_message", {}).get("content", "").lower() or "quote" in data1.get("agent_message", {}).get("content", "").lower()
 
         # Step 2: Interrupt with balance check
         response2 = await client.post(
@@ -350,7 +350,7 @@ class TestInterruptionFlows:
         assert response2.status_code == 200
         data2 = response2.json()
         # Should provide balance info
-        assert any(keyword in data2.get("message", "").lower() for keyword in ["usdc", "balance"])
+        assert any(keyword in data2.get("agent_message", {}).get("content", "").lower() for keyword in ["usdc", "balance"])
 
         # Step 3: Resume swap
         response3 = await client.post(
@@ -408,7 +408,7 @@ class TestInterruptionFlows:
             data = response.json()
 
             # Verify response contains expected keywords
-            response_text = data.get("message", "").lower()
+            response_text = data.get("agent_message", {}).get("content", "").lower()
             keywords = expected_keywords.split("|")
             assert any(keyword in response_text for keyword in keywords), \
                 f"Message {idx}: Expected one of {keywords} in response"
