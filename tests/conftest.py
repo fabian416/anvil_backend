@@ -40,6 +40,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "chat: Chat/conversation tests")
     config.addinivalue_line("markers", "subscription: Subscription tests")
     config.addinivalue_line("markers", "defi: DeFi protocol tests")
+    config.addinivalue_line("markers", "llm_validation: Tests with optional LLM semantic validation")
 
 
 @pytest.fixture(scope="session")

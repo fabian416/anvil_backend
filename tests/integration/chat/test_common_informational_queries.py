@@ -75,14 +75,18 @@ class TestCommonQueriesGuest:
             f"Should mention relevant crypto/defi topics: {content[:200]}"
 
     @pytest.mark.asyncio
-    async def test_guest_bitcoin_price(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_guest_bitcoin_price(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What is the price of Bitcoin?
         Expected: Returns current Bitcoin price.
+
+        LLM Validation: Semantic validation of price information accuracy and relevance.
         """
+        user_input = "What is the price of Bitcoin?"
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What is the price of Bitcoin?", "language": "en"}
+            json={"content": user_input, "language": "en"}
         )
 
         assert response.status_code in [200, 201]
@@ -93,15 +97,38 @@ class TestCommonQueriesGuest:
         assert any(word in content.lower() for word in ["price", "$", "usd", "btc"]), \
             f"Should show price information: {content[:200]}"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_bitcoin_price",
+                user_input=user_input,
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate Bitcoin price information in a clear, "
+                    "user-friendly format. Response must reference Bitcoin (not other cryptocurrencies) "
+                    "and include current price data with USD denomination."
+                ),
+                additional_context={"test_category": "price_query", "token": "BTC"}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     @pytest.mark.asyncio
-    async def test_guest_ethereum_price(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_guest_ethereum_price(self, client: AsyncClient, llm_validator):
         """
         Guest Query: How much is Ethereum?
         Expected: Returns current Ethereum price.
+
+        LLM Validation: Semantic validation of Ethereum price information accuracy.
         """
+        user_input = "How much is Ethereum?"
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "How much is Ethereum?", "language": "en"}
+            json={"content": user_input, "language": "en"}
         )
 
         assert response.status_code in [200, 201]
@@ -112,6 +139,25 @@ class TestCommonQueriesGuest:
         # Accept price info or general crypto/defi assistance response
         assert any(word in content.lower() for word in ["price", "$", "usd", "eth", "ethereum", "crypto", "defi", "assist"]), \
             f"Should mention relevant crypto topics: {content[:200]}"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_ethereum_price",
+                user_input=user_input,
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate Ethereum price information in a clear format. "
+                    "Response must reference Ethereum/ETH (not other cryptocurrencies) and include "
+                    "current price data. May also mention Ethereum's role in DeFi/smart contracts."
+                ),
+                additional_context={"test_category": "price_query", "token": "ETH"}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
 
     @pytest.mark.asyncio
     async def test_guest_eth_price_shorthand(self, client: AsyncClient):

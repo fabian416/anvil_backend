@@ -32,14 +32,17 @@ class TestMultiIntentEndToEnd:
         return MultiIntentResponseFormatter()
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_multi_token_price_query_end_to_end(
-        self, detector, orchestrator, formatter
+        self, detector, orchestrator, formatter, llm_validator
     ):
         """
         Test: "show btc eth ada prices"
 
         This was the FAILING CSV test case with 0.00 confidence.
         Now it should detect 3 separate PRICE intents.
+
+        LLM Validation: Semantic validation of multi-token response formatting and completeness.
         """
         message = "show btc eth ada prices"
         language = "en"
@@ -96,6 +99,31 @@ class TestMultiIntentEndToEnd:
         print(f"   Message: {message}")
         print(f"   Intents detected: {len(multi_intent.intents)}")
         print(f"   Response: {formatted.message[:100]}...")
+
+        # Optional LLM validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_token_price_query_end_to_end",
+                user_input=message,
+                agent_output=formatted.message,
+                expected_behavior=(
+                    "Response must clearly present price information for ALL THREE tokens "
+                    "(BTC, ETH, ADA) in an organized format. Each token should be identifiable "
+                    "with its price. Response should not omit any requested tokens or provide "
+                    "information about different tokens."
+                ),
+                additional_context={
+                    "test_category": "multi_intent",
+                    "orchestration": "parallel",
+                    "tokens_requested": ["BTC", "ETH", "ADA"],
+                    "intents_detected": len(multi_intent.intents)
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
 
     @pytest.mark.asyncio
     async def test_swap_and_balance_sequential_end_to_end(

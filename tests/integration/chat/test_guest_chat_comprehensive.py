@@ -19,7 +19,8 @@ class TestGuestChatMultiStepFlows:
     """Test all multi-step conversational flows for guests."""
 
     @pytest.mark.asyncio
-    async def test_lending_flow_complete_usdc(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_lending_flow_complete_usdc(self, client: AsyncClient, llm_validator):
         """
         Test complete LENDING flow: Asset → Amount → Quote → Confirm.
 
@@ -28,11 +29,16 @@ class TestGuestChatMultiStepFlows:
         - State preservation (pending_action, lending_info)
         - Response quality (emojis, CTAs, clear messaging)
         - Registration requirement
+
+        LLM Validation: Context consistency and conversational flow quality across 4-step lending process.
         """
+        # Track conversation steps for LLM validation
+        conversation_steps = []
         # Step 1: Initiate lending
+        step1_input = "Deposit USDC on Morpho"
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Deposit USDC on Morpho", "language": "en"}
+            json={"content": step1_input, "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -44,11 +50,13 @@ class TestGuestChatMultiStepFlows:
         assert "USDC" in content or "asset" in content.lower()
         assert data["enrichment"]["lending_flow"] == "step1_asset"
         assert data["registration_required"]["required"] is True
+        conversation_steps.append({"user": step1_input, "agent": content, "step": "initiate"})
 
         # Step 2: Select USDC (by name)
+        step2_input = "USDC"
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "USDC", "language": "en"}
+            json={"content": step2_input, "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -59,11 +67,13 @@ class TestGuestChatMultiStepFlows:
         assert "amount" in content.lower() or "how much" in content.lower()
         assert data["enrichment"]["lending_flow"] == "step2_amount"
         assert data["enrichment"]["asset"] == "USDC"
+        conversation_steps.append({"user": step2_input, "agent": content, "step": "asset_selection"})
 
         # Step 3: Enter amount (1000 USDC)
+        step3_input = "1000"
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "1000", "language": "en"}
+            json={"content": step3_input, "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -78,11 +88,13 @@ class TestGuestChatMultiStepFlows:
         assert "apy" in data["enrichment"]
         assert "monthly_earnings" in data["enrichment"]
         assert "yearly_earnings" in data["enrichment"]
+        conversation_steps.append({"user": step3_input, "agent": content, "step": "amount_confirmation"})
 
         # Step 4: Confirm deposit
+        step4_input = "confirm"
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "confirm", "language": "en"}
+            json={"content": step4_input, "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -93,6 +105,34 @@ class TestGuestChatMultiStepFlows:
         assert "sign up" in content.lower() or "signup" in content.lower()
         assert data["enrichment"]["lending_flow"] == "execution"
         assert data["registration_required"]["required"] is True
+        conversation_steps.append({"user": step4_input, "agent": content, "step": "execution"})
+
+        # Optional LLM multi-step validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_multi_step_flow(
+                test_name="test_lending_flow_complete_usdc",
+                conversation_steps=conversation_steps,
+                expected_behavior=(
+                    "Multi-step lending flow should maintain context consistency across 4 steps: "
+                    "1) Initiate deposit of USDC on Morpho "
+                    "2) Confirm USDC selection and ask for amount "
+                    "3) Provide APY quote for 1000 USDC with earnings projections "
+                    "4) Execute with signup requirement. "
+                    "Each response must reference previous context (USDC, 1000, Morpho) and guide user to next step."
+                ),
+                additional_context={
+                    "test_category": "multi_step_flow",
+                    "flow_type": "lending",
+                    "protocol": "Morpho",
+                    "asset": "USDC",
+                    "amount": "1000"
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM multi-step validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
 
     @pytest.mark.asyncio
     async def test_lending_flow_with_number_selection(self, client: AsyncClient):
