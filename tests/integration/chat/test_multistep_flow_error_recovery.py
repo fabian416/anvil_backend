@@ -21,7 +21,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multi_st
 class TestMultiStepFlowErrorRecovery:
     """Test error recovery and resilience for multi-step flows."""
 
-    async def test_step_failure_recovery(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_step_failure_recovery(self, client: AsyncClient, llm_validator):
         """
         Test recovery when handling invalid data.
 
@@ -46,7 +47,26 @@ class TestMultiStepFlowErrorRecovery:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide helpful error guidance"
 
-    async def test_flow_rollback_on_error(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_step_failure_recovery",
+                user_input="Send 999999999 ETH to invalid_address_xyz123",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_flow_rollback_on_error(self, client: AsyncClient, llm_validator):
         """
         Test handling when later step fails after earlier success.
 
@@ -71,7 +91,26 @@ class TestMultiStepFlowErrorRecovery:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should explain balance validation"
 
-    async def test_partial_flow_completion(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_rollback_on_error",
+                user_input="Check my balance, then send 1000 ETH (which I don",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_partial_flow_completion(self, client: AsyncClient, llm_validator):
         """
         Test partial completion when full flow cannot finish.
 
@@ -97,7 +136,26 @@ class TestMultiStepFlowErrorRecovery:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide partial results with explanation"
 
-    async def test_retry_failed_flow_step(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_partial_flow_completion",
+                user_input="Show me Bitcoin price and also tell me my portfolio balance ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_retry_failed_flow_step(self, client: AsyncClient, llm_validator):
         """
         Test system resilience with transient-like queries.
 
@@ -120,4 +178,22 @@ class TestMultiStepFlowErrorRecovery:
 
         # Should handle data source queries with resilience
         agent_response = data["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_retry_failed_flow_step",
+                user_input="Get the latest Ethereum price from multiple sources and compare",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 50, "Should provide price data with source info"

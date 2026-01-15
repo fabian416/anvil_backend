@@ -20,7 +20,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multiste
 class TestFlowStatePersistence:
     """Test flow state persistence and data carry-forward."""
 
-    async def test_flow_state_persistence_across_steps(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_flow_state_persistence_across_steps(self, client: AsyncClient, llm_validator):
         """
         Verify state persists through all flow steps.
 
@@ -70,7 +71,26 @@ class TestFlowStatePersistence:
         # This test verifies basic state persistence
         assert context_maintained or len(agent_response) > 0
 
-    async def test_flow_data_validation_between_steps(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_state_persistence_across_steps",
+                user_input="I want to swap 1 ETH for USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_flow_data_validation_between_steps(self, client: AsyncClient, llm_validator):
         """
         Test data validation at each flow step.
 
@@ -113,11 +133,30 @@ class TestFlowStatePersistence:
         agent_response = data2["agent_message"]["content"]
         assert len(agent_response) > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_data_validation_between_steps",
+                user_input="I want to lend USDC on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestFlowInterruptionRecovery:
     """Test flow recovery after interruptions."""
 
-    async def test_flow_interruption_and_recovery(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_flow_interruption_and_recovery(self, client: AsyncClient, llm_validator):
         """
         Test graceful recovery after flow interruption.
 
@@ -162,7 +201,26 @@ class TestFlowInterruptionRecovery:
 
         assert handles_interruption or len(agent_response) > 0
 
-    async def test_flow_timeout_handling(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_interruption_and_recovery",
+                user_input="I want to swap ETH",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_flow_timeout_handling(self, client: AsyncClient, llm_validator):
         """
         Test long-running flow timeout behavior.
 
@@ -202,11 +260,30 @@ class TestFlowInterruptionRecovery:
         agent_response = data2["agent_message"]["content"]
         assert len(agent_response) > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_timeout_handling",
+                user_input="Let",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestNestedFlowScenarios:
     """Test nested flow scenarios."""
 
-    async def test_nested_multistep_flow(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_nested_multistep_flow(self, client: AsyncClient, llm_validator):
         """
         Test flow within another flow (nested flows).
 
@@ -262,4 +339,22 @@ class TestNestedFlowScenarios:
 
         # Agent should continue handling the nested flow
         agent_response2 = data2["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_nested_multistep_flow",
+                user_input="I want to swap ETH to USDC and then lend it on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response2) > 0

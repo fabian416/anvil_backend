@@ -24,7 +24,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multi_st
 class TestMultiStepFlowOrchestration:
     """Test advanced multi-step flow orchestration scenarios."""
 
-    async def test_nested_flow_execution(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_nested_flow_execution(self, client: AsyncClient, llm_validator):
         """
         Test execution of nested multi-step flows.
 
@@ -50,7 +51,26 @@ class TestMultiStepFlowOrchestration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should provide comprehensive response for nested flow (100+ chars)"
 
-    async def test_parallel_flow_execution(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_nested_flow_execution",
+                user_input="I want to swap ETH for USDC and then lend the USDC on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_parallel_flow_execution(self, client: AsyncClient, llm_validator):
         """
         Test parallel execution of independent flows.
 
@@ -75,7 +95,26 @@ class TestMultiStepFlowOrchestration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should address all parallel requests (100+ chars)"
 
-    async def test_flow_state_persistence(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_parallel_flow_execution",
+                user_input="Check Bitcoin price, Ethereum gas fees, and Solana network status",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_flow_state_persistence(self, client: AsyncClient, llm_validator):
         """
         Test flow state persists across requests.
 
@@ -111,7 +150,26 @@ class TestMultiStepFlowOrchestration:
         agent_response = data2["agent_message"]["content"]
         assert len(agent_response) > 50, "Should understand context from previous message"
 
-    async def test_flow_timeout_handling(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_state_persistence",
+                user_input="I want to buy $1000 worth of Bitcoin",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_flow_timeout_handling(self, client: AsyncClient, llm_validator):
         """
         Test flow timeout and cleanup.
 
@@ -137,7 +195,26 @@ class TestMultiStepFlowOrchestration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide response even for complex query"
 
-    async def test_flow_dependency_resolution(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_timeout_handling",
+                user_input="Analyze all DeFi protocols, compare their TVL, APY, risks, ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_flow_dependency_resolution(self, client: AsyncClient, llm_validator):
         """
         Test flow dependency resolution and ordering.
 
@@ -163,7 +240,26 @@ class TestMultiStepFlowOrchestration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should handle dependent steps logically"
 
-    async def test_conditional_flow_branching(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_dependency_resolution",
+                user_input="First check if I have enough ETH, then estimate gas for a swap, ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_conditional_flow_branching(self, client: AsyncClient, llm_validator):
         """
         Test conditional branching in flows based on results.
 
@@ -189,7 +285,26 @@ class TestMultiStepFlowOrchestration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide conditional recommendation"
 
-    async def test_flow_result_aggregation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conditional_flow_branching",
+                user_input="If ETH price is above $2000, recommend buying, ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_flow_result_aggregation(self, client: AsyncClient, llm_validator):
         """
         Test aggregation of results from multiple flow steps.
 
@@ -213,4 +328,22 @@ class TestMultiStepFlowOrchestration:
 
         # Should aggregate price data and calculate total
         agent_response = data["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_flow_result_aggregation",
+                user_input="Get prices for BTC, ETH, and SOL, then calculate my total ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 100, "Should provide aggregated calculation result (100+ chars)"

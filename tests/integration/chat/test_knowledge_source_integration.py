@@ -21,7 +21,7 @@ class TestCoinGeckoIntegration:
     """Test CoinGecko API integration for real market data."""
 
     @pytest.mark.llm_validation
-    async def test_coingecko_price_data_injection(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_coingecko_price_data_injection(self, client: AsyncClient, llm_validator):
         """
         Test real CoinGecko price data injection into responses.
 
@@ -70,7 +70,7 @@ class TestCoinGeckoIntegration:
 
 
     @pytest.mark.llm_validation
-    async def test_coingecko_market_data_injection(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_coingecko_market_data_injection(self, client: AsyncClient, llm_validator):
         """
         Test market data (market cap, volume) injection from CoinGecko.
 
@@ -118,7 +118,7 @@ class TestCoinGeckoIntegration:
 
 
     @pytest.mark.llm_validation
-    async def test_coingecko_api_failure_handling(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_coingecko_api_failure_handling(self, client: AsyncClient, llm_validator):
         """
         Test graceful degradation when CoinGecko API might be unavailable.
 
@@ -166,7 +166,7 @@ class TestRSSNewsIntegration:
     """Test RSS news feed integration from crypto news sources."""
 
     @pytest.mark.llm_validation
-    async def test_rss_news_injection_coindesk(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_rss_news_injection_coindesk(self, client: AsyncClient, llm_validator):
         """
         Test CoinDesk RSS feed integration.
 
@@ -209,7 +209,7 @@ class TestRSSNewsIntegration:
 
 
     @pytest.mark.llm_validation
-    async def test_rss_news_injection_cointelegraph(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_rss_news_injection_cointelegraph(self, client: AsyncClient, llm_validator):
         """
         Test CoinTelegraph RSS feed integration.
 
@@ -252,7 +252,7 @@ class TestRSSNewsIntegration:
 
 
     @pytest.mark.llm_validation
-    async def test_rss_news_multiple_sources_aggregation(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_rss_news_multiple_sources_aggregation(self, client: AsyncClient, llm_validator):
         """
         Test aggregation from multiple RSS news sources.
 
@@ -304,7 +304,7 @@ class TestDataSourcePriority:
     """Test data source priority and failover mechanisms."""
 
     @pytest.mark.llm_validation
-    async def test_data_source_priority_order(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_data_source_priority_order(self, client: AsyncClient, llm_validator):
         """
         Test primary/fallback source ordering.
 
@@ -352,7 +352,7 @@ class TestDataSourcePriority:
 
 
     @pytest.mark.llm_validation
-    async def test_data_source_failover_mechanism(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_data_source_failover_mechanism(self, client: AsyncClient, llm_validator):
         """
         Test automatic failover when sources are unavailable.
 

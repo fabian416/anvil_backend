@@ -135,7 +135,8 @@ class TestGuestChatMultiStepFlows:
                 ))
 
     @pytest.mark.asyncio
-    async def test_lending_flow_with_number_selection(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_lending_flow_with_number_selection(self, client: AsyncClient, llm_validator):
         """Test LENDING flow using number selection (option 1 = USDC)."""
         # Step 1: Initiate
         await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
@@ -161,8 +162,27 @@ class TestGuestChatMultiStepFlows:
             # This is acceptable behavior - number selection is a nice-to-have
             pytest.skip("Number selection not fully implemented - using explicit asset names works")
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_lending_flow_with_number_selection",
+                user_input="lending",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_lending_flow_cancel(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_lending_flow_cancel(self, client: AsyncClient, llm_validator):
         """Test cancelling LENDING flow at confirmation step."""
         # Navigate to confirmation
         await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
@@ -195,8 +215,27 @@ class TestGuestChatMultiStepFlows:
 
         assert is_cancelled, f"Expected cancellation but got: {content}"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_lending_flow_cancel",
+                user_input="lending",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_lending_all_supported_assets(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_lending_all_supported_assets(self, client: AsyncClient, llm_validator):
         """Test LENDING flow supports multiple asset types."""
         # Test two representative assets to prove multi-asset support
         # (Testing more in sequence causes guest session state pollution)
@@ -232,8 +271,27 @@ class TestGuestChatMultiStepFlows:
             word in content2.lower() for word in ["eth", "deposit", "earn", "yield"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_lending_all_supported_assets",
+                user_input="Deposit USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_moonpay_swap_flow_complete(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_moonpay_swap_flow_complete(self, client: AsyncClient, llm_validator):
         """
         Test complete SWAP_MOONPAY flow: FROM token → TO token → Amount → Quote → Confirm.
 
@@ -313,8 +371,27 @@ class TestGuestChatMultiStepFlows:
         assert "sign up" in content.lower()
         assert data["enrichment"]["swap_flow"] == "execution"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_moonpay_swap_flow_complete",
+                user_input="swap",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_moonpay_swap_complete_request_parsing(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_moonpay_swap_complete_request_parsing(self, client: AsyncClient, llm_validator):
         """Test SWAP_MOONPAY with complete request: 'swap 0.5 BTC to ETH'."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -329,6 +406,24 @@ class TestGuestChatMultiStepFlows:
         assert "confirm" in content.lower()
         assert data["enrichment"]["swap_flow"] == "step4_confirmation"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_moonpay_swap_complete_request_parsing",
+                user_input="swap 0.5 BTC to ETH",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.chat
@@ -336,7 +431,8 @@ class TestGuestChatShortcuts:
     """Test all shortcuts from shortcuts API work correctly."""
 
     @pytest.mark.asyncio
-    async def test_lending_shortcuts(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_lending_shortcuts(self, client: AsyncClient, llm_validator):
         """Test all lending-related shortcuts."""
         # Shortcuts with asset specified SHOULD skip to step2 (amount)
         # BUT if parser doesn't extract asset perfectly, step1 is acceptable
@@ -396,8 +492,27 @@ class TestGuestChatShortcuts:
                 # Allow any lending flow step as valid - parsing might place us at different steps
                 assert enrichment["lending_flow"] in ["step1_asset", "step2_amount", "vault_display"]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_lending_shortcuts",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_swap_shortcuts(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_swap_shortcuts(self, client: AsyncClient, llm_validator):
         """Test swap-related shortcuts."""
         shortcuts = [
             "Swap BTC to ETH",
@@ -416,8 +531,27 @@ class TestGuestChatShortcuts:
             # Should show swap quote or ask for amount
             assert "swap_flow" in data["enrichment"]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_swap_shortcuts",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_balance_shortcut(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_balance_shortcut(self, client: AsyncClient, llm_validator):
         """Test balance shortcut for guests."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -438,8 +572,27 @@ class TestGuestChatShortcuts:
         )
         assert is_valid_response, f"Unexpected balance response for guest: {content}"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_balance_shortcut",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_portfolio_shortcut(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_portfolio_shortcut(self, client: AsyncClient, llm_validator):
         """Test portfolio shortcut for guests."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -460,6 +613,24 @@ class TestGuestChatShortcuts:
         )
         assert is_valid_response, f"Unexpected portfolio response for guest: {content}"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_portfolio_shortcut",
+                user_input="Show my portfolio",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.chat
@@ -467,7 +638,8 @@ class TestGuestChatProductionQuality:
     """Test production-grade response quality."""
 
     @pytest.mark.asyncio
-    async def test_responses_use_emojis(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_responses_use_emojis(self, client: AsyncClient, llm_validator):
         """Test that responses use emojis for visual appeal."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -483,8 +655,27 @@ class TestGuestChatProductionQuality:
 
         assert has_emoji or has_formatting, f"Response lacks visual appeal (no emojis or formatting): {content[:100]}"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_responses_use_emojis",
+                user_input="lending",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_responses_have_clear_ctas(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_responses_have_clear_ctas(self, client: AsyncClient, llm_validator):
         """Test that confirmation steps have clear calls-to-action."""
         # Navigate step by step to confirmation
         # Step 1: Initiate
@@ -514,8 +705,27 @@ class TestGuestChatProductionQuality:
             # Flow was reset or didn't trigger
             pytest.skip("Lending flow not maintained across requests - context management issue")
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_responses_have_clear_ctas",
+                user_input="lending",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_error_handling_invalid_amount(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_error_handling_invalid_amount(self, client: AsyncClient, llm_validator):
         """Test error handling for invalid amount input."""
         # Navigate to amount step first, then send invalid amount
         await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
@@ -551,8 +761,27 @@ class TestGuestChatProductionQuality:
 
         assert is_handled_gracefully, f"Invalid input not handled gracefully: {content}"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_error_handling_invalid_amount",
+                user_input="lending",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_multilingual_support_spanish(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_multilingual_support_spanish(self, client: AsyncClient, llm_validator):
         """Test Spanish language support."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -565,8 +794,27 @@ class TestGuestChatProductionQuality:
         # Should contain Spanish or English text (fallback allowed)
         assert len(content) > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multilingual_support_spanish",
+                user_input="préstamo",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_out_of_scope_rejection(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_out_of_scope_rejection(self, client: AsyncClient, llm_validator):
         """Test that out-of-scope queries are rejected politely."""
         out_of_scope_queries = ["What's the weather?", "bake", "bomb"]
 
@@ -583,8 +831,27 @@ class TestGuestChatProductionQuality:
             assert "DeFi" in content or "crypto" in content
             assert any(word in content for word in ["portfolio", "swap", "lending"])
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_out_of_scope_rejection",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
-    async def test_typo_tolerance(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_typo_tolerance(self, client: AsyncClient, llm_validator):
         """Test that common typos are handled gracefully."""
         typos = [
             ("porfolio", "portfolio"),  # Typo of portfolio
@@ -598,4 +865,22 @@ class TestGuestChatProductionQuality:
                 json={"content": typo, "language": "en"}
             )
             assert response.status_code == 200
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_typo_tolerance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
             # Should handle typo and route correctly (no error)

@@ -337,7 +337,7 @@ class TestGuestUserKnowledgeInjection:
     """Test knowledge injection for guest users"""
 
     @pytest.mark.llm_validation
-    async def test_what_can_you_do_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
+    async def test_what_can_you_do_guest(self, async_client: AsyncClient, llm_validator):
         """Test 'what can you do?' for guest user includes knowledge"""
 
         response = await async_client.post(
@@ -386,7 +386,7 @@ class TestGuestUserKnowledgeInjection:
 
 
     @pytest.mark.llm_validation
-    async def test_hunter_ai_query_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
+    async def test_hunter_ai_query_guest(self, async_client: AsyncClient, llm_validator):
         """Test Hunter AI query for guest includes knowledge"""
 
         response = await async_client.post(
@@ -426,7 +426,7 @@ class TestGuestUserKnowledgeInjection:
 
 
     @pytest.mark.llm_validation
-    async def test_ultra_query_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
+    async def test_ultra_query_guest(self, async_client: AsyncClient, llm_validator):
         """Test ULTRA query for guest includes knowledge"""
 
         response = await async_client.post(
@@ -466,7 +466,7 @@ class TestGuestUserKnowledgeInjection:
 
 
     @pytest.mark.llm_validation
-    async def test_price_query_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
+    async def test_price_query_guest(self, async_client: AsyncClient, llm_validator):
         """Test price query for guest works with knowledge"""
 
         response = await async_client.post(
@@ -549,7 +549,7 @@ class TestMultiLanguageKnowledge:
         assert len(agent_content) > 100
 
     @pytest.mark.llm_validation
-    async def test_spanish_query_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
+    async def test_spanish_query_guest(self, async_client: AsyncClient, llm_validator):
         """Test Spanish query for guest gets knowledge-enhanced response"""
 
         response = await async_client.post(
@@ -631,7 +631,7 @@ class TestKnowledgeInjectionPerformance:
         assert elapsed < 30  # 30 seconds max (includes LLM generation)
 
     @pytest.mark.llm_validation
-    async def test_response_time_acceptable_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
+    async def test_response_time_acceptable_guest(self, async_client: AsyncClient, llm_validator):
         """Test response time for guest with knowledge injection"""
         import time
 
@@ -1118,7 +1118,7 @@ class TestCompressionLevelsGuest:
     """Test different compression levels for guest users"""
 
     @pytest.mark.llm_validation
-    async def test_medium_compression_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
+    async def test_medium_compression_guest(self, async_client: AsyncClient, llm_validator):
         """Test medium compression works for guest users"""
 
         response = await async_client.post(
@@ -1156,7 +1156,7 @@ class TestCompressionLevelsGuest:
 
 
     @pytest.mark.llm_validation
-    async def test_compression_consistency_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
+    async def test_compression_consistency_guest(self, async_client: AsyncClient, llm_validator):
         """Test compression provides consistent results for guest"""
 
         # Make same query twice

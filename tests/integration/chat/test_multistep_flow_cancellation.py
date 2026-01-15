@@ -30,7 +30,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multiste
 class TestSwapFlowCancellation:
     """Test cancelling swap flows at various steps."""
 
-    async def test_cancel_swap_via_explicit_keyword(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_cancel_swap_via_explicit_keyword(self, client: AsyncClient, llm_validator):
         """Test explicit cancellation using 'cancel' keyword."""
         # Start a swap-related conversation
         response1 = await client.post(
@@ -60,7 +61,26 @@ class TestSwapFlowCancellation:
         agent_response = data2.get("agent_message", {}).get("content", "").lower()
         # Agent should acknowledge cancellation or ask "what would you like to do?"
 
-    async def test_cancel_swap_via_never_mind(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cancel_swap_via_explicit_keyword",
+                user_input="I want to swap tokens",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_cancel_swap_via_never_mind(self, client: AsyncClient, llm_validator):
         """Test cancellation using 'never mind' phrase."""
         # Start swap intent
         response1 = await client.post(
@@ -82,7 +102,26 @@ class TestSwapFlowCancellation:
         # Should handle gracefully
         assert "agent_message" in data2
 
-    async def test_swap_flow_topic_change_to_query(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cancel_swap_via_never_mind",
+                user_input="help me swap ETH",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_swap_flow_topic_change_to_query(self, client: AsyncClient, llm_validator):
         """Test implicit cancellation when topic changes from swap to query."""
         # Start swap discussion
         response1 = await client.post(
@@ -106,6 +145,24 @@ class TestSwapFlowCancellation:
             new_intent = data2["routing"].get("intent", "").upper()
             # Should be price query related, not swap
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_swap_flow_topic_change_to_query",
+                user_input="I want to swap some tokens",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Lending Flow Cancellation Tests
@@ -115,7 +172,8 @@ class TestSwapFlowCancellation:
 class TestLendingFlowCancellation:
     """Test cancelling lending flows at various steps."""
 
-    async def test_cancel_lending_via_stop_keyword(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_cancel_lending_via_stop_keyword(self, client: AsyncClient, llm_validator):
         """Test cancelling lending flow with 'stop' command."""
         # Start lending conversation
         response1 = await client.post(
@@ -139,7 +197,26 @@ class TestLendingFlowCancellation:
 
             assert response2.status_code == status.HTTP_200_OK
 
-    async def test_cancel_lending_before_protocol_selection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cancel_lending_via_stop_keyword",
+                user_input="I want to lend my USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_cancel_lending_before_protocol_selection(self, client: AsyncClient, llm_validator):
         """Test cancelling lending flow before protocol selection."""
         # Ask about lending
         response1 = await client.post(
@@ -161,7 +238,26 @@ class TestLendingFlowCancellation:
         # Should acknowledge cancellation
         assert "agent_message" in data2
 
-    async def test_lending_flow_implicit_cancel_via_topic_shift(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cancel_lending_before_protocol_selection",
+                user_input="how do I lend tokens?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_lending_flow_implicit_cancel_via_topic_shift(self, client: AsyncClient, llm_validator):
         """Test implicit cancellation when topic shifts from lending."""
         # Start lending inquiry
         response1 = await client.post(
@@ -183,6 +279,24 @@ class TestLendingFlowCancellation:
         # Should handle new intent (agent squad query)
         assert "agent_message" in data2
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_lending_flow_implicit_cancel_via_topic_shift",
+                user_input="tell me about lending on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Compound Intent Cancellation Tests
@@ -192,7 +306,8 @@ class TestLendingFlowCancellation:
 class TestCompoundIntentCancellation:
     """Test cancelling compound intents (multiple sub-intents)."""
 
-    async def test_compound_intent_full_cancellation(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_compound_intent_full_cancellation(self, client: AsyncClient, llm_validator):
         """Test cancelling entire compound intent before execution."""
         # Complex multi-step request
         response1 = await client.post(
@@ -213,7 +328,26 @@ class TestCompoundIntentCancellation:
 
         assert response2.status_code == status.HTTP_200_OK
 
-    async def test_multi_action_intent_cancellation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compound_intent_full_cancellation",
+                user_input="I want to swap ETH for USDC then lend it",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Compound protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Compound'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_multi_action_intent_cancellation(self, client: AsyncClient, llm_validator):
         """Test cancelling multi-action intents."""
         # Request with multiple actions
         response1 = await client.post(
@@ -228,6 +362,24 @@ class TestCompoundIntentCancellation:
         if "registration_required" in data1:
             assert data1["registration_required"]["required"] == True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_action_intent_cancellation",
+                user_input="check my portfolio and show trading signals",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Flow State Cleanup Tests
@@ -237,7 +389,8 @@ class TestCompoundIntentCancellation:
 class TestFlowStateCleanup:
     """Test that cancellation properly cleans up conversation state."""
 
-    async def test_cancelled_flow_allows_new_conversation(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_cancelled_flow_allows_new_conversation(self, client: AsyncClient, llm_validator):
         """Test user can start fresh conversation after cancellation."""
         # Start a flow
         response1 = await client.post(
@@ -269,7 +422,26 @@ class TestFlowStateCleanup:
         assert "agent_message" in data3
         # May or may not have same conversation_id (implementation dependent)
 
-    async def test_multiple_cancellations_handled_gracefully(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cancelled_flow_allows_new_conversation",
+                user_input="I want to do a swap",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_multiple_cancellations_handled_gracefully(self, client: AsyncClient, llm_validator):
         """Test multiple consecutive cancellations don't cause issues."""
         # Send cancel without any active flow
         response1 = await client.post(
@@ -291,6 +463,24 @@ class TestFlowStateCleanup:
 
         assert response2.status_code == status.HTTP_200_OK
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multiple_cancellations_handled_gracefully",
+                user_input="cancel",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Topic Change Detection Tests
@@ -300,7 +490,8 @@ class TestFlowStateCleanup:
 class TestTopicChangeDetection:
     """Test detection of topic changes and implicit flow cancellation."""
 
-    async def test_topic_change_from_execution_to_query(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_topic_change_from_execution_to_query(self, client: AsyncClient, llm_validator):
         """Test topic change from execution intent to informational query."""
         # Start execution intent (swap)
         response1 = await client.post(
@@ -323,7 +514,26 @@ class TestTopicChangeDetection:
         agent_response = data2.get("agent_message", {}).get("content", "").lower()
         # Response should be about gas, not continuing swap flow
 
-    async def test_topic_change_preserves_conversation_context(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_topic_change_from_execution_to_query",
+                user_input="help me swap tokens",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_topic_change_preserves_conversation_context(self, client: AsyncClient, llm_validator):
         """Test topic change preserves some conversation context."""
         # Discuss ETH
         response1 = await client.post(
@@ -345,7 +555,26 @@ class TestTopicChangeDetection:
         # Should understand "its" refers to Ethereum
         assert "agent_message" in data2
 
-    async def test_topic_change_detection_threshold(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_topic_change_preserves_conversation_context",
+                user_input="tell me about Ethereum",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_topic_change_detection_threshold(self, client: AsyncClient, llm_validator):
         """Test that minor topic shifts don't trigger cancellation."""
         # Talk about trading
         response1 = await client.post(
@@ -367,6 +596,24 @@ class TestTopicChangeDetection:
         # Should handle as related topic, not complete change
         assert "agent_message" in data2
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_topic_change_detection_threshold",
+                user_input="I",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Cancellation Keywords Tests
@@ -376,7 +623,8 @@ class TestTopicChangeDetection:
 class TestCancellationKeywords:
     """Test various cancellation keywords and phrases."""
 
-    async def test_cancel_keyword_variations(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_cancel_keyword_variations(self, client: AsyncClient, llm_validator):
         """Test different cancellation keywords work."""
         cancellation_phrases = [
             "cancel",
@@ -404,6 +652,24 @@ class TestCancellationKeywords:
             # Should handle gracefully (not error)
             assert response2.status_code == status.HTTP_200_OK
             assert "agent_message" in response2.json()
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cancel_keyword_variations",
+                user_input="I want to do a swap",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 # ============================================================================

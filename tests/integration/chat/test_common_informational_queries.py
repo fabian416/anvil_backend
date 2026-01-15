@@ -32,7 +32,7 @@ class TestCommonQueriesGuest:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_what_is_bitcoin(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_what_is_bitcoin(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What is Bitcoin?
         Expected: Returns information about Bitcoin without signup prompt.
@@ -76,7 +76,7 @@ class TestCommonQueriesGuest:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_what_is_ethereum(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_what_is_ethereum(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What is Ethereum?
         Expected: Returns information about Ethereum.
@@ -199,7 +199,7 @@ class TestCommonQueriesGuest:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_eth_price_shorthand(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_eth_price_shorthand(self, client: AsyncClient, llm_validator):
         """
         Guest Query: ETH price
         Expected: Returns ETH price using shorthand query.
@@ -236,7 +236,7 @@ class TestCommonQueriesGuest:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_btc_sentiment(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_btc_sentiment(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What do people think about Bitcoin?
         Expected: Returns sentiment analysis.
@@ -276,7 +276,7 @@ class TestCommonQueriesGuest:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_what_is_defi(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_what_is_defi(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What is DeFi?
         Expected: Returns explanation of DeFi.
@@ -314,7 +314,7 @@ class TestCommonQueriesGuest:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_what_is_usdc(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_what_is_usdc(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What is USDC?
         Expected: Returns information about USDC stablecoin.
@@ -352,7 +352,7 @@ class TestCommonQueriesGuest:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_multiple_tokens_price(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_multiple_tokens_price(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What are the prices of Bitcoin and Ethereum?
         Expected: Returns prices for multiple tokens.
@@ -794,7 +794,7 @@ class TestCommonQueriesMultiLanguage:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_spanish_bitcoin_price(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_spanish_bitcoin_price(self, client: AsyncClient, llm_validator):
         """
         Guest Query (Spanish): ¿Cuál es el precio de Bitcoin?
         Expected: Returns price in Spanish.
@@ -834,7 +834,7 @@ class TestCommonQueriesMultiLanguage:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_portuguese_ethereum_info(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_portuguese_ethereum_info(self, client: AsyncClient, llm_validator):
         """
         Guest Query (Portuguese): O que é Ethereum?
         Expected: Returns Ethereum info in Portuguese.
@@ -873,7 +873,7 @@ class TestCommonQueriesMultiLanguage:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_chinese_bitcoin_info(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_chinese_bitcoin_info(self, client: AsyncClient, llm_validator):
         """
         Guest Query (Chinese): 什么是比特币?
         Expected: Returns Bitcoin info in Chinese.
@@ -912,7 +912,7 @@ class TestCommonQueriesEdgeCases:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_unknown_token(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_unknown_token(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What is UNKNOWNTOKEN123?
         Expected: Handles unknown token gracefully.
@@ -947,7 +947,7 @@ class TestCommonQueriesEdgeCases:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_case_insensitive_queries(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_case_insensitive_queries(self, client: AsyncClient, llm_validator):
         """
         Guest Query: WHAT IS BITCOIN? (uppercase)
         Expected: Handles case-insensitive queries.
@@ -985,7 +985,7 @@ class TestCommonQueriesEdgeCases:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_guest_typo_tolerance(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_guest_typo_tolerance(self, client: AsyncClient, llm_validator):
         """
         Guest Query: What is Bitcion? (typo)
         Expected: Attempts to handle common typos.

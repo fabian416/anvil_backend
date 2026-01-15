@@ -26,7 +26,7 @@ class TestContextEnrichment:
     """Test context enrichment with additional data from multiple sources."""
 
     @pytest.mark.llm_validation
-    async def test_price_context_with_historical_data(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_price_context_with_historical_data(self, client: AsyncClient, llm_validator):
         """
         Test price enriched with historical trend context.
 
@@ -75,7 +75,7 @@ class TestContextEnrichment:
 
 
     @pytest.mark.llm_validation
-    async def test_protocol_context_with_tvl_data(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_protocol_context_with_tvl_data(self, client: AsyncClient, llm_validator):
         """
         Test protocol info enriched with TVL data.
 
@@ -124,7 +124,7 @@ class TestContextEnrichment:
 
 
     @pytest.mark.llm_validation
-    async def test_token_context_with_market_data(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_token_context_with_market_data(self, client: AsyncClient, llm_validator):
         """
         Test token info with comprehensive market metrics.
 
@@ -173,7 +173,7 @@ class TestContextEnrichment:
 
 
     @pytest.mark.llm_validation
-    async def test_multi_source_context_aggregation(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_multi_source_context_aggregation(self, client: AsyncClient, llm_validator):
         """
         Test aggregating context from multiple sources.
 
@@ -221,7 +221,7 @@ class TestContextCaching:
     """Test knowledge cache hit/miss behavior and performance."""
 
     @pytest.mark.llm_validation
-    async def test_knowledge_cache_hit_performance(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_knowledge_cache_hit_performance(self, client: AsyncClient, llm_validator):
         """
         Test cache hit improves response time.
 
@@ -286,7 +286,7 @@ class TestContextCaching:
 
 
     @pytest.mark.llm_validation
-    async def test_knowledge_cache_miss_fallback(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_knowledge_cache_miss_fallback(self, client: AsyncClient, llm_validator):
         """
         Test cache miss falls back to API.
 
@@ -330,7 +330,7 @@ class TestContextCaching:
 
 
     @pytest.mark.llm_validation
-    async def test_knowledge_cache_expiration(self, client: AsyncClient, llm_validator, llm_validator):
+    async def test_knowledge_cache_expiration(self, client: AsyncClient, llm_validator):
         """
         Test cache expiration and refresh.
 

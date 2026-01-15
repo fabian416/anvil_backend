@@ -44,8 +44,27 @@ class TestInterruptionFlows:
     # ==========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_swap_flow_interrupted_by_general_question(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_swap_flow_interrupted_by_general_question",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -98,8 +117,27 @@ class TestInterruptionFlows:
         assert response3.status_code in [200, 201]
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_lending_flow_interrupted_by_price_check(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_lending_flow_interrupted_by_price_check",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -151,8 +189,27 @@ class TestInterruptionFlows:
         # Should handle resumption gracefully (may ask to restart or continue)
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_multiple_interruptions_in_single_flow(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_multiple_interruptions_in_single_flow",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -205,8 +262,27 @@ class TestInterruptionFlows:
         assert response3.status_code in [200, 201]
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_interruption_with_context_switch(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_interruption_with_context_switch",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -245,8 +321,27 @@ class TestInterruptionFlows:
         assert response3.status_code in [200, 201]
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_cancellation_after_interruption(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_cancellation_after_interruption",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -296,6 +391,7 @@ class TestInterruptionFlows:
     # ==========================================
 
     @pytest_asyncio.fixture
+    @pytest.mark.llm_validation
     async def test_user(self, async_db_session: AsyncSession):
         """Create a test user for authenticated interruption tests."""
         user, token = await AuthHelper.create_test_user_in_db(
@@ -305,6 +401,24 @@ class TestInterruptionFlows:
         )
         return user, token
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
         """Get authentication headers for test user."""
@@ -312,11 +426,30 @@ class TestInterruptionFlows:
         return AuthHelper.get_auth_headers(token)
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_authenticated_swap_interrupted_then_resumed(
         self,
         client: AsyncClient,
         test_user,
         auth_headers,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_authenticated_swap_interrupted_then_resumed",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         async_db_session: AsyncSession,
     ):
         """
@@ -374,11 +507,30 @@ class TestInterruptionFlows:
         # Should accept amount and proceed with swap
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_authenticated_complex_interruption_scenario(
         self,
         client: AsyncClient,
         test_user,
         auth_headers,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_authenticated_complex_interruption_scenario",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         async_db_session: AsyncSession,
     ):
         """
@@ -442,8 +594,27 @@ class TestInterruptionStateManagement:
     """Test state management during interruptions."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_state_isolation_between_users(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_state_isolation_between_users",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -486,9 +657,28 @@ class TestInterruptionStateManagement:
         # Should be in lending context, not swap
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_authenticated_state_persistence_across_sessions(
         self,
         client: AsyncClient,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_authenticated_state_persistence_across_sessions",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         async_db_session: AsyncSession,
     ):
         """
