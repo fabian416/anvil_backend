@@ -28,7 +28,7 @@ def map_agent_session_table() -> None:
         conversation_id = mapped_column(UUID(as_uuid=True), ForeignKey("conversations.id"), nullable=False, index=True)
         
         # Agent details
-        agent_type = mapped_column(Enum(AgentType, values_callable=lambda x: [e.value for e in x]), nullable=False)
+        agent_type = mapped_column(Enum(AgentType, values_callable=lambda x: [e.value for e in x], name="agenttype", create_type=False), nullable=False)
         
         # State
         state = mapped_column(JSONB, default={})

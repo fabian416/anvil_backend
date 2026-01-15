@@ -29,9 +29,9 @@ def map_message_table() -> None:
         conversation_id = mapped_column(UUID(as_uuid=True), ForeignKey("conversations.id"), nullable=False, index=True)
         
         # Message details
-        role = mapped_column(Enum(MessageRole, values_callable=lambda x: [e.value for e in x]), nullable=False)
+        role = mapped_column(Enum(MessageRole, values_callable=lambda x: [e.value for e in x], name="messagerole", create_type=False), nullable=False)
         content = mapped_column(Text, nullable=False)
-        agent_type = mapped_column(Enum(AgentType, values_callable=lambda x: [e.value for e in x]), nullable=True)
+        agent_type = mapped_column(Enum(AgentType, values_callable=lambda x: [e.value for e in x], name="agenttype", create_type=False), nullable=True)
         
         # Metadata (for swap quotes, enrichment, etc.)
         # Note: 'metadata' is reserved in SQLAlchemy, so we use 'extra_metadata' as attribute name

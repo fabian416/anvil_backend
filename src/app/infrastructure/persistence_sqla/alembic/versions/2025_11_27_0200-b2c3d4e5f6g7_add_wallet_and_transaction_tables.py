@@ -17,12 +17,23 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    # Create Enums if they don't exist (Postgres specific)
-    # We use existing Enums or create new ones.
-    # WalletProvider and ChainType are used as Enums in mapping but mapped to Enum column in DB.
-    sa.Enum("privy", "external", name="walletprovider").create(op.get_bind(), checkfirst=True)
-    sa.Enum("arbitrum", "base", "hyperliquid", name="chaintype").create(op.get_bind(), checkfirst=True)
-    sa.Enum("inactive", "active", "deleted", name="walletstatus").create(op.get_bind(), checkfirst=True)
+    # Create Enums using raw SQL to avoid duplication issues
+    connection = op.get_bind()
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'walletprovider') THEN
+            CREATE TYPE walletprovider AS ENUM ('privy', 'external');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'chaintype') THEN
+            CREATE TYPE chaintype AS ENUM ('arbitrum', 'base', 'hyperliquid');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'walletstatus') THEN
+            CREATE TYPE walletstatus AS ENUM ('inactive', 'active', 'deleted');
+        END IF;
+    END $$;"""))
 
     # --- WALLETS ---
     op.create_table(
@@ -31,8 +42,8 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("privy_wallet_id", sa.String(length=255), nullable=False),
         sa.Column("address", sa.String(length=42), nullable=False),
-        sa.Column("provider", sa.Enum("privy", "external", name="walletprovider"), nullable=False),
-        sa.Column("default_chain", sa.Enum("arbitrum", "base", "hyperliquid", name="chaintype"), nullable=True),
+        sa.Column("provider", postgresql.ENUM("privy", "external", name="walletprovider", create_type=False), nullable=False),
+        sa.Column("default_chain", postgresql.ENUM("arbitrum", "base", "hyperliquid", name="chaintype", create_type=False), nullable=True),
         sa.Column("status", sa.Integer(), nullable=False, server_default='1'),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
@@ -50,7 +61,7 @@ def upgrade() -> None:
         "chain_addresses",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("wallet_id", sa.Integer(), nullable=False),
-        sa.Column("chain", sa.Enum("arbitrum", "base", "hyperliquid", name="chaintype"), nullable=False),
+        sa.Column("chain", postgresql.ENUM("arbitrum", "base", "hyperliquid", name="chaintype", create_type=False), nullable=False),
         sa.Column("address", sa.String(length=255), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=True, server_default='true'),
         sa.Column("balance_usd", sa.Numeric(precision=20, scale=2), nullable=True, server_default='0.00'),
@@ -70,7 +81,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("wallet_id", sa.Integer(), nullable=False),
         sa.Column("type", sa.Integer(), nullable=False),
-        sa.Column("chain", sa.Enum("arbitrum", "base", "hyperliquid", name="chaintype"), nullable=False),
+        sa.Column("chain", postgresql.ENUM("arbitrum", "base", "hyperliquid", name="chaintype", create_type=False), nullable=False),
         sa.Column("asset_in", sa.String(length=20), nullable=True),
         sa.Column("amount_in", sa.Numeric(precision=30, scale=18), nullable=True),
         sa.Column("asset_out", sa.String(length=20), nullable=True),

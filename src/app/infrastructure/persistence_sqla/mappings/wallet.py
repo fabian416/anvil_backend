@@ -50,8 +50,8 @@ def map_wallet_tables() -> None:
         # For imported wallets, we use a synthetic ID like "imported:<address>"
         privy_wallet_id = mapped_column(String(255), unique=True, nullable=True, index=True)
         address = mapped_column(String(42), nullable=False, index=True)
-        provider = mapped_column(Enum(WalletProvider, values_callable=lambda x: [e.value for e in x]), default=WalletProvider.PRIVY, nullable=False)
-        default_chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x]), default=ChainType.ARBITRUM)
+        provider = mapped_column(Enum(WalletProvider, values_callable=lambda x: [e.value for e in x], name="walletprovider", create_type=False), default=WalletProvider.PRIVY, nullable=False)
+        default_chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x], name="chaintype", create_type=False), default=ChainType.ARBITRUM)
         status = mapped_column(Integer, default=WalletStatus.ACTIVE.value, nullable=False)
         
         # Privy configuration fields (for admin management)
@@ -82,7 +82,7 @@ def map_wallet_tables() -> None:
         wallet_id = mapped_column(Integer, ForeignKey("wallets.id", ondelete="CASCADE"), nullable=False, index=True)
         
         # Chain details
-        chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+        chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x], name="chaintype", create_type=False), nullable=False, index=True)
         address = mapped_column(String(255), nullable=False, index=True)
         is_active = mapped_column(Boolean, default=True, index=True)
         

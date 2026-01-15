@@ -1,15 +1,17 @@
 """
 MoonPay Swap Flow Handler.
 
-Implements the complete conversational swap flow using MoonPay API:
+Implements the complete conversational swap flow using Privy + 0x Protocol:
 - Step-by-step parameter collection (from_token, to_token, amount)
 - Intelligent parameter detection from initial message
-- MoonPay quote integration
+- Quote generation for swap preview
 - Execute object generation for frontend confirmation banner
 - Multi-language support
 
-Note: The actual swap execution is handled by Privy SDK on the frontend.
-This handler manages the conversational flow and provides quote data.
+IMPORTANT: As of 2026-01-14, swap execution uses Privy + 0x Protocol.
+MoonPay is only used for on-ramp (BUY) operations.
+The actual swap execution is handled by Privy SDK + 0x API on the frontend.
+This handler manages the conversational flow and provides quote/execute data.
 """
 
 import logging
@@ -99,9 +101,9 @@ SWAP_FLOW_MESSAGES = {
     "en": {
         "ask_from_token": """🔄 **Let's Start Your Swap!**
 
-Great choice! Swapping crypto is easy with MoonPay.
+Great choice! Swapping crypto is easy with Privy + 0x.
 
-**Step 1 of 4:** Which crypto do you want to swap FROM?
+**Step 1 of 3:** Which crypto do you want to swap FROM?
 
 {options}
 
@@ -109,7 +111,7 @@ Great choice! Swapping crypto is easy with MoonPay.
 
         "ask_to_token": """✨ **Perfect! You're swapping {from_emoji} {from_token}**
 
-**Step 2 of 4:** What crypto would you like to receive?
+**Step 2 of 3:** What crypto would you like to receive?
 
 {options}
 
@@ -119,7 +121,7 @@ Great choice! Swapping crypto is easy with MoonPay.
 
 Swapping {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 
-**Step 3 of 4:** How much {from_token} would you like to swap?
+**Step 3 of 3:** How much {from_token} would you like to swap?
 
 💡 *Just enter a number, like:*
 • `1` (one {from_token})
@@ -128,13 +130,14 @@ Swapping {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 
         "quote_ready": """✅ **Swap Ready to Execute**
 
-🔄 **Intercambio:** {amount} {from_token} → {quote_amount} {to_token}
+🔄 **Swap:** {amount} {from_token} → ~{quote_amount} {to_token}
 📊 **Rate:** 1 {from_token} = {exchange_rate} {to_token}
-💸 **Network Fee:** ~${network_fee_usd}
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~${network_fee_usd}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Click **Confirm** to execute the swap.""",
+Click **Confirm** to execute via Privy + 0x Protocol.""",
 
         "error_invalid_token": """❌ I didn't recognize that token. Let's try again!
 
@@ -151,9 +154,9 @@ Please try again or choose different tokens.""",
     "es": {
         "ask_from_token": """🔄 **¡Comencemos tu Swap!**
 
-¡Excelente elección! Intercambiar cripto es fácil con MoonPay.
+¡Excelente elección! Intercambiar cripto es fácil con Privy + 0x.
 
-**Paso 1 de 4:** ¿Qué cripto quieres intercambiar?
+**Paso 1 de 3:** ¿Qué cripto quieres intercambiar?
 
 {options}
 
@@ -161,7 +164,7 @@ Please try again or choose different tokens.""",
 
         "ask_to_token": """✨ **¡Perfecto! Vas a intercambiar {from_emoji} {from_token}**
 
-**Paso 2 de 4:** ¿Qué cripto te gustaría recibir?
+**Paso 2 de 3:** ¿Qué cripto te gustaría recibir?
 
 {options}
 
@@ -171,7 +174,7 @@ Please try again or choose different tokens.""",
 
 Intercambiando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 
-**Paso 3 de 4:** ¿Cuánto {from_token} te gustaría intercambiar?
+**Paso 3 de 3:** ¿Cuánto {from_token} te gustaría intercambiar?
 
 💡 *Solo ingresa un número, como:*
 • `1` (un {from_token})
@@ -180,13 +183,14 @@ Intercambiando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 
         "quote_ready": """✅ **Swap Listo para Ejecutar**
 
-🔄 **Intercambio:** {amount} {from_token} → {quote_amount} {to_token}
+🔄 **Intercambio:** {amount} {from_token} → ~{quote_amount} {to_token}
 📊 **Tasa:** 1 {from_token} = {exchange_rate} {to_token}
-💸 **Fee de red:** ~${network_fee_usd}
+⛓️ **Red:** Base
+💸 **Gas Est.:** ~${network_fee_usd}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Haz clic en **Confirmar** para ejecutar el swap.""",
+Haz clic en **Confirmar** para ejecutar vía Privy + 0x Protocol.""",
 
         "error_invalid_token": """❌ No reconocí ese token. ¡Intentemos de nuevo!
 
@@ -203,9 +207,9 @@ Por favor intenta de nuevo o elige tokens diferentes.""",
     "pt": {
         "ask_from_token": """🔄 **Vamos Começar seu Swap!**
 
-Ótima escolha! Trocar cripto é fácil com MoonPay.
+Ótima escolha! Trocar cripto é fácil com Privy + 0x.
 
-**Passo 1 de 4:** Qual cripto você quer trocar?
+**Passo 1 de 3:** Qual cripto você quer trocar?
 
 {options}
 
@@ -213,7 +217,7 @@ Por favor intenta de nuevo o elige tokens diferentes.""",
 
         "ask_to_token": """✨ **Perfeito! Você vai trocar {from_emoji} {from_token}**
 
-**Passo 2 de 4:** Qual cripto você gostaria de receber?
+**Passo 2 de 3:** Qual cripto você gostaria de receber?
 
 {options}
 
@@ -223,7 +227,7 @@ Por favor intenta de nuevo o elige tokens diferentes.""",
 
 Trocando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 
-**Passo 3 de 4:** Quanto {from_token} você gostaria de trocar?
+**Passo 3 de 3:** Quanto {from_token} você gostaria de trocar?
 
 💡 *Apenas digite um número, como:*
 • `1` (um {from_token})
@@ -232,13 +236,14 @@ Trocando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 
         "quote_ready": """✅ **Swap Pronto para Executar**
 
-🔄 **Troca:** {amount} {from_token} → {quote_amount} {to_token}
+🔄 **Troca:** {amount} {from_token} → ~{quote_amount} {to_token}
 📊 **Taxa:** 1 {from_token} = {exchange_rate} {to_token}
-💸 **Taxa de rede:** ~${network_fee_usd}
+⛓️ **Rede:** Base
+💸 **Gas Est.:** ~${network_fee_usd}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Clique em **Confirmar** para executar o swap.""",
+Clique em **Confirmar** para executar via Privy + 0x Protocol.""",
 
         "error_invalid_token": """❌ Não reconheci esse token. Vamos tentar de novo!
 
@@ -279,14 +284,18 @@ class MoonPaySwapFlowHandler:
     5. User confirms → Frontend executes via Privy
     """
 
-    def __init__(self, moonpay_swap_handler=None):
+    def __init__(self, moonpay_swap_handler=None, ox_client=None, wallet_repository=None):
         """
         Initialize the handler.
 
         Args:
             moonpay_swap_handler: Optional MoonPay swap handler for quotes
+            ox_client: 0x Protocol client for real swap quotes
+            wallet_repository: Wallet repository to get user wallet address
         """
         self._moonpay_handler = moonpay_swap_handler
+        self._ox_client = ox_client
+        self._wallet_repository = wallet_repository
         self._supported_tokens = ["ETH", "USDC", "USDT", "BTC", "SOL"]
 
     # ========================================================================
@@ -301,6 +310,7 @@ class MoonPaySwapFlowHandler:
         continuation_step: str | None = None,
         continuation_value: str | None = None,
         previous_swap_info: dict | None = None,
+        user_id: int | None = None,
     ) -> MoonPaySwapHandlerResult:
         """
         Handle swap request with multi-turn support.
@@ -312,6 +322,7 @@ class MoonPaySwapFlowHandler:
             continuation_step: If continuing a flow, which step
             continuation_value: Value for the continuation step
             previous_swap_info: Previous swap info for continuation
+            user_id: User ID for fetching wallet address
 
         Returns:
             MoonPaySwapHandlerResult with response and pending action
@@ -319,6 +330,7 @@ class MoonPaySwapFlowHandler:
         logger.info(f"[MOONPAY_SWAP] handle() called with message: '{message}'")
         logger.info(f"[MOONPAY_SWAP] continuation_step: {continuation_step}")
         logger.info(f"[MOONPAY_SWAP] previous_swap_info: {previous_swap_info}")
+        logger.info(f"[MOONPAY_SWAP] user_id: {user_id}")
 
         # Initialize swap_info from previous state if available
         if previous_swap_info:
@@ -344,7 +356,7 @@ class MoonPaySwapFlowHandler:
             )
 
         # Process the flow
-        return await self._process_swap_flow(swap_info, language)
+        return await self._process_swap_flow(swap_info, language, user_id)
 
     # ========================================================================
     # Flow Processing
@@ -354,6 +366,7 @@ class MoonPaySwapFlowHandler:
         self,
         swap_info: MoonPaySwapInfo,
         language: str,
+        user_id: int | None = None,
     ) -> MoonPaySwapHandlerResult:
         """Process swap flow based on current info."""
         msgs = SWAP_FLOW_MESSAGES.get(language, SWAP_FLOW_MESSAGES["en"])
@@ -404,95 +417,130 @@ class MoonPaySwapFlowHandler:
             )
 
         # Phase 4: All data collected - Get quote and generate execute object
-        return await self._generate_quote_and_execute(swap_info, language)
+        return await self._generate_quote_and_execute(swap_info, language, user_id)
 
     async def _generate_quote_and_execute(
         self,
         swap_info: MoonPaySwapInfo,
         language: str,
+        user_id: int | None = None,
     ) -> MoonPaySwapHandlerResult:
-        """Generate quote from MoonPay and create execute object."""
+        """Generate quote from 0x Protocol and create execute object."""
         msgs = SWAP_FLOW_MESSAGES.get(language, SWAP_FLOW_MESSAGES["en"])
 
         try:
             quote = {}
             use_demo_quote = False
-            
-            # Get quote from MoonPay
-            if self._moonpay_handler:
-                logger.info(f"[MOONPAY_SWAP] Calling MoonPay API for quote: {swap_info.from_token} -> {swap_info.to_token}, amount: {swap_info.amount}")
+            user_wallet_address = None
+
+            # ============================================================================
+            # CRITICAL: Get REAL quote from 0x Protocol (not MoonPay)
+            # ============================================================================
+            # MoonPay is ONLY used for on-ramp (BUY operations with fiat)
+            # Swaps use Privy + 0x Protocol for best rates and decentralized execution
+            # ============================================================================
+
+            if self._ox_client and user_id and self._wallet_repository:
+                logger.info(
+                    "[SWAP_FLOW] Fetching REAL quote from 0x Protocol: "
+                    f"{swap_info.amount} {swap_info.from_token} → {swap_info.to_token}"
+                )
+
                 try:
-                    quote_result = await self._moonpay_handler.get_swap_quote(
-                        from_currency=swap_info.from_token.lower(),
-                        to_currency=swap_info.to_token.lower(),
-                        amount=swap_info.amount,
-                        language=language,
-                    )
-                    # MoonPaySwapHandler returns quote dict with these fields:
-                    # quote_amount, exchange_rate, network_fee_usd, expires_at
-                    quote = quote_result.quote if hasattr(quote_result, "quote") and quote_result.quote else {}
-                    logger.info(f"[MOONPAY_SWAP] MoonPay quote received: {quote}")
-                    
-                    # Validate the quote has meaningful data
-                    quote_amount_raw = quote.get("quote_amount") or quote.get("quoteCurrencyAmount") or "0"
-                    try:
-                        quote_amount_float = float(quote_amount_raw)
-                        if quote_amount_float == 0:
-                            logger.warning(
-                                f"[MOONPAY_SWAP] MoonPay returned 0 quote amount for {swap_info.from_token}->{swap_info.to_token}. "
-                                "Using demo quote as fallback."
-                            )
-                            use_demo_quote = True
-                    except (ValueError, TypeError):
-                        logger.warning(f"[MOONPAY_SWAP] Invalid quote_amount: {quote_amount_raw}. Using demo quote.")
+                    # 1. Get user's wallet address
+                    user_wallets = await self._wallet_repository.get_by_user_id(user_id)
+                    if user_wallets:
+                        user_wallet_address = user_wallets[0].address
+                        logger.info(f"[SWAP_FLOW] Using wallet: {user_wallet_address}")
+                    else:
+                        logger.warning(f"[SWAP_FLOW] No wallet found for user {user_id}")
                         use_demo_quote = True
-                        
+
+                    if user_wallet_address:
+                        # 2. Call 0x API for REAL quote
+                        ox_quote = await self._ox_client.get_swap_quote(
+                            chain="base",  # Default to Base for lower fees
+                            from_token=swap_info.from_token,
+                            to_token=swap_info.to_token,
+                            amount=swap_info.amount,
+                            user_address=user_wallet_address,
+                            slippage=1.0,  # 1% default slippage
+                        )
+
+                        # 3. Convert to internal quote format
+                        quote = {
+                            "quote_amount": self._ox_client._from_wei(
+                                ox_quote.buy_amount, swap_info.to_token
+                            ),
+                            "exchange_rate": ox_quote.price,
+                            "network_fee_usd": "0.01",  # Estimated, actual fee from transaction
+                            "quote_id": ox_quote.quote_id or f"0x-{datetime.utcnow().timestamp()}",
+                            "expires_at": ox_quote.expires_at or (
+                                datetime.utcnow() + timedelta(minutes=1)
+                            ).isoformat(),
+                            "transaction": ox_quote.transaction,
+                            "permit2": ox_quote.permit2,
+                            "gas_estimate": ox_quote.gas_estimate,
+                        }
+
+                        logger.info(
+                            "[SWAP_FLOW] ✅ REAL quote from 0x: "
+                            f"{swap_info.amount} {swap_info.from_token} → "
+                            f"{quote['quote_amount']} {swap_info.to_token} "
+                            f"(rate: {quote['exchange_rate']})"
+                        )
+
                 except Exception as api_error:
-                    logger.warning(f"[MOONPAY_SWAP] MoonPay API error: {api_error}. Using demo quote as fallback.")
+                    logger.error(
+                        f"[SWAP_FLOW] ❌ 0x API error: {api_error}. Falling back to demo quote.",
+                        exc_info=True,
+                    )
                     use_demo_quote = True
+
             else:
-                # Demo quote if no handler available
-                logger.warning("[MOONPAY_SWAP] No MoonPay handler available, using demo quote")
+                # No 0x client or user wallet - use demo quote
+                missing = []
+                if not self._ox_client:
+                    missing.append("0x client")
+                if not user_id:
+                    missing.append("user_id")
+                if not self._wallet_repository:
+                    missing.append("wallet_repository")
+
+                logger.warning(
+                    f"[SWAP_FLOW] Missing: {', '.join(missing)}. Using demo quote."
+                )
                 use_demo_quote = True
 
-            # Use demo quote if needed
+            # Use demo quote if needed (fallback for testing/errors)
             if use_demo_quote:
                 quote = self._get_demo_quote(swap_info)
-                logger.info(f"[MOONPAY_SWAP] Using demo quote: {quote}")
+                logger.info(f"[SWAP_FLOW] Using DEMO quote: {quote}")
 
-            # Extract quote data - handle both MoonPay API format and demo format
-            # MoonPaySwapHandler returns: quote_amount, exchange_rate, network_fee_usd
-            # Demo returns: quoteCurrencyAmount, exchangeRate, networkFee
-            quote_amount = (
-                quote.get("quote_amount") or 
-                quote.get("quoteCurrencyAmount") or 
-                self._calculate_demo_output(swap_info)
-            )
+            # Extract quote data with fallback to multiple API response formats
+            quote_amount = quote.get("quote_amount") or self._calculate_demo_output(swap_info)
             exchange_rate = (
-                quote.get("exchange_rate") or 
-                quote.get("exchangeRate") or 
+                quote.get("exchange_rate") or
+                quote.get("exchangeRate") or
                 self._get_demo_rate(swap_info.from_token, swap_info.to_token)
             )
             network_fee = (
-                quote.get("network_fee_usd") or 
-                quote.get("networkFee") or 
+                quote.get("network_fee_usd") or
+                quote.get("networkFee") or
                 "0.01"
             )
             quote_id = quote.get("id", f"quote-{datetime.now(UTC).timestamp()}")
             expires_at = quote.get("expires_at") or quote.get("expiresAt") or (datetime.now(UTC) + timedelta(minutes=1)).isoformat()
-            
+
             # Final validation - ensure we have valid amounts
             try:
                 quote_amount_float = float(quote_amount)
                 if quote_amount_float <= 0:
-                    # Force recalculation using demo rate
                     quote_amount = self._calculate_demo_output(swap_info)
                     exchange_rate = self._get_demo_rate(swap_info.from_token, swap_info.to_token)
-                    logger.warning(f"[MOONPAY_SWAP] Forced demo calculation: {quote_amount} at rate {exchange_rate}")
             except (ValueError, TypeError):
                 quote_amount = self._calculate_demo_output(swap_info)
                 exchange_rate = self._get_demo_rate(swap_info.from_token, swap_info.to_token)
-                logger.warning(f"[MOONPAY_SWAP] Invalid quote amount, using demo: {quote_amount}")
 
             # Format the response
             content = msgs["quote_ready"].format(
@@ -504,13 +552,36 @@ class MoonPaySwapFlowHandler:
                 network_fee_usd=network_fee,
             )
 
-            # Build execute object - ONLY when all data is complete
-            # Use "moonpay_swap" to differentiate from regular swaps
+            # ============================================================================
+            # Build execute object for Privy + 0x Protocol
+            # ============================================================================
+            # CRITICAL: This structure must match what the frontend expects for
+            # Privy + 0x swap execution. The frontend checks for:
+            # - provider === "privy_0x" to trigger the correct flow
+            # - action_type === "swap" for the ExecutionConfirmationBanner
+            # - Complete data: from_token, to_token, amount, chain
+            #
+            # The frontend will use usePrivySwap hook to:
+            # 1. Approve Permit2 contract
+            # 2. Get live quote from 0x API
+            # 3. Sign permit via Privy wallet
+            # 4. Execute swap transaction
+            # ============================================================================
             execute_data = {
-                "action_type": "moonpay_swap",
-                "from_token": swap_info.from_token,
-                "to_token": swap_info.to_token,
+                # Core action identification
+                "action_type": "swap",  # Use "swap" for ExecutionConfirmationBanner compatibility
+                "provider": "privy_0x",  # CRITICAL: Tells frontend to use Privy + 0x flow
+
+                # Token pair
+                "from_token": swap_info.from_token.upper(),
+                "to_token": swap_info.to_token.upper(),
                 "amount": swap_info.amount,
+
+                # Network configuration
+                "chain": "base",  # Default chain for swaps
+                "slippage": 1.0,  # 1% default slippage
+
+                # Quote preview data (frontend will get live quote from 0x)
                 "quote_id": quote_id,
                 "quote_amount": str(quote_amount),
                 "exchange_rate": str(exchange_rate),
@@ -529,15 +600,22 @@ class MoonPaySwapFlowHandler:
                 requires_registration=True,
                 metadata=metadata,
                 enrichment={
+                    # Provider info for frontend detection
+                    "provider": "privy_0x",
+                    "chain": "base",
+                    "frontend_execution": True,  # Signal that frontend handles execution
+
+                    # Swap quote details
                     "swap_quote": {
-                        "from_token": swap_info.from_token,
-                        "to_token": swap_info.to_token,
+                        "from_token": swap_info.from_token.upper(),
+                        "to_token": swap_info.to_token.upper(),
                         "from_amount": swap_info.amount,
                         "to_amount": str(quote_amount),
                         "rate": str(exchange_rate),
                         "network_fee_usd": str(network_fee),
                         "quote_id": quote_id,
                         "expires_at": expires_at,
+                        "is_estimate": True,  # Indicates frontend should get live quote from 0x
                     },
                 },
                 execute_data=execute_data,  # Execute object triggers banner
@@ -545,7 +623,7 @@ class MoonPaySwapFlowHandler:
             )
 
         except Exception as e:
-            logger.error(f"Error getting MoonPay quote: {e}", exc_info=True)
+            logger.error(f"Error generating swap quote: {e}", exc_info=True)
             return MoonPaySwapHandlerResult(
                 content=msgs["error_quote_failed"].format(
                     from_token=swap_info.from_token,

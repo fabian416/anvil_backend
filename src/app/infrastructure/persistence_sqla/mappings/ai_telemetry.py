@@ -32,7 +32,7 @@ def map_ai_telemetry_tables() -> None:
             )
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False, index=True)
             model_name = mapped_column(String(100), nullable=False, index=True)
             label = mapped_column(String(255), nullable=False)
             is_default = mapped_column(Boolean, default=False, index=True)
@@ -42,7 +42,7 @@ def map_ai_telemetry_tables() -> None:
             cost_per_1k_output_tokens = mapped_column(Numeric(10, 8), nullable=False)
             max_tokens = mapped_column(Integer, nullable=True)
             
-            status = mapped_column(Enum(ModelStatus, values_callable=lambda x: [e.value for e in x]), default=ModelStatus.ACTIVE, nullable=False, index=True)
+            status = mapped_column(Enum(ModelStatus, values_callable=lambda x: [e.value for e in x], name="modelstatus", create_type=False), default=ModelStatus.ACTIVE, nullable=False, index=True)
             request_count = mapped_column(BigInteger, default=0)
             total_cost_usd = mapped_column(Numeric(12, 2), default=0)
             
@@ -61,7 +61,7 @@ def map_ai_telemetry_tables() -> None:
             session_id = mapped_column(String(100), nullable=False, index=True)
             model_id = mapped_column(BigInteger, ForeignKey("models.id", ondelete="SET NULL"), nullable=True, index=True)
             
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False, index=True)
             model_name = mapped_column(String(100), nullable=False)
             prompt_text = mapped_column(Text, nullable=False)
             response_text = mapped_column(Text, nullable=True)
@@ -72,7 +72,7 @@ def map_ai_telemetry_tables() -> None:
             cost_usd = mapped_column(Numeric(10, 6), nullable=True)
             latency_ms = mapped_column(Integer, nullable=True)
             
-            status = mapped_column(Enum(LLMStatus, values_callable=lambda x: [e.value for e in x]), default=LLMStatus.SUCCESS, index=True)
+            status = mapped_column(Enum(LLMStatus, values_callable=lambda x: [e.value for e in x], name="llmstatus", create_type=False), default=LLMStatus.SUCCESS, index=True)
             error_message = mapped_column(Text, nullable=True)
             ip_address = mapped_column(String(45), nullable=True)
             user_agent = mapped_column(Text, nullable=True)
@@ -91,7 +91,7 @@ def map_ai_telemetry_tables() -> None:
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
             agent_type = mapped_column(String(50), nullable=False, index=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False)
             model_name = mapped_column(String(100), nullable=False)
             
             priority = mapped_column(Integer, default=100, nullable=False)
@@ -171,7 +171,7 @@ def map_ai_telemetry_tables() -> None:
             
             agent_type = mapped_column(String(50), nullable=False, index=True)
             workflow_type = mapped_column(String(50), nullable=False, index=True)
-            status = mapped_column(Enum(AgentExecutionStatus, values_callable=lambda x: [e.value for e in x]), default=AgentExecutionStatus.PENDING, index=True)
+            status = mapped_column(Enum(AgentExecutionStatus, values_callable=lambda x: [e.value for e in x], name="agentexecutionstatus", create_type=False), default=AgentExecutionStatus.PENDING, index=True)
             
             input_params = mapped_column(JSON, nullable=True)
             output_result = mapped_column(JSON, nullable=True)
@@ -199,7 +199,7 @@ def map_ai_telemetry_tables() -> None:
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
             agent_type = mapped_column(String(50), nullable=False, index=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False)
             model_name = mapped_column(String(100), nullable=False)
             
             priority = mapped_column(Integer, default=100, nullable=False)
@@ -278,7 +278,7 @@ def map_ai_telemetry_tables() -> None:
             
             task_name = mapped_column(String(100), nullable=False)
             task_type = mapped_column(String(50), nullable=False, index=True)
-            status = mapped_column(Enum(AgentTaskStatus, values_callable=lambda x: [e.value for e in x]), default=AgentTaskStatus.PENDING, index=True)
+            status = mapped_column(Enum(AgentTaskStatus, values_callable=lambda x: [e.value for e in x], name="agenttaskstatus", create_type=False), default=AgentTaskStatus.PENDING, index=True)
             
             input_data = mapped_column(JSON, nullable=True)
             output_data = mapped_column(JSON, nullable=True)
@@ -303,7 +303,7 @@ def map_ai_telemetry_tables() -> None:
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
             agent_type = mapped_column(String(50), nullable=False, index=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False)
             model_name = mapped_column(String(100), nullable=False)
             
             priority = mapped_column(Integer, default=100, nullable=False)
@@ -385,7 +385,7 @@ def map_ai_telemetry_tables() -> None:
             input_params = mapped_column(JSON, nullable=True)
             output_result = mapped_column(JSON, nullable=True)
             
-            status = mapped_column(Enum(AgentToolStatus, values_callable=lambda x: [e.value for e in x]), default=AgentToolStatus.SUCCESS, index=True)
+            status = mapped_column(Enum(AgentToolStatus, values_callable=lambda x: [e.value for e in x], name="agenttoolstatus", create_type=False), default=AgentToolStatus.SUCCESS, index=True)
             execution_time_ms = mapped_column(Integer, nullable=True)
             error_message = mapped_column(Text, nullable=True)
             
@@ -403,7 +403,7 @@ def map_ai_telemetry_tables() -> None:
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
             agent_type = mapped_column(String(50), nullable=False, index=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False)
             model_name = mapped_column(String(100), nullable=False)
             
             priority = mapped_column(Integer, default=100, nullable=False)
@@ -478,9 +478,9 @@ def map_ai_telemetry_tables() -> None:
             __table_args__ = {"extend_existing": True}
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False, index=True)
             model_name = mapped_column(String(100), nullable=False, index=True)
-            event_type = mapped_column(Enum(RateLimitEventType, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+            event_type = mapped_column(Enum(RateLimitEventType, values_callable=lambda x: [e.value for e in x], name="ratelimiteventtype", create_type=False), nullable=False, index=True)
             
             user_id = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
             error_code = mapped_column(String(50), nullable=True)
@@ -504,7 +504,7 @@ def map_ai_telemetry_tables() -> None:
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
             agent_type = mapped_column(String(50), nullable=False, index=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False)
             model_name = mapped_column(String(100), nullable=False)
             
             priority = mapped_column(Integer, default=100, nullable=False)
@@ -579,7 +579,7 @@ def map_ai_telemetry_tables() -> None:
             __table_args__ = {"extend_existing": True}
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-            alert_type = mapped_column(Enum(CostAlertType, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+            alert_type = mapped_column(Enum(CostAlertType, values_callable=lambda x: [e.value for e in x], name="costalerttype", create_type=False), nullable=False, index=True)
             threshold_usd = mapped_column(Numeric(10, 2), nullable=False)
             actual_cost_usd = mapped_column(Numeric(10, 2), nullable=False)
             
@@ -606,7 +606,7 @@ def map_ai_telemetry_tables() -> None:
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
             agent_type = mapped_column(String(50), nullable=False, index=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False)
             model_name = mapped_column(String(100), nullable=False)
             
             priority = mapped_column(Integer, default=100, nullable=False)
@@ -751,7 +751,7 @@ def map_ai_telemetry_tables() -> None:
             user_id = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
             
             rating = mapped_column(Integer, nullable=True, index=True)
-            feedback_type = mapped_column(Enum(FeedbackType, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+            feedback_type = mapped_column(Enum(FeedbackType, values_callable=lambda x: [e.value for e in x], name="feedbacktype", create_type=False), nullable=False, index=True)
             feedback_text = mapped_column(Text, nullable=True)
             
             created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
@@ -768,7 +768,7 @@ def map_ai_telemetry_tables() -> None:
             
             id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
             agent_type = mapped_column(String(50), nullable=False, index=True)
-            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            provider = mapped_column(Enum(LLMProvider, values_callable=lambda x: [e.value for e in x], name="llmprovider", create_type=False), nullable=False)
             model_name = mapped_column(String(100), nullable=False)
             
             priority = mapped_column(Integer, default=100, nullable=False)

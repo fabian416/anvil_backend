@@ -29,7 +29,7 @@ def map_defi_operations_tables() -> None:
             wallet_id = mapped_column(Integer, ForeignKey("wallets.id", ondelete="CASCADE"), nullable=False)
             
             symbol = mapped_column(String(20), nullable=False, index=True)
-            side = mapped_column(Enum(Side, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            side = mapped_column(Enum(Side, values_callable=lambda x: [e.value for e in x], name="side", create_type=False), nullable=False)
             leverage = mapped_column(Numeric(5, 2), nullable=False)
             size = mapped_column(Numeric(30, 18), nullable=False)
             entry_price = mapped_column(Numeric(20, 8), nullable=False)
@@ -42,7 +42,7 @@ def map_defi_operations_tables() -> None:
             funding_rate = mapped_column(Numeric(10, 6), nullable=True)
             last_funding_payment = mapped_column(Numeric(20, 8), nullable=True)
             
-            status = mapped_column(Enum(PositionStatus, values_callable=lambda x: [e.value for e in x]), default=PositionStatus.OPEN, index=True)
+            status = mapped_column(Enum(PositionStatus, values_callable=lambda x: [e.value for e in x], name="positionstatus", create_type=False), default=PositionStatus.OPEN, index=True)
             hyperliquid_order_id = mapped_column(String(100), nullable=True)
             
             opened_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
@@ -60,7 +60,7 @@ def map_defi_operations_tables() -> None:
             user_id = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
             wallet_id = mapped_column(Integer, ForeignKey("wallets.id", ondelete="CASCADE"), nullable=False)
             
-            chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+            chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x], name="chaintype", create_type=False), nullable=False, index=True)
             protocol = mapped_column(String(50), nullable=False, index=True)
             asset = mapped_column(String(20), nullable=False)
             amount_deposited = mapped_column(Numeric(30, 18), nullable=False)
@@ -71,7 +71,7 @@ def map_defi_operations_tables() -> None:
             rewards_earned = mapped_column(Numeric(30, 18), default=0)
             rewards_earned_usd = mapped_column(Numeric(20, 2), default=0)
             
-            status = mapped_column(Enum(EarnStatus, values_callable=lambda x: [e.value for e in x]), default=EarnStatus.ACTIVE, index=True)
+            status = mapped_column(Enum(EarnStatus, values_callable=lambda x: [e.value for e in x], name="earnstatus", create_type=False), default=EarnStatus.ACTIVE, index=True)
             
             transaction_hash = mapped_column(String(66), nullable=True)
             deposit_tx_hash = mapped_column(String(66), nullable=True)
@@ -92,16 +92,16 @@ def map_defi_operations_tables() -> None:
             user_id = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
             wallet_id = mapped_column(Integer, ForeignKey("wallets.id", ondelete="CASCADE"), nullable=False)
             
-            chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            chain = mapped_column(Enum(ChainType, values_callable=lambda x: [e.value for e in x], name="chaintype", create_type=False), nullable=False)
             asset = mapped_column(String(20), nullable=False)
             amount = mapped_column(Numeric(30, 18), nullable=False)
             
-            frequency = mapped_column(Enum(Frequency, values_callable=lambda x: [e.value for e in x]), nullable=False)
+            frequency = mapped_column(Enum(Frequency, values_callable=lambda x: [e.value for e in x], name="frequency", create_type=False), nullable=False)
             day_of_week = mapped_column(Integer, nullable=True)
             day_of_month = mapped_column(Integer, nullable=True)
             destination_protocol = mapped_column(String(50), nullable=True)
             
-            status = mapped_column(Enum(ScheduleStatus, values_callable=lambda x: [e.value for e in x]), default=ScheduleStatus.ACTIVE, index=True)
+            status = mapped_column(Enum(ScheduleStatus, values_callable=lambda x: [e.value for e in x], name="schedulestatus", create_type=False), default=ScheduleStatus.ACTIVE, index=True)
             
             next_execution_at = mapped_column(DateTime(timezone=True), nullable=False, index=True)
             last_execution_at = mapped_column(DateTime(timezone=True), nullable=True)

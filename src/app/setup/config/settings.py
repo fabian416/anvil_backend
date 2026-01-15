@@ -11,6 +11,7 @@ from app.setup.config.logs import LoggingSettings
 from app.setup.config.mailgun import MailgunSettings
 from app.setup.config.mcp import MCPSettings
 from app.setup.config.moonpay import MoonPaySettings
+from app.setup.config.ox_protocol import OxProtocolSettings
 from app.setup.config.privy import PrivySettings
 from app.setup.config.projects import ProjectSettings
 from app.setup.config.rpc import RPCSettings, WalletSettings
@@ -30,6 +31,7 @@ class AppSettings(BaseModel):
     stripe: StripeSettings | None = None
     privy: PrivySettings | None = None
     moonpay: MoonPaySettings = MoonPaySettings()
+    ox_protocol: OxProtocolSettings = OxProtocolSettings()
     integrations: IntegrationSettings = IntegrationSettings()
     mcp: MCPSettings = MCPSettings()
     agno: AgnoSettings = AgnoSettings()

@@ -314,8 +314,10 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
         )
         
         # Build execute data for when swap is complete and ready
+        # NOW USING: Privy + 0x Protocol for frontend execution
         execute_data = {
             "action_type": "swap",
+            "provider": "privy_0x",  # Tell frontend to use Privy + 0x
             "chain": chain,
             "from_token": swap_info.from_token,
             "to_token": swap_info.to_token,

@@ -89,8 +89,9 @@ class ConversationWithMessagesResponse(BaseModel):
 
 class ExecuteActionData(BaseModel):
     """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
-    
+
     action_type: str = Field(..., description="Type of action: swap, deposit, withdraw, transfer, approve, bridge")
+    provider: str | None = Field(default=None, description="Execution provider: privy_0x for Privy + 0x swaps")
     chain: str = Field(default="base", description="Blockchain to execute on")
     from_token: str | None = Field(default=None, description="Source token symbol or address")
     to_token: str | None = Field(default=None, description="Destination token symbol (for swap)")
@@ -100,6 +101,13 @@ class ExecuteActionData(BaseModel):
     recipient: str | None = Field(default=None, description="Recipient address (for transfer)")
     slippage: float = Field(default=1.0, description="Slippage tolerance in percent")
     to_chain: str | None = Field(default=None, description="Destination chain (for cross-chain swap/bridge)")
+
+    # Quote preview fields (for display before execution)
+    quote_id: str | None = Field(default=None, description="Quote identifier")
+    quote_amount: str | None = Field(default=None, description="Estimated output amount")
+    exchange_rate: str | None = Field(default=None, description="Exchange rate for the swap")
+    network_fee_usd: str | None = Field(default=None, description="Estimated network fee in USD")
+    expires_at: str | None = Field(default=None, description="Quote expiration timestamp")
 
 
 class ChatResponse(BaseModel):

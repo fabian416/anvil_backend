@@ -25,6 +25,7 @@ from app.application.commands.auth.change_role import ChangeRoleInteractor
 from app.application.commands.auth.privy_login import PrivyLogin
 from app.application.commands.wallet.export_wallet import ExportWallet
 from app.application.commands.wallet.update_privy_wallet import UpdatePrivyWallet
+from app.application.commands.wallet.save_swap_transaction import SaveSwapTransactionHandler
 from app.application.commands.policy.create_privy_policy import CreatePrivyPolicy
 from app.application.commands.policy.get_privy_policy import GetPrivyPolicy
 from app.application.commands.policy.update_privy_policy import UpdatePrivyPolicy
@@ -196,6 +197,7 @@ class ApplicationProvider(Provider):
         PrivyLogin,
         ExportWallet,
         UpdatePrivyWallet,
+        SaveSwapTransactionHandler,
         # Privy policy management (admin)
         CreatePrivyPolicy,
         GetPrivyPolicy,

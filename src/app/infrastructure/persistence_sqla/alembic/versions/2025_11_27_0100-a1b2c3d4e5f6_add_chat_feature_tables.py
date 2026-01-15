@@ -17,9 +17,18 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    # Create Enums (checkfirst=True to avoid error if already exists)
-    sa.Enum("user", "agent", "system", name="messagerole").create(op.get_bind(), checkfirst=True)
-    sa.Enum("trading", "yield_farming", "risk_analysis", "research", "portfolio", name="agenttype").create(op.get_bind(), checkfirst=True)
+    # Create Enums using raw SQL to avoid duplication issues
+    connection = op.get_bind()
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'messagerole') THEN
+            CREATE TYPE messagerole AS ENUM ('user', 'agent', 'system');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agenttype') THEN
+            CREATE TYPE agenttype AS ENUM ('trading', 'yield_farming', 'risk_analysis', 'research', 'portfolio');
+        END IF;
+    END $$;"""))
 
     # Create Conversations Table
     op.create_table(
@@ -34,26 +43,26 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_conversations_user_id"), "conversations", ["user_id"], unique=False)
 
-    # Create Messages Table (create_type=False to avoid duplicate enum creation)
+    # Create Messages Table using raw column types
     op.create_table(
         "messages",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("conversation_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("role", sa.Enum("user", "agent", "system", name="messagerole", create_type=False), nullable=False),
+        sa.Column("role", postgresql.ENUM('user', 'agent', 'system', name='messagerole', create_type=False), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("agent_type", sa.Enum("trading", "yield_farming", "risk_analysis", "research", "portfolio", name="agenttype", create_type=False), nullable=True),
+        sa.Column("agent_type", postgresql.ENUM('trading', 'yield_farming', 'risk_analysis', 'research', 'portfolio', name='agenttype', create_type=False), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
         sa.ForeignKeyConstraint(["conversation_id"], ["conversations.id"], name=op.f("fk_messages_conversation_id_conversations")),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_messages")),
     )
     op.create_index(op.f("ix_messages_conversation_id"), "messages", ["conversation_id"], unique=False)
 
-    # Create Agent Sessions Table (create_type=False to avoid duplicate enum creation)
+    # Create Agent Sessions Table
     op.create_table(
         "agent_sessions",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("conversation_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("agent_type", sa.Enum("trading", "yield_farming", "risk_analysis", "research", "portfolio", name="agenttype", create_type=False), nullable=False),
+        sa.Column("agent_type", postgresql.ENUM('trading', 'yield_farming', 'risk_analysis', 'research', 'portfolio', name='agenttype', create_type=False), nullable=False),
         sa.Column("state", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),

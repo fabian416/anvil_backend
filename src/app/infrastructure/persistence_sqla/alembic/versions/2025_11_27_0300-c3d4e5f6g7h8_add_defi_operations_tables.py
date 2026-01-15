@@ -17,12 +17,33 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    # Create Enums (checkfirst=True to avoid error if already exists)
-    sa.Enum("long", "short", name="side").create(op.get_bind(), checkfirst=True)
-    sa.Enum("open", "closed", "liquidated", name="positionstatus").create(op.get_bind(), checkfirst=True)
-    sa.Enum("active", "withdrawn", "emergency_exit", name="earnstatus").create(op.get_bind(), checkfirst=True)
-    sa.Enum("daily", "weekly", "biweekly", "monthly", name="frequency").create(op.get_bind(), checkfirst=True)
-    sa.Enum("active", "paused", "completed", "failed", name="schedulestatus").create(op.get_bind(), checkfirst=True)
+    # Create Enums using raw SQL to avoid duplication issues
+    connection = op.get_bind()
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'side') THEN
+            CREATE TYPE side AS ENUM ('long', 'short');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'positionstatus') THEN
+            CREATE TYPE positionstatus AS ENUM ('open', 'closed', 'liquidated');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'earnstatus') THEN
+            CREATE TYPE earnstatus AS ENUM ('active', 'withdrawn', 'emergency_exit');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'frequency') THEN
+            CREATE TYPE frequency AS ENUM ('daily', 'weekly', 'biweekly', 'monthly');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'schedulestatus') THEN
+            CREATE TYPE schedulestatus AS ENUM ('active', 'paused', 'completed', 'failed');
+        END IF;
+    END $$;"""))
 
     # --- Hyperliquid Positions ---
     op.create_table(
@@ -31,7 +52,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("wallet_id", sa.Integer(), nullable=False),
         sa.Column("symbol", sa.String(length=20), nullable=False),
-        sa.Column("side", sa.Enum("long", "short", name="side"), nullable=False),
+        sa.Column("side", postgresql.ENUM("long", "short", name="side", create_type=False), nullable=False),
         sa.Column("leverage", sa.Numeric(precision=5, scale=2), nullable=False),
         sa.Column("size", sa.Numeric(precision=30, scale=18), nullable=False),
         sa.Column("entry_price", sa.Numeric(precision=20, scale=8), nullable=False),
@@ -42,7 +63,7 @@ def upgrade() -> None:
         sa.Column("margin", sa.Numeric(precision=20, scale=8), nullable=False),
         sa.Column("funding_rate", sa.Numeric(precision=10, scale=6), nullable=True),
         sa.Column("last_funding_payment", sa.Numeric(precision=20, scale=8), nullable=True),
-        sa.Column("status", sa.Enum("open", "closed", "liquidated", name="positionstatus"), server_default='open', nullable=True),
+        sa.Column("status", postgresql.ENUM("open", "closed", "liquidated", name="positionstatus", create_type=False), server_default='open', nullable=True),
         sa.Column("hyperliquid_order_id", sa.String(length=100), nullable=True),
         sa.Column("opened_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
         sa.Column("closed_at", sa.DateTime(timezone=True), nullable=True),
@@ -62,7 +83,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("wallet_id", sa.Integer(), nullable=False),
-        sa.Column("chain", sa.Enum("arbitrum", "base", "hyperliquid", name="chaintype"), nullable=False),
+        sa.Column("chain", postgresql.ENUM("arbitrum", "base", "hyperliquid", name="chaintype", create_type=False), nullable=False),
         sa.Column("protocol", sa.String(length=50), nullable=False),
         sa.Column("asset", sa.String(length=20), nullable=False),
         sa.Column("amount_deposited", sa.Numeric(precision=30, scale=18), nullable=False),
@@ -71,7 +92,7 @@ def upgrade() -> None:
         sa.Column("current_apy", sa.Numeric(precision=8, scale=4), nullable=True),
         sa.Column("rewards_earned", sa.Numeric(precision=30, scale=18), server_default='0', nullable=True),
         sa.Column("rewards_earned_usd", sa.Numeric(precision=20, scale=2), server_default='0', nullable=True),
-        sa.Column("status", sa.Enum("active", "withdrawn", "emergency_exit", name="earnstatus"), server_default='active', nullable=True),
+        sa.Column("status", postgresql.ENUM("active", "withdrawn", "emergency_exit", name="earnstatus", create_type=False), server_default='active', nullable=True),
         sa.Column("transaction_hash", sa.String(length=66), nullable=True),
         sa.Column("deposit_tx_hash", sa.String(length=66), nullable=True),
         sa.Column("withdraw_tx_hash", sa.String(length=66), nullable=True),
@@ -94,14 +115,14 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("wallet_id", sa.Integer(), nullable=False),
-        sa.Column("chain", sa.Enum("arbitrum", "base", "hyperliquid", name="chaintype"), nullable=False),
+        sa.Column("chain", postgresql.ENUM("arbitrum", "base", "hyperliquid", name="chaintype", create_type=False), nullable=False),
         sa.Column("asset", sa.String(length=20), nullable=False),
         sa.Column("amount", sa.Numeric(precision=30, scale=18), nullable=False),
-        sa.Column("frequency", sa.Enum("daily", "weekly", "biweekly", "monthly", name="frequency"), nullable=False),
+        sa.Column("frequency", postgresql.ENUM("daily", "weekly", "biweekly", "monthly", name="frequency", create_type=False), nullable=False),
         sa.Column("day_of_week", sa.Integer(), nullable=True),
         sa.Column("day_of_month", sa.Integer(), nullable=True),
         sa.Column("destination_protocol", sa.String(length=50), nullable=True),
-        sa.Column("status", sa.Enum("active", "paused", "completed", "failed", name="schedulestatus"), server_default='active', nullable=True),
+        sa.Column("status", postgresql.ENUM("active", "paused", "completed", "failed", name="schedulestatus", create_type=False), server_default='active', nullable=True),
         sa.Column("next_execution_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("last_execution_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("total_saved", sa.Numeric(precision=30, scale=18), server_default='0', nullable=True),

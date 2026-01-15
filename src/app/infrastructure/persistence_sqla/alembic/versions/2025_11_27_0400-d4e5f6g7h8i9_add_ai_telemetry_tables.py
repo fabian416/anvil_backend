@@ -17,22 +17,59 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    # Create Enums (checkfirst=True to avoid error if already exists)
-    sa.Enum("vertex", "bedrock", "openai", name="llmprovider").create(op.get_bind(), checkfirst=True)
-    sa.Enum("success", "failed", "rate_limited", "fallback", name="llmstatus").create(op.get_bind(), checkfirst=True)
-    sa.Enum("pending", "running", "completed", "failed", "canceled", name="agentexecutionstatus").create(op.get_bind(), checkfirst=True)
-    sa.Enum("pending", "running", "completed", "failed", "skipped", name="agenttaskstatus").create(op.get_bind(), checkfirst=True)
-    sa.Enum("success", "failed", "timeout", name="agenttoolstatus").create(op.get_bind(), checkfirst=True)
-    sa.Enum("rate_limit", "quota_exceeded", "throttle", "timeout", name="ratelimiteventtype").create(op.get_bind(), checkfirst=True)
-    sa.Enum("daily_threshold", "weekly_threshold", "monthly_threshold", "user_spike", name="costalerttype").create(op.get_bind(), checkfirst=True)
-    sa.Enum("helpful", "not_helpful", "incorrect", "offensive", "other", name="feedbacktype").create(op.get_bind(), checkfirst=True)
-    sa.Enum("inactive", "active", "deprecated", name="modelstatus").create(op.get_bind(), checkfirst=True)
+    # Create Enums using raw SQL to avoid duplication issues
+    connection = op.get_bind()
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'llmprovider') THEN
+            CREATE TYPE llmprovider AS ENUM ('vertex', 'bedrock', 'openai');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'llmstatus') THEN
+            CREATE TYPE llmstatus AS ENUM ('success', 'failed', 'rate_limited', 'fallback');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agentexecutionstatus') THEN
+            CREATE TYPE agentexecutionstatus AS ENUM ('pending', 'running', 'completed', 'failed', 'canceled');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agenttaskstatus') THEN
+            CREATE TYPE agenttaskstatus AS ENUM ('pending', 'running', 'completed', 'failed', 'skipped');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agenttoolstatus') THEN
+            CREATE TYPE agenttoolstatus AS ENUM ('success', 'failed', 'timeout');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ratelimiteventtype') THEN
+            CREATE TYPE ratelimiteventtype AS ENUM ('rate_limit', 'quota_exceeded', 'throttle', 'timeout');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'costalerttype') THEN
+            CREATE TYPE costalerttype AS ENUM ('daily_threshold', 'weekly_threshold', 'monthly_threshold', 'user_spike');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'feedbacktype') THEN
+            CREATE TYPE feedbacktype AS ENUM ('helpful', 'not_helpful', 'incorrect', 'offensive', 'other');
+        END IF;
+    END $$;"""))
+    connection.execute(sa.text("""DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'modelstatus') THEN
+            CREATE TYPE modelstatus AS ENUM ('inactive', 'active', 'deprecated');
+        END IF;
+    END $$;"""))
 
     # --- Models ---
     op.create_table(
         "models",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
-        sa.Column("provider", sa.Enum("vertex", "bedrock", "openai", name="llmprovider"), nullable=False),
+        sa.Column("provider", postgresql.ENUM("vertex", "bedrock", "openai", name="llmprovider", create_type=False), nullable=False),
         sa.Column("model_name", sa.String(length=100), nullable=False),
         sa.Column("label", sa.String(length=255), nullable=False),
         sa.Column("is_default", sa.Boolean(), nullable=True, server_default='false'),
@@ -40,7 +77,7 @@ def upgrade() -> None:
         sa.Column("cost_per_1k_input_tokens", sa.Numeric(precision=10, scale=8), nullable=False),
         sa.Column("cost_per_1k_output_tokens", sa.Numeric(precision=10, scale=8), nullable=False),
         sa.Column("max_tokens", sa.Integer(), nullable=True),
-        sa.Column("status", sa.Enum("inactive", "active", "deprecated", name="modelstatus"), nullable=False, server_default='active'),
+        sa.Column("status", postgresql.ENUM("inactive", "active", "deprecated", name="modelstatus", create_type=False), nullable=False, server_default='active'),
         sa.Column("request_count", sa.BigInteger(), nullable=True, server_default='0'),
         sa.Column("total_cost_usd", sa.Numeric(precision=12, scale=2), nullable=True, server_default='0'),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
@@ -61,7 +98,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("session_id", sa.String(length=100), nullable=False),
         sa.Column("model_id", sa.BigInteger(), nullable=True),
-        sa.Column("provider", sa.Enum("vertex", "bedrock", "openai", name="llmprovider"), nullable=False),
+        sa.Column("provider", postgresql.ENUM("vertex", "bedrock", "openai", name="llmprovider", create_type=False), nullable=False),
         sa.Column("model_name", sa.String(length=100), nullable=False),
         sa.Column("prompt_text", sa.Text(), nullable=False),
         sa.Column("response_text", sa.Text(), nullable=True),
@@ -70,7 +107,7 @@ def upgrade() -> None:
         sa.Column("total_tokens", sa.Integer(), nullable=True),
         sa.Column("cost_usd", sa.Numeric(precision=10, scale=6), nullable=True),
         sa.Column("latency_ms", sa.Integer(), nullable=True),
-        sa.Column("status", sa.Enum("success", "failed", "rate_limited", "fallback", name="llmstatus"), nullable=True, server_default='success'),
+        sa.Column("status", postgresql.ENUM("success", "failed", "rate_limited", "fallback", name="llmstatus", create_type=False), nullable=True, server_default='success'),
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column("ip_address", sa.String(length=45), nullable=True),
         sa.Column("user_agent", sa.Text(), nullable=True),
@@ -94,7 +131,7 @@ def upgrade() -> None:
         sa.Column("conversation_id", sa.BigInteger(), nullable=True),
         sa.Column("agent_type", sa.String(length=50), nullable=False),
         sa.Column("workflow_type", sa.String(length=50), nullable=False),
-        sa.Column("status", sa.Enum("pending", "running", "completed", "failed", "canceled", name="agentexecutionstatus"), nullable=True, server_default='pending'),
+        sa.Column("status", postgresql.ENUM("pending", "running", "completed", "failed", "canceled", name="agentexecutionstatus", create_type=False), nullable=True, server_default='pending'),
         sa.Column("input_params", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("output_result", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("total_tasks", sa.Integer(), nullable=True, server_default='0'),
@@ -124,7 +161,7 @@ def upgrade() -> None:
         sa.Column("execution_id", sa.BigInteger(), nullable=False),
         sa.Column("task_name", sa.String(length=100), nullable=False),
         sa.Column("task_type", sa.String(length=50), nullable=False),
-        sa.Column("status", sa.Enum("pending", "running", "completed", "failed", "skipped", name="agenttaskstatus"), nullable=True, server_default='pending'),
+        sa.Column("status", postgresql.ENUM("pending", "running", "completed", "failed", "skipped", name="agenttaskstatus", create_type=False), nullable=True, server_default='pending'),
         sa.Column("input_data", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("output_data", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("error_message", sa.Text(), nullable=True),
@@ -150,7 +187,7 @@ def upgrade() -> None:
         sa.Column("tool_name", sa.String(length=100), nullable=False),
         sa.Column("input_params", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("output_result", postgresql.JSON(astext_type=sa.Text()), nullable=True),
-        sa.Column("status", sa.Enum("success", "failed", "timeout", name="agenttoolstatus"), nullable=True, server_default='success'),
+        sa.Column("status", postgresql.ENUM("success", "failed", "timeout", name="agenttoolstatus", create_type=False), nullable=True, server_default='success'),
         sa.Column("execution_time_ms", sa.Integer(), nullable=True),
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
@@ -168,9 +205,9 @@ def upgrade() -> None:
     op.create_table(
         "llm_rate_limit_events",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
-        sa.Column("provider", sa.Enum("vertex", "bedrock", "openai", name="llmprovider"), nullable=False),
+        sa.Column("provider", postgresql.ENUM("vertex", "bedrock", "openai", name="llmprovider", create_type=False), nullable=False),
         sa.Column("model_name", sa.String(length=100), nullable=False),
-        sa.Column("event_type", sa.Enum("rate_limit", "quota_exceeded", "throttle", "timeout", name="ratelimiteventtype"), nullable=False),
+        sa.Column("event_type", postgresql.ENUM("rate_limit", "quota_exceeded", "throttle", "timeout", name="ratelimiteventtype", create_type=False), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=True),
         sa.Column("error_code", sa.String(length=50), nullable=True),
         sa.Column("error_message", sa.Text(), nullable=True),
@@ -190,7 +227,7 @@ def upgrade() -> None:
     op.create_table(
         "llm_cost_alerts",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
-        sa.Column("alert_type", sa.Enum("daily_threshold", "weekly_threshold", "monthly_threshold", "user_spike", name="costalerttype"), nullable=False),
+        sa.Column("alert_type", postgresql.ENUM("daily_threshold", "weekly_threshold", "monthly_threshold", "user_spike", name="costalerttype", create_type=False), nullable=False),
         sa.Column("threshold_usd", sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column("actual_cost_usd", sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column("time_period_start", sa.DateTime(timezone=True), nullable=False),
@@ -271,7 +308,7 @@ def upgrade() -> None:
         sa.Column("conversation_id", sa.BigInteger(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("rating", sa.Integer(), nullable=True),
-        sa.Column("feedback_type", sa.Enum("helpful", "not_helpful", "incorrect", "offensive", "other", name="feedbacktype"), nullable=False),
+        sa.Column("feedback_type", postgresql.ENUM("helpful", "not_helpful", "incorrect", "offensive", "other", name="feedbacktype", create_type=False), nullable=False),
         sa.Column("feedback_text", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=True),
         sa.ForeignKeyConstraint(["conversation_id"], ["llm_conversations.id"], name=op.f("fk_conversation_feedback_conversation_id_llm_conversations"), ondelete="CASCADE"),

@@ -185,6 +185,7 @@ from app.infrastructure.persistence_sqla.repositories.project_repository import 
 
 # Privy / Wallet Infrastructure
 from app.infrastructure.privy import PrivyClient
+from app.infrastructure.ox_protocol import OxProtocolClient
 from app.infrastructure.subscription.handlers.customer_subscription import (
     CreateSubscriptionHandler,
 )
@@ -199,6 +200,7 @@ from app.presentation.http.auth.adapters.session_transport_jwt_header import (
 )
 from app.setup.config.agent_squad import AgentSquadConfig, load_agent_squad_config
 from app.setup.config.privy import PrivySettings
+from app.setup.config.settings import AppSettings
 
 
 class InfrastructureProvider(Provider):
@@ -536,6 +538,17 @@ class InfrastructureProvider(Provider):
         (Dynamic, Turnkey, etc.) by changing this provider.
         """
         return client
+
+    # 0x Protocol Client
+    @provide(scope=Scope.APP)
+    def get_ox_protocol_client(self, settings: AppSettings) -> OxProtocolClient:
+        """
+        Provide 0x Protocol client for DEX aggregation and swap quotes.
+
+        This is APP-scoped because we reuse the HTTP client across requests.
+        The OxProtocolClient handles connection pooling internally.
+        """
+        return OxProtocolClient(settings)
 
     # Infrastructure Handlers
     infra_handlers = provide_all(

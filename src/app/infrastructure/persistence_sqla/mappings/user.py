@@ -28,7 +28,7 @@ def map_users_table() -> None:
         email = mapped_column(String(255), unique=True, index=True, nullable=False)
         first_name = mapped_column(String(100), nullable=False)
         last_name = mapped_column(String(100), nullable=False)
-        role = mapped_column(Enum(UserRole, values_callable=lambda x: [e.value for e in x]), default=UserRole.USER)
+        role = mapped_column(Enum(UserRole, values_callable=lambda x: [e.value for e in x], name="userrole", create_type=False), default=UserRole.USER)
         is_active = mapped_column(Boolean, default=True)
         is_blocked = mapped_column(Boolean, default=False)
         is_verified = mapped_column(Boolean, default=False)

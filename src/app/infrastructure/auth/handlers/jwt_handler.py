@@ -20,21 +20,20 @@ class JwtHandler:
     def decode_token(self, token: str) -> Dict[str, Any]:
         """
         Decode a JWT token and return the payload.
-        
+
         Args:
             token: The JWT token to decode
-            
+
         Returns:
-            The decoded token payload
-            
+            The decoded token payload with 'auth_session_id' key
+
         Raises:
             Exception: If token is invalid
         """
-        try:
-            payload = self._access_token_processor.decode_token(token)
-            return payload
-        except Exception as e:
-            raise Exception(f"Invalid token: {str(e)}")
+        auth_session_id = self._access_token_processor.decode_auth_session_id(token)
+        if auth_session_id is None:
+            raise Exception("Invalid token: could not decode auth_session_id")
+        return {"auth_session_id": auth_session_id}
 
     def create_token(self, user_id: str, email: str, role: str) -> str:
         """

@@ -184,8 +184,9 @@ class EnrichmentData(BaseModel):
 
 class ExecuteActionData(BaseModel):
     """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
-    
+
     action_type: str = Field(..., description="Type of action: swap, deposit, withdraw, transfer, approve, bridge")
+    provider: Optional[str] = Field(default=None, description="Execution provider: privy_0x for Privy + 0x swaps")
     chain: str = Field(default="base", description="Blockchain to execute on")
     from_token: Optional[str] = Field(default=None, description="Source token symbol or address")
     to_token: Optional[str] = Field(default=None, description="Destination token symbol (for swap)")
@@ -195,6 +196,13 @@ class ExecuteActionData(BaseModel):
     recipient: Optional[str] = Field(default=None, description="Recipient address (for transfer)")
     slippage: Optional[float] = Field(default=1.0, description="Slippage tolerance in percent")
     to_chain: Optional[str] = Field(default=None, description="Destination chain (for cross-chain swap/bridge)")
+
+    # Quote preview fields (for display before execution)
+    quote_id: Optional[str] = Field(default=None, description="Quote identifier")
+    quote_amount: Optional[str] = Field(default=None, description="Estimated output amount")
+    exchange_rate: Optional[str] = Field(default=None, description="Exchange rate for the swap")
+    network_fee_usd: Optional[str] = Field(default=None, description="Estimated network fee in USD")
+    expires_at: Optional[str] = Field(default=None, description="Quote expiration timestamp")
 
 
 class UnifiedChatResponse(BaseModel):

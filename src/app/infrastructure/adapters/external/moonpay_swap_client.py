@@ -13,8 +13,11 @@ API Docs: https://dev.moonpay.com/v1.0/docs/ramps-swap
 Reference: https://dev.moonpay.com/v1.0/reference/getswappairs
 """
 
+import hashlib
+import hmac
 import logging
 from dataclasses import dataclass
+from urllib.parse import urlencode
 
 import httpx
 
@@ -89,6 +92,7 @@ class MoonPaySwapClient:
     def __init__(
         self,
         api_key: str,
+        secret_key: str = "",
         environment: str = "sandbox",
     ):
         """
@@ -96,9 +100,11 @@ class MoonPaySwapClient:
 
         Args:
             api_key: MoonPay publishable API key (pk_test_... or pk_live_...)
+            secret_key: MoonPay secret key for URL signing (required for execute_quote)
             environment: "sandbox" or "production"
         """
         self._api_key = api_key
+        self._secret_key = secret_key
         self._environment = environment
         self._base_url = "https://api.moonpay.com/v4"
 
@@ -114,6 +120,94 @@ class MoonPaySwapClient:
     async def close(self):
         """Close HTTP client."""
         await self._client.aclose()
+
+    def _sign_url(self, query_params: dict) -> str:
+        """
+        Sign URL query parameters with HMAC SHA-256.
+
+        MoonPay requires ALL requests with walletAddress/walletAddresses to be signed
+        using the secret key. Without this signature, requests will fail with 401.
+
+        Reference: https://dev.moonpay.com/docs/url-signing
+
+        Args:
+            query_params: Dictionary of query parameters to sign
+
+        Returns:
+            Base64-encoded HMAC SHA-256 signature
+
+        Example:
+            >>> params = {"apiKey": "pk_test_123", "walletAddress": "0x123..."}
+            >>> signature = self._sign_url(params)
+            >>> # Add signature to params before making request
+        """
+        if not self._secret_key:
+            logger.warning(
+                "[MoonPay] URL signing skipped: secret_key not configured. "
+                "Requests with wallet addresses will fail with 401."
+            )
+            return ""
+
+        # Build query string exactly as MoonPay expects
+        # Format: ?key1=value1&key2=value2
+        query_string = "?" + urlencode(sorted(query_params.items()))
+
+        # Sign with HMAC SHA-256
+        signature = hmac.new(
+            self._secret_key.encode('utf-8'),
+            query_string.encode('utf-8'),
+            hashlib.sha256
+        ).digest()
+
+        # Return base64-encoded signature
+        import base64
+        return base64.b64encode(signature).decode('utf-8')
+
+    def _sign_merchant_payload(self, payload: dict) -> str:
+        """
+        Generate HMAC-SHA256 signature for POST payload (Merchant Signature).
+
+        MoonPay Swaps v4 requires TWO separate signatures:
+        1. URL Signature (_sign_url) - for query parameters
+        2. Merchant Signature (this method) - for POST body payload
+
+        CRITICAL: The JSON must be canonical (no spaces, keys sorted alphabetically)
+        to match MoonPay's signature validation.
+
+        Args:
+            payload: Dictionary with data to sign (quoteId, walletAddresses)
+
+        Returns:
+            Base64-encoded HMAC-SHA256 merchant signature
+
+        Example:
+            >>> payload = {"quoteId": "123", "walletAddresses": {...}}
+            >>> sig = self._sign_merchant_payload(payload)
+        """
+        if not self._secret_key:
+            logger.warning(
+                "[MoonPay] Merchant signature skipped: secret_key not configured. "
+                "Request will fail with 401."
+            )
+            return ""
+
+        # CRITICAL: Create canonical JSON (no spaces, sorted keys)
+        # MoonPay validates signature against this exact format
+        import json
+        import base64
+
+        json_string = json.dumps(payload, separators=(',', ':'), sort_keys=True)
+
+        # Generate HMAC-SHA256
+        signature = hmac.new(
+            self._secret_key.encode('utf-8'),
+            json_string.encode('utf-8'),
+            hashlib.sha256
+        ).digest()
+
+        # Return base64-encoded signature
+        return base64.b64encode(signature).decode('utf-8')
+
 
     async def get_pairs(self) -> list[MoonPaySwapPair]:
         """
@@ -194,7 +288,7 @@ class MoonPaySwapClient:
         """
         try:
             logger.info(
-                f"[MoonPay] Requesting quote for pair={pair_name}, amount={base_amount}"
+                f"💰 [MoonPay] Requesting quote for pair={pair_name}, amount={base_amount}"
             )
             
             response = await self._client.get(
@@ -285,7 +379,7 @@ class MoonPaySwapClient:
             )
 
             logger.info(
-                f"[MoonPay] Quote result: {base_amount} {quote.base_currency_code} → "
+                f"✅ [MoonPay] Quote result: {base_amount} {quote.base_currency_code} → "
                 f"{quote.quote_currency_amount} {quote.quote_currency_code} "
                 f"(rate: {quote.exchange_rate})"
             )
@@ -360,6 +454,7 @@ class MoonPaySwapClient:
 
     async def execute_quote(
         self,
+        quote_id: str,
         customer_token: str,
         signature: str,
         base_wallet_address: str,
@@ -368,14 +463,37 @@ class MoonPaySwapClient:
         external_transaction_id: str | None = None,
     ) -> dict:
         """
-        Execute a swap using a quote signature and customer token.
+        Execute a swap using DOUBLE SIGNATURE authentication with TIMESTAMP.
 
-        This is the OFFICIAL MoonPay swap execution endpoint that requires
-        the customer's authentication token obtained from the swapsCustomerSetup flow.
+        MoonPay Swaps v4 requires TWO separate HMAC-SHA256 signatures:
+
+        1. **URL Signature**: Signs query parameters (apiKey + quoteId + timestamp)
+           - Protects URL from manipulation
+           - Includes timestamp to prevent replay attacks
+           - Added to query string as `&signature=...`
+
+        2. **Merchant Signature**: Signs POST body payload
+           - Authenticates the request body (quoteId + walletAddresses)
+           - Sent in JSON body as `merchantSignature` field
+           - MUST use canonical JSON (no spaces, sorted keys)
+
+        Flow requirements:
+        1. Unix timestamp (prevents replay attacks - CRITICAL)
+        2. Quote ID from the quote response (CRITICAL for authorization)
+        3. Customer authentication token from swapsCustomerSetup flow
+        4. Quote signature from the quote response (encrypted price validation)
+        5. URL signature for query params (apiKey + quoteId + timestamp)
+        6. Merchant signature for POST body (quoteId + walletAddresses)
+
+        CRITICAL: Both signatures AND timestamp must be present or request fails with 401.
+        The merchant signature uses canonical JSON: separators=(',',':'), sort_keys=True
+
+        Reference: https://dev.moonpay.com/docs/url-signing
 
         Args:
+            quote_id: The quote ID from the quote response (REQUIRED for authorization)
             customer_token: Bearer token from MoonPay swapsCustomerSetup onAuthToken
-            signature: The signature from the quote response
+            signature: The quote signature from the quote response
             base_wallet_address: Wallet address for the base currency (sending from)
             quote_wallet_address: Wallet address for the quote currency (receiving to)
             refund_wallet_address: Wallet address for refunds (optional, defaults to base)
@@ -390,9 +508,12 @@ class MoonPaySwapClient:
             - quoteCurrencyAmount: Amount to receive
 
         Raises:
-            httpx.HTTPStatusError: If the API returns an error (401 = invalid token)
+            httpx.HTTPStatusError: If the API returns an error (401 = invalid token/signature)
         """
         try:
+            import json
+
+            # Build the JSON payload for the request body
             payload = {
                 "signature": signature,
                 "walletAddresses": {
@@ -414,10 +535,118 @@ class MoonPaySwapClient:
             if external_transaction_id:
                 payload["externalTransactionId"] = external_transaction_id
 
-            logger.info(f"[MoonPay] Executing quote with signature: {signature[:20]}...")
+            # ============================================================
+            # DOUBLE SIGNATURE SYSTEM (MoonPay Swaps v4 Requirement)
+            # ============================================================
 
+            # Generate timestamp for replay attack prevention
+            import time
+            timestamp = str(int(time.time()))
+
+            # SIGNATURE 1: URL Signature (for query parameters)
+            # Build query parameters for URL signing
+            query_params = {
+                "apiKey": self._api_key,
+                "quoteId": quote_id,  # ✅ MUST be included in signature calculation
+                "timestamp": timestamp,  # ✅ CRITICAL: Prevents replay attacks
+            }
+
+            # Sign the URL with HMAC SHA-256 using secret key
+            url_signature = self._sign_url(query_params)
+
+            # SIGNATURE 2: Merchant Signature (for POST body)
+            # Build merchant payload for signing (canonical JSON required)
+            merchant_payload = {
+                "quoteId": quote_id,
+                "walletAddresses": payload["walletAddresses"],
+            }
+
+            # Generate merchant signature
+            merchant_signature = self._sign_merchant_payload(merchant_payload)
+
+            # Add merchant signature to the request payload
+            payload["merchantSignature"] = merchant_signature
+
+            # ========== DEBUG LOGGING ==========
+            logger.info(
+                f"🚀 [MoonPay] ====== EXECUTE_QUOTE DEBUG START ======"
+            )
+            logger.info(
+                f"🔑 [MoonPay] Customer Token (first 30 chars): {customer_token[:30] if customer_token else 'EMPTY'}..."
+            )
+            logger.info(
+                f"🔑 [MoonPay] API Key: {self._api_key}"
+            )
+            logger.info(
+                f"🔐 [MoonPay] Secret Key (first 20 chars): {self._secret_key[:20] if self._secret_key else 'NOT CONFIGURED'}..."
+            )
+
+            # Debug query params - ALL params are included in signature
+            logger.info(
+                f"📋 [MoonPay] Query params (ALL included in signature):"
+            )
+            for k, v in sorted(query_params.items()):
+                if k == "quoteId":
+                    logger.info(f"  ✅ {k} = {v}  ← REQUIRED for authorization")
+                elif k == "apiKey":
+                    logger.info(f"  ✅ {k} = {v}  ← REQUIRED for API access")
+                elif k == "timestamp":
+                    logger.info(f"  ✅ {k} = {v}  ← CRITICAL for replay attack prevention")
+                else:
+                    logger.info(f"  ✅ {k} = {v}")
+
+            # Debug URL signature
+            query_string_to_sign = "?" + urlencode(sorted(query_params.items()))
+            logger.info(
+                f"📝 [MoonPay] Complete query string for URL signature: {query_string_to_sign}"
+            )
+            logger.info(
+                f"🔏 [MoonPay] Generated URL signature: {url_signature if url_signature else 'EMPTY'}..."
+            )
+
+            # Debug merchant signature
+            import json
+            merchant_json = json.dumps(merchant_payload, separators=(',', ':'), sort_keys=True)
+            logger.info(
+                f"📝 [MoonPay] Canonical JSON for merchant signature: {merchant_json[:100]}..."
+            )
+            logger.info(
+                f"🔐 [MoonPay] Generated MERCHANT signature: {merchant_signature if merchant_signature else 'EMPTY'}..."
+            )
+
+            # Debug final payload with both signatures
+            logger.info(
+                f"📦 [MoonPay] Final request body (with merchantSignature):"
+            )
+            logger.info(
+                f"  {json.dumps(payload, indent=2)}"
+            )
+            logger.info(
+                f"🏁 [MoonPay] ====== EXECUTE_QUOTE DEBUG END ======"
+            )
+            logger.info(
+                f"🔑 [MoonPay] SUMMARY: Using DOUBLE signature system (URL + Merchant)"
+            )
+            # ===================================
+
+            if url_signature:
+                # Add signature to query params
+                query_params["signature"] = url_signature
+                logger.info(
+                    f"✅ [MoonPay] URL signed for execute_quote (signature: {url_signature[:20]}...)"
+                )
+            else:
+                logger.warning(
+                    "⚠️ [MoonPay] URL signing skipped - request will likely fail with 401. "
+                    "Ensure MOONPAY_SECRET_KEY is configured."
+                )
+
+            logger.info(f"🔄 [MoonPay] Executing quote with quote signature: {signature[:20]}...")
+
+            # Make POST request with signed URL and JSON payload
             response = await self._client.post(
                 "/swap/execute_quote",
+                params=query_params,  # Add signed query parameters
                 json=payload,
                 headers={
                     "Authorization": f"Bearer {customer_token}",
@@ -427,7 +656,7 @@ class MoonPaySwapClient:
             data = response.json()
 
             logger.info(
-                f"[MoonPay] Swap executed successfully: "
+                f"✅ [MoonPay] Swap executed successfully: "
                 f"transactionId={data.get('transactionId', 'unknown')}, "
                 f"depositAddress={data.get('depositWalletAddress', {}).get('address', 'unknown')}"
             )
@@ -435,11 +664,11 @@ class MoonPaySwapClient:
 
         except httpx.HTTPStatusError as e:
             logger.error(
-                f"MoonPay API error executing swap: {e.response.status_code} - {e.response.text}"
+                f"❌ [MoonPay] API error executing swap: {e.response.status_code} - {e.response.text}"
             )
             raise
         except Exception as e:
-            logger.error(f"MoonPay swap execution failed: {e}")
+            logger.error(f"❌ [MoonPay] Swap execution failed: {e}")
             raise
 
     async def get_transaction(

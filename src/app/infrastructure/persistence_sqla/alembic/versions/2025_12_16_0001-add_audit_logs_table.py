@@ -29,7 +29,12 @@ def upgrade() -> None:
     - IP-based queries (ip_address + created_at)
     - Resource activity (resource_id + resource_type)
     """
-    # Create audit_logs table
+    # Drop old audit_logs table if it exists (from previous migration)
+    # The old table had a different schema (integer id) vs new (UUID entry_id)
+    connection = op.get_bind()
+    connection.execute(sa.text("DROP TABLE IF EXISTS audit_logs CASCADE"))
+
+    # Create new audit_logs table with improved schema
     op.create_table(
         "audit_logs",
         sa.Column("entry_id", postgresql.UUID(as_uuid=True), nullable=False),
