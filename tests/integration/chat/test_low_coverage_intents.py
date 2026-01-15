@@ -26,8 +26,27 @@ class TestMoneyMarketIntent:
     """Expand Money Market intent coverage from 1 to 5 tests."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_money_market_compare_protocols(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_money_market_compare_protocols",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -51,8 +70,27 @@ class TestMoneyMarketIntent:
         assert any(keyword in content for keyword in ["aave", "compound", "rate", "apy", "yield"])
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_money_market_best_yields(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_money_market_best_yields",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -76,8 +114,27 @@ class TestMoneyMarketIntent:
         assert any(keyword in content for keyword in ["yield", "apy", "rate", "usdc", "earn"])
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_money_market_supply_withdraw(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_money_market_supply_withdraw",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -101,8 +158,27 @@ class TestMoneyMarketIntent:
         assert any(keyword in content for keyword in ["supply", "withdraw", "deposit", "lend"])
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_money_market_spanish(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_money_market_spanish",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -132,8 +208,27 @@ class TestSendIntent:
     """Expand Send intent coverage from 2 to 5 tests."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_send_specific_amount(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_specific_amount",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -165,8 +260,27 @@ class TestSendIntent:
         assert routing.get("is_demo_mode") is True
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_send_to_ens_name(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_to_ens_name",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -200,8 +314,27 @@ class TestSendIntent:
         assert routing.get("is_demo_mode") is True
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_send_max_balance(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_max_balance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -231,8 +364,27 @@ class TestReceiveIntent:
     """Expand Receive intent coverage from 2 to 5 tests."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_receive_show_address(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_receive_show_address",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -256,8 +408,27 @@ class TestReceiveIntent:
         assert any(keyword in content for keyword in ["address", "receive", "wallet", "deposit"])
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_receive_qr_code(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_receive_qr_code",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -281,8 +452,27 @@ class TestReceiveIntent:
         assert any(keyword in content for keyword in ["qr", "receive", "address", "code", "wallet"])
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_receive_specific_token(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_receive_specific_token",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -312,8 +502,27 @@ class TestBuyIntent:
     """Expand Buy intent coverage from 3 to 5 tests."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_buy_with_card(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_buy_with_card",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -337,8 +546,27 @@ class TestBuyIntent:
         assert any(keyword in content for keyword in ["buy", "purchase", "card", "moonpay", "usdc"])
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_buy_portuguese(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_buy_portuguese",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -368,8 +596,27 @@ class TestIntentEdgeCases:
     """Test edge cases and error handling for low-coverage intents."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_send_invalid_address(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_invalid_address",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """
@@ -391,8 +638,27 @@ class TestIntentEdgeCases:
         assert response.status_code in [200, 201]
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_receive_multi_chain(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_receive_multi_chain",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         client: AsyncClient,
     ):
         """

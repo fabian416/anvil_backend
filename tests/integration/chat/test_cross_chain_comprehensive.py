@@ -30,6 +30,7 @@ class TestCrossChainComprehensive:
     """Comprehensive cross-chain integration tests."""
 
     @pytest_asyncio.fixture
+    @pytest.mark.llm_validation
     async def test_user(self, async_db_session: AsyncSession):
         """Create a test user in the database."""
         user, token = await AuthHelper.create_test_user_in_db(
@@ -38,6 +39,24 @@ class TestCrossChainComprehensive:
             email="crosschain_test@example.com",
         )
         return user, token
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
@@ -60,10 +79,29 @@ class TestCrossChainComprehensive:
     # Test 1: Ethereum → Base Token Swap (P2 REQUIREMENT)
     # =========================================================================
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_001_ethereum_to_base_swap(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_001_ethereum_to_base_swap",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """
@@ -114,10 +152,29 @@ class TestCrossChainComprehensive:
     # Test 2: Multi-Chain Balance Validation
     # =========================================================================
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_002_multi_chain_balance_check(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_002_multi_chain_balance_check",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """
@@ -160,10 +217,29 @@ class TestCrossChainComprehensive:
     # Test 3: L2 → L2 Direct Bridge (Optimistic Rollup)
     # =========================================================================
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_003_l2_to_l2_direct_bridge(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_003_l2_to_l2_direct_bridge",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """
@@ -205,10 +281,29 @@ class TestCrossChainComprehensive:
     # Test 4: Cross-Chain Gas Estimation
     # =========================================================================
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_004_gas_cost_estimation(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_004_gas_cost_estimation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """
@@ -251,10 +346,29 @@ class TestCrossChainComprehensive:
     # Test 5: Bridge Security Validation
     # =========================================================================
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_005_bridge_security_check(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_005_bridge_security_check",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """
@@ -296,10 +410,29 @@ class TestCrossChainComprehensive:
     # Test 6: Cross-Chain Error Handling (Insufficient Gas)
     # =========================================================================
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_006_insufficient_gas_error(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_006_insufficient_gas_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """
@@ -341,10 +474,29 @@ class TestCrossChainComprehensive:
     # Test 7: Bridge Time Estimation with Urgency
     # =========================================================================
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_007_fast_bridge_time_priority(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_007_fast_bridge_time_priority",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """
@@ -390,6 +542,7 @@ class TestCrossChainEdgeCases:
     """Edge case testing for cross-chain functionality."""
 
     @pytest_asyncio.fixture
+    @pytest.mark.llm_validation
     async def test_user(self, async_db_session: AsyncSession):
         """Create a test user in the database."""
         user, token = await AuthHelper.create_test_user_in_db(
@@ -398,6 +551,24 @@ class TestCrossChainEdgeCases:
             email="crosschain_edge@example.com",
         )
         return user, token
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
@@ -416,10 +587,29 @@ class TestCrossChainEdgeCases:
         assert response.status_code == 201
         return response.json()["id"]
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_edge_001_unsupported_chain(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_edge_001_unsupported_chain",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """
@@ -446,10 +636,29 @@ class TestCrossChainEdgeCases:
         # Should mention Solana or provide helpful response
         assert len(agent_content) > 50, "Should provide meaningful response"
 
+    @pytest.mark.llm_validation
     async def test_cross_chain_edge_002_same_chain_transfer(
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_chain_edge_002_same_chain_transfer",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         conversation_id: str,
     ):
         """

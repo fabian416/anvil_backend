@@ -22,7 +22,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledg
 class TestAdvancedKnowledge:
     """Test advanced knowledge injection scenarios."""
 
-    async def test_multi_token_knowledge_injection(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_multi_token_knowledge_injection(self, client: AsyncClient, llm_validator):
         """
         Inject knowledge for multiple tokens in one query.
 
@@ -46,7 +47,26 @@ class TestAdvancedKnowledge:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should provide comprehensive comparison (100+ chars)"
 
-    async def test_nested_knowledge_references(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_token_knowledge_injection",
+                user_input="Compare the prices of Bitcoin, Ethereum, and Solana",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_nested_knowledge_references(self, client: AsyncClient, llm_validator):
         """
         Handle knowledge with nested references.
 
@@ -70,7 +90,26 @@ class TestAdvancedKnowledge:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should provide detailed explanation (100+ chars)"
 
-    async def test_conditional_knowledge_injection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_nested_knowledge_references",
+                user_input="Explain how Uniswap works with liquidity pools and token swaps",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_conditional_knowledge_injection(self, client: AsyncClient, llm_validator):
         """
         Conditional injection based on query context.
 
@@ -107,7 +146,26 @@ class TestAdvancedKnowledge:
         # Both queries should succeed with appropriate context
         assert data1["agent_message"]["content"] != data2["agent_message"]["content"]
 
-    async def test_knowledge_personalization_guest(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conditional_knowledge_injection",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_knowledge_personalization_guest(self, client: AsyncClient, llm_validator):
         """
         Guest-specific knowledge filtering.
 
@@ -131,7 +189,26 @@ class TestAdvancedKnowledge:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive information"
 
-    async def test_knowledge_injection_with_llm_context(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_knowledge_personalization_guest",
+                user_input="Tell me about cryptocurrency investing",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_knowledge_injection_with_llm_context(self, client: AsyncClient, llm_validator):
         """
         LLM context-aware knowledge injection.
 
@@ -167,4 +244,22 @@ class TestAdvancedKnowledge:
 
         # Should provide context-aware response
         agent_response = data2["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_knowledge_injection_with_llm_context",
+                user_input="I",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 50, "Should provide context-aware response"

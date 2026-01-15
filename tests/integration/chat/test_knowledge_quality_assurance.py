@@ -21,7 +21,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledg
 class TestKnowledgeQuality:
     """Test data quality assurance in knowledge injection system."""
 
-    async def test_data_freshness_validation(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_data_freshness_validation(self, client: AsyncClient, llm_validator):
         """
         Verify data is recent/fresh.
 
@@ -46,7 +47,26 @@ class TestKnowledgeQuality:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive current data"
 
-    async def test_data_completeness_validation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_data_freshness_validation",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_data_completeness_validation(self, client: AsyncClient, llm_validator):
         """
         Verify all required fields are present.
 
@@ -71,7 +91,26 @@ class TestKnowledgeQuality:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should provide complete information (100+ chars)"
 
-    async def test_data_accuracy_cross_validation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_data_completeness_validation",
+                user_input="Give me complete information about Ethereum",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_data_accuracy_cross_validation(self, client: AsyncClient, llm_validator):
         """
         Cross-validate data across sources.
 
@@ -95,7 +134,26 @@ class TestKnowledgeQuality:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide validated data"
 
-    async def test_contradictory_data_resolution(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_data_accuracy_cross_validation",
+                user_input="What is the market cap of Bitcoin according to available sources?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_contradictory_data_resolution(self, client: AsyncClient, llm_validator):
         """
         Resolve conflicting data from sources.
 
@@ -117,4 +175,22 @@ class TestKnowledgeQuality:
 
         # Should provide resolved, reasonable data
         agent_response = data["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_contradictory_data_resolution",
+                user_input="What are the key metrics for Solana network?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 50, "Should provide resolved information"

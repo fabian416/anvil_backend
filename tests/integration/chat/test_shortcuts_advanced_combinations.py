@@ -21,7 +21,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.shortcut
 class TestShortcutsAdvancedCombinations:
     """Test advanced shortcut combinations and functionality."""
 
-    async def test_shortcut_with_multiple_parameters(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_shortcut_with_multiple_parameters(self, client: AsyncClient, llm_validator):
         """
         Test shortcuts with complex parameter combinations.
 
@@ -46,7 +47,26 @@ class TestShortcutsAdvancedCombinations:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide conversion calculation"
 
-    async def test_nested_shortcut_resolution(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcut_with_multiple_parameters",
+                user_input="How much is 100 USDC worth in Bitcoin?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_nested_shortcut_resolution(self, client: AsyncClient, llm_validator):
         """
         Test shortcuts that reference other shortcuts or concepts.
 
@@ -71,7 +91,26 @@ class TestShortcutsAdvancedCombinations:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 80, "Should provide current price and comparison"
 
-    async def test_shortcut_dynamic_generation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_nested_shortcut_resolution",
+                user_input="Check Bitcoin price and compare it to yesterday",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_shortcut_dynamic_generation(self, client: AsyncClient, llm_validator):
         """
         Test shortcuts generated based on query patterns.
 
@@ -96,7 +135,26 @@ class TestShortcutsAdvancedCombinations:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should provide comprehensive staking guidance"
 
-    async def test_shortcut_performance_optimization(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcut_dynamic_generation",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_shortcut_performance_optimization(self, client: AsyncClient, llm_validator):
         """
         Test shortcut caching and performance across conversation.
 
@@ -133,4 +191,22 @@ class TestShortcutsAdvancedCombinations:
 
         # Should maintain context and build on previous response
         agent_response = data2["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcut_performance_optimization",
+                user_input="What is Ethereum?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 50, "Should provide context-aware response"

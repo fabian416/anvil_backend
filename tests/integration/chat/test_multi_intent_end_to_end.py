@@ -35,6 +35,24 @@ class TestMultiIntentEndToEnd:
     @pytest.mark.llm_validation
     async def test_multi_token_price_query_end_to_end(
         self, detector, orchestrator, formatter, llm_validator
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_token_price_query_end_to_end",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     ):
         """
         Test: "show btc eth ada prices"
@@ -126,7 +144,26 @@ class TestMultiIntentEndToEnd:
                 ))
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_swap_and_balance_sequential_end_to_end(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_swap_and_balance_sequential_end_to_end",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, detector, orchestrator, formatter
     ):
         """
@@ -179,7 +216,26 @@ class TestMultiIntentEndToEnd:
         print(f"   Response: {formatted.message[:100]}...")
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_single_intent_backward_compatibility(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_single_intent_backward_compatibility",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, detector, orchestrator, formatter
     ):
         """
@@ -212,7 +268,26 @@ class TestMultiIntentEndToEnd:
         print(f"   Response: {formatted.message}")
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_multi_language_spanish(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_language_spanish",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, detector, orchestrator, formatter
     ):
         """
@@ -244,7 +319,26 @@ class TestMultiIntentEndToEnd:
         print(f"   Response: {formatted.message[:100]}...")
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_performance_parallel_execution(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_performance_parallel_execution",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, detector, orchestrator, formatter
     ):
         """

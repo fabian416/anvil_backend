@@ -23,7 +23,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledg
 class TestKnowledgeInjectionErrors:
     """Test error handling in knowledge injection system."""
 
-    async def test_invalid_token_symbol_handling(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_invalid_token_symbol_handling(self, client: AsyncClient, llm_validator):
         """
         Test handling of invalid/unknown token symbols.
 
@@ -48,7 +49,26 @@ class TestKnowledgeInjectionErrors:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0, "Should provide helpful response for invalid token"
 
-    async def test_malformed_api_response_handling(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_invalid_token_symbol_handling",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_malformed_api_response_handling(self, client: AsyncClient, llm_validator):
         """
         Test handling of malformed external API responses.
 
@@ -73,7 +93,26 @@ class TestKnowledgeInjectionErrors:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive response"
 
-    async def test_partial_data_availability(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_malformed_api_response_handling",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_partial_data_availability(self, client: AsyncClient, llm_validator):
         """
         Test when only some data is available.
 
@@ -98,7 +137,26 @@ class TestKnowledgeInjectionErrors:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide response with available data"
 
-    async def test_stale_data_detection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_partial_data_availability",
+                user_input="Tell me about Polkadot token metrics and recent news",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_stale_data_detection(self, client: AsyncClient, llm_validator):
         """
         Test detection and handling of stale cached data.
 
@@ -123,7 +181,26 @@ class TestKnowledgeInjectionErrors:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide current information"
 
-    async def test_rate_limit_on_knowledge_apis(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_stale_data_detection",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rate_limit_on_knowledge_apis(self, client: AsyncClient, llm_validator):
         """
         Test handling rate limits from external APIs.
 
@@ -153,7 +230,26 @@ class TestKnowledgeInjectionErrors:
             assert data["agent_message"]["content"]
             assert len(data["agent_message"]["content"]) > 0
 
-    async def test_timeout_on_knowledge_fetch(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_on_knowledge_apis",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_timeout_on_knowledge_fetch(self, client: AsyncClient, llm_validator):
         """
         Test timeout on external API calls.
 
@@ -176,4 +272,22 @@ class TestKnowledgeInjectionErrors:
 
         # Should provide response even if some requests timeout
         agent_response = data["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_timeout_on_knowledge_fetch",
+                user_input="Give me comprehensive data on all major DeFi protocols",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 50, "Should provide response despite potential timeouts"

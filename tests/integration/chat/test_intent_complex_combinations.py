@@ -23,7 +23,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_d
 class TestComplexIntentCombos:
     """Test complex intent combination scenarios."""
 
-    async def test_quadruple_intent_query(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_quadruple_intent_query(self, client: AsyncClient, llm_validator):
         """
         Test 4 distinct intents in one query.
 
@@ -50,7 +51,26 @@ class TestComplexIntentCombos:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 150, "Should provide comprehensive response for multiple intents (150+ chars)"
 
-    async def test_recursive_intent_dependency(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_quadruple_intent_query",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_recursive_intent_dependency(self, client: AsyncClient, llm_validator):
         """
         Test intents dependent on previous results.
 
@@ -76,7 +96,26 @@ class TestComplexIntentCombos:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should provide comprehensive sequential response (100+ chars)"
 
-    async def test_parallel_independent_intents(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_recursive_intent_dependency",
+                user_input="If Bitcoin price goes above $50k, what are the best ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_parallel_independent_intents(self, client: AsyncClient, llm_validator):
         """
         Test multiple independent intents.
 
@@ -102,7 +141,26 @@ class TestComplexIntentCombos:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should address all independent intents (100+ chars)"
 
-    async def test_intent_with_multiple_conditions(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_parallel_independent_intents",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_intent_with_multiple_conditions(self, client: AsyncClient, llm_validator):
         """
         Test complex conditional intents.
 
@@ -128,7 +186,26 @@ class TestComplexIntentCombos:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide thoughtful conditional response"
 
-    async def test_intent_priority_resolution(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_intent_with_multiple_conditions",
+                user_input="If ETH is above $2000 and gas fees are below 50 gwei, ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_intent_priority_resolution(self, client: AsyncClient, llm_validator):
         """
         Test priority among competing intents.
 
@@ -154,7 +231,26 @@ class TestComplexIntentCombos:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should handle priority resolution appropriately"
 
-    async def test_ambiguous_multi_intent_resolution(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_intent_priority_resolution",
+                user_input="I need to urgently swap my USDC for ETH, but also want to ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_ambiguous_multi_intent_resolution(self, client: AsyncClient, llm_validator):
         """
         Test resolving ambiguous multi-intent queries.
 
@@ -178,4 +274,22 @@ class TestComplexIntentCombos:
 
         # Should provide helpful response despite ambiguity
         agent_response = data["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ambiguous_multi_intent_resolution",
+                user_input="I want to invest in crypto but not sure where to start, ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 100, "Should provide helpful guidance despite ambiguity (100+ chars)"

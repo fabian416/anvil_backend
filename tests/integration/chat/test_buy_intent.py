@@ -37,9 +37,28 @@ class TestBuyIntent:
     @pytest.mark.asyncio
     @pytest.mark.integration
     @pytest.mark.skip(reason="Requires real ops user password - run manually")
+    @pytest.mark.llm_validation
     async def test_buy_crypto_shows_wallet_for_authenticated_user(
         self,
         async_client: AsyncClient,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_buy_crypto_shows_wallet_for_authenticated_user",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         ops_auth_headers: dict,
     ):
         """
@@ -123,9 +142,28 @@ class TestBuyIntent:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
+    @pytest.mark.llm_validation
     async def test_buy_crypto_different_phrasings(
         self,
         async_client: AsyncClient,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_buy_crypto_different_phrasings",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         auth_headers_ops: dict,
     ):
         """Test that different buy phrasings trigger the buy intent."""
