@@ -24,7 +24,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_d
 class TestAllLanguageSupport:
     """Test intent detection across all supported languages."""
 
-    async def test_spanish_language_full_flow(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_spanish_language_full_flow(self, client: AsyncClient, llm_validator):
         """
         Test Spanish language end-to-end intent detection.
 
@@ -49,7 +50,26 @@ class TestAllLanguageSupport:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive response in Spanish"
 
-    async def test_portuguese_language_full_flow(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_spanish_language_full_flow",
+                user_input="¿Cuál es el precio de Bitcoin?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_portuguese_language_full_flow(self, client: AsyncClient, llm_validator):
         """
         Test Portuguese language end-to-end intent detection.
 
@@ -73,7 +93,26 @@ class TestAllLanguageSupport:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive response in Portuguese"
 
-    async def test_chinese_language_full_flow(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_portuguese_language_full_flow",
+                user_input="Qual é o preço do Ethereum?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_chinese_language_full_flow(self, client: AsyncClient, llm_validator):
         """
         Test Chinese language end-to-end intent detection.
 
@@ -97,7 +136,26 @@ class TestAllLanguageSupport:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive response in Chinese"
 
-    async def test_unsupported_language_french(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_chinese_language_full_flow",
+                user_input="比特币的价格是多少？",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_unsupported_language_french(self, client: AsyncClient, llm_validator):
         """
         Test graceful handling of unsupported language (French).
 
@@ -114,7 +172,26 @@ class TestAllLanguageSupport:
         # Should return 422 for unsupported language
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    async def test_unsupported_language_japanese(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_unsupported_language_french",
+                user_input="Quel est le prix d",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_unsupported_language_japanese(self, client: AsyncClient, llm_validator):
         """
         Test graceful handling of unsupported language (Japanese).
 
@@ -131,7 +208,26 @@ class TestAllLanguageSupport:
         # Should return 422 for unsupported language
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    async def test_language_validation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_unsupported_language_japanese",
+                user_input="ビットコインの価格は何ですか？",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_language_validation(self, client: AsyncClient, llm_validator):
         """
         Test language validation with invalid language code.
 
@@ -148,7 +244,26 @@ class TestAllLanguageSupport:
         # Should return 422 for invalid language
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    async def test_supported_languages_coverage(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_language_validation",
+                user_input="What is Bitcoin price?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_supported_languages_coverage(self, client: AsyncClient, llm_validator):
         """
         Test all supported languages (en, es, pt, zh) work correctly.
 
@@ -175,7 +290,26 @@ class TestAllLanguageSupport:
             assert "agent_message" in data
             assert len(data["agent_message"]["content"]) > 0
 
-    async def test_language_auto_detection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_supported_languages_coverage",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_language_auto_detection(self, client: AsyncClient, llm_validator):
         """
         Test automatic language detection from content.
 
@@ -197,4 +331,22 @@ class TestAllLanguageSupport:
 
         # Should provide substantive response
         agent_response = data["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_language_auto_detection",
+                user_input="What is the price of Ethereum?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 50, "Should provide substantive response"

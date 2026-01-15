@@ -29,7 +29,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.security
 class TestXSSMultiStepInjection:
     """Test XSS injection protection across multi-step conversation flows."""
 
-    async def test_xss_step1_script_tag(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_xss_step1_script_tag(self, client: AsyncClient, llm_validator):
         """Test XSS script tag injection at step 1 (initial request)."""
         # Step 1: XSS in initial request
         response = await client.post(
@@ -53,7 +54,26 @@ class TestXSSMultiStepInjection:
         )
         assert response.status_code == status.HTTP_200_OK
 
-    async def test_xss_step2_img_onerror(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_step1_script_tag",
+                user_input="<script>alert(",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_step2_img_onerror(self, client: AsyncClient, llm_validator):
         """Test XSS img onerror injection at step 2 (asset selection)."""
         # Step 1: Normal request
         response = await client.post(
@@ -75,7 +95,26 @@ class TestXSSMultiStepInjection:
         assert "onerror" not in agent_content.lower()
         assert "<img" not in agent_content.lower()
 
-    async def test_xss_step3_svg_onload(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_step2_img_onerror",
+                user_input="Deposit USDC on Morpho",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_step3_svg_onload(self, client: AsyncClient, llm_validator):
         """Test XSS svg onload injection at step 3 (amount field)."""
         # Step 1: Normal request
         response = await client.post(
@@ -97,7 +136,26 @@ class TestXSSMultiStepInjection:
         assert "onload" not in agent_content.lower()
         assert "<svg" not in agent_content.lower()
 
-    async def test_xss_step4_iframe_injection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_step3_svg_onload",
+                user_input="Lend USDC on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_step4_iframe_injection(self, client: AsyncClient, llm_validator):
         """Test XSS iframe injection at step 4 (confirmation)."""
         # Step 1: Normal request
         response = await client.post(
@@ -119,7 +177,26 @@ class TestXSSMultiStepInjection:
         assert "<iframe" not in agent_content.lower()
         assert "javascript:" not in agent_content.lower()
 
-    async def test_xss_deposit_flow(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_step4_iframe_injection",
+                user_input="Swap 1 ETH to USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_deposit_flow(self, client: AsyncClient, llm_validator):
         """Test XSS injection throughout deposit flow."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -131,7 +208,26 @@ class TestXSSMultiStepInjection:
         # Verify XSS is sanitized
         assert "<script>" not in agent_content.lower()
 
-    async def test_xss_lend_flow(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_deposit_flow",
+                user_input="Deposit USDC on Morpho<script>alert(1)</script>",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_lend_flow(self, client: AsyncClient, llm_validator):
         """Test XSS injection in lending flow with event handler."""
         # Step 1: Normal request
         response = await client.post(
@@ -153,7 +249,26 @@ class TestXSSMultiStepInjection:
         assert "onerror" not in agent_content.lower()
         assert "document.cookie" not in agent_content.lower()
 
-    async def test_xss_swap_flow(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_lend_flow",
+                user_input="Lend USDC on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_swap_flow(self, client: AsyncClient, llm_validator):
         """Test XSS injection in swap flow at step 2."""
         # Step 1: Initiate swap
         response = await client.post(
@@ -175,7 +290,26 @@ class TestXSSMultiStepInjection:
         assert "onload" not in agent_content.lower()
         assert "<svg>" not in agent_content.lower()
 
-    async def test_xss_buy_flow(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_swap_flow",
+                user_input="Swap ETH to USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_buy_flow(self, client: AsyncClient, llm_validator):
         """Test XSS injection in buy flow at step 2."""
         # Step 1: Initiate buy
         response = await client.post(
@@ -197,7 +331,26 @@ class TestXSSMultiStepInjection:
         assert "<style>" not in agent_content.lower()
         assert "javascript:" not in agent_content.lower()
 
-    async def test_xss_with_cancel_step2(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_buy_flow",
+                user_input="Buy Bitcoin",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_with_cancel_step2(self, client: AsyncClient, llm_validator):
         """Test XSS injection followed by cancellation at step 2."""
         # Step 1: Normal request
         response = await client.post(
@@ -218,7 +371,26 @@ class TestXSSMultiStepInjection:
         # Verify XSS is sanitized and cancellation worked
         assert "<script>" not in agent_content.lower()
 
-    async def test_xss_with_cancel_step3(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_with_cancel_step2",
+                user_input="Deposit USDC on Morpho",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_with_cancel_step3(self, client: AsyncClient, llm_validator):
         """Test XSS injection then cancel with malicious payload."""
         # Step 1: Normal request
         response = await client.post(
@@ -246,7 +418,26 @@ class TestXSSMultiStepInjection:
         # Verify XSS is sanitized
         assert "onerror" not in agent_content.lower()
 
-    async def test_xss_then_topic_change(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_with_cancel_step3",
+                user_input="Lend USDC on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_then_topic_change(self, client: AsyncClient, llm_validator):
         """Test XSS injection followed by topic change (implicit cancel)."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -266,7 +457,26 @@ class TestXSSMultiStepInjection:
         )
         assert response.status_code == status.HTTP_200_OK
 
-    async def test_xss_unicode_mixed(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_then_topic_change",
+                user_input="Swap ETH to USDC<script>alert(1)</script>",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_xss_unicode_mixed(self, client: AsyncClient, llm_validator):
         """Test XSS with unicode and mixed encoding attempts."""
         # Step 1: Normal request
         response = await client.post(
@@ -287,6 +497,24 @@ class TestXSSMultiStepInjection:
         # Verify unicode XSS is sanitized
         assert "script" not in agent_content.lower() or "invalid" in agent_content.lower()
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_xss_unicode_mixed",
+                user_input="Deposit USDC on Morpho",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Phase 2: SQL Injection Multi-Step Tests (8 tests)
@@ -296,7 +524,8 @@ class TestXSSMultiStepInjection:
 class TestSQLMultiStepInjection:
     """Test SQL injection protection across multi-step conversation flows."""
 
-    async def test_sql_step1_or_injection(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_sql_step1_or_injection(self, client: AsyncClient, llm_validator):
         """Test SQL OR injection at step 1 (initial request)."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -316,7 +545,26 @@ class TestSQLMultiStepInjection:
         )
         assert response.status_code == status.HTTP_200_OK
 
-    async def test_sql_step2_union_injection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sql_step1_or_injection",
+                user_input="' OR ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_sql_step2_union_injection(self, client: AsyncClient, llm_validator):
         """Test SQL UNION injection at step 2 (asset selection)."""
         # Step 1: Normal request
         response = await client.post(
@@ -338,7 +586,26 @@ class TestSQLMultiStepInjection:
         assert "union select" not in agent_content.lower()
         assert "from users" not in agent_content.lower()
 
-    async def test_sql_step3_drop_injection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sql_step2_union_injection",
+                user_input="Lend USDC on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_sql_step3_drop_injection(self, client: AsyncClient, llm_validator):
         """Test SQL DROP TABLE injection at step 3 (amount field)."""
         # Step 1: Normal request
         response = await client.post(
@@ -359,7 +626,26 @@ class TestSQLMultiStepInjection:
         # Verify SQL injection is sanitized
         assert "drop table" not in agent_content.lower()
 
-    async def test_sql_step4_comment_injection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sql_step3_drop_injection",
+                user_input="Swap ETH to USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_sql_step4_comment_injection(self, client: AsyncClient, llm_validator):
         """Test SQL comment injection at step 4 (confirmation)."""
         # Step 1-3: Normal requests
         response = await client.post(
@@ -392,7 +678,26 @@ class TestSQLMultiStepInjection:
         # Verify SQL injection is sanitized
         assert "'--" not in agent_content or "invalid" in agent_content.lower()
 
-    async def test_sql_deposit_with_cancel(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sql_step4_comment_injection",
+                user_input="Deposit USDC on Morpho",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_sql_deposit_with_cancel(self, client: AsyncClient, llm_validator):
         """Test SQL injection in deposit flow followed by cancellation."""
         # Step 1: Normal request
         response = await client.post(
@@ -420,7 +725,26 @@ class TestSQLMultiStepInjection:
         )
         assert response.status_code == status.HTTP_200_OK
 
-    async def test_sql_lend_with_topic_change(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sql_deposit_with_cancel",
+                user_input="Deposit USDC on Morpho",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_sql_lend_with_topic_change(self, client: AsyncClient, llm_validator):
         """Test SQL injection in lending flow then topic change."""
         # Step 1: Normal request
         response = await client.post(
@@ -449,7 +773,26 @@ class TestSQLMultiStepInjection:
         )
         assert response.status_code == status.HTTP_200_OK
 
-    async def test_sql_in_amount_field(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sql_lend_with_topic_change",
+                user_input="Lend USDC on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_sql_in_amount_field(self, client: AsyncClient, llm_validator):
         """Test SQL injection specifically in amount field."""
         # Step 1: Normal request
         response = await client.post(
@@ -470,7 +813,26 @@ class TestSQLMultiStepInjection:
         # Verify SQL is sanitized
         assert "delete from" not in agent_content.lower()
 
-    async def test_sql_admin_bypass_attempt(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sql_in_amount_field",
+                user_input="Buy Bitcoin",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_sql_admin_bypass_attempt(self, client: AsyncClient, llm_validator):
         """Test SQL admin bypass attempt in multi-step flow."""
         # Step 1: Normal request
         response = await client.post(
@@ -497,6 +859,24 @@ class TestSQLMultiStepInjection:
             json={"content": "What is gas price?", "language": "en"}
         )
         assert response.status_code == status.HTTP_200_OK
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sql_admin_bypass_attempt",
+                user_input="Swap ETH to USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 # ============================================================================

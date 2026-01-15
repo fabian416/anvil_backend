@@ -23,7 +23,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_d
 class TestAllProtocolIntents:
     """Test intent detection for all major DeFi protocols."""
 
-    async def test_compound_protocol_specific_intent(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_compound_protocol_specific_intent(self, client: AsyncClient, llm_validator):
         """
         Test Compound protocol-specific queries.
 
@@ -49,7 +50,26 @@ class TestAllProtocolIntents:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive Compound protocol information"
 
-    async def test_uniswap_protocol_specific_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compound_protocol_specific_intent",
+                user_input="What are the current lending rates on Compound protocol?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Compound protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Compound'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_uniswap_protocol_specific_intent(self, client: AsyncClient, llm_validator):
         """
         Test Uniswap protocol-specific queries.
 
@@ -74,7 +94,26 @@ class TestAllProtocolIntents:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive Uniswap information"
 
-    async def test_curve_protocol_specific_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_uniswap_protocol_specific_intent",
+                user_input="How do I swap tokens on Uniswap?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Uniswap protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Uniswap'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_curve_protocol_specific_intent(self, client: AsyncClient, llm_validator):
         """
         Test Curve protocol-specific queries.
 
@@ -99,7 +138,26 @@ class TestAllProtocolIntents:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive Curve protocol information"
 
-    async def test_balancer_protocol_specific_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_curve_protocol_specific_intent",
+                user_input="What are the best stablecoin pools on Curve Finance?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Curve protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Curve'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_balancer_protocol_specific_intent(self, client: AsyncClient, llm_validator):
         """
         Test Balancer protocol-specific queries.
 
@@ -124,7 +182,26 @@ class TestAllProtocolIntents:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive Balancer information"
 
-    async def test_yearn_protocol_specific_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_balancer_protocol_specific_intent",
+                user_input="How do weighted pools work on Balancer?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_yearn_protocol_specific_intent(self, client: AsyncClient, llm_validator):
         """
         Test Yearn protocol-specific queries.
 
@@ -149,7 +226,26 @@ class TestAllProtocolIntents:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive Yearn protocol information"
 
-    async def test_protocol_version_specific_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_yearn_protocol_specific_intent",
+                user_input="What are the highest yielding Yearn vaults right now?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_protocol_version_specific_intent(self, client: AsyncClient, llm_validator):
         """
         Test specific protocol versions (Uniswap v2 vs v3).
 
@@ -172,4 +268,22 @@ class TestAllProtocolIntents:
 
         # Should provide substantive comparison between versions
         agent_response = data["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_protocol_version_specific_intent",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Uniswap protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Uniswap'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 100, "Should provide comprehensive version comparison (100+ chars)"

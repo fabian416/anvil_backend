@@ -21,7 +21,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_d
 class TestAmbiguousQueryHandling:
     """Test how the system handles queries that could match multiple intents."""
 
-    async def test_ambiguous_swap_vs_query(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_ambiguous_swap_vs_query(self, client: AsyncClient, llm_validator):
         """Test ambiguous query that could be swap intent or price query."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -44,7 +45,26 @@ class TestAmbiguousQueryHandling:
         # Could be interpreted as query or clarification request
         assert len(agent_response) > 0
 
-    async def test_ambiguous_lend_vs_query(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ambiguous_swap_vs_query",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_ambiguous_lend_vs_query(self, client: AsyncClient, llm_validator):
         """Test query that could be lending intent or advice query."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -65,7 +85,26 @@ class TestAmbiguousQueryHandling:
         # Likely provides advice rather than executing lend action
         assert len(agent_response) > 0
 
-    async def test_ambiguous_protocol_mention(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ambiguous_lend_vs_query",
+                user_input="Should I lend USDC?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_ambiguous_protocol_mention(self, client: AsyncClient, llm_validator):
         """Test query with protocol mention that could be query or action."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -86,7 +125,26 @@ class TestAmbiguousQueryHandling:
         # Should either provide Aave info or ask for clarification on "do something"
         assert len(agent_response) > 0
 
-    async def test_very_vague_query(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ambiguous_protocol_mention",
+                user_input="Tell me about Aave and then do something",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Aave protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Aave'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_very_vague_query(self, client: AsyncClient, llm_validator):
         """Test extremely vague query with unclear intent."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -107,11 +165,30 @@ class TestAmbiguousQueryHandling:
         # Should provide helpful response or ask for clarification
         assert len(agent_response) > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_very_vague_query",
+                user_input="Help me with crypto",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestMultiIntentQueries:
     """Test queries containing multiple intents in one message."""
 
-    async def test_swap_then_lend_multi_intent(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_swap_then_lend_multi_intent(self, client: AsyncClient, llm_validator):
         """Test compound intent with multiple actions."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -133,7 +210,26 @@ class TestMultiIntentQueries:
         # Guest will likely be told to register for execution
         assert len(agent_response) > 0
 
-    async def test_query_with_embedded_action(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_swap_then_lend_multi_intent",
+                user_input="Swap ETH for USDC then lend it on Aave",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_query_with_embedded_action(self, client: AsyncClient, llm_validator):
         """Test mixed intent: query + action in same message."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -154,7 +250,26 @@ class TestMultiIntentQueries:
         # Should provide gas price info and handle swap request
         assert len(agent_response) > 0
 
-    async def test_multiple_queries_single_message(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_query_with_embedded_action",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_multiple_queries_single_message(self, client: AsyncClient, llm_validator):
         """Test multiple query intents in one message."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -175,7 +290,26 @@ class TestMultiIntentQueries:
         # Should provide info on multiple tokens or acknowledge multiple queries
         assert len(agent_response) > 0
 
-    async def test_conflicting_intents(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multiple_queries_single_message",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_conflicting_intents(self, client: AsyncClient, llm_validator):
         """Test query with conflicting intents."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -196,11 +330,30 @@ class TestMultiIntentQueries:
         # Should ask for clarification or acknowledge the contradiction
         assert len(agent_response) > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conflicting_intents",
+                user_input="Swap ETH but actually don",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestLanguageMixingScenarios:
     """Test handling of mixed-language inputs."""
 
-    async def test_english_with_spanish_tokens(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_english_with_spanish_tokens(self, client: AsyncClient, llm_validator):
         """Test mixed English and Spanish in query."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -221,7 +374,26 @@ class TestLanguageMixingScenarios:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
-    async def test_query_language_code_mismatch(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_english_with_spanish_tokens",
+                user_input="Swap ETH por USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_query_language_code_mismatch(self, client: AsyncClient, llm_validator):
         """Test Spanish query with English language parameter."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -241,7 +413,26 @@ class TestLanguageMixingScenarios:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
-    async def test_unsupported_language_fallback(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_query_language_code_mismatch",
+                user_input="¿Cuál es el precio de ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_unsupported_language_fallback(self, client: AsyncClient, llm_validator):
         """Test query in unsupported language."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -264,11 +455,30 @@ class TestLanguageMixingScenarios:
             assert "agent_message" in data
             assert data["agent_message"]["content"]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_unsupported_language_fallback",
+                user_input="What is the price of ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestTypoAndMisspellingHandling:
     """Test robustness against common typos and misspellings."""
 
-    async def test_misspelled_protocol_name(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_misspelled_protocol_name(self, client: AsyncClient, llm_validator):
         """Test query with misspelled protocol name."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -288,7 +498,26 @@ class TestTypoAndMisspellingHandling:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
-    async def test_misspelled_action_verb(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_misspelled_protocol_name",
+                user_input="Lend on Aavee",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Aave protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Aave'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_misspelled_action_verb(self, client: AsyncClient, llm_validator):
         """Test query with misspelled action verb."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -308,7 +537,26 @@ class TestTypoAndMisspellingHandling:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
-    async def test_multiple_typos_in_query(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_misspelled_action_verb",
+                user_input="Sawp ETH for USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_multiple_typos_in_query(self, client: AsyncClient, llm_validator):
         """Test query with multiple typos."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -329,7 +577,26 @@ class TestTypoAndMisspellingHandling:
         # Should provide price info or indicate understanding
         assert len(agent_response) > 0
 
-    async def test_completely_garbled_input(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multiple_typos_in_query",
+                user_input="Wat iz the prce of etherum?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_completely_garbled_input(self, client: AsyncClient, llm_validator):
         """Test completely garbled/nonsense input."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -350,11 +617,30 @@ class TestTypoAndMisspellingHandling:
         # Should indicate unable to understand or ask for clarification
         assert len(agent_response) > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_completely_garbled_input",
+                user_input="asdfghjkl qwerty zxcvbnm",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestConfidenceThresholdBehavior:
     """Test intent detection confidence scoring and thresholds."""
 
-    async def test_high_confidence_intent_executes(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_high_confidence_intent_executes(self, client: AsyncClient, llm_validator):
         """Test clear, unambiguous query gets processed immediately."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -375,7 +661,26 @@ class TestConfidenceThresholdBehavior:
         # Should provide price information directly
         assert len(agent_response) > 0
 
-    async def test_low_confidence_asks_clarification(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_high_confidence_intent_executes",
+                user_input="What is the current price of ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_low_confidence_asks_clarification(self, client: AsyncClient, llm_validator):
         """Test vague query results in clarification request."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -396,7 +701,26 @@ class TestConfidenceThresholdBehavior:
         # Should ask what kind of help or provide general guidance
         assert len(agent_response) > 0
 
-    async def test_medium_confidence_provides_suggestions(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_low_confidence_asks_clarification",
+                user_input="I need help",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_medium_confidence_provides_suggestions(self, client: AsyncClient, llm_validator):
         """Test somewhat clear query gets helpful suggestions."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -415,4 +739,22 @@ class TestConfidenceThresholdBehavior:
 
         agent_response = data["agent_message"]["content"].lower()
         # Should provide DeFi information or ask for specific area of interest
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_medium_confidence_provides_suggestions",
+                user_input="Tell me about DeFi",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 0

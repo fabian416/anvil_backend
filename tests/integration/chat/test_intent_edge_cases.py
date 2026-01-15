@@ -22,7 +22,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_d
 class TestIntentEdgeCases:
     """Test intent detection edge cases and boundary conditions."""
 
-    async def test_extremely_long_query_intent(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_extremely_long_query_intent(self, client: AsyncClient, llm_validator):
         """
         Test very long query (1000+ characters).
 
@@ -62,7 +63,26 @@ class TestIntentEdgeCases:
         # Should return 422 for extremely long query (proper validation)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    async def test_extremely_short_query_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_extremely_long_query_intent",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_extremely_short_query_intent(self, client: AsyncClient, llm_validator):
         """
         Test very short query (1-2 words).
 
@@ -87,7 +107,26 @@ class TestIntentEdgeCases:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 20, "Should provide helpful response to short query"
 
-    async def test_emoji_only_query_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_extremely_short_query_intent",
+                user_input="ETH price?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_emoji_only_query_intent(self, client: AsyncClient, llm_validator):
         """
         Test query with only emojis.
 
@@ -112,7 +151,26 @@ class TestIntentEdgeCases:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 20, "Should provide graceful response to emoji query"
 
-    async def test_special_characters_query_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_emoji_only_query_intent",
+                user_input="🚀💰📈",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_special_characters_query_intent(self, client: AsyncClient, llm_validator):
         """
         Test special characters and symbols.
 
@@ -137,7 +195,26 @@ class TestIntentEdgeCases:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should handle special characters and provide response"
 
-    async def test_code_snippet_in_query_intent(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_special_characters_query_intent",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_code_snippet_in_query_intent(self, client: AsyncClient, llm_validator):
         """
         Test code snippet or address in query.
 
@@ -161,4 +238,22 @@ class TestIntentEdgeCases:
 
         # Should handle code/address appropriately
         agent_response = data["agent_message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_code_snippet_in_query_intent",
+                user_input="Can you check this address 0x1234567890abcdef1234567890abcdef12345678 ",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(agent_response) > 50, "Should handle code/address in query appropriately"
