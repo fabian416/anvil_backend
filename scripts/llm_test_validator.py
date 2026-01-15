@@ -50,21 +50,77 @@ class LLMTestValidator:
         self.mode = mode
         self.project_root = Path(__file__).parent.parent
         self.output_dir = self.project_root / "tests" / "output"
+        self.llm_provider = None  # "deepinfra" or "vertex_ai"
 
-        # Try to initialize Vertex AI if available
+        # Try DeepInfra first (already configured)
+        self.llm = None
+        self.llm_available = False
+
+        if self._init_deepinfra():
+            return
+
+        # Fallback to Vertex AI
+        if self._init_vertex_ai():
+            return
+
+        print("⚠️  No LLM provider available")
+        print("   Continuing with basic analysis only")
+
+    def _init_deepinfra(self) -> bool:
+        """Try to initialize DeepInfra."""
+        try:
+            import toml
+            import httpx
+
+            # Load API key from config
+            secrets_file = self.project_root / "config" / "local" / ".secrets.toml"
+            if not secrets_file.exists():
+                return False
+
+            config = toml.load(secrets_file)
+            deepinfra_config = config.get("deepinfra", {})
+
+            api_key = deepinfra_config.get("API_KEY")
+            base_url = deepinfra_config.get("BASE_URL", "https://api.deepinfra.com/v1/openai")
+
+            if not api_key:
+                return False
+
+            # Initialize HTTP client for OpenAI-compatible API
+            self.llm = httpx.AsyncClient(
+                base_url=base_url,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=60.0,
+            )
+            self.llm_provider = "deepinfra"
+            self.llm_available = True
+            print("✅ LLM (DeepInfra) initialized")
+            print(f"   Model: meta-llama/Meta-Llama-3.1-70B-Instruct")
+            print(f"   Cost: $0.08/1M tokens")
+            return True
+
+        except Exception as e:
+            print(f"   DeepInfra init failed: {e}")
+            return False
+
+    def _init_vertex_ai(self) -> bool:
+        """Try to initialize Vertex AI."""
         try:
             from google.cloud import aiplatform
             from vertexai.generative_models import GenerativeModel
 
             aiplatform.init(project="your-project-id", location="us-central1")
             self.llm = GenerativeModel("gemini-2.0-flash-exp")
+            self.llm_provider = "vertex_ai"
             self.llm_available = True
             print("✅ LLM (Vertex AI) initialized")
+            return True
         except Exception as e:
-            print(f"⚠️  LLM not available: {e}")
-            print("   Continuing with basic analysis only")
-            self.llm = None
-            self.llm_available = False
+            print(f"   Vertex AI init failed: {e}")
+            return False
 
     async def run_tests(self, test_type: str) -> list[TestResult]:
         """Run tests and collect results."""
@@ -259,9 +315,14 @@ Example:
 IMPORTANT: Respond ONLY with valid JSON, no markdown formatting."""
 
         try:
-            # Call LLM
-            response = await self.llm.generate_content_async(prompt)
-            llm_output = response.text.strip()
+            # Call LLM based on provider
+            if self.llm_provider == "deepinfra":
+                llm_output = await self._call_deepinfra(prompt)
+            elif self.llm_provider == "vertex_ai":
+                response = await self.llm.generate_content_async(prompt)
+                llm_output = response.text.strip()
+            else:
+                return
 
             # Remove markdown code blocks if present
             if llm_output.startswith("```json"):
@@ -291,6 +352,24 @@ IMPORTANT: Respond ONLY with valid JSON, no markdown formatting."""
         except Exception as e:
             result.llm_analysis = f"LLM analysis failed: {str(e)}"
             result.severity = "unknown"
+
+    async def _call_deepinfra(self, prompt: str) -> str:
+        """Call DeepInfra API (OpenAI-compatible)."""
+        response = await self.llm.post(
+            "/chat/completions",
+            json={
+                "model": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+                "messages": [
+                    {"role": "system", "content": "You are a helpful test analysis assistant. Always respond with valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.1,
+                "max_tokens": 1000,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
 
     def _extract_relevant_logs(self, logs: str, test_name: str) -> str:
         """Extract relevant log section for a test."""
