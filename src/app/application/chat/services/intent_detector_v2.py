@@ -724,16 +724,34 @@ class IntentDetectorV2:
                 intent=ChatIntentV2.LENDING,
                 confidence=0.95,
                 handler=self._handler_map[ChatIntentV2.LENDING],
-                metadata={"step": "select_asset", "value": message, "awaiting_asset": True},
+                metadata={"step": "lending_awaiting_asset", "value": message},
             )
-        
+
+        # Lending awaiting amount input
+        if pending == "lending_awaiting_amount":
+            return IntentResult(
+                intent=ChatIntentV2.LENDING,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.LENDING],
+                metadata={"step": "lending_awaiting_amount", "value": message},
+            )
+
+        # Lending awaiting confirmation
+        if pending == "lending_awaiting_confirmation":
+            return IntentResult(
+                intent=ChatIntentV2.LENDING,
+                confidence=0.95,
+                handler=self._handler_map[ChatIntentV2.LENDING],
+                metadata={"step": "lending_awaiting_confirmation", "value": message},
+            )
+
         # Lending awaiting chain selection
         if pending == "lending_awaiting_chain":
             return IntentResult(
                 intent=ChatIntentV2.LENDING,
                 confidence=0.95,
                 handler=self._handler_map[ChatIntentV2.LENDING],
-                metadata={"step": "select_chain", "value": message, "awaiting_chain": True},
+                metadata={"step": "lending_awaiting_chain", "value": message},
             )
         
         # Portfolio flow continuations (when no portfolio found)
