@@ -880,6 +880,7 @@ class MockChatGraphSearchHandler(ChatGraphSearchHandler):
         message: str,
         user_preferences: Optional[dict] = None,
         conversation_id: Optional[UUID] = None,
+        language: str = "en",
     ) -> ChatSearchContext:
         """Return mock protocol search results."""
         # Generate deterministic mock data based on message
