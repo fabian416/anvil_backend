@@ -21,7 +21,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.shortcut
 class TestShortcutsEdgeCasesComprehensive:
     """Test edge cases and boundary conditions for shortcuts."""
 
-    async def test_shortcut_with_invalid_parameters(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_shortcut_with_invalid_parameters(self, client: AsyncClient, llm_validator):
         """
         Test shortcuts with invalid or out-of-range parameters.
 
@@ -46,7 +47,26 @@ class TestShortcutsEdgeCasesComprehensive:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 30, "Should provide helpful response about invalid input"
 
-    async def test_shortcut_not_found_fallback(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcut_with_invalid_parameters",
+                user_input="Convert -999999 ETH to BTC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_shortcut_not_found_fallback(self, client: AsyncClient, llm_validator):
         """
         Test behavior when shortcut or pattern not recognized.
 
@@ -71,7 +91,26 @@ class TestShortcutsEdgeCasesComprehensive:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should fall back to general query processing"
 
-    async def test_shortcut_metadata_validation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcut_not_found_fallback",
+                user_input="Tell me about the philosophical implications of blockchain",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_shortcut_metadata_validation(self, client: AsyncClient, llm_validator):
         """
         Test shortcut metadata completeness and structure.
 
@@ -98,7 +137,26 @@ class TestShortcutsEdgeCasesComprehensive:
             has_description = any(key in shortcut for key in ["description", "title", "text", "content"])
             assert has_description, f"Shortcut should have descriptive content: {shortcut}"
 
-    async def test_shortcut_language_support(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcut_metadata_validation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_shortcut_language_support(self, client: AsyncClient, llm_validator):
         """
         Test shortcuts work across all supported languages.
 
@@ -150,4 +208,22 @@ class TestShortcutsEdgeCasesComprehensive:
         # All languages should provide substantial responses
         assert data_en["conversation_id"] is not None
         assert data_es["conversation_id"] is not None
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcut_language_support",
+                user_input="What is Bitcoin?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert data_pt["conversation_id"] is not None

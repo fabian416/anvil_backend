@@ -53,7 +53,26 @@ class TestRedisMetricsCollectorAdapter:
     """Tests for RedisMetricsCollectorAdapter."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_record_response_time(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_record_response_time",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test recording response time."""
@@ -65,7 +84,26 @@ class TestRedisMetricsCollectorAdapter:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_record_request(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_record_request",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test recording request."""
@@ -79,7 +117,26 @@ class TestRedisMetricsCollectorAdapter:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_record_error(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_record_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test recording error."""
@@ -92,7 +149,26 @@ class TestRedisMetricsCollectorAdapter:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_record_cost(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_record_cost",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate ADA price information in a clear format. Response must reference ADA specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'ADA'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test recording cost."""
@@ -106,7 +182,26 @@ class TestRedisMetricsCollectorAdapter:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_record_cache_hit(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_record_cache_hit",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test recording cache hit."""
@@ -117,7 +212,26 @@ class TestRedisMetricsCollectorAdapter:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_record_cache_miss(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_record_cache_miss",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test recording cache miss."""
@@ -128,7 +242,26 @@ class TestRedisMetricsCollectorAdapter:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_response_time_percentiles(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_response_time_percentiles",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test getting response time percentiles."""
@@ -158,7 +291,26 @@ class TestRedisMetricsCollectorAdapter:
         assert 400.0 <= percentiles["p95"] <= 500.0
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_error_counts_by_type(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_error_counts_by_type",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test getting error counts by type."""
@@ -193,7 +345,26 @@ class TestRedisMetricsCollectorAdapter:
         assert error_counts[ErrorType.RATE_LIMIT] == 1
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_total_cost(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_total_cost",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate ADA price information in a clear format. Response must reference ADA specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'ADA'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test getting total cost."""
@@ -226,7 +397,26 @@ class TestRedisMetricsCollectorAdapter:
         assert total_cost == 0.15
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_cache_hit_rate(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_cache_hit_rate",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test getting cache hit rate."""
@@ -261,7 +451,26 @@ class TestRedisMetricsCollectorAdapter:
         assert hit_rate == 0.75
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_metrics(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_metrics",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test getting aggregated metrics."""
@@ -307,7 +516,26 @@ class TestRedisMetricsCollectorAdapter:
         assert metrics.cache.hit_rate == 1.0
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_top_agents_by_requests(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_top_agents_by_requests",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test getting top agents by request count."""
@@ -347,7 +575,26 @@ class TestRedisMetricsCollectorAdapter:
         assert top_agents[1][1] == 5
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_top_agents_by_cost(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_top_agents_by_cost",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate ADA price information in a clear format. Response must reference ADA specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'ADA'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test getting top agents by cost."""
@@ -383,7 +630,26 @@ class TestRedisMetricsCollectorAdapter:
         assert top_agents[0][1] == 1.00
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_top_agents_by_errors(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_top_agents_by_errors",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test getting top agents by error count."""
@@ -417,7 +683,26 @@ class TestRedisMetricsCollectorAdapter:
         assert top_agents[0][1] == 5
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_cleanup_old_metrics(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cleanup_old_metrics",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test cleaning up old metrics."""
@@ -454,7 +739,26 @@ class TestRedisMetricsCollectorAdapter:
         assert percentiles["avg"] == 200.0
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_global_metrics(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_global_metrics",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test recording and retrieving global metrics (no agent)."""
@@ -485,7 +789,26 @@ class TestRedisMetricsCollectorAdapter:
         assert metrics.request_count >= 1
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_concurrent_recordings(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_concurrent_recordings",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test concurrent metric recordings."""
@@ -520,7 +843,26 @@ class TestRedisMetricsCollectorAdapter:
         assert percentiles["count"] == 100
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_metrics_isolation_by_agent(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_metrics_isolation_by_agent",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, metrics_collector: RedisMetricsCollectorAdapter
     ) -> None:
         """Test that metrics are isolated by agent."""

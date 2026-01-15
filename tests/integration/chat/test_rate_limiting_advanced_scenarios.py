@@ -23,7 +23,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.rate_lim
 class TestRateLimitingAdvancedScenarios:
     """Test advanced rate limiting scenarios."""
 
-    async def test_distributed_rate_limiting(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_distributed_rate_limiting(self, client: AsyncClient, llm_validator):
         """
         Test rate limiting consistency across requests.
 
@@ -52,7 +53,26 @@ class TestRateLimitingAdvancedScenarios:
             )
             assert response.status_code == status.HTTP_200_OK
 
-    async def test_rate_limit_reset_scenarios(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_distributed_rate_limiting",
+                user_input="What is Bitcoin?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rate_limit_reset_scenarios(self, client: AsyncClient, llm_validator):
         """
         Test rate limit window reset behavior.
 
@@ -85,7 +105,26 @@ class TestRateLimitingAdvancedScenarios:
 
         assert response2.status_code == status.HTTP_200_OK
 
-    async def test_burst_traffic_handling(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_reset_scenarios",
+                user_input="What is Ethereum?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_burst_traffic_handling(self, client: AsyncClient, llm_validator):
         """
         Test system behavior under burst traffic.
 
@@ -115,7 +154,26 @@ class TestRateLimitingAdvancedScenarios:
         # At least some requests should succeed (system is handling traffic)
         assert successful_count >= 2, f"Should handle multiple requests (succeeded: {successful_count}/5)"
 
-    async def test_rate_limit_storage_edge_cases(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_burst_traffic_handling",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rate_limit_storage_edge_cases(self, client: AsyncClient, llm_validator):
         """
         Test rate limiting storage resilience.
 
@@ -138,7 +196,26 @@ class TestRateLimitingAdvancedScenarios:
         success_count = sum(1 for r in responses if r.status_code == 200)
         assert success_count >= 3, "Should allow multiple requests within limit"
 
-    async def test_rate_limit_key_generation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_storage_edge_cases",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rate_limit_key_generation(self, client: AsyncClient, llm_validator):
         """
         Test rate limit key generation for different scenarios.
 
@@ -173,4 +250,22 @@ class TestRateLimitingAdvancedScenarios:
 
         # Conversation ID may be same for guest users
         assert "conversation_id" in data1
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_key_generation",
+                user_input="Hello from guest",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert "conversation_id" in data2

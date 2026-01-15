@@ -19,7 +19,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.rate_lim
 class TestRateLimitErrorHandling:
     """Test rate limit error responses and retry behavior."""
 
-    async def test_rate_limit_429_error_format(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_rate_limit_429_error_format(self, client: AsyncClient, llm_validator):
         """
         Verify 429 response structure when rate limit is exceeded.
 
@@ -76,7 +77,26 @@ class TestRateLimitErrorHandling:
             for response in responses:
                 assert response.status_code == status.HTTP_200_OK
 
-    async def test_rate_limit_headers_present(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_429_error_format",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rate_limit_headers_present(self, client: AsyncClient, llm_validator):
         """
         Verify rate limit headers are present in responses.
 
@@ -150,4 +170,22 @@ class TestRateLimitErrorHandling:
         # Verify response data is correct
         data = response.json()
         assert "agent_message" in data
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_headers_present",
+                user_input="check rate limit headers",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert data["agent_message"]["content"]

@@ -23,7 +23,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.historic
 class TestHistoricalChatAdvancedScenarios:
     """Test advanced historical chat scenarios."""
 
-    async def test_conversation_history_pagination(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_conversation_history_pagination(self, client: AsyncClient, llm_validator):
         """
         Test pagination through conversation history.
 
@@ -57,7 +58,26 @@ class TestHistoricalChatAdvancedScenarios:
         # Verify conversation has multiple messages (pagination would be tested here)
         assert conversation_id is not None
 
-    async def test_historical_context_window(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conversation_history_pagination",
+                user_input="What is Bitcoin?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_historical_context_window(self, client: AsyncClient, llm_validator):
         """
         Test context window for historical messages.
 
@@ -104,7 +124,26 @@ class TestHistoricalChatAdvancedScenarios:
         data_final = response_final.json()
         assert len(data_final["agent_message"]["content"]) > 50
 
-    async def test_cross_conversation_search(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_historical_context_window",
+                user_input="I want to learn about DeFi",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_cross_conversation_search(self, client: AsyncClient, llm_validator):
         """
         Test conversation continuity across multiple messages.
 
@@ -154,7 +193,26 @@ class TestHistoricalChatAdvancedScenarios:
         assert "agent_message" in data3
         assert len(data3["agent_message"]["content"]) > 50
 
-    async def test_conversation_metadata_filtering(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cross_conversation_search",
+                user_input="Tell me about Ethereum",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_conversation_metadata_filtering(self, client: AsyncClient, llm_validator):
         """
         Test language metadata preservation in conversations.
 
@@ -195,7 +253,26 @@ class TestHistoricalChatAdvancedScenarios:
         # Verify conversation continues with same ID
         assert data_follow["conversation_id"] == conversation_id
 
-    async def test_historical_message_editing(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conversation_metadata_filtering",
+                user_input="Hello, tell me about crypto",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_historical_message_editing(self, client: AsyncClient, llm_validator):
         """
         Test conversation continuity and context updates.
 
@@ -229,7 +306,26 @@ class TestHistoricalChatAdvancedScenarios:
         assert "agent_message" in data2
         assert len(data2["agent_message"]["content"]) > 50
 
-    async def test_conversation_export_import(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_historical_message_editing",
+                user_input="I want to invest $1000 in crypto",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_conversation_export_import(self, client: AsyncClient, llm_validator):
         """
         Test conversation data integrity over multiple messages.
 
@@ -270,4 +366,22 @@ class TestHistoricalChatAdvancedScenarios:
             assert len(data["agent_message"]["content"]) > 30
 
         # Verify conversation data integrity
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conversation_export_import",
+                user_input="Explain DeFi lending",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert conversation_id is not None

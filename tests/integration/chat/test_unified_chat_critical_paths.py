@@ -57,6 +57,7 @@ async def authenticated_client(test_app, async_db_session):
 
 
 @pytest_asyncio.fixture
+@pytest.mark.llm_validation
 async def test_conversation(authenticated_client):
     """Create a test conversation for message testing."""
     response = await authenticated_client.post(
@@ -67,16 +68,53 @@ async def test_conversation(authenticated_client):
     conversation_data = response.json()
     return conversation_data["id"]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conversation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.asyncio
 class TestUnifiedChatCriticalPaths:
     """Critical path integration tests for unified chat with test data."""
 
     @pytest.mark.parametrize("test_case", get_critical_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.llm_validation
     async def test_send_message_with_critical_test_case(
         self,
         authenticated_client: AuthenticatedClient,
         test_conversation: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_message_with_critical_test_case",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_case: dict,
     ):
         """
@@ -202,9 +240,28 @@ class TestUnifiedChatCriticalPaths:
 class TestUnifiedChatErrorHandling:
     """Critical path error handling tests."""
 
+    @pytest.mark.llm_validation
     async def test_send_message_empty_content(
         self,
         authenticated_client: AuthenticatedClient,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_message_empty_content",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: str,
     ):
         """
@@ -217,8 +274,27 @@ class TestUnifiedChatErrorHandling:
         )
         assert response.status_code == 422, f"Expected 422 for empty content, got {response.status_code}"
 
+    @pytest.mark.llm_validation
     async def test_send_message_invalid_conversation(
         self,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_message_invalid_conversation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         authenticated_client: AuthenticatedClient,
     ):
         """
@@ -234,9 +310,28 @@ class TestUnifiedChatErrorHandling:
             f"Expected 404 for invalid conversation, got {response.status_code}"
         )
 
+    @pytest.mark.llm_validation
     async def test_send_message_unauthorized(
         self,
         test_app,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_message_unauthorized",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: str,
     ):
         """

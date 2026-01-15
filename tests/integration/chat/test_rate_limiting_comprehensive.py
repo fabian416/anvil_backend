@@ -31,7 +31,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.rate_lim
 class TestGuestRateLimitBoundaries:
     """Test guest rate limit boundaries (5000 messages/hour)."""
 
-    async def test_guest_rate_limit_messages_remaining_countdown(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_guest_rate_limit_messages_remaining_countdown(self, client: AsyncClient, llm_validator):
         """Test guest messages_remaining counter decrements correctly."""
         # Send first message
         response1 = await client.post(
@@ -61,7 +62,26 @@ class TestGuestRateLimitBoundaries:
                 second_remaining = data2["guest_info"]["messages_remaining"]
                 assert second_remaining == initial_remaining - 1
 
-    async def test_guest_rate_limit_tracking_exists(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_rate_limit_messages_remaining_countdown",
+                user_input="test message 1",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_guest_rate_limit_tracking_exists(self, client: AsyncClient, llm_validator):
         """Test guest rate limit tracking is present in responses."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -81,7 +101,26 @@ class TestGuestRateLimitBoundaries:
             assert isinstance(data["guest_info"]["messages_remaining"], int)
             assert data["guest_info"]["messages_remaining"] >= 0
 
-    async def test_guest_rate_limit_per_ip_independence(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_rate_limit_tracking_exists",
+                user_input="check rate limit",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_guest_rate_limit_per_ip_independence(self, client: AsyncClient, llm_validator):
         """Test rate limits are tracked independently per IP."""
         # This test verifies the concept - in real implementation,
         # different IPs would have independent rate limits
@@ -101,7 +140,26 @@ class TestGuestRateLimitBoundaries:
         if "guest_info" in data1:
             assert "messages_remaining" in data1.get("guest_info", {})
 
-    async def test_guest_not_rate_limited_initially(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_rate_limit_per_ip_independence",
+                user_input="message from IP 1",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_guest_not_rate_limited_initially(self, client: AsyncClient, llm_validator):
         """Test guest is not rate limited on initial messages."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -114,6 +172,24 @@ class TestGuestRateLimitBoundaries:
         # Should not be rate limited initially
         assert data.get("rate_limited") == False
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_not_rate_limited_initially",
+                user_input="first message",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # User Rate Limit Boundary Tests
@@ -123,7 +199,8 @@ class TestGuestRateLimitBoundaries:
 class TestUserRateLimitBoundaries:
     """Test authenticated user rate limit boundaries (1000 messages/hour)."""
 
-    async def test_user_rate_limit_tracking_via_conversations(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_user_rate_limit_tracking_via_conversations(self, client: AsyncClient, llm_validator):
         """Test user rate limit tracking through conversations endpoint."""
         # Note: This requires authenticated session
         # For now, test the endpoint structure
@@ -142,7 +219,26 @@ class TestUserRateLimitBoundaries:
             status.HTTP_403_FORBIDDEN
         ]
 
-    async def test_user_endpoint_exists(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user_rate_limit_tracking_via_conversations",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_user_endpoint_exists(self, client: AsyncClient, llm_validator):
         """Test authenticated user conversation endpoint exists."""
         # Test that the endpoint structure exists
         # This will likely return 401 without auth, which is expected
@@ -160,7 +256,26 @@ class TestUserRateLimitBoundaries:
             status.HTTP_422_UNPROCESSABLE_ENTITY
         ]
 
-    async def test_user_rate_limit_applies_to_conversations(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user_endpoint_exists",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_user_rate_limit_applies_to_conversations(self, client: AsyncClient, llm_validator):
         """Test that rate limiting applies to conversation messages."""
         # Conceptual test - verifies rate limiting exists in the system
         # Actual user rate limit testing would require auth fixtures
@@ -177,7 +292,26 @@ class TestUserRateLimitBoundaries:
         # Rate limiting mechanism is present
         assert "rate_limited" in data
 
-    async def test_user_and_guest_have_different_limits(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user_rate_limit_applies_to_conversations",
+                user_input="verify rate limiting exists",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_user_and_guest_have_different_limits(self, client: AsyncClient, llm_validator):
         """Test user and guest rate limits are different (1000 vs 5000)."""
         # Conceptual test documenting the difference
         # Guest: 5000/hour, User: 1000/hour
@@ -196,6 +330,24 @@ class TestUserRateLimitBoundaries:
             # Should be significantly higher than user limit (1000)
             assert remaining > 100  # Conservative check
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user_and_guest_have_different_limits",
+                user_input="check guest limit",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Rate Limit Reset Behavior Tests
@@ -205,7 +357,8 @@ class TestUserRateLimitBoundaries:
 class TestRateLimitResetBehavior:
     """Test rate limit reset and sliding window behavior."""
 
-    async def test_rate_limit_window_is_one_hour(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_rate_limit_window_is_one_hour(self, client: AsyncClient, llm_validator):
         """Test rate limit window is based on 1-hour periods."""
         # Send message and check timestamp-based logic exists
         response = await client.post(
@@ -223,7 +376,26 @@ class TestRateLimitResetBehavior:
         # Verified by code inspection: src/app/application/guest/commands/send_guest_message.py:431
         # hour_ago = datetime.utcnow() - timedelta(hours=1)
 
-    async def test_rate_limit_uses_sliding_window(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_window_is_one_hour",
+                user_input="test hourly window",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rate_limit_uses_sliding_window(self, client: AsyncClient, llm_validator):
         """Test rate limit uses sliding window (not fixed hourly reset)."""
         # Send multiple messages to verify tracking
         messages = []
@@ -242,7 +414,26 @@ class TestRateLimitResetBehavior:
             # Should not be rate limited with only 3 messages
             assert msg_data["rate_limited"] == False
 
-    async def test_rate_limit_countdown_reflects_time_window(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_uses_sliding_window",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rate_limit_countdown_reflects_time_window(self, client: AsyncClient, llm_validator):
         """Test messages_remaining reflects current time window."""
         # Send message
         response = await client.post(
@@ -259,6 +450,24 @@ class TestRateLimitResetBehavior:
             assert remaining >= 0
             assert remaining <= 5000  # Guest limit
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_countdown_reflects_time_window",
+                user_input="window test",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Rate Limit Response Metadata Tests
@@ -268,7 +477,8 @@ class TestRateLimitResetBehavior:
 class TestRateLimitResponseMetadata:
     """Test rate limit metadata in responses."""
 
-    async def test_rate_limited_field_always_present(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_rate_limited_field_always_present(self, client: AsyncClient, llm_validator):
         """Test rate_limited field is always present in responses."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -282,7 +492,26 @@ class TestRateLimitResponseMetadata:
         assert "rate_limited" in data
         assert isinstance(data["rate_limited"], bool)
 
-    async def test_guest_info_includes_messages_remaining(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limited_field_always_present",
+                user_input="check metadata",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_guest_info_includes_messages_remaining(self, client: AsyncClient, llm_validator):
         """Test guest_info includes messages_remaining counter."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -301,6 +530,24 @@ class TestRateLimitResponseMetadata:
             assert "session_active" in data["guest_info"]
             assert isinstance(data["guest_info"]["session_active"], bool)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_info_includes_messages_remaining",
+                user_input="check guest info",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto. Response must focus on crypto specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Burst Rate Limiting Tests
@@ -310,7 +557,8 @@ class TestRateLimitResponseMetadata:
 class TestBurstRateLimiting:
     """Test burst rate limiting (rapid sequential requests)."""
 
-    async def test_rapid_sequential_requests_handled(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_rapid_sequential_requests_handled(self, client: AsyncClient, llm_validator):
         """Test system handles rapid sequential requests gracefully."""
         # Send 5 rapid requests
         responses = []
@@ -327,7 +575,26 @@ class TestBurstRateLimiting:
             data = response.json()
             assert "rate_limited" in data
 
-    async def test_burst_requests_track_correctly(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rapid_sequential_requests_handled",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_burst_requests_track_correctly(self, client: AsyncClient, llm_validator):
         """Test burst requests are tracked correctly."""
         # Send 3 requests in quick succession
         for i in range(3):
@@ -347,6 +614,24 @@ class TestBurstRateLimiting:
                 remaining = data["guest_info"]["messages_remaining"]
                 assert remaining >= 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_burst_requests_track_correctly",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 # ============================================================================
 # Rate Limit Error Response Tests
@@ -356,7 +641,8 @@ class TestBurstRateLimiting:
 class TestRateLimitErrorResponses:
     """Test rate limit error responses and handling."""
 
-    async def test_rate_limited_response_structure(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_rate_limited_response_structure(self, client: AsyncClient, llm_validator):
         """Test rate limited response has proper structure."""
         # Note: To test actual 429 response, would need to exhaust rate limit
         # This test verifies the response structure when not rate limited
@@ -376,7 +662,26 @@ class TestRateLimitErrorResponses:
         assert "user_message" in data
         assert "agent_message" in data
 
-    async def test_rate_limit_field_type_validation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limited_response_structure",
+                user_input="structure test",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rate_limit_field_type_validation(self, client: AsyncClient, llm_validator):
         """Test rate limit fields have correct types."""
         response = await client.post(
             "/api/v1/guest/chat",
@@ -392,6 +697,24 @@ class TestRateLimitErrorResponses:
         if "guest_info" in data and data["guest_info"]:
             assert isinstance(data["guest_info"]["messages_remaining"], int)
             assert isinstance(data["guest_info"]["session_active"], bool)
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rate_limit_field_type_validation",
+                user_input="type validation",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 # ============================================================================
