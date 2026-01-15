@@ -2,17 +2,21 @@
 """
 Comprehensive Integration Test Runner with CSV Export
 
-Executes all guest and user integration tests and exports results to CSV format
-for Week 1-8 testing coverage analysis.
+Executes all integration tests and exports results to CSV format:
+- Guest tests: Week 1-8 comprehensive guest testing
+- User tests: Week 1-8 authenticated user testing
+- Advanced tests: Agent Squad and Knowledge Database testing (Week 9+)
 
 Usage:
     python scripts/run_comprehensive_integration_tests.py --mode guest
     python scripts/run_comprehensive_integration_tests.py --mode user
+    python scripts/run_comprehensive_integration_tests.py --mode advanced
     python scripts/run_comprehensive_integration_tests.py --mode all
 
 Output:
     - tests/output/guest/week1_8_input_output.csv
     - tests/output/user/week1_8_input_output.csv
+    - tests/output/advanced/advanced_tests_output.csv
 """
 
 import argparse
@@ -49,6 +53,16 @@ class TestRunner:
             "user": {
                 "comprehensive": "tests/integration/chat/test_authenticated_chat_comprehensive.py",
                 "integration": "tests/integration/chat/test_authenticated_chat_integration.py",
+            },
+            "advanced": {
+                "agent_squad": "tests/integration/chat/test_agent_squad_ultra_hunter_full.py",
+                "knowledge_injection": "tests/integration/chat/test_knowledge_injection.py",
+                "knowledge_compression": "tests/integration/chat/test_knowledge_compression.py",
+                "knowledge_quality": "tests/integration/chat/test_knowledge_quality_assurance.py",
+                "knowledge_context": "tests/integration/chat/test_knowledge_context_enrichment.py",
+                "knowledge_errors": "tests/integration/chat/test_knowledge_error_handling.py",
+                "knowledge_advanced": "tests/integration/chat/test_knowledge_advanced_scenarios.py",
+                "knowledge_sources": "tests/integration/chat/test_knowledge_source_integration.py",
             },
         }
 
@@ -281,7 +295,7 @@ class TestRunner:
     def run(self):
         """Execute test runner."""
         print("\n" + "="*80)
-        print("Week 1-8 Comprehensive Integration Test Runner")
+        print("Comprehensive Integration Test Runner")
         print("="*80)
         print(f"Mode: {self.mode.upper()}")
         print(f"Timestamp: {datetime.now().isoformat()}")
@@ -299,12 +313,20 @@ class TestRunner:
             user_output.parent.mkdir(parents=True, exist_ok=True)
             self.export_to_csv(user_results, user_output)
 
+        if self.mode in ["advanced", "all"]:
+            advanced_results = self.run_tests("advanced")
+            advanced_output = self.output_dir / "advanced" / "advanced_tests_output.csv"
+            advanced_output.parent.mkdir(parents=True, exist_ok=True)
+            self.export_to_csv(advanced_results, advanced_output)
+
         print("\n✅ Test execution complete!")
         print(f"\nOutput files:")
         if self.mode in ["guest", "all"]:
             print(f"  - tests/output/guest/week1_8_input_output.csv")
         if self.mode in ["user", "all"]:
             print(f"  - tests/output/user/week1_8_input_output.csv")
+        if self.mode in ["advanced", "all"]:
+            print(f"  - tests/output/advanced/advanced_tests_output.csv")
 
 
 def main():
@@ -314,9 +336,9 @@ def main():
     )
     parser.add_argument(
         "--mode",
-        choices=["guest", "user", "all"],
+        choices=["guest", "user", "advanced", "all"],
         default="all",
-        help="Test mode: guest, user, or all (default: all)",
+        help="Test mode: guest, user, advanced, or all (default: all)",
     )
 
     args = parser.parse_args()
