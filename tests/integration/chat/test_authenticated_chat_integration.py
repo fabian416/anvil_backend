@@ -1,26 +1,28 @@
 """
 Integration tests for authenticated chat system.
 
-⚠️ DEPRECATED: These tests were written for the old AuthChatUser system
-which has been replaced by the unified ChatUser system (2026-01-06).
+✅ CLEANED UP: Deprecated AuthChatUser test classes removed (2026-01-15)
 
-Tests marked with @pytest.mark.skip are deprecated and need to be rewritten
-for the new unified chat system. See:
-- src/app/domain/chat/entities/chat_user.py (new)
-- src/app/domain/chat/entities/authenticated_chat.py (deprecated)
-- Migration: 2026_01_06_1500-chat_unified_v2.py
+DELETION RATIONALE:
+- Old AuthChatUser system removed in migration 2026_01_06_1500-chat_unified_v2.py
+- Legacy INTEGER user_id bridge to users table no longer exists
+- Functionality fully covered by test_authenticated_chat_comprehensive.py (75 tests)
+- Tests were testing non-existent functionality (would fail if run)
 
-TODO: Rewrite these tests for the unified ChatUser system
-Priority: P2 (working tests exist in comprehensive suite)
+DELETED CLASSES (P2-4):
+- TestChatUserRepository (4 tests) - Tested legacy user bridge
+- TestChatConversationRepository (3 tests) - Tested old conversation system
 
-Tests the complete flow of authenticated user chat:
-- Chat user creation/retrieval (bridge to legacy users)
-- Chat conversation management
-- Chat message creation with Hunter AI metadata
-- UnifiedChatHandler with authenticated context
-- End-to-end API flow
+REMAINING TESTS:
+- TestChatMessageRepository - Message creation and listing
+- TestCommandHandlers - Command pattern handlers
+- TestAuthenticatedContext - Context validation
+- TestFeatureFlags - Feature flag logic
 
-Day 4: Risk Assessment - Integration Testing
+See:
+- Unified ChatUser: src/app/domain/chat/entities/chat_user.py
+- Comprehensive tests: tests/integration/chat/test_authenticated_chat_comprehensive.py (75 tests)
+- Deletion analysis: tests/output/P2-4_DEPRECATED_TESTS_ANALYSIS.md
 """
 
 import pytest
@@ -84,263 +86,6 @@ async def legacy_user(async_db_session):
         role="user",
     )
     return user
-
-
-@pytest.mark.skip(reason="DEPRECATED: Tests old AuthChatUser system - needs rewrite for unified ChatUser (P2)")
-@pytest.mark.asyncio
-class TestChatUserRepository:
-    """Test ChatUserRepository operations."""
-
-    async def test_create_chat_user(
-        self,
-        chat_user_repo: ChatUserRepository,
-        legacy_user,
-    ):
-        """
-        GIVEN a legacy user in the users table
-        WHEN creating a new chat user
-        THEN chat user should be created with correct data
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,  # Legacy INTEGER user_id
-            email=legacy_user.email,
-            subscription_tier="free",
-        )
-
-        # Act
-        created = await chat_user_repo.create(chat_user)
-
-        # Assert
-        assert created.id_ == chat_user.id_
-        assert created.user_id == legacy_user.id
-        assert created.email == legacy_user.email
-        assert created.subscription_tier == "free"
-        assert created.total_messages == 0
-        assert isinstance(created.created_at, datetime)
-
-    async def test_get_by_user_id(
-        self,
-        chat_user_repo: ChatUserRepository,
-        legacy_user,
-    ):
-        """
-        GIVEN an existing chat user
-        WHEN retrieving by legacy user_id
-        THEN correct chat user should be returned
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
-            subscription_tier="premium",
-        )
-        await chat_user_repo.create(chat_user)
-
-        # Act
-        retrieved = await chat_user_repo.get_by_user_id(legacy_user.id)
-
-        # Assert
-        assert retrieved is not None
-        assert retrieved.id_ == chat_user.id_
-        assert retrieved.user_id == legacy_user.id
-        assert retrieved.subscription_tier == "premium"
-
-    async def test_update_last_seen(
-        self,
-        chat_user_repo: ChatUserRepository,
-        legacy_user,
-    ):
-        """
-        GIVEN an existing chat user
-        WHEN updating last_seen_at
-        THEN timestamp should be updated
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
-        )
-        created = await chat_user_repo.create(chat_user)
-        original_time = created.last_seen_at
-
-        # Act
-        await chat_user_repo.update_last_seen(created.id_)
-
-        # Assert
-        updated = await chat_user_repo.get_by_id(created.id_)
-        assert updated.last_seen_at > original_time
-
-    async def test_get_statistics(
-        self,
-        chat_user_repo: ChatUserRepository,
-        legacy_user,
-        async_db_session,
-    ):
-        """
-        GIVEN multiple chat users with different tiers
-        WHEN getting statistics
-        THEN correct aggregated data should be returned
-        """
-        # Arrange - Create users with different tiers
-        users_data = [
-            {"tier": "free", "messages": 10},
-            {"tier": "free", "messages": 20},
-            {"tier": "premium", "messages": 50},
-            {"tier": "enterprise", "messages": 100},
-        ]
-
-        for i, data in enumerate(users_data):
-            # Create a unique legacy user for each chat user
-            user, _ = await AuthHelper.create_test_user_in_db(
-                db_session=async_db_session,
-                email=f"test{i}@example.com",
-                role="user",
-            )
-            chat_user = ChatUser(
-                id_=uuid4(),
-                user_id=user.id,
-                email=user.email,
-                subscription_tier=data["tier"],
-                total_messages=data["messages"],
-            )
-            await chat_user_repo.create(chat_user)
-
-        # Act
-        stats = await chat_user_repo.get_statistics()
-
-        # Assert
-        assert stats["total_users"] >= 4
-        assert stats["total_messages"] >= 180
-        assert "free" in stats["users_by_tier"]
-        assert "premium" in stats["users_by_tier"]
-        assert "enterprise" in stats["users_by_tier"]
-
-
-@pytest.mark.skip(reason="DEPRECATED: Tests old AuthChatUser system - needs rewrite for unified ChatUser (P2)")
-@pytest.mark.asyncio
-class TestChatConversationRepository:
-    """Test ChatConversationRepository operations."""
-
-    async def test_create_conversation(
-        self,
-        chat_conversation_repo: ChatConversationRepository,
-        chat_user_repo: ChatUserRepository,
-        legacy_user,
-    ):
-        """
-        GIVEN a chat user
-        WHEN creating a conversation
-        THEN conversation should be created with correct data
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
-        )
-        chat_user = await chat_user_repo.create(chat_user)
-
-        conversation = ChatConversation(
-            id_=uuid4(),
-            chat_user_id=chat_user.id_,
-            language="en",
-            title="Test Conversation",
-        )
-
-        # Act
-        created = await chat_conversation_repo.create(conversation)
-
-        # Assert
-        assert created.id_ == conversation.id_
-        assert created.chat_user_id == chat_user.id_
-        assert created.language == "en"
-        assert created.title == "Test Conversation"
-        assert created.status == "active"
-        assert created.message_count == 0
-
-    async def test_get_active_conversation(
-        self,
-        chat_conversation_repo: ChatConversationRepository,
-        chat_user_repo: ChatUserRepository,
-        legacy_user,
-    ):
-        """
-        GIVEN multiple conversations (some active, some archived)
-        WHEN getting active conversation
-        THEN only active conversation for language should be returned
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
-        )
-        chat_user = await chat_user_repo.create(chat_user)
-
-        # Create archived conversation
-        archived = ChatConversation(
-            id_=uuid4(),
-            chat_user_id=chat_user.id_,
-            language="en",
-            status="archived",
-        )
-        await chat_conversation_repo.create(archived)
-
-        # Create active conversation
-        active = ChatConversation(
-            id_=uuid4(),
-            chat_user_id=chat_user.id_,
-            language="en",
-            status="active",
-        )
-        await chat_conversation_repo.create(active)
-
-        # Act
-        retrieved = await chat_conversation_repo.get_active_conversation(
-            chat_user.id_, "en"
-        )
-
-        # Assert
-        assert retrieved is not None
-        assert retrieved.id_ == active.id_
-        assert retrieved.status == "active"
-
-    async def test_increment_message_count(
-        self,
-        chat_conversation_repo: ChatConversationRepository,
-        chat_user_repo: ChatUserRepository,
-        legacy_user,
-    ):
-        """
-        GIVEN an existing conversation
-        WHEN incrementing message count
-        THEN count should increase
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
-        )
-        chat_user = await chat_user_repo.create(chat_user)
-
-        conversation = ChatConversation(
-            id_=uuid4(),
-            chat_user_id=chat_user.id_,
-            language="en",
-        )
-        created = await chat_conversation_repo.create(conversation)
-
-        # Act
-        await chat_conversation_repo.increment_message_count(created.id_)
-
-        # Assert
-        updated = await chat_conversation_repo.get_by_id(created.id_)
-        assert updated.message_count == 1
 
 
 @pytest.mark.asyncio
