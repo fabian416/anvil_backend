@@ -9,12 +9,14 @@ import logging
 from dataclasses import dataclass
 from decimal import Decimal
 
-from app.domain.entities.transaction import Transaction, TransactionId
 from app.domain.entities.wallet import WalletId
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
-from app.domain.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.entities.transaction import Transaction, TransactionId
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.user_id import UserId
 

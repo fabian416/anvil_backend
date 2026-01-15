@@ -16,7 +16,7 @@ def create_wallet_router() -> APIRouter:
     """Create and configure the wallet router."""
     # Import here to avoid circular imports
     from app.presentation.http.controllers.wallet.complete_swap import router as complete_swap_router
-    from app.presentation.http.controllers.wallet.execute_swap import router as execute_swap_router
+    # from app.presentation.http.controllers.wallet.execute_swap import router as execute_swap_router
     from app.presentation.http.controllers.wallet.export_wallet import router as export_router
     from app.presentation.http.controllers.wallet.my_wallets import create_my_wallets_router
 
@@ -29,7 +29,8 @@ def create_wallet_router() -> APIRouter:
     main_router.include_router(export_router)
 
     # Include the execute swap router (POST /swaps/quote)
-    main_router.include_router(execute_swap_router)
+    # NOTE: Temporarily disabled - swap quotes are handled via chat flow
+    # main_router.include_router(execute_swap_router)
 
     # Include the complete swap router (POST /swaps/complete)
     main_router.include_router(complete_swap_router)
