@@ -10,7 +10,7 @@ The Guest Chat system provides a demo experience for unauthenticated users, allo
 - No authentication required
 - IP-based session tracking
 - Rate limiting (20 messages/hour)
-- Multi-language support (en, es, pt, zh)
+- Multi-language support (en, es, pt, zh, fr)
 - Real data from Hunter AI and ULTRA
 - Registration prompts for restricted actions
 

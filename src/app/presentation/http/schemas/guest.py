@@ -22,8 +22,8 @@ class GuestChatRequest(BaseModel):
     )
     language: str = Field(
         default="en",
-        pattern="^(en|es|pt|zh)$",
-        description="Response language: en, es, pt, zh",
+        pattern="^(en|es|pt|zh|fr)$",
+        description="Response language: en, es, pt, zh, fr",
     )
 
 

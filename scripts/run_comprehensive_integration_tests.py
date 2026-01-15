@@ -57,6 +57,7 @@ class TestRunner:
             "advanced": {
                 "agent_squad": "tests/integration/chat/test_agent_squad_ultra_hunter_full.py",
                 "cross_chain": "tests/integration/chat/test_cross_chain_comprehensive.py",
+                "multilanguage": "tests/integration/chat/test_multilanguage_comprehensive.py",
                 "knowledge_injection": "tests/integration/chat/test_knowledge_injection.py",
                 "knowledge_compression": "tests/integration/chat/test_knowledge_compression.py",
                 "knowledge_quality": "tests/integration/chat/test_knowledge_quality_assurance.py",
