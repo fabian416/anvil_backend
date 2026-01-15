@@ -7,11 +7,15 @@ execution via Privy + 0x Protocol.
 
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from decimal import Decimal
 
-from app.domain.entities.transaction import Transaction, TransactionType
-from app.domain.ports.repositories.transaction_repository import TransactionRepository
-from app.domain.value_objects.transaction_id import TransactionId
+from app.domain.entities.transaction import Transaction, TransactionId
+from app.domain.entities.wallet import WalletId
+from app.domain.enums.chain_type import ChainType
+from app.domain.enums.transaction_status import TransactionStatus
+from app.domain.enums.transaction_type import TransactionType
+from app.domain.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.user_id import UserId
 
 logger = logging.getLogger(__name__)
@@ -80,48 +84,79 @@ class SaveSwapTransactionHandler:
 
         # Validate amounts
         try:
-            from_amount_float = float(command.from_amount)
-            to_amount_float = float(command.to_amount)
-            if from_amount_float <= 0 or to_amount_float <= 0:
+            from_amount_decimal = Decimal(command.from_amount)
+            to_amount_decimal = Decimal(command.to_amount)
+            if from_amount_decimal <= 0 or to_amount_decimal <= 0:
                 raise ValueError("Amounts must be positive")
-        except ValueError as e:
+        except (ValueError, TypeError) as e:
             logger.error("[SAVE_SWAP] Invalid amounts: %s", e)
             raise ValueError(f"Invalid amounts: {e}")
 
+        # Parse chain
+        try:
+            chain = ChainType[command.chain.upper()]
+        except KeyError:
+            # Fallback for common chain name variations
+            chain_mapping = {
+                "ethereum": ChainType.ETHEREUM,
+                "base": ChainType.BASE,
+                "polygon": ChainType.POLYGON,
+                "arbitrum": ChainType.ARBITRUM,
+                "optimism": ChainType.OPTIMISM,
+            }
+            chain = chain_mapping.get(command.chain.lower(), ChainType.BASE)
+
         # Build transaction metadata
         metadata = {
-            "from_token": command.from_token,
-            "to_token": command.to_token,
-            "from_amount": command.from_amount,
-            "to_amount": command.to_amount,
-            "chain": command.chain,
+            "conversation_id": command.conversation_id,
         }
 
         if command.exchange_rate:
             metadata["exchange_rate"] = command.exchange_rate
 
+        # Parse gas fee if provided
+        fee_usd = None
         if command.gas_fee_usd:
-            metadata["gas_fee_usd"] = command.gas_fee_usd
+            try:
+                fee_usd = Decimal(command.gas_fee_usd)
+            except (ValueError, TypeError):
+                pass
 
+        # Parse slippage if provided
+        slippage = None
         if command.slippage:
-            metadata["slippage"] = command.slippage
-
-        if command.conversation_id:
-            metadata["conversation_id"] = command.conversation_id
+            try:
+                slippage = Decimal(command.slippage)
+            except (ValueError, TypeError):
+                pass
 
         # Create transaction entity
-        # Note: We don't have TransactionId yet, will be assigned by repository
+        # Note: wallet_id is set to 0 temporarily - will be resolved by repository
         transaction = Transaction(
-            id_=TransactionId(0),  # Temporary, will be set by repository
+            id_=TransactionId(0),
             user_id=UserId(command.user_id),
+            wallet_id=WalletId(0),  # Will be resolved by repository based on user
+            to_address=None,  # Not applicable for swaps
+            type=TransactionType.SWAP,
+            chain=chain,
+            asset_in=command.from_token,
+            amount_in=from_amount_decimal,
+            asset_out=command.to_token,
+            amount_out=to_amount_decimal,
+            fee=None,
+            fee_usd=fee_usd,
             tx_hash=command.tx_hash,
-            chain=command.chain,
-            transaction_type=TransactionType.SWAP,
-            status="confirmed",
-            amount=command.from_amount,
-            token_symbol=command.from_token,
-            metadata=metadata,
-            created_at=datetime.now(UTC),
+            status=TransactionStatus.SUCCESS,
+            dex_aggregator="0x",  # Using 0x Protocol
+            dex_route=None,
+            slippage=slippage,
+            error_message=None,
+            block_number=None,
+            confirmed_at=None,
+            created_at=CreatedAt.now(),
+            gas_used=None,
+            gas_price=None,
+            tx_metadata=metadata,
         )
 
         # Save to repository
@@ -135,5 +170,5 @@ class SaveSwapTransactionHandler:
 
         return SaveSwapTransactionResult(
             transaction_id=saved_transaction.id_.value,
-            tx_hash=saved_transaction.tx_hash,
+            tx_hash=saved_transaction.tx_hash or command.tx_hash,
         )
