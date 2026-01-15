@@ -5,7 +5,7 @@ SQLAlchemy implementation for retry telemetry data persistence.
 """
 from typing import Dict, Any, List, Optional
 from uuid import UUID
-from datetime import datetime, timedelta, date as Date
+from datetime import datetime, timedelta, date, UTC as Date
 from sqlalchemy import select, func, and_, text, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
@@ -50,7 +50,7 @@ class RetryTelemetryRepository:
             error_message=error_message,
             request_context=request_context or {},
             success=success,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         
         await self.session.execute(query)
@@ -73,7 +73,7 @@ class RetryTelemetryRepository:
             reason=reason,
             failure_count=failure_count,
             success_count=success_count,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         
         await self.session.execute(query)
@@ -94,7 +94,7 @@ class RetryTelemetryRepository:
             user_id=user_id,
             reason=reason,
             duration_minutes=duration_minutes,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         
         await self.session.execute(query)
@@ -106,7 +106,7 @@ class RetryTelemetryRepository:
         latency_ms: int,
     ) -> None:
         """Increment success count in daily aggregate."""
-        today = datetime.utcnow().date()
+        today = datetime.now(UTC).date()
         
         # Get or create aggregate
         aggregate = await self._get_or_create_aggregate(service_name, today)
@@ -120,7 +120,7 @@ class RetryTelemetryRepository:
         current_avg = aggregate['avg_latency_ms'] or 0
         new_avg = ((current_avg * (total - 1)) + latency_ms) / total
         aggregate['avg_latency_ms'] = new_avg
-        aggregate['updated_at'] = datetime.utcnow()
+        aggregate['updated_at'] = datetime.now(UTC)
         
         # Upsert
         query = insert(retry_metrics_aggregate).values(**aggregate)
@@ -142,14 +142,14 @@ class RetryTelemetryRepository:
         service_name: str,
     ) -> None:
         """Increment failure count in daily aggregate."""
-        today = datetime.utcnow().date()
+        today = datetime.now(UTC).date()
         
         aggregate = await self._get_or_create_aggregate(service_name, today)
         
         aggregate['total_requests'] += 1
         aggregate['failed_requests'] += 1
         aggregate['retry_attempts'] += 1
-        aggregate['updated_at'] = datetime.utcnow()
+        aggregate['updated_at'] = datetime.now(UTC)
         
         query = insert(retry_metrics_aggregate).values(**aggregate)
         query = query.on_conflict_do_update(
@@ -170,12 +170,12 @@ class RetryTelemetryRepository:
         service_name: str,
     ) -> None:
         """Increment circuit breaker open count."""
-        today = datetime.utcnow().date()
+        today = datetime.now(UTC).date()
         
         aggregate = await self._get_or_create_aggregate(service_name, today)
         
         aggregate['circuit_breaker_opens'] += 1
-        aggregate['updated_at'] = datetime.utcnow()
+        aggregate['updated_at'] = datetime.now(UTC)
         
         query = insert(retry_metrics_aggregate).values(**aggregate)
         query = query.on_conflict_do_update(
@@ -195,7 +195,7 @@ class RetryTelemetryRepository:
         days: int = 7,
     ) -> List[Dict[str, Any]]:
         """Get aggregated metrics for a service."""
-        start_date = datetime.utcnow().date() - timedelta(days=days)
+        start_date = datetime.now(UTC).date() - timedelta(days=days)
         
         query = (
             select(retry_metrics_aggregate)
@@ -268,6 +268,6 @@ class RetryTelemetryRepository:
                 'retry_attempts': 0,
                 'avg_latency_ms': 0.0,
                 'circuit_breaker_opens': 0,
-                'created_at': datetime.utcnow(),
-                'updated_at': datetime.utcnow(),
+                'created_at': datetime.now(UTC),
+                'updated_at': datetime.now(UTC),
             }

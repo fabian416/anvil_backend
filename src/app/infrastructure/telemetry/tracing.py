@@ -19,7 +19,7 @@ import time
 import uuid
 from contextvars import ContextVar
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Optional
 
@@ -61,7 +61,7 @@ class SpanContext:
     kind: SpanKind = SpanKind.INTERNAL
     
     # Timing
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
     end_time: Optional[datetime] = None
     duration_ms: float = 0.0
     
@@ -88,7 +88,7 @@ class SpanContext:
         """Add event to span."""
         self.events.append({
             "name": name,
-            "timestamp": (timestamp or datetime.utcnow()).isoformat(),
+            "timestamp": (timestamp or datetime.now(UTC)).isoformat(),
             "attributes": attributes or {},
         })
     
@@ -99,7 +99,7 @@ class SpanContext:
     
     def end(self):
         """End the span."""
-        self.end_time = datetime.utcnow()
+        self.end_time = datetime.now(UTC)
         self.duration_ms = (self.end_time - self.start_time).total_seconds() * 1000
         
         if self.status == SpanStatus.UNSET:

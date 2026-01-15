@@ -1,5 +1,5 @@
 """SQLAlchemy repositories for assignment rules."""
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
 from uuid import UUID
 
@@ -258,7 +258,7 @@ class UserAssignmentRepositorySqla(UserAssignmentRepository):
                 .where(user_active_projects.c.user_id == user_id)
                 .values(
                     project_id=project_id,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                     session_count=user_active_projects.c.session_count + 1,
                 )
             )
@@ -267,9 +267,9 @@ class UserAssignmentRepositorySqla(UserAssignmentRepository):
             query = insert(user_active_projects).values(
                 user_id=user_id,
                 project_id=project_id,
-                activated_at=datetime.utcnow(),
+                activated_at=datetime.now(UTC),
                 session_count=1,
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(UTC),
             )
         
         await self.session.execute(query)

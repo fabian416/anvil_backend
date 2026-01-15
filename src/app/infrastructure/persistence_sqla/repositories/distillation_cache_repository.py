@@ -1,5 +1,5 @@
 """SQLAlchemy repository for distillation cache."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional
 
 from sqlalchemy import delete, select, text, update
@@ -23,7 +23,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
         """Get exact cache match by key."""
         query = select(distillation_cache_exact).where(
             distillation_cache_exact.c.cache_key == cache_key,
-            distillation_cache_exact.c.expires_at > datetime.utcnow(),
+            distillation_cache_exact.c.expires_at > datetime.now(UTC),
         )
         
         result = await self.session.execute(query)
@@ -102,7 +102,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
         **metadata,
     ) -> None:
         """Set exact cache entry."""
-        expires_at = datetime.utcnow() + timedelta(seconds=ttl_seconds)
+        expires_at = datetime.now(UTC) + timedelta(seconds=ttl_seconds)
         
         # Use INSERT ON CONFLICT to handle duplicates
         query = text("""
@@ -148,7 +148,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
         **metadata,
     ) -> None:
         """Set semantic cache entry."""
-        expires_at = datetime.utcnow() + timedelta(seconds=ttl_seconds)
+        expires_at = datetime.now(UTC) + timedelta(seconds=ttl_seconds)
         
         # Convert embedding to string format for pgvector
         embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
@@ -199,7 +199,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
                 query = query.where(distillation_cache_exact.c.intent == filters["intent"])
             
             if "older_than_hours" in filters:
-                cutoff = datetime.utcnow() - timedelta(hours=filters["older_than_hours"])
+                cutoff = datetime.now(UTC) - timedelta(hours=filters["older_than_hours"])
                 query = query.where(distillation_cache_exact.c.created_at < cutoff)
             
             result = await self.session.execute(query)
@@ -213,7 +213,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
                 query = query.where(distillation_cache_semantic.c.intent == filters["intent"])
             
             if "older_than_hours" in filters:
-                cutoff = datetime.utcnow() - timedelta(hours=filters["older_than_hours"])
+                cutoff = datetime.now(UTC) - timedelta(hours=filters["older_than_hours"])
                 query = query.where(distillation_cache_semantic.c.created_at < cutoff)
             
             result = await self.session.execute(query)

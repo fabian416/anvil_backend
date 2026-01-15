@@ -6,7 +6,7 @@ import logging
 import time
 from typing import Dict, Any, Optional
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, UTC
 import asyncio
 
 logger = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ class MetricsCollector:
         
         return {
             "uptime_seconds": uptime,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "requests": {
                 "total": sum(self._request_count.values()),
                 "by_endpoint": dict(self._request_count),

@@ -146,13 +146,13 @@ class RateLimitService:
     
     def _seconds_until_hour_reset(self) -> int:
         """Calculate seconds until the next hour."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
         return int((next_hour - now).total_seconds())
     
     def _seconds_until_day_reset(self) -> int:
         """Calculate seconds until midnight UTC."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         return int((tomorrow - now).total_seconds())
 

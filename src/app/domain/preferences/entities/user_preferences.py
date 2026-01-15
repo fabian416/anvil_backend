@@ -1,7 +1,7 @@
 """User preferences domain entity."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
 from uuid import UUID, uuid4
 
@@ -14,7 +14,7 @@ class SavedSearch:
     name: str = ""
     query: str = ""
     filters: dict = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -126,8 +126,8 @@ class UserPreferences:
     personalization_enabled: bool = True
 
     # Timestamps
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def update_risk_tolerance(self, tolerance: str) -> None:
         """Update risk tolerance level."""
@@ -135,19 +135,19 @@ class UserPreferences:
         if tolerance not in valid_levels:
             raise ValueError(f"Invalid risk tolerance: {tolerance}")
         self.risk_tolerance = tolerance
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def add_preferred_chain(self, chain: str) -> None:
         """Add a preferred chain."""
         if chain not in self.preferred_chains:
             self.preferred_chains.append(chain)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
 
     def remove_preferred_chain(self, chain: str) -> bool:
         """Remove a preferred chain."""
         if chain in self.preferred_chains:
             self.preferred_chains.remove(chain)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
             return True
         return False
 
@@ -155,13 +155,13 @@ class UserPreferences:
         """Add protocol to exclusion list."""
         if protocol_id not in self.excluded_protocols:
             self.excluded_protocols.append(protocol_id)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
 
     def include_protocol(self, protocol_id: UUID) -> bool:
         """Remove protocol from exclusion list."""
         if protocol_id in self.excluded_protocols:
             self.excluded_protocols.remove(protocol_id)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
             return True
         return False
 
@@ -169,12 +169,12 @@ class UserPreferences:
         """Add protocol to favorites."""
         if protocol_id not in self.favorite_protocols:
             self.favorite_protocols.append(protocol_id)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
 
     def remove_favorite(self, protocol_id: UUID) -> bool:
         """Remove protocol from favorites."""
         if protocol_id in self.favorite_protocols:
             self.favorite_protocols.remove(protocol_id)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
             return True
         return False

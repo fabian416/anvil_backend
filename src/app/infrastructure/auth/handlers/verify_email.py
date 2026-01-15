@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.application.common.exceptions.authorization import AuthorizationError
 from app.application.common.ports.email_verification_repository import (
@@ -38,7 +38,7 @@ class VerifyEmailHandler:
 
         # Mark user verified
         user.is_verified = UserVerified(True)
-        user.updated_at = UpdatedAt(datetime.utcnow())
+        user.updated_at = UpdatedAt(datetime.now(UTC))
         await self._user_command_gateway.update(user)
 
         # Mark token used and delete

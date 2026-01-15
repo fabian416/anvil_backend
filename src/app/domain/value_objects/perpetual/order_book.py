@@ -5,7 +5,7 @@ Immutable representation of perpetual order book.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from typing import Any
 
@@ -99,7 +99,7 @@ class OrderBook:
         elif isinstance(timestamp, (int, float)):
             timestamp = datetime.fromtimestamp(timestamp / 1000)
         else:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(UTC)
 
         bids = tuple(
             (Decimal(str(b[0])), Decimal(str(b[1])))

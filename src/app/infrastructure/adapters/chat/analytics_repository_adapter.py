@@ -6,7 +6,7 @@ SQLAlchemy implementation of AnalyticsRepository port for PostgreSQL.
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from sqlalchemy import select, func, and_, case, cast
 
@@ -687,7 +687,7 @@ class AnalyticsRepositoryAdapter(AnalyticsRepository):
             Number of analytics records deleted
         """
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+            cutoff_date = datetime.now(UTC) - timedelta(days=days_to_keep)
 
             stmt = select(ConversationAnalyticsModel).where(
                 ConversationAnalyticsModel.created_at < cutoff_date

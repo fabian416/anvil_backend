@@ -9,7 +9,7 @@ This interactor orchestrates the complete flow of:
 5. Tracking telemetry (latency, tokens, tools used)
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID, uuid4
 
 from app.domain.chat.entities.message import Message
@@ -86,7 +86,7 @@ class SendAgentSquadMessage:
         Raises:
             ValueError: If conversation not found or agent disabled
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Step 1: Build conversation context
         conv_id = ConversationId(conversation_id)
@@ -168,7 +168,7 @@ class SendAgentSquadMessage:
         )
 
         # Step 8: Calculate metrics
-        end_time = datetime.utcnow()
+        end_time = datetime.now(UTC)
         latency_ms = int((end_time - start_time).total_seconds() * 1000)
         tokens_used = agent_response.metadata.get("tokens_used")
 

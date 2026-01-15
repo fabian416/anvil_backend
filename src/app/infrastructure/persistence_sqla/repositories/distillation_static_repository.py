@@ -95,7 +95,7 @@ class DistillationStaticRepositorySqla(StaticResponseRepository):
         is_active: Optional[bool] = None,
     ) -> None:
         """Update static response."""
-        from datetime import datetime
+        from datetime import datetime, UTC
         
         values = {}
         if response_template is not None:
@@ -106,7 +106,7 @@ class DistillationStaticRepositorySqla(StaticResponseRepository):
         if not values:
             return
         
-        values["updated_at"] = datetime.utcnow()
+        values["updated_at"] = datetime.now(UTC)
         
         query = (
             update(distillation_static_responses)

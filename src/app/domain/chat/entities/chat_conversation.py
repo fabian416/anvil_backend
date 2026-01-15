@@ -5,7 +5,7 @@ Unified conversation entity with full CRUD support.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -32,8 +32,8 @@ class ChatConversation:
     user_id: UUID = field(default_factory=uuid4)
     title: str | None = None
     status: ConversationStatus = ConversationStatus.ACTIVE
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     last_message_at: datetime | None = None
     message_count: int = 0
     language: str = "en"
@@ -56,29 +56,29 @@ class ChatConversation:
     def increment_messages(self) -> None:
         """Increment message count and update timestamps."""
         self.message_count += 1
-        self.updated_at = datetime.utcnow()
-        self.last_message_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
+        self.last_message_at = datetime.now(UTC)
     
     def set_title(self, title: str) -> None:
         """Set conversation title."""
         self.title = title
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def archive(self) -> None:
         """Archive the conversation."""
         self.status = ConversationStatus.ARCHIVED
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def delete(self) -> None:
         """Mark conversation as deleted."""
         self.status = ConversationStatus.DELETED
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def reactivate(self) -> None:
         """Reactivate an archived conversation."""
         if self.status == ConversationStatus.ARCHIVED:
             self.status = ConversationStatus.ACTIVE
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
     
     @property
     def is_active(self) -> bool:
@@ -103,5 +103,5 @@ class ChatConversation:
             if len(first_message) > 50:
                 title += "..."
             self.title = title
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
 

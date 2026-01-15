@@ -13,7 +13,7 @@ Features:
 - Rate limiting violation tracking
 """
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, Optional
 
 import boto3
@@ -73,7 +73,7 @@ class CloudWatchMetrics:
                 "MetricName": metric_name,
                 "Value": value,
                 "Unit": unit,
-                "Timestamp": datetime.utcnow(),
+                "Timestamp": datetime.now(UTC),
             }
 
             if dimensions:

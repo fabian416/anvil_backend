@@ -1,7 +1,7 @@
 """User portfolio domain entity."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID, uuid4
@@ -32,8 +32,8 @@ class UserPortfolio:
     chains: List[str] = field(default_factory=list)
     total_value_usd: Decimal = field(default=Decimal("0"))
     risk_profile: str = "moderate"  # conservative/moderate/aggressive
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def add_exposure(self, exposure: ProtocolExposure) -> None:
         """Add protocol exposure to portfolio."""
@@ -69,7 +69,7 @@ class UserPortfolio:
 
         # Update chains
         self.chains = list({p.chain for p in self.protocols})
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def get_chain_allocation(self) -> dict[str, Decimal]:
         """Get portfolio allocation by chain."""

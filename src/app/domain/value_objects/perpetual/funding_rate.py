@@ -5,7 +5,7 @@ Immutable representation of perpetual funding rate.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from typing import Any
 
@@ -70,7 +70,7 @@ class FundingRate:
         elif isinstance(next_funding, (int, float)):
             next_funding = datetime.fromtimestamp(next_funding / 1000)
         else:
-            next_funding = datetime.utcnow()
+            next_funding = datetime.now(UTC)
 
         timestamp = data.get("timestamp")
         if isinstance(timestamp, str):
@@ -78,7 +78,7 @@ class FundingRate:
         elif isinstance(timestamp, (int, float)):
             timestamp = datetime.fromtimestamp(timestamp / 1000)
         else:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(UTC)
 
         return cls(
             symbol=data["symbol"],

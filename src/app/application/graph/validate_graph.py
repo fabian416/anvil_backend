@@ -5,7 +5,7 @@ Service for validating graph integrity and data quality.
 """
 
 from typing import List, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 
 from app.domain.graph.ports import GraphRepository, TraversalDirection
@@ -46,7 +46,7 @@ class ValidateGraphInteractor:
         logger.info("Starting graph validation...")
         
         report = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "checks": {},
             "total_issues": 0,
             "is_valid": True,

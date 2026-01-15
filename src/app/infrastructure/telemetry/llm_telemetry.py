@@ -44,7 +44,7 @@ import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any, Optional
 from uuid import uuid4
@@ -322,7 +322,7 @@ class LLMTelemetry:
         
         # Budget tracking
         self._monthly_cost: float = 0.0
-        self._month_start: datetime = datetime.utcnow().replace(
+        self._month_start: datetime = datetime.now(UTC).replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
         
@@ -413,7 +413,7 @@ class LLMTelemetry:
             metrics = LLMProviderMetrics(provider=ctx.provider)
             self._provider_metrics[ctx.provider] = metrics
         
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         metrics.total_calls += 1
         
         if metrics.first_call_at is None:
@@ -487,7 +487,7 @@ class LLMTelemetry:
     def _update_budget(self, ctx: LLMCallContext) -> None:
         """Update monthly budget tracking."""
         # Reset budget on new month
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         if month_start > self._month_start:
@@ -569,7 +569,7 @@ class LLMTelemetry:
             if (
                 existing.provider == provider
                 and existing.message == message
-                and (datetime.utcnow() - existing.timestamp).seconds < 300
+                and (datetime.now(UTC) - existing.timestamp).seconds < 300
             ):
                 return  # Skip duplicate
         
@@ -579,7 +579,7 @@ class LLMTelemetry:
             provider=provider,
             message=message,
             details=details,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
         
         self._alerts.append(alert)
@@ -649,7 +649,7 @@ class LLMTelemetry:
         hours: int = 24,
     ) -> list[LLMAlert]:
         """Get recent alerts."""
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
         alerts = [a for a in self._alerts if a.timestamp > cutoff]
         
         if severity:

@@ -129,7 +129,7 @@ class CrisisManagerAgentForta:
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add Forta source
         sources.append(create_api_source(

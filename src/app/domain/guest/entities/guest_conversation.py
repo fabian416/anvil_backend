@@ -5,7 +5,7 @@ Represents a chat conversation for a guest user.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from uuid import UUID, uuid4
 
@@ -31,8 +31,8 @@ class GuestConversation:
     status: GuestConversationStatus = GuestConversationStatus.ACTIVE
     message_count: int = 0
     language: str = "en"
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     archived_at: datetime | None = None
 
     @property
@@ -48,15 +48,15 @@ class GuestConversation:
     def increment_messages(self) -> None:
         """Increment message count."""
         self.message_count += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def archive(self) -> None:
         """Archive this conversation."""
         self.status = GuestConversationStatus.ARCHIVED
-        self.archived_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.archived_at = datetime.now(UTC)
+        self.updated_at = datetime.now(UTC)
 
     def set_title(self, title: str) -> None:
         """Set conversation title."""
         self.title = title[:255] if title else None
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)

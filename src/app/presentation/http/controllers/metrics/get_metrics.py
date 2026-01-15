@@ -2,7 +2,7 @@
 Get Metrics endpoints - for querying user metrics.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Annotated, Any, Optional
 
 from dishka import FromDishka
@@ -170,7 +170,7 @@ async def get_platform_metrics(
     if current_user.role.value != "admin":
         raise InsufficientPermissionsError("Admin access required")
     
-    from_date = datetime.utcnow() - timedelta(days=days)
+    from_date = datetime.now(UTC) - timedelta(days=days)
     
     total_events = await metrics_repo.get_event_count(from_date=from_date)
     active_users = await metrics_repo.get_active_users_count(from_date=from_date)
@@ -180,5 +180,5 @@ async def get_platform_metrics(
         "total_events": total_events,
         "active_users": active_users,
         "from_date": from_date.isoformat(),
-        "to_date": datetime.utcnow().isoformat(),
+        "to_date": datetime.now(UTC).isoformat(),
     }

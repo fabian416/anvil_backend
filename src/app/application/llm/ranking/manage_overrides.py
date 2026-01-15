@@ -7,7 +7,7 @@ Set and remove manual ranking overrides.
 import logging
 from typing import Optional
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 from app.domain.ports.llm_ranking_repository import LLMRankingRepository
@@ -82,7 +82,7 @@ class SetRankingOverride:
         # Calculate expiry
         expires_at = None
         if expires_in_hours:
-            expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
+            expires_at = datetime.now(UTC) + timedelta(hours=expires_in_hours)
 
         # Check if override already exists
         existing_override = await self._repository.get_override(agent_type, model_id)

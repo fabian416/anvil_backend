@@ -19,7 +19,7 @@ Security Features:
 import time
 import logging
 from uuid import UUID, uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional
 from dataclasses import dataclass
 from decimal import Decimal
@@ -373,7 +373,7 @@ class ExecuteActionCommand:
                     transaction=None,
                     summary="Cross-chain swap failed: LiFi not configured",
                     enrichment={"error": "LIFI_NOT_CONFIGURED", "from_token": from_token, "to_token": to_token, "chain": chain, "to_chain": to_chain},
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
                     expires_at=None,
                 )
             
@@ -403,7 +403,7 @@ class ExecuteActionCommand:
                     transaction=None,
                     summary=f"Cross-chain swap failed: {str(e)}",
                     enrichment={"error": str(e), "from_token": from_token, "to_token": to_token, "chain": chain, "to_chain": to_chain},
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
                     expires_at=None,
                 )
         else:
@@ -419,7 +419,7 @@ class ExecuteActionCommand:
                     transaction=None,
                     summary="Same-chain swap failed: 1inch not configured",
                     enrichment={"error": "ONEINCH_NOT_CONFIGURED", "from_token": from_token, "to_token": to_token, "chain": chain},
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
                     expires_at=None,
                 )
             
@@ -450,7 +450,7 @@ class ExecuteActionCommand:
                     transaction=None,
                     summary=f"Same-chain swap failed: {str(e)}",
                     enrichment={"error": str(e), "from_token": from_token, "to_token": to_token, "chain": chain},
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
                     expires_at=None,
                 )
         
@@ -494,8 +494,8 @@ class ExecuteActionCommand:
                     "output_amount": output_amount,
                     "aggregator": aggregator_used or "none",
                 },
-                created_at=datetime.utcnow(),
-                expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                created_at=datetime.now(UTC),
+                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
         
         # Execute swap (confirmed) - Generate transaction for Privy signing
@@ -614,7 +614,7 @@ class ExecuteActionCommand:
                     "to_token": to_token,
                     "amount": amount,
                 },
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 expires_at=None,
             )
         
@@ -647,7 +647,7 @@ class ExecuteActionCommand:
                 "aggregator": aggregator_used or "none",
                 "transaction_data": transaction_data,  # Additional data for LiFi routes
             },
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=None,
         )
     
@@ -702,8 +702,8 @@ class ExecuteActionCommand:
                     "vault_address": vault_address,
                     "chain": chain,
                 },
-                created_at=datetime.utcnow(),
-                expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                created_at=datetime.now(UTC),
+                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
         
         # Execute deposit
@@ -730,7 +730,7 @@ class ExecuteActionCommand:
                 "vault_address": vault_address,
                 "chain": chain,
             },
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=None,
         )
     
@@ -781,8 +781,8 @@ class ExecuteActionCommand:
                     "vault_address": vault_address,
                     "chain": chain,
                 },
-                created_at=datetime.utcnow(),
-                expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                created_at=datetime.now(UTC),
+                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
         
         return ActionResult(
@@ -808,7 +808,7 @@ class ExecuteActionCommand:
                 "vault_address": vault_address,
                 "chain": chain,
             },
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=None,
         )
     
@@ -835,7 +835,7 @@ class ExecuteActionCommand:
                 transaction=None,
                 summary="Transfer failed: No recipient specified",
                 enrichment=None,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 expires_at=None,
             )
         
@@ -874,8 +874,8 @@ class ExecuteActionCommand:
                     "recipient": recipient,
                     "chain": chain,
                 },
-                created_at=datetime.utcnow(),
-                expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                created_at=datetime.now(UTC),
+                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
         
         return ActionResult(
@@ -900,7 +900,7 @@ class ExecuteActionCommand:
                 "recipient": recipient,
                 "chain": chain,
             },
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=None,
         )
     
@@ -927,7 +927,7 @@ class ExecuteActionCommand:
                 transaction=None,
                 summary="Approval failed: No spender specified",
                 enrichment=None,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 expires_at=None,
             )
         
@@ -966,8 +966,8 @@ class ExecuteActionCommand:
                     "spender": spender,
                     "chain": chain,
                 },
-                created_at=datetime.utcnow(),
-                expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                created_at=datetime.now(UTC),
+                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
         
         return ActionResult(
@@ -992,7 +992,7 @@ class ExecuteActionCommand:
                 "spender": spender,
                 "chain": chain,
             },
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=None,
         )
     
@@ -1041,8 +1041,8 @@ class ExecuteActionCommand:
                     "from_chain": from_chain,
                     "to_chain": to_chain,
                 },
-                created_at=datetime.utcnow(),
-                expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                created_at=datetime.now(UTC),
+                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
         
         return ActionResult(
@@ -1067,7 +1067,7 @@ class ExecuteActionCommand:
                 "from_chain": from_chain,
                 "to_chain": to_chain,
             },
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=None,
         )
 
@@ -1156,8 +1156,8 @@ class ExecuteActionCommand:
                     transaction=None,
                     summary=f"MoonPay Quote: {quote.base_currency_amount} {from_token.upper()} → {quote.quote_amount} {to_token.upper()}",
                     enrichment=enrichment,
-                    created_at=datetime.utcnow(),
-                    expires_at=datetime.utcnow() + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                    created_at=datetime.now(UTC),
+                    expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
                 )
             else:
                 # Second call - user confirmed, prepare for Privy execution
@@ -1196,7 +1196,7 @@ class ExecuteActionCommand:
                     },
                     summary=f"Ready to execute: {fresh_quote.base_currency_amount} {from_token.upper()} → {fresh_quote.quote_amount} {to_token.upper()}",
                     enrichment=enrichment,
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
                     expires_at=None,
                 )
 
@@ -1220,7 +1220,7 @@ class ExecuteActionCommand:
                 transaction=None,
                 summary=error_msgs.get(language, error_msgs["en"]),
                 enrichment={"error": str(e), "provider": "moonpay"},
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 expires_at=None,
             )
 
@@ -1249,7 +1249,7 @@ class ExecuteActionCommand:
             transaction=None,
             summary=msgs.get(language, msgs["en"]),
             enrichment=None,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=None,
         )
     
@@ -1278,6 +1278,6 @@ class ExecuteActionCommand:
             transaction=None,
             summary=msgs.get(language, msgs["en"]),
             enrichment=None,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=None,
         )

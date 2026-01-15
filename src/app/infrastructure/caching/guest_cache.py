@@ -7,7 +7,7 @@ for caching Hunter AI responses, user context, and rate limiting data.
 
 import logging
 from typing import Any, Optional, Dict, List
-from datetime import datetime
+from datetime import datetime, UTC
 
 from .redis_cache import RedisCache
 
@@ -168,7 +168,7 @@ class GuestCache:
         ttl = self.GUEST_TTL_CONFIG["guest:context"]
 
         # Add timestamp
-        context["cached_at"] = datetime.utcnow().isoformat()
+        context["cached_at"] = datetime.now(UTC).isoformat()
 
         await self.cache.set(key, context, ttl=ttl)
 
@@ -265,7 +265,7 @@ class GuestCache:
             duration: Block duration in seconds (default 24hr)
         """
         key = self.cache.make_key("ratelimit", "blocked", ip_address)
-        await self.cache.set(key, {"blocked_at": datetime.utcnow().isoformat()}, ttl=duration)
+        await self.cache.set(key, {"blocked_at": datetime.now(UTC).isoformat()}, ttl=duration)
 
     # ========== Token Data Caching ==========
 
@@ -296,7 +296,7 @@ class GuestCache:
 
         data = {
             "price": price,
-            "fetched_at": datetime.utcnow().isoformat(),
+            "fetched_at": datetime.now(UTC).isoformat(),
         }
 
         await self.cache.set(key, data, ttl=ttl)

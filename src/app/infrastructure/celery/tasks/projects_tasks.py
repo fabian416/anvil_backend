@@ -1,6 +1,6 @@
 """Celery background tasks for projects system."""
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from celery import Task
 from celery.schedules import crontab
 
@@ -151,7 +151,7 @@ def aggregate_project_analytics():
         session = await container.get(MainAsyncSession)
         
         # Calculate yesterday's date
-        yesterday = datetime.utcnow().date() - timedelta(days=1)
+        yesterday = datetime.now(UTC).date() - timedelta(days=1)
         
         # Aggregate query
         query = text("""
@@ -241,7 +241,7 @@ def check_knowledge_base_health():
                 print(f"  - KB: {row.name}, Doc: {row.title}, Chunks: {row.chunk_count}")
         
         # Find stale documents
-        stale_threshold = datetime.utcnow() - timedelta(days=90)
+        stale_threshold = datetime.now(UTC) - timedelta(days=90)
         stale_query = text("""
             SELECT kb.name, kd.title, kd.updated_at
             FROM project_knowledge_documents kd

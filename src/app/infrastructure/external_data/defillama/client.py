@@ -5,7 +5,7 @@ Adapter for DeFiLlama API - the largest DeFi TVL aggregator.
 """
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 import httpx
 
@@ -156,7 +156,7 @@ class DeFiLlamaClient(DefiDataProvider):
                 tvl=Decimal(str(item.get("tvl", 0))),
                 protocols_count=item.get("protocols", 0),
                 raw_data=item,
-                last_updated=datetime.utcnow(),
+                last_updated=datetime.now(UTC),
             ))
         
         return chains
@@ -203,7 +203,7 @@ class DeFiLlamaClient(DefiDataProvider):
                     logo=None,
                     coingecko_id=None,
                     raw_data=coin,
-                    last_updated=datetime.utcnow(),
+                    last_updated=datetime.now(UTC),
                 )
         except httpx.HTTPError:
             pass
@@ -251,7 +251,7 @@ class DeFiLlamaClient(DefiDataProvider):
                 findings=None,
                 critical_findings=None,
                 raw_data={"url": link},
-                last_updated=datetime.utcnow(),
+                last_updated=datetime.now(UTC),
             ))
         
         return audits
@@ -274,7 +274,7 @@ class DeFiLlamaClient(DefiDataProvider):
             audit_links=data.get("audits", "").split(", ") if data.get("audits") else None,
             token_symbol=data.get("symbol"),
             raw_data=data,
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(UTC),
         )
     
     def _parse_protocol_detail(self, data: Dict[str, Any]) -> ProtocolData:
@@ -295,5 +295,5 @@ class DeFiLlamaClient(DefiDataProvider):
             audit_links=data.get("audits", []) if isinstance(data.get("audits"), list) else None,
             token_symbol=data.get("symbol"),
             raw_data=data,
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(UTC),
         )

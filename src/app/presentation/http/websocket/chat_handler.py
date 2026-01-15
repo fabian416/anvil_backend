@@ -18,7 +18,7 @@ Features:
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -143,7 +143,7 @@ async def chat_websocket_handler(
         return
 
     # Generate session ID for this connection
-    session_id = f"ws_{user.id}_{conversation_id}_{datetime.utcnow().timestamp()}"
+    session_id = f"ws_{user.id}_{conversation_id}_{datetime.now(UTC).timestamp()}"
 
     # Register connection with manager
     await connection_manager.connect(
@@ -153,7 +153,7 @@ async def chat_websocket_handler(
         metadata={
             "conversation_id": str(conversation_id),
             "email": user.email,
-            "connected_at": datetime.utcnow().isoformat(),
+            "connected_at": datetime.now(UTC).isoformat(),
         },
     )
 

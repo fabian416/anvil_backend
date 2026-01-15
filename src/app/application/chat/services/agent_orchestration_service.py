@@ -10,7 +10,7 @@ Comprehensive multi-agent coordination including:
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional, Dict, Tuple
 from uuid import UUID
 
@@ -138,7 +138,7 @@ class AgentOrchestrationService:
             object.__setattr__(voting_round, "winning_response", winning_response)
             object.__setattr__(voting_round, "winning_vote_count", len(winning_votes))
             object.__setattr__(voting_round, "consensus_confidence", consensus_confidence)
-            object.__setattr__(voting_round, "completed_at", datetime.utcnow())
+            object.__setattr__(voting_round, "completed_at", datetime.now(UTC))
 
         # Save voting round
         await self._repository.save_voting_round(voting_round)
@@ -162,7 +162,7 @@ class AgentOrchestrationService:
         Returns:
             Tuple of (response, confidence)
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             # Get response from LLM with agent-specific prompt
@@ -180,7 +180,7 @@ class AgentOrchestrationService:
             confidence = self._estimate_confidence(response)
 
             # Update performance metrics
-            response_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            response_time_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
             await self._update_agent_metrics(
                 agent_name=agent_name,
                 success=True,
@@ -193,7 +193,7 @@ class AgentOrchestrationService:
 
         except Exception as e:
             # Update metrics with failure
-            response_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            response_time_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
             await self._update_agent_metrics(
                 agent_name=agent_name,
                 success=False,
@@ -332,7 +332,7 @@ class AgentOrchestrationService:
         else:
             debate.consensus_status = ConsensusStatus.FAILED
 
-        debate.completed_at = datetime.utcnow()
+        debate.completed_at = datetime.now(UTC)
 
         # Save debate
         await self._repository.save_debate(debate)
@@ -520,7 +520,7 @@ clearly and explain the tradeoffs.
             Attempt 2: yield_optimizer responds with 40% confidence → FALLBACK (threshold 50%)
             Attempt 3: general agent responds with 75% confidence → SUCCESS
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         final_response = None
 
         while fallback_chain.has_more_agents():
@@ -555,7 +555,7 @@ clearly and explain the tradeoffs.
 
         # Calculate total time
         fallback_chain.total_time_ms = int(
-            (datetime.utcnow() - start_time).total_seconds() * 1000
+            (datetime.now(UTC) - start_time).total_seconds() * 1000
         )
 
         # Save fallback chain execution

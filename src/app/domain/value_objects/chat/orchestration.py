@@ -10,7 +10,7 @@ This module provides domain models for:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
@@ -54,7 +54,7 @@ class AgentVote:
     confidence: float  # 0.0 to 1.0
     reasoning: str
     vote_weight: float = 1.0  # For weighted voting
-    voted_at: datetime = field(default_factory=datetime.utcnow)
+    voted_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -81,7 +81,7 @@ class VotingRound:
     winning_vote_count: int = 0
     total_votes: int = 0
     consensus_confidence: float = 0.0  # Average confidence in winner
-    started_at: datetime = field(default_factory=datetime.utcnow)
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     completed_at: Optional[datetime] = None
 
     def calculate_winner(self) -> Optional[str]:
@@ -210,7 +210,7 @@ class DebateStatement:
     position: str = ""  # The position being argued
     confidence: float = 0.0
     references_statement_ids: List[UUID] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def is_rebuttal_to(self, other_statement_id: UUID) -> bool:
         """Check if this statement rebuts another."""
@@ -236,7 +236,7 @@ class AgentDebate:
     consensus_confidence: float = 0.0
     max_rounds: int = 3
     current_round: int = 0
-    started_at: datetime = field(default_factory=datetime.utcnow)
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     completed_at: Optional[datetime] = None
 
     def add_statement(self, statement: DebateStatement) -> None:
@@ -390,8 +390,8 @@ class AgentPerformanceMetrics:
     last_24h_requests: int = 0
     last_error: Optional[str] = None
     last_error_at: Optional[datetime] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def update_with_result(
         self,
@@ -418,7 +418,7 @@ class AgentPerformanceMetrics:
         else:
             self.failed_requests += 1
             self.last_error = error
-            self.last_error_at = datetime.utcnow()
+            self.last_error_at = datetime.now(UTC)
 
         # Update rolling averages
         self.avg_response_time_ms = self._update_average(
@@ -434,7 +434,7 @@ class AgentPerformanceMetrics:
         self.total_cost_usd += cost_usd
 
         self.uptime_percentage = (self.successful_requests / self.total_requests) * 100
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def _update_average(self, current_avg: float, new_value: float, count: int) -> float:
         """Update rolling average with new value."""
@@ -502,7 +502,7 @@ class CustomAgentConfig:
     fallback_llm_provider: Optional[str] = None
     is_active: bool = True
     created_by_user_id: UUID = field(default_factory=uuid4)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_llm_prompt(self) -> str:
         """

@@ -15,7 +15,7 @@ This handler manages the conversational flow and provides quote data.
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from app.application.chat.services.conversation_memory import ConversationContext
@@ -478,8 +478,8 @@ class MoonPaySwapFlowHandler:
                 quote.get("networkFee") or 
                 "0.01"
             )
-            quote_id = quote.get("id", f"quote-{datetime.utcnow().timestamp()}")
-            expires_at = quote.get("expires_at") or quote.get("expiresAt") or (datetime.utcnow() + timedelta(minutes=1)).isoformat()
+            quote_id = quote.get("id", f"quote-{datetime.now(UTC).timestamp()}")
+            expires_at = quote.get("expires_at") or quote.get("expiresAt") or (datetime.now(UTC) + timedelta(minutes=1)).isoformat()
             
             # Final validation - ensure we have valid amounts
             try:
@@ -709,8 +709,8 @@ class MoonPaySwapFlowHandler:
             "quoteCurrencyAmount": str(output),
             "exchangeRate": str(rate),
             "networkFee": "0.01",
-            "id": f"demo-{datetime.utcnow().timestamp()}",
-            "expiresAt": (datetime.utcnow() + timedelta(minutes=1)).isoformat(),
+            "id": f"demo-{datetime.now(UTC).timestamp()}",
+            "expiresAt": (datetime.now(UTC) + timedelta(minutes=1)).isoformat(),
         }
 
     def _get_demo_rate(self, from_token: str, to_token: str) -> float:

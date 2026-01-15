@@ -10,7 +10,7 @@ import hashlib
 import asyncio
 from typing import List, Optional, Dict, Any, Tuple
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.domain.value_objects.chat.performance import (
     CacheEntry,
@@ -168,8 +168,8 @@ class PerformanceOptimizationService:
                 conversation_context_hash=context_hash,
                 embedding=query_embedding,
                 hit_count=0,
-                last_accessed=datetime.utcnow(),
-                created_at=datetime.utcnow(),
+                last_accessed=datetime.now(UTC),
+                created_at=datetime.now(UTC),
                 ttl_seconds=ttl_seconds,
             )
 
@@ -359,7 +359,7 @@ class PerformanceOptimizationService:
             conversation_id=conversation_id,
             message=message,
             agent_name=agent_name,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             priority=priority,
         )
 
@@ -450,7 +450,7 @@ class PerformanceOptimizationService:
                     actual_value=response_time_ms,
                     budget_value=self._budget.max_response_time_ms,
                     threshold_exceeded_by=response_time_ms - self._budget.max_response_time_ms,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     recommendation="Consider enabling more aggressive caching or reducing agent complexity",
                 )
             )
@@ -466,7 +466,7 @@ class PerformanceOptimizationService:
                     actual_value=cost_usd,
                     budget_value=self._budget.max_llm_cost_per_query_usd,
                     threshold_exceeded_by=cost_usd - self._budget.max_llm_cost_per_query_usd,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     recommendation="Consider using smaller LLM models or increasing cache hit rate",
                 )
             )
@@ -483,7 +483,7 @@ class PerformanceOptimizationService:
                     actual_value=cache_stats.hit_rate,
                     budget_value=self._budget.target_cache_hit_rate,
                     threshold_exceeded_by=self._budget.target_cache_hit_rate - cache_stats.hit_rate,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     recommendation="Enable semantic similarity caching or adjust TTL values",
                 )
             )

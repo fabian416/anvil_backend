@@ -71,14 +71,14 @@ class ResearchAgentPerplexity:
         start_time = time.time()
         
         # Collect sources
-        from datetime import datetime
+        from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_api_source,
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         perplexity_result = None
         tools_used = ["openai_api"]
         

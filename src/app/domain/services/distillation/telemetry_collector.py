@@ -6,7 +6,7 @@ Collects and records metrics for all distillation operations.
 import asyncio
 import hashlib
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
 from uuid import UUID
 
@@ -56,7 +56,7 @@ class DistillationTelemetryRecord:
         self.cost_usd = cost_usd
         self.fallback_used = fallback_used
         self.error = error
-        self.timestamp = timestamp or datetime.utcnow()
+        self.timestamp = timestamp or datetime.now(UTC)
 
 
 class DistillationTelemetryCollector:

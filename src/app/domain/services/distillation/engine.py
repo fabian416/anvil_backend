@@ -1,6 +1,6 @@
 """Main distillation engine orchestrator."""
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -231,7 +231,7 @@ class DistillationEngine:
             total_latency_ms=result.classification_latency_ms,  # Same for now
             was_processed=result.should_process,
             llm_request_id=None,  # Will be set later if processed
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         
         await self.telemetry_repo.log_request(telemetry)

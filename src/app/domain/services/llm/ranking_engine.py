@@ -5,7 +5,7 @@ Dynamically scores models based on real-world performance.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 from decimal import Decimal
@@ -232,7 +232,7 @@ class RankingEngine:
 
         from datetime import timedelta
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         cutoff = now - timedelta(hours=recency_hours)
 
         if last_used_at >= cutoff:

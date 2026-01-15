@@ -7,7 +7,7 @@ overrides, and telemetry aggregation.
 
 import logging
 from typing import List, Optional, Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 from uuid import UUID
 
@@ -134,7 +134,7 @@ class SqlaLLMRankingRepository:
         self, agent_type: str, hours: int = 24
     ) -> Dict[UUID, TelemetryMetrics]:
         """Get aggregated telemetry metrics for agent type."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(UTC) - timedelta(hours=hours)
 
         query = (
             select(
@@ -178,7 +178,7 @@ class SqlaLLMRankingRepository:
         self, agent_type: str, model_id: UUID
     ) -> Optional[RankingOverride]:
         """Get active override for agent type + model."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         query = (
             select(ranking_overrides)
@@ -238,7 +238,7 @@ class SqlaLLMRankingRepository:
             total_requests=total_requests,
             successful_requests=successful_requests,
             failed_requests=failed_requests,
-            last_recalculated_at=datetime.utcnow(),
+            last_recalculated_at=datetime.now(UTC),
         )
 
         stmt = stmt.on_conflict_do_update(

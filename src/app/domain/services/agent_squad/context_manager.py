@@ -4,7 +4,7 @@ Context Manager domain service - Preserves conversation history.
 
 from typing import Protocol
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_id import MessageId
@@ -97,7 +97,7 @@ class ContextManager:
             role=role,
             content=content,
             agent_type=agent_type,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             metadata=metadata or {},
         )
         

@@ -5,7 +5,7 @@ User chat preferences entity.
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 @dataclass
@@ -53,8 +53,8 @@ class UserChatPreferences:
     high_contrast_mode: bool = False
     font_size: str = "medium"  # "small", "medium", "large"
 
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     def create_default(cls, user_id: UUID) -> "UserChatPreferences":
@@ -83,7 +83,7 @@ class UserChatPreferences:
         self.response_style = style
         if verbosity is not None:
             self.verbosity_level = max(1, min(5, verbosity))
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def set_agent_preference(self, query_type: str, agents: List[str]) -> None:
         """
@@ -94,19 +94,19 @@ class UserChatPreferences:
             agents: List of preferred agent names in priority order
         """
         self.preferred_agents[query_type] = agents
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def add_to_favorites(self, conversation_id: UUID) -> None:
         """Add conversation to favorites."""
         if conversation_id not in self.favorites:
             self.favorites.append(conversation_id)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
 
     def remove_from_favorites(self, conversation_id: UUID) -> None:
         """Remove conversation from favorites."""
         if conversation_id in self.favorites:
             self.favorites.remove(conversation_id)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
 
     def update_privacy_settings(
         self,
@@ -128,7 +128,7 @@ class UserChatPreferences:
             self.auto_delete_after_days = auto_delete_days
         if analytics_opt_in is not None:
             self.analytics_opt_in = analytics_opt_in
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def update_accessibility_settings(
         self,
@@ -154,7 +154,7 @@ class UserChatPreferences:
             self.high_contrast_mode = high_contrast
         if font_size is not None:
             self.font_size = font_size
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def get_preferred_agent_for_query(self, query_type: str) -> Optional[str]:
         """

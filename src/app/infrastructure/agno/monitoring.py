@@ -11,7 +11,7 @@ Features:
 """
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from collections import defaultdict
 import logging
 import time
@@ -31,7 +31,7 @@ class AgentMetrics:
     user_id: Optional[str]
     session_id: Optional[str]
     
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
     end_time: Optional[datetime] = None
     duration_ms: float = 0.0
     
@@ -47,7 +47,7 @@ class AgentMetrics:
     
     def complete(self, success: bool = True, error: Optional[str] = None):
         """Mark execution as complete."""
-        self.end_time = datetime.utcnow()
+        self.end_time = datetime.now(UTC)
         self.duration_ms = (self.end_time - self.start_time).total_seconds() * 1000
         self.success = success
         self.error = error
@@ -188,7 +188,7 @@ class AgentMonitor:
             self.metrics = self.metrics[-self.max_metrics:]
         
         # Remove metrics older than retention period
-        cutoff = datetime.utcnow() - timedelta(hours=self.retention_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=self.retention_hours)
         self.metrics = [
             m for m in self.metrics
             if m.start_time > cutoff
@@ -213,7 +213,7 @@ class AgentMonitor:
         metrics = self.metrics
         
         if time_window_minutes:
-            cutoff = datetime.utcnow() - timedelta(minutes=time_window_minutes)
+            cutoff = datetime.now(UTC) - timedelta(minutes=time_window_minutes)
             metrics = [m for m in metrics if m.start_time > cutoff]
         
         if agent_type:

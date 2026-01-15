@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 import stripe
 
 from app.application.subscription.ports import SubscriptionRepository
@@ -51,7 +51,7 @@ class InitSubscriptionsHandler:
         ]
 
         results: list[dict] = []
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         # First ensure rows exist
         for d in definitions:
             existing = await self._repo.read_by_name(d["name"])

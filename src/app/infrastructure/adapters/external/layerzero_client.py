@@ -8,7 +8,7 @@ Actual implementation should use LayerZero Protocol APIs.
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import httpx
 
 
@@ -109,7 +109,7 @@ class LayerZeroClient:
             status="pending",
             sender="0x0000000000000000000000000000000000000000",
             receiver="0x0000000000000000000000000000000000000000",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
     
     async def get_oft_transfer(self, tx_hash: str) -> OFTTransfer:

@@ -5,7 +5,7 @@ Service for analyzing graph statistics and insights.
 """
 
 from typing import Dict, Any, List
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 
 from app.domain.graph.ports import GraphRepository, TraversalDirection
@@ -46,7 +46,7 @@ class GraphAnalyticsInteractor:
         logger.info("Generating graph overview statistics...")
         
         stats = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "nodes": {},
             "edges": {},
             "health": {},

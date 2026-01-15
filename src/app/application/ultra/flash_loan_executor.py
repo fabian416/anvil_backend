@@ -16,7 +16,7 @@ Current Status:
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from typing import Any
 
@@ -146,7 +146,7 @@ class FlashLoanExecutor:
 
     async def _get_eth_price(self) -> Decimal:
         """Get ETH price in USD (cached)."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Use cache if less than 1 minute old
         if self._eth_price_cache:
@@ -300,7 +300,7 @@ class FlashLoanExecutor:
             available_liquidity=available,
             available_liquidity_usd=available_usd,
             utilization_rate=0.0,  # Would need additional query
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
     async def simulate_flash_loan(
@@ -389,7 +389,7 @@ class FlashLoanExecutor:
             gas_price_gwei=int(gas_estimate.gas_price_gwei),
             profit_usd=None,  # Unknown without callback logic
             fees_paid=total_fees,
-            execution_time=datetime.utcnow(),
+            execution_time=datetime.now(UTC),
         )
 
     def _get_protocol_info(self, protocol: FlashLoanProtocol) -> ProtocolInfo:
@@ -423,7 +423,7 @@ class FlashLoanExecutor:
             gas_price_gwei=None,
             profit_usd=None,
             fees_paid=Decimal("0"),
-            execution_time=datetime.utcnow(),
+            execution_time=datetime.now(UTC),
             error_message=error,
         )
 

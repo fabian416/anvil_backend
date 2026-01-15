@@ -16,7 +16,7 @@ Features:
 Admin-only endpoints for monitoring chat system health and performance.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional
 
 from dishka import FromDishka
@@ -113,7 +113,7 @@ async def get_chat_dashboard(
         Complete dashboard summary with all key metrics
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -176,7 +176,7 @@ async def get_agent_performance(
     """
     await _ensure_admin(current_user_service)
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -232,7 +232,7 @@ async def get_cache_efficiency(
     """
     await _ensure_admin(current_user_service)
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=7)
 
@@ -291,7 +291,7 @@ async def get_cost_tracking(
     """
     await _ensure_admin(current_user_service)
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -351,7 +351,7 @@ async def get_error_monitoring(
     """
     await _ensure_admin(current_user_service)
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=7)
 
@@ -406,7 +406,7 @@ async def get_active_users(
     """
     await _ensure_admin(current_user_service)
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -459,7 +459,7 @@ async def get_conversation_metrics(
     """
     await _ensure_admin(current_user_service)
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -521,7 +521,7 @@ async def export_dashboard_data(
     """
     await _ensure_admin(current_user_service)
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 

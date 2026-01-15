@@ -5,7 +5,7 @@ Enterprise-grade audit logging for compliance and security tracking.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
@@ -41,7 +41,7 @@ class AuditLogEntry:
     error_code: Optional[str] = None
 
     # Timestamps (immutable)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self):
         """Validate required fields."""
@@ -52,7 +52,7 @@ class AuditLogEntry:
 
         # Ensure created_at is set and immutable
         if not isinstance(self.created_at, datetime):
-            object.__setattr__(self, "created_at", datetime.utcnow())
+            object.__setattr__(self, "created_at", datetime.now(UTC))
 
     def is_success(self) -> bool:
         """Check if event was successful."""

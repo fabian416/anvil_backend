@@ -5,7 +5,7 @@ Implements automated arbitrage execution with risk management.
 
 from typing import Dict, List, Optional
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from enum import Enum
 
@@ -144,7 +144,7 @@ class AutoExecutor:
         if self._status != AutoExecutorStatus.RUNNING:
             return {"status": "not_running", "opportunities_found": 0, "executed": 0}
 
-        self._last_scan_time = datetime.utcnow()
+        self._last_scan_time = datetime.now(UTC)
 
         # Discover opportunities
         opportunities = await self.discovery.discover_all_opportunities(

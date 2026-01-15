@@ -5,7 +5,7 @@ CRUD endpoints for conversation management.
 Supports both guest and authenticated users.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -776,7 +776,7 @@ def create_conversations_router() -> APIRouter:
                         from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
 
                         # Create user message
-                        user_timestamp = datetime.utcnow()
+                        user_timestamp = datetime.now(UTC)
                         user_message = ChatMessage.create_user_message(
                             conversation_id=conversation_id,
                             content=request_body.content,
@@ -1337,7 +1337,7 @@ Response Guidelines:
             registration_required = None
         
         # Create user message with explicit timestamp
-        user_timestamp = datetime.utcnow()
+        user_timestamp = datetime.now(UTC)
         user_message = ChatMessage.create_user_message(
             conversation_id=conversation_id,
             content=request_body.content,
@@ -1674,7 +1674,7 @@ Response Guidelines:
             "swap_info": {
                 "quote": request_body.swap_quote,
                 "status": request_body.status,
-                "saved_at": datetime.utcnow().isoformat(),
+                "saved_at": datetime.now(UTC).isoformat(),
             }
         }
         

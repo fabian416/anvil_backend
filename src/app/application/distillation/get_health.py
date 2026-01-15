@@ -2,7 +2,7 @@
 Get distillation health interactor.
 """
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from app.application.distillation.request_distillator import RequestDistillator
@@ -48,7 +48,7 @@ class GetDistillationHealth:
             healthy=primary_healthy,
             latency_ms=health.get("primary_latency_ms"),
             error_rate=None,
-            last_check=datetime.utcnow(),
+            last_check=datetime.now(UTC),
         )
         
         fallback_status = ProviderStatus(
@@ -56,7 +56,7 @@ class GetDistillationHealth:
             healthy=fallback_healthy,
             latency_ms=health.get("fallback_latency_ms"),
             error_rate=None,
-            last_check=datetime.utcnow(),
+            last_check=datetime.now(UTC),
         )
         
         # System is healthy if at least one provider is healthy

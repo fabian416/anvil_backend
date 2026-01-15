@@ -144,7 +144,7 @@ class ExportGeneratorAdapter(ExportGenerator):
 
             # Save to file
             file_extension = format.value
-            file_name = f"conversation_{conversation.id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{file_extension}"
+            file_name = f"conversation_{conversation.id}_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.{file_extension}"
             file_path = self.storage_path / file_name
 
             # Write content to file
@@ -204,7 +204,7 @@ class ExportGeneratorAdapter(ExportGenerator):
             export_id=str(export_id),
             conversation_id=str(conversation.id),
             exported_by_user_id=str(conversation.user_id),
-            export_timestamp=datetime.utcnow(),
+            export_timestamp=datetime.now(UTC),
             format=format,
             compliance_standard=compliance_standard,
             file_size_bytes=file_size_bytes,
@@ -381,7 +381,7 @@ class ExportGeneratorAdapter(ExportGenerator):
                 "project_id": str(conversation.project_id) if conversation.project_id else None,
                 "created_at": conversation.created_at.isoformat(),
                 "updated_at": conversation.updated_at.isoformat(),
-                "export_timestamp": datetime.utcnow().isoformat(),
+                "export_timestamp": datetime.now(UTC).isoformat(),
                 "message_count": len(messages),
             }
 
@@ -479,7 +479,7 @@ class ExportGeneratorAdapter(ExportGenerator):
         if compliance_standard:
             lines.append("---")
             lines.append(f"\n*This export complies with {compliance_standard.value.upper()} standards.*")
-            lines.append(f"*Generated on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}*")
+            lines.append(f"*Generated on {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}*")
 
         return "\n".join(lines)
 
@@ -711,7 +711,7 @@ class ExportGeneratorAdapter(ExportGenerator):
         <div class="compliance-footer">
             <div class="compliance-badge">{compliance_standard.value.upper()} Compliant</div>
             <div>This export complies with {compliance_standard.value.upper()} standards.</div>
-            <div>Generated on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</div>
+            <div>Generated on {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}</div>
         </div>
 """
 
@@ -907,7 +907,7 @@ class ExportGeneratorAdapter(ExportGenerator):
             )
             elements.append(
                 Paragraph(
-                    f"Generated on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}",
+                    f"Generated on {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}",
                     footer_style,
                 )
             )

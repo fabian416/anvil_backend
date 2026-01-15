@@ -22,7 +22,7 @@ from app.infrastructure.auth.session.constants import AUTH_INVALID_PASSWORD
 from app.infrastructure.auth.session.service import AuthSessionService
 from app.application.common.ports.session_recorder import SessionRecorder
 from app.domain.value_objects.ip_address import IpAddress
-from datetime import datetime
+from datetime import datetime, UTC
 
 log = logging.getLogger(__name__)
 
@@ -136,9 +136,9 @@ class LogInHandler:
             token_type="bearer",
             ip_address=request_data.ip_address,
             user_agent=request_data.user_agent,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=auth_session.expiration,
-            last_activity=datetime.utcnow(),
+            last_activity=datetime.now(UTC),
             is_active=True,
         )
         await self._transaction_manager.commit()

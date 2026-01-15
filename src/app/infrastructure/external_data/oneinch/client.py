@@ -11,7 +11,7 @@ Integration with 1inch API for:
 from typing import List, Dict, Any, Optional
 import httpx
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.domain.ports.external_data.defi_data_provider import (
     TokenData,
@@ -240,7 +240,7 @@ class OneInchClient:
             "protocol_count": protocol_count,
             "total_volume_24h": total_volume,  # Not in API
             "liquidity_sources": sources,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     
     async def get_best_route(

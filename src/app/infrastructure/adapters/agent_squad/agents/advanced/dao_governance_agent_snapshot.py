@@ -88,14 +88,14 @@ class DAOGovernanceAgentSnapshot:
         latency_ms = int((time.time() - start_time) * 1000)
         
         # Collect sources
-        from datetime import datetime
+        from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_api_source,
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add Snapshot source
         sources.append(create_api_source(

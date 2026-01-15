@@ -5,7 +5,7 @@ Conversation template entity for workflow automation.
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 @dataclass
@@ -72,8 +72,8 @@ class ConversationTemplate:
     is_public: bool = False
     usage_count: int = 0
     avg_success_rate: float = 0.0
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     def create(
@@ -129,7 +129,7 @@ class ConversationTemplate:
             total_success += 1
 
         self.avg_success_rate = total_success / self.usage_count
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def get_total_steps(self) -> int:
         """Get total number of steps."""

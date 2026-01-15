@@ -15,7 +15,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -40,7 +40,7 @@ class ComponentHealth:
     message: str
     latency_ms: Optional[float] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    checked_at: datetime = field(default_factory=datetime.utcnow)
+    checked_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def is_healthy(self) -> bool:
         """Check if component is healthy."""
@@ -551,7 +551,7 @@ class HealthCheckService:
 
         # Update cache
         self._cached_results = health_results
-        self._last_full_check = datetime.utcnow()
+        self._last_full_check = datetime.now(UTC)
 
         return health_results
 
@@ -575,7 +575,7 @@ class HealthCheckService:
         if not self._last_full_check or not self._cached_results:
             return False
 
-        age = (datetime.utcnow() - self._last_full_check).total_seconds()
+        age = (datetime.now(UTC) - self._last_full_check).total_seconds()
         return age < self.cache_ttl_seconds
 
     async def get_overall_status(self) -> HealthStatus:
@@ -616,7 +616,7 @@ class HealthCheckService:
 
         return {
             "status": overall.value,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "components": {name: health.to_dict() for name, health in results.items()},
             "healthy_count": sum(
                 1 for h in results.values() if h.status == HealthStatus.HEALTHY

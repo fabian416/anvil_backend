@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from app.domain.entities.user import User
@@ -69,7 +69,7 @@ class UserService:
 
         user_id = UserId(self._user_id_generator())
         password_hash = UserPasswordHash(self._password_hasher.hash(password))
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         
         return User(
             id_=user_id,
@@ -107,7 +107,7 @@ class UserService:
     def change_password(self, user: User, raw_password: RawPassword) -> None:
         hashed_password = UserPasswordHash(self._password_hasher.hash(raw_password))
         user.password = hashed_password
-        user.updated_at = UpdatedAt(datetime.utcnow())
+        user.updated_at = UpdatedAt(datetime.now(UTC))
 
     def toggle_user_activation(self, user: User, *, is_active: bool) -> None:
         """
@@ -116,7 +116,7 @@ class UserService:
         if not user.role.is_changeable:
             raise ActivationChangeNotPermittedError(user.email, user.role)
         user.is_active = UserActive(is_active)
-        user.updated_at = UpdatedAt(datetime.utcnow())
+        user.updated_at = UpdatedAt(datetime.now(UTC))
 
     def toggle_user_admin_role(self, user: User, *, is_admin: bool) -> None:
         """
@@ -125,19 +125,19 @@ class UserService:
         if not user.role.is_changeable:
             raise RoleChangeNotPermittedError(user.email, user.role)
         user.role = UserRole.ADMIN if is_admin else UserRole.USER
-        user.updated_at = UpdatedAt(datetime.utcnow())
+        user.updated_at = UpdatedAt(datetime.now(UTC))
 
     def increment_login_retry_count(self, user: User) -> None:
         """
         Increments the user's failed login retry count and updates timestamp.
         """
         user.retry_count = RetryCount(user.retry_count.value + 1)
-        user.updated_at = UpdatedAt(datetime.utcnow())
+        user.updated_at = UpdatedAt(datetime.now(UTC))
 
     def record_successful_login(self, user: User) -> None:
         """
         Resets retry count and sets last login timestamp.
         """
         user.retry_count = RetryCount(0)
-        user.last_login = LastLogin(datetime.utcnow())
-        user.updated_at = UpdatedAt(datetime.utcnow())
+        user.last_login = LastLogin(datetime.now(UTC))
+        user.updated_at = UpdatedAt(datetime.now(UTC))

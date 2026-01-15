@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.application.portfolio.portfolio_risk_analysis import PortfolioRiskAnalysis
 from app.application.preferences.user_preferences_service import UserPreferencesService
@@ -124,7 +124,7 @@ class DashboardAggregationService:
                         action_label="Review Risk",
                         action_url=f"/protocols/{protocol_at_risk.protocol_id}/risk",
                         severity="HIGH",
-                        created_at=datetime.utcnow(),
+                        created_at=datetime.now(UTC),
                     )
                 )
 
@@ -141,7 +141,7 @@ class DashboardAggregationService:
                     action_label="View Diversification",
                     action_url="/portfolio/diversify",
                     severity="MEDIUM",
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
                 )
             )
 
@@ -175,7 +175,7 @@ class DashboardAggregationService:
                 action_label="Explore Lido",
                 action_url="/protocols/lido-finance",
                 severity="LOW",
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
             )
         )
 
@@ -200,7 +200,7 @@ class DashboardAggregationService:
                     action_label="Explore Multi-Chain",
                     action_url="/protocols?chains=multiple",
                     severity="LOW",
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
                 )
             )
 
@@ -217,7 +217,7 @@ class DashboardAggregationService:
                     action_label="Explore Strategies",
                     action_url="/defi/strategies",
                     severity="LOW",
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
                 )
             )
 
@@ -256,7 +256,7 @@ class DashboardAggregationService:
             "position_breakdown": position_breakdown,
             "protocols_count": len(portfolio.protocols),
             "chains_count": len(chain_breakdown),
-            "last_updated": datetime.utcnow(),
+            "last_updated": datetime.now(UTC),
         }
 
     def _get_risk_level(self, risk_score: float) -> str:

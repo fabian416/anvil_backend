@@ -7,7 +7,7 @@ blocking requests to failing providers/models.
 
 import logging
 from typing import Any, Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -80,7 +80,7 @@ class CircuitBreaker:
         if self.state == CircuitBreakerState.OPEN:
             # Check if timeout has passed
             if self.opened_at:
-                timeout_passed = datetime.utcnow() >= self.opened_at + timedelta(
+                timeout_passed = datetime.now(UTC) >= self.opened_at + timedelta(
                     seconds=self.config.timeout_seconds
                 )
 
@@ -99,7 +99,7 @@ class CircuitBreaker:
 
     def record_success(self):
         """Record successful request."""
-        self.last_success_at = datetime.utcnow()
+        self.last_success_at = datetime.now(UTC)
         self.consecutive_failures = 0
 
         if self.state == CircuitBreakerState.HALF_OPEN:
@@ -117,7 +117,7 @@ class CircuitBreaker:
         """Record failed request."""
         self.failure_count += 1
         self.consecutive_failures += 1
-        self.last_failure_at = datetime.utcnow()
+        self.last_failure_at = datetime.now(UTC)
 
         if self.state == CircuitBreakerState.CLOSED:
             if self.consecutive_failures >= self.config.failure_threshold:
@@ -153,13 +153,13 @@ class CircuitBreaker:
     def _transition_to_open(self):
         """Transition to open state."""
         self.state = CircuitBreakerState.OPEN
-        self.opened_at = datetime.utcnow()
+        self.opened_at = datetime.now(UTC)
         self.success_count = 0
 
     def _transition_to_half_open(self):
         """Transition to half-open state."""
         self.state = CircuitBreakerState.HALF_OPEN
-        self.half_open_at = datetime.utcnow()
+        self.half_open_at = datetime.now(UTC)
         self.success_count = 0
         logger.info(
             f"Circuit breaker HALF-OPEN for {self.entity_type} {self.entity_name} "

@@ -16,7 +16,7 @@ Metrics exported:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -200,7 +200,7 @@ class PrometheusMetrics:
             Prometheus-compatible metrics text
         """
         lines = []
-        timestamp = int(datetime.utcnow().timestamp() * 1000)
+        timestamp = int(datetime.now(UTC).timestamp() * 1000)
         
         # Export counters
         for name, values in self._counters.items():

@@ -5,7 +5,7 @@ Repository interface for LLM model rankings and related data.
 """
 
 from typing import Protocol, List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from uuid import UUID
 
@@ -119,7 +119,7 @@ class RankingOverride:
         """Check if override is expired."""
         if not self.expires_at:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
 
 class LLMRankingRepository(Protocol):

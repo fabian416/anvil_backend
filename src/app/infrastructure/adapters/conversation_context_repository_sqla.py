@@ -5,7 +5,7 @@ SQLAlchemy implementation of ConversationContextRepository.
 import logging
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,7 +75,7 @@ class ConversationContextRepositorySqla(ConversationContextRepository):
         # Check if exists
         existing = await self.get_by_conversation_id(context.conversation_id)
         
-        context.updated_at = datetime.utcnow()
+        context.updated_at = datetime.now(UTC)
         
         if existing:
             # Update

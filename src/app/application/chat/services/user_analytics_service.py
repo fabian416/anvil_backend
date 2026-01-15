@@ -17,7 +17,7 @@ This service follows hexagonal architecture by:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 from collections import Counter
@@ -1359,7 +1359,7 @@ class UserChatAnalyticsService:
                 "date_to": date_to.isoformat(),
                 "format": export_format,
                 "includes_conversations": include_conversations,
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(UTC).isoformat(),
             },
             "summary": {
                 "total_conversations": aggregates["total_conversations"],
@@ -1422,7 +1422,7 @@ class UserChatAnalyticsService:
             date_to=date_to,
             includes_conversations=include_conversations,
             data=export_data,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(UTC),
             record_count=record_count,
             file_size_bytes=file_size_bytes,
             download_url=None,  # Would need file storage implementation

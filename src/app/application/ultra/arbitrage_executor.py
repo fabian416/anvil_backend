@@ -6,7 +6,7 @@ for complete arbitrage execution.
 
 from typing import Dict, Optional
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from decimal import Decimal
 
@@ -103,7 +103,7 @@ class ArbitrageExecutor:
     def _generate_execution_id(self) -> str:
         """Generate unique execution ID."""
         self._execution_counter += 1
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(datetime.now(UTC).timestamp())
         return f"EXEC-{timestamp}-{self._execution_counter:04d}"
 
     async def simulate_execution(
@@ -141,7 +141,7 @@ class ArbitrageExecutor:
                 expected_profit=opportunity.expected_profit_usd,
                 realized_profit=None,
                 gas_cost=opportunity.estimated_gas_cost,
-                execution_time=datetime.utcnow(),
+                execution_time=datetime.now(UTC),
                 error_message="No flash loan protocol available",
             )
 
@@ -168,7 +168,7 @@ class ArbitrageExecutor:
                 expected_profit=net_profit,
                 realized_profit=None,
                 gas_cost=total_costs,
-                execution_time=datetime.utcnow(),
+                execution_time=datetime.now(UTC),
                 error_message=f"Net profit ${net_profit} not profitable after costs",
             )
 
@@ -182,7 +182,7 @@ class ArbitrageExecutor:
             expected_profit=net_profit,
             realized_profit=None,  # Will be known after execution
             gas_cost=total_costs,
-            execution_time=datetime.utcnow(),
+            execution_time=datetime.now(UTC),
         )
 
     async def execute_with_mev_protection(
@@ -274,7 +274,7 @@ class ArbitrageExecutor:
             expected_profit=simulation.expected_profit,
             realized_profit=flashbots_response.profit_realized,
             gas_cost=simulation.gas_cost,
-            execution_time=datetime.utcnow(),
+            execution_time=datetime.now(UTC),
             error_message=flashbots_response.error_message,
         )
 

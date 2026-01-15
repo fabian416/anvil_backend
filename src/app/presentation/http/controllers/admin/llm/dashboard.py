@@ -7,7 +7,7 @@ Aggregated endpoints optimized for dashboard rendering.
 from fastapi import APIRouter, status, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import asyncio
 import json
 
@@ -113,7 +113,7 @@ async def get_dashboard_data(period: str = "24h"):
             "cost_summary": data.cost_summary,
             "recent_requests": data.recent_requests[:10],  # Last 10 requests
             "active_alerts": data.active_alerts,
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
         }
     )
 
@@ -146,7 +146,7 @@ async def websocket_endpoint(websocket: WebSocket):
             {
                 "type": "connection",
                 "status": "connected",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -161,7 +161,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 # Echo back (for ping/pong)
                 if message == "ping":
                     await websocket.send_json(
-                        {"type": "pong", "timestamp": datetime.utcnow().isoformat()}
+                        {"type": "pong", "timestamp": datetime.now(UTC).isoformat()}
                     )
 
             except asyncio.TimeoutError:
@@ -169,7 +169,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_json(
                     {
                         "type": "heartbeat",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                     }
                 )
 
@@ -214,7 +214,7 @@ async def export_data(request: ExportRequest):
             "status": "generating",
             "download_url": f"/admin/llm/dashboard/export/export-uuid/download",
             "expires_at": (
-                datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+                datetime.now(UTC).replace(microsecond=0).isoformat() + "Z"
             ),
         }
     )
@@ -236,7 +236,7 @@ async def dashboard_health():
     return DashboardResponse(
         data={
             "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "components": {
                 "database": "healthy",
                 "cache": "healthy",
@@ -261,7 +261,7 @@ async def broadcast_request_update(request_data: Dict[str, Any]):
         {
             "type": "request_update",
             "data": request_data,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     )
 
@@ -276,7 +276,7 @@ async def broadcast_alert(alert_data: Dict[str, Any]):
         {
             "type": "alert",
             "data": alert_data,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     )
 
@@ -291,6 +291,6 @@ async def broadcast_metrics_update(metrics_data: Dict[str, Any]):
         {
             "type": "metrics_update",
             "data": metrics_data,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     )

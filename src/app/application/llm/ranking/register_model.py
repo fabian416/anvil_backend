@@ -8,7 +8,7 @@ rank 1 placement for metric collection.
 import logging
 from typing import List, Optional
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID, uuid4
 from decimal import Decimal
 
@@ -110,7 +110,7 @@ class RegisterVertexAIModel:
 
         # 4. Create ranking entries with overrides
         initial_score = Decimal("1.0")
-        expires_at = datetime.utcnow() + timedelta(hours=24)
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
 
         for agent_type in agent_types:
             # Create ranking entry
@@ -262,7 +262,7 @@ class RegisterDeepInfraModel:
 
         # 4. Create ranking entries with overrides
         initial_score = Decimal("1.0")
-        expires_at = datetime.utcnow() + timedelta(hours=24)
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
 
         for agent_type in agent_types:
             # Create ranking entry

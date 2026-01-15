@@ -76,7 +76,7 @@ class DistillationConfigRepositorySqla(DistillationConfigRepository):
         modified_by: Optional[UUID] = None,
     ) -> None:
         """Update specific configuration."""
-        from datetime import datetime
+        from datetime import datetime, UTC
         
         query = (
             update(distillation_config)
@@ -84,7 +84,7 @@ class DistillationConfigRepositorySqla(DistillationConfigRepository):
             .values(
                 config_value=config_value,
                 modified_by=modified_by,
-                modified_at=datetime.utcnow(),
+                modified_at=datetime.now(UTC),
             )
         )
         

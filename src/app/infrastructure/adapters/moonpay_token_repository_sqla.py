@@ -4,7 +4,7 @@ SQLAlchemy implementation of MoonPay Token Repository.
 Stores and retrieves MoonPay authentication tokens for swap execution.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID, uuid4
 
 from sqlalchemy import delete, select
@@ -68,7 +68,7 @@ class SqlaMoonPayTokenRepository(MoonPayTokenRepository):
         """Insert or update MoonPay tokens for a user."""
         try:
             table = self._get_table()
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
 
             # Use PostgreSQL's INSERT ... ON CONFLICT DO UPDATE (upsert)
             stmt = insert(table).values(

@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.application.common.ports.session_recorder import SessionRecorder
 from app.application.common.ports.transaction_manager import TransactionManager
@@ -68,9 +68,9 @@ class ChangeOwnPasswordHandler:
             token_type="bearer",
             ip_address=request.ip_address,
             user_agent=request.user_agent,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=auth_session.expiration,
-            last_activity=datetime.utcnow(),
+            last_activity=datetime.now(UTC),
             is_active=True,
         )
         await self._tx.commit()

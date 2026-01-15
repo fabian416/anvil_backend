@@ -7,7 +7,7 @@ Implements LLMProviderPort for DeepInfra.
 import logging
 from typing import AsyncIterator, Dict, Any, List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 
 import httpx
 
@@ -112,14 +112,14 @@ class DeepInfraAdapter:
                 payload["tool_choice"] = request.tool_choice
 
         # Execute request
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             response = await self._client.post("/chat/completions", json=payload)
             response.raise_for_status()
             data = response.json()
 
-            latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             # Parse OpenAI-format response
             return self._parse_response(data, model_id, latency_ms)
@@ -206,9 +206,9 @@ class DeepInfraAdapter:
                 messages=[LLMMessage(role="user", content="Hi")], max_tokens=10
             )
 
-            start_time = datetime.utcnow()
+            start_time = datetime.now(UTC)
             await self.complete(test_request)
-            latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             return {
                 "status": "healthy",

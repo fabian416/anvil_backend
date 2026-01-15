@@ -5,7 +5,7 @@ Implements the GuestRepository port using SQLAlchemy.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 from sqlalchemy import delete, func, select, update
@@ -104,7 +104,7 @@ class GuestRepositorySqla(GuestRepository):
                     total_messages=guest.total_messages,
                     language=guest.language,
                     is_blocked=guest.is_blocked,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await self._session.execute(stmt)
@@ -197,7 +197,7 @@ class GuestRepositorySqla(GuestRepository):
                     title=conversation.title,
                     status=conversation.status.value,
                     message_count=conversation.message_count,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                     archived_at=conversation.archived_at,
                 )
             )
@@ -219,7 +219,7 @@ class GuestRepositorySqla(GuestRepository):
                 .where(table.c.updated_at < older_than)
                 .values(
                     status="archived",
-                    archived_at=datetime.utcnow(),
+                    archived_at=datetime.now(UTC),
                 )
             )
             result = await self._session.execute(stmt)
@@ -268,8 +268,8 @@ class GuestRepositorySqla(GuestRepository):
                 .values(
                     status="archived",
                     message_count=0,
-                    archived_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    archived_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await self._session.execute(archive_conv_stmt)

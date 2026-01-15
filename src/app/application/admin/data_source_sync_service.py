@@ -6,7 +6,7 @@ including DeFi APIs, RPC nodes, and oracles.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Dict, Optional
 from uuid import UUID, uuid4
 from enum import Enum
@@ -143,8 +143,8 @@ class DataSourceSyncService:
             chains_supported=config.get("chains", []),
             data_types=config.get("data_types", []),
             priority=config.get("priority", 5),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
         
         return source
@@ -194,7 +194,7 @@ class DataSourceSyncService:
                 status=DataSourceStatus.HEALTHY,
                 uptime_percentage=99.9,
                 avg_response_time_ms=150.0,
-                last_success=datetime.utcnow(),
+                last_success=datetime.now(UTC),
                 last_failure=None,
                 api_key_configured=False,
                 rate_limit_per_minute=300,
@@ -203,8 +203,8 @@ class DataSourceSyncService:
                 chains_supported=["ethereum", "arbitrum", "optimism"],
                 data_types=["tvl", "protocols"],
                 priority=10,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
         ]
 
@@ -230,8 +230,8 @@ class DataSourceSyncService:
             "source_id": source_id,
             "status": "healthy",
             "response_time_ms": 120.0,
-            "last_checked": datetime.utcnow(),
-            "next_check": datetime.utcnow(),
+            "last_checked": datetime.now(UTC),
+            "next_check": datetime.now(UTC),
         }
 
     async def get_health_summary(self) -> Dict:
@@ -369,5 +369,5 @@ class DataSourceSyncService:
             "failed_syncs": 2,
             "avg_sync_duration_seconds": 45.0,
             "total_records_synced": 1_250_000,
-            "last_full_sync": datetime.utcnow(),
+            "last_full_sync": datetime.now(UTC),
         }

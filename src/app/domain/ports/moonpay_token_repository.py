@@ -4,7 +4,7 @@ MoonPay Token Repository Port.
 Defines the interface for storing and retrieving MoonPay authentication tokens.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Protocol
 from uuid import UUID
 
@@ -34,7 +34,7 @@ class MoonPayTokenData:
         """Check if the token has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
 
 class MoonPayTokenRepository(Protocol):

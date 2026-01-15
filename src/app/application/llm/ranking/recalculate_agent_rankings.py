@@ -9,7 +9,7 @@ import logging
 from typing import Optional, List
 from dataclasses import dataclass
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 from app.domain.ports.llm_ranking_repository import LLMRankingRepository
@@ -105,7 +105,7 @@ class RecalculateAgentRankings:
                 models_evaluated=0,
                 models_updated=0,
                 changes=[],
-                recalculated_at=datetime.utcnow(),
+                recalculated_at=datetime.now(UTC),
             )
 
         # 3. Get weight profile
@@ -236,7 +236,7 @@ class RecalculateAgentRankings:
             models_evaluated=models_evaluated,
             models_updated=models_updated,
             changes=changes,
-            recalculated_at=datetime.utcnow(),
+            recalculated_at=datetime.now(UTC),
         )
 
         logger.info(

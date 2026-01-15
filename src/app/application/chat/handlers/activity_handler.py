@@ -10,7 +10,7 @@ Provides transaction history using:
 import time
 from dataclasses import dataclass
 from typing import Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.domain.transactions.ports.transaction.transaction_repository import (
     TransactionRepository,
@@ -185,7 +185,7 @@ class ActivityHandler:
         if not created_at:
             return "unknown"
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         if hasattr(created_at, "replace"):
             created_at = created_at.replace(tzinfo=None)
 

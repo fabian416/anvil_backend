@@ -6,7 +6,7 @@ SQLAlchemy implementation of ExportRepository port for PostgreSQL.
 
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import select, and_
 
@@ -174,7 +174,7 @@ class ExportRepositoryAdapter(ExportRepository):
             .where(
                 and_(
                     ConversationExportModel.status == "completed",
-                    ConversationExportModel.expires_at < datetime.utcnow(),
+                    ConversationExportModel.expires_at < datetime.now(UTC),
                 )
             )
             .limit(limit)
@@ -223,7 +223,7 @@ class ExportRepositoryAdapter(ExportRepository):
             stmt = select(ConversationExportModel).where(
                 and_(
                     ConversationExportModel.status == "completed",
-                    ConversationExportModel.expires_at < datetime.utcnow(),
+                    ConversationExportModel.expires_at < datetime.now(UTC),
                 )
             )
             result = await self._session.execute(stmt)

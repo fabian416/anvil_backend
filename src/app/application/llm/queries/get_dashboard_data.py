@@ -6,7 +6,7 @@ Aggregates data for the admin dashboard.
 
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 
@@ -75,7 +75,7 @@ class GetDashboardData:
                 "total_models": 9,
                 "available_models": 9,
                 "circuit_breakers_open": 0,
-                "last_updated": datetime.utcnow().isoformat(),
+                "last_updated": datetime.now(UTC).isoformat(),
             },
             providers=[
                 {
@@ -176,7 +176,7 @@ class GetDashboardData:
             recent_requests=[
                 {
                     "request_id": "req_abc123",
-                    "timestamp": (datetime.utcnow() - timedelta(seconds=30)).isoformat(),
+                    "timestamp": (datetime.now(UTC) - timedelta(seconds=30)).isoformat(),
                     "agent_type": "swap_agent",
                     "provider": "vertex_ai",
                     "model": "gemini-1.5-pro",
@@ -186,7 +186,7 @@ class GetDashboardData:
                 },
                 {
                     "request_id": "req_def456",
-                    "timestamp": (datetime.utcnow() - timedelta(seconds=45)).isoformat(),
+                    "timestamp": (datetime.now(UTC) - timedelta(seconds=45)).isoformat(),
                     "agent_type": "trading_agent",
                     "provider": "deepinfra",
                     "model": "llama-3.1-405b",
@@ -201,7 +201,7 @@ class GetDashboardData:
                     "type": "budget_warning",
                     "severity": "low",
                     "message": "Daily budget at 76% (approaching 80% warning threshold)",
-                    "timestamp": (datetime.utcnow() - timedelta(minutes=15)).isoformat(),
+                    "timestamp": (datetime.now(UTC) - timedelta(minutes=15)).isoformat(),
                 }
             ],
         )

@@ -9,7 +9,7 @@ Celery tasks for periodic:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ async def run_periodic_health_checks() -> Dict[str, str]:
         return {
             "status": "error",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -87,14 +87,14 @@ async def run_periodic_alert_evaluation() -> Dict[str, int]:
         return {
             "triggered_count": len(triggered_alerts),
             "active_count": len(active_alerts),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
         logger.error(f"Error evaluating alerts: {e}", exc_info=True)
         return {
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -113,14 +113,14 @@ async def aggregate_metrics_hourly() -> Dict[str, int]:
 
         return {
             "aggregated_count": 0,  # Placeholder
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
         logger.error(f"Error aggregating metrics: {e}", exc_info=True)
         return {
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -145,14 +145,14 @@ async def cleanup_old_metrics(retention_days: int = 30) -> Dict[str, int]:
         return {
             "deleted_count": 0,  # Placeholder
             "retention_days": retention_days,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
         logger.error(f"Error cleaning up metrics: {e}", exc_info=True)
         return {
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -189,14 +189,14 @@ async def check_budget_utilization() -> Dict[str, float]:
             "total_cost_usd": total_cost,
             "daily_budget_usd": daily_budget,
             "utilization_percent": utilization_percent,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
         logger.error(f"Error checking budget utilization: {e}", exc_info=True)
         return {
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -216,14 +216,14 @@ async def generate_daily_metrics_report() -> Dict[str, any]:
         # In production, this would query time-series data
 
         report = {
-            "date": datetime.utcnow().date().isoformat(),
+            "date": datetime.now(UTC).date().isoformat(),
             "total_requests": 0,  # Placeholder
             "total_errors": 0,
             "total_cost_usd": metrics.get_total_cost(),
             "avg_response_time_ms": 0.0,
             "cache_hit_rate": metrics.get_cache_hit_rate(),
             "error_rate": metrics.get_error_rate(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         logger.info("Daily metrics report generated", extra=report)
@@ -234,7 +234,7 @@ async def generate_daily_metrics_report() -> Dict[str, any]:
         logger.error(f"Error generating daily report: {e}", exc_info=True)
         return {
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 

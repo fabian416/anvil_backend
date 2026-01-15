@@ -5,7 +5,7 @@ Tracks message usage for rate limiting.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from uuid import UUID, uuid4
 
@@ -28,7 +28,7 @@ class RateLimit:
     id: UUID = field(default_factory=uuid4)
     user_id: UUID = field(default_factory=uuid4)
     window_type: WindowType = WindowType.HOURLY
-    window_start: datetime = field(default_factory=datetime.utcnow)
+    window_start: datetime = field(default_factory=lambda: datetime.now(UTC))
     message_count: int = 0
     
     def increment(self) -> None:
@@ -38,11 +38,11 @@ class RateLimit:
     def reset(self) -> None:
         """Reset message count for new window."""
         self.message_count = 0
-        self.window_start = datetime.utcnow()
+        self.window_start = datetime.now(UTC)
     
     def is_expired(self) -> bool:
         """Check if the rate limit window has expired."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         if self.window_type == WindowType.HOURLY:
             # Check if more than 1 hour has passed
             delta = now - self.window_start

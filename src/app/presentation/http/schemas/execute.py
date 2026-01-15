@@ -5,7 +5,7 @@ Schemas for the execute endpoint that allows users to execute
 recommendations from chat (swaps, deposits, withdrawals, etc.).
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional, List, Any
 from uuid import UUID
 from enum import Enum
@@ -197,7 +197,7 @@ class ExecuteActionResponse(BaseModel):
     )
     
     # Timing
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: Optional[datetime] = Field(
         default=None,
         description="When the action expires (for confirmation)",

@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.application.common.exceptions.authorization import AuthorizationError
 from app.application.common.ports.email_verification_repository import (
@@ -40,7 +40,7 @@ class SendEmailVerificationHandler:
         from secrets import token_urlsafe
 
         token = token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(hours=24)
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
 
         await self._repo.add(user_id=user.id_.value, token=token, expires_at=expires_at)
         await self._tx.commit()

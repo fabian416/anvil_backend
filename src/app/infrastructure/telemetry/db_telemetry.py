@@ -30,7 +30,7 @@ import re
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any, Callable, Optional
 from uuid import uuid4
@@ -175,7 +175,7 @@ class QueryPattern:
     
     def record(self, execution: QueryExecution) -> None:
         """Record an execution of this pattern."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         
         self.execution_count += 1
         self.total_duration_ms += execution.duration_ms
@@ -466,7 +466,7 @@ class DatabaseTelemetry:
     
     def _update_metrics(self, execution: QueryExecution) -> None:
         """Update aggregate metrics."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         
         self._metrics.total_queries += 1
         self._metrics.total_duration_ms += execution.duration_ms
@@ -537,14 +537,14 @@ class DatabaseTelemetry:
         """Called when a connection is checked out from the pool."""
         self._pool_stats.checkout_count += 1
         self._pool_stats.checked_out += 1
-        self._pool_stats.last_checkout_time = datetime.utcnow()
+        self._pool_stats.last_checkout_time = datetime.now(UTC)
     
     def on_checkin(self, dbapi_conn: Any, conn_record: Any) -> None:
         """Called when a connection is returned to the pool."""
         self._pool_stats.checkin_count += 1
         self._pool_stats.checked_out = max(0, self._pool_stats.checked_out - 1)
         self._pool_stats.checked_in += 1
-        self._pool_stats.last_checkin_time = datetime.utcnow()
+        self._pool_stats.last_checkin_time = datetime.now(UTC)
     
     def on_connect(self, dbapi_conn: Any, conn_record: Any) -> None:
         """Called when a new connection is created."""

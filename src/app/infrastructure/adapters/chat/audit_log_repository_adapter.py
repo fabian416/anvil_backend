@@ -5,7 +5,7 @@ SQLAlchemy implementation of AuditLogRepository port for PostgreSQL.
 Optimized for high-volume logging with indexed queries for compliance reporting.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional
 from uuid import UUID
 
@@ -460,7 +460,7 @@ class AuditLogRepositoryAdapter(AuditLogRepository):
             Number of entries deleted
         """
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+            cutoff_date = datetime.now(UTC) - timedelta(days=retention_days)
 
             conditions = [AuditLogModel.created_at < cutoff_date]
 

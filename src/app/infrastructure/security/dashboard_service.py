@@ -5,7 +5,7 @@ Aggregates security metrics and scan results for monitoring dashboard.
 Provides comprehensive security posture overview.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 import json
@@ -58,7 +58,7 @@ class SecurityDashboardService:
             Dict containing all security metrics and status
         """
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "security_posture": self._get_security_posture(),
             "attack_statistics": self._get_attack_statistics(),
             "transaction_approvals": self._get_transaction_approval_stats(),
@@ -121,7 +121,7 @@ class SecurityDashboardService:
         return {
             "overall_score": score,
             "level": level,
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
             "factors": {
                 "vulnerabilities_impact": critical_vulns * -10 + high_vulns * -5 + medium_vulns * -2 if latest_scan else 0,
                 "block_rate_bonus": 5 if block_rate > 95 else (-10 if block_rate < 80 else 0)
@@ -294,7 +294,7 @@ class SecurityDashboardService:
                 "name": "Helios",
                 "type": "XSS Testing",
                 "status": "active",
-                "last_run": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
+                "last_run": (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
                 "patterns_count": 150,
                 "version": "1.0.0"
             },
@@ -302,7 +302,7 @@ class SecurityDashboardService:
                 "name": "LLMExploiter",
                 "type": "LLM Security",
                 "status": "active",
-                "last_run": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
+                "last_run": (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
                 "patterns_count": 219,
                 "version": "1.0.0"
             },
@@ -310,21 +310,21 @@ class SecurityDashboardService:
                 "name": "Nettacker",
                 "type": "Network Scanning",
                 "status": "active",
-                "last_run": (datetime.utcnow() - timedelta(days=1)).isoformat(),
+                "last_run": (datetime.now(UTC) - timedelta(days=1)).isoformat(),
                 "version": "0.3.3"
             },
             {
                 "name": "llm-security-auditor",
                 "type": "Multi-Agent Security",
                 "status": "active",
-                "last_run": (datetime.utcnow() - timedelta(hours=6)).isoformat(),
+                "last_run": (datetime.now(UTC) - timedelta(hours=6)).isoformat(),
                 "version": "1.0.0"
             },
             {
                 "name": "OWASP AI Testing Guide",
                 "type": "Best Practices",
                 "status": "active",
-                "last_run": (datetime.utcnow() - timedelta(days=7)).isoformat(),
+                "last_run": (datetime.now(UTC) - timedelta(days=7)).isoformat(),
                 "version": "2024.1"
             }
         ]
@@ -365,7 +365,7 @@ class SecurityDashboardService:
 
         daily_data = []
         for i in range(days):
-            date = datetime.utcnow() - timedelta(days=days-i-1)
+            date = datetime.now(UTC) - timedelta(days=days-i-1)
             daily_data.append({
                 "date": date.strftime("%Y-%m-%d"),
                 "critical": 0,
@@ -381,6 +381,6 @@ class SecurityDashboardService:
             "trend_analysis": {
                 "direction": "IMPROVING",
                 "rate_of_change": -0.5,  # Vulnerabilities decreasing
-                "projected_zero_date": (datetime.utcnow() + timedelta(days=15)).strftime("%Y-%m-%d")
+                "projected_zero_date": (datetime.now(UTC) + timedelta(days=15)).strftime("%Y-%m-%d")
             }
         }

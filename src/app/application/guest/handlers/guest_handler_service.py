@@ -614,11 +614,11 @@ class GuestHandlerService:
             response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
 
             # Build sources list
-            from datetime import datetime
+            from datetime import datetime, UTC
             from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
             
             sources = []
-            fetched_at = datetime.utcnow()
+            fetched_at = datetime.now(UTC)
             
             # Add social media sources
             for source_name, data in breakdown.items():

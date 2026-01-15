@@ -9,7 +9,7 @@ Machine learning models for predicting protocol risk based on:
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 import numpy as np
@@ -166,7 +166,7 @@ class RiskPredictionService:
             risk_trend=risk_trend,
             contributing_factors=contributing_factors,
             recommendations=recommendations,
-            prediction_timestamp=datetime.utcnow(),
+            prediction_timestamp=datetime.now(UTC),
             model_version=self._model_version,
         )
     
@@ -239,7 +239,7 @@ class RiskPredictionService:
             "anomalies_detected": len(anomalies),
             "anomalies": anomalies,
             "is_anomalous": len(anomalies) > 0,
-            "checked_at": datetime.utcnow().isoformat(),
+            "checked_at": datetime.now(UTC).isoformat(),
         }
     
     async def forecast_risk(
@@ -274,7 +274,7 @@ class RiskPredictionService:
             
             forecast.append({
                 "day": day,
-                "date": (datetime.utcnow() + timedelta(days=day)).isoformat(),
+                "date": (datetime.now(UTC) + timedelta(days=day)).isoformat(),
                 "predicted_risk_score": round(forecasted_score, 2),
                 "risk_level": self._classify_risk_level(forecasted_score).value,
                 "confidence": max(0.5, current_risk.confidence - (0.05 * day)),

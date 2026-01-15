@@ -17,7 +17,7 @@ This service follows hexagonal architecture by:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 from collections import defaultdict
@@ -159,7 +159,7 @@ class AdminChatAnalyticsService:
                         avg_response_time_ms=agent_data["avg_response_time_ms"],
                         total_cost_usd=agent_data["total_cost_usd"],
                         error_count=estimated_errors,
-                        last_used=datetime.utcnow(),  # Simplified
+                        last_used=datetime.now(UTC),  # Simplified
                     )
                 )
 
@@ -317,7 +317,7 @@ class AdminChatAnalyticsService:
                     avg_response_time_ms=agent_data["avg_response_time_ms"],
                     total_cost_usd=agent_data["total_cost_usd"],
                     error_count=agent_data["error_count"],
-                    last_used=datetime.utcnow(),  # Simplified
+                    last_used=datetime.now(UTC),  # Simplified
                 )
             )
 
@@ -651,7 +651,7 @@ class AdminChatAnalyticsService:
                     most_common_message="Agent execution failure (< 90% success rate)",
                     affected_agents=[name for name, _ in critical_agents],
                     first_occurrence=date_from,
-                    last_occurrence=datetime.utcnow(),
+                    last_occurrence=datetime.now(UTC),
                 )
             )
 
@@ -666,7 +666,7 @@ class AdminChatAnalyticsService:
                     most_common_message="Agent execution issues (90-95% success rate)",
                     affected_agents=[name for name, _ in high_agents],
                     first_occurrence=date_from,
-                    last_occurrence=datetime.utcnow(),
+                    last_occurrence=datetime.now(UTC),
                 )
             )
 
@@ -681,7 +681,7 @@ class AdminChatAnalyticsService:
                     most_common_message="Occasional agent failures (95-98% success rate)",
                     affected_agents=[name for name, _ in medium_agents],
                     first_occurrence=date_from,
-                    last_occurrence=datetime.utcnow(),
+                    last_occurrence=datetime.now(UTC),
                 )
             )
 
@@ -1073,7 +1073,7 @@ class AdminChatAnalyticsService:
                 "date_to": date_to.isoformat(),
                 "format": export_format,
                 "sections": sections,
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(UTC).isoformat(),
             },
             "summary": {
                 "total_conversations": aggregates["total_conversations"],
@@ -1171,7 +1171,7 @@ class AdminChatAnalyticsService:
             date_to=date_to,
             sections_included=sections,
             data=export_data,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(UTC),
             record_count=aggregates["total_conversations"],
             file_size_bytes=file_size_bytes,
         )

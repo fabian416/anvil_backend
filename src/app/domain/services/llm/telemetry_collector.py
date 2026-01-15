@@ -6,7 +6,7 @@ Collects, aggregates, and exposes LLM orchestration metrics.
 
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
@@ -81,7 +81,7 @@ class TelemetryCollector:
         self._cache_hits = 0
         self._cache_misses = 0
         self._retry_count = 0
-        self._start_time = datetime.utcnow()
+        self._start_time = datetime.now(UTC)
 
     async def record_request(
         self,
@@ -160,7 +160,7 @@ class TelemetryCollector:
             Dictionary of metrics
         """
         total_requests = sum(self._request_count.values())
-        uptime = (datetime.utcnow() - self._start_time).total_seconds()
+        uptime = (datetime.now(UTC) - self._start_time).total_seconds()
 
         # Calculate averages
         avg_durations = {}
@@ -176,7 +176,7 @@ class TelemetryCollector:
 
         return {
             "uptime_seconds": uptime,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "requests": {
                 "total": total_requests,
                 "by_key": dict(self._request_count),
@@ -217,7 +217,7 @@ class TelemetryCollector:
         self._cache_hits = 0
         self._cache_misses = 0
         self._retry_count = 0
-        self._start_time = datetime.utcnow()
+        self._start_time = datetime.now(UTC)
         logger.info("Telemetry metrics reset")
 
 

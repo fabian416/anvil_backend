@@ -13,7 +13,7 @@ from typing import Dict, Set, Optional, Any
 from uuid import UUID
 import logging
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 
 from fastapi import WebSocket
 
@@ -99,7 +99,7 @@ class ConnectionManager:
         self.connection_metadata[ws_id] = {
             "user_id": user_id,
             "session_id": session_id,
-            "connected_at": datetime.utcnow().isoformat(),
+            "connected_at": datetime.now(UTC).isoformat(),
             "messages_sent": 0,
             "messages_received": 0,
             **(metadata or {}),

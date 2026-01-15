@@ -6,7 +6,7 @@ subscribers, including protocol updates, risk alerts, and graph changes.
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -61,7 +61,7 @@ class GraphEventBroadcaster:
             "protocol_name": protocol_name,
             "change_type": change_type,
             "changes": changes,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
         }
 
         await self._publish("graph:updates", event)
@@ -102,7 +102,7 @@ class GraphEventBroadcaster:
             "message": message,
             "risk_score": risk_score,
             "risk_change": risk_change,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
         }
 
         # Broadcast to general channel
@@ -157,7 +157,7 @@ class GraphEventBroadcaster:
             "entity_id": str(entity_id),
             "entity_name": entity_name,
             "details": details or {},
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
         }
 
         await self._publish("graph:changes", event)
@@ -188,7 +188,7 @@ class GraphEventBroadcaster:
             "price_usd": price_usd,
             "price_change_24h": price_change_24h,
             "volume_24h": volume_24h,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
         }
 
         await self._publish("price:updates", event)
@@ -221,7 +221,7 @@ class GraphEventBroadcaster:
             "status": status,
             "tx_hash": tx_hash,
             "details": details or {},
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
         }
 
         # Publish to user-specific channel
@@ -265,7 +265,7 @@ class GraphEventBroadcaster:
             "severity": severity,
             "description": description,
             "metrics": metrics,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
         }
 
         await self._publish("graph:anomalies", event)
@@ -295,7 +295,7 @@ class GraphEventBroadcaster:
         event = {
             "type": event_type,
             "data": data,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
         }
 
         user_channel = f"user:{user_id}:events"
@@ -318,7 +318,7 @@ class GraphEventBroadcaster:
         event = {
             "type": event_type,
             "data": data,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
         }
 
         await self._publish(channel, event)

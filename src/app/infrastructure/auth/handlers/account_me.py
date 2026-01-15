@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import TypedDict
 
 from sqlalchemy import Select, select
@@ -178,7 +178,7 @@ class UpdateMeHandler:
                 raise ValueError("City does not belong to selected country")
             user.city_id = CityId(request.city_id)
 
-        user.updated_at = UpdatedAt(datetime.utcnow())
+        user.updated_at = UpdatedAt(datetime.now(UTC))
 
         # Persist
         await self._user_command_gateway.update(user)

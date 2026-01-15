@@ -13,7 +13,7 @@ Handles guest chat messages with:
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -428,7 +428,7 @@ class SendGuestMessage:
         )
 
         # 10. Calculate remaining messages
-        hour_ago = datetime.utcnow() - timedelta(hours=1)
+        hour_ago = datetime.now(UTC) - timedelta(hours=1)
         messages_this_hour = await self._guest_repo.get_message_count_since(
             guest.id, hour_ago
         )
@@ -528,7 +528,7 @@ class SendGuestMessage:
 
     async def _check_rate_limit(self, guest: GuestUser) -> tuple[bool, int]:
         """Check if guest is rate limited."""
-        hour_ago = datetime.utcnow() - timedelta(hours=1)
+        hour_ago = datetime.now(UTC) - timedelta(hours=1)
         messages_this_hour = await self._guest_repo.get_message_count_since(
             guest.id, hour_ago
         )

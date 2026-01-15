@@ -16,7 +16,7 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Callable, Optional, TypeVar
 
@@ -98,7 +98,7 @@ class CachedResponse:
     
     def is_expired(self) -> bool:
         """Check if cache entry has expired."""
-        elapsed = (datetime.utcnow() - self.cached_at).total_seconds()
+        elapsed = (datetime.now(UTC) - self.cached_at).total_seconds()
         return elapsed > self.ttl
 
 

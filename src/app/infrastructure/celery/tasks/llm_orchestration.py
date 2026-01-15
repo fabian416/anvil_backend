@@ -9,7 +9,7 @@ Celery tasks for:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.infrastructure.celery.app import celery_app
 
@@ -78,7 +78,7 @@ def aggregate_llm_telemetry():
     # 5. Update llm_cost_daily
 
     try:
-        current_hour = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+        current_hour = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
         logger.info(f"Aggregating telemetry for hour: {current_hour}")
 
         # In production:
@@ -171,7 +171,7 @@ def cleanup_old_llm_data(days_to_keep: int = 90):
     # TimescaleDB automatically compresses old data
 
     try:
-        cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days_to_keep)
         logger.info(f"Cleaning up data before {cutoff_date}")
 
         logger.info("Cleanup completed successfully")

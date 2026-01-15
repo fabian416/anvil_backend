@@ -9,7 +9,7 @@ Implements repositories for the unified chat system:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 from sqlalchemy import func, select, update, delete
@@ -282,7 +282,7 @@ class ChatConversationRepositorySqla:
                 .values(
                     title=conversation.title,
                     status=conversation.status.value,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                     last_message_at=conversation.last_message_at,
                     message_count=conversation.message_count,
                     language=conversation.language,
@@ -307,7 +307,7 @@ class ChatConversationRepositorySqla:
                 .where(table.c.user_id == user_id)
                 .values(
                     status="deleted",
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
             result = await self._session.execute(stmt)
@@ -328,7 +328,7 @@ class ChatConversationRepositorySqla:
                 .where(table.c.updated_at < older_than)
                 .values(
                     status="archived",
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
             result = await self._session.execute(stmt)
@@ -562,7 +562,7 @@ class RateLimitRepositorySqla:
         """Get message count for current hour."""
         try:
             table = mapping_registry.metadata.tables["chat_rate_limits"]
-            hour_start = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+            hour_start = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
             
             stmt = select(table.c.message_count).where(
                 (table.c.user_id == user_id) &
@@ -580,7 +580,7 @@ class RateLimitRepositorySqla:
         """Get message count for current day."""
         try:
             table = mapping_registry.metadata.tables["chat_rate_limits"]
-            day_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            day_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
             
             stmt = select(table.c.message_count).where(
                 (table.c.user_id == user_id) &
@@ -598,7 +598,7 @@ class RateLimitRepositorySqla:
         """Increment message counts for hourly and daily windows."""
         try:
             table = mapping_registry.metadata.tables["chat_rate_limits"]
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             hour_start = now.replace(minute=0, second=0, microsecond=0)
             day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             

@@ -32,7 +32,7 @@ Message Types:
 from typing import Optional, Dict, Any
 from uuid import UUID
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 from fastapi import WebSocket, WebSocketDisconnect, status
 from dishka.integrations.fastapi import FromDishka
@@ -176,7 +176,7 @@ class TemplateExecutionWebSocketHandler:
             metadata={
                 "type": "template_execution",
                 "execution_id": execution_id,
-                "connected_at": datetime.utcnow().isoformat(),
+                "connected_at": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -191,7 +191,7 @@ class TemplateExecutionWebSocketHandler:
             "message": "Connected to template execution stream",
             "execution_id": execution_id,
             "execution_state": execution.to_dict(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         })
 
         logger.info(
@@ -317,7 +317,7 @@ class TemplateExecutionWebSocketHandler:
                     "type": "execution_paused",
                     "message": "Execution paused by user",
                     "execution_state": execution.to_dict(),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -375,7 +375,7 @@ class TemplateExecutionWebSocketHandler:
                     "type": "execution_resumed",
                     "message": "Execution resumed by user",
                     "execution_state": execution.to_dict(),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -433,7 +433,7 @@ class TemplateExecutionWebSocketHandler:
                     "type": "execution_cancelled",
                     "message": "Execution cancelled by user",
                     "execution_state": execution.to_dict(),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -470,7 +470,7 @@ class TemplateExecutionWebSocketHandler:
                 "step_index": step_index,
                 "agent_name": agent_name,
                 "description": step_description,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -497,7 +497,7 @@ class TemplateExecutionWebSocketHandler:
                 "step_index": step_index,
                 "progress": progress,
                 "message": message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -522,7 +522,7 @@ class TemplateExecutionWebSocketHandler:
                 "type": "step_completed",
                 "step_result": step_result.to_dict(),
                 "execution_state": execution.to_dict() if execution else None,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -549,7 +549,7 @@ class TemplateExecutionWebSocketHandler:
                 "step_index": step_index,
                 "agent_name": agent_name,
                 "error_message": error_message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -572,7 +572,7 @@ class TemplateExecutionWebSocketHandler:
                 "type": "execution_completed",
                 "message": "Template execution completed successfully",
                 "execution_state": execution.to_dict() if execution else None,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -598,7 +598,7 @@ class TemplateExecutionWebSocketHandler:
                 "message": "Template execution failed",
                 "error_message": error_message,
                 "execution_state": execution.to_dict() if execution else None,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 

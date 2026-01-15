@@ -10,7 +10,7 @@ OWASP Reference: OWASP LLM Top 10 - LLM08: Excessive Agency
 from typing import Dict, Any, List, Optional, Callable
 from enum import Enum
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import logging
 
 logger = logging.getLogger(__name__)
@@ -174,7 +174,7 @@ class TransactionApprovalService:
             Approval request object
         """
         risk_level = self.assess_risk(transaction_type, details)
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         approval_request = TransactionApprovalRequest(
             transaction_id=transaction_id,
@@ -230,7 +230,7 @@ class TransactionApprovalService:
             return False
 
         # Check if expired
-        if datetime.utcnow() > request.expires_at:
+        if datetime.now(UTC) > request.expires_at:
             request.status = ApprovalStatus.EXPIRED
             logger.warning(f"Approval request expired: {transaction_id}")
             return False
@@ -238,7 +238,7 @@ class TransactionApprovalService:
         # Approve
         request.status = ApprovalStatus.APPROVED
         request.approved_by = approver_id
-        request.approved_at = datetime.utcnow()
+        request.approved_at = datetime.now(UTC)
 
         logger.info(
             f"Transaction approved: {transaction_id}",
@@ -276,7 +276,7 @@ class TransactionApprovalService:
 
         request.status = ApprovalStatus.REJECTED
         request.approved_by = rejector_id
-        request.approved_at = datetime.utcnow()
+        request.approved_at = datetime.now(UTC)
 
         logger.info(
             f"Transaction rejected: {transaction_id}",
@@ -307,7 +307,7 @@ class TransactionApprovalService:
             return None
 
         # Check if expired
-        if request.status == ApprovalStatus.PENDING and datetime.utcnow() > request.expires_at:
+        if request.status == ApprovalStatus.PENDING and datetime.now(UTC) > request.expires_at:
             request.status = ApprovalStatus.EXPIRED
 
         return request.status
@@ -328,7 +328,7 @@ class TransactionApprovalService:
         pending = [
             req for req in self.pending_approvals.values()
             if req.status == ApprovalStatus.PENDING
-            and datetime.utcnow() <= req.expires_at
+            and datetime.now(UTC) <= req.expires_at
         ]
 
         if user_id:
@@ -338,7 +338,7 @@ class TransactionApprovalService:
 
     def cleanup_expired(self):
         """Remove expired approval requests."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         expired = [
             tid for tid, req in self.pending_approvals.items()
             if req.status == ApprovalStatus.PENDING and now > req.expires_at

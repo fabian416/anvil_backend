@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from sqlalchemy import Select, and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -23,7 +23,7 @@ class SqlaSessionStore(SessionStore):
                 and_(
                     SessionsTable.c.refresh_token == refresh_token,
                     SessionsTable.c.is_active == True,  # noqa: E712
-                    SessionsTable.c.expires_at > datetime.utcnow(),
+                    SessionsTable.c.expires_at > datetime.now(UTC),
                 )
             )
             row = (await self._session.execute(select_stmt)).mappings().first()

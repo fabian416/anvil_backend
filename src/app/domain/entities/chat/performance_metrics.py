@@ -6,7 +6,7 @@ for monitoring and optimization of the chat system.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Dict, Optional, List
 from uuid import UUID, uuid4
 from enum import Enum
@@ -89,7 +89,7 @@ class ErrorMetrics:
         """Increment error count for a specific type."""
         self.total_errors += 1
         self.errors_by_type[error_type] = self.errors_by_type.get(error_type, 0) + 1
-        self.last_error_timestamp = datetime.utcnow()
+        self.last_error_timestamp = datetime.now(UTC)
 
     def get_most_common_error(self) -> Optional[ErrorType]:
         """Get the most frequently occurring error type."""
@@ -214,8 +214,8 @@ class PerformanceMetrics:
     cache: CacheMetrics
     request_count: int = 0
     user_count: int = 0
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     def create(
@@ -320,7 +320,7 @@ class PerformanceMetrics:
             self.errors.increment_error(error_type)
             self.errors.error_rate = self.errors.total_errors / self.request_count
 
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def get_period_duration(self) -> timedelta:
         """Get duration of the metrics period."""
@@ -328,7 +328,7 @@ class PerformanceMetrics:
 
     def is_period_active(self) -> bool:
         """Check if metrics period is currently active."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         return self.period_start <= now <= self.period_end
 
     def get_requests_per_second(self) -> float:

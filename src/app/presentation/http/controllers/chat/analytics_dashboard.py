@@ -15,7 +15,7 @@ Features:
 User-facing endpoints for self-service analytics.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional, List
 from uuid import UUID
 
@@ -85,7 +85,7 @@ async def get_my_analytics(
         Personalized dashboard summary with key metrics
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -138,7 +138,7 @@ async def get_my_usage_stats(
         Personal usage statistics
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -191,7 +191,7 @@ async def get_conversation_insights(
         Conversation insights and analysis
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -250,7 +250,7 @@ async def get_my_cost_breakdown(
         Personal cost breakdown and analysis
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -306,7 +306,7 @@ async def get_favorite_agents(
         Favorite agents statistics and recommendations
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -366,7 +366,7 @@ async def get_historical_trends(
         Historical trends with time-series data
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -421,7 +421,7 @@ async def get_conversation_history_analysis(
         Conversation history analysis
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 
@@ -485,7 +485,7 @@ async def export_my_analytics(
         Exported analytics data in requested format
     """
     if not date_to:
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
     if not date_from:
         date_from = date_to - timedelta(days=30)
 

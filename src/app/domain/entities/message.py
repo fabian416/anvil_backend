@@ -2,7 +2,7 @@
 Message entity for chat messages.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, Optional, Any
 from uuid import UUID, uuid4
 
@@ -43,7 +43,7 @@ class Message:
         self.role = role
         self.content = content
         self.agent_type = agent_type
-        self.created_at = created_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
         self.metadata = metadata or {}
     
     @classmethod

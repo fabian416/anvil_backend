@@ -5,7 +5,7 @@ Unified user entity for both guest and authenticated users.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -34,8 +34,8 @@ class ChatUser:
     privy_id: str | None = None
     email: str | None = None
     preferred_language: str = "en"
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    last_active_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    last_active_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     is_blocked: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
     
@@ -70,7 +70,7 @@ class ChatUser:
     
     def update_last_active(self) -> None:
         """Update last active timestamp."""
-        self.last_active_at = datetime.utcnow()
+        self.last_active_at = datetime.now(UTC)
     
     def block(self) -> None:
         """Block the user."""

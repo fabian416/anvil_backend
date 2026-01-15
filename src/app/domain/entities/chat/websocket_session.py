@@ -6,7 +6,7 @@ for real-time chat communication.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Dict, Any, Optional
 from uuid import UUID, uuid4
 
@@ -62,7 +62,7 @@ class WebSocketSession:
         Returns:
             WebSocketSession instance with CONNECTED state
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         return cls(
             id=uuid4(),
             session_id=session_id,
@@ -80,7 +80,7 @@ class WebSocketSession:
 
         If session was IDLE, transitions back to CONNECTED.
         """
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(UTC)
         if self.connection_state == ConnectionState.IDLE:
             self.connection_state = ConnectionState.CONNECTED
 
@@ -91,7 +91,7 @@ class WebSocketSession:
         Sets disconnection timestamp and transitions to DISCONNECTED state.
         """
         self.connection_state = ConnectionState.DISCONNECTED
-        self.disconnected_at = datetime.utcnow()
+        self.disconnected_at = datetime.now(UTC)
 
     def mark_idle(self) -> None:
         """
@@ -116,7 +116,7 @@ class WebSocketSession:
         if self.connection_state != ConnectionState.CONNECTED:
             return False
 
-        time_since_activity = datetime.utcnow() - self.last_activity
+        time_since_activity = datetime.now(UTC) - self.last_activity
         return time_since_activity.total_seconds() > self.IDLE_THRESHOLD_SECONDS
 
     def is_expired(self) -> bool:
@@ -134,7 +134,7 @@ class WebSocketSession:
         if not self.disconnected_at:
             return False
 
-        time_since_disconnect = datetime.utcnow() - self.disconnected_at
+        time_since_disconnect = datetime.now(UTC) - self.disconnected_at
         return time_since_disconnect > timedelta(hours=self.EXPIRATION_HOURS)
 
     def get_duration(self) -> timedelta:
@@ -144,7 +144,7 @@ class WebSocketSession:
         Returns:
             Time connected (or total duration if disconnected)
         """
-        end_time = self.disconnected_at or datetime.utcnow()
+        end_time = self.disconnected_at or datetime.now(UTC)
         return end_time - self.connected_at
 
     def get_idle_time(self) -> timedelta:
@@ -154,7 +154,7 @@ class WebSocketSession:
         Returns:
             Time since last activity
         """
-        return datetime.utcnow() - self.last_activity
+        return datetime.now(UTC) - self.last_activity
 
     def update_metadata(self, updates: Dict[str, Any]) -> None:
         """

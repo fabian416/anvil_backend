@@ -5,7 +5,7 @@ Public endpoints for unauthenticated guest users.
 Provides demo chat functionality with limited features.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Request, status
@@ -215,7 +215,7 @@ def create_guest_router() -> APIRouter:
         conversation = await repository.get_active_conversation(guest.id)
 
         # Get message count this hour
-        hour_ago = datetime.utcnow() - timedelta(hours=1)
+        hour_ago = datetime.now(UTC) - timedelta(hours=1)
         messages_this_hour = await repository.get_message_count_since(
             guest.id, hour_ago
         )

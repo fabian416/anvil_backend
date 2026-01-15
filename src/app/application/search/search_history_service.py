@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 from uuid import UUID, uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 
 class SearchHistoryEntry:
@@ -24,7 +24,7 @@ class SearchHistoryEntry:
         self.search_type = search_type
         self.results_count = results_count
         self.filters_applied = filters_applied or {}
-        self.created_at = created_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
 
 
 class SearchHistoryService:
@@ -134,7 +134,7 @@ class SearchHistoryService:
         user_searches = self._history.get(user_id, [])
 
         # Filter by date range
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
         recent_searches = [
             s for s in user_searches if s.created_at >= cutoff_date
         ]
@@ -271,7 +271,7 @@ class SearchHistoryService:
         user_searches = self._history.get(user_id, [])
 
         # Filter by date range
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
         recent_searches = [
             s for s in user_searches if s.created_at >= cutoff_date
         ]

@@ -7,7 +7,7 @@ when a user logs in with a wallet address.
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.application.common.ports.flusher import Flusher
 from app.application.common.ports.session_recorder import SessionRecorder
@@ -177,7 +177,7 @@ class PrivyLogin:
             auth_session, access_token = await self._auth_session_service.create_session(user.id_)
 
             # Record the session (like LogInHandler and SignUpHandler do)
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             await self._session_recorder.add(
                 user_id=user.id_.value,
                 access_token=access_token,
@@ -258,7 +258,7 @@ class PrivyLogin:
                 user.email.value,
             )
             user.role = UserRole.ADMIN
-            user.updated_at = UpdatedAt(datetime.utcnow())
+            user.updated_at = UpdatedAt(datetime.now(UTC))
             await self._user_gateway.update(user)
 
     async def _create_privy_user(self, request: PrivyLoginRequest) -> User:
@@ -270,7 +270,7 @@ class PrivyLogin:
         If the user's email is in ALLOWED_ADMIN_EMAILS, they will be
         automatically assigned the admin role.
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Generate email if not provided (wallet-only users)
         # Clean privy_user_id for email (remove special chars)

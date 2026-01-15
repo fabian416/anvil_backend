@@ -6,7 +6,7 @@ Enterprise-grade multi-language support with technical term preservation.
 
 from dataclasses import dataclass
 from typing import List, Optional, Dict
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 
 
@@ -200,26 +200,26 @@ class UserLanguagePreference:
     def __post_init__(self):
         """Initialize timestamps."""
         if self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(UTC)
         if self.updated_at is None:
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
         if self.preferred_terms_config is None:
             self.preferred_terms_config = PreservedTermsConfig()
 
     def enable_auto_translate(self) -> None:
         """Enable automatic translation."""
         self.auto_translate_enabled = True
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def disable_auto_translate(self) -> None:
         """Disable automatic translation."""
         self.auto_translate_enabled = False
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def set_translation_mode(self, mode: TranslationMode) -> None:
         """Set translation display mode."""
         self.translation_mode = mode
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""

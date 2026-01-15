@@ -8,7 +8,7 @@ Actual implementation should use Axelar Network APIs.
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import httpx
 
 
@@ -115,8 +115,8 @@ class AxelarClient:
             dest_chain="polygon",
             source_tx_hash=tx_hash,
             dest_tx_hash=None,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
     
     async def get_supported_chains(self) -> List[str]:

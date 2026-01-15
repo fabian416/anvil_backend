@@ -1,7 +1,7 @@
 """Risk alert domain entity."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -31,14 +31,14 @@ class RiskAlert:
     acted_upon: bool = False
     
     # Timestamps
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     acknowledged_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
 
     def acknowledge(self) -> None:
         """Mark alert as acknowledged by user."""
         self.acknowledged = True
-        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_at = datetime.now(UTC)
 
     def dismiss(self) -> None:
         """Dismiss alert (mark as not relevant)."""
@@ -48,13 +48,13 @@ class RiskAlert:
         """Mark that user took action on this alert."""
         self.acted_upon = True
         self.acknowledged = True
-        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_at = datetime.now(UTC)
 
     def is_expired(self) -> bool:
         """Check if alert has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def should_notify(self) -> bool:
         """Determine if alert should trigger notification."""
@@ -105,8 +105,8 @@ class AlertSubscription:
     # Throttling
     max_alerts_per_hour: int = 10
     
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def should_alert_for_severity(self, severity: str) -> bool:
         """Check if should alert for given severity."""

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import Select, and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -27,8 +27,8 @@ class SqlaEmailVerificationRepository(EmailVerificationRepository):
                     token=token,
                     expires_at=expires_at,
                     is_used=False,
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
             )
         except SQLAlchemyError as error:
@@ -42,7 +42,7 @@ class SqlaEmailVerificationRepository(EmailVerificationRepository):
                     table.c.user_id == user_id,
                     table.c.token == token,
                     table.c.is_used == False,  # noqa: E712
-                    table.c.expires_at > datetime.utcnow(),
+                    table.c.expires_at > datetime.now(UTC),
                 )
             )
             row = (await self._session.execute(select_stmt)).mappings().first()
@@ -54,7 +54,7 @@ class SqlaEmailVerificationRepository(EmailVerificationRepository):
         try:
             table = mapping_registry.metadata.tables["email_verifications"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(is_used=True, updated_at=datetime.utcnow())
+                table.update().where(table.c.id == id_).values(is_used=True, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error

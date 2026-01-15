@@ -6,7 +6,7 @@ in Apache AGE graph database.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Dict, Optional
 from uuid import UUID, uuid4
 
@@ -99,8 +99,8 @@ class GraphManagementService:
             website=protocol_data.get("website"),
             logo_url=protocol_data.get("logo_url"),
             description=protocol_data.get("description"),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
         
         return protocol
@@ -208,7 +208,7 @@ class GraphManagementService:
             target_protocol_id=target_id,
             relationship_type=rel_type,
             weight=weight,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
 
     async def delete_relationship(
@@ -276,7 +276,7 @@ class GraphManagementService:
             "valid": len(issues) == 0,
             "issues": issues,
             "total_issues": len(issues),
-            "checked_at": datetime.utcnow(),
+            "checked_at": datetime.now(UTC),
         }
 
     async def _find_orphaned_nodes(self) -> List[str]:
@@ -349,7 +349,7 @@ class GraphManagementService:
         return {
             "protocols": [],
             "relationships": [],
-            "exported_at": datetime.utcnow(),
+            "exported_at": datetime.now(UTC),
         }
 
     # ==================== Statistics ====================
@@ -365,5 +365,5 @@ class GraphManagementService:
             "orphaned_nodes": 0,
             "chains_count": 12,
             "categories_count": 8,
-            "last_updated": datetime.utcnow(),
+            "last_updated": datetime.now(UTC),
         }

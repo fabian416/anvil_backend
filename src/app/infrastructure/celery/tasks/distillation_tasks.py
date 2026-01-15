@@ -1,6 +1,6 @@
 """Celery background tasks for distillation system."""
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from celery import Task
 from celery.schedules import crontab
 
@@ -43,7 +43,7 @@ def aggregate_distillation_telemetry():
         session = await container.get(MainAsyncSession)
         
         # Calculate the previous hour window
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         hour_start = now.replace(minute=0, second=0, microsecond=0) - timedelta(hours=1)
         hour_end = now.replace(minute=0, second=0, microsecond=0)
         
@@ -172,8 +172,8 @@ def cache_llm_response(
             entities=entities,
             source_model=source_model,
             hit_count=0,
-            created_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(hours=24),  # 24 hour TTL
+            created_at=datetime.now(UTC),
+            expires_at=datetime.now(UTC) + timedelta(hours=24),  # 24 hour TTL
         )
         
         # Store in exact cache

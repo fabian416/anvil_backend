@@ -983,7 +983,7 @@ def create_chat_router() -> APIRouter:
     
     from pydantic import BaseModel, Field
     from typing import Any
-    from datetime import datetime
+    from datetime import datetime, UTC
     from app.infrastructure.adapters.conversation_repository_sqla import SqlaConversationRepository
     
     class SaveSwapQuoteRequest(BaseModel):
@@ -1039,7 +1039,7 @@ def create_chat_router() -> APIRouter:
             "swap_info": {
                 "quote": request_body.swap_quote,
                 "status": request_body.status,
-                "saved_at": datetime.utcnow().isoformat(),
+                "saved_at": datetime.now(UTC).isoformat(),
             }
         }
         

@@ -3,7 +3,7 @@ UserEvent entity for tracking user activity and metrics.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from app.domain.entities.base import Entity
@@ -31,7 +31,7 @@ class UserEvent(Entity[UserEventId]):
     session_id: str | None = None
     ip_address: str | None = None
     country_code: str | None = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     def create(

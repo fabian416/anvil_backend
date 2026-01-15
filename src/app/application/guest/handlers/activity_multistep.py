@@ -11,7 +11,7 @@ Guest experience with demo data.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class ActivityMultiStepHandler:
             "from_amount": 1000.0,
             "to_amount": 0.51,
             "status": "completed",
-            "timestamp": datetime.utcnow() - timedelta(hours=2),
+            "timestamp": datetime.now(UTC) - timedelta(hours=2),
             "emoji": "🔄",
             "tx_hash": "0x1a2b3c...7d8e9f",
         },
@@ -39,7 +39,7 @@ class ActivityMultiStepHandler:
             "amount": 0.05,
             "from": "External Wallet",
             "status": "completed",
-            "timestamp": datetime.utcnow() - timedelta(hours=12),
+            "timestamp": datetime.now(UTC) - timedelta(hours=12),
             "emoji": "📥",
             "tx_hash": "0x2b3c4d...8e9f0a",
         },
@@ -49,7 +49,7 @@ class ActivityMultiStepHandler:
             "amount": 25.0,
             "to": "Friend's Wallet",
             "status": "completed",
-            "timestamp": datetime.utcnow() - timedelta(days=1),
+            "timestamp": datetime.now(UTC) - timedelta(days=1),
             "emoji": "📤",
             "tx_hash": "0x3c4d5e...9f0a1b",
         },
@@ -59,7 +59,7 @@ class ActivityMultiStepHandler:
             "amount": 5000.0,
             "payment_method": "Credit Card",
             "status": "completed",
-            "timestamp": datetime.utcnow() - timedelta(days=2),
+            "timestamp": datetime.now(UTC) - timedelta(days=2),
             "emoji": "💳",
             "tx_hash": "0x4d5e6f...0a1b2c",
         },
@@ -70,7 +70,7 @@ class ActivityMultiStepHandler:
             "from_amount": 1.0,
             "to_amount": 3000.0,
             "status": "completed",
-            "timestamp": datetime.utcnow() - timedelta(days=3),
+            "timestamp": datetime.now(UTC) - timedelta(days=3),
             "emoji": "🔄",
             "tx_hash": "0x5e6f7a...1b2c3d",
         },
@@ -80,7 +80,7 @@ class ActivityMultiStepHandler:
             "amount": 500.0,
             "from": "Airdrop",
             "status": "completed",
-            "timestamp": datetime.utcnow() - timedelta(days=5),
+            "timestamp": datetime.now(UTC) - timedelta(days=5),
             "emoji": "📥",
             "tx_hash": "0x6f7a8b...2c3d4e",
         },
@@ -278,7 +278,7 @@ class ActivityMultiStepHandler:
 
     def _format_time_ago(self, timestamp: datetime, language: str) -> str:
         """Format timestamp as relative time."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         delta = now - timestamp
 
         if delta.days > 0:

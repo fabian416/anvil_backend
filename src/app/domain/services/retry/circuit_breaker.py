@@ -10,7 +10,7 @@ Pattern: CLOSED → OPEN → HALF_OPEN → CLOSED
 import logging
 from enum import Enum
 from typing import Dict, Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from dataclasses import dataclass
 import json
 
@@ -306,7 +306,7 @@ class CircuitBreaker:
         try:
             opened_at = datetime.fromisoformat(opened_at_str.decode())
             timeout_threshold = opened_at + timedelta(seconds=self.config.timeout_seconds)
-            return datetime.utcnow() >= timeout_threshold
+            return datetime.now(UTC) >= timeout_threshold
         except (ValueError, AttributeError):
             return True
     
@@ -348,7 +348,7 @@ class CircuitBreaker:
         """Set opened timestamp in Redis."""
         self.redis.set(
             f"circuit:{service_name}:opened_at",
-            datetime.utcnow().isoformat(),
+            datetime.now(UTC).isoformat(),
         )
 
 

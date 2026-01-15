@@ -8,7 +8,7 @@ Used by daily Celery task.
 import logging
 from typing import List
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.domain.ports.llm_ranking_repository import LLMRankingRepository
 from app.domain.services.llm.ranking_engine import RankingEngine
@@ -80,7 +80,7 @@ class RecalculateAllRankings:
         Returns:
             Aggregated result
         """
-        started_at = datetime.utcnow()
+        started_at = datetime.now(UTC)
         logger.info(
             f"Starting global ranking recalculation "
             f"(analyzing last {hours_to_analyze}h)"
@@ -123,7 +123,7 @@ class RecalculateAllRankings:
                 # Continue processing other agent types
 
         # 3. Aggregate results
-        completed_at = datetime.utcnow()
+        completed_at = datetime.now(UTC)
         duration = (completed_at - started_at).total_seconds()
 
         total_models_evaluated = sum(r.models_evaluated for r in agent_results)

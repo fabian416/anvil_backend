@@ -28,7 +28,7 @@ Usage:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from enum import Enum
 from typing import Any
@@ -91,7 +91,7 @@ class BundleResult:
     simulation_error: str | None = None
     gas_used: int | None = None
     effective_gas_price: int | None = None
-    submitted_at: datetime = field(default_factory=datetime.utcnow)
+    submitted_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""

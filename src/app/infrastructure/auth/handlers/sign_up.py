@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import TypedDict
 
 from app.application.common.ports.flusher import Flusher
@@ -162,9 +162,9 @@ class SignUpHandler:
             token_type="bearer",
             ip_address=request_data.ip_address,
             user_agent=request_data.user_agent,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             expires_at=auth_session.expiration,
-            last_activity=datetime.utcnow(),
+            last_activity=datetime.now(UTC),
             is_active=True,
         )
         await self._transaction_manager.commit()
@@ -173,7 +173,7 @@ class SignUpHandler:
         # Create email verification token and send email
         from secrets import token_urlsafe
         token = token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(hours=24)
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
         await self._email_verification_repo.add(user_id=user.id_.value, token=token, expires_at=expires_at)
         try:
             celery_app.send_task(

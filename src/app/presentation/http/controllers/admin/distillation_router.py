@@ -49,7 +49,7 @@ async def create_static_response(
     """Create a new static response template."""
     from app.domain.entities.distillation import StaticResponse
     from uuid import uuid4
-    from datetime import datetime
+    from datetime import datetime, UTC
     
     static_response = StaticResponse(
         id=uuid4(),
@@ -61,8 +61,8 @@ async def create_static_response(
         conditions=data.conditions,
         priority=data.priority,
         is_active=data.is_active,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     
     await repository.add_response(static_response)

@@ -1,7 +1,7 @@
 """
 Get distillation metrics interactor.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional
 from dataclasses import dataclass
 
@@ -52,7 +52,7 @@ class GetDistillationMetrics:
             List of daily metrics
         """
         # Calculate date range
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(UTC).date()
         start_date = end_date - timedelta(days=days)
         
         # Get metrics from repository

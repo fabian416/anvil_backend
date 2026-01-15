@@ -4,7 +4,7 @@ Distillation domain entities.
 Represents request distillation concepts in the domain.
 """
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
 from uuid import UUID
 
@@ -30,7 +30,7 @@ class DistillationRequest:
     def __post_init__(self):
         """Set default timestamp."""
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(UTC)
 
 
 @dataclass
@@ -59,7 +59,7 @@ class DistillationResult:
     def __post_init__(self):
         """Set default timestamp and validate fields."""
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(UTC)
         
         # Validate confidence range
         if not 0.0 <= self.confidence <= 1.0:

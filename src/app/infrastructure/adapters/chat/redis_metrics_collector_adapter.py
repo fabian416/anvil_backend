@@ -6,7 +6,7 @@ Implements MetricsCollector port using Redis time-series data structures
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional, Dict
 from uuid import UUID
 import statistics
@@ -158,7 +158,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
         Uses sorted sets with timestamp as score for time-series storage.
         """
         try:
-            timestamp = timestamp or datetime.utcnow()
+            timestamp = timestamp or datetime.now(UTC)
             score = timestamp.timestamp()
 
             # Record in minute-level sorted set
@@ -186,7 +186,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
         Increments request counter and tracks unique users.
         """
         try:
-            timestamp = timestamp or datetime.utcnow()
+            timestamp = timestamp or datetime.now(UTC)
             score = timestamp.timestamp()
 
             # Increment request count in sorted set
@@ -222,7 +222,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
         Tracks errors by type in sorted sets.
         """
         try:
-            timestamp = timestamp or datetime.utcnow()
+            timestamp = timestamp or datetime.now(UTC)
             score = timestamp.timestamp()
 
             # Record error in sorted set
@@ -255,7 +255,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
         Stores in hash with timestamp-based key.
         """
         try:
-            timestamp = timestamp or datetime.utcnow()
+            timestamp = timestamp or datetime.now(UTC)
             key = self._cost_key(agent_name, AggregationPeriod.MINUTE)
 
             # Increment cost and token counters atomically
@@ -285,7 +285,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
     ) -> bool:
         """Record a cache hit."""
         try:
-            timestamp = timestamp or datetime.utcnow()
+            timestamp = timestamp or datetime.now(UTC)
             key = self._cache_hit_key(agent_name, AggregationPeriod.MINUTE)
 
             await self._redis.incr(key)
@@ -305,7 +305,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
     ) -> bool:
         """Record a cache miss."""
         try:
-            timestamp = timestamp or datetime.utcnow()
+            timestamp = timestamp or datetime.now(UTC)
             key = self._cache_miss_key(agent_name, AggregationPeriod.MINUTE)
 
             await self._redis.incr(key)
@@ -830,7 +830,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
         """Clean up metrics older than retention period."""
         try:
             cutoff_timestamp = (
-                datetime.utcnow() - timedelta(days=retention_days)
+                datetime.now(UTC) - timedelta(days=retention_days)
             ).timestamp()
 
             pattern = f"{self._prefix}:*"

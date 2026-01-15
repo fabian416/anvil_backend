@@ -8,7 +8,7 @@ This interactor orchestrates complex multi-agent workflows:
 4. Tracking workflow status
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 from app.domain.enums.agent_type import AgentType
@@ -75,7 +75,7 @@ class ExecuteSupervisorWorkflow:
         Raises:
             ValueError: If max_agents exceeds limits or task is invalid
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         workflow_id = UUID(int=0)  # Placeholder for now
 
         # Validate max_agents
@@ -109,7 +109,7 @@ class ExecuteSupervisorWorkflow:
             message=ConversationMessage(
                 role=MessageRole.AGENT.value,
                 content=workflow_result.final_response,
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 metadata={
                     "workflow_id": str(workflow_id),
                     "agents_used": [task.agent_type.value for task in workflow_result.task_results],
@@ -119,7 +119,7 @@ class ExecuteSupervisorWorkflow:
         )
 
         # Step 5: Calculate metrics
-        end_time = datetime.utcnow()
+        end_time = datetime.now(UTC)
         total_latency_ms = int((end_time - start_time).total_seconds() * 1000)
         total_tokens = sum(
             task.tokens_used or 0 for task in workflow_result.task_results

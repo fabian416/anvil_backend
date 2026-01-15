@@ -29,7 +29,7 @@ from typing import Optional, Dict, Any, Set
 from uuid import UUID
 import logging
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from fastapi import WebSocket, WebSocketDisconnect, status
 from dishka.integrations.fastapi import FromDishka
@@ -139,7 +139,7 @@ class AnalyticsWebSocketHandler:
             session_id=session_id,
             metadata={
                 "type": "analytics",
-                "connected_at": datetime.utcnow().isoformat(),
+                "connected_at": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -152,7 +152,7 @@ class AnalyticsWebSocketHandler:
             "type": "connected",
             "message": "Connected to analytics stream",
             "user_id": user_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         })
 
         try:
@@ -302,12 +302,12 @@ class AnalyticsWebSocketHandler:
                 start_date = datetime.fromisoformat(start_date)
             else:
                 # Default to last 30 days
-                start_date = datetime.utcnow() - timedelta(days=30)
+                start_date = datetime.now(UTC) - timedelta(days=30)
 
             if end_date:
                 end_date = datetime.fromisoformat(end_date)
             else:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
 
             # Get aggregate analytics
             user_uuid = UUID(user_id)
@@ -351,7 +351,7 @@ class AnalyticsWebSocketHandler:
                         "end": end_date.isoformat(),
                     },
                 },
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             })
 
             logger.info(f"Sent analytics snapshot to user {user_id}")
@@ -396,7 +396,7 @@ class AnalyticsWebSocketHandler:
                 message={
                     "type": "metrics_update",
                     "data": analytics.to_dict(),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -436,7 +436,7 @@ class AnalyticsWebSocketHandler:
                         "threshold": self.cost_threshold_usd,
                         "cost_by_agent": analytics.cost_by_agent,
                     },
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -459,7 +459,7 @@ class AnalyticsWebSocketHandler:
                         "avg_response_time_ms": analytics.avg_response_time_ms,
                         "threshold": self.response_time_threshold_ms,
                     },
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -483,7 +483,7 @@ class AnalyticsWebSocketHandler:
                         "satisfaction_score": analytics.user_satisfaction_score,
                         "threshold": self.quality_threshold,
                     },
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 

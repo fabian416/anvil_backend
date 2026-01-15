@@ -1,6 +1,6 @@
 """Risk alert service for monitoring and generating alerts."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional
 from uuid import UUID
 import logging
@@ -201,7 +201,7 @@ class RiskAlertService:
             current_risk_score=current_score,
             previous_risk_score=previous_score,
             risk_change=risk_change,
-            expires_at=datetime.utcnow() + timedelta(days=7),
+            expires_at=datetime.now(UTC) + timedelta(days=7),
         )
 
     def _create_critical_risk_alert(
@@ -234,7 +234,7 @@ class RiskAlertService:
             },
             recommendations=recommendations,
             current_risk_score=prediction.risk_score,
-            expires_at=datetime.utcnow() + timedelta(days=30),
+            expires_at=datetime.now(UTC) + timedelta(days=30),
         )
 
     def _create_anomaly_alert(
@@ -274,7 +274,7 @@ class RiskAlertService:
                 "Consider reducing exposure until anomaly is understood",
             ],
             current_risk_score=0.0,  # Anomaly doesn't have direct score
-            expires_at=datetime.utcnow() + timedelta(days=14),
+            expires_at=datetime.now(UTC) + timedelta(days=14),
         )
 
     def _determine_severity(self, current_score: float, change: float) -> str:

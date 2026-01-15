@@ -1,7 +1,7 @@
 """Portfolio risk analysis application service."""
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from typing import List, Dict, Optional
 from uuid import UUID
@@ -169,7 +169,7 @@ class PortfolioRiskAnalysis:
             chain_risk_distribution=chain_risk,
             recommendations=recommendations,
             total_value_at_risk_usd=total_var,
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(UTC),
         )
 
     async def simulate_portfolio_cascade(
@@ -637,5 +637,5 @@ class PortfolioRiskAnalysis:
             chain_risk_distribution={},
             recommendations=["No protocols in portfolio"],
             total_value_at_risk_usd=Decimal("0"),
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(UTC),
         )

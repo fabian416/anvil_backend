@@ -5,7 +5,7 @@ Represents a liquidation event in perpetual futures.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from typing import Any
 
@@ -50,7 +50,7 @@ class Liquidation:
         elif isinstance(timestamp, (int, float)):
             timestamp = datetime.fromtimestamp(timestamp / 1000)
         else:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(UTC)
 
         return cls(
             symbol=data["symbol"],

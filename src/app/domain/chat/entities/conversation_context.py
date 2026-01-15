@@ -3,7 +3,7 @@ Conversation context entity for agent memory.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, Any, List, Optional
 from uuid import UUID, uuid4
 
@@ -40,8 +40,8 @@ class ConversationContext:
     interaction_count: int = 0
     
     # Metadata
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     
     def add_intent(self, intent: str, max_recent: int = 10) -> None:
         """
@@ -58,19 +58,19 @@ class ConversationContext:
         # Update frequent operations
         self.frequent_operations[intent] = self.frequent_operations.get(intent, 0) + 1
         self.interaction_count += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def add_mentioned_token(self, token: str) -> None:
         """Add a token to mentioned tokens (deduplicated)."""
         if token not in self.mentioned_tokens:
             self.mentioned_tokens.append(token)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def add_mentioned_protocol(self, protocol: str) -> None:
         """Add a protocol to mentioned protocols (deduplicated)."""
         if protocol not in self.mentioned_protocols:
             self.mentioned_protocols.append(protocol)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def update_preference(self, key: str, value: Any) -> None:
         """
@@ -82,7 +82,7 @@ class ConversationContext:
         """
         if hasattr(self, key):
             setattr(self, key, value)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
     
     def get_dominant_intent(self) -> Optional[str]:
         """

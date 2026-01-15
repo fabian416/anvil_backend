@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.application.common.ports.session_store import SessionStore
 from app.domain.value_objects.user_id import UserId
@@ -60,7 +60,7 @@ class RefreshTokenHandler:
             new_refresh_token=auth_session.refresh_token or "",
             ip_address=request_data.ip_address,
             user_agent=request_data.user_agent,
-            last_activity=datetime.utcnow(),
+            last_activity=datetime.now(UTC),
         )
 
         return {

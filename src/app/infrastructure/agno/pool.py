@@ -12,7 +12,7 @@ Features:
 import asyncio
 from typing import Dict, Optional, List
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 import logging
 
@@ -44,7 +44,7 @@ class PooledAgent:
     agent: any  # TradingAgent | LendingAgent | AnalyticsAgent | PortfolioAgent
     agent_type: AgentType
     status: AgentStatus = AgentStatus.AVAILABLE
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     last_used_at: Optional[datetime] = None
     use_count: int = 0
     error_count: int = 0
@@ -52,7 +52,7 @@ class PooledAgent:
     def mark_in_use(self):
         """Mark agent as in use."""
         self.status = AgentStatus.IN_USE
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = datetime.now(UTC)
         self.use_count += 1
     
     def mark_available(self):

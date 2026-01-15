@@ -6,7 +6,7 @@ legacy users table (INTEGER user_id).
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 from uuid import UUID
 
@@ -32,7 +32,7 @@ class AuthChatUser(Entity[UUID]):
     def __post_init__(self):
         super().__post_init__()
         if self.last_seen_at is None:
-            self.last_seen_at = datetime.utcnow()
+            self.last_seen_at = datetime.now(UTC)
 
     def update_subscription_tier(self, tier: str) -> None:
         """Update subscription tier with validation."""
@@ -43,12 +43,12 @@ class AuthChatUser(Entity[UUID]):
                 f"Must be one of: {', '.join(valid_tiers)}"
             )
         self.subscription_tier = tier
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def increment_message_count(self) -> None:
         """Increment total message count."""
         self.total_messages += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def update_language(self, language: str) -> None:
         """Update preferred language."""
@@ -59,7 +59,7 @@ class AuthChatUser(Entity[UUID]):
                 f"Must be one of: {', '.join(supported_languages)}"
             )
         self.language = language
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
 
 @dataclass(eq=False, kw_only=True)
@@ -81,25 +81,25 @@ class AuthChatConversation(Entity[UUID]):
         """Archive this conversation."""
         if self.status != "archived":
             self.status = "archived"
-            self.archived_at = datetime.utcnow()
-            self.updated_at = datetime.utcnow()
+            self.archived_at = datetime.now(UTC)
+            self.updated_at = datetime.now(UTC)
 
     def reactivate(self) -> None:
         """Reactivate an archived conversation."""
         if self.status == "archived":
             self.status = "active"
             self.archived_at = None
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
 
     def update_title(self, title: str) -> None:
         """Update conversation title."""
         self.title = title
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def increment_message_count(self) -> None:
         """Increment message count."""
         self.message_count += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     @property
     def is_active(self) -> bool:

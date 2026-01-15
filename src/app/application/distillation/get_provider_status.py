@@ -1,7 +1,7 @@
 """
 Get provider status interactor.
 """
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
 from dataclasses import dataclass
 
@@ -49,7 +49,7 @@ class GetProviderStatus:
                     healthy=health["primary_healthy"],
                     latency_ms=health.get("primary_latency_ms"),
                     error_rate=None,  # TODO: Calculate from recent telemetry
-                    last_check=datetime.utcnow(),
+                    last_check=datetime.now(UTC),
                 )
             )
         
@@ -60,7 +60,7 @@ class GetProviderStatus:
                     healthy=health["fallback_healthy"],
                     latency_ms=health.get("fallback_latency_ms"),
                     error_rate=None,  # TODO: Calculate from recent telemetry
-                    last_check=datetime.utcnow(),
+                    last_check=datetime.now(UTC),
                 )
             )
         

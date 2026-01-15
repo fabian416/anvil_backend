@@ -207,8 +207,8 @@ class RedisIntentCacheAdapter(IntentCacheAdapter):
                 ],
                 "embedding": query_embedding,
                 "hit_count": 0,
-                "created_at": datetime.utcnow().isoformat(),
-                "last_accessed_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
+                "last_accessed_at": datetime.now(UTC).isoformat(),
             }
 
             # Serialize and store
@@ -347,15 +347,15 @@ class RedisIntentCacheAdapter(IntentCacheAdapter):
             if existing_data:
                 entity_data = json.loads(existing_data)
                 entity_data["usage_count"] += 1
-                entity_data["last_used_at"] = datetime.utcnow().isoformat()
+                entity_data["last_used_at"] = datetime.now(UTC).isoformat()
             else:
                 entity_data = {
                     "entity_type": entity_type,
                     "entity_value": entity_value,
                     "usage_count": 1,
                     "metadata": metadata or {},
-                    "created_at": datetime.utcnow().isoformat(),
-                    "last_used_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
+                    "last_used_at": datetime.now(UTC).isoformat(),
                 }
 
             # Store with 30-day TTL
@@ -548,7 +548,7 @@ class RedisIntentCacheAdapter(IntentCacheAdapter):
             # Update hit count
             entry_dict = json.loads(data)
             entry_dict["hit_count"] = entry_dict.get("hit_count", 0) + 1
-            entry_dict["last_accessed_at"] = datetime.utcnow().isoformat()
+            entry_dict["last_accessed_at"] = datetime.now(UTC).isoformat()
 
             # Get TTL and preserve it
             ttl = await self._redis.ttl(full_key)
@@ -667,7 +667,7 @@ class RedisIntentCacheAdapter(IntentCacheAdapter):
                         "suggestion_type": "query",
                         "intent_type": intent.intent_type.value,
                         "usage_count": 1,
-                        "created_at": datetime.utcnow().isoformat(),
+                        "created_at": datetime.now(UTC).isoformat(),
                     }
 
                 # Store with 7-day TTL

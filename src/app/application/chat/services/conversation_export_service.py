@@ -9,7 +9,7 @@ import re
 import hashlib
 from typing import Optional, List
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 from io import BytesIO
 
 from app.domain.value_objects.chat.export import (
@@ -121,13 +121,13 @@ class ConversationExportService:
             export_id=str(uuid4()),
             conversation_id=str(conversation_id),
             exported_by_user_id=str(user_id),
-            export_timestamp=datetime.utcnow(),
+            export_timestamp=datetime.now(UTC),
             format=export_format,
             compliance_standard=compliance_standard,
             file_size_bytes=len(file_bytes),
             message_count=conversation_data.get("message_count", 0),
-            date_range_start=conversation_data.get("start_date", datetime.utcnow()),
-            date_range_end=conversation_data.get("end_date", datetime.utcnow()),
+            date_range_start=conversation_data.get("start_date", datetime.now(UTC)),
+            date_range_end=conversation_data.get("end_date", datetime.now(UTC)),
             includes_attachments=include_attachments,
             pii_redacted=pii_redaction is not None,
             digitally_signed=digitally_signed,
@@ -223,7 +223,7 @@ class ConversationExportService:
             "messages": [],
             "message_count": 42,
             "start_date": datetime(2025, 1, 1),
-            "end_date": datetime.utcnow(),
+            "end_date": datetime.now(UTC),
             "participants": [str(user_id)],
         }
 
@@ -324,7 +324,7 @@ class ConversationExportService:
 
         export_data = {
             "conversation": data,
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(UTC).isoformat(),
         }
 
         if compliance_reqs:
@@ -360,7 +360,7 @@ class ConversationExportService:
         lines = [
             f"# {data.get('title', 'Conversation')}",
             "",
-            f"**Exported**: {datetime.utcnow().isoformat()}",
+            f"**Exported**: {datetime.now(UTC).isoformat()}",
             f"**Messages**: {data.get('message_count', 0)}",
             "",
             "---",
@@ -409,7 +409,7 @@ class ConversationExportService:
 </head>
 <body>
     <h1>{data.get('title', 'Conversation')}</h1>
-    <p><strong>Exported:</strong> {datetime.utcnow().isoformat()}</p>
+    <p><strong>Exported:</strong> {datetime.now(UTC).isoformat()}</p>
     <p><strong>Messages:</strong> {data.get('message_count', 0)}</p>
     {compliance_banner}
     <hr>
@@ -454,7 +454,7 @@ class ConversationExportService:
     ) -> None:
         """Create audit trail entry."""
         entry = ExportAuditEntry(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             user_id=str(user_id),
             action=action,
             conversation_id=str(conversation_id),

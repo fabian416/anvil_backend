@@ -10,7 +10,7 @@ Provides comprehensive market data including:
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional, Dict
 from uuid import UUID
 
@@ -125,7 +125,7 @@ class AdvancedMarketsService:
             ),
             "total_market_cap_usd": 1_200_000_000_000,  # Placeholder
             "total_volume_24h_usd": 85_000_000_000,  # Placeholder
-            "updated_at": datetime.utcnow(),
+            "updated_at": datetime.now(UTC),
         }
 
     async def _get_top_tokens(
@@ -153,7 +153,7 @@ class AdvancedMarketsService:
                 chains=["ethereum"],
                 liquidity_score=0.98,
                 volatility_24h=0.032,
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(UTC),
             ),
             TokenMarketData(
                 token_symbol="BTC",
@@ -169,7 +169,7 @@ class AdvancedMarketsService:
                 chains=["bitcoin"],
                 liquidity_score=0.99,
                 volatility_24h=0.018,
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(UTC),
             ),
         ]
 

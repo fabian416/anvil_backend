@@ -15,7 +15,7 @@ Production-ready alerting with:
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -75,14 +75,14 @@ class Alert:
     condition: AlertCondition
     message: str
     context: AlertContext
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     resolved: bool = False
     resolved_at: Optional[datetime] = None
 
     def resolve(self) -> None:
         """Mark alert as resolved."""
         self.resolved = True
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(UTC)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -147,7 +147,7 @@ class AlertRule(ABC):
         if not self._last_triggered:
             return False
 
-        return datetime.utcnow() - self._last_triggered < self._cooldown_period
+        return datetime.now(UTC) - self._last_triggered < self._cooldown_period
 
     def trigger_alert(self, message: str, context: AlertContext) -> Alert:
         """
@@ -160,7 +160,7 @@ class AlertRule(ABC):
         Returns:
             Created alert
         """
-        self._last_triggered = datetime.utcnow()
+        self._last_triggered = datetime.now(UTC)
         alert_id = f"{self.name}_{int(self._last_triggered.timestamp())}"
 
         return Alert(

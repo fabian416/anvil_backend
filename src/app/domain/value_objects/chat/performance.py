@@ -7,7 +7,7 @@ prefetching, and offline support.
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from uuid import UUID
 
@@ -53,15 +53,15 @@ class CacheEntry:
     conversation_context_hash: Optional[str] = None
     embedding: Optional[List[float]] = None  # For semantic similarity
     hit_count: int = 0
-    last_accessed: datetime = field(default_factory=datetime.utcnow)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    last_accessed: datetime = field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     ttl_seconds: int = 3600  # 1 hour default
     similarity_threshold: float = 0.85  # For semantic matching
 
     def is_expired(self) -> bool:
         """Check if cache entry has expired."""
         expiry_time = self.created_at + timedelta(seconds=self.ttl_seconds)
-        return datetime.utcnow() > expiry_time
+        return datetime.now(UTC) > expiry_time
 
     def is_semantically_similar(self, query_embedding: List[float], threshold: Optional[float] = None) -> bool:
         """Check if query is semantically similar to cached query."""
@@ -169,7 +169,7 @@ class PrefetchPrediction:
     reasoning: str
     estimated_response_time_ms: int
     estimated_cost_usd: float
-    suggested_at: datetime = field(default_factory=datetime.utcnow)
+    suggested_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def should_prefetch(self, confidence_threshold: float = 0.7) -> bool:
         """Determine if prefetching is worthwhile."""

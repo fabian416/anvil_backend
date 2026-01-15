@@ -5,7 +5,7 @@ Enterprise-grade template workflow execution tracking.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
@@ -66,7 +66,7 @@ class TemplateExecution:
     def __post_init__(self):
         """Initialize timestamps."""
         if self.started_at is None:
-            self.started_at = datetime.utcnow()
+            self.started_at = datetime.now(UTC)
 
     def is_in_progress(self) -> bool:
         """Check if execution is in progress."""
@@ -106,7 +106,7 @@ class TemplateExecution:
         """Pause execution."""
         if self.status == "in_progress":
             self.status = "paused"
-            self.paused_at = datetime.utcnow()
+            self.paused_at = datetime.now(UTC)
 
     def resume(self) -> None:
         """Resume paused execution."""
@@ -117,7 +117,7 @@ class TemplateExecution:
     def complete(self) -> None:
         """Mark execution as completed."""
         self.status = "completed"
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC)
         self.completion_rate = 1.0
 
         # Calculate total execution time
@@ -134,7 +134,7 @@ class TemplateExecution:
             error_message: Error description
         """
         self.status = "failed"
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC)
 
         # Calculate execution time up to failure
         if self.started_at:

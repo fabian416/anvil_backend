@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import Select, and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -41,8 +41,8 @@ class SqlaPaymentRepository(PaymentRepository):
                     status=status,
                     stripe_payment_intent_id=stripe_payment_intent_id,
                     data_json=data_json,
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
                 .returning(table.c.id)
             )
@@ -68,7 +68,7 @@ class SqlaPaymentRepository(PaymentRepository):
         try:
             table = mapping_registry.metadata.tables["payments"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(status=status, updated_at=datetime.utcnow())
+                table.update().where(table.c.id == id_).values(status=status, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -86,7 +86,7 @@ class SqlaPaymentRepository(PaymentRepository):
         try:
             table = mapping_registry.metadata.tables["payments"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(data_json=data_json, updated_at=datetime.utcnow())
+                table.update().where(table.c.id == id_).values(data_json=data_json, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -125,8 +125,8 @@ class SqlaPaymentRepository(PaymentRepository):
                     currency=currency,
                     status="pending",
                     data_json={"description": description},
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
                 .returning(table.c.id)
             )

@@ -4,7 +4,7 @@ Implements the ChatRepository ports using SQLAlchemy with imperative mapping.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional, List
 from uuid import UUID
 
@@ -113,7 +113,7 @@ class ChatUserRepositorySqla(ChatUserRepository):
                     language=chat_user.language,
                     chat_preferences=chat_user.chat_preferences,
                     last_seen_at=chat_user.last_seen_at,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await self._session.execute(stmt)
@@ -143,7 +143,7 @@ class ChatUserRepositorySqla(ChatUserRepository):
             stmt = (
                 update(table)
                 .where(table.c.id == chat_user_id)
-                .values(last_seen_at=datetime.utcnow(), updated_at=datetime.utcnow())
+                .values(last_seen_at=datetime.now(UTC), updated_at=datetime.now(UTC))
             )
             await self._session.execute(stmt)
             await self._session.commit()
@@ -161,7 +161,7 @@ class ChatUserRepositorySqla(ChatUserRepository):
                 .where(table.c.id == chat_user_id)
                 .values(
                     total_messages=table.c.total_messages + 1,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await self._session.execute(stmt)
@@ -299,7 +299,7 @@ class ChatConversationRepositorySqla(ChatConversationRepository):
                     message_count=conversation.message_count,
                     language=conversation.language,
                     archived_at=conversation.archived_at,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await self._session.execute(stmt)
@@ -331,8 +331,8 @@ class ChatConversationRepositorySqla(ChatConversationRepository):
                 .where(table.c.id == conversation_id)
                 .values(
                     status="archived",
-                    archived_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    archived_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await self._session.execute(stmt)
@@ -350,7 +350,7 @@ class ChatConversationRepositorySqla(ChatConversationRepository):
                 update(table)
                 .where(table.c.id == conversation_id)
                 .values(
-                    status="active", archived_at=None, updated_at=datetime.utcnow()
+                    status="active", archived_at=None, updated_at=datetime.now(UTC)
                 )
             )
             await self._session.execute(stmt)
@@ -369,7 +369,7 @@ class ChatConversationRepositorySqla(ChatConversationRepository):
                 .where(table.c.id == conversation_id)
                 .values(
                     message_count=table.c.message_count + 1,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
             await self._session.execute(stmt)

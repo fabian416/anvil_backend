@@ -4,7 +4,7 @@ Domain entity for persisting and managing sentiment analysis data.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -26,8 +26,8 @@ class SentimentAnalysis:
     id: UUID = field(default_factory=uuid4)
     token_symbol: str = field(default="")
     aggregated_sentiment: Optional[AggregatedSentiment] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Analysis metadata
     analysis_version: str = "1.0"
@@ -41,7 +41,7 @@ class SentimentAnalysis:
             aggregated: New aggregated sentiment data
         """
         self.aggregated_sentiment = aggregated
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
         self.sources_analyzed = [r.source for r in aggregated.readings]
         self.total_data_points = len(aggregated.readings)
 
@@ -55,7 +55,7 @@ class SentimentAnalysis:
         Returns:
             True if analysis is older than max_age_minutes
         """
-        age = datetime.utcnow() - self.updated_at
+        age = datetime.now(UTC) - self.updated_at
         return age.total_seconds() / 60 > max_age_minutes
 
     @property
@@ -139,7 +139,7 @@ class SentimentSnapshot:
     confidence: float = 0.0
     classification: SentimentScore = SentimentScore.NEUTRAL
     source: SentimentSource = SentimentSource.AGGREGATED
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Metadata
     data_points: int = 0

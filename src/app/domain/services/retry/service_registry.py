@@ -7,7 +7,7 @@ unavailable or during maintenance windows.
 
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -128,9 +128,9 @@ class ServiceRegistry:
         metadata = {
             "user_id": str(user_id),
             "reason": reason,
-            "disabled_at": datetime.utcnow().isoformat(),
+            "disabled_at": datetime.now(UTC).isoformat(),
             "expires_at": (
-                (datetime.utcnow() + timedelta(minutes=duration_minutes)).isoformat()
+                (datetime.now(UTC) + timedelta(minutes=duration_minutes)).isoformat()
                 if duration_minutes
                 else None
             ),

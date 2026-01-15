@@ -7,7 +7,7 @@ connection pooling, efficient querying, and automatic cleanup.
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from redis.asyncio import Redis, ConnectionPool
@@ -343,7 +343,7 @@ class RedisSessionStoreAdapter(SessionStore):
         try:
             session_key = self._session_key(session_id)
             activity_key = self._activity_key()
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
 
             # Check if session exists
             exists = await self._redis.exists(session_key)
@@ -394,7 +394,7 @@ class RedisSessionStoreAdapter(SessionStore):
 
             session_key = self._session_key(session_id)
             disconnected_key = self._disconnected_key()
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
 
             async with self._redis.pipeline(transaction=True) as pipe:
                 # Update session hash
@@ -487,7 +487,7 @@ class RedisSessionStoreAdapter(SessionStore):
             idle_key = self._state_sessions_key(ConnectionState.IDLE)
 
             # Calculate idle threshold timestamp
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             idle_threshold = now.timestamp() - WebSocketSession.IDLE_THRESHOLD_SECONDS
 
             # Get sessions with activity before threshold
@@ -541,7 +541,7 @@ class RedisSessionStoreAdapter(SessionStore):
             disconnected_key = self._disconnected_key()
 
             # Calculate expiration threshold timestamp
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             expiration_threshold = now.timestamp() - (
                 WebSocketSession.EXPIRATION_HOURS * 3600
             )

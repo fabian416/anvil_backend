@@ -7,7 +7,7 @@ not separate REST endpoints.
 
 import logging
 from typing import Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 from collections import Counter
 import statistics
@@ -62,7 +62,7 @@ class ChatAnalyticsService:
         """
         # Calculate date range
         days = int(time_range.replace("d", ""))
-        date_to = datetime.utcnow()
+        date_to = datetime.now(UTC)
         date_from = date_to - timedelta(days=days)
 
         # Gather all metrics

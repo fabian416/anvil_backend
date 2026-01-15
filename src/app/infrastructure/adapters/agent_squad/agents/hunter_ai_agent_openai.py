@@ -60,14 +60,14 @@ class HunterAIAgentOpenAI:
         conversation_context: ConversationContext,
     ) -> AgentResponse:
         """Execute Hunter AI agent - Market sentiment analysis."""
-        from datetime import datetime
+        from datetime import datetime, UTC
         from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
         from app.domain.value_objects.chat.source_info import sanitize_query_params
         
         start_time = time.time()
         tools_used = ["openai_api"]
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Extract token from message if present
         market_data_context = ""

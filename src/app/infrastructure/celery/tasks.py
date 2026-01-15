@@ -238,7 +238,7 @@ def archive_guest_conversations():
         repository = await container.get(GuestRepository)
         
         # Archive conversations older than 1 hour
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
         archived_count = await repository.archive_inactive_conversations(one_hour_ago)
         
         print(f"Guest conversation archival complete: {archived_count} conversations archived")

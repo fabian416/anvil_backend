@@ -9,7 +9,7 @@ import logging
 import asyncio
 from typing import Dict, Any, List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.domain.entities.chat.conversation_template import (
     ConversationTemplate,
@@ -98,7 +98,7 @@ class TemplateExecutorService:
             TemplateValidationError: Invalid inputs
             TemplateExecutionError: Execution failed
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Load template
         template = await self._repository.get_by_id(template_id)
@@ -118,7 +118,7 @@ class TemplateExecutorService:
             template.increment_usage(success=True)
             await self._repository.save(template)
 
-            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            execution_time = (datetime.now(UTC) - start_time).total_seconds()
 
             return TemplateExecutionResult(
                 template_id=template_id,
@@ -134,7 +134,7 @@ class TemplateExecutorService:
             template.increment_usage(success=False)
             await self._repository.save(template)
 
-            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            execution_time = (datetime.now(UTC) - start_time).total_seconds()
 
             return TemplateExecutionResult(
                 template_id=template_id,

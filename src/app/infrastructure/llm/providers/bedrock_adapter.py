@@ -8,7 +8,7 @@ import logging
 import json
 from typing import AsyncIterator, Dict, Any, List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 
 import httpx
 import boto3
@@ -115,7 +115,7 @@ class BedrockAdapter:
             body["tools"] = self._convert_tools(request.tools)
 
         # Execute request
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             response = self._bedrock_runtime.invoke_model(
@@ -124,7 +124,7 @@ class BedrockAdapter:
 
             response_body = json.loads(response["body"].read())
 
-            latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             return self._parse_response(response_body, model_id, latency_ms)
 
@@ -206,9 +206,9 @@ class BedrockAdapter:
                 messages=[LLMMessage(role="user", content="Hi")], max_tokens=10
             )
 
-            start_time = datetime.utcnow()
+            start_time = datetime.now(UTC)
             await self.complete(test_request)
-            latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             return {
                 "status": "healthy",

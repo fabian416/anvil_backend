@@ -10,7 +10,7 @@ Based on ULTRA Arbitrage Bot's flash loan module.
 
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from decimal import Decimal
 
@@ -354,7 +354,7 @@ class FlashLoanEngine:
                 gas_price_gwei=None,
                 profit_usd=None,
                 fees_paid=Decimal("0"),
-                execution_time=datetime.utcnow(),
+                execution_time=datetime.now(UTC),
                 error_message=error,
             )
 
@@ -378,7 +378,7 @@ class FlashLoanEngine:
                 gas_price_gwei=30,
                 profit_usd=estimated_profit,
                 fees_paid=fees,
-                execution_time=datetime.utcnow(),
+                execution_time=datetime.now(UTC),
                 error_message=f"Profit ${estimated_profit} below threshold ${self.config.min_profit_threshold}",
             )
 
@@ -390,7 +390,7 @@ class FlashLoanEngine:
             gas_price_gwei=30,
             profit_usd=estimated_profit,
             fees_paid=fees,
-            execution_time=datetime.utcnow(),
+            execution_time=datetime.now(UTC),
         )
 
     async def execute_loan(

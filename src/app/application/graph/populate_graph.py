@@ -6,7 +6,7 @@ Service for populating the knowledge graph with DeFi data.
 
 from typing import List, Dict, Any, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 
 from app.domain.graph.ports import GraphRepository
@@ -132,7 +132,7 @@ class PopulateGraphInteractor:
                     to_id=chain_id,
                     rel_type="DEPLOYED_ON",
                     properties={
-                        "created_at": datetime.utcnow().isoformat(),
+                        "created_at": datetime.now(UTC).isoformat(),
                     },
                 )
                 stats["relationships_created"] += 1
@@ -155,7 +155,7 @@ class PopulateGraphInteractor:
                     rel_type="USES_TOKEN",
                     properties={
                         "is_native": True,
-                        "created_at": datetime.utcnow().isoformat(),
+                        "created_at": datetime.now(UTC).isoformat(),
                     },
                 )
                 stats["relationships_created"] += 1
@@ -181,8 +181,8 @@ class PopulateGraphInteractor:
             "twitter": protocol.twitter or "",
             "github": protocol.github or "",
             "logo": protocol.logo or "",
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }
         
         return await self._graph_repo.create_node("Protocol", properties)
@@ -202,7 +202,7 @@ class PopulateGraphInteractor:
             "twitter": protocol.twitter or "",
             "github": protocol.github or "",
             "logo": protocol.logo or "",
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }
         
         await self._graph_repo.update_node(protocol_id, properties)
@@ -240,7 +240,7 @@ class PopulateGraphInteractor:
                 "Chain",
                 {
                     "name": chain_name,
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 },
             )
             stats["chains_created"] += 1
@@ -284,7 +284,7 @@ class PopulateGraphInteractor:
                 {
                     "symbol": symbol,
                     "name": name,
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 },
             )
             stats["tokens_created"] += 1
@@ -386,7 +386,7 @@ class PopulateGraphInteractor:
                             to_id=dep_id,
                             rel_type="DEPENDS_ON",
                             properties={
-                                "created_at": datetime.utcnow().isoformat(),
+                                "created_at": datetime.now(UTC).isoformat(),
                             },
                         )
                         stats["dependencies_created"] += 1

@@ -860,13 +860,13 @@ class UnifiedChatOrchestrator:
         response_content = self._format_search_results(search_results)
 
         # Collect sources
-        from datetime import datetime
+        from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_database_source,
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add GraphRAG database source
         sources.append(create_database_source(
@@ -948,7 +948,7 @@ class UnifiedChatOrchestrator:
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add GraphRAG database source
         sources.append(create_database_source(
@@ -1073,7 +1073,7 @@ class UnifiedChatOrchestrator:
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add GraphRAG database source
         sources.append(create_database_source(
@@ -1150,7 +1150,7 @@ class UnifiedChatOrchestrator:
             # Fallback: create basic sources from tools_used
             from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
             from datetime import datetime
-            fetched_at = datetime.utcnow()
+            fetched_at = datetime.now(UTC)
             for tool in result["tools_used"]:
                 if tool != "openai_api":  # Skip LLM as it's implicit
                     sources.append(SourceInfo(
@@ -1984,7 +1984,7 @@ class UnifiedChatOrchestrator:
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add 1inch source (used by ArbitrageDiscovery)
         sources.append(create_api_source(
@@ -2092,7 +2092,7 @@ class UnifiedChatOrchestrator:
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add protocol sources based on what was queried
         if protocol:
@@ -2222,7 +2222,7 @@ class UnifiedChatOrchestrator:
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add Flashbots source
         sources.append(create_api_source(
@@ -2345,7 +2345,7 @@ class UnifiedChatOrchestrator:
         )
         
         sources = []
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         
         # Add 1inch source (used for arbitrage discovery)
         sources.append(create_api_source(

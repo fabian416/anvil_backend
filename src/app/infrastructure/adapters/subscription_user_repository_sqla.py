@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import Select, and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -35,8 +35,8 @@ class SqlaSubscriptionUserRepository(SubscriptionUserRepository):
                     subscription_id=subscription_id,
                     status=status,
                     data_json=data_json,
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
                 .returning(table.c.id)
             )
@@ -59,7 +59,7 @@ class SqlaSubscriptionUserRepository(SubscriptionUserRepository):
         try:
             table = mapping_registry.metadata.tables["subscription_users"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(status=status, updated_at=datetime.utcnow())
+                table.update().where(table.c.id == id_).values(status=status, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -70,7 +70,7 @@ class SqlaSubscriptionUserRepository(SubscriptionUserRepository):
             await self._session.execute(
                 table.update()
                 .where(table.c.id == id_)
-                .values(stripe_subscription_id=stripe_subscription_id, updated_at=datetime.utcnow())
+                .values(stripe_subscription_id=stripe_subscription_id, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -91,7 +91,7 @@ class SqlaSubscriptionUserRepository(SubscriptionUserRepository):
         try:
             table = mapping_registry.metadata.tables["subscription_users"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(data_json=data_json, updated_at=datetime.utcnow())
+                table.update().where(table.c.id == id_).values(data_json=data_json, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error

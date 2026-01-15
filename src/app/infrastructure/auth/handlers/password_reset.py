@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.application.common.ports.password_reset_repository import PasswordResetRepository
 from app.application.common.ports.transaction_manager import TransactionManager
@@ -53,7 +53,7 @@ class ForgotPasswordHandler:
         from secrets import token_urlsafe
 
         token = token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(hours=24)
+        expires_at = datetime.now(UTC) + timedelta(hours=24)
         await self._repo.add(user_id=user.id_.value, token=token, expires_at=expires_at)
         await self._tx.commit()
 
@@ -102,7 +102,7 @@ class ResetPasswordHandler:
         # Update password
         new_hash = UserPasswordHash(self._password_hasher.hash(RawPassword(request.new_password)))
         user.password = new_hash
-        user.updated_at = UpdatedAt(datetime.utcnow())
+        user.updated_at = UpdatedAt(datetime.now(UTC))
         await self._user_gateway.update(user)
 
         # Mark token used and delete

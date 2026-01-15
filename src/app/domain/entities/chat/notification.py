@@ -6,7 +6,7 @@ Represents a notification that can be sent through multiple channels
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, Optional, Set
 
 from app.domain.entities.base import Entity
@@ -45,7 +45,7 @@ class ChatNotification(Entity[ChatNotificationId]):
     payload: NotificationPayload
     channels: Set[NotificationChannel]
     delivery_status: Dict[NotificationChannel, DeliveryStatus] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     sent_at: Optional[datetime] = None
     delivered_at: Optional[datetime] = None
     read_at: Optional[datetime] = None
@@ -66,7 +66,7 @@ class ChatNotification(Entity[ChatNotificationId]):
         """
         self.delivery_status[channel] = DeliveryStatus.SENT
         if not self.sent_at:
-            self.sent_at = datetime.utcnow()
+            self.sent_at = datetime.now(UTC)
 
     def mark_delivered(self, channel: NotificationChannel) -> None:
         """
@@ -77,14 +77,14 @@ class ChatNotification(Entity[ChatNotificationId]):
         """
         self.delivery_status[channel] = DeliveryStatus.DELIVERED
         if not self.delivered_at:
-            self.delivered_at = datetime.utcnow()
+            self.delivered_at = datetime.now(UTC)
 
     def mark_read(self) -> None:
         """Mark notification as read by user."""
         for channel in self.channels:
             if self.delivery_status[channel] == DeliveryStatus.DELIVERED:
                 self.delivery_status[channel] = DeliveryStatus.READ
-        self.read_at = datetime.utcnow()
+        self.read_at = datetime.now(UTC)
 
     def mark_failed(self, channel: NotificationChannel, error: str) -> None:
         """

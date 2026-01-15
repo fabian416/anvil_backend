@@ -6,7 +6,7 @@ REST API endpoints for cryptocurrency sentiment analysis.
 from typing import Annotated, Optional
 from fastapi import APIRouter, Query, HTTPException, status
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.application.hunter.twitter_sentiment import (
     TwitterSentimentAnalyzer,
@@ -337,7 +337,7 @@ def create_sentiment_router() -> APIRouter:
                 "highest_sentiment": highest["token"],
                 "lowest_sentiment": lowest["token"],
                 "average_sentiment": round(avg_sentiment, 2),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except ValueError as e:

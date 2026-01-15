@@ -25,7 +25,7 @@ from typing import Optional, Dict, Any
 from uuid import UUID
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query, status
 from dishka.integrations.fastapi import FromDishka, inject
@@ -139,7 +139,7 @@ async def chat_websocket(
         session_id=session_id,
         metadata={
             "email": user.get("email"),
-            "connected_at": datetime.utcnow().isoformat(),
+            "connected_at": datetime.now(UTC).isoformat(),
         },
     )
     
@@ -149,7 +149,7 @@ async def chat_websocket(
         "message": "Connected to Anvil AI Chat",
         "user_id": user_id,
         "session_id": session_id,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     })
     
     try:

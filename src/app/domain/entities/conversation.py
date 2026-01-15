@@ -2,7 +2,7 @@
 Conversation entity for chat conversations.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional, List
 from uuid import UUID, uuid4
 
@@ -39,8 +39,8 @@ class Conversation:
         self.user_id = user_id
         self.title = title
         self.project_id = project_id
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
     
     @classmethod
     def create(
@@ -75,11 +75,11 @@ class Conversation:
             title: New title
         """
         self.title = title
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def touch(self) -> None:
         """Update the updated_at timestamp."""
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     @property
     def is_project_scoped(self) -> bool:

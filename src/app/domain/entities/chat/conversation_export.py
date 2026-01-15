@@ -5,7 +5,7 @@ Enterprise-grade conversation export with compliance support.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 from uuid import UUID
 
@@ -53,7 +53,7 @@ class ConversationExport:
     def __post_init__(self):
         """Initialize timestamps."""
         if self.requested_at is None:
-            self.requested_at = datetime.utcnow()
+            self.requested_at = datetime.now(UTC)
 
     def is_pending(self) -> bool:
         """Check if export is pending."""
@@ -75,7 +75,7 @@ class ConversationExport:
         """Check if download URL has expired."""
         if not self.expires_at:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def mark_as_processing(self) -> None:
         """Mark export as being processed."""
@@ -102,7 +102,7 @@ class ConversationExport:
         self.file_size_bytes = file_size_bytes
         self.download_url = download_url
         self.expires_at = expires_at
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC)
 
     def mark_as_failed(self, error_message: str) -> None:
         """
@@ -113,7 +113,7 @@ class ConversationExport:
         """
         self.status = "failed"
         self.error_message = error_message
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC)
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""

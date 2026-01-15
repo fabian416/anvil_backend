@@ -20,7 +20,7 @@ import time
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any, Callable, Optional
 
@@ -92,7 +92,7 @@ class APICallContext:
     operation: str = ""
     
     # Timing
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
     end_time: Optional[datetime] = None
     duration_ms: float = 0.0
     
@@ -117,7 +117,7 @@ class APICallContext:
         error_type: Optional[str] = None,
     ):
         """Complete the API call context."""
-        self.end_time = datetime.utcnow()
+        self.end_time = datetime.now(UTC)
         self.duration_ms = (self.end_time - self.start_time).total_seconds() * 1000
         self.status = status
         self.status_code = status_code
@@ -156,8 +156,8 @@ class APIMetrics:
     estimated_cost_usd: float = 0.0
     
     # Time window
-    window_start: datetime = field(default_factory=datetime.utcnow)
-    last_updated: datetime = field(default_factory=datetime.utcnow)
+    window_start: datetime = field(default_factory=lambda: datetime.now(UTC))
+    last_updated: datetime = field(default_factory=lambda: datetime.now(UTC))
     
     @property
     def avg_latency_ms(self) -> float:
@@ -388,7 +388,7 @@ class APITelemetry:
         metrics.estimated_cost_usd += cost_per_1k / 1000
         
         # Update timestamp
-        metrics.last_updated = datetime.utcnow()
+        metrics.last_updated = datetime.now(UTC)
         
         # Store recent call
         self._recent_calls.append(ctx)
@@ -409,7 +409,7 @@ class APITelemetry:
         if len(self._recent_calls) > self._config.max_records:
             self._recent_calls = self._recent_calls[-self._config.max_records:]
         
-        cutoff = datetime.utcnow() - timedelta(hours=self._config.retention_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=self._config.retention_hours)
         self._recent_calls = [
             c for c in self._recent_calls
             if c.start_time > cutoff
@@ -443,7 +443,7 @@ class APITelemetry:
         # Check rate limiting
         recent_rate_limits = [
             t for t in metrics.rate_limit_events
-            if t > datetime.utcnow() - timedelta(minutes=5)
+            if t > datetime.now(UTC) - timedelta(minutes=5)
         ]
         if len(recent_rate_limits) >= self._config.rate_limit_alert_count:
             alerts.append({
@@ -459,8 +459,8 @@ class APITelemetry:
             alert_key = f"{alert['type']}:{alert['api']}"
             last_sent = self._alerts_sent.get(alert_key)
             
-            if last_sent is None or datetime.utcnow() - last_sent > self._alert_cooldown:
-                self._alerts_sent[alert_key] = datetime.utcnow()
+            if last_sent is None or datetime.now(UTC) - last_sent > self._alert_cooldown:
+                self._alerts_sent[alert_key] = datetime.now(UTC)
                 
                 if self._alert_callback:
                     try:

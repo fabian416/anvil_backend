@@ -1,5 +1,5 @@
 """Auto-assignment rule entity."""
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, Optional, Any
 from uuid import UUID, uuid4
 
@@ -47,8 +47,8 @@ class AssignmentRule:
         self.priority = priority
         self.auto_switch = auto_switch
         self.is_active = is_active
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
     
     @classmethod
     def create(
@@ -88,22 +88,22 @@ class AssignmentRule:
     def activate(self) -> None:
         """Activate the rule."""
         self.is_active = True
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def deactivate(self) -> None:
         """Deactivate the rule."""
         self.is_active = False
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def update_priority(self, priority: int) -> None:
         """Update rule priority."""
         self.priority = priority
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def update_params(self, condition_params: Dict[str, Any]) -> None:
         """Update condition parameters."""
         self.condition_params = condition_params
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
 
 class UserProjectAssignment:
@@ -134,7 +134,7 @@ class UserProjectAssignment:
         self.assigned_by = assigned_by
         self.assignment_reason = assignment_reason
         self.is_active = is_active
-        self.assigned_at = assigned_at or datetime.utcnow()
+        self.assigned_at = assigned_at or datetime.now(UTC)
         self.last_active_at = last_active_at
         self.removed_at = removed_at
     
@@ -194,9 +194,9 @@ class UserProjectAssignment:
     
     def touch(self) -> None:
         """Update last active timestamp."""
-        self.last_active_at = datetime.utcnow()
+        self.last_active_at = datetime.now(UTC)
     
     def remove(self) -> None:
         """Remove assignment."""
         self.is_active = False
-        self.removed_at = datetime.utcnow()
+        self.removed_at = datetime.now(UTC)

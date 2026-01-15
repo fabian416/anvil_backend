@@ -5,7 +5,7 @@ Multi-Sig Proposal entity - Treasury management proposals.
 from dataclasses import dataclass
 from typing import Any
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 from app.domain.entities.base import Entity
@@ -144,7 +144,7 @@ class MultiSigProposal(Entity[MultiSigProposalId]):
         """Add approval from a signer."""
         approval = Approval(
             signer=signer,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             ip_address=ip_address,
             comment=comment,
         )
@@ -159,7 +159,7 @@ class MultiSigProposal(Entity[MultiSigProposalId]):
         """Mark proposal as executed."""
         self.transaction_hash = transaction_hash
         self.status = ProposalStatus.EXECUTED
-        self.executed_at = datetime.utcnow()
+        self.executed_at = datetime.now(UTC)
         self.updated_at = UpdatedAt.now()
     
     def cancel(self) -> None:

@@ -1,6 +1,6 @@
 """Cache manager for distillation system."""
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Optional
 
 from app.domain.ports.distillation_repository import CacheRepository
@@ -48,7 +48,7 @@ class CacheManager:
         """
         # L1: Try exact match first (fastest)
         exact_hit = await self.cache_repo.get_exact(cache_key)
-        if exact_hit and exact_hit.expires_at > datetime.utcnow():
+        if exact_hit and exact_hit.expires_at > datetime.now(UTC):
             # Update hit statistics
             await self._increment_hit_count(exact_hit)
             return exact_hit.response_content, CacheLevel.EXACT
@@ -65,7 +65,7 @@ class CacheManager:
                     threshold=semantic_threshold,
                 )
                 
-                if semantic_hit and semantic_hit.expires_at > datetime.utcnow():
+                if semantic_hit and semantic_hit.expires_at > datetime.now(UTC):
                     # Update hit statistics
                     await self._increment_hit_count(semantic_hit)
                     return semantic_hit.response_content, CacheLevel.SEMANTIC

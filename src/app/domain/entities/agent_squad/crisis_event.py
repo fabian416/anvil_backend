@@ -5,7 +5,7 @@ Crisis Event entity - Emergency response logs.
 from dataclasses import dataclass
 from typing import Any
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 from app.domain.entities.base import Entity
@@ -164,7 +164,7 @@ class CrisisEvent(Entity[CrisisEventId]):
         """Add crisis response action."""
         crisis_action = CrisisAction(
             action=action,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             result=result,
             details=details,
         )
@@ -190,7 +190,7 @@ class CrisisEvent(Entity[CrisisEventId]):
     def resolve(self) -> None:
         """Mark crisis as resolved."""
         self.crisis_resolved = True
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(UTC)
     
     @property
     def is_critical(self) -> bool:

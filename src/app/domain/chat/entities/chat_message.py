@@ -5,7 +5,7 @@ Unified message entity with enhanced metadata support.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -37,7 +37,7 @@ class ChatMessage:
     handler: str | None = None
     is_restricted_action: bool = False
     language: str = "en"
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
     
     @classmethod
@@ -56,7 +56,7 @@ class ChatMessage:
             content=content,
             language=language,
             metadata=metadata or {},
-            created_at=created_at or datetime.utcnow(),
+            created_at=created_at or datetime.now(UTC),
         )
     
     @classmethod
@@ -83,7 +83,7 @@ class ChatMessage:
             is_restricted_action=is_restricted_action,
             language=language,
             metadata=metadata or {},
-            created_at=created_at or datetime.utcnow(),
+            created_at=created_at or datetime.now(UTC),
         )
     
     @classmethod

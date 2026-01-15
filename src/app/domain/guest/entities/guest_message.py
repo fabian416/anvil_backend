@@ -5,7 +5,7 @@ Represents a message in a guest conversation.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from uuid import UUID, uuid4
 
@@ -36,7 +36,7 @@ class GuestMessage:
     language: str = "en"
     is_restricted_action: bool = False
     metadata: dict | None = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     def create_user_message(

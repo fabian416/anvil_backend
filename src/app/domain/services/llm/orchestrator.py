@@ -6,7 +6,7 @@ Main orchestration engine for multi-LLM routing, retry, and telemetry.
 
 import logging
 from typing import Optional, List, AsyncIterator, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID, uuid4
 from dataclasses import dataclass
 import asyncio
@@ -137,7 +137,7 @@ class LLMOrchestrator:
             NoAvailableModelsError: No models available
         """
         request_id = self._generate_request_id()
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Filter out models with open circuit breakers
         available_models = [
@@ -216,7 +216,7 @@ class LLMOrchestrator:
             )
 
             total_latency_ms = int(
-                (datetime.utcnow() - start_time).total_seconds() * 1000
+                (datetime.now(UTC) - start_time).total_seconds() * 1000
             )
 
             logger.info(

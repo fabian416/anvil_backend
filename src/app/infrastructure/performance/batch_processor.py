@@ -6,7 +6,7 @@ import asyncio
 import logging
 from typing import List, Callable, Any, TypeVar, Generic
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class BatchProcessor(Generic[T]):
             future = asyncio.Future()
             batch_item = BatchItem(
                 data=item,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 future=future,
             )
             

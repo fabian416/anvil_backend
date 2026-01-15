@@ -2,7 +2,7 @@
 Project entity.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, List, Optional, Any
 from uuid import UUID, uuid4
 
@@ -88,8 +88,8 @@ class Project:
         self.display_order = display_order
         self.is_featured = is_featured
         self.created_by = created_by
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
     
     @classmethod
     def create(
@@ -224,22 +224,22 @@ class Project:
         if is_featured is not None:
             self.is_featured = is_featured
         
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def activate(self) -> None:
         """Activate the project."""
         self.status = "active"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def pause(self) -> None:
         """Pause the project."""
         self.status = "paused"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def archive(self) -> None:
         """Archive the project."""
         self.status = "archived"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def is_active(self) -> bool:
         """Check if project is active."""

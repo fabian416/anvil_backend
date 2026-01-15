@@ -10,7 +10,7 @@ Tracks metrics and statistics for chat conversations including:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, Optional, Any
 from uuid import UUID
 
@@ -61,6 +61,6 @@ class ConversationAnalytics:
     # Timestamps
     first_message_at: Optional[datetime] = None
     last_message_at: Optional[datetime] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 

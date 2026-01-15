@@ -6,7 +6,7 @@ following the presentation layer's responsibility for request/response
 serialization.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Dict, Optional
 from uuid import UUID
@@ -123,7 +123,7 @@ class ServerMessage(BaseModel):
     """
 
     type: WebSocketMessageType
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class StreamTokenMessage(ServerMessage):

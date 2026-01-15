@@ -1,5 +1,5 @@
 """Knowledge base entities."""
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
 from uuid import UUID, uuid4
 
@@ -41,8 +41,8 @@ class KnowledgeDocument:
         self.is_processed = is_processed
         self.chunk_count = chunk_count
         self.processing_error = processing_error
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
     
     @classmethod
     def create(
@@ -77,13 +77,13 @@ class KnowledgeDocument:
         self.is_processed = True
         self.chunk_count = chunk_count
         self.processing_error = None
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def mark_failed(self, error: str) -> None:
         """Mark document processing as failed."""
         self.is_processed = False
         self.processing_error = error
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
     
     def update_content(self, content: str) -> None:
         """Update document content (requires reprocessing)."""
@@ -91,7 +91,7 @@ class KnowledgeDocument:
         self.is_processed = False
         self.chunk_count = 0
         self.processing_error = None
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
 
 class KnowledgeChunk:
@@ -120,7 +120,7 @@ class KnowledgeChunk:
         self.chunk_index = chunk_index
         self.embedding = embedding
         self.metadata = metadata
-        self.created_at = created_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
     
     @classmethod
     def create(
@@ -182,8 +182,8 @@ class KnowledgeBase:
         self.total_chunks = total_chunks
         self.status = status
         self.last_indexed_at = last_indexed_at
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
     
     @classmethod
     def create(
@@ -214,8 +214,8 @@ class KnowledgeBase:
         """Update knowledge base statistics."""
         self.total_documents = total_documents
         self.total_chunks = total_chunks
-        self.last_indexed_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.last_indexed_at = datetime.now(UTC)
+        self.updated_at = datetime.now(UTC)
     
     def is_active(self) -> bool:
         """Check if knowledge base is active."""

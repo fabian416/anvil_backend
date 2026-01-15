@@ -311,7 +311,7 @@ async def create_knowledge_document(
     """Create and process a knowledge document."""
     from app.domain.entities.knowledge_base import KnowledgeDocument
     from uuid import uuid4
-    from datetime import datetime
+    from datetime import datetime, UTC
     
     # Create document
     document = KnowledgeDocument(
@@ -327,8 +327,8 @@ async def create_knowledge_document(
         is_processed=False,
         chunk_count=0,
         processing_error=None,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     
     await doc_repository.add_document(document)

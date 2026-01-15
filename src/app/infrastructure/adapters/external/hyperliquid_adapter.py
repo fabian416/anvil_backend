@@ -7,7 +7,7 @@ with minimal caching for real-time data.
 
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 
 from app.domain.entities.perpetual.liquidation import Liquidation
@@ -163,8 +163,8 @@ class HyperliquidAdapter(PerpetualGateway):
                     symbol=market.symbol,
                     rate=market.funding_rate,
                     annualized_rate=market.funding_rate * 3 * 365,  # 8h -> annual
-                    next_funding_time=datetime.utcnow(),  # Would need actual data
-                    timestamp=datetime.utcnow(),
+                    next_funding_time=datetime.now(UTC),  # Would need actual data
+                    timestamp=datetime.now(UTC),
                 )
                 funding_rates.append(funding_rate)
 

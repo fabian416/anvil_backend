@@ -85,10 +85,10 @@ class ChatAgentOpenAI:
         latency_ms = int((time.time() - start_time) * 1000)
         
         # Add LLM source
-        from datetime import datetime
+        from datetime import datetime, UTC
         from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
         
-        fetched_at = datetime.utcnow()
+        fetched_at = datetime.now(UTC)
         model_name = response.get("model", "Unknown")
         provider = "Vertex AI" if "gemini" in model_name.lower() else "DeepInfra"
         

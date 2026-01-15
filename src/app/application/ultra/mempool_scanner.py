@@ -33,7 +33,7 @@ import asyncio
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Callable
@@ -142,7 +142,7 @@ class PendingTransaction:
     max_priority_fee: int | None
     input_data: str
     nonce: int
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     
     @property
     def effective_gas_price(self) -> int:
@@ -198,7 +198,7 @@ class AttackDetection:
     estimated_loss_usd: Decimal
     gas_price_delta: float  # % higher than victim
     token_pair: tuple[str, str] | None
-    detected_at: datetime = field(default_factory=datetime.utcnow)
+    detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     
     # For sandwich attacks
     front_run_tx: str | None = None

@@ -8,7 +8,7 @@ Provides subgraph queries for protocol metrics, transactions, and events.
 from typing import List, Dict, Any, Optional
 import httpx
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.domain.ports.external_data.defi_data_provider import (
     ProtocolData,
@@ -183,7 +183,7 @@ class TheGraphClient:
             tvl_change_24h=0.0,  # Would need historical data
             tvl_change_7d=0.0,
             tvl_change_30d=0.0,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
     
     async def get_protocol_transactions(

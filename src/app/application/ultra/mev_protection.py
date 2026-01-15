@@ -36,7 +36,7 @@ Usage:
 
 from typing import Any, Optional
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from decimal import Decimal
 
@@ -97,7 +97,7 @@ class MEVBundle:
     expected_profit: Decimal
     bundle_hash: str
     status: BundleStatus = BundleStatus.PENDING
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -226,7 +226,7 @@ class MEVProtection:
     def _generate_bundle_id(self) -> str:
         """Generate unique bundle ID."""
         self._bundle_counter += 1
-        timestamp = int(datetime.utcnow().timestamp())
+        timestamp = int(datetime.now(UTC).timestamp())
         return f"BUNDLE-{timestamp}-{self._bundle_counter:04d}"
 
     def _calculate_bundle_hash(self, transactions: list[Transaction]) -> str:
