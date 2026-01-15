@@ -8,7 +8,7 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, List
 
 from app.application.chat.services.conversation_memory import ConversationContext
 from app.application.chat.services.conversation_state_manager import ConversationStateManager
@@ -1497,4 +1497,353 @@ class IntentDetectorV2:
             for lang_keywords in INTENT_KEYWORDS[category].values():
                 all_keywords.extend(lang_keywords)
         return all_keywords
+
+    # ========================================================================
+    # Multi-Intent Detection (Solution B)
+    # ========================================================================
+
+    def detect_multi_intent(
+        self,
+        message: str,
+        language: str = "en",
+        context: ConversationContext | None = None,
+    ) -> "MultiIntentResult":
+        """
+        Detect multiple intents in a single user message.
+
+        This method implements Solution B: Multi-Intent Detection Layer,
+        enabling the system to handle messages like:
+        - "show btc eth ada prices" → 3 PRICE intents (parallel)
+        - "swap usdc to eth and show balance" → 2 intents with dependency (sequential)
+        - "buy bitcoin if price drops below 90k" → 2 intents with condition
+
+        Args:
+            message: User message
+            language: Language code (en, es, pt, zh)
+            context: Optional conversation context
+
+        Returns:
+            MultiIntentResult with detected intents, orchestration strategy, and dependencies
+
+        Example:
+            >>> result = detector.detect_multi_intent("show btc eth prices")
+            >>> result.intents  # [IntentResult(BTC), IntentResult(ETH)]
+            >>> result.orchestration_strategy  # OrchestrationStrategy.PARALLEL
+        """
+        from app.domain.value_objects.chat.multi_intent_result import (
+            MultiIntentResult,
+            OrchestrationStrategy,
+            IntentDependency,
+        )
+        from app.domain.value_objects.chat.intent_prediction import (
+            IntentResult as DomainIntentResult,
+        )
+
+        message_lower = message.lower().strip()
+
+        # Step 1: Extract entities (tokens, amounts, chains) from message
+        entities_map = self._extract_entities_from_message(message_lower)
+
+        # Step 2: Detect all intents (expand by entities where applicable)
+        detected_intents = self._detect_all_intents(
+            message_lower, language, entities_map, context
+        )
+
+        # Step 3: Convert application IntentResult to domain IntentResult
+        domain_intents = []
+        for app_intent in detected_intents:
+            domain_intent = DomainIntentResult(
+                intent=app_intent.intent,
+                confidence=app_intent.confidence,
+                entities=app_intent.metadata.get("entities", []) if app_intent.metadata else [],
+                metadata=app_intent.metadata or {},
+            )
+            domain_intents.append(domain_intent)
+
+        # Step 4: Detect dependencies between intents
+        dependencies = self._detect_intent_dependencies(domain_intents, message_lower)
+
+        # Step 5: Determine orchestration strategy
+        orchestration_strategy = self._determine_orchestration_strategy(
+            domain_intents, dependencies, message_lower
+        )
+
+        # Step 6: Create and return MultiIntentResult
+        return MultiIntentResult(
+            intents=domain_intents,
+            orchestration_strategy=orchestration_strategy,
+            dependencies=dependencies,
+            metadata={
+                "original_message": message,
+                "language": language,
+                "entities_map": entities_map,
+            },
+        )
+
+    def _extract_entities_from_message(self, message: str) -> Dict[str, List[str]]:
+        """
+        Extract entities from message (tokens, amounts, chains).
+
+        Args:
+            message: Lowercased user message
+
+        Returns:
+            Dictionary with entity types and their values
+
+        Example:
+            >>> _extract_entities_from_message("show btc eth ada prices")
+            {"tokens": ["btc", "eth", "ada"]}
+        """
+        import re
+
+        entities = {
+            "tokens": [],
+            "amounts": [],
+            "chains": [],
+        }
+
+        # Extract token symbols
+        token_pattern = r"\b(btc|bitcoin|eth|ethereum|usdc|usdt|dai|wbtc|weth|sol|solana|matic|polygon|arb|arbitrum|op|optimism|ada|cardano|dot|polkadot|link|chainlink|uni|uniswap|aave|crv|curve|mkr|maker|comp|compound|avax|avalanche|bnb|binance)\b"
+        tokens = re.findall(token_pattern, message, re.IGNORECASE)
+        entities["tokens"] = list(dict.fromkeys(tokens))  # Remove duplicates, preserve order
+
+        # Extract amounts (numbers)
+        amount_pattern = r"\b\d+(?:\.\d+)?\b"
+        amounts = re.findall(amount_pattern, message)
+        entities["amounts"] = amounts
+
+        # Extract chain names
+        chain_pattern = r"\b(ethereum|base|arbitrum|optimism|polygon|avalanche|avax|bsc|binance|solana|fantom)\b"
+        chains = re.findall(chain_pattern, message, re.IGNORECASE)
+        entities["chains"] = list(dict.fromkeys(chains))
+
+        return entities
+
+    def _detect_all_intents(
+        self,
+        message: str,
+        language: str,
+        entities_map: Dict[str, List[str]],
+        context: ConversationContext | None,
+    ) -> List["IntentResult"]:
+        """
+        Detect all intents in the message, expanding by entities where applicable.
+
+        For messages like "show btc eth ada prices", this will detect:
+        - 3 separate PRICE intents (one per token)
+
+        Args:
+            message: Lowercased message
+            language: Language code
+            entities_map: Extracted entities
+            context: Conversation context
+
+        Returns:
+            List of detected intents (application-layer IntentResult)
+        """
+        detected_intents = []
+
+        # Check if message has multiple tokens + price/sentiment keywords
+        # Example: "show btc eth prices" → 2 PRICE intents
+        tokens = entities_map.get("tokens", [])
+
+        # Price/sentiment multi-entity expansion
+        price_keywords = ["price", "precio", "preço", "cost", "value", "worth"]
+        sentiment_keywords = ["sentiment", "sentimiento", "sentimento", "mood", "feeling"]
+
+        has_price_keyword = any(kw in message for kw in price_keywords)
+        has_sentiment_keyword = any(kw in message for kw in sentiment_keywords)
+
+        # Multi-entity price queries
+        if has_price_keyword and len(tokens) > 1:
+            for token in tokens:
+                detected_intents.append(
+                    IntentResult(
+                        intent=ChatIntentV2.HUNTER_PRICE_PREDICTION,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.HUNTER_PRICE_PREDICTION],
+                        metadata={"entities": [token.upper()]},
+                    )
+                )
+            return detected_intents
+
+        # Multi-entity sentiment queries
+        if has_sentiment_keyword and len(tokens) > 1:
+            for token in tokens:
+                detected_intents.append(
+                    IntentResult(
+                        intent=ChatIntentV2.HUNTER_SENTIMENT,
+                        confidence=0.90,
+                        handler=self._handler_map[ChatIntentV2.HUNTER_SENTIMENT],
+                        metadata={"entities": [token.upper()]},
+                    )
+                )
+            return detected_intents
+
+        # Check for multi-step commands (e.g., "swap and balance")
+        # Pattern: "action1 and action2"
+        swap_keywords = ["swap", "cambiar", "intercambiar", "exchange", "trocar"]
+        balance_keywords = ["balance", "saldo", "wallet"]
+
+        has_swap = any(kw in message for kw in swap_keywords)
+        has_balance = any(kw in message for kw in balance_keywords)
+
+        if has_swap and has_balance and " and " in message or " y " in message or " e " in message:
+            # Sequential: swap first, then balance
+            detected_intents.append(
+                IntentResult(
+                    intent=ChatIntentV2.SWAP,
+                    confidence=0.90,
+                    handler=self._handler_map[ChatIntentV2.SWAP],
+                    metadata={"entities": []},
+                )
+            )
+            detected_intents.append(
+                IntentResult(
+                    intent=ChatIntentV2.BALANCE,
+                    confidence=0.90,
+                    handler=self._handler_map[ChatIntentV2.BALANCE],
+                    metadata={"entities": []},
+                )
+            )
+            return detected_intents
+
+        # Fallback: single intent detection using existing detect() method
+        single_intent = self.detect(message, language, context)
+
+        # Populate entities from extracted tokens for single intent
+        if tokens and single_intent.metadata:
+            single_intent.metadata["entities"] = [tokens[0].upper()]
+        elif tokens:
+            single_intent.metadata = {"entities": [tokens[0].upper()]}
+
+        detected_intents.append(single_intent)
+
+        return detected_intents
+
+    def _detect_intent_dependencies(
+        self,
+        intents: List["DomainIntentResult"],
+        message: str,
+    ) -> List["IntentDependency"]:
+        """
+        Detect dependencies between intents.
+
+        Dependencies occur when:
+        - Sequential keywords: "and then", "después", "depois"
+        - Data flow: balance depends on swap completing
+        - Conditional: "if price drops, then buy"
+
+        Args:
+            intents: List of detected domain intents
+            message: Original message
+
+        Returns:
+            List of intent dependencies
+        """
+        from app.domain.value_objects.chat.multi_intent_result import IntentDependency
+
+        dependencies = []
+
+        # Single intent → no dependencies
+        if len(intents) <= 1:
+            return dependencies
+
+        # Check for sequential keywords
+        sequential_keywords = [
+            " and then ", " y luego ", " e então ",
+            " después ", " depois ", " then ",
+        ]
+        has_sequential = any(kw in message for kw in sequential_keywords)
+
+        # Check for data flow dependencies
+        # Example: SWAP → BALANCE (balance needs swap result)
+        for i, intent in enumerate(intents):
+            for j, prev_intent in enumerate(intents[:i]):
+                # BALANCE depends on SWAP
+                if intent.intent.value == "BALANCE" and prev_intent.intent.value == "SWAP":
+                    dependencies.append(
+                        IntentDependency(
+                            dependent_index=i,
+                            dependency_index=j,
+                            dependency_type="data_flow",
+                        )
+                    )
+
+                # General sequential dependency if keywords present
+                elif has_sequential and i > j:
+                    dependencies.append(
+                        IntentDependency(
+                            dependent_index=i,
+                            dependency_index=j,
+                            dependency_type="sequential",
+                        )
+                    )
+
+        # Check for conditional dependencies
+        conditional_keywords = [" if ", " si ", " se "]
+        has_conditional = any(kw in message for kw in conditional_keywords)
+
+        if has_conditional and len(intents) == 2:
+            # Second intent depends on first (conditional)
+            dependencies.append(
+                IntentDependency(
+                    dependent_index=1,
+                    dependency_index=0,
+                    dependency_type="conditional",
+                )
+            )
+
+        return dependencies
+
+    def _determine_orchestration_strategy(
+        self,
+        intents: List["DomainIntentResult"],
+        dependencies: List["IntentDependency"],
+        message: str,
+    ) -> "OrchestrationStrategy":
+        """
+        Determine how intents should be orchestrated.
+
+        Strategy selection:
+        - PARALLEL: Independent intents (e.g., "show btc eth prices")
+        - SEQUENTIAL: Dependent intents (e.g., "swap and balance")
+        - CONDITIONAL: If-then logic (e.g., "buy if price drops")
+
+        Args:
+            intents: Detected intents
+            dependencies: Intent dependencies
+            message: Original message
+
+        Returns:
+            OrchestrationStrategy enum value
+        """
+        from app.domain.value_objects.chat.multi_intent_result import OrchestrationStrategy
+
+        # Single intent → PARALLEL (no orchestration needed)
+        if len(intents) <= 1:
+            return OrchestrationStrategy.PARALLEL
+
+        # Check for conditional keywords
+        conditional_keywords = [" if ", " si ", " se "]
+        has_conditional = any(kw in message for kw in conditional_keywords)
+
+        if has_conditional:
+            return OrchestrationStrategy.CONDITIONAL
+
+        # Check if any dependencies exist
+        if len(dependencies) > 0:
+            # Check dependency types
+            has_data_flow = any(dep.dependency_type == "data_flow" for dep in dependencies)
+            has_conditional_dep = any(dep.dependency_type == "conditional" for dep in dependencies)
+
+            if has_conditional_dep:
+                return OrchestrationStrategy.CONDITIONAL
+            elif has_data_flow:
+                return OrchestrationStrategy.SEQUENTIAL
+            else:
+                return OrchestrationStrategy.SEQUENTIAL
+
+        # No dependencies → PARALLEL execution
+        return OrchestrationStrategy.PARALLEL
 

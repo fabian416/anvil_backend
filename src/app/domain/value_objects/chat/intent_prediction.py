@@ -2,8 +2,8 @@
 Intent prediction value object for chat intent detection.
 """
 
-from dataclasses import dataclass
-from typing import Optional, List
+from dataclasses import dataclass, field
+from typing import Optional, List, Dict, Any
 from enum import Enum
 
 
@@ -135,4 +135,53 @@ class IntentPrediction:
             ],
             "is_high_confidence": self.is_high_confidence,
             "is_ambiguous": self.is_ambiguous,
+        }
+
+
+@dataclass(frozen=True)
+class IntentResult:
+    """
+    Single intent detection result for multi-intent orchestration.
+
+    This is a simplified domain value object used by the multi-intent
+    detection system to represent a single detected intent with its
+    confidence score, extracted entities, and metadata.
+
+    Unlike IntentPrediction which is used for single-intent detection
+    with reasoning and alternatives, IntentResult is designed for
+    multi-intent orchestration where multiple intents need to be
+    detected, prioritized, and executed.
+
+    Attributes:
+        intent: The detected intent (from any intent enum, typically ChatIntentV2)
+        confidence: Confidence score (0.0 - 1.0)
+        entities: Extracted entities from the message (e.g., ["BTC", "ETH"])
+        metadata: Additional context and metadata for the intent
+
+    Example:
+        >>> intent_result = IntentResult(
+        ...     intent=ChatIntentV2.SWAP,
+        ...     confidence=0.95,
+        ...     entities=["USDC", "ETH"],
+        ...     metadata={"amount": "100"}
+        ... )
+    """
+
+    intent: Any  # Typically ChatIntentV2, but kept flexible for extensibility
+    confidence: float
+    entities: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        """Validate confidence score."""
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "intent": self.intent.value if hasattr(self.intent, "value") else str(self.intent),
+            "confidence": self.confidence,
+            "entities": self.entities,
+            "metadata": self.metadata,
         }
