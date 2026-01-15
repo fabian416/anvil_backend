@@ -60,7 +60,7 @@ class TestInterruptionFlows:
         response1 = await client.post(
             "/api/v1/guest/chat",
             json={
-                "message": "Swap 100 USDC for ETH",
+                "content": "Swap 100 USDC for ETH",
                 "language": "en",
             },
             headers={"X-Forwarded-For": "1.2.3.4"},
@@ -73,7 +73,7 @@ class TestInterruptionFlows:
         response2 = await client.post(
             "/api/v1/guest/chat",
             json={
-                "message": "What is Bitcoin?",
+                "content": "What is Bitcoin?",
                 "language": "en",
             },
             headers={"X-Forwarded-For": "1.2.3.4"},
@@ -87,7 +87,7 @@ class TestInterruptionFlows:
         response3 = await client.post(
             "/api/v1/guest/chat",
             json={
-                "message": "Yes, continue the swap",
+                "content": "Yes, continue the swap",
                 "language": "en",
             },
             headers={"X-Forwarded-For": "1.2.3.4"},
@@ -114,7 +114,7 @@ class TestInterruptionFlows:
         response1 = await client.post(
             "/api/v1/guest/chat",
             json={
-                "message": "I want to deposit USDC to earn yield",
+                "content": "I want to deposit USDC to earn yield",
                 "language": "en",
             },
             headers={"X-Forwarded-For": "1.2.3.5"},
@@ -128,7 +128,7 @@ class TestInterruptionFlows:
         response2 = await client.post(
             "/api/v1/guest/chat",
             json={
-                "message": "What's the current ETH price?",
+                "content": "What's the current ETH price?",
                 "language": "en",
             },
             headers={"X-Forwarded-For": "1.2.3.5"},
@@ -142,7 +142,7 @@ class TestInterruptionFlows:
         response3 = await client.post(
             "/api/v1/guest/chat",
             json={
-                "message": "Continue with deposit",
+                "content": "Continue with deposit",
                 "language": "en",
             },
             headers={"X-Forwarded-For": "1.2.3.5"},
@@ -166,7 +166,7 @@ class TestInterruptionFlows:
         # Start swap flow
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Swap USDC to ETH", "language": "en"},
+            json={"content": "Swap USDC to ETH", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.6"},
         )
         assert response1.status_code == 200
@@ -174,7 +174,7 @@ class TestInterruptionFlows:
         # Interruption 1: General question
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "What is DeFi?", "language": "en"},
+            json={"content": "What is DeFi?", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.6"},
         )
         assert response2.status_code == 200
@@ -183,7 +183,7 @@ class TestInterruptionFlows:
         # Interruption 2: Price check
         response3 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Show me BTC price", "language": "en"},
+            json={"content": "Show me BTC price", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.6"},
         )
         assert response3.status_code == 200
@@ -191,7 +191,7 @@ class TestInterruptionFlows:
         # Try to continue original flow
         response4 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Continue my swap", "language": "en"},
+            json={"content": "Continue my swap", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.6"},
         )
         assert response4.status_code == 200
@@ -212,7 +212,7 @@ class TestInterruptionFlows:
         # Start swap flow
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Swap 50 USDC for ETH", "language": "en"},
+            json={"content": "Swap 50 USDC for ETH", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.7"},
         )
         assert response1.status_code == 200
@@ -220,7 +220,7 @@ class TestInterruptionFlows:
         # Interrupt with ULTRA Hunter (different intent entirely)
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Show me risk signals for ETH", "language": "en"},
+            json={"content": "Show me risk signals for ETH", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.7"},
         )
         assert response2.status_code == 200
@@ -231,7 +231,7 @@ class TestInterruptionFlows:
         # Original swap flow should be cancelled or pausable
         response3 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "What was I doing?", "language": "en"},
+            json={"content": "What was I doing?", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.7"},
         )
         assert response3.status_code == 200
@@ -252,7 +252,7 @@ class TestInterruptionFlows:
         # Start lending flow
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Deposit USDC to earn yield", "language": "en"},
+            json={"content": "Deposit USDC to earn yield", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.8"},
         )
         assert response1.status_code == 200
@@ -260,7 +260,7 @@ class TestInterruptionFlows:
         # Interrupt
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "What's the weather?", "language": "en"},
+            json={"content": "What's the weather?", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.8"},
         )
         assert response2.status_code == 200
@@ -268,7 +268,7 @@ class TestInterruptionFlows:
         # Cancel explicitly
         response3 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Cancel", "language": "en"},
+            json={"content": "Cancel", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.8"},
         )
         assert response3.status_code == 200
@@ -277,7 +277,7 @@ class TestInterruptionFlows:
         # Start fresh
         response4 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Show my portfolio", "language": "en"},
+            json={"content": "Show my portfolio", "language": "en"},
             headers={"X-Forwarded-For": "1.2.3.8"},
         )
         assert response4.status_code == 200
@@ -442,7 +442,7 @@ class TestInterruptionStateManagement:
         # User 1: Start swap
         response1_user1 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Swap USDC to ETH", "language": "en"},
+            json={"content": "Swap USDC to ETH", "language": "en"},
             headers={"X-Forwarded-For": "10.0.0.1"},
         )
         assert response1_user1.status_code == 200
@@ -450,7 +450,7 @@ class TestInterruptionStateManagement:
         # User 2: Start lending (different IP, different flow)
         response1_user2 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Deposit DAI", "language": "en"},
+            json={"content": "Deposit DAI", "language": "en"},
             headers={"X-Forwarded-For": "10.0.0.2"},
         )
         assert response1_user2.status_code == 200
@@ -458,7 +458,7 @@ class TestInterruptionStateManagement:
         # User 1: Continue swap
         response2_user1 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Confirm swap", "language": "en"},
+            json={"content": "Confirm swap", "language": "en"},
             headers={"X-Forwarded-For": "10.0.0.1"},
         )
         assert response2_user1.status_code == 200
@@ -467,7 +467,7 @@ class TestInterruptionStateManagement:
         # User 2: Continue lending
         response2_user2 = await client.post(
             "/api/v1/guest/chat",
-            json={"message": "Select Aave", "language": "en"},
+            json={"content": "Select Aave", "language": "en"},
             headers={"X-Forwarded-For": "10.0.0.2"},
         )
         assert response2_user2.status_code == 200
