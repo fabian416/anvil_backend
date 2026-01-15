@@ -26,6 +26,7 @@ class TestRedditSentimentAnalyzer:
     """Test Reddit sentiment analyzer."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_analyze_token_sentiment(self):
         """Test analyzing token sentiment from Reddit."""
         config = RedditConfig(enabled=True)
@@ -39,7 +40,26 @@ class TestRedditSentimentAnalyzer:
         assert reading.token_symbol == "ETH"
         assert "post_count" in reading.metadata
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_analyze_token_sentiment",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_reddit_config_defaults(self):
         """Test Reddit config default values."""
         config = RedditConfig()
@@ -50,7 +70,26 @@ class TestRedditSentimentAnalyzer:
         assert len(config.target_subreddits) > 0
         assert "cryptocurrency" in config.target_subreddits
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_reddit_config_defaults",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_trending_discussions(self):
         """Test getting trending Reddit discussions."""
         analyzer = RedditSentimentAnalyzer()
@@ -61,6 +100,24 @@ class TestRedditSentimentAnalyzer:
         assert all("token" in t for t in trending)
         assert all("posts" in t for t in trending)
         assert all("sentiment" in t for t in trending)
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_trending_discussions",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
     def test_reddit_keyword_analysis(self):
         """Test Reddit keyword sentiment analysis."""
@@ -148,6 +205,7 @@ class TestDiscordSentimentAnalyzer:
     """Test Discord sentiment analyzer."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_analyze_token_sentiment(self):
         """Test analyzing token sentiment from Discord."""
         config = DiscordConfig(enabled=True)
@@ -161,7 +219,26 @@ class TestDiscordSentimentAnalyzer:
         assert reading.token_symbol == "ETH"
         assert "message_count" in reading.metadata
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_analyze_token_sentiment",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_discord_config_defaults(self):
         """Test Discord config default values."""
         config = DiscordConfig()
@@ -172,7 +249,26 @@ class TestDiscordSentimentAnalyzer:
         assert len(config.target_servers) > 0
         assert "ethereum" in config.target_servers
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_discord_config_defaults",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_server_activity(self):
         """Test getting Discord server activity."""
         analyzer = DiscordSentimentAnalyzer()
@@ -183,6 +279,24 @@ class TestDiscordSentimentAnalyzer:
         assert "messages_24h" in activity
         assert "avg_sentiment" in activity
         assert "top_tokens" in activity
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_server_activity",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
     def test_discord_keyword_analysis(self):
         """Test Discord keyword sentiment analysis."""
@@ -281,6 +395,7 @@ class TestMultiSourceSentiment:
     """Test multi-source sentiment aggregation (Twitter + Reddit + Discord)."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_three_source_aggregation(self):
         """Test aggregating sentiment from Twitter, Reddit, and Discord."""
         # Analyze same token across all three sources
@@ -303,7 +418,26 @@ class TestMultiSourceSentiment:
         assert 0 <= aggregated.overall_score <= 100
         assert 0 <= aggregated.overall_confidence <= 1
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_three_source_aggregation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_weighted_multi_source_aggregation(self):
         """Test that weights are properly applied across sources."""
         twitter_analyzer = TwitterSentimentAnalyzer()
@@ -330,7 +464,26 @@ class TestMultiSourceSentiment:
         if "discord" in breakdown:
             assert breakdown["discord"]["weight"] == 0.20
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_weighted_multi_source_aggregation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_consensus_across_sources(self):
         """Test consensus calculation with multiple sources."""
         twitter_analyzer = TwitterSentimentAnalyzer()
@@ -348,7 +501,26 @@ class TestMultiSourceSentiment:
 
         assert 0 <= consensus <= 1, "Consensus should be 0-1"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_consensus_across_sources",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_divergence_detection_multi_source(self):
         """Test divergence detection across multiple sources."""
         # Create readings with mixed sentiment
@@ -392,11 +564,30 @@ class TestMultiSourceSentiment:
         assert len(divergence["bullish_sources"]) >= 1
         assert len(divergence["bearish_sources"]) >= 1
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_divergence_detection_multi_source",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestDay2Integration:
     """Integration tests for complete Day 2 functionality."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_end_to_end_multi_source_analysis(self):
         """Test complete multi-source sentiment analysis flow."""
         token = "ETH"
@@ -424,7 +615,26 @@ class TestDay2Integration:
         assert aggregated.classification is not None
         assert aggregated.signal_strength in ["strong", "moderate", "weak"]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_end_to_end_multi_source_analysis",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_selective_source_analysis(self):
         """Test analyzing only specific sources."""
         # Analyze only Reddit and Discord (skip Twitter)
@@ -439,4 +649,22 @@ class TestDay2Integration:
 
         assert aggregated.source_count == 2
         assert SentimentSource.REDDIT in [r.source for r in aggregated.readings]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_selective_source_analysis",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert SentimentSource.DISCORD in [r.source for r in aggregated.readings]

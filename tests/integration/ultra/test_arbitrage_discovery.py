@@ -86,6 +86,7 @@ class Test2HopArbitrage:
     """Test 2-hop arbitrage discovery."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_discover_2hop_opportunities(self):
         """Test discovering 2-hop arbitrage opportunities."""
         discovery = ArbitrageDiscovery()
@@ -102,7 +103,26 @@ class Test2HopArbitrage:
             assert len(opp.path) == 2
             assert opp.expected_profit_usd > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_discover_2hop_opportunities",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_2hop_path_structure(self):
         """Test 2-hop path has correct structure."""
         discovery = ArbitrageDiscovery()
@@ -120,7 +140,26 @@ class Test2HopArbitrage:
             assert path[1].token_in == path[0].token_out
             assert path[1].token_out == path[0].token_in
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_2hop_path_structure",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_2hop_different_dexes(self):
         """Test 2-hop uses different DEXes."""
         discovery = ArbitrageDiscovery()
@@ -134,11 +173,30 @@ class Test2HopArbitrage:
             # Should use different DEXes
             assert path[0].dex != path[1].dex
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_2hop_different_dexes",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class Test3HopArbitrage:
     """Test 3-hop arbitrage discovery."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_discover_3hop_opportunities(self):
         """Test discovering 3-hop arbitrage opportunities."""
         discovery = ArbitrageDiscovery()
@@ -155,7 +213,26 @@ class Test3HopArbitrage:
             assert len(opp.path) == 3
             assert opp.expected_profit_usd > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_discover_3hop_opportunities",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_3hop_circular_path(self):
         """Test 3-hop creates circular path."""
         discovery = ArbitrageDiscovery()
@@ -172,7 +249,26 @@ class Test3HopArbitrage:
 
             assert start_token == end_token
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_3hop_circular_path",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_3hop_unique_tokens(self):
         """Test 3-hop uses three different tokens."""
         discovery = ArbitrageDiscovery()
@@ -189,11 +285,30 @@ class Test3HopArbitrage:
             # Should have 3 unique tokens
             assert len(set(tokens)) == 3
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_3hop_unique_tokens",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestTriangleArbitrage:
     """Test triangle arbitrage discovery."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_discover_triangle_opportunities(self):
         """Test discovering triangle arbitrage opportunities."""
         discovery = ArbitrageDiscovery()
@@ -211,7 +326,26 @@ class TestTriangleArbitrage:
             assert opp.type == ArbitrageType.TRIANGLE
             assert len(opp.path) == 3
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_discover_triangle_opportunities",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_triangle_same_dex(self):
         """Test triangle uses same DEX for all trades."""
         discovery = ArbitrageDiscovery()
@@ -229,7 +363,26 @@ class TestTriangleArbitrage:
             assert len(set(dexes)) == 1
             assert dexes[0] == DEX.UNISWAP_V2
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_triangle_same_dex",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_triangle_circular_path(self):
         """Test triangle creates circular path."""
         discovery = ArbitrageDiscovery()
@@ -245,11 +398,30 @@ class TestTriangleArbitrage:
             # Start and end with same token
             assert path[0].token_in == path[-1].token_out
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_triangle_circular_path",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestAllOpportunitiesDiscovery:
     """Test discovering all opportunity types."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_discover_all_opportunities(self):
         """Test discovering all opportunity types."""
         discovery = ArbitrageDiscovery()
@@ -259,7 +431,26 @@ class TestAllOpportunitiesDiscovery:
         # Should return combined results
         assert isinstance(opportunities, list)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_discover_all_opportunities",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_all_opportunities_sorted(self):
         """Test opportunities are sorted by profit."""
         discovery = ArbitrageDiscovery()
@@ -274,7 +465,26 @@ class TestAllOpportunitiesDiscovery:
                     >= opportunities[i + 1].expected_profit_usd
                 )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_all_opportunities_sorted",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_all_opportunities_mix_types(self):
         """Test all opportunities includes multiple types."""
         discovery = ArbitrageDiscovery()
@@ -286,11 +496,30 @@ class TestAllOpportunitiesDiscovery:
             # Should have at least one type
             assert len(types) >= 1
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_all_opportunities_mix_types",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestOpportunityRetrieval:
     """Test opportunity retrieval."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_opportunity_by_id(self):
         """Test retrieving opportunity by ID."""
         discovery = ArbitrageDiscovery()
@@ -306,7 +535,26 @@ class TestOpportunityRetrieval:
             assert found is not None
             assert found.opportunity_id == target.opportunity_id
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_opportunity_by_id",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_nonexistent_opportunity(self):
         """Test retrieving non-existent opportunity."""
         discovery = ArbitrageDiscovery()
@@ -317,11 +565,30 @@ class TestOpportunityRetrieval:
 
         assert found is None
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_nonexistent_opportunity",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestOpportunitySimulation:
     """Test opportunity simulation."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_simulate_opportunity(self):
         """Test simulating opportunity execution."""
         discovery = ArbitrageDiscovery()
@@ -337,7 +604,26 @@ class TestOpportunitySimulation:
             assert "simulated_profit" in result
             assert "recommendation" in result
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_simulate_opportunity",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_simulation_includes_slippage(self):
         """Test simulation accounts for slippage."""
         discovery = ArbitrageDiscovery()
@@ -354,11 +640,30 @@ class TestOpportunitySimulation:
 
             assert simulated <= expected
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_simulation_includes_slippage",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestProfitCalculation:
     """Test profit calculation."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_opportunities_above_threshold(self):
         """Test opportunities meet profit threshold."""
         config = ArbitrageConfig(min_profit_usd=Decimal("100"))
@@ -369,7 +674,26 @@ class TestProfitCalculation:
         for opp in opportunities:
             assert opp.expected_profit_usd >= config.min_profit_usd
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_opportunities_above_threshold",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_profit_percentage_calculation(self):
         """Test profit percentage is calculated correctly."""
         discovery = ArbitrageDiscovery()
@@ -385,11 +709,30 @@ class TestProfitCalculation:
             # Allow small floating point difference
             assert abs(opp.profit_percentage - expected_pct) < Decimal("0.0001")
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_profit_percentage_calculation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestOpportunitySerialization:
     """Test opportunity serialization."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_opportunity_to_dict(self):
         """Test opportunity serialization."""
         discovery = ArbitrageDiscovery()
@@ -404,4 +747,22 @@ class TestOpportunitySerialization:
             assert "type" in data
             assert "path" in data
             assert "expected_profit_usd" in data
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_opportunity_to_dict",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
             assert isinstance(data["path"], list)

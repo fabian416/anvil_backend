@@ -19,6 +19,7 @@ from app.domain.enums.agent_type import AgentType
 class TestContextPreservation:
     """Test conversation context preservation."""
     
+    @pytest.mark.llm_validation
     async def test_add_and_retrieve_messages(self, mock_storage):
         """Test adding and retrieving conversation messages."""
         manager = ContextManager(storage=mock_storage)
@@ -50,7 +51,26 @@ class TestContextPreservation:
         
         assert len(context.conversation_history) > 0
         assert context.conversation_history[0]["content"] == "Hello, how are you?"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_add_and_retrieve_messages",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_enforce_history_limit(self, mock_storage):
         """Test enforcing conversation history limit."""
         manager = ContextManager(storage=mock_storage, history_limit=5)
@@ -73,7 +93,26 @@ class TestContextPreservation:
         mock_storage.remove_oldest_messages.assert_called_once_with(
             conversation_id, 6
         )
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_enforce_history_limit",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_multi_turn_context(self, mock_storage):
         """Test multi-turn conversation context."""
         manager = ContextManager(storage=mock_storage)
@@ -115,7 +154,26 @@ class TestContextPreservation:
         assert len(context.conversation_history) == 3
         assert context.last_agent_type == AgentType.RESEARCH
         assert context.has_history is True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_turn_context",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_context_with_agent_metadata(self, mock_storage):
         """Test context includes agent metadata."""
         manager = ContextManager(storage=mock_storage)
@@ -143,6 +201,24 @@ class TestContextPreservation:
         
         assert message.agent_type == AgentType.HUNTER_AI
         assert message.metadata["tokens_used"] == 500
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_context_with_agent_metadata",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 @pytest.fixture

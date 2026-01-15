@@ -50,6 +50,7 @@ class TestSignalGeneration:
     """Test basic signal generation."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_generate_signal_eth(self):
         """Test generating signal for ETH."""
         generator = TradingSignalGenerator()
@@ -68,7 +69,26 @@ class TestSignalGeneration:
         assert 0 <= signal.signal_strength <= 100
         assert 0 <= signal.confidence <= 1
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_generate_signal_eth",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_generate_signal_btc(self):
         """Test generating signal for BTC."""
         generator = TradingSignalGenerator()
@@ -79,7 +99,26 @@ class TestSignalGeneration:
         assert signal.timeframe == Timeframe.DAY_1
         assert signal.generated_at is not None
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_generate_signal_btc",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_signal_has_all_factors(self):
         """Test that signal includes all factor scores."""
         generator = TradingSignalGenerator()
@@ -91,11 +130,30 @@ class TestSignalGeneration:
         assert 0 <= signal.prediction_score <= 100
         assert 0 <= signal.risk_score <= 100
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_signal_has_all_factors",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestEntryExitPrices:
     """Test entry/exit price calculations."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_buy_signal_has_prices(self):
         """Test that BUY signals include entry/exit prices."""
         generator = TradingSignalGenerator()
@@ -116,7 +174,26 @@ class TestEntryExitPrices:
                 assert signal.take_profit_price > signal.entry_price
                 break
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_buy_signal_has_prices",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate BTC price information in a clear format. Response must reference BTC specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'BTC'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_hold_signal_no_prices(self):
         """Test that HOLD signals don't have entry/exit prices."""
         generator = TradingSignalGenerator()
@@ -132,11 +209,30 @@ class TestEntryExitPrices:
                 assert signal.take_profit_price is None
                 break
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hold_signal_no_prices",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate BTC price information in a clear format. Response must reference BTC specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'BTC'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestMultiTimeframeAnalysis:
     """Test multi-timeframe analysis."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_multi_timeframe_analysis(self):
         """Test generating multi-timeframe analysis."""
         generator = TradingSignalGenerator()
@@ -147,7 +243,26 @@ class TestMultiTimeframeAnalysis:
         assert analysis.token_symbol == "ETH"
         assert len(analysis.signals) == 3  # 4h, 1d, 1w
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_timeframe_analysis",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_multi_timeframe_has_all_timeframes(self):
         """Test that analysis includes all expected timeframes."""
         generator = TradingSignalGenerator()
@@ -160,7 +275,26 @@ class TestMultiTimeframeAnalysis:
             assert tf in analysis.signals
             assert isinstance(analysis.signals[tf], TradingSignal)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_timeframe_has_all_timeframes",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_consensus_signal_valid(self):
         """Test that consensus signal is valid."""
         generator = TradingSignalGenerator()
@@ -175,7 +309,26 @@ class TestMultiTimeframeAnalysis:
             SignalType.STRONG_SELL,
         ]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_consensus_signal_valid",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_alignment_score_valid(self):
         """Test that alignment score is between 0 and 1."""
         generator = TradingSignalGenerator()
@@ -184,7 +337,26 @@ class TestMultiTimeframeAnalysis:
 
         assert 0 <= analysis.alignment_score <= 1
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_alignment_score_valid",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_trend_direction_valid(self):
         """Test that trend direction is valid."""
         generator = TradingSignalGenerator()
@@ -193,11 +365,30 @@ class TestMultiTimeframeAnalysis:
 
         assert analysis.trend_direction in ["bullish", "bearish", "neutral"]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_trend_direction_valid",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestSignalRecommendations:
     """Test signal recommendations."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_signal_has_recommendation(self):
         """Test that signals include human-readable recommendation."""
         generator = TradingSignalGenerator()
@@ -207,7 +398,26 @@ class TestSignalRecommendations:
         assert isinstance(signal.recommendation, str)
         assert len(signal.recommendation) > 20  # Should be meaningful
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_signal_has_recommendation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_recommendation_mentions_signal_type(self):
         """Test that recommendation mentions the signal type."""
         generator = TradingSignalGenerator()
@@ -220,11 +430,30 @@ class TestSignalRecommendations:
 
         assert signal_type_lower in recommendation_lower
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_recommendation_mentions_signal_type",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestSignalSerialization:
     """Test signal serialization."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_signal_to_dict(self):
         """Test signal serialization to dictionary."""
         generator = TradingSignalGenerator()
@@ -243,7 +472,26 @@ class TestSignalSerialization:
         assert "timeframe" in data
         assert "recommendation" in data
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_signal_to_dict",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_multi_timeframe_to_dict(self):
         """Test multi-timeframe analysis serialization."""
         generator = TradingSignalGenerator()
@@ -263,11 +511,30 @@ class TestSignalSerialization:
             assert "signal_type" in signal_data
             assert "signal_strength" in signal_data
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_timeframe_to_dict",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestSignalIntegration:
     """Integration tests for complete signal flow."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_multiple_token_signals(self):
         """Test generating signals for multiple tokens."""
         generator = TradingSignalGenerator()
@@ -284,7 +551,26 @@ class TestSignalIntegration:
         for token, signal in signals.items():
             assert signal.token_symbol == token
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multiple_token_signals",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_different_timeframes(self):
         """Test signal generation across different timeframes."""
         generator = TradingSignalGenerator()
@@ -301,7 +587,26 @@ class TestSignalIntegration:
         for tf, signal in signals.items():
             assert signal.timeframe == tf
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_different_timeframes",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_signal_consistency(self):
         """Test that multiple runs produce consistent results."""
         generator = TradingSignalGenerator()
@@ -312,4 +617,22 @@ class TestSignalIntegration:
 
         # Should be identical (deterministic with same data)
         assert signal1.signal_type == signal2.signal_type
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_signal_consistency",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert signal1.signal_strength == signal2.signal_strength

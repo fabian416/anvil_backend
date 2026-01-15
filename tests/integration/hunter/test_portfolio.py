@@ -34,6 +34,7 @@ class TestPortfolioOptimization:
     """Test portfolio optimization."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_optimize_portfolio_balanced(self):
         """Test balanced portfolio optimization (max Sharpe)."""
         optimizer = PortfolioOptimizer()
@@ -49,7 +50,26 @@ class TestPortfolioOptimization:
         total_weight = sum(portfolio.weights.values())
         assert 0.99 <= total_weight <= 1.01
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_optimize_portfolio_balanced",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_optimize_portfolio_conservative(self):
         """Test conservative portfolio (min variance)."""
         optimizer = PortfolioOptimizer()
@@ -59,7 +79,26 @@ class TestPortfolioOptimization:
         assert len(portfolio.weights) == 3
         assert sum(portfolio.weights.values()) <= 1.01
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_optimize_portfolio_conservative",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_optimize_portfolio_aggressive(self):
         """Test aggressive portfolio (max return)."""
         optimizer = PortfolioOptimizer()
@@ -71,11 +110,30 @@ class TestPortfolioOptimization:
         max_weight = max(portfolio.weights.values())
         assert max_weight <= 0.40  # Respects max_single_asset constraint
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_optimize_portfolio_aggressive",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestPortfolioMetrics:
     """Test portfolio metrics calculation."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_portfolio_has_all_metrics(self):
         """Test that optimized portfolio includes all metrics."""
         optimizer = PortfolioOptimizer()
@@ -92,11 +150,30 @@ class TestPortfolioMetrics:
         assert 0 <= metrics.diversification_score <= 1
         assert metrics.var_95 <= 0  # VaR is negative
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_portfolio_has_all_metrics",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestEfficientFrontier:
     """Test efficient frontier calculation."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_calculate_efficient_frontier(self):
         """Test efficient frontier calculation."""
         optimizer = PortfolioOptimizer()
@@ -113,7 +190,26 @@ class TestEfficientFrontier:
         assert len(frontier.returns) == len(frontier.risks)
         assert len(frontier.returns) == len(frontier.sharpe_ratios)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_calculate_efficient_frontier",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_frontier_has_max_sharpe(self):
         """Test that frontier identifies max Sharpe portfolio."""
         optimizer = PortfolioOptimizer()
@@ -127,7 +223,26 @@ class TestEfficientFrontier:
         max_sharpe = max(frontier.sharpe_ratios)
         assert frontier.sharpe_ratios[frontier.max_sharpe_idx] == max_sharpe
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_frontier_has_max_sharpe",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_frontier_has_min_volatility(self):
         """Test that frontier identifies min volatility portfolio."""
         optimizer = PortfolioOptimizer()
@@ -141,11 +256,30 @@ class TestEfficientFrontier:
         min_vol = min(frontier.risks)
         assert frontier.risks[frontier.min_vol_idx] == min_vol
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_frontier_has_min_volatility",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestPortfolioAnalysis:
     """Test portfolio analysis."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_analyze_portfolio(self):
         """Test analyzing existing portfolio."""
         optimizer = PortfolioOptimizer()
@@ -158,11 +292,30 @@ class TestPortfolioAnalysis:
         assert metrics.expected_return >= 0
         assert metrics.volatility >= 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_analyze_portfolio",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestRebalancing:
     """Test portfolio rebalancing."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_suggest_rebalancing(self):
         """Test rebalancing suggestions."""
         optimizer = PortfolioOptimizer()
@@ -180,7 +333,26 @@ class TestRebalancing:
             expected_change = plan.target_weights[token] - plan.current_weights[token]
             assert abs(plan.changes[token] - expected_change) < 0.01
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_suggest_rebalancing",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_rebalancing_trades(self):
         """Test that rebalancing generates trade recommendations."""
         optimizer = PortfolioOptimizer()
@@ -196,11 +368,30 @@ class TestRebalancing:
             assert "action" in trade
             assert trade["action"] in ["BUY", "SELL"]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rebalancing_trades",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestPortfolioSerialization:
     """Test portfolio serialization."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_portfolio_to_dict(self):
         """Test portfolio serialization."""
         optimizer = PortfolioOptimizer()
@@ -217,7 +408,26 @@ class TestPortfolioSerialization:
         for weight in data["weights"].values():
             assert 0 <= weight <= 100
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_portfolio_to_dict",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_frontier_to_dict(self):
         """Test efficient frontier serialization."""
         optimizer = PortfolioOptimizer()
@@ -230,4 +440,22 @@ class TestPortfolioSerialization:
         assert "risks" in data
         assert "sharpe_ratios" in data
         assert "max_sharpe_portfolio" in data
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_frontier_to_dict",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert "min_volatility_portfolio" in data

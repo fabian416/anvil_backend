@@ -35,6 +35,7 @@ class TestChartPatterns:
     """Test chart pattern detection."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_detect_chart_patterns(self):
         """Test chart pattern detection."""
         recognizer = PatternRecognizer()
@@ -46,7 +47,26 @@ class TestChartPatterns:
             assert isinstance(pattern, DetectedPattern)
             assert pattern.confidence >= 0.6
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_detect_chart_patterns",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_pattern_has_required_fields(self):
         """Test that detected patterns have all required fields."""
         recognizer = PatternRecognizer()
@@ -63,7 +83,26 @@ class TestChartPatterns:
             assert hasattr(pattern, "key_levels")
             assert hasattr(pattern, "description")
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_pattern_has_required_fields",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_pattern_signal_direction(self):
         """Test that patterns have valid signal directions."""
         recognizer = PatternRecognizer()
@@ -75,11 +114,30 @@ class TestChartPatterns:
         for pattern in patterns:
             assert pattern.signal in valid_signals
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_pattern_signal_direction",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestCandlestickPatterns:
     """Test candlestick pattern detection."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_detect_candlestick_patterns(self):
         """Test candlestick pattern detection."""
         recognizer = PatternRecognizer()
@@ -91,7 +149,26 @@ class TestCandlestickPatterns:
             assert isinstance(signal, CandlestickSignal)
             assert signal.confidence >= 0.6
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_detect_candlestick_patterns",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_doji_patterns(self):
         """Test doji pattern detection."""
         recognizer = PatternRecognizer()
@@ -113,7 +190,26 @@ class TestCandlestickPatterns:
         for signal in doji_signals:
             assert signal.confidence > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_doji_patterns",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_engulfing_patterns(self):
         """Test engulfing pattern detection."""
         recognizer = PatternRecognizer()
@@ -133,11 +229,30 @@ class TestCandlestickPatterns:
             assert signal.signal in [SignalDirection.BULLISH, SignalDirection.BEARISH]
             assert signal.confidence >= 0.6
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_engulfing_patterns",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestSupportResistance:
     """Test support and resistance level detection."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_find_support_resistance(self):
         """Test support/resistance detection."""
         recognizer = PatternRecognizer()
@@ -149,7 +264,26 @@ class TestSupportResistance:
         assert isinstance(levels["support"], list)
         assert isinstance(levels["resistance"], list)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_find_support_resistance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_support_level_structure(self):
         """Test support level structure."""
         recognizer = PatternRecognizer()
@@ -162,7 +296,26 @@ class TestSupportResistance:
             assert 0 <= support.strength <= 1
             assert support.touches >= 2  # At least 2 touches to be a level
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_support_level_structure",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_resistance_level_structure(self):
         """Test resistance level structure."""
         recognizer = PatternRecognizer()
@@ -175,11 +328,30 @@ class TestSupportResistance:
             assert 0 <= resistance.strength <= 1
             assert resistance.touches >= 2
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_resistance_level_structure",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestPatternSerialization:
     """Test pattern serialization."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_chart_pattern_to_dict(self):
         """Test chart pattern serialization."""
         recognizer = PatternRecognizer()
@@ -198,7 +370,26 @@ class TestPatternSerialization:
             assert "key_levels" in data
             assert "description" in data
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_chart_pattern_to_dict",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_candlestick_signal_to_dict(self):
         """Test candlestick signal serialization."""
         recognizer = PatternRecognizer()
@@ -216,7 +407,26 @@ class TestPatternSerialization:
             assert "price" in data
             assert "description" in data
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_candlestick_signal_to_dict",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_support_resistance_to_dict(self):
         """Test support/resistance serialization."""
         recognizer = PatternRecognizer()
@@ -234,11 +444,30 @@ class TestPatternSerialization:
             assert "first_touch" in data
             assert "last_touch" in data
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_support_resistance_to_dict",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestPatternConfidence:
     """Test pattern confidence scoring."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_confidence_filtering(self):
         """Test that patterns are filtered by confidence."""
         config = PatternConfig(min_pattern_confidence=0.8)
@@ -250,7 +479,26 @@ class TestPatternConfidence:
         for pattern in patterns:
             assert pattern.confidence >= 0.8
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_confidence_filtering",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_confidence_range(self):
         """Test that confidence is in valid range."""
         recognizer = PatternRecognizer()
@@ -264,11 +512,30 @@ class TestPatternConfidence:
         for signal in signals:
             assert 0 <= signal.confidence <= 1
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_confidence_range",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestPatternTypes:
     """Test different pattern type detections."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_reversal_patterns(self):
         """Test reversal pattern detection."""
         recognizer = PatternRecognizer()
@@ -288,7 +555,26 @@ class TestPatternTypes:
         for pattern in reversal_patterns:
             assert pattern.signal in [SignalDirection.BULLISH, SignalDirection.BEARISH]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_reversal_patterns",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_continuation_patterns(self):
         """Test continuation pattern detection."""
         recognizer = PatternRecognizer()
@@ -308,11 +594,30 @@ class TestPatternTypes:
         for pattern in continuation_patterns:
             assert pattern.confidence > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_continuation_patterns",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestEdgeCases:
     """Test edge cases and error handling."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_empty_patterns_handling(self):
         """Test handling when no patterns detected."""
         recognizer = PatternRecognizer()
@@ -326,7 +631,26 @@ class TestEdgeCases:
         # Should return empty list, not error
         assert isinstance(patterns, list)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_empty_patterns_handling",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_multiple_token_analysis(self):
         """Test analyzing multiple tokens."""
         recognizer = PatternRecognizer()
@@ -341,4 +665,22 @@ class TestEdgeCases:
             # Should complete without error
             assert isinstance(patterns, list)
             assert isinstance(signals, list)
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multiple_token_analysis",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
             assert isinstance(levels, dict)

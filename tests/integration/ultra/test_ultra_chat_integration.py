@@ -82,6 +82,7 @@ class TestULTRAToolExecutor:
         assert executor.client is not None
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_format_flash_loans_response(self, executor):
         """Test flash loans response formatting."""
         data = {
@@ -100,8 +101,27 @@ class TestULTRAToolExecutor:
         assert "Balancer" in result
         assert "0.09%" in result or "0.0%" in result
         assert "Recommended" in result
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_format_flash_loans_response",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_format_arbitrage_response(self, executor):
         """Test arbitrage discovery response formatting."""
         data = {
@@ -128,8 +148,27 @@ class TestULTRAToolExecutor:
         assert "$150.00" in result
         assert "$30.00" in result
         assert "Net Profit" in result
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_format_arbitrage_response",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_format_mev_response(self, executor):
         """Test MEV protection response formatting."""
         data = {}
@@ -140,8 +179,27 @@ class TestULTRAToolExecutor:
         assert "HIGH" in result
         assert "Flashbots" in result
         assert "Sandwich attack prevention" in result
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_format_mev_response",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_format_auto_executor_response(self, executor):
         """Test auto-executor response formatting."""
         data = {
@@ -164,6 +222,24 @@ class TestULTRAToolExecutor:
         assert "50" in result  # Total trades
         assert "45" in result  # Successful
         assert "$5,000" in result  # Total profit
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_format_auto_executor_response",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 class TestProjectULTRAIntegration:
@@ -200,7 +276,26 @@ class TestProjectULTRAIntegration:
         )
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_execute_ultra_tool_in_arbitrage_project(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_execute_ultra_tool_in_arbitrage_project",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, arbitrage_project, mock_hunter_executor, mock_ultra_executor
     ):
         """Test executing ULTRA tool in Arbitrage Hunter project."""
@@ -220,7 +315,26 @@ class TestProjectULTRAIntegration:
         mock_ultra_executor.execute_tool.assert_called_once()
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_ultra_tool_blocked_in_conservative_project(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_tool_blocked_in_conservative_project",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, conservative_project, mock_hunter_executor, mock_ultra_executor
     ):
         """Test ULTRA tool blocked in Conservative Investor project."""
@@ -241,6 +355,7 @@ class TestProjectULTRAIntegration:
         assert "Conservative Investor" in str(exc_info.value)
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_arbitrage_project_has_ultra_tools_enabled(self):
         """Test that Arbitrage Hunter project has ULTRA tools enabled."""
         project = create_project_from_template(
@@ -256,8 +371,27 @@ class TestProjectULTRAIntegration:
         ultra_tools = project.ultra_tools_enabled
         assert len(ultra_tools) == 3
         assert "ultra_flash_loans" in ultra_tools
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_arbitrage_project_has_ultra_tools_enabled",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_conservative_project_has_no_ultra_tools(self):
         """Test that Conservative Investor project has no ULTRA tools."""
         project = create_project_from_template(
@@ -271,6 +405,24 @@ class TestProjectULTRAIntegration:
         # Check ultra_tools_enabled property
         ultra_tools = project.ultra_tools_enabled
         assert len(ultra_tools) == 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conservative_project_has_no_ultra_tools",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 class TestULTRAKeywordDetection:

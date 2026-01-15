@@ -18,6 +18,7 @@ from app.infrastructure.adapters.agent_squad.agents.hunter_ai_agent_openai impor
 class TestAgentExecution:
     """Test individual agent execution."""
 
+    @pytest.mark.llm_validation
     async def test_chat_agent_execution(self, mock_llm_client):
         """Test chat agent execution."""
         agent = ChatAgentOpenAI(llm_client=mock_llm_client)
@@ -45,7 +46,26 @@ class TestAgentExecution:
         assert response.tokens_used == 150
         assert response.latency_ms > 0
         assert len(response.tools_used) == 0  # Chat doesn't use external tools
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_chat_agent_execution",
+                user_input="I can help you with DeFi, trading, and more!",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_hunter_ai_agent_execution(self, mock_llm_client):
         """Test Hunter AI agent execution."""
         agent = HunterAIAgentOpenAI(llm_client=mock_llm_client)
@@ -73,7 +93,26 @@ class TestAgentExecution:
         assert "sentiment" in response.content.lower() or "bullish" in response.content.lower()
         assert response.tokens_used > 0
         assert "openai_api" in response.tools_used
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_ai_agent_execution",
+                user_input="Bitcoin sentiment is 75/100 (Bullish). Key drivers: ETF inflows, institutional adoption.",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_agent_availability(self, mock_llm_client):
         """Test agent availability check."""
         agent = ChatAgentOpenAI(llm_client=mock_llm_client)
@@ -81,7 +120,26 @@ class TestAgentExecution:
         is_available = await agent.is_available()
         
         assert is_available is True  # Chat agent always available
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_availability",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_agent_error_handling(self, mock_llm_client):
         """Test agent error handling."""
         agent = ChatAgentOpenAI(llm_client=mock_llm_client)
@@ -97,6 +155,24 @@ class TestAgentExecution:
             await agent.execute(conversation_id, message, context)
         
         assert "API error" in str(exc_info.value)
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_error_handling",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 @pytest.fixture

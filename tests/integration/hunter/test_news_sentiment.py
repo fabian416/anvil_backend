@@ -24,6 +24,7 @@ class TestNewsSentimentAnalyzer:
     """Test News sentiment analyzer."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_analyze_token_sentiment(self):
         """Test analyzing token sentiment from news."""
         config = NewsConfig(enabled=True)
@@ -37,7 +38,26 @@ class TestNewsSentimentAnalyzer:
         assert reading.token_symbol == "ETH"
         assert "article_count" in reading.metadata
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_analyze_token_sentiment",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_news_config_defaults(self):
         """Test news config default values."""
         config = NewsConfig()
@@ -47,7 +67,26 @@ class TestNewsSentimentAnalyzer:
         assert len(config.rss_feeds) > 0
         assert any("coindesk" in feed for feed in config.rss_feeds)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_news_config_defaults",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_top_headlines(self):
         """Test getting top crypto news headlines."""
         analyzer = NewsSentimentAnalyzer()
@@ -58,6 +97,24 @@ class TestNewsSentimentAnalyzer:
         assert all("title" in h for h in headlines)
         assert all("source" in h for h in headlines)
         assert all("sentiment" in h for h in headlines)
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_top_headlines",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
     def test_news_keyword_analysis(self):
         """Test news keyword sentiment analysis."""
@@ -140,6 +197,7 @@ class TestFourSourceAggregation:
     """Test complete 4-source sentiment aggregation (Twitter + Reddit + Discord + News)."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_all_sources_aggregation(self):
         """Test aggregating sentiment from all four sources."""
         # Analyze same token across all sources
@@ -165,7 +223,26 @@ class TestFourSourceAggregation:
         assert 0 <= aggregated.overall_confidence <= 1
         assert aggregated.classification is not None
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_all_sources_aggregation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_full_weight_distribution(self):
         """Test that all source weights sum to 1.0."""
         twitter_analyzer = TwitterSentimentAnalyzer()
@@ -190,7 +267,26 @@ class TestFourSourceAggregation:
         total_weight = sum(s["weight"] for s in breakdown.values())
         assert abs(total_weight - 1.0) < 0.01, f"Weights should sum to 1.0, got {total_weight}"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_full_weight_distribution",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_news_authority_boosts_confidence(self):
         """Test that high-authority news sources boost overall confidence."""
         news_analyzer = NewsSentimentAnalyzer()
@@ -201,7 +297,26 @@ class TestFourSourceAggregation:
         assert reading.confidence >= 0.3, "News should have reasonable confidence"
         assert reading.confidence <= 1.0, "Confidence should be <= 1.0"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_news_authority_boosts_confidence",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_complete_sentiment_pipeline(self):
         """Test complete sentiment analysis pipeline with all sources."""
         token = "SOL"
@@ -245,4 +360,22 @@ class TestFourSourceAggregation:
         divergence = aggregator.identify_divergence(aggregated)
 
         assert 0 <= consensus <= 1
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_complete_sentiment_pipeline",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert "has_divergence" in divergence
