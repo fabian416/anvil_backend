@@ -20,7 +20,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledg
 class TestCoinGeckoIntegration:
     """Test CoinGecko API integration for real market data."""
 
-    async def test_coingecko_price_data_injection(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_coingecko_price_data_injection(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test real CoinGecko price data injection into responses.
 
@@ -50,7 +51,26 @@ class TestCoinGeckoIntegration:
 
         assert price_mentioned, "Response should include price information"
 
-    async def test_coingecko_market_data_injection(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_coingecko_price_data_injection",
+                user_input="What is the current price of Ethereum?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate Ethereum price information in a clear format. Response must reference Ethereum specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'Ethereum'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_coingecko_market_data_injection(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test market data (market cap, volume) injection from CoinGecko.
 
@@ -79,7 +99,26 @@ class TestCoinGeckoIntegration:
 
         assert market_data, "Response should include market data"
 
-    async def test_coingecko_api_failure_handling(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_coingecko_market_data_injection",
+                user_input="Tell me about Bitcoin",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for Bitcoin. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'Bitcoin'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_coingecko_api_failure_handling(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test graceful degradation when CoinGecko API might be unavailable.
 
@@ -104,11 +143,30 @@ class TestCoinGeckoIntegration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_coingecko_api_failure_handling",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestRSSNewsIntegration:
     """Test RSS news feed integration from crypto news sources."""
 
-    async def test_rss_news_injection_coindesk(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_rss_news_injection_coindesk(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test CoinDesk RSS feed integration.
 
@@ -132,7 +190,26 @@ class TestRSSNewsIntegration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Response should be substantive"
 
-    async def test_rss_news_injection_cointelegraph(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rss_news_injection_coindesk",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rss_news_injection_cointelegraph(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test CoinTelegraph RSS feed integration.
 
@@ -156,7 +233,26 @@ class TestRSSNewsIntegration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Response should be substantive"
 
-    async def test_rss_news_multiple_sources_aggregation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rss_news_injection_cointelegraph",
+                user_input="Any important crypto updates today?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_rss_news_multiple_sources_aggregation(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test aggregation from multiple RSS news sources.
 
@@ -185,11 +281,30 @@ class TestRSSNewsIntegration:
 
         assert comprehensive, "Response should provide comprehensive overview"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_rss_news_multiple_sources_aggregation",
+                user_input="Give me a comprehensive overview of crypto market news",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestDataSourcePriority:
     """Test data source priority and failover mechanisms."""
 
-    async def test_data_source_priority_order(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_data_source_priority_order(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test primary/fallback source ordering.
 
@@ -218,7 +333,26 @@ class TestDataSourcePriority:
 
         assert ethereum_info, "Response should include Ethereum information"
 
-    async def test_data_source_failover_mechanism(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_data_source_priority_order",
+                user_input="What is Ethereum doing right now?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_data_source_failover_mechanism(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test automatic failover when sources are unavailable.
 
@@ -244,5 +378,23 @@ class TestDataSourcePriority:
         defi_info = any(keyword in agent_response for keyword in [
             "defi", "protocol", "aave", "compound", "uniswap", "lending", "swap"
         ])
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_data_source_failover_mechanism",
+                user_input="Tell me about DeFi protocols and their current status",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
         assert defi_info, "Response should include DeFi protocol information"

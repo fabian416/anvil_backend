@@ -25,7 +25,8 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledg
 class TestContextEnrichment:
     """Test context enrichment with additional data from multiple sources."""
 
-    async def test_price_context_with_historical_data(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_price_context_with_historical_data(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test price enriched with historical trend context.
 
@@ -55,7 +56,26 @@ class TestContextEnrichment:
         assert price_or_trend, "Response should include price/trend information"
         assert len(agent_response) > 50, "Response should be substantive"
 
-    async def test_protocol_context_with_tvl_data(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_price_context_with_historical_data",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate Bitcoin price information in a clear format. Response must reference Bitcoin specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'Bitcoin'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_protocol_context_with_tvl_data(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test protocol info enriched with TVL data.
 
@@ -85,7 +105,26 @@ class TestContextEnrichment:
         assert protocol_info, "Response should include protocol information"
         assert len(agent_response) > 50, "Response should be substantive"
 
-    async def test_token_context_with_market_data(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_protocol_context_with_tvl_data",
+                user_input="Tell me about Aave protocol and its metrics",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Aave protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Aave'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_token_context_with_market_data(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test token info with comprehensive market metrics.
 
@@ -115,7 +154,26 @@ class TestContextEnrichment:
         assert market_metrics, "Response should include market metrics"
         assert len(agent_response) > 50, "Response should be substantive"
 
-    async def test_multi_source_context_aggregation(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_token_context_with_market_data",
+                user_input="What are the key market metrics for Ethereum?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for Ethereum. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'Ethereum'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_multi_source_context_aggregation(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test aggregating context from multiple sources.
 
@@ -140,11 +198,30 @@ class TestContextEnrichment:
         # Should provide comprehensive analysis (check substantiveness, not keywords)
         assert len(agent_response) > 100, "Response should be comprehensive (100+ chars)"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_source_context_aggregation",
+                user_input="Give me a complete analysis of Ethereum: price, news, and DeFi activity",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestContextCaching:
     """Test knowledge cache hit/miss behavior and performance."""
 
-    async def test_knowledge_cache_hit_performance(self, client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_knowledge_cache_hit_performance(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test cache hit improves response time.
 
@@ -190,7 +267,26 @@ class TestContextCaching:
         assert len(data1["agent_message"]["content"]) > 0
         assert len(data2["agent_message"]["content"]) > 0
 
-    async def test_knowledge_cache_miss_fallback(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_knowledge_cache_hit_performance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_knowledge_cache_miss_fallback(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test cache miss falls back to API.
 
@@ -215,7 +311,26 @@ class TestContextCaching:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Response should be substantive"
 
-    async def test_knowledge_cache_expiration(self, client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_knowledge_cache_miss_fallback",
+                user_input="What is the trading volume of Cardano in the last 24 hours?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_knowledge_cache_expiration(self, client: AsyncClient, llm_validator, llm_validator):
         """
         Test cache expiration and refresh.
 
@@ -253,4 +368,22 @@ class TestContextCaching:
 
         # Both queries should succeed with substantive responses
         assert len(data1["agent_message"]["content"]) > 50
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_knowledge_cache_expiration",
+                user_input="What",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(data2["agent_message"]["content"]) > 50

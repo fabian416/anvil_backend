@@ -21,11 +21,30 @@ pytestmark = pytest.mark.asyncio
 class TestAuthenticatedUserKnowledgeInjection:
     """Test knowledge injection for authenticated users"""
 
+    @pytest.mark.llm_validation
     async def test_what_can_you_do_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_what_can_you_do_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test 'what can you do?' for authenticated user includes knowledge"""
@@ -59,11 +78,30 @@ class TestAuthenticatedUserKnowledgeInjection:
             "flash loan", "mev protection"
         ])
 
+    @pytest.mark.llm_validation
     async def test_hunter_ai_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_ai_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test Hunter AI query includes accuracy metrics"""
@@ -92,11 +130,30 @@ class TestAuthenticatedUserKnowledgeInjection:
             "twitter", "reddit", "news", "sentiment", "prediction"
         ])
 
+    @pytest.mark.llm_validation
     async def test_ultra_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test ULTRA query includes detailed capabilities"""
@@ -125,11 +182,30 @@ class TestAuthenticatedUserKnowledgeInjection:
             "0%", "fee", "0.09%"
         ])
 
+    @pytest.mark.llm_validation
     async def test_swap_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_swap_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test swap query includes aggregator information"""
@@ -158,11 +234,30 @@ class TestAuthenticatedUserKnowledgeInjection:
             "rate", "gas", "mev", "protection", "slippage"
         ])
 
+    @pytest.mark.llm_validation
     async def test_investor_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_investor_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test investor query includes competitive advantages"""
@@ -188,11 +283,30 @@ class TestAuthenticatedUserKnowledgeInjection:
             "18 agents", "99%", "cost", "multi-language", "bloomberg"
         ])
 
+    @pytest.mark.llm_validation
     async def test_command_help_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_command_help_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test command help includes shortcuts"""
@@ -222,7 +336,8 @@ class TestAuthenticatedUserKnowledgeInjection:
 class TestGuestUserKnowledgeInjection:
     """Test knowledge injection for guest users"""
 
-    async def test_what_can_you_do_guest(self, async_client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_what_can_you_do_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
         """Test 'what can you do?' for guest user includes knowledge"""
 
         response = await async_client.post(
@@ -252,7 +367,26 @@ class TestGuestUserKnowledgeInjection:
             "sentiment", "arbitrage", "price", "flash loan"
         ])
 
-    async def test_hunter_ai_query_guest(self, async_client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_what_can_you_do_guest",
+                user_input="what can you do?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_hunter_ai_query_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
         """Test Hunter AI query for guest includes knowledge"""
 
         response = await async_client.post(
@@ -273,7 +407,26 @@ class TestGuestUserKnowledgeInjection:
             "sentiment", "prediction", "risk", "trading signals"
         ])
 
-    async def test_ultra_query_guest(self, async_client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_ai_query_guest",
+                user_input="what is hunter ai?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_ultra_query_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
         """Test ULTRA query for guest includes knowledge"""
 
         response = await async_client.post(
@@ -294,7 +447,26 @@ class TestGuestUserKnowledgeInjection:
             "arbitrage", "flash loan", "mev", "automation"
         ])
 
-    async def test_price_query_guest(self, async_client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_query_guest",
+                user_input="what is ultra?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_price_query_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
         """Test price query for guest works with knowledge"""
 
         response = await async_client.post(
@@ -309,15 +481,52 @@ class TestGuestUserKnowledgeInjection:
         assert "routing" in data
         # Price query should work normally
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_price_query_guest",
+                user_input="what",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate BTC price information in a clear format. Response must reference BTC specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'BTC'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestMultiLanguageKnowledge:
     """Test knowledge injection works with multi-language queries"""
 
+    @pytest.mark.llm_validation
     async def test_spanish_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_spanish_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test Spanish query gets knowledge-enhanced response"""
@@ -339,7 +548,8 @@ class TestMultiLanguageKnowledge:
         # At minimum, should have comprehensive answer
         assert len(agent_content) > 100
 
-    async def test_spanish_query_guest(self, async_client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_spanish_query_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
         """Test Spanish query for guest gets knowledge-enhanced response"""
 
         response = await async_client.post(
@@ -353,15 +563,52 @@ class TestMultiLanguageKnowledge:
         # Should work with knowledge injection
         assert "agent_message" in data
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_spanish_query_guest",
+                user_input="qué es hunter ai?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestKnowledgeInjectionPerformance:
     """Test performance impact of knowledge injection"""
 
+    @pytest.mark.llm_validation
     async def test_response_time_acceptable_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_response_time_acceptable_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test response time with knowledge injection is acceptable"""
@@ -383,7 +630,8 @@ class TestKnowledgeInjectionPerformance:
         # Total time includes LLM call, so this is just a sanity check
         assert elapsed < 30  # 30 seconds max (includes LLM generation)
 
-    async def test_response_time_acceptable_guest(self, async_client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_response_time_acceptable_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
         """Test response time for guest with knowledge injection"""
         import time
 
@@ -399,15 +647,52 @@ class TestKnowledgeInjectionPerformance:
         assert response.status_code == status.HTTP_200_OK
         assert elapsed < 30
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_response_time_acceptable_guest",
+                user_input="what can you do?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestKnowledgeConsistency:
     """Test knowledge injection provides consistent results"""
 
+    @pytest.mark.llm_validation
     async def test_same_query_consistent_knowledge_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_same_query_consistent_knowledge_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test same query gets consistent knowledge injection"""
@@ -455,11 +740,30 @@ class TestKnowledgeConsistency:
 class TestEdgeCases:
     """Test edge cases for knowledge injection"""
 
+    @pytest.mark.llm_validation
     async def test_empty_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_empty_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test empty query doesn't crash knowledge injection"""
@@ -476,11 +780,30 @@ class TestEdgeCases:
             status.HTTP_422_UNPROCESSABLE_ENTITY
         ]
 
+    @pytest.mark.llm_validation
     async def test_very_long_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_very_long_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test very long query with knowledge injection"""
@@ -496,11 +819,30 @@ class TestEdgeCases:
         # Should handle without crashing
         assert response.status_code == status.HTTP_200_OK
 
+    @pytest.mark.llm_validation
     async def test_special_characters_query_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_special_characters_query_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test query with special characters"""
@@ -528,6 +870,7 @@ class TestKnowledgeForAllIntents:
         ("what's the price of SOL", ["price", "sol"]),
         ("show my portfolio", ["portfolio"]),
     ])
+    @pytest.mark.llm_validation
     async def test_intent_gets_knowledge(
         self,
         async_client: AsyncClient,
@@ -535,6 +878,24 @@ class TestKnowledgeForAllIntents:
         test_session: str,
         test_conversation: ChatConversation,
         query: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_intent_gets_knowledge",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         expected_keywords: list
     ):
         """Test various intents all get knowledge-enhanced responses"""
@@ -559,11 +920,30 @@ class TestKnowledgeForAllIntents:
 class TestCompressionLevelsAuthenticated:
     """Test different compression levels for authenticated users"""
 
+    @pytest.mark.llm_validation
     async def test_no_compression_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_no_compression_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test no compression provides full knowledge"""
@@ -586,11 +966,30 @@ class TestCompressionLevelsAuthenticated:
         # Should mention accuracy metrics
         assert any(metric in agent_content for metric in ["82%", "73%"])
 
+    @pytest.mark.llm_validation
     async def test_medium_compression_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_medium_compression_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test medium compression (60% reduction) for authenticated users"""
@@ -616,11 +1015,30 @@ class TestCompressionLevelsAuthenticated:
             "82%", "73%", "sentiment", "prediction", "accuracy", "accurate"
         ])
 
+    @pytest.mark.llm_validation
     async def test_aggressive_compression_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_aggressive_compression_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test aggressive compression (80% reduction) preserves essentials"""
@@ -641,11 +1059,30 @@ class TestCompressionLevelsAuthenticated:
         # Should still mention Hunter AI
         assert "hunter" in agent_content.lower() or "ai" in agent_content.lower()
 
+    @pytest.mark.llm_validation
     async def test_compression_preserves_quality_authenticated(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compression_preserves_quality_authenticated",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test that compression doesn't degrade response quality significantly"""
@@ -680,7 +1117,8 @@ class TestCompressionLevelsAuthenticated:
 class TestCompressionLevelsGuest:
     """Test different compression levels for guest users"""
 
-    async def test_medium_compression_guest(self, async_client: AsyncClient):
+    @pytest.mark.llm_validation
+    async def test_medium_compression_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
         """Test medium compression works for guest users"""
 
         response = await async_client.post(
@@ -699,7 +1137,26 @@ class TestCompressionLevelsGuest:
         agent_lower = agent_content.lower()
         assert "hunter" in agent_lower or "ai" in agent_lower
 
-    async def test_compression_consistency_guest(self, async_client: AsyncClient):
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_medium_compression_guest",
+                user_input="what is hunter ai?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
+    async def test_compression_consistency_guest(self, async_client: AsyncClient, llm_validator, llm_validator):
         """Test compression provides consistent results for guest"""
 
         # Make same query twice
@@ -719,6 +1176,24 @@ class TestCompressionLevelsGuest:
                 "trading", "swap", "hunter", "ultra", "portfolio"
             ])
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compression_consistency_guest",
+                user_input="what can you do?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 class TestCompressionWithDifferentIntents:
     """Test compression works correctly with different intents"""
@@ -730,6 +1205,7 @@ class TestCompressionWithDifferentIntents:
         ("tell me about flash loans", ["flash", "loan"]),
         ("swap 100 USDC to ETH", ["swap", "usdc", "eth"]),
     ])
+    @pytest.mark.llm_validation
     async def test_compressed_knowledge_by_intent(
         self,
         async_client: AsyncClient,
@@ -737,6 +1213,24 @@ class TestCompressionWithDifferentIntents:
         test_session: str,
         test_conversation: ChatConversation,
         query: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compressed_knowledge_by_intent",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         expected_keywords: list
     ):
         """Test compression works for different intents and preserves key info"""
@@ -764,11 +1258,30 @@ class TestCompressionWithDifferentIntents:
 class TestCompressionPerformance:
     """Test performance impact of compression"""
 
+    @pytest.mark.llm_validation
     async def test_compressed_response_time_acceptable(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compressed_response_time_acceptable",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test response time with compression is acceptable"""
@@ -790,11 +1303,30 @@ class TestCompressionPerformance:
         # (Compression overhead is minimal compared to LLM generation time)
         assert elapsed < 30  # 30 seconds max (includes LLM call)
 
+    @pytest.mark.llm_validation
     async def test_compression_overhead_minimal(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compression_overhead_minimal",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test compression adds minimal overhead"""
@@ -826,11 +1358,30 @@ class TestCompressionPerformance:
 class TestCompressionEssentialPreservation:
     """Test that compression preserves essential information"""
 
+    @pytest.mark.llm_validation
     async def test_accuracy_metrics_preserved_in_responses(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_accuracy_metrics_preserved_in_responses",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test accuracy metrics are preserved in compressed responses"""
@@ -855,11 +1406,30 @@ class TestCompressionEssentialPreservation:
         assert has_sentiment_accuracy or has_prediction_accuracy or has_arbitrage_accuracy, \
             "Response should mention at least one key accuracy metric"
 
+    @pytest.mark.llm_validation
     async def test_protocol_names_preserved_in_responses(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_protocol_names_preserved_in_responses",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test protocol names are preserved in compressed responses"""
@@ -880,11 +1450,30 @@ class TestCompressionEssentialPreservation:
         assert any(protocol in agent_content for protocol in protocols), \
             f"Response should mention at least one of {protocols}"
 
+    @pytest.mark.llm_validation
     async def test_aggregator_names_preserved_in_responses(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_aggregator_names_preserved_in_responses",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test aggregator names are preserved in swap responses"""
@@ -905,11 +1494,30 @@ class TestCompressionEssentialPreservation:
         assert any(agg in agent_content for agg in aggregators), \
             f"Response should mention at least one of {aggregators}"
 
+    @pytest.mark.llm_validation
     async def test_competitive_advantages_preserved_for_investors(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_competitive_advantages_preserved_for_investors",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test competitive advantages are preserved in investor queries"""
@@ -942,11 +1550,30 @@ class TestCompressionEssentialPreservation:
 class TestCompressionMultiLanguage:
     """Test compression works with multi-language queries"""
 
+    @pytest.mark.llm_validation
     async def test_spanish_query_with_compression(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_spanish_query_with_compression",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test compression works with Spanish queries"""
@@ -965,11 +1592,30 @@ class TestCompressionMultiLanguage:
         # Should have substantial response
         assert len(agent_content) > 100
 
+    @pytest.mark.llm_validation
     async def test_compression_preserves_quality_across_languages(
         self,
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compression_preserves_quality_across_languages",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         test_conversation: ChatConversation
     ):
         """Test compression maintains quality for different languages"""

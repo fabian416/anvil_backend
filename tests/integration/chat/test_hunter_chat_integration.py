@@ -75,6 +75,7 @@ class TestHunterToolExecutor:
         assert executor.client is not None
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_format_sentiment_response(self, executor):
         """Test sentiment response formatting."""
         data = {
@@ -98,8 +99,27 @@ class TestHunterToolExecutor:
         assert "Twitter" in result
         assert "Reddit" in result
         assert "Rising" in result
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_format_sentiment_response",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_format_prediction_response(self, executor):
         """Test prediction response formatting."""
         data = {
@@ -119,8 +139,27 @@ class TestHunterToolExecutor:
         assert "+3.00%" in result
         assert "75%" in result
         assert "🚀" in result or "UP" in result
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_format_prediction_response",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_format_risk_response(self, executor):
         """Test risk response formatting."""
         data = {
@@ -139,8 +178,27 @@ class TestHunterToolExecutor:
         assert "Medium" in result
         assert "Volatility" in result
         assert "Liquidity" in result
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_format_risk_response",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_format_signal_response(self, executor):
         """Test signal response formatting."""
         data = {
@@ -161,6 +219,24 @@ class TestHunterToolExecutor:
         assert "$2000.00" in result
         assert "$2160.00" in result
         assert "$1920.00" in result
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_format_signal_response",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 class TestSendMessageIntegration:
@@ -198,7 +274,26 @@ class TestSendMessageIntegration:
         return executor
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_send_message_without_hunter_tools(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_message_without_hunter_tools",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, mock_repository, mock_agent_gateway
     ):
         """Test sending message without Hunter AI tools."""
@@ -219,7 +314,26 @@ class TestSendMessageIntegration:
         assert mock_repository.add_message.call_count == 2
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_send_message_with_sentiment_tool(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_send_message_with_sentiment_tool",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, mock_repository, mock_agent_gateway, mock_hunter_executor
     ):
         """Test sending message that triggers sentiment analysis."""
@@ -246,7 +360,26 @@ class TestSendMessageIntegration:
         mock_hunter_executor.execute_tool.assert_called_once()
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_token_extraction(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_token_extraction",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, mock_repository, mock_agent_gateway, mock_hunter_executor
     ):
         """Test token extraction from various message formats."""
@@ -283,7 +416,26 @@ class TestSendMessageIntegration:
             assert "Mock Hunter AI response" in agent_msg.content or "Here's the analysis" in agent_msg.content
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_comprehensive_analysis_triggers_multiple_tools(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_comprehensive_analysis_triggers_multiple_tools",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, mock_repository, mock_agent_gateway, mock_hunter_executor
     ):
         """Test that comprehensive analysis triggers multiple Hunter tools."""
@@ -304,7 +456,26 @@ class TestSendMessageIntegration:
         assert mock_hunter_executor.execute_tool.called
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_error_handling_in_hunter_tools(
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_error_handling_in_hunter_tools",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         self, mock_repository, mock_agent_gateway
     ):
         """Test that Hunter AI errors don't break message flow."""
@@ -336,14 +507,52 @@ class TestIntegrationEnd2End:
     """End-to-end integration tests."""
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_full_flow_sentiment_analysis(self):
         """Test full flow: user message → Hunter AI sentiment → response."""
         # This would be a full integration test with real database/API
         # For now, we test the components work together
         pass
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_full_flow_sentiment_analysis",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_full_flow_comprehensive_analysis(self):
         """Test full flow: comprehensive analysis → all Hunter tools → response."""
         # This would test the full stack
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_full_flow_comprehensive_analysis",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         pass
