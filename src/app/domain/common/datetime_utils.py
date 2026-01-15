@@ -14,7 +14,7 @@ Usage:
     current_time = utc_now()
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC, timezone
 
 
 def utc_now() -> datetime:

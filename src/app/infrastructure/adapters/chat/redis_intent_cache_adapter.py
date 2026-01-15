@@ -7,7 +7,7 @@ auto-suggestions, entity extraction caching, and cache warming strategies.
 
 import json
 import hashlib
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, UTC
 from typing import List, Optional
 import asyncio
 

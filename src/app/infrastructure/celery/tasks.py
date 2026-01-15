@@ -232,7 +232,7 @@ def archive_guest_conversations():
     table clean and ensures new sessions get fresh conversations.
     """
     async def runner(container):
-        from datetime import datetime, timedelta
+        from datetime import datetime, UTC, timedelta
         from app.domain.guest.ports.guest_repository import GuestRepository
         
         repository = await container.get(GuestRepository)

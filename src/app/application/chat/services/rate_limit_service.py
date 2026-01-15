@@ -5,7 +5,7 @@ Handles rate limiting based on user type.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from typing import Protocol
 from uuid import UUID
 
