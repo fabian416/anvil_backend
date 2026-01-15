@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 class TestNotificationCreation:
     """Integration tests for notification creation."""
     
+    @pytest.mark.llm_validation
     async def test_create_notification_for_user(self):
         """Test creating notification for specific user."""
         # This validates notification creation
@@ -29,7 +30,26 @@ class TestNotificationCreation:
         
         assert user_id > 0
         assert len(notification_title) > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_create_notification_for_user",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_priority_levels(self):
         """Test notifications support priority levels."""
         # This validates priority system
@@ -41,7 +61,26 @@ class TestNotificationCreation:
         
         priorities = ["high", "medium", "low"]
         assert len(priorities) == 3
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_priority_levels",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_categories(self):
         """Test notifications have categories."""
         # This validates categorization
@@ -54,7 +93,26 @@ class TestNotificationCreation:
         
         categories = ["security", "feature", "billing", "system"]
         assert len(categories) == 4
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_categories",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_bulk_notification_creation(self):
         """Test creating notifications for multiple users."""
         # This validates bulk creation
@@ -67,12 +125,31 @@ class TestNotificationCreation:
         user_count = 100
         assert user_count > 1
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_bulk_notification_creation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestNotificationDelivery:
     """Integration tests for notification delivery."""
     
+    @pytest.mark.llm_validation
     async def test_notification_delivered_to_user(self):
         """Test notification appears in user's notification list."""
         # This validates delivery
@@ -83,7 +160,26 @@ class TestNotificationDelivery:
         # 4. Marked as unread
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_delivered_to_user",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_real_time_notification_via_websocket(self):
         """Test real-time notification delivery via WebSocket."""
         # This validates real-time delivery
@@ -94,7 +190,26 @@ class TestNotificationDelivery:
         # 4. No polling required
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_real_time_notification_via_websocket",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_polling_fallback(self):
         """Test polling fallback when WebSocket unavailable."""
         # This validates polling mechanism
@@ -105,7 +220,26 @@ class TestNotificationDelivery:
         # 4. Polling efficient
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_polling_fallback",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_batching(self):
         """Test multiple notifications batched efficiently."""
         # This validates batching
@@ -118,12 +252,31 @@ class TestNotificationDelivery:
         notification_count = 5
         assert notification_count > 1
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_batching",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestNotificationReadStatus:
     """Integration tests for notification read status."""
     
+    @pytest.mark.llm_validation
     async def test_mark_notification_as_read(self):
         """Test marking notification as read."""
         # This validates read status update
@@ -134,7 +287,26 @@ class TestNotificationReadStatus:
         # 4. Reflected in notification list
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_mark_notification_as_read",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_mark_all_notifications_as_read(self):
         """Test marking all notifications as read."""
         # This validates bulk read
@@ -145,7 +317,26 @@ class TestNotificationReadStatus:
         # 4. Unread count = 0
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_mark_all_notifications_as_read",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_get_unread_notification_count(self):
         """Test retrieving unread notification count."""
         # This validates count retrieval
@@ -157,7 +348,26 @@ class TestNotificationReadStatus:
         
         unread_count = 5
         assert unread_count >= 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_unread_notification_count",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_auto_mark_read_on_view(self):
         """Test notifications auto-marked read when viewed."""
         # This validates auto-read
@@ -169,12 +379,31 @@ class TestNotificationReadStatus:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_auto_mark_read_on_view",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestNotificationPagination:
     """Integration tests for notification pagination."""
     
+    @pytest.mark.llm_validation
     async def test_paginate_notification_list(self):
         """Test notification list pagination."""
         # This validates pagination
@@ -189,7 +418,26 @@ class TestNotificationPagination:
         page_size = 10
         
         assert total_notifications > page_size
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_paginate_notification_list",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_infinite_scroll_notifications(self):
         """Test infinite scroll pattern for notifications."""
         # This validates infinite scroll
@@ -201,7 +449,26 @@ class TestNotificationPagination:
         
         initial_load = 20
         assert initial_load > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_infinite_scroll_notifications",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_cursor_based_pagination(self):
         """Test cursor-based pagination for efficiency."""
         # This validates cursor pagination
@@ -213,12 +480,31 @@ class TestNotificationPagination:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cursor_based_pagination",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestNotificationFiltering:
     """Integration tests for notification filtering."""
     
+    @pytest.mark.llm_validation
     async def test_filter_notifications_by_type(self):
         """Test filtering notifications by type."""
         # This validates type filtering
@@ -231,7 +517,26 @@ class TestNotificationFiltering:
         filter_type = "security"
         
         assert filter_type in notification_types
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_filter_notifications_by_type",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_filter_notifications_by_read_status(self):
         """Test filtering by read/unread status."""
         # This validates status filtering
@@ -241,7 +546,26 @@ class TestNotificationFiltering:
         # 3. Read notifications excluded
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_filter_notifications_by_read_status",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_filter_notifications_by_date_range(self):
         """Test filtering notifications by date range."""
         # This validates date filtering
@@ -252,7 +576,26 @@ class TestNotificationFiltering:
         
         days_back = 7
         assert days_back > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_filter_notifications_by_date_range",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_combined_filters(self):
         """Test combining multiple filters."""
         # This validates filter combination
@@ -263,12 +606,31 @@ class TestNotificationFiltering:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_combined_filters",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestNotificationSettings:
     """Integration tests for notification settings."""
     
+    @pytest.mark.llm_validation
     async def test_user_notification_preferences(self):
         """Test user can set notification preferences."""
         # This validates user preferences
@@ -279,7 +641,26 @@ class TestNotificationSettings:
         # 4. Critical notifications still sent
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user_notification_preferences",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_channel_preferences(self):
         """Test user can choose notification channels."""
         # This validates channel preferences
@@ -291,7 +672,26 @@ class TestNotificationSettings:
         
         channels = ["in_app", "email", "push", "sms"]
         assert len(channels) == 4
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_channel_preferences",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_quiet_hours_setting(self):
         """Test quiet hours prevent notifications."""
         # This validates quiet hours
@@ -303,12 +703,31 @@ class TestNotificationSettings:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_quiet_hours_setting",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestNotificationActions:
     """Integration tests for notification actions."""
     
+    @pytest.mark.llm_validation
     async def test_notification_with_action_button(self):
         """Test notifications can have action buttons."""
         # This validates action buttons
@@ -320,7 +739,26 @@ class TestNotificationActions:
         # 5. Notification updated
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_with_action_button",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_deep_link(self):
         """Test notifications can deep link to features."""
         # This validates deep linking
@@ -331,7 +769,26 @@ class TestNotificationActions:
         # 4. Navigated to conversation
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_deep_link",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_dismissal(self):
         """Test notifications can be dismissed."""
         # This validates dismissal
@@ -343,12 +800,31 @@ class TestNotificationActions:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_dismissal",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestNotificationPerformance:
     """Performance tests for notification system."""
     
+    @pytest.mark.llm_validation
     async def test_notification_creation_performance(self):
         """Test notification creation performance."""
         # This validates creation speed
@@ -362,7 +838,26 @@ class TestNotificationPerformance:
         
         assert notification_count > 0
         assert max_time_seconds > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_creation_performance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_query_performance(self):
         """Test notification query performance."""
         # This validates query speed
@@ -374,7 +869,26 @@ class TestNotificationPerformance:
         
         max_time_ms = 100
         assert max_time_ms < 200
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_query_performance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_real_time_delivery_latency(self):
         """Test real-time notification latency."""
         # This validates delivery speed
@@ -387,12 +901,31 @@ class TestNotificationPerformance:
         max_latency_ms = 500
         assert max_latency_ms < 1000
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_real_time_delivery_latency",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestNotificationSecurity:
     """Integration tests for notification security."""
     
+    @pytest.mark.llm_validation
     async def test_user_only_sees_own_notifications(self):
         """Test users only see their own notifications."""
         # This validates user isolation
@@ -402,7 +935,26 @@ class TestNotificationSecurity:
         # 3. Proper authorization enforced
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user_only_sees_own_notifications",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_notification_content_sanitized(self):
         """Test notification content is sanitized."""
         # This validates XSS prevention
@@ -413,7 +965,26 @@ class TestNotificationSecurity:
         # 4. Safe to display
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_notification_content_sanitized",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_sensitive_data_not_in_notifications(self):
         """Test sensitive data not exposed in notifications."""
         # This validates data protection
@@ -422,5 +993,23 @@ class TestNotificationSecurity:
         # 2. Notification sent
         # 3. No full card numbers
         # 4. Only last 4 digits
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_sensitive_data_not_in_notifications",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         
         assert True

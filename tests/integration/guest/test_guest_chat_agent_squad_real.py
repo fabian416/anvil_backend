@@ -30,6 +30,7 @@ class TestGuestChatAgentSquadReal:
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_specialist_task_english(self, test_app):
         """Test specialist task handler in English returns real agent info."""
         async with AsyncClient(
@@ -68,7 +69,26 @@ class TestGuestChatAgentSquadReal:
         if data.get("registration_required"):
             assert data["registration_required"]["required"] is True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_specialist_task_english",
+                user_input="What specialist agents do you have?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_specialist_task_spanish(self, test_app):
         """Test specialist task in Spanish."""
         async with AsyncClient(
@@ -93,7 +113,26 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["agente", "especialista", "investigación", "seguridad", "portafolio"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_specialist_task_spanish",
+                user_input="¿Qué agentes especialistas tienes?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_specialist_task_portuguese(self, test_app):
         """Test specialist task in Portuguese."""
         async with AsyncClient(
@@ -118,7 +157,26 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["agente", "especialista", "pesquisa", "segurança", "portfólio", "defi", "ai", "assistente"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_specialist_task_portuguese",
+                user_input="Quais agentes especialistas você tem?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_specialist_task_chinese(self, test_app):
         """Test specialist task in Chinese."""
         async with AsyncClient(
@@ -143,7 +201,26 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["代理", "专家", "研究", "安全", "投资组合", "DeFi", "AI", "助手"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_specialist_task_chinese",
+                user_input="你有什么专家代理？",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_specialist_task_specific_agents(self, test_app):
         """Test specialist task mentions specific agent types."""
         async with AsyncClient(
@@ -165,11 +242,30 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["security", "auditor", "slither", "contract", "agent"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_specialist_task_specific_agents",
+                user_input="I need a security auditor",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Complex Workflow Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_complex_workflow_english(self, test_app):
         """Test complex workflow handler in English returns real supervisor info."""
         async with AsyncClient(
@@ -204,7 +300,26 @@ class TestGuestChatAgentSquadReal:
             if enrichment:
                 assert isinstance(enrichment, dict)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_complex_workflow_english",
+                user_input="How does multi-agent workflow work?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_complex_workflow_spanish(self, test_app):
         """Test complex workflow in Spanish."""
         async with AsyncClient(
@@ -226,7 +341,26 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["flujo", "supervisor", "multi-agente", "coordin", "portafolio"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_complex_workflow_spanish",
+                user_input="¿Cómo funcionan los flujos multi-agente?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_complex_workflow_portuguese(self, test_app):
         """Test complex workflow in Portuguese."""
         async with AsyncClient(
@@ -248,7 +382,26 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["fluxo", "supervisor", "multi-agente", "coorden", "portfólio", "defi", "ai", "assistente"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_complex_workflow_portuguese",
+                user_input="Como funcionam os fluxos multi-agente?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_complex_workflow_chinese(self, test_app):
         """Test complex workflow in Chinese."""
         async with AsyncClient(
@@ -270,7 +423,26 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["工作流", "Supervisor", "多代理", "协调", "投资组合", "DeFi", "AI", "助手"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_complex_workflow_chinese",
+                user_input="多代理工作流如何工作？",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_complex_workflow_examples(self, test_app):
         """Test complex workflow mentions specific examples."""
         async with AsyncClient(
@@ -292,11 +464,30 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["portfolio", "rebalancing", "analysis", "optimization", "migration", "strategy", "defi", "ai", "assistant"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_complex_workflow_examples",
+                user_input="What can the supervisor do?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Agent-Specific Request Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_research_agent_request(self, test_app):
         """Test request for research agent."""
         async with AsyncClient(
@@ -318,7 +509,26 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["research", "analysis", "protocol", "agent", "specialist", "defi", "ai", "assistant"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_research_agent_request",
+                user_input="I need deep protocol analysis",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_security_auditor_request(self, test_app):
         """Test request for security auditor."""
         async with AsyncClient(
@@ -340,7 +550,26 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["security", "audit", "contract", "slither", "agent", "defi", "ai", "assistant"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_security_auditor_request",
+                user_input="I want to audit a smart contract",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_portfolio_agent_request(self, test_app):
         """Test request for portfolio agent."""
         async with AsyncClient(
@@ -362,11 +591,30 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["portfolio", "optimize", "allocation", "rebalancing", "agent", "defi", "ai", "assistant"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_portfolio_agent_request",
+                user_input="Help me optimize my portfolio",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Cross-Language Validation Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_agent_squad_all_languages(self, test_app):
         """Test Agent Squad features work in all supported languages."""
         test_cases = [
@@ -436,4 +684,22 @@ class TestGuestChatAgentSquadReal:
             
             assert response.status_code == 200
             data = response.json()
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_squad_all_languages",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
             assert data["routing"]["language"] == zh_lang

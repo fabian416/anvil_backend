@@ -14,6 +14,7 @@ from uuid import uuid4
 class TestLiveVectorSearch:
     """Integration tests for live vector search operations."""
     
+    @pytest.mark.llm_validation
     async def test_generate_embeddings_for_protocol(self):
         """Test generating embeddings for protocol data."""
         # This validates embedding generation
@@ -25,7 +26,26 @@ class TestLiveVectorSearch:
         
         embedding_dimensions = 1536  # OpenAI ada-002
         assert embedding_dimensions > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_generate_embeddings_for_protocol",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_similarity_search_finds_relevant_protocols(self):
         """Test similarity search returns relevant results."""
         # This validates vector similarity
@@ -38,7 +58,26 @@ class TestLiveVectorSearch:
         
         query = "DEX with low fees"
         assert len(query) > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_similarity_search_finds_relevant_protocols",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Uniswap protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Uniswap'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_semantic_search_understands_intent(self):
         """Test semantic search understands query intent."""
         # This validates semantic understanding
@@ -49,7 +88,26 @@ class TestLiveVectorSearch:
         # 4. Not just keyword matching
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_semantic_search_understands_intent",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_vector_search_performance(self):
         """Test vector search meets performance requirements."""
         # This validates search speed
@@ -65,6 +123,24 @@ class TestLiveVectorSearch:
         assert max_time_ms < 200
         assert protocol_count > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_vector_search_performance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.graphrag
@@ -72,6 +148,7 @@ class TestLiveVectorSearch:
 class TestLiveGraphTraversal:
     """Integration tests for live graph traversal operations."""
     
+    @pytest.mark.llm_validation
     async def test_find_protocol_relationships(self):
         """Test finding relationships between protocols."""
         # This validates graph traversal
@@ -86,7 +163,26 @@ class TestLiveGraphTraversal:
         
         assert len(start_protocol) > 0
         assert max_depth > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_find_protocol_relationships",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Aave protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Aave'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_shortest_path_between_protocols(self):
         """Test finding shortest path between protocols."""
         # This validates path finding
@@ -97,7 +193,26 @@ class TestLiveGraphTraversal:
         # 4. Include relationship types
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortest_path_between_protocols",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Uniswap protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Uniswap'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_community_detection_groups_protocols(self):
         """Test community detection groups similar protocols."""
         # This validates community detection
@@ -108,7 +223,26 @@ class TestLiveGraphTraversal:
         # 4. Can navigate within communities
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_community_detection_groups_protocols",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_centrality_identifies_hub_protocols(self):
         """Test centrality measures identify important protocols."""
         # This validates centrality calculation
@@ -120,6 +254,24 @@ class TestLiveGraphTraversal:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_centrality_identifies_hub_protocols",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Aave protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Aave'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.graphrag
@@ -127,6 +279,7 @@ class TestLiveGraphTraversal:
 class TestHybridRetrievalLive:
     """Integration tests for live hybrid retrieval (vector + graph)."""
     
+    @pytest.mark.llm_validation
     async def test_hybrid_search_combines_vector_and_graph(self):
         """Test hybrid search combines both approaches."""
         # This validates hybrid approach
@@ -137,7 +290,26 @@ class TestHybridRetrievalLive:
         # 4. More comprehensive than either alone
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hybrid_search_combines_vector_and_graph",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_contextual_results_include_relationships(self):
         """Test results include graph context."""
         # This validates context enrichment
@@ -150,7 +322,26 @@ class TestHybridRetrievalLive:
         #    - Risk factors
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_contextual_results_include_relationships",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_personalized_recommendations(self):
         """Test personalized protocol recommendations."""
         # This validates personalization
@@ -161,7 +352,26 @@ class TestHybridRetrievalLive:
         # 4. Based on vector + graph similarity
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_personalized_recommendations",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_temporal_aware_recommendations(self):
         """Test recommendations consider temporal factors."""
         # This validates temporal awareness
@@ -173,6 +383,24 @@ class TestHybridRetrievalLive:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_temporal_aware_recommendations",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.graphrag
@@ -180,6 +408,7 @@ class TestHybridRetrievalLive:
 class TestGraphRAGChatIntegration:
     """Integration tests for GraphRAG-chat integration."""
     
+    @pytest.mark.llm_validation
     async def test_chat_query_uses_graphrag(self):
         """Test chat queries leverage GraphRAG for answers."""
         # This validates chat-GraphRAG integration
@@ -192,7 +421,26 @@ class TestGraphRAGChatIntegration:
         
         user_query = "Compare Uniswap and Curve"
         assert len(user_query) > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_chat_query_uses_graphrag",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_multi_hop_reasoning_with_graph(self):
         """Test multi-hop reasoning using graph structure."""
         # This validates complex reasoning
@@ -203,7 +451,26 @@ class TestGraphRAGChatIntegration:
         # 4. Return comprehensive risk analysis
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_hop_reasoning_with_graph",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_followup_questions_maintain_graph_context(self):
         """Test followup questions use graph context."""
         # This validates context maintenance
@@ -216,6 +483,24 @@ class TestGraphRAGChatIntegration:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_followup_questions_maintain_graph_context",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.graphrag
@@ -223,6 +508,7 @@ class TestGraphRAGChatIntegration:
 class TestGraphRAGDataIngestion:
     """Integration tests for GraphRAG data ingestion."""
     
+    @pytest.mark.llm_validation
     async def test_ingest_new_protocol_data(self):
         """Test ingesting new protocol into graph."""
         # This validates data ingestion
@@ -234,7 +520,26 @@ class TestGraphRAGDataIngestion:
         # 5. Available for search immediately
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ingest_new_protocol_data",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_update_existing_protocol_data(self):
         """Test updating existing protocol data."""
         # This validates data updates
@@ -246,7 +551,26 @@ class TestGraphRAGDataIngestion:
         # 5. Changes reflected in queries
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_update_existing_protocol_data",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_delete_deprecated_protocol_data(self):
         """Test removing deprecated protocols."""
         # This validates data deletion
@@ -259,6 +583,24 @@ class TestGraphRAGDataIngestion:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_delete_deprecated_protocol_data",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.graphrag
@@ -266,6 +608,7 @@ class TestGraphRAGDataIngestion:
 class TestGraphRAGCaching:
     """Integration tests for GraphRAG caching."""
     
+    @pytest.mark.llm_validation
     async def test_embedding_cache_improves_performance(self):
         """Test embedding cache speeds up repeated queries."""
         # This validates cache effectiveness
@@ -277,7 +620,26 @@ class TestGraphRAGCaching:
         # 5. T2 < T1 * 0.5 (50% faster)
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_embedding_cache_improves_performance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_graph_subgraph_caching(self):
         """Test frequently accessed subgraphs are cached."""
         # This validates subgraph caching
@@ -288,7 +650,26 @@ class TestGraphRAGCaching:
         # 4. Cache invalidated on updates
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_graph_subgraph_caching",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_cache_invalidation_on_data_update(self):
         """Test cache invalidates when data updates."""
         # This validates cache consistency
@@ -300,6 +681,24 @@ class TestGraphRAGCaching:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_cache_invalidation_on_data_update",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.graphrag
@@ -307,6 +706,7 @@ class TestGraphRAGCaching:
 class TestGraphRAGScaling:
     """Integration tests for GraphRAG scaling."""
     
+    @pytest.mark.llm_validation
     async def test_handle_1000_concurrent_searches(self):
         """Test system handles high concurrent search load."""
         # This validates scalability
@@ -321,7 +721,26 @@ class TestGraphRAGScaling:
         
         assert concurrent_searches > 0
         assert max_time_ms > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_handle_1000_concurrent_searches",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_large_graph_traversal_performance(self):
         """Test traversal performance on large graphs."""
         # This validates large graph handling
@@ -336,7 +755,26 @@ class TestGraphRAGScaling:
         
         assert node_count > 1000
         assert max_depth > 1
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_large_graph_traversal_performance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_vector_db_size_scaling(self):
         """Test vector database scales with data."""
         # This validates vector DB scaling
@@ -347,4 +785,22 @@ class TestGraphRAGScaling:
         # 4. No degradation
         
         embedding_count = 100000
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_vector_db_size_scaling",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert embedding_count > 10000

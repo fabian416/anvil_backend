@@ -26,6 +26,7 @@ class TestGuestChatHistorialReal:
     """Test guest chat history endpoints with real API responses."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_history_empty(self, test_app):
         """Test history endpoint returns empty for new guest."""
         async with AsyncClient(
@@ -42,7 +43,26 @@ class TestGuestChatHistorialReal:
         # Should return empty history structure
         assert "messages" in data or "is_active" in data
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_history_empty",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_history_with_messages(self, test_app):
         """Test history endpoint returns real messages after conversation."""
         ip = "127.0.0.402"
@@ -92,7 +112,26 @@ class TestGuestChatHistorialReal:
             assert msg["role"] in ["user", "assistant"]
             assert len(msg["content"]) > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_history_with_messages",
+                user_input="Hello",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_history_spanish(self, test_app):
         """Test history endpoint with Spanish conversation."""
         ip = "127.0.0.403"
@@ -120,7 +159,26 @@ class TestGuestChatHistorialReal:
         if "language" in data:
             assert data["language"] == "es"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_history_spanish",
+                user_input="Hola",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_history_portuguese(self, test_app):
         """Test history endpoint with Portuguese conversation."""
         ip = "127.0.0.404"
@@ -148,7 +206,26 @@ class TestGuestChatHistorialReal:
         if "language" in data:
             assert data["language"] == "pt"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_history_portuguese",
+                user_input="Olá",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_history_chinese(self, test_app):
         """Test history endpoint with Chinese conversation."""
         ip = "127.0.0.405"
@@ -176,7 +253,26 @@ class TestGuestChatHistorialReal:
         if "language" in data:
             assert data["language"] == "zh"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_history_chinese",
+                user_input="你好",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_history_limit(self, test_app):
         """Test history endpoint respects limit parameter."""
         ip = "127.0.0.406"
@@ -204,7 +300,26 @@ class TestGuestChatHistorialReal:
         # Should respect limit (may return less if fewer messages)
         assert len(data["messages"]) <= 3
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_history_limit",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_status_empty(self, test_app):
         """Test status endpoint returns empty for new guest."""
         async with AsyncClient(
@@ -221,7 +336,26 @@ class TestGuestChatHistorialReal:
         # Should return status structure
         assert "has_active_session" in data or "messages_remaining" in data
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_status_empty",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_status_with_session(self, test_app):
         """Test status endpoint returns real session data."""
         ip = "127.0.0.408"
@@ -257,7 +391,26 @@ class TestGuestChatHistorialReal:
         assert data["messages_this_hour"] >= 0
         assert data["is_blocked"] is False
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_status_with_session",
+                user_input="Test",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_status_spanish(self, test_app):
         """Test status endpoint with Spanish session."""
         ip = "127.0.0.409"
@@ -285,7 +438,26 @@ class TestGuestChatHistorialReal:
         if "language" in data:
             assert data["language"] == "es"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_status_spanish",
+                user_input="Hola",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_status_portuguese(self, test_app):
         """Test status endpoint with Portuguese session."""
         ip = "127.0.0.410"
@@ -313,7 +485,26 @@ class TestGuestChatHistorialReal:
         if "language" in data:
             assert data["language"] == "pt"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_status_portuguese",
+                user_input="Olá",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_status_chinese(self, test_app):
         """Test status endpoint with Chinese session."""
         ip = "127.0.0.411"
@@ -341,7 +532,26 @@ class TestGuestChatHistorialReal:
         if "language" in data:
             assert data["language"] == "zh"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_status_chinese",
+                user_input="你好",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_history_message_structure(self, test_app):
         """Test history messages have complete structure."""
         ip = "127.0.0.412"
@@ -380,7 +590,26 @@ class TestGuestChatHistorialReal:
                 if "is_restricted_action" in msg:
                     assert isinstance(msg["is_restricted_action"], bool)
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_history_message_structure",
+                user_input="Test message",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_history_conversation_id(self, test_app):
         """Test history includes conversation_id when active."""
         ip = "127.0.0.413"
@@ -411,7 +640,26 @@ class TestGuestChatHistorialReal:
             assert "conversation_id" in data
             assert data["conversation_id"] == conv_id
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_history_conversation_id",
+                user_input="Hello",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_status_rate_limits(self, test_app):
         """Test status endpoint shows accurate rate limit information."""
         ip = "127.0.0.414"
@@ -442,4 +690,22 @@ class TestGuestChatHistorialReal:
         assert isinstance(data["messages_remaining"], int)
         assert isinstance(data["messages_this_hour"], int)
         assert data["messages_remaining"] >= 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_status_rate_limits",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert data["messages_this_hour"] >= 0

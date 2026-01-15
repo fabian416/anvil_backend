@@ -14,6 +14,7 @@ from datetime import datetime
 class TestCompleteConversationFlow:
     """Integration tests for complete conversation flows."""
     
+    @pytest.mark.llm_validation
     async def test_create_send_retrieve_conversation_flow(self):
         """Test complete flow: create -> send message -> retrieve."""
         # This validates complete conversation flow
@@ -29,7 +30,26 @@ class TestCompleteConversationFlow:
         
         assert user_id > 0
         assert len(message_content) > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_create_send_retrieve_conversation_flow",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_multi_message_conversation_maintains_context(self):
         """Test multi-message conversation maintains context."""
         # This validates context maintenance
@@ -41,7 +61,26 @@ class TestCompleteConversationFlow:
         # 5. All messages linked to same conversation
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_multi_message_conversation_maintains_context",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_concurrent_messages_in_same_conversation(self):
         """Test concurrent messages to same conversation."""
         # This validates concurrent handling
@@ -53,7 +92,26 @@ class TestCompleteConversationFlow:
         # 5. No race conditions
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_concurrent_messages_in_same_conversation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_conversation_pagination_works(self):
         """Test conversation list pagination."""
         # This validates pagination
@@ -68,7 +126,26 @@ class TestCompleteConversationFlow:
         page_size = 10
         
         assert total_conversations > page_size
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conversation_pagination_works",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_message_history_retrieval(self):
         """Test retrieving message history for conversation."""
         # This validates message retrieval
@@ -82,12 +159,31 @@ class TestCompleteConversationFlow:
         message_count = 5
         assert message_count > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_message_history_retrieval",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestConversationAgentInteraction:
     """Integration tests for conversation-agent interactions."""
     
+    @pytest.mark.llm_validation
     async def test_agent_selection_based_on_intent(self):
         """Test correct agent selected based on message intent."""
         # This validates agent routing
@@ -103,7 +199,26 @@ class TestConversationAgentInteraction:
         
         assert "swap" in trading_message.lower()
         assert "yield" in yield_message.lower()
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_selection_based_on_intent",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_agent_handles_complex_queries(self):
         """Test agent handles complex multi-part queries."""
         # This validates complex query handling
@@ -119,7 +234,26 @@ class TestConversationAgentInteraction:
         assert "Uniswap" in complex_query
         assert "Curve" in complex_query
         assert len(complex_query) > 30
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_handles_complex_queries",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_agent_uses_graphrag_for_context(self):
         """Test agent uses GraphRAG to enrich responses."""
         # This validates GraphRAG integration
@@ -130,7 +264,26 @@ class TestConversationAgentInteraction:
         # 4. Citations to data sources
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_uses_graphrag_for_context",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_agent_handles_followup_questions(self):
         """Test agent handles followup questions correctly."""
         # This validates followup handling
@@ -143,12 +296,31 @@ class TestConversationAgentInteraction:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_handles_followup_questions",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestConversationUserIsolation:
     """Integration tests for user data isolation."""
     
+    @pytest.mark.llm_validation
     async def test_user_only_sees_own_conversations(self):
         """Test user can only see their own conversations."""
         # This validates user isolation
@@ -160,7 +332,26 @@ class TestConversationUserIsolation:
         # 5. User B cannot access User A's
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user_only_sees_own_conversations",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_user_cannot_access_others_messages(self):
         """Test user cannot access other users' messages."""
         # This validates message isolation
@@ -171,7 +362,26 @@ class TestConversationUserIsolation:
         # 4. User B cannot see messages
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_user_cannot_access_others_messages",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_admin_can_view_all_conversations(self):
         """Test admin can view all user conversations."""
         # This validates admin access
@@ -183,12 +393,31 @@ class TestConversationUserIsolation:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_admin_can_view_all_conversations",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestConversationMetadata:
     """Integration tests for conversation metadata."""
     
+    @pytest.mark.llm_validation
     async def test_conversation_timestamps_accurate(self):
         """Test conversation timestamps are accurate."""
         # This validates timestamps
@@ -200,7 +429,26 @@ class TestConversationMetadata:
         # 5. Timestamps accurate within 1 second
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conversation_timestamps_accurate",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_conversation_auto_title_generation(self):
         """Test conversation auto-generates title from first message."""
         # This validates auto-titling
@@ -211,7 +459,26 @@ class TestConversationMetadata:
         # 4. Title summarizes message
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conversation_auto_title_generation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_conversation_message_count_tracking(self):
         """Test conversation tracks message count."""
         # This validates message counting
@@ -224,12 +491,31 @@ class TestConversationMetadata:
         expected_count = 5
         assert expected_count > 0
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_conversation_message_count_tracking",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestConversationErrorHandling:
     """Integration tests for conversation error handling."""
     
+    @pytest.mark.llm_validation
     async def test_empty_message_rejected(self):
         """Test empty message is rejected."""
         # This validates input validation
@@ -239,7 +525,26 @@ class TestConversationErrorHandling:
         # 3. Conversation unaffected
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_empty_message_rejected",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_too_long_message_rejected(self):
         """Test overly long message is rejected."""
         # This validates length limits
@@ -250,7 +555,26 @@ class TestConversationErrorHandling:
         
         max_length = 10000
         assert max_length > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_too_long_message_rejected",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_agent_error_handled_gracefully(self):
         """Test agent errors handled gracefully."""
         # This validates error handling
@@ -261,7 +585,26 @@ class TestConversationErrorHandling:
         # 4. Next message works
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_error_handled_gracefully",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_nonexistent_conversation_returns_404(self):
         """Test accessing nonexistent conversation returns 404."""
         # This validates not found handling
@@ -273,12 +616,31 @@ class TestConversationErrorHandling:
         fake_conversation_id = uuid4()
         assert fake_conversation_id is not None
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_nonexistent_conversation_returns_404",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestConversationDeletion:
     """Integration tests for conversation deletion."""
     
+    @pytest.mark.llm_validation
     async def test_delete_conversation_removes_all_data(self):
         """Test deleting conversation removes all associated data."""
         # This validates cascade deletion
@@ -290,7 +652,26 @@ class TestConversationDeletion:
         # 5. Cannot retrieve
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_delete_conversation_removes_all_data",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_soft_delete_vs_hard_delete(self):
         """Test soft delete vs hard delete behavior."""
         # This validates deletion strategies
@@ -302,12 +683,31 @@ class TestConversationDeletion:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_soft_delete_vs_hard_delete",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestConversationSearch:
     """Integration tests for conversation search."""
     
+    @pytest.mark.llm_validation
     async def test_search_conversations_by_content(self):
         """Test searching conversations by message content."""
         # This validates search functionality
@@ -319,7 +719,26 @@ class TestConversationSearch:
         
         search_query = "Uniswap"
         assert len(search_query) > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_search_conversations_by_content",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_search_with_filters(self):
         """Test searching with date and other filters."""
         # This validates filtered search
@@ -331,12 +750,31 @@ class TestConversationSearch:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_search_with_filters",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 class TestConversationPerformance:
     """Performance tests for conversation operations."""
     
+    @pytest.mark.llm_validation
     async def test_create_conversation_performance(self):
         """Test conversation creation performance."""
         # This validates creation speed
@@ -347,7 +785,26 @@ class TestConversationPerformance:
         
         max_time_ms = 100
         assert max_time_ms > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_create_conversation_performance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_message_retrieval_performance(self):
         """Test message retrieval performance."""
         # This validates retrieval speed
@@ -361,7 +818,26 @@ class TestConversationPerformance:
         
         assert message_count > 0
         assert max_time_ms > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_message_retrieval_performance",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
+    @pytest.mark.llm_validation
     async def test_concurrent_conversation_creation(self):
         """Test concurrent conversation creation."""
         # This validates concurrent operations
@@ -372,4 +848,22 @@ class TestConversationPerformance:
         # 4. All have unique IDs
         
         concurrent_count = 10
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_concurrent_conversation_creation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert concurrent_count > 0

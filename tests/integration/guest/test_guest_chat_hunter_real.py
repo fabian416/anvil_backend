@@ -34,6 +34,7 @@ class TestGuestChatHunterReal:
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_sentiment_english(self, test_app):
         """Test sentiment analysis in English uses real SentimentAggregator."""
         async with AsyncClient(
@@ -76,7 +77,26 @@ class TestGuestChatHunterReal:
             if len(sources) > 0:
                 assert "source_type" in sources[0] or "source_name" in sources[0]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_sentiment_english",
+                user_input="What is the sentiment for ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_sentiment_spanish(self, test_app):
         """Test sentiment analysis in Spanish."""
         async with AsyncClient(
@@ -101,7 +121,26 @@ class TestGuestChatHunterReal:
             for keyword in ["sentimiento", "eth", "puntuación", "twitter", "reddit", "alcista", "bajista"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_sentiment_spanish",
+                user_input="¿Cuál es el sentimiento para ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_sentiment_portuguese(self, test_app):
         """Test sentiment analysis in Portuguese."""
         async with AsyncClient(
@@ -126,7 +165,26 @@ class TestGuestChatHunterReal:
             for keyword in ["sentimento", "eth", "pontuação", "twitter", "reddit", "altista", "baixista", "defi", "ai", "assistente", "análise"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_sentiment_portuguese",
+                user_input="Qual é o sentimento para ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_sentiment_chinese(self, test_app):
         """Test sentiment analysis in Chinese."""
         async with AsyncClient(
@@ -151,7 +209,26 @@ class TestGuestChatHunterReal:
             for keyword in ["情绪", "ETH", "评分", "Twitter", "Reddit", "看涨", "看跌", "DeFi", "AI", "助手", "分析"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_sentiment_chinese",
+                user_input="ETH的情绪如何？",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_sentiment_multiple_tokens(self, test_app):
         """Test sentiment analysis for different tokens."""
         tokens = ["BTC", "ETH", "USDC", "SOL"]
@@ -175,11 +252,30 @@ class TestGuestChatHunterReal:
             agent_content = data["agent_message"]["content"]
             assert token in agent_content or token.lower() in agent_content.lower()
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_sentiment_multiple_tokens",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for BTC. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'BTC'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Price Prediction Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_price_prediction_english(self, test_app):
         """Test price prediction in English uses real LSTMPricePredictor."""
         async with AsyncClient(
@@ -215,7 +311,26 @@ class TestGuestChatHunterReal:
                 for key in ["token", "current_price", "predicted_price", "change_percent", "direction", "confidence", "hunter_tool"]
             )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_price_prediction_english",
+                user_input="What is the price prediction for BTC?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate BTC price information in a clear format. Response must reference BTC specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'BTC'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_price_prediction_spanish(self, test_app):
         """Test price prediction in Spanish."""
         async with AsyncClient(
@@ -237,7 +352,26 @@ class TestGuestChatHunterReal:
             for keyword in ["precio", "predicción", "pronóstico", "btc", "modelo", "confianza", "dirección"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_price_prediction_spanish",
+                user_input="¿Cuál es la predicción de precio para BTC?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate BTC price information in a clear format. Response must reference BTC specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'BTC'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_price_prediction_portuguese(self, test_app):
         """Test price prediction in Portuguese."""
         async with AsyncClient(
@@ -259,7 +393,26 @@ class TestGuestChatHunterReal:
             for keyword in ["preço", "previsão", "pronóstico", "btc", "modelo", "confiança", "direção", "defi", "ai", "assistente", "análise"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_price_prediction_portuguese",
+                user_input="Qual é a previsão de preço para BTC?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate BTC price information in a clear format. Response must reference BTC specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'BTC'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_price_prediction_chinese(self, test_app):
         """Test price prediction in Chinese."""
         async with AsyncClient(
@@ -281,11 +434,30 @@ class TestGuestChatHunterReal:
             for keyword in ["价格", "预测", "BTC", "模型", "置信度", "方向", "DeFi", "AI", "助手", "分析"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_price_prediction_chinese",
+                user_input="BTC的价格预测是什么？",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate BTC price information in a clear format. Response must reference BTC specifically (not other cryptocurrencies) and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'BTC'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Risk Signals Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_risk_signals_english(self, test_app):
         """Test risk signals in English uses real RiskAnalyzer."""
         async with AsyncClient(
@@ -321,7 +493,26 @@ class TestGuestChatHunterReal:
                 for key in ["token", "risk_level", "risk_score", "factors", "hunter_tool"]
             )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_risk_signals_english",
+                user_input="What are the risk signals for ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_risk_signals_spanish(self, test_app):
         """Test risk signals in Spanish."""
         async with AsyncClient(
@@ -343,7 +534,26 @@ class TestGuestChatHunterReal:
             for keyword in ["riesgo", "señal", "eth", "ballena", "liquidación", "peligro", "advertencia"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_risk_signals_spanish",
+                user_input="¿Cuáles son las señales de riesgo para ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_risk_signals_portuguese(self, test_app):
         """Test risk signals in Portuguese."""
         async with AsyncClient(
@@ -365,7 +575,26 @@ class TestGuestChatHunterReal:
             for keyword in ["risco", "sinal", "eth", "baleia", "liquidação", "perigo", "alerta", "defi", "ai", "assistente", "análise"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_risk_signals_portuguese",
+                user_input="Quais são os sinais de risco para ETH?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_risk_signals_chinese(self, test_app):
         """Test risk signals in Chinese."""
         async with AsyncClient(
@@ -387,11 +616,30 @@ class TestGuestChatHunterReal:
             for keyword in ["风险", "信号", "ETH", "鲸鱼", "清算", "危险", "警告", "DeFi", "AI", "助手", "分析"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_risk_signals_chinese",
+                user_input="ETH的风险信号是什么？",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Trading Signals Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_trading_signals_english(self, test_app):
         """Test trading signals in English uses real TradingSignalGenerator."""
         async with AsyncClient(
@@ -427,7 +675,26 @@ class TestGuestChatHunterReal:
                 for key in ["token", "signal_type", "signal_strength", "confidence", "entry_price", "hunter_tool"]
             )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_trading_signals_english",
+                user_input="Generate trading signal for BTC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_trading_signals_spanish(self, test_app):
         """Test trading signals in Spanish."""
         async with AsyncClient(
@@ -449,7 +716,26 @@ class TestGuestChatHunterReal:
             for keyword in ["trading", "señal", "btc", "compra", "venta", "entrada", "stop loss", "confianza"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_trading_signals_spanish",
+                user_input="Genera señal de trading para BTC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_trading_signals_portuguese(self, test_app):
         """Test trading signals in Portuguese."""
         async with AsyncClient(
@@ -471,7 +757,26 @@ class TestGuestChatHunterReal:
             for keyword in ["trading", "sinal", "btc", "compra", "venda", "entrada", "stop loss", "confiança", "defi", "ai", "assistente"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_trading_signals_portuguese",
+                user_input="Gere sinal de trading para BTC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_trading_signals_chinese(self, test_app):
         """Test trading signals in Chinese."""
         async with AsyncClient(
@@ -493,11 +798,30 @@ class TestGuestChatHunterReal:
             for keyword in ["交易", "信号", "BTC", "买入", "卖出", "入场", "止损", "置信度", "DeFi", "AI", "助手"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_trading_signals_chinese",
+                user_input="为BTC生成交易信号",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Pattern Recognition Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_patterns_english(self, test_app):
         """Test pattern recognition in English uses real PatternRecognizer."""
         async with AsyncClient(
@@ -533,7 +857,26 @@ class TestGuestChatHunterReal:
                 for key in ["token", "patterns", "hunter_tool"]
             )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_patterns_english",
+                user_input="Detect chart patterns for ETH",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_patterns_spanish(self, test_app):
         """Test pattern recognition in Spanish."""
         async with AsyncClient(
@@ -555,7 +898,26 @@ class TestGuestChatHunterReal:
             for keyword in ["patrón", "gráfico", "eth", "hombro", "doble", "bandera", "triángulo", "ruptura"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_patterns_spanish",
+                user_input="Detecta patrones de gráfico para ETH",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_patterns_portuguese(self, test_app):
         """Test pattern recognition in Portuguese."""
         async with AsyncClient(
@@ -577,7 +939,26 @@ class TestGuestChatHunterReal:
             for keyword in ["padrão", "gráfico", "eth", "ombro", "duplo", "bandeira", "triângulo", "rompimento", "defi", "ai", "assistente"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_patterns_portuguese",
+                user_input="Detecte padrões de gráfico para ETH",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_patterns_chinese(self, test_app):
         """Test pattern recognition in Chinese."""
         async with AsyncClient(
@@ -599,11 +980,30 @@ class TestGuestChatHunterReal:
             for keyword in ["模式", "图表", "ETH", "头肩", "双底", "旗形", "三角形", "突破", "DeFi", "AI", "助手"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_patterns_chinese",
+                user_input="检测ETH的图表模式",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Portfolio Optimization Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_portfolio_optimization_english(self, test_app):
         """Test portfolio optimization in English uses real PortfolioOptimizer."""
         async with AsyncClient(
@@ -643,7 +1043,26 @@ class TestGuestChatHunterReal:
         if data.get("registration_required"):
             assert data["registration_required"]["required"] is True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_portfolio_optimization_english",
+                user_input="Optimize my portfolio",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_portfolio_optimization_spanish(self, test_app):
         """Test portfolio optimization in Spanish."""
         async with AsyncClient(
@@ -665,7 +1084,26 @@ class TestGuestChatHunterReal:
             for keyword in ["portafolio", "optimizar", "asignación", "estrategia", "riesgo", "retorno"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_portfolio_optimization_spanish",
+                user_input="Optimiza mi portafolio",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_portfolio_optimization_portuguese(self, test_app):
         """Test portfolio optimization in Portuguese."""
         async with AsyncClient(
@@ -687,7 +1125,26 @@ class TestGuestChatHunterReal:
             for keyword in ["portfólio", "otimizar", "alocação", "estratégia", "risco", "retorno", "defi", "ai", "assistente"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_portfolio_optimization_portuguese",
+                user_input="Otimize meu portfólio",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_guest_chat_portfolio_optimization_chinese(self, test_app):
         """Test portfolio optimization in Chinese."""
         async with AsyncClient(
@@ -709,11 +1166,30 @@ class TestGuestChatHunterReal:
             for keyword in ["投资组合", "优化", "配置", "策略", "风险", "回报", "DeFi", "AI", "助手"]
         )
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_guest_chat_portfolio_optimization_chinese",
+                user_input="优化我的投资组合",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     # ========================================
     # Cross-Language Validation Tests
     # ========================================
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_hunter_features_all_languages(self, test_app):
         """Test all Hunter AI features work in all supported languages."""
         features = [
@@ -786,4 +1262,22 @@ class TestGuestChatHunterReal:
             
             assert response.status_code == 200
             data = response.json()
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_features_all_languages",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
             assert data["routing"]["language"] == zh_lang
