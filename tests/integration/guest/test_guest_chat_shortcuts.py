@@ -740,17 +740,52 @@ class TestGuestChatShortcuts:
             assert len(shortcut["examples"]) > 0, f"Shortcut {shortcut['intent']} has no examples"
             assert shortcut["icon"], f"Shortcut {shortcut['intent']} has no icon"
             assert shortcut["command"], f"Shortcut {shortcut['intent']} has no command"
+            assert shortcut["description"], f"Shortcut {shortcut['intent']} has no description"
 
-        # Optional LLM semantic validation (environment-gated)
+
+# ========================================
+# Advanced Shortcuts Tests (Phase 2.5)
+# ========================================
+
+
+@pytest.mark.integration
+class TestGuestChatShortcutsAdvanced:
+    """Advanced shortcuts tests for multi-step workflows and edge cases."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_shortcuts_multi_step_portfolio_analysis(self, test_app, llm_validator):
+        """Test chained shortcut workflow for portfolio analysis."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={
+                    "content": "Show me top DeFi protocols and analyze their risks",
+                    "language": "en"
+                },
+                headers={"X-Forwarded-For": "127.0.0.900"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide comprehensive multi-step analysis"
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
-                test_name="test_all_shortcuts_have_examples",
-                user_input="query",
+                test_name="test_shortcuts_multi_step_portfolio_analysis",
+                user_input="Show me top DeFi protocols and analyze their risks",
                 agent_output=content,
                 expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                    "Should handle multi-step workflow combining protocol discovery and risk analysis. "
+                    "Response should list top DeFi protocols and then analyze risks for each. "
+                    "Should demonstrate ability to chain multiple shortcuts in sequence."
                 ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+                additional_context={
+                    'test_category': 'multi_step_workflow',
+                    'shortcuts_involved': ['hunter_research', 'risk_analysis']
+                }
             )
             if validation.verdict != "PASS":
                 pytest.warn(UserWarning(
@@ -758,4 +793,266 @@ class TestGuestChatShortcuts:
                     f"{validation.reasoning}"
                 ))
 
-            assert shortcut["description"], f"Shortcut {shortcut['intent']} has no description"
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_shortcuts_conditional_execution_logic(self, test_app, llm_validator):
+        """Test if-then shortcut behaviors."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={
+                    "content": "Check ETH price and tell me if it's a good buy opportunity",
+                    "language": "en"
+                },
+                headers={"X-Forwarded-For": "127.0.0.901"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 50, "Should provide conditional analysis"
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcuts_conditional_execution_logic",
+                user_input="Check ETH price and tell me if it's a good buy opportunity",
+                agent_output=content,
+                expected_behavior=(
+                    "Should check ETH price and provide conditional recommendation. "
+                    "Response should include current price and then evaluate buy opportunity. "
+                    "Should demonstrate conditional logic (if price X, then recommend Y)."
+                ),
+                additional_context={
+                    'test_category': 'conditional_logic',
+                    'asset': 'ETH',
+                    'action': 'buy_recommendation'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_shortcuts_parameter_validation_edge_cases(self, test_app, llm_validator):
+        """Test invalid input handling in shortcuts."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={
+                    "content": "Swap -100 ETH for BTC",
+                    "language": "en"
+                },
+                headers={"X-Forwarded-For": "127.0.0.902"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 30, "Should provide error guidance"
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcuts_parameter_validation_edge_cases",
+                user_input="Swap -100 ETH for BTC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should gracefully handle invalid parameter (negative amount). "
+                    "Response should explain why -100 ETH is invalid and provide helpful guidance. "
+                    "Should NOT process the invalid request but educate the user."
+                ),
+                additional_context={
+                    'test_category': 'parameter_validation',
+                    'invalid_parameter': 'negative_amount',
+                    'expected_behavior': 'graceful_error_handling'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_shortcuts_output_format_consistency(self, test_app, llm_validator):
+        """Test standardized response structures across shortcuts."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            # Test multiple shortcuts to verify consistent formatting
+            responses = []
+            for i, query in enumerate([
+                "What's BTC price?",
+                "Analyze ETH trends",
+                "Show DeFi yields"
+            ]):
+                resp = await ac.post(
+                    "/api/v1/guest/chat",
+                    json={"content": query, "language": "en"},
+                    headers={"X-Forwarded-For": f"127.0.0.{903+i}"},
+                )
+                assert resp.status_code == 200
+                responses.append(resp.json())
+
+        # All responses should have consistent structure
+        for data in responses:
+            assert "agent_message" in data
+            assert "content" in data["agent_message"]
+            assert "routing" in data
+            assert "guest_info" in data
+
+        if llm_validator.enabled:
+            combined_content = " | ".join([r["agent_message"]["content"] for r in responses])
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcuts_output_format_consistency",
+                user_input="Multiple shortcut queries for format consistency check",
+                agent_output=combined_content,
+                expected_behavior=(
+                    "All shortcut responses should follow consistent formatting patterns. "
+                    "Structure should be predictable and well-organized across different shortcut types."
+                ),
+                additional_context={
+                    'test_category': 'format_consistency',
+                    'shortcuts_tested': 3
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_shortcuts_internationalization_parity(self, test_app, llm_validator):
+        """Test multi-language quality consistency."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            # Test same query in different languages
+            languages = ["en", "es", "pt", "zh"]
+            responses = {}
+
+            for i, lang in enumerate(languages):
+                resp = await ac.post(
+                    "/api/v1/guest/chat",
+                    json={"content": "What is DeFi?", "language": lang},
+                    headers={"X-Forwarded-For": f"127.0.0.{910+i}"},
+                )
+                assert resp.status_code == 200
+                responses[lang] = resp.json()
+
+        # All languages should get responses
+        for lang, data in responses.items():
+            content = data["agent_message"]["content"]
+            assert len(content) > 20, f"Language {lang} should get substantive response"
+            assert data["routing"]["language"] == lang, f"Language routing should match {lang}"
+
+        if llm_validator.enabled:
+            # Validate English response quality (representative)
+            en_content = responses["en"]["agent_message"]["content"]
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcuts_internationalization_parity",
+                user_input="What is DeFi? (tested across 4 languages)",
+                agent_output=en_content,
+                expected_behavior=(
+                    "Should provide quality response about DeFi that maintains consistent quality "
+                    "across all supported languages (en, es, pt, zh). Response should be informative "
+                    "and culturally appropriate."
+                ),
+                additional_context={
+                    'test_category': 'internationalization',
+                    'languages_tested': 4
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_shortcuts_accessibility_considerations(self, test_app, llm_validator):
+        """Test screen reader friendly responses."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={
+                    "content": "Explain current market conditions",
+                    "language": "en"
+                },
+                headers={"X-Forwarded-For": "127.0.0.920"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        # Check for structured content (not just visual formatting)
+        assert len(content) > 50, "Should provide detailed explanation"
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcuts_accessibility_considerations",
+                user_input="Explain current market conditions",
+                agent_output=content,
+                expected_behavior=(
+                    "Response should be accessible for screen readers. "
+                    "Should use clear structure, avoid emoji-only communication, "
+                    "provide text descriptions, and organize information logically. "
+                    "Content should be understandable without visual formatting."
+                ),
+                additional_context={
+                    'test_category': 'accessibility',
+                    'consideration': 'screen_reader_friendly'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_shortcuts_mobile_optimization_responses(self, test_app, llm_validator):
+        """Test concise mobile-friendly output."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={
+                    "content": "Quick ETH update",
+                    "language": "en"
+                },
+                headers={"X-Forwarded-For": "127.0.0.921"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        # Should be concise but informative
+        assert len(content) > 30, "Should provide informative content"
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_shortcuts_mobile_optimization_responses",
+                user_input="Quick ETH update",
+                agent_output=content,
+                expected_behavior=(
+                    "Response should be mobile-optimized. Should provide concise, scannable information "
+                    "suitable for small screens. Key information should come first. "
+                    "Should avoid overly long paragraphs that are hard to read on mobile."
+                ),
+                additional_context={
+                    'test_category': 'mobile_optimization',
+                    'query_type': 'quick_update'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
