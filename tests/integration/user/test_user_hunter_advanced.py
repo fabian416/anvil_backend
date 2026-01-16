@@ -7,6 +7,7 @@ Tests mirror guest Hunter tests but validate user-specific features.
 
 import pytest
 import pytest_asyncio
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 from app.run import make_app
@@ -42,6 +43,7 @@ async def test_user_hunter_cross_chain_analysis(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI cross-chain analysis for authenticated user."""
     response = await client.post(
@@ -56,6 +58,7 @@ async def test_user_hunter_cross_chain_analysis(
 
     assert len(content) > 100, "Should provide detailed cross-chain analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_cross_chain_analysis",
@@ -79,6 +82,21 @@ async def test_user_hunter_cross_chain_analysis(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_cross_chain_001",
+        "s_multistep": False,
+        "input": "Find arbitrage opportunities between Ethereum and Polygon for USDC",
+        "output": content,
+        "test_label_sequence": "hunter_cross_chain",
+        "output_expected": "Cross-chain arbitrage opportunities with personalized recommendations",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -87,6 +105,7 @@ async def test_user_hunter_sentiment_aggregation_sources(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI multi-source sentiment aggregation for authenticated user."""
     response = await client.post(
@@ -101,6 +120,7 @@ async def test_user_hunter_sentiment_aggregation_sources(
 
     assert len(content) > 100, "Should provide comprehensive sentiment analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_sentiment_aggregation_sources",
@@ -124,6 +144,21 @@ async def test_user_hunter_sentiment_aggregation_sources(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_sentiment_002",
+        "s_multistep": False,
+        "input": "What's the overall sentiment about Solana across news, Reddit, and Twitter?",
+        "output": content,
+        "test_label_sequence": "hunter_sentiment_analysis",
+        "output_expected": "Multi-source sentiment analysis with synthesized perspectives",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -132,6 +167,7 @@ async def test_user_hunter_historical_pattern_recognition(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI historical pattern analysis for authenticated user."""
     response = await client.post(
@@ -146,6 +182,7 @@ async def test_user_hunter_historical_pattern_recognition(
 
     assert len(content) > 150, "Should provide detailed historical analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_historical_pattern_recognition",
@@ -169,6 +206,21 @@ async def test_user_hunter_historical_pattern_recognition(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_historical_003",
+        "s_multistep": False,
+        "input": "Show me Bitcoin's price patterns during the last 3 bull markets",
+        "output": content,
+        "test_label_sequence": "hunter_historical_analysis",
+        "output_expected": "Historical BTC patterns with recurring trends and actionable insights",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -177,6 +229,7 @@ async def test_user_hunter_risk_adjusted_recommendations(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI risk-adjusted yield recommendations for authenticated user."""
     response = await client.post(
@@ -191,6 +244,7 @@ async def test_user_hunter_risk_adjusted_recommendations(
 
     assert len(content) > 100, "Should provide risk-adjusted recommendations"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_risk_adjusted_recommendations",
@@ -214,6 +268,21 @@ async def test_user_hunter_risk_adjusted_recommendations(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_risk_adjusted_004",
+        "s_multistep": False,
+        "input": "Suggest low-risk DeFi yield opportunities with 5%+ APY",
+        "output": content,
+        "test_label_sequence": "hunter_yield_recommendations",
+        "output_expected": "Risk-adjusted DeFi yield opportunities with protocols and APY rates",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -222,6 +291,7 @@ async def test_user_hunter_portfolio_rebalancing_suggestions(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI portfolio rebalancing suggestions for authenticated user."""
     response = await client.post(
@@ -236,6 +306,7 @@ async def test_user_hunter_portfolio_rebalancing_suggestions(
 
     assert len(content) > 80, "Should provide rebalancing analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_portfolio_rebalancing_suggestions",
@@ -258,6 +329,21 @@ async def test_user_hunter_portfolio_rebalancing_suggestions(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_portfolio_005",
+        "s_multistep": False,
+        "input": "I have 70% ETH and 30% BTC. Should I rebalance?",
+        "output": content,
+        "test_label_sequence": "hunter_portfolio_rebalancing",
+        "output_expected": "Portfolio allocation analysis with rebalancing advice based on market conditions",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -266,6 +352,7 @@ async def test_user_hunter_gas_optimization_strategies(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI gas optimization recommendations for authenticated user."""
     response = await client.post(
@@ -280,6 +367,7 @@ async def test_user_hunter_gas_optimization_strategies(
 
     assert len(content) > 80, "Should provide gas optimization strategies"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_gas_optimization_strategies",
@@ -302,6 +390,21 @@ async def test_user_hunter_gas_optimization_strategies(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_gas_optimization_006",
+        "s_multistep": False,
+        "input": "When is the best time to execute Ethereum transactions to save on gas?",
+        "output": content,
+        "test_label_sequence": "hunter_gas_optimization",
+        "output_expected": "Gas optimization strategies with timing recommendations and cost-saving tips",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -310,6 +413,7 @@ async def test_user_hunter_market_regime_detection(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI market regime detection for authenticated user."""
     response = await client.post(
@@ -324,6 +428,7 @@ async def test_user_hunter_market_regime_detection(
 
     assert len(content) > 80, "Should provide market regime analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_market_regime_detection",
@@ -346,6 +451,21 @@ async def test_user_hunter_market_regime_detection(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_market_regime_007",
+        "s_multistep": False,
+        "input": "Are we in a bull market or bear market right now?",
+        "output": content,
+        "test_label_sequence": "hunter_market_regime",
+        "output_expected": "Market regime identification with supporting evidence and context",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -354,6 +474,7 @@ async def test_user_hunter_correlation_analysis_assets(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI asset correlation analysis for authenticated user."""
     response = await client.post(
@@ -368,6 +489,7 @@ async def test_user_hunter_correlation_analysis_assets(
 
     assert len(content) > 80, "Should provide correlation analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_correlation_analysis_assets",
@@ -390,6 +512,21 @@ async def test_user_hunter_correlation_analysis_assets(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_correlation_008",
+        "s_multistep": False,
+        "input": "How correlated are BTC, ETH, and SOL price movements?",
+        "output": content,
+        "test_label_sequence": "hunter_correlation_analysis",
+        "output_expected": "Asset correlation analysis with diversification insights and timeframes",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -398,6 +535,7 @@ async def test_user_hunter_liquidity_depth_assessment(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Hunter AI liquidity depth analysis for authenticated user."""
     response = await client.post(
@@ -412,6 +550,7 @@ async def test_user_hunter_liquidity_depth_assessment(
 
     assert len(content) > 50, "Should provide liquidity assessment"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_hunter_liquidity_depth_assessment",
@@ -434,3 +573,18 @@ async def test_user_hunter_liquidity_depth_assessment(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
             ))
+
+    # CSV tracking
+    await csv_tracker("user", "hunter", {
+        "test_id": "user_hunter_liquidity_009",
+        "s_multistep": False,
+        "input": "What's the liquidity depth for AAVE/ETH on Uniswap?",
+        "output": content,
+        "test_label_sequence": "hunter_liquidity_analysis",
+        "output_expected": "Liquidity depth assessment with TVL, volume, and slippage implications",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
