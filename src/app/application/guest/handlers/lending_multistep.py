@@ -86,7 +86,10 @@ class LendingMultiStepHandler:
             if not amount:
                 # Invalid amount, re-ask
                 return await self._ask_for_amount(asset, language, error=True)
-            return await self._show_vault_quote(asset, amount, language)
+
+            # For authenticated users: show quote with execute_data (modal will appear)
+            # For guests: show quote with confirmation request
+            return await self._show_vault_quote(asset, amount, language, is_authenticated, wallet_address)
 
         # Step 4: Process confirmation
         if continuation_step == "lending_awaiting_confirmation":
@@ -292,7 +295,7 @@ class LendingMultiStepHandler:
             return fallback_apys.get(asset, 5.0)
 
     async def _show_vault_quote(
-        self, asset: str, amount: str, language: str, error: bool = False
+        self, asset: str, amount: str, language: str, is_authenticated: bool = False, wallet_address: str | None = None, error: bool = False
     ) -> dict[str, Any]:
         """Step 3: Show vault options and quote."""
         try:
@@ -372,6 +375,38 @@ class LendingMultiStepHandler:
         msg = messages.get(language, messages["en"])
         error_text = f"\n{msg['error']}\n\n" if error else ""
 
+        # For authenticated users: fetch real vault data and generate execute_data
+        # Modal will appear immediately (like Swap)
+        execute_data = None
+        if is_authenticated and wallet_address:
+            try:
+                vaults = await self._morpho.get_vaults(
+                    chain="base",
+                    asset=asset,
+                    whitelisted_only=True,
+                )
+
+                best_vault = vaults[0] if vaults else None
+
+                if best_vault:
+                    execute_data = {
+                        "action_type": "deposit",
+                        "provider": "morpho",
+                        "protocol": "morpho",
+                        "chain": "base",
+                        "vault_address": best_vault.address,
+                        "asset_address": best_vault.asset_address,
+                        "asset_symbol": best_vault.asset,
+                        "amount": amount,
+                        "slippage": 0.5,
+                        "vault_name": best_vault.name,
+                        "vault_apy": best_vault.apy,
+                        "vault_tvl": best_vault.total_assets,
+                    }
+            except Exception as e:
+                logger.error(f"Error fetching vault data for execute_data: {e}", exc_info=True)
+
+        # Build message content (shown above the modal for authenticated users)
         content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {msg['title']}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -389,28 +424,51 @@ class LendingMultiStepHandler:
 {msg['note']}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**{msg['confirm_title']}**
+"""
+
+        # For authenticated users with execute_data: no pending_action, modal will show
+        # For guests or if no vault found: ask for confirmation
+        if execute_data:
+            # Authenticated flow - modal appears
+            content += f"**{msg['confirm_title']}**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n👉 Click **Execute** below to deposit."
+            return {
+                "content": content,
+                "pending_action": None,  # No pending action - modal shows immediately
+                "lending_info": None,
+                "enrichment": {
+                    "lending_flow": "ready_to_execute",
+                    "asset": asset,
+                    "amount": amount,
+                    "apy": apy,
+                    "monthly_earnings": monthly_earnings,
+                    "yearly_earnings": yearly_earnings,
+                },
+                "execute_data": execute_data,
+                "requires_registration": False,
+            }
+        else:
+            # Guest flow - ask for text confirmation
+            content += f"""**{msg['confirm_title']}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 {msg['confirm_actions']}
 
 {msg['signup_required']}
 """
-
-        return {
-            "content": content,
-            "pending_action": "lending_awaiting_confirmation",
-            "lending_info": {"asset": asset, "amount": amount},
-            "enrichment": {
-                "lending_flow": "step3_confirmation",
-                "asset": asset,
-                "amount": amount,
-                "apy": apy,
-                "monthly_earnings": monthly_earnings,
-                "yearly_earnings": yearly_earnings,
-            },
-            "requires_registration": True,
-        }
+            return {
+                "content": content,
+                "pending_action": "lending_awaiting_confirmation",
+                "lending_info": {"asset": asset, "amount": amount},
+                "enrichment": {
+                    "lending_flow": "step3_confirmation",
+                    "asset": asset,
+                    "amount": amount,
+                    "apy": apy,
+                    "monthly_earnings": monthly_earnings,
+                    "yearly_earnings": yearly_earnings,
+                },
+                "requires_registration": True,
+            }
 
     async def _execute_deposit(
         self, asset: str, amount: str, language: str, is_authenticated: bool, wallet_address: str | None = None
