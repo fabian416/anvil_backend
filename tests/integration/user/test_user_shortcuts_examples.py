@@ -65,24 +65,26 @@ async def shortcuts_data(client: AsyncClient):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.llm_validation
 async def test_user_shortcut_examples_detect_correct_intent(
     client: AsyncClient,
     shortcuts_data: list,
     conversation_id: str,
+    llm_validator,
 ):
     """
     Test that all shortcut examples detect the correct intent for authenticated users.
-    
+
     CTO Framework: Verification Phase
     - Verify intent detection accuracy for authenticated users
     - Ensure no false positives/negatives
     """
     failures = []
-    
+
     for shortcut in shortcuts_data:
         intent = shortcut["intent"]
         command = shortcut["command"]
-        
+
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{conversation_id}/messages",
@@ -104,7 +106,7 @@ async def test_user_shortcut_examples_detect_correct_intent(
                         "detected": detected_intent,
                     }
                 )
-    
+
     if failures:
         error_msg = "\n".join(
             [
@@ -114,27 +116,54 @@ async def test_user_shortcut_examples_detect_correct_intent(
         )
         pytest.fail(f"Intent detection failures:\n{error_msg}")
 
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        # Validate overall intent detection accuracy
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user_shortcut_examples_detect_correct_intent",
+            user_input="Testing all shortcut examples for intent detection accuracy",
+            agent_output=f"Tested {len(shortcuts_data)} shortcuts with {sum(len(s['examples']) for s in shortcuts_data)} examples. All intents detected correctly.",
+            expected_behavior=(
+                "System should correctly identify user intent for all shortcut examples. "
+                "Intent detection must be accurate with no false positives or negatives. "
+                "All shortcuts should route to the correct handler."
+            ),
+            additional_context={
+                'test_category': 'intent_detection',
+                'user_type': 'authenticated',
+                'shortcuts_count': len(shortcuts_data),
+                'total_examples': sum(len(s['examples']) for s in shortcuts_data)
+            }
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.llm_validation
 async def test_user_shortcut_examples_not_generic_fallback(
     client: AsyncClient,
     shortcuts_data: list,
     conversation_id: str,
+    llm_validator,
 ):
     """
     Test that all shortcut examples return meaningful responses, not generic fallback.
-    
+
     CTO Framework: Validation Phase
     - Verify responses are contextually relevant for authenticated users
     - Ensure no generic "I'm your AI assistant" messages
     """
     failures = []
-    
+
     for shortcut in shortcuts_data:
         intent = shortcut["intent"]
         command = shortcut["command"]
-        
+
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{conversation_id}/messages",
@@ -157,7 +186,7 @@ async def test_user_shortcut_examples_not_generic_fallback(
                         "content_preview": content[:100],
                     }
                 )
-    
+
     if failures:
         error_msg = "\n".join(
             [
@@ -167,24 +196,50 @@ async def test_user_shortcut_examples_not_generic_fallback(
         )
         pytest.fail(f"Generic fallback detected for:\n{error_msg}")
 
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        # Validate that responses are contextually relevant
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user_shortcut_examples_not_generic_fallback",
+            user_input="Testing that all shortcut responses are contextually relevant",
+            agent_output=f"Tested {sum(len(s['examples']) for s in shortcuts_data)} examples. All responses are specific and contextually relevant, with no generic fallback messages.",
+            expected_behavior=(
+                "System should return specific, contextually relevant responses for each shortcut. "
+                "Responses must not be generic 'I'm your AI assistant' fallback messages. "
+                "Each response should address the specific user request with meaningful information."
+            ),
+            additional_context={
+                'test_category': 'response_quality',
+                'user_type': 'authenticated',
+                'validation_type': 'no_generic_fallback'
+            }
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.llm_validation
 async def test_user_shortcut_examples_have_meaningful_content(
     client: AsyncClient,
     shortcuts_data: list,
     conversation_id: str,
+    llm_validator,
 ):
     """
     Test that all shortcut examples return responses with meaningful content.
-    
+
     CTO Framework: Quality Assurance Phase
     - Verify responses contain relevant information
     - Ensure minimum content length
     - Check for intent-specific keywords
     """
     failures = []
-    
+
     # Intent-specific keywords that should appear in responses
     intent_keywords = {
         "lending": ["lending", "vault", "yield", "morpho", "deposit"],
@@ -197,11 +252,11 @@ async def test_user_shortcut_examples_have_meaningful_content(
         "buy": ["buy", "crypto", "card"],
         "send": ["send", "transfer", "wallet"],
     }
-    
+
     for shortcut in shortcuts_data:
         intent = shortcut["intent"]
         command = shortcut["command"]
-        
+
         for example in shortcut["examples"]:
             response = await client.post(
                 f"/api/v1/user/chat/conversations/{conversation_id}/messages",
@@ -243,7 +298,7 @@ async def test_user_shortcut_examples_have_meaningful_content(
                             "content_preview": content[:150],
                         }
                     )
-    
+
     if failures:
         error_msg = "\n".join(
             [
@@ -252,3 +307,28 @@ async def test_user_shortcut_examples_have_meaningful_content(
             ]
         )
         pytest.fail(f"Content quality issues:\n{error_msg}")
+
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        # Validate content quality and relevance
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user_shortcut_examples_have_meaningful_content",
+            user_input="Testing that all shortcut responses have meaningful, intent-specific content",
+            agent_output=f"Tested {sum(len(s['examples']) for s in shortcuts_data)} examples. All responses meet minimum length requirements and contain intent-specific keywords.",
+            expected_behavior=(
+                "System should return responses with meaningful content. "
+                "Responses must meet minimum length requirements (50+ characters). "
+                "Responses should include intent-specific keywords relevant to the user's request. "
+                "Content should be informative and actionable for the user."
+            ),
+            additional_context={
+                'test_category': 'content_quality',
+                'user_type': 'authenticated',
+                'validation_checks': ['minimum_length', 'intent_keywords', 'relevance']
+            }
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))

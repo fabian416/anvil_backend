@@ -1281,3 +1281,453 @@ class TestGuestChatHunterReal:
                 ))
 
             assert data["routing"]["language"] == zh_lang
+
+
+    # ========================================
+    # Advanced Hunter AI Tests (Phase 2.1)
+    # ========================================
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_cross_chain_analysis(self, test_app, llm_validator):
+        """
+        Test Hunter AI cross-chain arbitrage opportunity analysis.
+
+        CTO Framework: Advanced Feature Validation
+        - Multi-chain data aggregation
+        - Cross-chain price differential detection
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "Find arbitrage opportunities between Ethereum and Polygon for USDC", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.500"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed cross-chain analysis"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_cross_chain_analysis",
+                user_input="Find arbitrage opportunities between Ethereum and Polygon for USDC",
+                agent_output=content,
+                expected_behavior=(
+                    "Should identify cross-chain arbitrage opportunities for USDC. "
+                    "Response should mention specific protocols on both chains, price differences, "
+                    "gas cost considerations for cross-chain transfers, and potential profit margins."
+                ),
+                additional_context={
+                    'test_category': 'cross_chain_analysis',
+                    'chains': ['ethereum', 'polygon'],
+                    'token': 'USDC'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_sentiment_aggregation_sources(self, test_app, llm_validator):
+        """
+        Test Hunter AI sentiment analysis with data source citations.
+
+        CTO Framework: Data Provenance
+        - Verify multiple data sources are aggregated
+        - Check for source attribution
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "What's the current market sentiment for Bitcoin across all sources?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.501"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide comprehensive sentiment analysis"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_sentiment_aggregation_sources",
+                user_input="What's the current market sentiment for Bitcoin across all sources?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide aggregated sentiment analysis from multiple sources. "
+                    "Response should ideally mention different data sources (Twitter, Reddit, news, etc.) "
+                    "and provide an overall sentiment score or classification. "
+                    "Should distinguish between different source perspectives if available."
+                ),
+                additional_context={
+                    'test_category': 'sentiment_aggregation',
+                    'token': 'BTC',
+                    'data_sources': ['twitter', 'reddit', 'news', 'coingecko']
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_historical_pattern_recognition(self, test_app, llm_validator):
+        """
+        Test Hunter AI historical pattern recognition and time-series analysis.
+
+        CTO Framework: Temporal Analysis
+        - Historical data analysis quality
+        - Pattern recognition in price movements
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "Analyze historical price patterns for Ethereum over the past 30 days", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.502"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed historical analysis"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_historical_pattern_recognition",
+                user_input="Analyze historical price patterns for Ethereum over the past 30 days",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide historical price pattern analysis for Ethereum. "
+                    "Response should reference recent price movements, identify patterns "
+                    "(trends, support/resistance, volatility), and provide context about "
+                    "the 30-day period mentioned."
+                ),
+                additional_context={
+                    'test_category': 'historical_analysis',
+                    'token': 'ETH',
+                    'timeframe': '30_days'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_risk_adjusted_recommendations(self, test_app, llm_validator):
+        """
+        Test Hunter AI risk-adjusted investment recommendations.
+
+        CTO Framework: Risk Assessment
+        - Risk metrics inclusion
+        - Balanced recommendation quality
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "What are low-risk DeFi yield opportunities right now?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.503"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed risk-adjusted analysis"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_risk_adjusted_recommendations",
+                user_input="What are low-risk DeFi yield opportunities right now?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide low-risk DeFi yield opportunities with risk considerations. "
+                    "Response should mention specific protocols, explain why they're low-risk, "
+                    "include APY information, and discuss relevant risk factors (smart contract risk, "
+                    "impermanent loss, protocol security)."
+                ),
+                additional_context={
+                    'test_category': 'risk_adjusted_recommendations',
+                    'risk_profile': 'low',
+                    'topic': 'defi_yields'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_portfolio_rebalancing_suggestions(self, test_app, llm_validator):
+        """
+        Test Hunter AI portfolio rebalancing strategy suggestions.
+
+        CTO Framework: Portfolio Management
+        - Actionable rebalancing advice
+        - Strategy quality and clarity
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "How should I rebalance my portfolio if I'm 70% ETH and 30% BTC?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.504"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed rebalancing guidance"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_portfolio_rebalancing_suggestions",
+                user_input="How should I rebalance my portfolio if I'm 70% ETH and 30% BTC?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide portfolio rebalancing guidance for the specified allocation. "
+                    "Response should analyze the current 70/30 ETH/BTC split, discuss diversification, "
+                    "suggest alternative allocations or additional assets to consider, and explain "
+                    "the rationale for any recommendations."
+                ),
+                additional_context={
+                    'test_category': 'portfolio_rebalancing',
+                    'current_allocation': {'ETH': 70, 'BTC': 30}
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_gas_optimization_strategies(self, test_app, llm_validator):
+        """
+        Test Hunter AI gas optimization and cost-benefit analysis.
+
+        CTO Framework: Cost Optimization
+        - Gas cost analysis quality
+        - Actionable optimization strategies
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "What's the best time to execute trades to minimize gas costs on Ethereum?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.505"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed gas optimization guidance"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_gas_optimization_strategies",
+                user_input="What's the best time to execute trades to minimize gas costs on Ethereum?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide gas optimization strategies for Ethereum trading. "
+                    "Response should discuss optimal timing (weekends, off-peak hours), "
+                    "current gas price trends, gas price prediction tools, and strategies "
+                    "like batching transactions or using L2 solutions."
+                ),
+                additional_context={
+                    'test_category': 'gas_optimization',
+                    'chain': 'ethereum',
+                    'focus': 'timing'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_market_regime_detection(self, test_app, llm_validator):
+        """
+        Test Hunter AI market regime detection (bull/bear market adaptation).
+
+        CTO Framework: Adaptive Analysis
+        - Market condition recognition
+        - Strategy adaptation to market regime
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "Is the crypto market currently in a bull or bear phase?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.506"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed market regime analysis"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_market_regime_detection",
+                user_input="Is the crypto market currently in a bull or bear phase?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market regime analysis (bull/bear phase identification). "
+                    "Response should reference current market indicators, price trends, volume, "
+                    "sentiment, and potentially historical context to support the assessment. "
+                    "Should acknowledge market volatility and avoid absolute predictions."
+                ),
+                additional_context={
+                    'test_category': 'market_regime',
+                    'analysis_type': 'bull_bear_detection'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_correlation_analysis_assets(self, test_app, llm_validator):
+        """
+        Test Hunter AI multi-asset correlation analysis.
+
+        CTO Framework: Statistical Analysis
+        - Asset correlation insights
+        - Multi-asset relationship analysis
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "How correlated are BTC, ETH, and SOL price movements?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.507"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed correlation analysis"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_correlation_analysis_assets",
+                user_input="How correlated are BTC, ETH, and SOL price movements?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide correlation analysis for BTC, ETH, and SOL. "
+                    "Response should discuss how these assets move together or independently, "
+                    "mention correlation strength (high/low correlation), and explain implications "
+                    "for portfolio diversification and risk management."
+                ),
+                additional_context={
+                    'test_category': 'correlation_analysis',
+                    'assets': ['BTC', 'ETH', 'SOL']
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_hunter_liquidity_depth_assessment(self, test_app, llm_validator):
+        """
+        Test Hunter AI liquidity depth analysis and slippage warnings.
+
+        CTO Framework: Market Microstructure
+        - Liquidity assessment quality
+        - Slippage risk communication
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "What's the liquidity depth like for AAVE/ETH on Uniswap?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.508"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 50, "Should provide liquidity analysis"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_hunter_liquidity_depth_assessment",
+                user_input="What's the liquidity depth like for AAVE/ETH on Uniswap?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide liquidity depth analysis for AAVE/ETH on Uniswap. "
+                    "Response should discuss liquidity pool size, trading volume, potential slippage "
+                    "for different trade sizes, and implications for traders. May mention TVL, "
+                    "liquidity provider incentives, or alternative liquidity sources."
+                ),
+                additional_context={
+                    'test_category': 'liquidity_analysis',
+                    'pair': 'AAVE/ETH',
+                    'protocol': 'uniswap'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))

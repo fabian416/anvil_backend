@@ -1,0 +1,16 @@
+test_id,category,scenario,input,expected_output,actual_output,status,execution_time_ms,error_message,llm_analysis,severity,recommendations,notes
+guest_parity_001,guest_chat,test_guest_hunter_risk_signals,See test code,See test assertions,See test logs,PASS,0,,,,,
+guest_parity_002,guest_chat,test_guest_hunter_risk_signals_with_token,See test code,See test assertions,See test logs,PASS,0,,,,,
+guest_parity_003,guest_chat,test_guest_hunter_pattern_recognition,See test code,See test assertions,See test logs,PASS,0,,,,,
+guest_parity_004,guest_chat,test_guest_hunter_pattern_btc,See test code,See test assertions,See test logs,PASS,0,,,,,
+guest_parity_005,guest_chat,test_guest_hunter_risk_signals_multiple_tokens,See test code,See test assertions,See test logs,PASS,0,,,,,
+guest_parity_006,guest_chat,test_guest_hunter_pattern_eth_scenarios,See test code,See test assertions,".venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:521: in _prepare_and_execute
+    prepared_stmt, attributes = await adapt_connection._prepare(
+.venv/lib/python3.12/site-pac",FAIL,0,".venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:521: in _prepare_and_execute
+    prepared_stmt, attributes = await adapt_connection._prepare(
+.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:768: in _prepare
+    prepared_stmt = await self._connection.prepare(
+.venv/lib/python3.12/site-packages/asyncpg/connection.py:638: in prepare
+    return await self._prepare(
+.venv/lib/python3.12/site-packages/asyncpg/connection.py:657: in _prepare
+    ",,,,
