@@ -36,12 +36,32 @@ class TestPerplexityMCP:
         )
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_retry_decorator_exists(self, server):
         """Test that retry decorator is initialized."""
         assert hasattr(server, "_retry")
         assert server._retry is not None
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_retry_decorator_exists",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_search_success(self, server):
         """Test successful search."""
         mock_response = MagicMock()
@@ -69,8 +89,27 @@ class TestPerplexityMCP:
             assert "Ethereum" in result["answer"]
             assert "citations" in result
             assert len(result["citations"]) > 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_search_success",
+                user_input="Ethereum is a blockchain platform.",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_search_retries_on_http_error(self, server):
         """Test that search retries on HTTP error."""
         mock_response_fail = MagicMock()
@@ -111,8 +150,27 @@ class TestPerplexityMCP:
             assert "answer" in result
             assert "Bitcoin" in result["answer"]
             assert call_count == 3  # Failed twice, succeeded third time
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_search_retries_on_http_error",
+                user_input="Bitcoin is a cryptocurrency.",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_search_handles_timeout(self, server):
         """Test search handles timeout error."""
         with patch.object(
@@ -124,8 +182,27 @@ class TestPerplexityMCP:
             
             assert "error" in result
             assert "timeout" in result["error"].lower()
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_search_handles_timeout",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_chat_success(self, server):
         """Test successful chat."""
         mock_response = MagicMock()
@@ -156,8 +233,27 @@ class TestPerplexityMCP:
             assert "message" in result
             assert "content" in result["message"]
             assert "DeFi" in result["message"]["content"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_chat_success",
+                user_input="DeFi stands for Decentralized Finance.",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_call_tool_search(self, server):
         """Test calling search tool."""
         mock_response = MagicMock()
@@ -179,8 +275,27 @@ class TestPerplexityMCP:
             )
             
             assert "answer" in result or "error" not in result
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_call_tool_search",
+                user_input="Test answer",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_call_tool_unknown(self, server):
         """Test calling unknown tool."""
         result = await server.call_tool(
@@ -190,8 +305,27 @@ class TestPerplexityMCP:
         
         assert "error" in result
         assert "Unknown tool" in result["error"]
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_call_tool_unknown",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_tools_registered(self, server):
         """Test that tools are registered."""
         assert "search" in server.tools
@@ -202,8 +336,27 @@ class TestPerplexityMCP:
         assert "description" in search_tool
         assert "parameters" in search_tool
         assert "handler" in search_tool
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_tools_registered",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_retry_configuration(self, mock_settings):
         """Test retry configuration from settings."""
         server = PerplexityMCPServer(
@@ -213,4 +366,22 @@ class TestPerplexityMCP:
         
         assert server._retry is not None
         # Retry decorator should be callable (it's a decorator function)
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_retry_configuration",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert callable(server._retry)

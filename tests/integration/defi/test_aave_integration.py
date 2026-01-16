@@ -434,6 +434,7 @@ class TestAaveMCPServer:
 class TestAaveAdapterIntegration:
     """Test AaveAdapter integration with mock cache."""
 
+    @pytest.mark.llm_validation
     async def test_adapter_get_markets(self):
         """Test adapter can get markets with mock cache."""
         from unittest.mock import AsyncMock
@@ -449,6 +450,25 @@ class TestAaveAdapterIntegration:
         assert len(markets) > 0
         assert markets[0].chain == "ethereum"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_adapter_get_markets",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide market sentiment analysis for Ethereum. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+                ),
+                additional_context={'test_category': 'sentiment_query', 'token': 'Ethereum'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
     async def test_adapter_get_user_position(self):
         """Test adapter can get user position with mock cache."""
         from unittest.mock import AsyncMock
@@ -467,6 +487,25 @@ class TestAaveAdapterIntegration:
         assert position is not None
         assert position.chain == "ethereum"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_adapter_get_user_position",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.llm_validation
     async def test_adapter_calculate_health_factor(self):
         """Test adapter can calculate health factor."""
         from decimal import Decimal
@@ -482,4 +521,22 @@ class TestAaveAdapterIntegration:
         )
 
         assert hf.value > 1
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_adapter_calculate_health_factor",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert not hf.is_liquidatable

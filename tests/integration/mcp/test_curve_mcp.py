@@ -84,6 +84,7 @@ class TestCurveToolHandlers:
     """Tests for Curve MCP tool handlers."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_pools_handler_with_gateway(self):
         """Test get_pools handler with mocked gateway."""
         mock_coin1 = MagicMock()
@@ -120,7 +121,26 @@ class TestCurveToolHandlers:
         assert result["pools"][0]["name"] == "3pool"
         assert "USDC" in result["pools"][0]["coins"]
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_pools_handler_with_gateway",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_find_best_pools_handler(self):
         """Test find_best_pools handler."""
         mock_coin = MagicMock()
@@ -161,4 +181,22 @@ class TestCurveToolHandlers:
 
         assert "pools" in result
         assert result["token"] == "USDC"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_find_best_pools_handler",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert len(result["pools"]) > 0

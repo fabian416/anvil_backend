@@ -124,6 +124,7 @@ class TestMorphoToolHandlers:
     """Tests for Morpho MCP tool handlers."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_vaults_handler_no_gateway(self):
         """Test get_vaults handler when gateway is None."""
         # Arrange
@@ -145,7 +146,26 @@ class TestMorphoToolHandlers:
         assert "vaults" in result
         assert result["vaults"] == []
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_vaults_handler_no_gateway",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_vaults_handler_with_gateway(self):
         """Test get_vaults handler with mocked gateway."""
         # Arrange
@@ -184,7 +204,26 @@ class TestMorphoToolHandlers:
         assert result["vaults"][0]["name"] == "Test Vault"
         mock_gateway.get_vaults.assert_called_once_with(asset="USDC", chain="ethereum")
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_vaults_handler_with_gateway",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_compare_yields_handler(self):
         """Test compare_yields handler."""
         # Arrange
@@ -220,12 +259,31 @@ class TestMorphoToolHandlers:
         assert len(result["comparisons"]) > 0
         assert result["comparisons"][0]["protocol"] == "morpho"
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_compare_yields_handler",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 class TestMorphoIntegration:
     """Integration tests for Morpho MCP server end-to-end."""
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_full_vault_discovery_flow(self):
         """Test complete vault discovery and analysis flow."""
         # Arrange - Create mock vaults
@@ -279,4 +337,22 @@ class TestMorphoIntegration:
         assert "vaults" in result
         assert len(result["vaults"]) == 1  # Only vault1 meets min_apy
         assert result["vaults"][0]["name"] == "USDC Vault High"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_full_vault_discovery_flow",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert "8.50%" in result["vaults"][0]["apy"]

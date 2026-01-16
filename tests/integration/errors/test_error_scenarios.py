@@ -180,6 +180,7 @@ class TestDatabaseErrors:
     """Tests for database error scenarios."""
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_database_connection_error(self):
         """Test handling of database connection errors."""
         # This validates DB error handling
@@ -190,8 +191,27 @@ class TestDatabaseErrors:
         # 4. Error logged
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_database_connection_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_transaction_rollback_on_error(self):
         """Test transaction rollback on error."""
         # This validates transaction handling
@@ -202,8 +222,27 @@ class TestDatabaseErrors:
         # 4. No partial data committed
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_transaction_rollback_on_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_unique_constraint_violation(self):
         """Test handling of unique constraint violations."""
         # This validates constraint handling
@@ -215,12 +254,31 @@ class TestDatabaseErrors:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_unique_constraint_violation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 class TestExternalServiceErrors:
     """Tests for external service error scenarios."""
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_openai_api_error(self):
         """Test handling of OpenAI API errors."""
         # This validates external API error handling
@@ -231,14 +289,52 @@ class TestExternalServiceErrors:
         # 4. Retry logic triggered
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_openai_api_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_stripe_api_error(self):
         """Test handling of Stripe API errors."""
         # This validates payment error handling
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_stripe_api_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_redis_connection_error(self):
         """Test handling of Redis connection errors."""
         # This validates cache error handling
@@ -250,12 +346,31 @@ class TestExternalServiceErrors:
         
         assert True
 
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_redis_connection_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
 
 @pytest.mark.integration
 class TestConcurrencyErrors:
     """Tests for concurrency and race condition scenarios."""
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_concurrent_user_creation(self):
         """Test concurrent user creation with same email."""
         # This validates concurrency handling
@@ -266,18 +381,74 @@ class TestConcurrencyErrors:
         # 4. No data corruption
         
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_concurrent_user_creation",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_concurrent_message_sending(self):
         """Test concurrent message sending to same conversation."""
         # This validates concurrent writes
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_concurrent_message_sending",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_optimistic_locking(self):
         """Test optimistic locking for concurrent updates."""
         # This validates version control
         assert True
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_optimistic_locking",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 @pytest.mark.integration

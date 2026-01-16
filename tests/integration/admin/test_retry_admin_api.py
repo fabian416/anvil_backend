@@ -70,6 +70,7 @@ class TestAdminRetryAPI:
         return repo
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_service_list(self, mock_circuit_breaker, mock_service_registry):
         """Test getting list of all services."""
         interactor = GetServiceList(mock_circuit_breaker, mock_service_registry)
@@ -80,8 +81,27 @@ class TestAdminRetryAPI:
         assert result[0]["service_name"] == "defillama_mcp"
         assert result[0]["enabled"] is True
         assert result[0]["circuit_state"] == "CLOSED"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_service_list",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_service_status(self, mock_circuit_breaker, mock_service_registry):
         """Test getting status for specific service."""
         interactor = GetServiceStatus(mock_circuit_breaker, mock_service_registry)
@@ -91,8 +111,27 @@ class TestAdminRetryAPI:
         assert result["service_name"] == "defillama_mcp"
         assert result["enabled"] is True
         assert result["circuit_state"] == "CLOSED"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_service_status",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_disable_service(self, mock_service_registry):
         """Test disabling a service."""
         interactor = DisableService(mock_service_registry)
@@ -108,8 +147,27 @@ class TestAdminRetryAPI:
         assert call_args.kwargs["service_name"] == "defillama_mcp"
         assert call_args.kwargs["reason"] == "Maintenance"
         assert call_args.kwargs["duration_minutes"] == 60
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_disable_service",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_enable_service(self, mock_service_registry):
         """Test enabling a service."""
         interactor = EnableService(mock_service_registry)
@@ -123,8 +181,27 @@ class TestAdminRetryAPI:
         call_args = mock_service_registry.enable_service.call_args
         assert call_args.kwargs["service_name"] == "defillama_mcp"
         assert call_args.kwargs["reason"] == "Maintenance complete"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_enable_service",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_circuit_status(self, mock_circuit_breaker):
         """Test getting circuit breaker status for all services."""
         interactor = GetCircuitStatus(mock_circuit_breaker)
@@ -133,8 +210,27 @@ class TestAdminRetryAPI:
         
         assert len(result) == 6
         assert result[0]["state"] == "CLOSED"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_circuit_status",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_reset_circuit_breaker(self, mock_circuit_breaker):
         """Test resetting a circuit breaker."""
         interactor = ResetCircuitBreaker(mock_circuit_breaker)
@@ -145,8 +241,27 @@ class TestAdminRetryAPI:
         )
         
         mock_circuit_breaker.reset.assert_called_once_with("defillama_mcp")
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_reset_circuit_breaker",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_get_service_metrics(self, mock_repository):
         """Test getting service metrics."""
         interactor = GetServiceMetrics(mock_repository)
@@ -159,8 +274,27 @@ class TestAdminRetryAPI:
         assert result["metrics"][0]["total_requests"] == 100
         assert result["summary"]["total_requests"] == 100
         assert result["summary"]["avg_success_rate"] == 0.98
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_get_service_metrics",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_service_metrics_empty_data(self, mock_repository):
         """Test service metrics with no data."""
         mock_repository.get_aggregated_metrics.return_value = []
@@ -171,4 +305,22 @@ class TestAdminRetryAPI:
         assert result["service_name"] == "defillama_mcp"
         assert len(result["metrics"]) == 0
         assert result["summary"]["total_requests"] == 0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_service_metrics_empty_data",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert result["summary"]["avg_success_rate"] == 0

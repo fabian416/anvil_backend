@@ -222,6 +222,7 @@ class TestCircuitBreaker:
         assert status["config"]["timeout_seconds"] == 60
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_telemetry_on_state_transitions(self):
         """Test telemetry is recorded on state transitions."""
         # Arrange
@@ -246,6 +247,24 @@ class TestCircuitBreaker:
         assert call_args[1]["to_state"] == "OPEN"
         assert call_args[1]["reason"] == "failure_threshold_exceeded"
         assert call_args[1]["failure_count"] == 2
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_telemetry_on_state_transitions",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
 
 class TestCircuitBreakerManager:

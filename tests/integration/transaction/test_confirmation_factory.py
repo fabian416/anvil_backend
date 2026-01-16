@@ -156,6 +156,7 @@ class TestConfirmationServiceFactory:
         return TransactionConfirmationSettings()
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_create_service(self, mock_session_factory, default_settings):
         """Test creating a service from the factory."""
         factory = ConfirmationServiceFactory(mock_session_factory, default_settings)
@@ -163,6 +164,24 @@ class TestConfirmationServiceFactory:
         service = await factory.create_service()
 
         assert isinstance(service, TransactionConfirmationService)
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_create_service",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
 
     def test_factory_settings_property(self, mock_session_factory, default_settings):
         """Test that factory exposes settings."""
@@ -315,6 +334,7 @@ class TestIntegrationWithConfirmationService:
         return repo
 
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_factory_creates_working_service(self, mock_transaction_repository):
         """Test that factory creates a service that can process transactions."""
         settings = TransactionConfirmationSettings(use_testnet=True)
@@ -339,4 +359,22 @@ class TestIntegrationWithConfirmationService:
             assert len(results) == 1
             assert results[0].status == TransactionStatus.SUCCESS
             assert results[0].block_number == 12345678
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_factory_creates_working_service",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
             mock_transaction_repository.update_status.assert_called_once()

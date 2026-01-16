@@ -21,6 +21,7 @@ class TestMCPServerRetry:
     """Test retry functionality for MCP servers."""
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_defillama_retry_on_http_error(self, mock_mcp_manager_http):
         """Test DeFiLlama server retries on HTTP error."""
         # Arrange
@@ -56,8 +57,27 @@ class TestMCPServerRetry:
         assert "name" in result
         assert result["name"] == "Aave"
         assert mock_get.call_count == 3  # Retried twice
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_defillama_retry_on_http_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_oneinch_retry_on_timeout(self, mock_mcp_manager_http):
         """Test 1inch server retries on timeout."""
         # Arrange
@@ -73,8 +93,27 @@ class TestMCPServerRetry:
         # Verify retry decorator is configured
         assert hasattr(server, '_retry')
         assert server._retry is not None
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_oneinch_retry_on_timeout",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_thegraph_retry_exhausted(self, mock_mcp_manager_http):
         """Test The Graph server exhausts retries."""
         # Arrange
@@ -94,8 +133,27 @@ class TestMCPServerRetry:
         # Assert
         assert "error" in result or "subgraphs" in result  # Method returns dict with either error or data
         # Note: _get_subgraphs doesn't take query params, it lists available subgraphs
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_thegraph_retry_exhausted",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_coingecko_successful_on_first_attempt(self, mock_mcp_manager_http):
         """Test CoinGecko server succeeds without retry."""
         # Arrange
@@ -117,8 +175,27 @@ class TestMCPServerRetry:
         # Assert
         assert "error" not in result
         assert mock_get.call_count == 1  # No retry needed
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_coingecko_successful_on_first_attempt",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_aave_retry_configuration(self, mock_mcp_manager_http):
         """Test Aave server has retry decorator configured."""
         # Arrange
@@ -127,8 +204,27 @@ class TestMCPServerRetry:
         # Assert
         assert hasattr(server, '_retry')
         assert server._retry is not None
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_aave_retry_configuration",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate information about Aave protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+                ),
+                additional_context={'test_category': 'defi_protocol', 'protocol': 'Aave'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_portfolio_retry_configuration(self, mock_mcp_manager_http):
         """Test Portfolio server has retry decorator configured."""
         # Arrange
@@ -137,8 +233,27 @@ class TestMCPServerRetry:
         # Assert
         assert hasattr(server, '_retry')
         assert server._retry is not None
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_portfolio_retry_configuration",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_all_servers_have_retry(self, mock_mcp_manager_http):
         """Test all 6 MCP servers have retry configured."""
         # Arrange
@@ -155,8 +270,27 @@ class TestMCPServerRetry:
         for server in servers:
             assert hasattr(server, '_retry'), f"{server.__class__.__name__} missing _retry"
             assert server._retry is not None
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_all_servers_have_retry",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_retry_backoff_timing(self, mock_mcp_manager_http):
         """Test exponential backoff timing."""
         # Arrange
@@ -191,8 +325,27 @@ class TestMCPServerRetry:
         if len(call_times) >= 3:
             delay2 = call_times[2] - call_times[1]
             assert delay2 >= 2.0  # At least 2 seconds (actual: ~4s with jitter)
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_retry_backoff_timing",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_retry_on_network_error(self, mock_mcp_manager_http):
         """Test retry on network connectivity errors."""
         # Arrange
@@ -215,8 +368,27 @@ class TestMCPServerRetry:
         # Assert
         assert "name" in result or "error" in result
         # Network errors might not be retried by tenacity, check actual behavior
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_retry_on_network_error",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_mcp_settings_retry_defaults(self, mock_mcp_manager_http):
         """Test MCPSettings has retry configuration."""
         # Arrange
@@ -228,8 +400,27 @@ class TestMCPServerRetry:
         assert settings.retry.max_retries == 3
         assert settings.retry.initial_backoff_seconds == 1.0
         assert settings.retry.max_backoff_seconds == 30.0
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_mcp_settings_retry_defaults",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
     
     @pytest.mark.asyncio
+    @pytest.mark.llm_validation
     async def test_custom_retry_configuration(self, mock_mcp_manager_http):
         """Test custom retry configuration."""
         # Arrange
@@ -245,4 +436,22 @@ class TestMCPServerRetry:
         # Assert
         assert settings.retry.max_retries == 5
         assert settings.retry.initial_backoff_seconds == 0.5
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_custom_retry_configuration",
+                user_input="query",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+                ),
+                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
         assert settings.retry.max_backoff_seconds == 15.0
