@@ -5,13 +5,15 @@ Tests the portfolio optimization suggestion feature for guest users with real da
 """
 
 import pytest
+from datetime import datetime
 
 
 class TestGuestHunterPortfolioOptimization:
     """Test Hunter AI portfolio optimization for guests."""
 
     @pytest.mark.asyncio
-    async def test_portfolio_optimization_basic(self, client):
+    @pytest.mark.llm_validation
+    async def test_portfolio_optimization_basic(self, client, llm_validator, csv_tracker):
         """Test basic portfolio optimization request."""
 
         response = await client.post(
@@ -41,6 +43,34 @@ class TestGuestHunterPortfolioOptimization:
         if reg_required is not None:
             # Portfolio optimization requires registration to execute (but not to view)
             assert isinstance(reg_required.get("required"), bool)
+
+        # Optional LLM semantic validation
+        validation = None
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_portfolio_optimization_basic",
+                user_input="How can I optimize my crypto portfolio?",
+                agent_output=content,
+                expected_behavior="Response should provide portfolio optimization suggestions including asset allocation recommendations, expected returns, risk metrics, or appropriate disclaimers if optimization service is unavailable.",
+                additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'basic_optimization'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_portfolio_basic_001",
+            "s_multistep": False,
+            "input": "How can I optimize my crypto portfolio?",
+            "output": content,
+            "test_label_sequence": "hunter_portfolio_optimization_basic",
+            "output_expected": "Portfolio optimization suggestions with allocation, returns, and risk metrics",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
 
     @pytest.mark.asyncio
     async def test_portfolio_allocation_recommendations(self, client):
