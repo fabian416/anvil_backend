@@ -41,6 +41,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "subscription: Subscription tests")
     config.addinivalue_line("markers", "defi: DeFi protocol tests")
     config.addinivalue_line("markers", "llm_validation: Tests with optional LLM semantic validation")
+    config.addinivalue_line("markers", "no_db: Tests that don't need database cleanup")
 
 
 @pytest.fixture(scope="session")
@@ -244,14 +245,21 @@ def db_session(test_db_session):
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
-async def cleanup_database(test_db_engine):
+async def cleanup_database(request, test_db_engine):
     """Clean up database tables before each test function.
 
     This ensures test isolation by truncating all tables BEFORE each test.
     Uses TRUNCATE for speed and CASCADE to handle foreign keys.
 
     Uses async to properly synchronize with async test sessions.
+
+    Skips cleanup for tests marked with @pytest.mark.no_db.
     """
+    # Skip database cleanup for tests marked as no_db
+    if "no_db" in request.keywords:
+        yield
+        return
+
     from sqlalchemy.ext.asyncio import create_async_engine
     from sqlalchemy import text
 
@@ -555,3 +563,67 @@ def csv_writer(tmp_path):
 
     output_file = tmp_path / "test_results.csv"
     return EnhancedCSVWriter(str(output_file))
+
+
+@pytest.fixture
+def csv_tracker():
+    """
+    CSV test tracker fixture.
+
+    Tracks test execution to organized CSV files:
+    - tests/output/guest/{category}.csv
+    - tests/output/user/{category}.csv
+
+    Provides historical tracking with LLM validation results.
+
+    Usage:
+        async def test_guest_hunter(client, llm_validator, csv_tracker):
+            response = await client.post("/api/guest/chat", ...)
+
+            # Optional: Track execution
+            if llm_validator.enabled:
+                validation = await llm_validator.validate_single_response(...)
+                await csv_tracker("guest", "hunter", {
+                    "test_id": "guest_hunter_001",
+                    "s_multistep": False,
+                    "input": "Find Bitcoin opportunities",
+                    "output": response.json()["response"][:200],
+                    "test_label_sequence": "hunter_ai",
+                    "output_expected": "Crypto opportunities with risk analysis",
+                    "status": "PASS" if response.status_code == 200 else "FAIL",
+                    "date": datetime.now().isoformat(),
+                    "quality": validation.confidence,
+                    "qa_status": validation.verdict,
+                    "qa_output": validation.reasoning[:200],
+                })
+    """
+    from datetime import datetime
+    from tests.helpers.csv_tracker import CSVTestTracker, TestExecutionData
+
+    tracker = CSVTestTracker()
+
+    async def track(user_type: str, category: str, data: dict):
+        """
+        Track test execution.
+
+        Args:
+            user_type: "guest" or "user"
+            category: Test category (hunter, ultra, agent_squad, etc.)
+            data: Dictionary with test execution data
+        """
+        execution_data = TestExecutionData(
+            test_id=data["test_id"],
+            s_multistep=data.get("s_multistep", False),
+            input=data["input"],
+            output=data["output"],
+            test_label_sequence=data["test_label_sequence"],
+            output_expected=data["output_expected"],
+            status=data["status"],
+            date=data.get("date", datetime.utcnow().isoformat()),
+            quality=data.get("quality"),
+            qa_status=data.get("qa_status"),
+            qa_output=data.get("qa_output"),
+        )
+        tracker.track(user_type, category, execution_data)
+
+    return track
