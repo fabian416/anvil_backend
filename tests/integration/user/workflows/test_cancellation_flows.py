@@ -16,6 +16,7 @@ Generated for Phase 1.3 of Guest/User Coverage Enhancement
 
 import pytest
 import pytest_asyncio
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 import asyncio
 
@@ -52,6 +53,7 @@ async def test_cancellation_mid_hunter_analysis(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """
     Test cancellation during Hunter AI market analysis workflow.
@@ -79,6 +81,7 @@ async def test_cancellation_mid_hunter_analysis(
     # In a real cancellation scenario, we would interrupt mid-process
     # This test validates that IF cancelled, the response acknowledges it gracefully
 
+    validation = None
     # Optional LLM semantic validation (environment-gated)
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
@@ -103,6 +106,21 @@ async def test_cancellation_mid_hunter_analysis(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "workflows", {
+        "test_id": "user_workflows_cancellation_hunter_001",
+        "s_multistep": False,
+        "input": "Analyze Bitcoin market sentiment and provide detailed arbitrage opportunities across 5 exchanges",
+        "output": content,
+        "test_label_sequence": "workflows_cancellation_hunter",
+        "output_expected": "Market analysis with graceful cancellation acknowledgment if interrupted",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -111,6 +129,7 @@ async def test_cancellation_mid_ultra_execution(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """
     Test cancellation during ULTRA trade execution workflow.
@@ -137,6 +156,7 @@ async def test_cancellation_mid_ultra_execution(
     # Verify response explains the workflow
     # In production, cancellation would prevent partial execution
 
+    validation = None
     # Optional LLM semantic validation (environment-gated)
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
@@ -162,6 +182,21 @@ async def test_cancellation_mid_ultra_execution(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "workflows", {
+        "test_id": "user_workflows_cancellation_ultra_002",
+        "s_multistep": False,
+        "input": "Execute a multi-hop swap: ETH → USDC → DAI with best routing",
+        "output": content,
+        "test_label_sequence": "workflows_cancellation_ultra",
+        "output_expected": "Swap routing strategy with atomic transaction guarantee on cancellation",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -170,6 +205,7 @@ async def test_cancellation_multi_step_workflow_cleanup(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """
     Test resource cleanup after multi-agent workflow cancellation.
@@ -199,6 +235,7 @@ async def test_cancellation_multi_step_workflow_cleanup(
     last_response = responses[-1]
     content = last_response["agent_message"]["content"]
 
+    validation = None
     # Optional LLM semantic validation (environment-gated)
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
@@ -224,6 +261,21 @@ async def test_cancellation_multi_step_workflow_cleanup(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "workflows", {
+        "test_id": "user_workflows_multi_step_cleanup_003",
+        "s_multistep": True,
+        "input": "Multi-turn: 1) What are the best DeFi yield opportunities? 2) Now execute the top opportunity",
+        "output": content,
+        "test_label_sequence": "workflows_multi_step_cleanup",
+        "output_expected": "Execution plan referencing previous yield analysis with proper resource cleanup",
+        "status": "PASS" if last_response and content else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -232,6 +284,7 @@ async def test_cancellation_conversation_state_consistency(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """
     Test conversation state remains consistent after cancellation.
@@ -268,6 +321,7 @@ async def test_cancellation_conversation_state_consistency(
     data = response3.json()
     content = data["agent_message"]["content"]
 
+    validation = None
     # Optional LLM semantic validation (environment-gated)
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
@@ -293,6 +347,21 @@ async def test_cancellation_conversation_state_consistency(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "workflows", {
+        "test_id": "user_workflows_state_consistency_004",
+        "s_multistep": True,
+        "input": "Multi-turn: 1) Tell me about Ethereum staking 2) What are the risks? 3) Compare staking rewards across validators",
+        "output": content,
+        "test_label_sequence": "workflows_state_consistency",
+        "output_expected": "Validator comparison maintaining context from earlier staking discussion",
+        "status": "PASS" if response3.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -301,6 +370,7 @@ async def test_cancellation_resource_cleanup_verified(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """
     Test that database connections and resources are properly cleaned up.
@@ -327,6 +397,7 @@ async def test_cancellation_resource_cleanup_verified(
     # Verify response (resources should be cleaned up automatically)
     assert len(content) > 100, "Should provide substantial analysis"
 
+    validation = None
     # Optional LLM semantic validation (environment-gated)
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
@@ -352,6 +423,21 @@ async def test_cancellation_resource_cleanup_verified(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "workflows", {
+        "test_id": "user_workflows_resource_cleanup_005",
+        "s_multistep": False,
+        "input": "Analyze top 10 DeFi protocols with TVL, APY, and risk scores",
+        "output": content,
+        "test_label_sequence": "workflows_resource_cleanup",
+        "output_expected": "DeFi protocol analysis with efficient resource management and cleanup",
+        "status": "PASS" if response.status_code in (200, 201) and len(content) > 100 else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -360,6 +446,7 @@ async def test_cancellation_idempotency_guarantee(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """
     Test that cancellation requests are idempotent (multiple cancels don't cause issues).
@@ -384,6 +471,7 @@ async def test_cancellation_idempotency_guarantee(
     # (In a real cancellation scenario, multiple cancel requests would be tested)
     # This test validates normal completion and that state remains clean
 
+    validation = None
     # Optional LLM semantic validation (environment-gated)
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
@@ -408,3 +496,18 @@ async def test_cancellation_idempotency_guarantee(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
             ))
+
+    # CSV tracking
+    await csv_tracker("user", "workflows", {
+        "test_id": "user_workflows_idempotency_006",
+        "s_multistep": False,
+        "input": "Explain flash loans in detail",
+        "output": content,
+        "test_label_sequence": "workflows_idempotency",
+        "output_expected": "Flash loan explanation with idempotent cancellation handling",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
