@@ -206,6 +206,7 @@ class GuestProvider(Provider):
             moonpay_swap_handler=moonpay_swap_handler,  # MoonPay swap quotes
             morpho_gateway=morpho_gateway,  # Morpho gateway for multi-step lending flow
             aave_gateway=aave_gateway,  # Aave gateway for fallback when Morpho unavailable
+            guest_cache=None,  # Guest cache not yet configured in DI
             portfolio_service=portfolio_service,  # Real on-chain balance data
         )
 
