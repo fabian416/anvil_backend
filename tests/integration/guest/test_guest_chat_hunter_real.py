@@ -22,6 +22,7 @@ Run: alembic upgrade head
 """
 
 import pytest
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 
@@ -1289,7 +1290,7 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_cross_chain_analysis(self, test_app, llm_validator):
+    async def test_hunter_cross_chain_analysis(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI cross-chain arbitrage opportunity analysis.
 
@@ -1313,6 +1314,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 100, "Should provide detailed cross-chain analysis"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_cross_chain_analysis",
@@ -1335,10 +1337,25 @@ class TestGuestChatHunterReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_cross_chain_001",
+            "s_multistep": False,
+            "input": "Find arbitrage opportunities between Ethereum and Polygon for USDC",
+            "output": content,
+            "test_label_sequence": "hunter_cross_chain",
+            "output_expected": "Cross-chain arbitrage opportunities with protocols and profit margins",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_sentiment_aggregation_sources(self, test_app, llm_validator):
+    async def test_hunter_sentiment_aggregation_sources(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI sentiment analysis with data source citations.
 
@@ -1362,6 +1379,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 100, "Should provide comprehensive sentiment analysis"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_sentiment_aggregation_sources",
@@ -1384,6 +1402,21 @@ class TestGuestChatHunterReal:
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
                 ))
+
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_sentiment_agg_002",
+            "s_multistep": False,
+            "input": "What's the current market sentiment for Bitcoin across all sources?",
+            "output": content,
+            "test_label_sequence": "hunter_sentiment_aggregation",
+            "output_expected": "Aggregated sentiment from multiple sources with overall score",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
 
 
     @pytest.mark.asyncio
