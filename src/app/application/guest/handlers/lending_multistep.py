@@ -33,6 +33,7 @@ class LendingMultiStepHandler:
     # Vaults with known issues (exclude from selection)
     EXCLUDED_VAULTS = {
         '0x8773447e6369472D9B72f064Ea62e405216E9084',  # MEV Frontier USDC - consistent transaction failures
+        '0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657',  # Clearstar USDC Reactor - transaction failures
     }
 
     def __init__(
