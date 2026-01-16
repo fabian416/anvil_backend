@@ -7,6 +7,7 @@ Tests mirror guest Agent Squad tests but validate user-specific features.
 
 import pytest
 import pytest_asyncio
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 from app.run import make_app
@@ -42,6 +43,7 @@ async def test_user_agent_squad_context_preservation_multi_turn(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Agent Squad context preservation across multiple turns for authenticated user."""
     # Turn 1: Initial question
@@ -73,6 +75,7 @@ async def test_user_agent_squad_context_preservation_multi_turn(
 
     assert len(content) > 80, "Should provide contextual comparison"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_context_preservation_multi_turn",
@@ -96,6 +99,21 @@ async def test_user_agent_squad_context_preservation_multi_turn(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "agent_squad", {
+        "test_id": "user_agent_squad_context_preservation_001",
+        "s_multistep": True,
+        "input": "Multi-turn: 1) Tell me about Aave 2) What are its main risks? 3) Compare it to Compound",
+        "output": content,
+        "test_label_sequence": "agent_squad_context_preservation",
+        "output_expected": "Contextual comparison of Aave and Compound based on conversation history",
+        "status": "PASS" if r3.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -104,6 +122,7 @@ async def test_user_agent_squad_handoff_transition_smoothness(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Agent Squad smooth handoff transitions for authenticated user."""
     response = await client.post(
@@ -121,6 +140,7 @@ async def test_user_agent_squad_handoff_transition_smoothness(
 
     assert len(content) > 100, "Should provide comprehensive response"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_handoff_transition_smoothness",
@@ -143,6 +163,21 @@ async def test_user_agent_squad_handoff_transition_smoothness(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "agent_squad", {
+        "test_id": "user_agent_squad_handoff_transition_002",
+        "s_multistep": False,
+        "input": "What's the current ETH price and should I buy or provide liquidity?",
+        "output": content,
+        "test_label_sequence": "agent_squad_handoff_transition",
+        "output_expected": "Smooth handoff between Hunter AI price data and ULTRA strategy recommendations",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -151,6 +186,7 @@ async def test_user_agent_squad_parallel_agent_coordination(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Agent Squad parallel coordination for authenticated user."""
     response = await client.post(
@@ -168,6 +204,7 @@ async def test_user_agent_squad_parallel_agent_coordination(
 
     assert len(content) > 150, "Should provide multi-dimensional analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_parallel_agent_coordination",
@@ -190,6 +227,21 @@ async def test_user_agent_squad_parallel_agent_coordination(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "agent_squad", {
+        "test_id": "user_agent_squad_parallel_coordination_003",
+        "s_multistep": False,
+        "input": "Analyze Bitcoin from technical, fundamental, and sentiment perspectives",
+        "output": content,
+        "test_label_sequence": "agent_squad_parallel_coordination",
+        "output_expected": "Multi-dimensional Bitcoin analysis integrating technical, fundamental, and sentiment insights",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -198,6 +250,7 @@ async def test_user_agent_squad_specialization_routing_accuracy(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Agent Squad routing accuracy for complex queries for authenticated user."""
     response = await client.post(
@@ -216,6 +269,7 @@ async def test_user_agent_squad_specialization_routing_accuracy(
 
     assert len(content) > 100, "Should provide specialized analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_specialization_routing_accuracy",
@@ -240,6 +294,21 @@ async def test_user_agent_squad_specialization_routing_accuracy(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "agent_squad", {
+        "test_id": "user_agent_squad_specialization_routing_004",
+        "s_multistep": False,
+        "input": "I want to explore DeFi yields but I'm worried about smart contract risks. What should I consider for Curve vs Convex?",
+        "output": content,
+        "test_label_sequence": "agent_squad_specialization_routing",
+        "output_expected": "Specialized analysis routing to yield and risk agents with Curve vs Convex comparison",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -248,6 +317,7 @@ async def test_user_agent_squad_fallback_agent_quality(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Agent Squad fallback handling for ambiguous intents for authenticated user."""
     response = await client.post(
@@ -265,6 +335,7 @@ async def test_user_agent_squad_fallback_agent_quality(
 
     assert len(content) > 80, "Should provide useful response"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_fallback_agent_quality",
@@ -287,6 +358,21 @@ async def test_user_agent_squad_fallback_agent_quality(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "agent_squad", {
+        "test_id": "user_agent_squad_fallback_quality_005",
+        "s_multistep": False,
+        "input": "What's happening with crypto today?",
+        "output": content,
+        "test_label_sequence": "agent_squad_fallback_handling",
+        "output_expected": "Graceful handling of ambiguous query with relevant crypto market overview",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -295,6 +381,7 @@ async def test_user_agent_squad_memory_utilization_long_context(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test Agent Squad memory utilization in long conversations for authenticated user."""
     # Simulate a 9-turn conversation building context
@@ -324,6 +411,7 @@ async def test_user_agent_squad_memory_utilization_long_context(
     final_content = responses[-1]["agent_message"]["content"]
     assert len(final_content) > 100, "Should provide comprehensive recommendation"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_memory_utilization_long_context",
@@ -347,3 +435,18 @@ async def test_user_agent_squad_memory_utilization_long_context(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
             ))
+
+    # CSV tracking
+    await csv_tracker("user", "agent_squad", {
+        "test_id": "user_agent_squad_memory_utilization_006",
+        "s_multistep": True,
+        "input": "9-turn conversation: Uniswap V3 -> concentrated liquidity -> fee tiers -> V2 comparison -> capital efficiency -> position management -> risks -> providing liquidity -> beginner recommendation",
+        "output": final_content,
+        "test_label_sequence": "agent_squad_long_context_memory",
+        "output_expected": "Synthesized recommendation for beginners based on entire conversation context",
+        "status": "PASS" if responses[-1] and len(final_content) > 100 else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
