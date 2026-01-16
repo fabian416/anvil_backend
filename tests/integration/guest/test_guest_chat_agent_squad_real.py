@@ -18,6 +18,7 @@ Run: alembic upgrade head
 """
 
 import pytest
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 
@@ -711,7 +712,7 @@ class TestGuestChatAgentSquadReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_agent_squad_context_preservation_multi_turn(self, test_app, llm_validator):
+    async def test_agent_squad_context_preservation_multi_turn(self, test_app, llm_validator, csv_tracker):
         """Test Agent Squad context preservation across multiple conversation turns."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             # Turn 1
@@ -724,6 +725,7 @@ class TestGuestChatAgentSquadReal:
         assert r3.status_code == 200
         content = r3.json()["agent_message"]["content"]
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_agent_squad_context_preservation_multi_turn",
@@ -735,10 +737,25 @@ class TestGuestChatAgentSquadReal:
             if validation.verdict != "PASS":
                 pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
 
+        # CSV tracking
+        await csv_tracker("guest", "agent_squad", {
+            "test_id": "guest_agent_squad_context_preservation_001",
+            "s_multistep": True,
+            "input": "Multi-turn: 1) Tell me about Aave lending protocol 2) What are its risks? 3) Compare it to Compound",
+            "output": content,
+            "test_label_sequence": "agent_squad_context_preservation",
+            "output_expected": "Context-aware comparison of Aave and Compound based on conversation history",
+            "status": "PASS" if r3.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_agent_squad_handoff_transition_smoothness(self, test_app, llm_validator):
+    async def test_agent_squad_handoff_transition_smoothness(self, test_app, llm_validator, csv_tracker):
         """Test Agent Squad smooth agent-to-agent handoff transitions."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post("/api/v1/guest/chat", json={"content": "What's Bitcoin price and should I buy now?", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.701"})
@@ -746,6 +763,7 @@ class TestGuestChatAgentSquadReal:
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_agent_squad_handoff_transition_smoothness",
@@ -757,10 +775,25 @@ class TestGuestChatAgentSquadReal:
             if validation.verdict != "PASS":
                 pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
 
+        # CSV tracking
+        await csv_tracker("guest", "agent_squad", {
+            "test_id": "guest_agent_squad_handoff_smoothness_002",
+            "s_multistep": False,
+            "input": "What's Bitcoin price and should I buy now?",
+            "output": content,
+            "test_label_sequence": "agent_squad→hunter→research",
+            "output_expected": "Seamless multi-agent response combining price data and analysis",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_agent_squad_parallel_agent_coordination(self, test_app, llm_validator):
+    async def test_agent_squad_parallel_agent_coordination(self, test_app, llm_validator, csv_tracker):
         """Test Agent Squad parallel agent coordination."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post("/api/v1/guest/chat", json={"content": "Analyze ETH price, sentiment, and best DEX for swapping", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.702"})
@@ -768,6 +801,7 @@ class TestGuestChatAgentSquadReal:
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_agent_squad_parallel_agent_coordination",
@@ -779,10 +813,25 @@ class TestGuestChatAgentSquadReal:
             if validation.verdict != "PASS":
                 pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
 
+        # CSV tracking
+        await csv_tracker("guest", "agent_squad", {
+            "test_id": "guest_agent_squad_parallel_coordination_003",
+            "s_multistep": False,
+            "input": "Analyze ETH price, sentiment, and best DEX for swapping",
+            "output": content,
+            "test_label_sequence": "agent_squad_parallel",
+            "output_expected": "Coordinated multi-aspect analysis covering price, sentiment, and DEX comparison",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_agent_squad_specialization_routing_accuracy(self, test_app, llm_validator):
+    async def test_agent_squad_specialization_routing_accuracy(self, test_app, llm_validator, csv_tracker):
         """Test Agent Squad routing accuracy for edge case intents."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post("/api/v1/guest/chat", json={"content": "Is Ethereum's merge affecting DeFi protocols security?", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.703"})
@@ -790,6 +839,7 @@ class TestGuestChatAgentSquadReal:
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_agent_squad_specialization_routing_accuracy",
@@ -801,10 +851,25 @@ class TestGuestChatAgentSquadReal:
             if validation.verdict != "PASS":
                 pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
 
+        # CSV tracking
+        await csv_tracker("guest", "agent_squad", {
+            "test_id": "guest_agent_squad_routing_accuracy_004",
+            "s_multistep": False,
+            "input": "Is Ethereum's merge affecting DeFi protocols security?",
+            "output": content,
+            "test_label_sequence": "agent_squad_routing",
+            "output_expected": "Technical analysis of merge impact on DeFi security with appropriate routing",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_agent_squad_fallback_agent_quality(self, test_app, llm_validator):
+    async def test_agent_squad_fallback_agent_quality(self, test_app, llm_validator, csv_tracker):
         """Test Agent Squad fallback agent quality for unknown/ambiguous intents."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post("/api/v1/guest/chat", json={"content": "blockchain quantum computers future", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.704"})
@@ -812,6 +877,7 @@ class TestGuestChatAgentSquadReal:
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_agent_squad_fallback_agent_quality",
@@ -823,10 +889,25 @@ class TestGuestChatAgentSquadReal:
             if validation.verdict != "PASS":
                 pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
 
+        # CSV tracking
+        await csv_tracker("guest", "agent_squad", {
+            "test_id": "guest_agent_squad_fallback_quality_005",
+            "s_multistep": False,
+            "input": "blockchain quantum computers future",
+            "output": content,
+            "test_label_sequence": "agent_squad_fallback",
+            "output_expected": "Graceful handling of ambiguous query with relevant information or clarification",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_agent_squad_memory_utilization_long_context(self, test_app, llm_validator):
+    async def test_agent_squad_memory_utilization_long_context(self, test_app, llm_validator, csv_tracker):
         """Test Agent Squad context window management in long conversations."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             # Simulate long conversation with many turns
@@ -839,6 +920,7 @@ class TestGuestChatAgentSquadReal:
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_agent_squad_memory_utilization_long_context",
@@ -849,3 +931,18 @@ class TestGuestChatAgentSquadReal:
             )
             if validation.verdict != "PASS":
                 pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+
+        # CSV tracking
+        await csv_tracker("guest", "agent_squad", {
+            "test_id": "guest_agent_squad_memory_utilization_006",
+            "s_multistep": True,
+            "input": "Long conversation (9 turns) ending with: Summarize what we discussed about topics 0 through 3",
+            "output": content,
+            "test_label_sequence": "agent_squad_long_context",
+            "output_expected": "Context retention in long conversations with relevant summary or graceful limits acknowledgment",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
