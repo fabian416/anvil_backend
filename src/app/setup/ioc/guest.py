@@ -23,6 +23,7 @@ from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandle
 from app.application.chat.services.intent_detector import IntentDetectorService
 from app.domain.guest.ports.guest_repository import GuestRepository
 from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.aave_gateway import AaveGateway
 from app.infrastructure.adapters.guest_repository_sqla import GuestRepositorySqla
 from app.infrastructure.adapters.chat.keyword_intent_detection_adapter import (
     KeywordIntentDetectionAdapter,
@@ -153,6 +154,7 @@ class GuestProvider(Provider):
         buy_handler: BuyHandler,
         moonpay_swap_handler: MoonPaySwapHandler,
         morpho_gateway: MorphoGateway,
+        aave_gateway: AaveGateway,
         swap_handler: SwapHandler | None = None,
     ) -> GuestHandlerService:
         """
@@ -203,6 +205,7 @@ class GuestProvider(Provider):
             buy_handler=buy_handler,  # Privy on-ramp with wallet resolution
             moonpay_swap_handler=moonpay_swap_handler,  # MoonPay swap quotes
             morpho_gateway=morpho_gateway,  # Morpho gateway for multi-step lending flow
+            aave_gateway=aave_gateway,  # Aave gateway for fallback when Morpho unavailable
             portfolio_service=portfolio_service,  # Real on-chain balance data
         )
 

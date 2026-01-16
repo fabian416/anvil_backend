@@ -7,13 +7,14 @@ Provides multi-step conversational flow for lending/deposit:
 3. Show vault options with APY quotes
 4. Confirm deposit → requires signup
 
-Guest experience with demo Morpho vault data.
+Guest experience with demo Morpho vault data and Aave V3 fallback.
 """
 
 import logging
 from typing import Any
 
 from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.aave_gateway import AaveGateway
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +30,14 @@ class LendingMultiStepHandler:
         "wbtc": {"symbol": "WBTC", "name": "Wrapped Bitcoin", "emoji": "₿"},
     }
 
-    def __init__(self, morpho_gateway: MorphoGateway):
-        """Initialize lending multi-step handler with real Morpho data."""
+    def __init__(
+        self,
+        morpho_gateway: MorphoGateway,
+        aave_gateway: AaveGateway | None = None,
+    ):
+        """Initialize lending multi-step handler with Morpho and Aave support."""
         self._morpho = morpho_gateway
+        self._aave = aave_gateway
 
     async def handle_flow(
         self,
@@ -257,27 +263,18 @@ class LendingMultiStepHandler:
             )
 
             if vaults and len(vaults) > 0:
-                # Sort by APY and get top vault
-                # Get APY for each vault and find the best one
-                vault_apys = []
-                for vault in vaults[:10]:  # Limit to first 10 for performance
-                    try:
-                        apy_data = await self._morpho.get_vault_apy(
-                            vault_address=vault.address,
-                            chain=chain,
-                        )
-                        vault_apys.append((vault, apy_data.net_apy))
-                    except Exception:
-                        # Skip vaults where we can't get APY
-                        continue
-                
-                if vault_apys:
-                    # Return highest APY
-                    best_vault, best_apy = max(vault_apys, key=lambda x: x[1])
+                # Filter for whitelisted vaults only
+                whitelisted_vaults = [v for v in vaults if v.whitelisted]
+
+                if whitelisted_vaults:
+                    # Sort by APY (highest first) and get best APY directly from vault object
+                    sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
+                    best_vault = sorted_vaults[0]
+                    best_apy = best_vault.apy
                     logger.info(f"Fetched real Morpho APY for {asset}: {best_apy:.2f}%")
                     return float(best_apy)
                 else:
-                    logger.warning(f"Could not get APY for any vaults for {asset} on {chain}")
+                    logger.warning(f"No whitelisted vaults found for {asset} on {chain}")
                     return 5.0  # Fallback
             else:
                 logger.warning(f"No Morpho vaults found for {asset} on {chain}")
@@ -303,8 +300,8 @@ class LendingMultiStepHandler:
         except ValueError:
             amount_float = 0
 
-        # Get real APY from Morpho
-        apy = await self._get_best_apy(asset, chain="ethereum")
+        # Get real APY from Morpho (use base chain for consistency with vault fetch)
+        apy = await self._get_best_apy(asset, chain="base")
         yearly_earnings = amount_float * (apy / 100)
         monthly_earnings = yearly_earnings / 12
 
@@ -394,6 +391,11 @@ class LendingMultiStepHandler:
                 best_vault = sorted_vaults[0] if sorted_vaults else None
 
                 if best_vault:
+                    logger.info(f"[LENDING_DEBUG] Best vault found: {best_vault.name}")
+                    logger.info(f"[LENDING_DEBUG] Vault address: {best_vault.address}")
+                    logger.info(f"[LENDING_DEBUG] Asset address: {best_vault.asset_address}")
+                    logger.info(f"[LENDING_DEBUG] Asset symbol: {best_vault.asset}")
+
                     execute_data = {
                         "action_type": "deposit",
                         "provider": "morpho",
@@ -408,6 +410,18 @@ class LendingMultiStepHandler:
                         "vault_apy": best_vault.apy,
                         "vault_tvl": best_vault.total_assets,
                     }
+                    logger.info(f"[LENDING_DEBUG] execute_data generated: {execute_data}")
+                else:
+                    logger.warning(f"[LENDING_DEBUG] No best vault found for {asset} on base")
+                    # Try Aave V3 fallback
+                    execute_data = await self._try_aave_fallback(
+                        asset=asset,
+                        amount=amount,
+                        chain="base",
+                        wallet_address=wallet_address,
+                    )
+                    if execute_data:
+                        logger.info(f"[LENDING_DEBUG] Using Aave V3 fallback for {asset}")
             except Exception as e:
                 logger.error(f"Error fetching vault data for execute_data: {e}", exc_info=True)
 
@@ -432,10 +446,11 @@ class LendingMultiStepHandler:
 """
 
         # For authenticated users with execute_data: no pending_action, modal will show
-        # For guests or if no vault found: ask for confirmation
+        # For guests or if no vault found: ask for confirmation or show error
         if execute_data:
             # Authenticated flow - modal appears
-            content += f"**{msg['confirm_title']}**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n👉 Click **Execute** below to deposit."
+            protocol_name = "Morpho" if execute_data.get("protocol") == "morpho" else "Aave V3"
+            content += f"**{msg['confirm_title']}** ({protocol_name})\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n👉 Click **Execute** below to deposit."
             return {
                 "content": content,
                 "pending_action": None,  # No pending action - modal shows immediately
@@ -449,6 +464,32 @@ class LendingMultiStepHandler:
                     "yearly_earnings": yearly_earnings,
                 },
                 "execute_data": execute_data,
+                "requires_registration": False,
+            }
+        elif is_authenticated:
+            # Authenticated user but no vault found - show error message
+            unavailable_msg = {
+                "en": f"""❌ **Vault Not Available**
+
+Unfortunately, there are no active Morpho vaults for **{asset}** on Base network.
+
+**Available assets**: USDC, USDT, DAI
+
+Would you like to deposit one of these instead?""",
+                "es": f"""❌ **Vault No Disponible**
+
+Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red Base.
+
+**Assets disponibles**: USDC, USDT, DAI
+
+¿Te gustaría depositar alguno de estos en su lugar?""",
+            }.get(language, "")
+
+            return {
+                "content": unavailable_msg,
+                "pending_action": None,
+                "lending_info": None,
+                "enrichment": {"lending_flow": "vault_unavailable", "asset": asset},
                 "requires_registration": False,
             }
         else:
@@ -772,3 +813,76 @@ class LendingMultiStepHandler:
             return False
 
         return None
+
+    async def _try_aave_fallback(
+        self,
+        asset: str,
+        amount: str,
+        chain: str,
+        wallet_address: str,
+    ) -> dict | None:
+        """
+        Try Aave V3 as fallback when Morpho doesn't have vaults.
+
+        Returns execute_data dict or None if Aave also unavailable.
+        """
+        if not self._aave:
+            logger.warning("AaveGateway not available for fallback")
+            return None
+
+        try:
+            # Check if Aave has market for this asset
+            market = await self._aave.get_market_details(
+                asset=asset,
+                chain=chain,
+            )
+
+            # Verify market is active and suppliable
+            if not market.is_active or not market.is_suppliable:
+                logger.warning(f"Aave market for {asset} is not active/suppliable")
+                return None
+
+            # Verify there's available liquidity
+            if market.supply_cap_remaining <= 0:
+                logger.warning(f"Aave market for {asset} has reached supply cap")
+                return None
+
+            # Get Aave V3 pool address for chain
+            pool_addresses = {
+                "ethereum": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+                "polygon": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+                "arbitrum": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+                "optimism": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+                "avalanche": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+                "base": "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
+            }
+            pool_address = pool_addresses.get(chain)
+
+            if not pool_address:
+                logger.error(f"No Aave pool address for chain {chain}")
+                return None
+
+            # Generate execute_data for Aave V3
+            execute_data = {
+                "action_type": "deposit",
+                "provider": "aave",
+                "protocol": "aave_v3",
+                "chain": chain,
+                "pool_address": pool_address,
+                "asset_address": market.asset_address,
+                "asset_symbol": market.symbol,
+                "amount": amount,
+                "slippage": 0.5,
+                "supply_apy": float(market.supply_apy),
+                "available_liquidity_usd": float(market.available_liquidity_usd),
+                "referral_code": 0,
+            }
+
+            logger.info(f"[LENDING_DEBUG] Aave fallback activated for {asset}")
+            logger.info(f"[LENDING_DEBUG] Aave execute_data: {execute_data}")
+
+            return execute_data
+
+        except Exception as e:
+            logger.error(f"Error in Aave fallback for {asset}: {e}", exc_info=True)
+            return None

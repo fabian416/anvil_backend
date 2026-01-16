@@ -98,6 +98,15 @@ class ExecuteActionData(BaseModel):
     amount: str | None = Field(default=None, description="Amount to execute (human readable)")
     protocol: str | None = Field(default=None, description="Protocol name (for deposit/withdraw)")
     vault_address: str | None = Field(default=None, description="Vault address (for Morpho deposits)")
+    asset_address: str | None = Field(default=None, description="Underlying asset address (for Morpho deposits)")
+    asset_symbol: str | None = Field(default=None, description="Underlying asset symbol (for Morpho deposits)")
+
+    # Aave V3 specific fields
+    pool_address: str | None = Field(default=None, description="Aave V3 Pool address")
+    referral_code: int | None = Field(default=None, description="Aave referral code (default 0)")
+    supply_apy: float | None = Field(default=None, description="Aave supply APY")
+    available_liquidity_usd: float | None = Field(default=None, description="Available liquidity in USD")
+
     recipient: str | None = Field(default=None, description="Recipient address (for transfer)")
     slippage: float = Field(default=1.0, description="Slippage tolerance in percent")
     to_chain: str | None = Field(default=None, description="Destination chain (for cross-chain swap/bridge)")

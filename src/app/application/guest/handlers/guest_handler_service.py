@@ -74,6 +74,7 @@ class GuestHandlerService:
         buy_handler: BuyHandler | None = None,
         moonpay_swap_handler: MoonPaySwapHandler | None = None,
         morpho_gateway: "MorphoGateway | None" = None,
+        aave_gateway: "AaveGateway | None" = None,
         guest_cache: GuestCache | None = None,
         portfolio_service: "PortfolioService | None" = None,
     ):
@@ -92,7 +93,10 @@ class GuestHandlerService:
         # Multi-step buy flow handler
         self._buy_multistep = BuyMultiStepHandler()
         # Multi-step lending flow handler
-        self._lending_multistep = LendingMultiStepHandler(morpho_gateway=morpho_gateway)
+        self._lending_multistep = LendingMultiStepHandler(
+            morpho_gateway=morpho_gateway,
+            aave_gateway=aave_gateway,
+        )
         # Portfolio and activity handlers (demo for guests)
         self._portfolio_multistep = PortfolioMultiStepHandler()
         self._activity_multistep = ActivityMultiStepHandler()
