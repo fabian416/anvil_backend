@@ -383,10 +383,15 @@ class LendingMultiStepHandler:
                 vaults = await self._morpho.get_vaults(
                     chain="base",
                     asset=asset,
-                    whitelisted_only=True,
                 )
 
-                best_vault = vaults[0] if vaults else None
+                # Filter for whitelisted vaults only
+                whitelisted_vaults = [v for v in vaults if v.whitelisted]
+
+                # Sort by APY (highest first)
+                sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
+
+                best_vault = sorted_vaults[0] if sorted_vaults else None
 
                 if best_vault:
                     execute_data = {
@@ -548,11 +553,16 @@ class LendingMultiStepHandler:
                 vaults = await self._morpho.get_vaults(
                     chain="base",  # Default to Base for now
                     asset=asset,
-                    whitelisted_only=True,
                 )
 
+                # Filter for whitelisted vaults only
+                whitelisted_vaults = [v for v in vaults if v.whitelisted]
+
+                # Sort by APY (highest first)
+                sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
+
                 # Use best vault (highest APY) if available
-                best_vault = vaults[0] if vaults else None
+                best_vault = sorted_vaults[0] if sorted_vaults else None
 
                 # Generate execute_data if we have a vault
                 execute_data = None
