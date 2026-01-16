@@ -7,6 +7,7 @@ Tests mirror guest ULTRA tests but validate user-specific features.
 
 import pytest
 import pytest_asyncio
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 from app.run import make_app
@@ -42,6 +43,7 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test ULTRA flash loan arbitrage explanation for authenticated user."""
     response = await client.post(
@@ -56,6 +58,7 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
 
     assert len(content) > 150, "Should provide detailed flash loan explanation"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_flash_loan_arbitrage_explanation",
@@ -78,6 +81,21 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "ultra", {
+        "test_id": "user_ultra_flash_loan_001",
+        "s_multistep": False,
+        "input": "Explain how flash loan arbitrage works and the risks involved",
+        "output": content,
+        "test_label_sequence": "ultra_flash_loan",
+        "output_expected": "Flash loan mechanics with arbitrage opportunities and risk analysis",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -86,6 +104,7 @@ async def test_user_ultra_mev_protection_strategies(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test ULTRA MEV protection strategies for authenticated user."""
     response = await client.post(
@@ -100,6 +119,7 @@ async def test_user_ultra_mev_protection_strategies(
 
     assert len(content) > 100, "Should provide MEV protection strategies"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_mev_protection_strategies",
@@ -122,6 +142,21 @@ async def test_user_ultra_mev_protection_strategies(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "ultra", {
+        "test_id": "user_ultra_mev_protection_002",
+        "s_multistep": False,
+        "input": "How can I protect my transactions from MEV bots using Flashbots?",
+        "output": content,
+        "test_label_sequence": "ultra_mev_protection",
+        "output_expected": "MEV protection strategies with Flashbots, private transactions, and RPC endpoints",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -130,6 +165,7 @@ async def test_user_ultra_slippage_tolerance_recommendations(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test ULTRA slippage tolerance recommendations for authenticated user."""
     response = await client.post(
@@ -144,6 +180,7 @@ async def test_user_ultra_slippage_tolerance_recommendations(
 
     assert len(content) > 80, "Should provide slippage recommendations"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_slippage_tolerance_recommendations",
@@ -167,6 +204,21 @@ async def test_user_ultra_slippage_tolerance_recommendations(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "ultra", {
+        "test_id": "user_ultra_slippage_tolerance_003",
+        "s_multistep": False,
+        "input": "What slippage tolerance should I set for a $10,000 ETH swap on Uniswap?",
+        "output": content,
+        "test_label_sequence": "ultra_slippage_tolerance",
+        "output_expected": "Slippage tolerance recommendations considering liquidity depth and market conditions",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -175,6 +227,7 @@ async def test_user_ultra_gas_price_prediction_accuracy(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test ULTRA gas price prediction for authenticated user."""
     response = await client.post(
@@ -189,6 +242,7 @@ async def test_user_ultra_gas_price_prediction_accuracy(
 
     assert len(content) > 50, "Should provide gas estimation"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_gas_price_prediction_accuracy",
@@ -212,6 +266,21 @@ async def test_user_ultra_gas_price_prediction_accuracy(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "ultra", {
+        "test_id": "user_ultra_gas_price_prediction_004",
+        "s_multistep": False,
+        "input": "Estimate gas costs for swapping tokens on Ethereum right now",
+        "output": content,
+        "test_label_sequence": "ultra_gas_estimation",
+        "output_expected": "Current gas price estimates with gwei and USD cost for token swaps",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -220,6 +289,7 @@ async def test_user_ultra_multi_hop_swap_routing(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test ULTRA multi-hop swap routing optimization for authenticated user."""
     response = await client.post(
@@ -234,6 +304,7 @@ async def test_user_ultra_multi_hop_swap_routing(
 
     assert len(content) > 80, "Should provide routing analysis"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_multi_hop_swap_routing",
@@ -257,6 +328,21 @@ async def test_user_ultra_multi_hop_swap_routing(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "ultra", {
+        "test_id": "user_ultra_multi_hop_swap_routing_005",
+        "s_multistep": False,
+        "input": "What's the best route to swap LINK to MATIC with minimal slippage?",
+        "output": content,
+        "test_label_sequence": "ultra_swap_routing",
+        "output_expected": "Optimal routing analysis for LINK to MATIC swap with intermediate tokens and trade-offs",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -265,6 +351,7 @@ async def test_user_ultra_impermanent_loss_warnings(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test ULTRA impermanent loss risk disclosure for authenticated user."""
     response = await client.post(
@@ -279,6 +366,7 @@ async def test_user_ultra_impermanent_loss_warnings(
 
     assert len(content) > 100, "Should provide IL explanation"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_impermanent_loss_warnings",
@@ -301,6 +389,21 @@ async def test_user_ultra_impermanent_loss_warnings(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "ultra", {
+        "test_id": "user_ultra_impermanent_loss_006",
+        "s_multistep": False,
+        "input": "Explain impermanent loss risk for providing ETH/USDC liquidity",
+        "output": content,
+        "test_label_sequence": "ultra_impermanent_loss",
+        "output_expected": "Impermanent loss explanation for ETH/USDC pair with price divergence and risk mitigation",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -309,6 +412,7 @@ async def test_user_ultra_yield_farming_roi_calculations(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test ULTRA yield farming ROI transparency for authenticated user."""
     response = await client.post(
@@ -323,6 +427,7 @@ async def test_user_ultra_yield_farming_roi_calculations(
 
     assert len(content) > 80, "Should provide ROI calculation"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_yield_farming_roi_calculations",
@@ -346,6 +451,21 @@ async def test_user_ultra_yield_farming_roi_calculations(
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "ultra", {
+        "test_id": "user_ultra_yield_farming_roi_007",
+        "s_multistep": False,
+        "input": "Calculate real APY for Curve 3pool considering all fees and IL",
+        "output": content,
+        "test_label_sequence": "ultra_yield_calculation",
+        "output_expected": "Comprehensive ROI calculation for Curve 3pool with trading fees, CRV rewards, and gas costs",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -354,6 +474,7 @@ async def test_user_ultra_liquidation_risk_monitoring(
     client: AsyncClient,
     conversation_id: str,
     llm_validator,
+    csv_tracker,
 ):
     """Test ULTRA liquidation risk monitoring for authenticated user."""
     response = await client.post(
@@ -368,6 +489,7 @@ async def test_user_ultra_liquidation_risk_monitoring(
 
     assert len(content) > 100, "Should provide liquidation monitoring guidance"
 
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_liquidation_risk_monitoring",
@@ -389,3 +511,18 @@ async def test_user_ultra_liquidation_risk_monitoring(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
             ))
+
+    # CSV tracking
+    await csv_tracker("user", "ultra", {
+        "test_id": "user_ultra_liquidation_risk_monitoring_008",
+        "s_multistep": False,
+        "input": "How can I monitor my Aave position to avoid liquidation?",
+        "output": content,
+        "test_label_sequence": "ultra_liquidation_monitoring",
+        "output_expected": "Liquidation risk monitoring guidance with health factor, price alerts, and preventive actions",
+        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
