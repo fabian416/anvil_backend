@@ -278,24 +278,6 @@ class TestProjectULTRAIntegration:
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_execute_ultra_tool_in_arbitrage_project(
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_execute_ultra_tool_in_arbitrage_project",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
         self, arbitrage_project, mock_hunter_executor, mock_ultra_executor
     ):
         """Test executing ULTRA tool in Arbitrage Hunter project."""
@@ -317,24 +299,6 @@ class TestProjectULTRAIntegration:
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_ultra_tool_blocked_in_conservative_project(
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_tool_blocked_in_conservative_project",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
         self, conservative_project, mock_hunter_executor, mock_ultra_executor
     ):
         """Test ULTRA tool blocked in Conservative Investor project."""

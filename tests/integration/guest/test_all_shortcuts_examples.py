@@ -45,24 +45,6 @@ async def shortcuts_data(client: AsyncClient):
 @pytest.mark.integration
 @pytest.mark.llm_validation
 async def test_all_shortcut_examples_detect_correct_intent(
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_all_shortcut_examples_detect_correct_intent",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
     client: AsyncClient, shortcuts_data: list
 ):
     """
@@ -117,24 +99,6 @@ async def test_all_shortcut_examples_detect_correct_intent(
 @pytest.mark.integration
 @pytest.mark.llm_validation
 async def test_all_shortcut_examples_not_generic_fallback(
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_all_shortcut_examples_not_generic_fallback",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
     client: AsyncClient, shortcuts_data: list
 ):
     """
@@ -190,24 +154,6 @@ async def test_all_shortcut_examples_not_generic_fallback(
 @pytest.mark.integration
 @pytest.mark.llm_validation
 async def test_shortcut_examples_have_meaningful_content(
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_examples_have_meaningful_content",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
     client: AsyncClient, shortcuts_data: list
 ):
     """
