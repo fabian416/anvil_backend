@@ -15,6 +15,7 @@ Generated for Phase 1.2 of Guest/User Coverage Enhancement - User Tests
 
 import pytest
 import pytest_asyncio
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 import asyncio
 
@@ -35,7 +36,7 @@ async def client():
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_invalid_message_format_user(client: AsyncClient, llm_validator):
+async def test_error_invalid_message_format_user(client: AsyncClient, llm_validator, csv_tracker):
     """
     Test authenticated user chat with invalid message format.
 
@@ -61,6 +62,8 @@ async def test_error_invalid_message_format_user(client: AsyncClient, llm_valida
     # Should handle gracefully
     assert response.status_code in (200, 400, 422), f"Unexpected status for empty message: {response.status_code}"
 
+    validation = None
+    error_message = ""
     if response.status_code in (400, 422):
         data = response.json()
         error_message = str(data)
@@ -88,11 +91,26 @@ async def test_error_invalid_message_format_user(client: AsyncClient, llm_valida
                     f"{validation.reasoning}"
                 ))
 
+    # CSV tracking
+    await csv_tracker("user", "errors", {
+        "test_id": "user_errors_invalid_message_format_001",
+        "s_multistep": False,
+        "input": "Empty message submitted by authenticated user",
+        "output": error_message or "Empty message handling",
+        "test_label_sequence": "errors_invalid_input",
+        "output_expected": "User-friendly error message explaining validation failure",
+        "status": "PASS" if response.status_code in (200, 400, 422) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_context_corruption_detection(client: AsyncClient, llm_validator):
+async def test_error_context_corruption_detection(client: AsyncClient, llm_validator, csv_tracker):
     """
     Test detection and handling of conversation state/context corruption.
 
@@ -130,6 +148,7 @@ async def test_error_context_corruption_detection(client: AsyncClient, llm_valid
     last_response = responses[-1]
     content = last_response["agent_message"]["content"]
 
+    validation = None
     # Optional LLM semantic validation (environment-gated)
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
@@ -155,11 +174,26 @@ async def test_error_context_corruption_detection(client: AsyncClient, llm_valid
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("user", "errors", {
+        "test_id": "user_errors_context_corruption_002",
+        "s_multistep": True,
+        "input": "Multi-turn: 1) Tell me about Bitcoin 2) What about Ethereum? 3) Compare them for me",
+        "output": content,
+        "test_label_sequence": "errors_context_integrity",
+        "output_expected": "Context-aware comparison of Bitcoin and Ethereum based on conversation history",
+        "status": "PASS" if last_response and content else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_validator):
+async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_validator, csv_tracker):
     """
     Test handling of concurrent requests to same conversation.
 
@@ -194,6 +228,8 @@ async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_valid
 
     # Check first successful response
     successful_responses = [r for r in responses if r.status_code in (200, 201)]
+    validation = None
+    content = ""
     if successful_responses:
         data = successful_responses[0].json()
         content = data["agent_message"]["content"]
@@ -221,3 +257,18 @@ async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_valid
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
                 ))
+
+    # CSV tracking
+    await csv_tracker("user", "errors", {
+        "test_id": "user_errors_concurrent_requests_003",
+        "s_multistep": True,
+        "input": "Concurrent requests: Query 0, Query 1, Query 2 (sent simultaneously)",
+        "output": content or "Concurrent request handling",
+        "test_label_sequence": "errors_concurrency",
+        "output_expected": "Graceful handling of concurrent requests without data corruption",
+        "status": "PASS" if all(r.status_code in (200, 201, 429) for r in responses) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
