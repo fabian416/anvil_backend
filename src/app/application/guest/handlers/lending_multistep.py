@@ -485,6 +485,38 @@ class LendingMultiStepHandler:
 👉 **{msg['cta']}**
 """
 
+            # Fetch real vault data from Morpho
+            try:
+                vaults = await self._morpho.get_vaults(
+                    chain="base",  # Default to Base for now
+                    asset=asset,
+                    whitelisted_only=True,
+                )
+
+                # Use best vault (highest APY) if available
+                best_vault = vaults[0] if vaults else None
+
+                # Generate execute_data if we have a vault
+                execute_data = None
+                if best_vault:
+                    execute_data = {
+                        "action_type": "deposit",
+                        "provider": "morpho",
+                        "protocol": "morpho",
+                        "chain": "base",
+                        "vault_address": best_vault.address,
+                        "asset_address": best_vault.asset_address,
+                        "asset_symbol": best_vault.asset,
+                        "amount": amount,
+                        "slippage": 0.5,
+                        "vault_name": best_vault.name,
+                        "vault_apy": best_vault.apy,
+                        "vault_tvl": best_vault.total_assets,
+                    }
+            except Exception as e:
+                logger.error(f"Error fetching vault data: {e}", exc_info=True)
+                execute_data = None
+
             return {
                 "content": content,
                 "pending_action": None,
@@ -495,6 +527,7 @@ class LendingMultiStepHandler:
                     "amount": amount,
                     "wallet_address": wallet_address,
                 },
+                "execute_data": execute_data,
                 "requires_registration": False,
             }
 
