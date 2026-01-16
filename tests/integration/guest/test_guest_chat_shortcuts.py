@@ -6,6 +6,8 @@ to ensure proper intent detection and routing.
 """
 
 import pytest
+from datetime import datetime
+from httpx import AsyncClient, ASGITransport
 
 
 class TestGuestChatShortcuts:
@@ -754,7 +756,7 @@ class TestGuestChatShortcutsAdvanced:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_multi_step_portfolio_analysis(self, test_app, llm_validator):
+    async def test_shortcuts_multi_step_portfolio_analysis(self, test_app, llm_validator, csv_tracker):
         """Test chained shortcut workflow for portfolio analysis."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -772,6 +774,7 @@ class TestGuestChatShortcutsAdvanced:
 
         assert len(content) > 100, "Should provide comprehensive multi-step analysis"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_shortcuts_multi_step_portfolio_analysis",
@@ -793,9 +796,24 @@ class TestGuestChatShortcutsAdvanced:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "shortcuts", {
+            "test_id": "guest_shortcuts_multi_step_001",
+            "s_multistep": True,
+            "input": "Show me top DeFi protocols and analyze their risks",
+            "output": content,
+            "test_label_sequence": "shortcuts_multi_step_workflow",
+            "output_expected": "Multi-step workflow combining protocol discovery and risk analysis",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_conditional_execution_logic(self, test_app, llm_validator):
+    async def test_shortcuts_conditional_execution_logic(self, test_app, llm_validator, csv_tracker):
         """Test if-then shortcut behaviors."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -813,6 +831,7 @@ class TestGuestChatShortcutsAdvanced:
 
         assert len(content) > 50, "Should provide conditional analysis"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_shortcuts_conditional_execution_logic",
@@ -835,9 +854,24 @@ class TestGuestChatShortcutsAdvanced:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "shortcuts", {
+            "test_id": "guest_shortcuts_conditional_002",
+            "s_multistep": False,
+            "input": "Check ETH price and tell me if it's a good buy opportunity",
+            "output": content,
+            "test_label_sequence": "shortcuts_conditional_logic",
+            "output_expected": "ETH price check with conditional buy recommendation based on current conditions",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_parameter_validation_edge_cases(self, test_app, llm_validator):
+    async def test_shortcuts_parameter_validation_edge_cases(self, test_app, llm_validator, csv_tracker):
         """Test invalid input handling in shortcuts."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -855,6 +889,7 @@ class TestGuestChatShortcutsAdvanced:
 
         assert len(content) > 30, "Should provide error guidance"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_shortcuts_parameter_validation_edge_cases",
@@ -877,9 +912,24 @@ class TestGuestChatShortcutsAdvanced:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "shortcuts", {
+            "test_id": "guest_shortcuts_parameter_validation_003",
+            "s_multistep": False,
+            "input": "Swap -100 ETH for BTC",
+            "output": content,
+            "test_label_sequence": "shortcuts_parameter_validation",
+            "output_expected": "Graceful error handling for invalid parameter with educational guidance",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_output_format_consistency(self, test_app, llm_validator):
+    async def test_shortcuts_output_format_consistency(self, test_app, llm_validator, csv_tracker):
         """Test standardized response structures across shortcuts."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             # Test multiple shortcuts to verify consistent formatting
@@ -904,6 +954,8 @@ class TestGuestChatShortcutsAdvanced:
             assert "routing" in data
             assert "guest_info" in data
 
+        validation = None
+        combined_content = ""
         if llm_validator.enabled:
             combined_content = " | ".join([r["agent_message"]["content"] for r in responses])
             validation = await llm_validator.validate_single_response(
@@ -925,9 +977,24 @@ class TestGuestChatShortcutsAdvanced:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "shortcuts", {
+            "test_id": "guest_shortcuts_format_consistency_004",
+            "s_multistep": True,
+            "input": "Multiple queries: What's BTC price? | Analyze ETH trends | Show DeFi yields",
+            "output": combined_content or " | ".join([r["agent_message"]["content"] for r in responses]),
+            "test_label_sequence": "shortcuts_format_consistency",
+            "output_expected": "Consistent format across multiple shortcut responses",
+            "status": "PASS" if all(r.status_code == 200 for r in [resp]) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_internationalization_parity(self, test_app, llm_validator):
+    async def test_shortcuts_internationalization_parity(self, test_app, llm_validator, csv_tracker):
         """Test multi-language quality consistency."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             # Test same query in different languages
@@ -949,9 +1016,10 @@ class TestGuestChatShortcutsAdvanced:
             assert len(content) > 20, f"Language {lang} should get substantive response"
             assert data["routing"]["language"] == lang, f"Language routing should match {lang}"
 
+        validation = None
+        en_content = responses["en"]["agent_message"]["content"]
         if llm_validator.enabled:
             # Validate English response quality (representative)
-            en_content = responses["en"]["agent_message"]["content"]
             validation = await llm_validator.validate_single_response(
                 test_name="test_shortcuts_internationalization_parity",
                 user_input="What is DeFi? (tested across 4 languages)",
@@ -972,9 +1040,24 @@ class TestGuestChatShortcutsAdvanced:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "shortcuts", {
+            "test_id": "guest_shortcuts_internationalization_005",
+            "s_multistep": True,
+            "input": "What is DeFi? (tested in en, es, pt, zh)",
+            "output": en_content,
+            "test_label_sequence": "shortcuts_internationalization",
+            "output_expected": "Quality consistent response across 4 languages",
+            "status": "PASS" if all(responses.values()) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_accessibility_considerations(self, test_app, llm_validator):
+    async def test_shortcuts_accessibility_considerations(self, test_app, llm_validator, csv_tracker):
         """Test screen reader friendly responses."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -993,6 +1076,7 @@ class TestGuestChatShortcutsAdvanced:
         # Check for structured content (not just visual formatting)
         assert len(content) > 50, "Should provide detailed explanation"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_shortcuts_accessibility_considerations",
@@ -1015,9 +1099,24 @@ class TestGuestChatShortcutsAdvanced:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "shortcuts", {
+            "test_id": "guest_shortcuts_accessibility_006",
+            "s_multistep": False,
+            "input": "Explain current market conditions",
+            "output": content,
+            "test_label_sequence": "shortcuts_accessibility",
+            "output_expected": "Screen reader friendly response with clear structure and text descriptions",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_mobile_optimization_responses(self, test_app, llm_validator):
+    async def test_shortcuts_mobile_optimization_responses(self, test_app, llm_validator, csv_tracker):
         """Test concise mobile-friendly output."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -1036,6 +1135,7 @@ class TestGuestChatShortcutsAdvanced:
         # Should be concise but informative
         assert len(content) > 30, "Should provide informative content"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_shortcuts_mobile_optimization_responses",
@@ -1056,3 +1156,18 @@ class TestGuestChatShortcutsAdvanced:
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
                 ))
+
+        # CSV tracking
+        await csv_tracker("guest", "shortcuts", {
+            "test_id": "guest_shortcuts_mobile_optimization_007",
+            "s_multistep": False,
+            "input": "Quick ETH update",
+            "output": content,
+            "test_label_sequence": "shortcuts_mobile_optimization",
+            "output_expected": "Mobile-optimized concise response with key information first",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
