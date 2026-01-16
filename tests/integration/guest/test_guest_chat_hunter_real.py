@@ -1421,7 +1421,7 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_historical_pattern_recognition(self, test_app, llm_validator):
+    async def test_hunter_historical_pattern_recognition(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI historical pattern recognition and time-series analysis.
 
@@ -1445,6 +1445,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 100, "Should provide detailed historical analysis"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_historical_pattern_recognition",
@@ -1468,10 +1469,25 @@ class TestGuestChatHunterReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_historical_003",
+            "s_multistep": False,
+            "input": "Analyze historical price patterns for Ethereum over the past 30 days",
+            "output": content,
+            "test_label_sequence": "hunter_historical_patterns",
+            "output_expected": "Historical pattern analysis with price movements and trends",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_risk_adjusted_recommendations(self, test_app, llm_validator):
+    async def test_hunter_risk_adjusted_recommendations(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI risk-adjusted investment recommendations.
 
@@ -1495,6 +1511,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 100, "Should provide detailed risk-adjusted analysis"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_risk_adjusted_recommendations",
@@ -1518,10 +1535,25 @@ class TestGuestChatHunterReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_risk_adjusted_004",
+            "s_multistep": False,
+            "input": "What are low-risk DeFi yield opportunities right now?",
+            "output": content,
+            "test_label_sequence": "hunter_risk_adjusted",
+            "output_expected": "Low-risk DeFi yield opportunities with risk analysis and protocols",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_portfolio_rebalancing_suggestions(self, test_app, llm_validator):
+    async def test_hunter_portfolio_rebalancing_suggestions(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI portfolio rebalancing strategy suggestions.
 
@@ -1545,6 +1577,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 100, "Should provide detailed rebalancing guidance"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_portfolio_rebalancing_suggestions",
@@ -1567,10 +1600,25 @@ class TestGuestChatHunterReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_portfolio_rebalancing_005",
+            "s_multistep": False,
+            "input": "How should I rebalance my portfolio if I'm 70% ETH and 30% BTC?",
+            "output": content,
+            "test_label_sequence": "hunter_portfolio_rebalancing",
+            "output_expected": "Portfolio rebalancing guidance with allocation analysis and suggestions",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_gas_optimization_strategies(self, test_app, llm_validator):
+    async def test_hunter_gas_optimization_strategies(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI gas optimization and cost-benefit analysis.
 
@@ -1594,6 +1642,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 100, "Should provide detailed gas optimization guidance"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_gas_optimization_strategies",
@@ -1617,10 +1666,25 @@ class TestGuestChatHunterReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_gas_optimization_006",
+            "s_multistep": False,
+            "input": "What's the best time to execute trades to minimize gas costs on Ethereum?",
+            "output": content,
+            "test_label_sequence": "hunter_gas_optimization",
+            "output_expected": "Gas optimization strategies with timing and cost-saving techniques",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_market_regime_detection(self, test_app, llm_validator):
+    async def test_hunter_market_regime_detection(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI market regime detection (bull/bear market adaptation).
 
@@ -1644,6 +1708,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 100, "Should provide detailed market regime analysis"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_market_regime_detection",
@@ -1666,10 +1731,25 @@ class TestGuestChatHunterReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_market_regime_007",
+            "s_multistep": False,
+            "input": "Is the crypto market currently in a bull or bear phase?",
+            "output": content,
+            "test_label_sequence": "hunter_market_regime",
+            "output_expected": "Market regime analysis with bull/bear phase identification and indicators",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_correlation_analysis_assets(self, test_app, llm_validator):
+    async def test_hunter_correlation_analysis_assets(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI multi-asset correlation analysis.
 
@@ -1693,6 +1773,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 100, "Should provide detailed correlation analysis"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_correlation_analysis_assets",
@@ -1715,10 +1796,25 @@ class TestGuestChatHunterReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_correlation_analysis_008",
+            "s_multistep": False,
+            "input": "How correlated are BTC, ETH, and SOL price movements?",
+            "output": content,
+            "test_label_sequence": "hunter_correlation_analysis",
+            "output_expected": "Multi-asset correlation analysis with portfolio diversification insights",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_liquidity_depth_assessment(self, test_app, llm_validator):
+    async def test_hunter_liquidity_depth_assessment(self, test_app, llm_validator, csv_tracker):
         """
         Test Hunter AI liquidity depth analysis and slippage warnings.
 
@@ -1742,6 +1838,7 @@ class TestGuestChatHunterReal:
         assert len(content) > 50, "Should provide liquidity analysis"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_hunter_liquidity_depth_assessment",
@@ -1764,3 +1861,18 @@ class TestGuestChatHunterReal:
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
                 ))
+
+        # CSV tracking
+        await csv_tracker("guest", "hunter", {
+            "test_id": "guest_hunter_liquidity_depth_009",
+            "s_multistep": False,
+            "input": "What's the liquidity depth like for AAVE/ETH on Uniswap?",
+            "output": content,
+            "test_label_sequence": "hunter_liquidity_analysis",
+            "output_expected": "Liquidity depth analysis for AAVE/ETH with slippage and trading insights",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
