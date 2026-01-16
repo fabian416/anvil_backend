@@ -20,6 +20,7 @@ Run: alembic upgrade head
 """
 
 import pytest
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 
@@ -871,7 +872,7 @@ class TestGuestChatULTRAReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_flash_loan_arbitrage_explanation(self, test_app, llm_validator):
+    async def test_ultra_flash_loan_arbitrage_explanation(self, test_app, llm_validator, csv_tracker):
         """
         Test ULTRA flash loan arbitrage strategy explanation.
 
@@ -895,6 +896,7 @@ class TestGuestChatULTRAReal:
         assert len(content) > 100, "Should provide detailed flash loan explanation"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_ultra_flash_loan_arbitrage_explanation",
@@ -918,10 +920,25 @@ class TestGuestChatULTRAReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "ultra", {
+            "test_id": "guest_ultra_flash_loan_arbitrage_001",
+            "s_multistep": False,
+            "input": "Explain how flash loan arbitrage works and the risks involved",
+            "output": content,
+            "test_label_sequence": "ultra_flash_loan_arbitrage",
+            "output_expected": "Flash loan arbitrage explanation with mechanics and risk analysis",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_mev_protection_strategies(self, test_app, llm_validator):
+    async def test_ultra_mev_protection_strategies(self, test_app, llm_validator, csv_tracker):
         """
         Test ULTRA MEV (Maximal Extractable Value) protection guidance.
 
@@ -945,6 +962,7 @@ class TestGuestChatULTRAReal:
         assert len(content) > 100, "Should provide detailed MEV protection guidance"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_ultra_mev_protection_strategies",
@@ -968,10 +986,25 @@ class TestGuestChatULTRAReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "ultra", {
+            "test_id": "guest_ultra_mev_protection_002",
+            "s_multistep": False,
+            "input": "How can I protect my trades from MEV attacks and front-running?",
+            "output": content,
+            "test_label_sequence": "ultra_mev_protection",
+            "output_expected": "MEV protection strategies with Flashbots and anti-front-running techniques",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_slippage_tolerance_recommendations(self, test_app, llm_validator):
+    async def test_ultra_slippage_tolerance_recommendations(self, test_app, llm_validator, csv_tracker):
         """
         Test ULTRA dynamic slippage tolerance recommendations.
 
@@ -995,6 +1028,7 @@ class TestGuestChatULTRAReal:
         assert len(content) > 100, "Should provide detailed slippage guidance"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_ultra_slippage_tolerance_recommendations",
@@ -1018,10 +1052,25 @@ class TestGuestChatULTRAReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "ultra", {
+            "test_id": "guest_ultra_slippage_tolerance_003",
+            "s_multistep": False,
+            "input": "What slippage tolerance should I set for a large USDC to ETH swap?",
+            "output": content,
+            "test_label_sequence": "ultra_slippage_tolerance",
+            "output_expected": "Slippage tolerance recommendations for large swaps with risk analysis",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_gas_price_prediction_accuracy(self, test_app, llm_validator):
+    async def test_ultra_gas_price_prediction_accuracy(self, test_app, llm_validator, csv_tracker):
         """
         Test ULTRA gas price prediction and estimation quality.
 
@@ -1045,6 +1094,7 @@ class TestGuestChatULTRAReal:
         assert len(content) > 50, "Should provide gas price guidance"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_ultra_gas_price_prediction_accuracy",
@@ -1068,10 +1118,25 @@ class TestGuestChatULTRAReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "ultra", {
+            "test_id": "guest_ultra_gas_price_prediction_004",
+            "s_multistep": False,
+            "input": "What gas price should I use for a swap transaction right now?",
+            "output": content,
+            "test_label_sequence": "ultra_gas_prediction",
+            "output_expected": "Gas price recommendations with network congestion and timing analysis",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_multi_hop_swap_routing(self, test_app, llm_validator):
+    async def test_ultra_multi_hop_swap_routing(self, test_app, llm_validator, csv_tracker):
         """
         Test ULTRA multi-hop swap routing explanation.
 
@@ -1095,6 +1160,7 @@ class TestGuestChatULTRAReal:
         assert len(content) > 100, "Should provide detailed multi-hop explanation"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_ultra_multi_hop_swap_routing",
@@ -1119,10 +1185,25 @@ class TestGuestChatULTRAReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "ultra", {
+            "test_id": "guest_ultra_multi_hop_routing_005",
+            "s_multistep": False,
+            "input": "How does multi-hop routing work for swapping obscure tokens?",
+            "output": content,
+            "test_label_sequence": "ultra_multi_hop_routing",
+            "output_expected": "Multi-hop routing explanation with path optimization and gas trade-offs",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_impermanent_loss_warnings(self, test_app, llm_validator):
+    async def test_ultra_impermanent_loss_warnings(self, test_app, llm_validator, csv_tracker):
         """
         Test ULTRA impermanent loss risk disclosure quality.
 
@@ -1146,6 +1227,7 @@ class TestGuestChatULTRAReal:
         assert len(content) > 100, "Should provide detailed impermanent loss explanation"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_ultra_impermanent_loss_warnings",
@@ -1170,10 +1252,25 @@ class TestGuestChatULTRAReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "ultra", {
+            "test_id": "guest_ultra_impermanent_loss_006",
+            "s_multistep": False,
+            "input": "What is impermanent loss and how can it affect my liquidity provision?",
+            "output": content,
+            "test_label_sequence": "ultra_impermanent_loss",
+            "output_expected": "Impermanent loss explanation with risk scenarios and mitigation strategies",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_yield_farming_roi_calculations(self, test_app, llm_validator):
+    async def test_ultra_yield_farming_roi_calculations(self, test_app, llm_validator, csv_tracker):
         """
         Test ULTRA yield farming ROI calculation transparency.
 
@@ -1197,6 +1294,7 @@ class TestGuestChatULTRAReal:
         assert len(content) > 100, "Should provide detailed ROI calculation guidance"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_ultra_yield_farming_roi_calculations",
@@ -1220,10 +1318,25 @@ class TestGuestChatULTRAReal:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "ultra", {
+            "test_id": "guest_ultra_yield_farming_roi_007",
+            "s_multistep": False,
+            "input": "How do I calculate actual ROI from yield farming considering all costs?",
+            "output": content,
+            "test_label_sequence": "ultra_yield_farming_roi",
+            "output_expected": "Comprehensive ROI calculation with gas costs, IL, and risk-adjusted returns",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_liquidation_risk_monitoring(self, test_app, llm_validator):
+    async def test_ultra_liquidation_risk_monitoring(self, test_app, llm_validator, csv_tracker):
         """
         Test ULTRA liquidation risk monitoring and warning quality.
 
@@ -1247,6 +1360,7 @@ class TestGuestChatULTRAReal:
         assert len(content) > 100, "Should provide detailed liquidation risk guidance"
 
         # Optional LLM semantic validation (environment-gated)
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_ultra_liquidation_risk_monitoring",
@@ -1269,3 +1383,18 @@ class TestGuestChatULTRAReal:
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
                 ))
+
+        # CSV tracking
+        await csv_tracker("guest", "ultra", {
+            "test_id": "guest_ultra_liquidation_risk_008",
+            "s_multistep": False,
+            "input": "How do I monitor and avoid liquidation risk in leveraged positions?",
+            "output": content,
+            "test_label_sequence": "ultra_liquidation_risk",
+            "output_expected": "Liquidation risk monitoring with health factors and prevention strategies",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
