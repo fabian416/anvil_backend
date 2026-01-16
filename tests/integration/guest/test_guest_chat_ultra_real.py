@@ -863,3 +863,409 @@ class TestGuestChatULTRAReal:
                 ))
 
             assert data["routing"]["language"] == zh_lang
+
+
+    # ========================================
+    # Advanced ULTRA Tests (Phase 2.2)
+    # ========================================
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_ultra_flash_loan_arbitrage_explanation(self, test_app, llm_validator):
+        """
+        Test ULTRA flash loan arbitrage strategy explanation.
+
+        CTO Framework: Complex DeFi Strategy Communication
+        - Flash loan mechanics clarity
+        - Risk explanation quality
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "Explain how flash loan arbitrage works and the risks involved", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.600"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed flash loan explanation"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_flash_loan_arbitrage_explanation",
+                user_input="Explain how flash loan arbitrage works and the risks involved",
+                agent_output=content,
+                expected_behavior=(
+                    "Should explain flash loan arbitrage mechanics clearly. "
+                    "Response should cover: borrowing without collateral, same-transaction repayment, "
+                    "arbitrage opportunities, gas costs, and risks (failed transactions, competition, "
+                    "smart contract vulnerabilities). Should be educational and balanced."
+                ),
+                additional_context={
+                    'test_category': 'flash_loan_strategy',
+                    'complexity': 'advanced',
+                    'focus': ['mechanics', 'risks']
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_ultra_mev_protection_strategies(self, test_app, llm_validator):
+        """
+        Test ULTRA MEV (Maximal Extractable Value) protection guidance.
+
+        CTO Framework: Security & Protection Mechanisms
+        - MEV risk awareness
+        - Protection strategy recommendations
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "How can I protect my trades from MEV attacks and front-running?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.601"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed MEV protection guidance"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_mev_protection_strategies",
+                user_input="How can I protect my trades from MEV attacks and front-running?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should explain MEV protection strategies. "
+                    "Response should cover: what MEV is, how front-running works, "
+                    "protection methods (private mempools like Flashbots, low slippage settings, "
+                    "sandwich attack protection, using MEV-protected RPCs). Should be actionable."
+                ),
+                additional_context={
+                    'test_category': 'mev_protection',
+                    'security_focus': True,
+                    'strategies': ['flashbots', 'slippage', 'private_transactions']
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_ultra_slippage_tolerance_recommendations(self, test_app, llm_validator):
+        """
+        Test ULTRA dynamic slippage tolerance recommendations.
+
+        CTO Framework: Risk Management Parameters
+        - Slippage explanation quality
+        - Dynamic recommendation logic
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "What slippage tolerance should I set for a large USDC to ETH swap?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.602"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed slippage guidance"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_slippage_tolerance_recommendations",
+                user_input="What slippage tolerance should I set for a large USDC to ETH swap?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide slippage tolerance guidance for large swaps. "
+                    "Response should explain: what slippage is, why large trades need higher tolerance, "
+                    "factors affecting slippage (liquidity, trade size, volatility), "
+                    "recommended ranges, and trade-offs between slippage and failed transactions."
+                ),
+                additional_context={
+                    'test_category': 'slippage_tolerance',
+                    'trade_type': 'large_swap',
+                    'pair': 'USDC/ETH'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_ultra_gas_price_prediction_accuracy(self, test_app, llm_validator):
+        """
+        Test ULTRA gas price prediction and estimation quality.
+
+        CTO Framework: Cost Estimation Accuracy
+        - Gas prediction methodology
+        - Recommendation actionability
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "What gas price should I use for a swap transaction right now?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.603"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 50, "Should provide gas price guidance"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_gas_price_prediction_accuracy",
+                user_input="What gas price should I use for a swap transaction right now?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should provide gas price recommendations. "
+                    "Response should discuss: current network congestion, typical gas ranges "
+                    "(slow/standard/fast), estimated confirmation times, cost vs speed trade-offs, "
+                    "and potentially gas price trends or tools for monitoring."
+                ),
+                additional_context={
+                    'test_category': 'gas_estimation',
+                    'transaction_type': 'swap',
+                    'urgency': 'current'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_ultra_multi_hop_swap_routing(self, test_app, llm_validator):
+        """
+        Test ULTRA multi-hop swap routing explanation.
+
+        CTO Framework: Complex Transaction Paths
+        - Multi-hop logic clarity
+        - Route optimization explanation
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "How does multi-hop routing work for swapping obscure tokens?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.604"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed multi-hop explanation"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_multi_hop_swap_routing",
+                user_input="How does multi-hop routing work for swapping obscure tokens?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should explain multi-hop swap routing. "
+                    "Response should cover: why direct pairs don't exist for all tokens, "
+                    "how routing algorithms find optimal paths (e.g., TOKEN → ETH → USDC), "
+                    "trade-offs (more hops = more gas but better rates), "
+                    "and how aggregators compare routes."
+                ),
+                additional_context={
+                    'test_category': 'multi_hop_routing',
+                    'complexity': 'advanced',
+                    'token_type': 'obscure'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_ultra_impermanent_loss_warnings(self, test_app, llm_validator):
+        """
+        Test ULTRA impermanent loss risk disclosure quality.
+
+        CTO Framework: Risk Disclosure Standards
+        - IL explanation clarity
+        - Warning effectiveness
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "What is impermanent loss and how can it affect my liquidity provision?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.605"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed impermanent loss explanation"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_impermanent_loss_warnings",
+                user_input="What is impermanent loss and how can it affect my liquidity provision?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should explain impermanent loss clearly. "
+                    "Response should define IL, explain how price divergence causes losses, "
+                    "provide examples or scenarios, discuss when IL is most significant, "
+                    "mention mitigation strategies (stablecoin pairs, correlated assets), "
+                    "and balance IL risk against fee earnings."
+                ),
+                additional_context={
+                    'test_category': 'impermanent_loss',
+                    'risk_type': 'liquidity_provision',
+                    'education_level': 'beginner_to_intermediate'
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_ultra_yield_farming_roi_calculations(self, test_app, llm_validator):
+        """
+        Test ULTRA yield farming ROI calculation transparency.
+
+        CTO Framework: Financial Transparency
+        - ROI calculation methodology
+        - Risk-adjusted returns
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "How do I calculate actual ROI from yield farming considering all costs?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.606"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed ROI calculation guidance"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_yield_farming_roi_calculations",
+                user_input="How do I calculate actual ROI from yield farming considering all costs?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should explain yield farming ROI calculation. "
+                    "Response should cover: APY vs APR differences, gas costs for entry/exit/claims, "
+                    "impermanent loss impact, token price volatility, compounding frequency, "
+                    "and provide a framework for calculating net returns after all costs."
+                ),
+                additional_context={
+                    'test_category': 'yield_farming_roi',
+                    'calculation_type': 'comprehensive',
+                    'cost_factors': ['gas', 'IL', 'volatility', 'fees']
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_ultra_liquidation_risk_monitoring(self, test_app, llm_validator):
+        """
+        Test ULTRA liquidation risk monitoring and warning quality.
+
+        CTO Framework: Proactive Risk Management
+        - Liquidation mechanics explanation
+        - Monitoring recommendations
+        """
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
+            response = await ac.post(
+                "/api/v1/guest/chat",
+                json={"content": "How do I monitor and avoid liquidation risk in leveraged positions?", "language": "en"},
+                headers={"X-Forwarded-For": "127.0.0.607"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        content = data["agent_message"]["content"]
+
+        assert len(content) > 100, "Should provide detailed liquidation risk guidance"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_ultra_liquidation_risk_monitoring",
+                user_input="How do I monitor and avoid liquidation risk in leveraged positions?",
+                agent_output=content,
+                expected_behavior=(
+                    "Should explain liquidation risk management. "
+                    "Response should cover: what triggers liquidation, collateralization ratios, "
+                    "health factors, monitoring tools/alerts, risk mitigation strategies "
+                    "(adding collateral, reducing leverage, stop-losses), and platform-specific liquidation mechanics."
+                ),
+                additional_context={
+                    'test_category': 'liquidation_risk',
+                    'position_type': 'leveraged',
+                    'focus': ['monitoring', 'prevention']
+                }
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))

@@ -703,3 +703,149 @@ class TestGuestChatAgentSquadReal:
                 ))
 
             assert data["routing"]["language"] == zh_lang
+
+
+    # ========================================
+    # Advanced Agent Squad Tests (Phase 2.3)
+    # ========================================
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_agent_squad_context_preservation_multi_turn(self, test_app, llm_validator):
+        """Test Agent Squad context preservation across multiple conversation turns."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            # Turn 1
+            r1 = await ac.post("/api/v1/guest/chat", json={"content": "Tell me about Aave lending protocol", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.700"})
+            # Turn 2
+            r2 = await ac.post("/api/v1/guest/chat", json={"content": "What are its risks?", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.700"})
+            # Turn 3
+            r3 = await ac.post("/api/v1/guest/chat", json={"content": "Compare it to Compound", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.700"})
+
+        assert r3.status_code == 200
+        content = r3.json()["agent_message"]["content"]
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_squad_context_preservation_multi_turn",
+                user_input="Compare it to Compound (referring to Aave from previous messages)",
+                agent_output=content,
+                expected_behavior="Should compare Aave and Compound based on conversation history, maintaining context from previous turns.",
+                additional_context={'test_category': 'context_preservation', 'turns': 3}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_agent_squad_handoff_transition_smoothness(self, test_app, llm_validator):
+        """Test Agent Squad smooth agent-to-agent handoff transitions."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post("/api/v1/guest/chat", json={"content": "What's Bitcoin price and should I buy now?", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.701"})
+
+        assert response.status_code == 200
+        content = response.json()["agent_message"]["content"]
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_squad_handoff_transition_smoothness",
+                user_input="What's Bitcoin price and should I buy now?",
+                agent_output=content,
+                expected_behavior="Should seamlessly handle query requiring multiple agents (price data + analysis). Transition should be natural without exposing internal routing.",
+                additional_context={'test_category': 'agent_handoff', 'agents_involved': ['hunter', 'research']}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_agent_squad_parallel_agent_coordination(self, test_app, llm_validator):
+        """Test Agent Squad parallel agent coordination."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post("/api/v1/guest/chat", json={"content": "Analyze ETH price, sentiment, and best DEX for swapping", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.702"})
+
+        assert response.status_code == 200
+        content = response.json()["agent_message"]["content"]
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_squad_parallel_agent_coordination",
+                user_input="Analyze ETH price, sentiment, and best DEX for swapping",
+                agent_output=content,
+                expected_behavior="Should coordinate multiple analysis types (price, sentiment, DEX comparison) in coherent response covering all aspects requested.",
+                additional_context={'test_category': 'parallel_coordination', 'aspects': ['price', 'sentiment', 'dex']}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_agent_squad_specialization_routing_accuracy(self, test_app, llm_validator):
+        """Test Agent Squad routing accuracy for edge case intents."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post("/api/v1/guest/chat", json={"content": "Is Ethereum's merge affecting DeFi protocols security?", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.703"})
+
+        assert response.status_code == 200
+        content = response.json()["agent_message"]["content"]
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_squad_specialization_routing_accuracy",
+                user_input="Is Ethereum's merge affecting DeFi protocols security?",
+                agent_output=content,
+                expected_behavior="Should route to appropriate agent (research/analysis) for complex technical query. Response should address merge impact on DeFi security thoughtfully.",
+                additional_context={'test_category': 'routing_edge_case', 'topic': 'eth_merge_security'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_agent_squad_fallback_agent_quality(self, test_app, llm_validator):
+        """Test Agent Squad fallback agent quality for unknown/ambiguous intents."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            response = await ac.post("/api/v1/guest/chat", json={"content": "blockchain quantum computers future", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.704"})
+
+        assert response.status_code == 200
+        content = response.json()["agent_message"]["content"]
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_squad_fallback_agent_quality",
+                user_input="blockchain quantum computers future",
+                agent_output=content,
+                expected_behavior="Should handle ambiguous/unclear query gracefully with general fallback agent providing relevant information or asking for clarification.",
+                additional_context={'test_category': 'fallback_handling', 'intent_clarity': 'low'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.llm_validation
+    async def test_agent_squad_memory_utilization_long_context(self, test_app, llm_validator):
+        """Test Agent Squad context window management in long conversations."""
+        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+            # Simulate long conversation with many turns
+            for i in range(8):
+                await ac.post("/api/v1/guest/chat", json={"content": f"Query {i} about crypto topic {i}", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.705"})
+
+            # Final query referencing earlier context
+            response = await ac.post("/api/v1/guest/chat", json={"content": "Summarize what we discussed about topics 0 through 3", "language": "en"}, headers={"X-Forwarded-For": "127.0.0.705"})
+
+        assert response.status_code == 200
+        content = response.json()["agent_message"]["content"]
+
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_agent_squad_memory_utilization_long_context",
+                user_input="Summarize what we discussed about topics 0 through 3",
+                agent_output=content,
+                expected_behavior="Should maintain relevant context from earlier conversation turns or acknowledge context limits gracefully if conversation is too long.",
+                additional_context={'test_category': 'long_context', 'turns': 9}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
