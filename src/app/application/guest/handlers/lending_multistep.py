@@ -30,6 +30,11 @@ class LendingMultiStepHandler:
         "wbtc": {"symbol": "WBTC", "name": "Wrapped Bitcoin", "emoji": "₿"},
     }
 
+    # Vaults with known issues (exclude from selection)
+    EXCLUDED_VAULTS = {
+        '0x8773447e6369472D9B72f064Ea62e405216E9084',  # MEV Frontier USDC - consistent transaction failures
+    }
+
     def __init__(
         self,
         morpho_gateway: MorphoGateway,
@@ -263,8 +268,11 @@ class LendingMultiStepHandler:
             )
 
             if vaults and len(vaults) > 0:
-                # Filter for whitelisted vaults only
-                whitelisted_vaults = [v for v in vaults if v.whitelisted]
+                # Filter for whitelisted vaults only, excluding problematic ones
+                whitelisted_vaults = [
+                    v for v in vaults
+                    if v.whitelisted and v.address not in self.EXCLUDED_VAULTS
+                ]
 
                 if whitelisted_vaults:
                     # Sort by APY (highest first) and get best APY directly from vault object
@@ -382,8 +390,11 @@ class LendingMultiStepHandler:
                     asset=asset,
                 )
 
-                # Filter for whitelisted vaults only
-                whitelisted_vaults = [v for v in vaults if v.whitelisted]
+                # Filter for whitelisted vaults only, excluding problematic ones
+                whitelisted_vaults = [
+                    v for v in vaults
+                    if v.whitelisted and v.address not in self.EXCLUDED_VAULTS
+                ]
 
                 # Sort by APY (highest first)
                 sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
@@ -596,8 +607,11 @@ Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red B
                     asset=asset,
                 )
 
-                # Filter for whitelisted vaults only
-                whitelisted_vaults = [v for v in vaults if v.whitelisted]
+                # Filter for whitelisted vaults only, excluding problematic ones
+                whitelisted_vaults = [
+                    v for v in vaults
+                    if v.whitelisted and v.address not in self.EXCLUDED_VAULTS
+                ]
 
                 # Sort by APY (highest first)
                 sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
