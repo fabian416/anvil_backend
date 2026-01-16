@@ -24,7 +24,7 @@ from app.domain.entities.lending.morpho_vault import MorphoVault
 @dataclass
 class LendingHandlerResult:
     """Result from lending handler."""
-    
+
     content: str
     vaults: list[dict]
     chain: str
@@ -35,6 +35,7 @@ class LendingHandlerResult:
     handler: str = "lending_handler"
     pending_action: str | None = None  # For multi-turn flows (e.g., "lending_no_vaults", "lending_awaiting_asset", "lending_awaiting_chain")
     lending_info: dict | None = None  # Lending info for continuation (chain, asset, awaiting_asset, awaiting_chain)
+    execute_data: dict | None = None  # Execute data for frontend transaction execution
 
 
 class LendingHandler:
@@ -167,7 +168,18 @@ class LendingHandler:
                 "chain": chain,
                 "asset": asset,
             }
-        
+
+        # Generate execute data if vaults found and no pending action
+        execute_data = None
+        if not pending_action and vaults:
+            # Use best vault (highest APY) for execute data
+            best_vault = vaults[0]
+            execute_data = self._generate_execute_data(
+                vault=best_vault,
+                amount="1000",  # Default amount (can be made configurable)
+                chain=chain,
+            )
+
         result = LendingHandlerResult(
             content=content,
             vaults=vault_data,
@@ -177,6 +189,7 @@ class LendingHandler:
             latency_ms=latency_ms,
             language=language,
             pending_action=pending_action,
+            execute_data=execute_data,
         )
         
         # Store lending_info in result for metadata
@@ -184,7 +197,43 @@ class LendingHandler:
             result.lending_info = lending_info
         
         return result
-    
+
+    def _generate_execute_data(
+        self,
+        vault: MorphoVault,
+        amount: str = "1000",
+        chain: str = "base",
+    ) -> dict:
+        """
+        Generate execute data for Morpho vault deposit.
+
+        Follows the same pattern as SwapHandlerV2 (lines 318-350)
+        and BuyHandler (lines 726-732).
+
+        Args:
+            vault: MorphoVault entity with address and asset details
+            amount: Default deposit amount in token units (e.g., "1000" for 1000 USDC)
+            chain: Blockchain network (base, ethereum)
+
+        Returns:
+            Execute data dictionary for frontend transaction execution
+        """
+        return {
+            "action_type": "deposit",
+            "provider": "morpho",  # Protocol identifier
+            "protocol": "morpho",
+            "chain": chain,
+            "vault_address": vault.address,
+            "asset_address": vault.asset_address,
+            "asset_symbol": vault.asset,
+            "amount": amount,
+            "slippage": 0.5,  # 0.5% slippage tolerance for deposits
+            # Additional metadata for frontend display
+            "vault_name": vault.name,
+            "vault_apy": vault.apy,
+            "vault_tvl": vault.total_assets,
+        }
+
     async def get_vault_details(
         self,
         vault_address: str,

@@ -1818,6 +1818,10 @@ class GuestHandlerService:
                             "asset": result.asset,
                         }
 
+                # Include execute_data if available (for transaction execution)
+                if hasattr(result, "execute_data") and result.execute_data:
+                    response["execute_data"] = result.execute_data
+
                 return response
             except Exception as e:
                 logger.error(f"Lending handler error for '{content}': {e}", exc_info=True)

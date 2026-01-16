@@ -1061,13 +1061,21 @@ def create_conversations_router() -> APIRouter:
             agent_content = handler_result.get("content", "")
             enrichment = handler_result.get("enrichment")
             pending_action = handler_result.get("pending_action")
+
+            # Extract execute data if available (like Swap handler does at lines 933-937)
+            execute_data = None
+            execute_data_dict = handler_result.get("execute_data")
+            if execute_data_dict and not pending_action:
+                # Lend is complete and ready for execution
+                execute_data = ExecuteActionData(**execute_data_dict)
+
             if user.is_guest and handler_result.get("requires_registration"):
                 registration_required = {
                     "required": True,
                     "reason": "action_required",
                     "signup_url": "/signup",
                 }
-        
+
         elif intent_result.intent.value == "MONEY_MARKET":
             # Handle MONEY_MARKET intent (not restricted, uses guest handler service)
             from app.application.chat.services.intent_detector import ChatIntent

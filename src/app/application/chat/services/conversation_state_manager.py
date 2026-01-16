@@ -184,7 +184,7 @@ class ConversationStateManager:
                 f"Off-topic message detected (count: {context.off_topic_message_count})",
                 extra={
                     "pending_intent": context.pending_intent,
-                    "message": current_message[:100],
+                    "user_message": current_message[:100],
                 },
             )
         else:
