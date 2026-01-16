@@ -15,6 +15,7 @@ Generated for Phase 1.2 of Guest/User Coverage Enhancement - Guest Tests
 
 import pytest
 import pytest_asyncio
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 from app.run import make_app
@@ -31,7 +32,7 @@ async def client():
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_invalid_message_format_guest(client: AsyncClient, llm_validator):
+async def test_error_invalid_message_format_guest(client: AsyncClient, llm_validator, csv_tracker):
     """
     Test guest chat with invalid message format (malformed JSON, empty content).
 
@@ -48,6 +49,8 @@ async def test_error_invalid_message_format_guest(client: AsyncClient, llm_valid
     # Should handle gracefully (either reject or handle as empty query)
     assert response.status_code in (200, 400, 422), f"Unexpected status for empty message: {response.status_code}"
 
+    validation = None
+    error_message = ""
     if response.status_code in (400, 422):
         data = response.json()
         error_message = str(data)
@@ -75,11 +78,26 @@ async def test_error_invalid_message_format_guest(client: AsyncClient, llm_valid
                     f"{validation.reasoning}"
                 ))
 
+    # CSV tracking
+    await csv_tracker("guest", "errors", {
+        "test_id": "guest_errors_invalid_message_format_001",
+        "s_multistep": False,
+        "input": "Empty message submitted",
+        "output": error_message or "Empty message handling",
+        "test_label_sequence": "errors_invalid_input",
+        "output_expected": "User-friendly error message explaining validation failure",
+        "status": "PASS" if response.status_code in (200, 400, 422) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, llm_validator):
+async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, llm_validator, csv_tracker):
     """
     Test graceful degradation when LLM API fails or times out.
 
@@ -106,6 +124,7 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
         "If error is mentioned, should be user-friendly apology"
 
     # Optional LLM semantic validation (environment-gated)
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_error_llm_api_failure_graceful_degradation",
@@ -129,11 +148,26 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("guest", "errors", {
+        "test_id": "guest_errors_llm_graceful_degradation_002",
+        "s_multistep": False,
+        "input": "What is Bitcoin?",
+        "output": content,
+        "test_label_sequence": "errors_graceful_degradation",
+        "output_expected": "Helpful response with graceful error handling if LLM fails",
+        "status": "PASS" if response.status_code == 200 else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_database_connection_loss_recovery(client: AsyncClient, llm_validator):
+async def test_error_database_connection_loss_recovery(client: AsyncClient, llm_validator, csv_tracker):
     """
     Test system behavior when database connection is temporarily unavailable.
 
@@ -155,6 +189,7 @@ async def test_error_database_connection_loss_recovery(client: AsyncClient, llm_
     assert len(content) > 50, "Should provide substantial response"
 
     # Optional LLM semantic validation (environment-gated)
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_error_database_connection_loss_recovery",
@@ -177,11 +212,26 @@ async def test_error_database_connection_loss_recovery(client: AsyncClient, llm_
                 f"{validation.reasoning}"
             ))
 
+    # CSV tracking
+    await csv_tracker("guest", "errors", {
+        "test_id": "guest_errors_database_resilience_003",
+        "s_multistep": False,
+        "input": "Tell me about DeFi",
+        "output": content,
+        "test_label_sequence": "errors_database_resilience",
+        "output_expected": "Reliable response with transparent database error handling",
+        "status": "PASS" if response.status_code == 200 else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_rate_limit_exceeded_user_friendly(client: AsyncClient, llm_validator):
+async def test_error_rate_limit_exceeded_user_friendly(client: AsyncClient, llm_validator, csv_tracker):
     """
     Test user-friendly error message when guest rate limit is exceeded.
 
@@ -205,6 +255,8 @@ async def test_error_rate_limit_exceeded_user_friendly(client: AsyncClient, llm_
     # Check last response for quality
     last_response = responses[-1]
 
+    validation = None
+    content = ""
     if last_response.status_code == 200:
         data = last_response.json()
         content = data["response"]
@@ -232,11 +284,26 @@ async def test_error_rate_limit_exceeded_user_friendly(client: AsyncClient, llm_
                     f"{validation.reasoning}"
                 ))
 
+    # CSV tracking
+    await csv_tracker("guest", "errors", {
+        "test_id": "guest_errors_rate_limit_004",
+        "s_multistep": True,
+        "input": "Quick test 4 (rapid requests)",
+        "output": content or "Rate limit handling",
+        "test_label_sequence": "errors_rate_limiting",
+        "output_expected": "Clear and polite rate limit message with actionable alternatives",
+        "status": "PASS" if last_response.status_code in (200, 429) else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_malformed_agent_response_handling(client: AsyncClient, llm_validator):
+async def test_error_malformed_agent_response_handling(client: AsyncClient, llm_validator, csv_tracker):
     """
     Test system handling when agent returns malformed or unexpected response.
 
@@ -262,6 +329,7 @@ async def test_error_malformed_agent_response_handling(client: AsyncClient, llm_
     assert len(content) > 0, "Response should not be empty"
 
     # Optional LLM semantic validation (environment-gated)
+    validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
             test_name="test_error_malformed_agent_response_handling",
@@ -284,3 +352,18 @@ async def test_error_malformed_agent_response_handling(client: AsyncClient, llm_
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
             ))
+
+    # CSV tracking
+    await csv_tracker("guest", "errors", {
+        "test_id": "guest_errors_malformed_response_005",
+        "s_multistep": False,
+        "input": "Analyze Ethereum and Polygon arbitrage opportunities with detailed calculations",
+        "output": content,
+        "test_label_sequence": "errors_response_validation",
+        "output_expected": "Coherent analysis with well-formatted content and clear calculations",
+        "status": "PASS" if response.status_code == 200 else "FAIL",
+        "date": datetime.utcnow().isoformat(),
+        "quality": validation.confidence if validation else None,
+        "qa_status": validation.verdict if validation else "SKIPPED",
+        "qa_output": validation.reasoning if validation else None,
+    })
