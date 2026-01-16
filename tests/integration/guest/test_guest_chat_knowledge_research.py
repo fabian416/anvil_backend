@@ -7,6 +7,7 @@ All tests use LLM validation for semantic quality assessment.
 """
 
 import pytest
+from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 
@@ -16,7 +17,7 @@ class TestGuestChatKnowledgeResearch:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_knowledge_protocol_documentation_accuracy(self, test_app, llm_validator):
+    async def test_knowledge_protocol_documentation_accuracy(self, test_app, llm_validator, csv_tracker):
         """Test protocol documentation technical accuracy."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -32,6 +33,7 @@ class TestGuestChatKnowledgeResearch:
         assert len(content) > 100, "Should provide detailed technical explanation"
         assert "Uniswap" in content or "liquidity" in content or "V3" in content, "Should reference Uniswap V3"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_knowledge_protocol_documentation_accuracy",
@@ -54,9 +56,24 @@ class TestGuestChatKnowledgeResearch:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "knowledge", {
+            "test_id": "guest_knowledge_protocol_documentation_001",
+            "s_multistep": False,
+            "input": "Explain how Uniswap V3 concentrated liquidity works technically",
+            "output": content,
+            "test_label_sequence": "knowledge_protocol_documentation",
+            "output_expected": "Technical explanation of Uniswap V3 concentrated liquidity with tick ranges and capital efficiency",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_knowledge_smart_contract_audit_insights(self, test_app, llm_validator):
+    async def test_knowledge_smart_contract_audit_insights(self, test_app, llm_validator, csv_tracker):
         """Test smart contract security audit analysis quality."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -74,6 +91,7 @@ class TestGuestChatKnowledgeResearch:
 
         assert len(content) > 100, "Should provide comprehensive security analysis"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_knowledge_smart_contract_audit_insights",
@@ -96,9 +114,24 @@ class TestGuestChatKnowledgeResearch:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "knowledge", {
+            "test_id": "guest_knowledge_audit_insights_002",
+            "s_multistep": False,
+            "input": "What are the most common vulnerabilities found in DeFi smart contract audits?",
+            "output": content,
+            "test_label_sequence": "knowledge_security_audit",
+            "output_expected": "Common DeFi vulnerabilities like reentrancy, flash loan attacks, oracle manipulation, and access control issues",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_knowledge_tokenomics_analysis_depth(self, test_app, llm_validator):
+    async def test_knowledge_tokenomics_analysis_depth(self, test_app, llm_validator, csv_tracker):
         """Test tokenomics and economic model analysis depth."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -116,6 +149,7 @@ class TestGuestChatKnowledgeResearch:
 
         assert len(content) > 100, "Should provide detailed tokenomics analysis"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_knowledge_tokenomics_analysis_depth",
@@ -138,9 +172,24 @@ class TestGuestChatKnowledgeResearch:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "knowledge", {
+            "test_id": "guest_knowledge_tokenomics_003",
+            "s_multistep": False,
+            "input": "Analyze the tokenomics of a typical governance token. What makes good token distribution?",
+            "output": content,
+            "test_label_sequence": "knowledge_tokenomics",
+            "output_expected": "Token distribution analysis covering vesting schedules, emission rates, supply allocation, and governance rights",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_knowledge_governance_proposal_summaries(self, test_app, llm_validator):
+    async def test_knowledge_governance_proposal_summaries(self, test_app, llm_validator, csv_tracker):
         """Test DAO governance proposal clarity and comprehension."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -158,6 +207,7 @@ class TestGuestChatKnowledgeResearch:
 
         assert len(content) > 100, "Should provide clear governance explanation"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_knowledge_governance_proposal_summaries",
@@ -180,9 +230,24 @@ class TestGuestChatKnowledgeResearch:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "knowledge", {
+            "test_id": "guest_knowledge_governance_004",
+            "s_multistep": False,
+            "input": "Explain how DAO governance proposals work and what makes a good proposal",
+            "output": content,
+            "test_label_sequence": "knowledge_dao_governance",
+            "output_expected": "DAO voting mechanisms, proposal lifecycle, quorum requirements, and best practices for proposal writing",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_knowledge_regulatory_compliance_guidance(self, test_app, llm_validator):
+    async def test_knowledge_regulatory_compliance_guidance(self, test_app, llm_validator, csv_tracker):
         """Test regulatory compliance and legal disclaimer quality."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -200,6 +265,7 @@ class TestGuestChatKnowledgeResearch:
 
         assert len(content) > 100, "Should provide comprehensive regulatory guidance"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_knowledge_regulatory_compliance_guidance",
@@ -223,9 +289,24 @@ class TestGuestChatKnowledgeResearch:
                     f"{validation.reasoning}"
                 ))
 
+        # CSV tracking
+        await csv_tracker("guest", "knowledge", {
+            "test_id": "guest_knowledge_regulatory_compliance_005",
+            "s_multistep": False,
+            "input": "What regulatory considerations should I know about when trading crypto in the US?",
+            "output": content,
+            "test_label_sequence": "knowledge_regulatory_compliance",
+            "output_expected": "SEC regulations, IRS tax reporting, KYC/AML compliance, and appropriate disclaimers",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_knowledge_educational_content_beginner_friendly(self, test_app, llm_validator):
+    async def test_knowledge_educational_content_beginner_friendly(self, test_app, llm_validator, csv_tracker):
         """Test educational content accessibility for beginners."""
         async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
             response = await ac.post(
@@ -243,6 +324,7 @@ class TestGuestChatKnowledgeResearch:
 
         assert len(content) > 50, "Should provide clear explanation"
 
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_knowledge_educational_content_beginner_friendly",
@@ -266,3 +348,18 @@ class TestGuestChatKnowledgeResearch:
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
                 ))
+
+        # CSV tracking
+        await csv_tracker("guest", "knowledge", {
+            "test_id": "guest_knowledge_educational_beginner_006",
+            "s_multistep": False,
+            "input": "I'm new to DeFi. Explain what yield farming is in simple terms",
+            "output": content,
+            "test_label_sequence": "knowledge_educational_beginner",
+            "output_expected": "Simple explanation of yield farming with analogies, covering rewards, liquidity pools, and risks in beginner-friendly terms",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        })
