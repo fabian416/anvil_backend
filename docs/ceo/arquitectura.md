@@ -189,6 +189,690 @@ async def send_message(
 
 ---
 
+## Sistemas de Orquestación y Procesamiento
+
+### 1. Destilador (Distillation Orchestrator)
+
+#### ¿Qué es el Destilador?
+
+El **Destilador** es un sistema inteligente que **valida y optimiza** las requests de los usuarios **antes** de procesarlas con LLM. Actúa como un "filtro inteligente" que:
+
+1. **Clasifica la intención** del usuario
+2. **Evalúa la complejidad** de la pregunta
+3. **Extrae entidades** (tokens, protocolos, chains)
+4. **Decide la ruta óptima**: Cache → Static Response → LLM Completo
+5. **Registra telemetría** para análisis y optimización
+
+#### Arquitectura del Destilador
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              DISTILLATION ORCHESTRATOR FLOW                  │
+└─────────────────────────────────────────────────────────────┘
+
+Usuario: "¿Cuál es el mejor yield para USDC?"
+    │
+    ▼
+┌─────────────────────────────┐
+│   Request Preprocessor      │  ← Preprocesa request
+│   - Normaliza texto         │
+│   - Detecta idioma          │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Intent Classifier          │  ← Clasifica intención
+│   - yield_optimization       │
+│   - Confidence: 0.92         │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Complexity Assessor       │  ← Evalúa complejidad
+│   - Complexity: LOW          │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Entity Extractor           │  ← Extrae entidades
+│   - Token: USDC              │
+│   - Chain: (none)            │
+└──────────────┬──────────────┘
+               │
+    ┌──────────┴──────────┐
+    │                     │
+    ▼                     ▼
+┌──────────┐      ┌──────────────┐
+│ Check    │      │ Check Static │
+│ Cache    │      │ Response     │
+│ (Exact)  │      │              │
+└─────┬────┘      └──────┬───────┘
+      │                   │
+      └──────────┬────────┘
+                 │
+    ┌────────────┴────────────┐
+    │                         │
+    ▼                         ▼
+Cache Hit?              Static Available?
+    │                         │
+    ▼                         ▼
+┌──────────┐          ┌──────────────┐
+│ Return   │          │ Return       │
+│ Cached   │          │ Static       │
+│ Response │          │ Response     │
+└──────────┘          └──────────────┘
+    │                         │
+    └──────────┬──────────────┘
+               │
+               ▼
+      ┌───────────────────────┐
+      │ Route Decision        │  ← Decide ruta óptima
+      │ - CACHE: Return cached│
+      │ - STATIC: Return static│
+      │ - FULL_LLM: Process   │
+      └───────────┬───────────┘
+                  │
+                  ▼
+      ┌───────────────────────┐
+      │ Record Telemetry      │  ← Registra métricas
+      │ - Intent              │
+      │ - Complexity          │
+      │ - Route Type          │
+      │ - Latency             │
+      └───────────────────────┘
+```
+
+#### Proceso de Destilación
+
+**Step 1: Preprocessing**
+```python
+# Normaliza y prepara el request
+request = preprocessor.preprocess(
+    user_message="¿Cuál es el mejor yield para USDC?",
+    conversation_history=[...],
+    user_id="123",
+    conversation_id="456",
+)
+# Output: {
+#   "normalized_text": "cual es el mejor yield para usdc",
+#   "detected_language": "es",
+#   "message_length": 35
+# }
+```
+
+**Step 2: Intent Classification**
+```python
+# Clasifica la intención
+intent, confidence = intent_classifier.classify("cual es el mejor yield para usdc")
+# Output: ("yield_optimization", 0.92)
+```
+
+**Step 3: Complexity Assessment**
+```python
+# Evalúa complejidad
+complexity = complexity_assessor.assess(query, intent)
+# Output: "LOW" (pregunta simple, directa)
+```
+
+**Step 4: Entity Extraction**
+```python
+# Extrae entidades
+entities = entity_extractor.extract("cual es el mejor yield para usdc")
+# Output: {
+#   "tokens": ["USDC"],
+#   "chains": [],
+#   "amounts": []
+# }
+```
+
+**Step 5: Cache Lookup**
+```python
+# Busca en cache (exact match → semantic similarity)
+cache_hit, cache_level = cache_manager.get(
+    cache_key="distill:v1:abc123...",
+    query="cual es el mejor yield para usdc",
+    semantic_threshold=0.85,
+)
+# Output: (None, CacheLevel.NONE)  # No hay cache hit
+```
+
+**Step 6: Static Response Check**
+```python
+# Verifica si hay respuesta estática disponible
+static_available = static_responder.check_available(
+    intent="yield_optimization",
+    entities={"tokens": ["USDC"]},
+)
+# Output: False  # No hay respuesta estática
+```
+
+**Step 7: Routing Decision**
+```python
+# Decide la ruta óptima
+result = router.route(
+    text="cual es el mejor yield para usdc",
+    cache_lookup=None,
+    static_available=False,
+)
+# Output: {
+#   "should_process": True,
+#   "route_type": "FULL_LLM",  # Necesita LLM completo
+#   "intent": "yield_optimization",
+#   "complexity": "LOW"
+# }
+```
+
+**Step 8: Telemetry Recording**
+```python
+# Registra telemetría
+await telemetry_repo.record({
+    "request_id": "req_123",
+    "user_id": "123",
+    "query": "cual es el mejor yield para usdc",
+    "intent": "yield_optimization",
+    "complexity": "LOW",
+    "route_type": "FULL_LLM",
+    "latency_ms": 45,
+    "timestamp": "2026-01-15T10:30:00Z"
+})
+```
+
+#### Tipos de Routing
+
+**A. CACHE Route** (Respuesta desde Cache)
+- **Cuándo**: Query exacto o semánticamente similar ya procesado
+- **Ventaja**: Respuesta instantánea, costo $0
+- **Ejemplo**: "¿Cuál es el mejor yield para USDC?" (ya preguntado antes)
+
+**B. STATIC Route** (Respuesta Estática)
+- **Cuándo**: Pregunta simple con respuesta predefinida
+- **Ventaja**: Respuesta instantánea, costo $0
+- **Ejemplo**: "¿Qué es Bitcoin?" → Respuesta estática desde knowledge base
+
+**C. FULL_LLM Route** (LLM Completo)
+- **Cuándo**: Pregunta compleja que requiere razonamiento
+- **Ventaja**: Respuesta personalizada y contextual
+- **Costo**: ~$0.0001 por request
+- **Ejemplo**: "Crea un portfolio balanceado con yield optimization"
+
+#### Beneficios del Destilador
+
+1. **Reducción de Costos**: 50-70% de requests resueltas sin LLM
+2. **Mejor Latencia**: Cache/Static responses en < 100ms vs 2-3s con LLM
+3. **Telemetría Completa**: Tracking de todos los requests para optimización
+4. **Fail-Safe**: Si destilador falla, permite request (fail-open)
+
+---
+
+### 2. Telemetría (LLM Telemetry System)
+
+#### ¿Qué es la Telemetría?
+
+El sistema de **Telemetría** rastrea y analiza **todas las interacciones con LLMs** para:
+- Monitorear costos y uso
+- Detectar problemas de rendimiento
+- Optimizar selección de modelos
+- Alertar sobre presupuestos
+
+#### Componentes de Telemetría
+
+**A. LLM Telemetry** (Tracking de LLM Calls)
+```
+┌─────────────────────────────────────────────────────────────┐
+│              LLM TELEMETRY FLOW                            │
+└─────────────────────────────────────────────────────────────┘
+
+LLM Call Iniciado
+    │
+    ▼
+┌─────────────────────────────┐
+│   Start Call Context        │  ← Crea contexto de tracking
+│   - call_id: uuid           │
+│   - provider: vertex_ai     │
+│   - model: gemini-2.0-flash │
+│   - start_time: timestamp   │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Execute LLM Call          │  ← Ejecuta llamada
+│   (Vertex AI API)           │
+└──────────────┬──────────────┘
+               │
+    ┌──────────┴──────────┐
+    │                     │
+    ▼                     ▼
+Success?              Error?
+    │                     │
+    ▼                     ▼
+┌──────────┐      ┌──────────────┐
+│ Complete │      │ Record Error │
+│ Context  │      │              │
+│ - tokens │      │ - error_type │
+│ - cost   │      │ - error_msg  │
+│ - latency│      │              │
+└─────┬────┘      └──────┬───────┘
+      │                   │
+      └──────────┬────────┘
+                 │
+                 ▼
+      ┌───────────────────────┐
+      │ Record Telemetry      │  ← Guarda en base de datos
+      │ (PostgreSQL)          │
+      └───────────────────────┘
+                 │
+                 ▼
+      ┌───────────────────────┐
+      │ Update Metrics        │  ← Actualiza métricas
+      │ - Total tokens        │
+      │ - Total cost          │
+      │ - Success rate        │
+      │ - Avg latency         │
+      └───────────────────────┘
+```
+
+**B. Distillation Telemetry** (Tracking de Destilación)
+- Rastrea todas las decisiones del destilador
+- Mide latencia de cada paso (classification, routing, etc.)
+- Registra cache hits/misses
+- Trackea static response usage
+
+**C. Retry Telemetry** (Tracking de Reintentos)
+- Rastrea fallos y reintentos de LLM calls
+- Mide circuit breaker states
+- Registra fallback usage
+
+#### Métricas Rastreadas
+
+**Por Provider/Model**:
+- Total requests
+- Success rate
+- Error rate
+- Average latency (P50, P90, P99)
+- Total tokens (input + output)
+- Total cost (USD)
+- Rate limit events
+
+**Por Intent**:
+- Intent distribution
+- Average confidence
+- Route type distribution (CACHE/STATIC/FULL_LLM)
+- Average latency per intent
+
+**Por Usuario**:
+- Requests per user
+- Cost per user
+- Most common intents
+
+#### Dashboard de Telemetría
+
+**Endpoints Admin**:
+- `GET /api/v1/admin/llm/telemetry` - Métricas generales
+- `GET /api/v1/admin/llm/telemetry/providers` - Métricas por provider
+- `GET /api/v1/admin/llm/telemetry/models` - Métricas por modelo
+- `GET /api/v1/admin/distillation/telemetry` - Métricas de destilación
+
+---
+
+### 3. Orchestrator con Multi-Intent
+
+#### ¿Qué es Multi-Intent?
+
+El sistema de **Multi-Intent** detecta y procesa **múltiples intenciones en un solo mensaje** del usuario.
+
+**Ejemplos**:
+- "Show BTC ETH ADA prices" → 3 intents de precio (paralelo)
+- "Swap USDC to ETH and show balance" → 2 intents con dependencia (secuencial)
+- "Buy Bitcoin if price drops below 90k" → 2 intents con condición (condicional)
+
+#### Arquitectura Multi-Intent
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              MULTI-INTENT ORCHESTRATION                    │
+└─────────────────────────────────────────────────────────────┘
+
+Usuario: "Show BTC ETH ADA prices"
+    │
+    ▼
+┌─────────────────────────────┐
+│   IntentDetectorV2          │  ← Detecta múltiples intents
+│   .detect_multi_intent()    │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Extract Entities          │  ← Extrae tokens
+│   - tokens: [BTC, ETH, ADA] │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Expand by Entities        │  ← Crea intent por token
+│   - Intent 1: BTC price     │
+│   - Intent 2: ETH price      │
+│   - Intent 3: ADA price      │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Detect Dependencies       │  ← Analiza dependencias
+│   - None (independent)      │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Determine Strategy        │  ← Decide estrategia
+│   - PARALLEL (independent)  │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   IntentOrchestrator        │  ← Ejecuta intents
+│   .execute()                │
+└──────────────┬──────────────┘
+               │
+    ┌──────────┴──────────┐
+    │                     │
+    ▼                     ▼
+PARALLEL            SEQUENTIAL
+    │                     │
+    ▼                     ▼
+┌──────────┐      ┌──────────────┐
+│ Execute  │      │ Execute      │
+│ All at   │      │ in Order     │
+│ Once     │      │ (with deps)  │
+│ (async)  │      │              │
+└─────┬────┘      └──────┬───────┘
+      │                   │
+      └──────────┬────────┘
+                 │
+                 ▼
+      ┌───────────────────────┐
+      │ Aggregate Results    │  ← Combina resultados
+      │ - BTC: $45,000       │
+      │ - ETH: $3,200        │
+      │ - ADA: $0.50         │
+      └───────────────────────┘
+                 │
+                 ▼
+      ┌───────────────────────┐
+      │ Format Response      │  ← Formatea respuesta
+      │ "BTC: $45,000        │
+      │  ETH: $3,200         │
+      │  ADA: $0.50"         │
+      └───────────────────────┘
+```
+
+#### Estrategias de Orquestación
+
+**A. PARALLEL** (Ejecución Paralela)
+- **Cuándo**: Intents independientes sin dependencias
+- **Ejemplo**: "Show BTC ETH ADA prices"
+- **Proceso**: Ejecuta todos los intents simultáneamente usando `asyncio.gather()`
+- **Tiempo**: ~2-3s (mismo que un solo intent)
+
+**B. SEQUENTIAL** (Ejecución Secuencial)
+- **Cuándo**: Intents con dependencias (uno necesita resultado del otro)
+- **Ejemplo**: "Swap USDC to ETH and show balance"
+- **Proceso**: Ejecuta en orden, pasando contexto entre intents
+- **Tiempo**: ~4-6s (suma de tiempos individuales)
+
+**C. CONDITIONAL** (Ejecución Condicional)
+- **Cuándo**: Segundo intent depende de condición del primero
+- **Ejemplo**: "Buy Bitcoin if price drops below 90k"
+- **Proceso**: Ejecuta primer intent, evalúa condición, ejecuta segundo si condición se cumple
+- **Tiempo**: ~3-5s (depende de condición)
+
+#### Ejemplo Completo: Multi-Intent Paralelo
+
+**Input**: "Show BTC ETH ADA prices"
+
+**Step 1: Entity Extraction**
+```python
+entities = extract_entities("show btc eth ada prices")
+# Output: {"tokens": ["btc", "eth", "ada"]}
+```
+
+**Step 2: Intent Detection**
+```python
+# Detecta keyword "price" + múltiples tokens
+intents = detect_all_intents("show btc eth ada prices", entities)
+# Output: [
+#   IntentResult(intent=HUNTER_PRICE_PREDICTION, entities=["BTC"]),
+#   IntentResult(intent=HUNTER_PRICE_PREDICTION, entities=["ETH"]),
+#   IntentResult(intent=HUNTER_PRICE_PREDICTION, entities=["ADA"]),
+# ]
+```
+
+**Step 3: Dependency Detection**
+```python
+dependencies = detect_dependencies(intents)
+# Output: []  # No hay dependencias (intents independientes)
+```
+
+**Step 4: Strategy Determination**
+```python
+strategy = determine_strategy(intents, dependencies)
+# Output: OrchestrationStrategy.PARALLEL
+```
+
+**Step 5: Parallel Execution**
+```python
+# Ejecuta los 3 intents en paralelo
+results = await asyncio.gather(
+    execute_intent(intents[0]),  # BTC price
+    execute_intent(intents[1]),  # ETH price
+    execute_intent(intents[2]),  # ADA price
+)
+# Output: [
+#   {"token": "BTC", "price": 45000},
+#   {"token": "ETH", "price": 3200},
+#   {"token": "ADA", "price": 0.50},
+# ]
+```
+
+**Step 6: Response Formatting**
+```python
+formatted = format_multi_intent_response(results)
+# Output: "💰 Precios Actuales:\n\nBTC: $45,000\nETH: $3,200\nADA: $0.50"
+```
+
+---
+
+### 4. Knowledge Questions (GraphRAG)
+
+#### ¿Qué son Knowledge Questions?
+
+Las **Knowledge Questions** son preguntas que requieren **conocimiento estructurado** sobre protocolos DeFi, relaciones entre protocolos, y análisis de riesgo. Estas preguntas usan **GraphRAG** (Graph Retrieval-Augmented Generation) en lugar de LLM directo.
+
+#### Intents de Knowledge
+
+**A. PROTOCOL_SEARCH** (Búsqueda de Protocolos)
+- **Ejemplo**: "Find low-risk staking protocols on Ethereum"
+- **Handler**: GraphRAG handler
+- **Proceso**: Busca en knowledge graph de protocolos DeFi
+- **Ventaja**: Respuestas precisas basadas en datos estructurados
+
+**B. RISK_ASSESSMENT** (Evaluación de Riesgo)
+- **Ejemplo**: "Is Aave safe? What are the risks?"
+- **Handler**: GraphRAG handler
+- **Proceso**: Analiza riesgo usando knowledge graph de protocolos
+- **Ventaja**: Análisis sistémico de riesgos (no solo opinión LLM)
+
+**C. SIMILAR_PROTOCOLS** (Protocolos Similares)
+- **Ejemplo**: "What's similar to Uniswap?"
+- **Handler**: GraphRAG handler
+- **Proceso**: Busca protocolos similares en knowledge graph
+- **Ventaja**: Comparaciones basadas en características reales
+
+#### Arquitectura GraphRAG
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              KNOWLEDGE QUESTIONS (GraphRAG)                 │
+└─────────────────────────────────────────────────────────────┘
+
+Usuario: "Find low-risk staking protocols on Ethereum"
+    │
+    ▼
+┌─────────────────────────────┐
+│   Intent Detection          │  ← Detecta PROTOCOL_SEARCH
+│   - Intent: PROTOCOL_SEARCH │
+│   - Confidence: 0.88         │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Extract Query Params      │  ← Extrae parámetros
+│   - Risk: low               │
+│   - Type: staking           │
+│   - Chain: ethereum         │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   GraphRAG Handler          │  ← Busca en knowledge graph
+│   - Query knowledge graph   │
+│   - Filter by risk level    │
+│   - Filter by chain         │
+│   - Filter by type          │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Knowledge Graph Query      │  ← Consulta graph database
+│   - Nodes: Protocols         │
+│   - Edges: Relationships     │
+│   - Properties: Risk, Chain │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Format Results            │  ← Formatea resultados
+│   - Lido: Low risk          │
+│   - Rocket Pool: Low risk   │
+│   - ...                     │
+└─────────────────────────────┘
+```
+
+#### Knowledge Base Structure
+
+**Knowledge Files** (`anvil_knowledge/features/`):
+- `overview.json` - Overview general de Anvil
+- `swap.json` - Información sobre swaps
+- `hunter_ai.json` - Información sobre Hunter AI
+- `ultra.json` - Información sobre ULTRA
+- `shortcuts.json` - Comandos y shortcuts
+
+**Knowledge Injector**:
+- Selecciona knowledge relevante basado en intent
+- Inyecta knowledge en prompts LLM cuando necesario
+- Personaliza knowledge por tipo de usuario (user vs investor)
+
+---
+
+### 5. General Questions (LLM Directo)
+
+#### ¿Qué son General Questions?
+
+Las **General Questions** son preguntas generales sobre DeFi, cripto, o conceptos que no requieren datos estructurados. Estas preguntas usan **LLM directo** (Vertex AI Gemini) sin GraphRAG.
+
+#### Intent: GENERAL_CONVERSATION
+
+**Ejemplos**:
+- "¿Qué es Bitcoin?"
+- "Explain impermanent loss"
+- "What is DeFi?"
+- "How does staking work?"
+
+#### Arquitectura General Questions
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              GENERAL QUESTIONS FLOW                        │
+└─────────────────────────────────────────────────────────────┘
+
+Usuario: "¿Qué es Bitcoin?"
+    │
+    ▼
+┌─────────────────────────────┐
+│   Intent Detection          │  ← Detecta GENERAL_CONVERSATION
+│   - Intent: GENERAL_CONVERSATION│
+│   - Confidence: 0.85         │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Check Knowledge Injector  │  ← Inyecta knowledge si aplica
+│   - Intent: GENERAL_CONVERSATION│
+│   - Knowledge: overview.json│
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Build LLM Prompt          │  ← Construye prompt
+│   - System: "You are Anvil..."│
+│   - User: "¿Qué es Bitcoin?" │
+│   - Context: Last 10 msgs    │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   LLM Gateway               │  ← Llama a Vertex AI
+│   - Model: gemini-2.0-flash │
+│   - Temperature: 0.7        │
+│   - Max tokens: 500         │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   LLM Response              │  ← Respuesta del LLM
+│   "Bitcoin es una cripto..."│
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Record Telemetry          │  ← Registra métricas
+│   - Tokens: 150              │
+│   - Cost: $0.000015         │
+│   - Latency: 1.2s           │
+└─────────────────────────────┘
+```
+
+#### System Prompt para General Questions
+
+```python
+system_prompt = """You are Anvil, a specialized DeFi assistant focused EXCLUSIVELY on decentralized finance, crypto trading, and blockchain technology.
+
+✅ ALWAYS IN SCOPE (Answer these confidently):
+- Cryptocurrency basics: "What is Bitcoin?", "What is Ethereum?"
+- Token information: Any questions about crypto tokens
+- DeFi protocols: Aave, Compound, Uniswap, Curve, etc.
+- Blockchain technology: How blockchains work
+- Trading & Markets: Price analysis, trading strategies
+- Portfolio management: Asset allocation, risk management
+
+⚠️ OUT OF SCOPE (Decline politely):
+- General knowledge: weather, cooking, jokes, sports
+- Personal advice: relationships, health, legal
+- If clearly NOT crypto/blockchain related, respond: "I'm Anvil, a specialized DeFi assistant. I can only help with crypto and DeFi topics."
+
+Response Guidelines:
+- Be concise, accurate, and friendly
+- Respond in the same language the user uses
+- Use conversation history for context ONLY for DeFi-related exchanges"""
+```
+
+#### Características
+
+1. **Multi-language Support**: Responde en el mismo idioma del usuario
+2. **Context Awareness**: Usa últimos 10 mensajes para contexto
+3. **Scope Limitation**: Solo responde sobre DeFi/crypto
+4. **Cost Optimization**: Usa modelo pequeño (gemini-2.0-flash) para preguntas simples
+
+---
+
 ## Arquitectura de Agentes (AgentSquad)
 
 ### Visión General
