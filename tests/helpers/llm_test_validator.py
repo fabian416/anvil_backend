@@ -20,6 +20,9 @@ from typing import Any, Optional
 from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import (
     LLMClientDeepInfra,
 )
+from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import (
+    LLMClientVertexAI,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +37,38 @@ class ValidationVerdict(str, Enum):
 
 
 @dataclass
+class ScoringBreakdown:
+    """Granular scoring metrics (0.0-1.0 scale)."""
+
+    accuracy_score: float  # Factual correctness
+    relevance_score: float  # Query relevance
+    safety_score: float  # Security/disclaimers
+    coherence_score: float  # Logical consistency
+    overall_score: float  # Weighted average
+
+
+@dataclass
+class ValidationMetadata:
+    """Test execution metadata from validation."""
+
+    test_category: str  # e.g., "hunter", "flows", "errors"
+    test_type: str  # e.g., "simple_query", "multi_step"
+    expected_intents: list[str]  # e.g., ["price_prediction", "sentiment"]
+    token_usage: int  # LLM tokens consumed
+    validation_latency_ms: int  # Time taken
+    model_used: str  # e.g., "meta-llama/Meta-Llama-3.1-70B-Instruct"
+
+
+@dataclass
+class ActionableRecommendations:
+    """Structured feedback for improvement."""
+
+    improvement_suggestions: list[str]  # Specific improvements
+    critical_issues: list[str]  # Must-fix issues
+    next_steps: list[str]  # Recommended actions
+
+
+@dataclass
 class ValidationResult:
     """Result from LLM test validation."""
 
@@ -44,6 +79,11 @@ class ValidationResult:
     tokens_used: int
     validation_time_ms: int
     timestamp: datetime
+
+    # NEW: Enhanced validation fields (optional for backward compatibility)
+    scoring: Optional[ScoringBreakdown] = None
+    metadata: Optional[ValidationMetadata] = None
+    recommendations: Optional[ActionableRecommendations] = None
 
 
 @dataclass
@@ -91,11 +131,11 @@ class LLMTestValidator:
         enabled: Optional[bool] = None,
     ):
         """
-        Initialize LLM test validator.
+        Initialize LLM test validator with Vertex AI (primary) and DeepInfra (fallback).
 
         Args:
-            api_key: DeepInfra API key (defaults to DEEPINFRA_API_KEY env var)
-            model: DeepInfra model to use for validation
+            api_key: Override API key (optional, loads from config/local/.secrets.toml by default)
+            model: Model to use for validation
             enabled: Whether to enable validation (defaults to ENABLE_LLM_VALIDATION env var)
         """
         # Check if LLM validation is enabled
@@ -104,23 +144,79 @@ class LLMTestValidator:
         if not self._enabled:
             logger.info("LLM test validation is DISABLED (set ENABLE_LLM_VALIDATION=true to enable)")
             self._client = None
+            self._provider = None
             return
 
-        # Get API key
-        api_key = api_key or os.getenv("DEEPINFRA_API_KEY")
+        # Load API keys from config if not provided
+        vertex_api_key = None
+        deepinfra_api_key = None
+
         if not api_key:
+            # Try loading from TOML config
+            try:
+                import tomllib
+                from pathlib import Path
+
+                secrets_path = Path(__file__).parent.parent.parent / "config" / "local" / ".secrets.toml"
+                if secrets_path.exists():
+                    with open(secrets_path, "rb") as f:
+                        config = tomllib.load(f)
+                        vertex_api_key = config.get("vertex_ai", {}).get("API_KEY")
+                        deepinfra_api_key = config.get("deepinfra", {}).get("API_KEY")
+                        logger.debug(f"Loaded API keys from {secrets_path}")
+            except Exception as e:
+                logger.debug(f"Could not load config from TOML: {e}")
+
+        # Fall back to environment variables
+        vertex_api_key = vertex_api_key or os.getenv("VERTEX_AI_API_KEY")
+        deepinfra_api_key = deepinfra_api_key or os.getenv("DEEPINFRA_API_KEY")
+
+        # Try Vertex AI first (primary provider)
+        self._client = None
+        self._provider = None
+
+        if vertex_api_key:
+            try:
+                # Vertex AI uses Gemini models, not Llama models
+                # Use gemini-2.0-flash (fast, cost-effective, and reliable for validation)
+                # Note: gemini-2.5-pro is a thinking model that requires special handling
+                vertex_model = "gemini-2.0-flash" if model.startswith("meta-llama") else model
+                self._client = LLMClientVertexAI(api_key=vertex_api_key, default_model=vertex_model)
+                self._provider = "vertex_ai"
+                logger.info(f"LLM test validator initialized with Vertex AI (primary) using {vertex_model}")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Vertex AI client: {e}")
+                self._client = None
+
+        # Fall back to DeepInfra if Vertex AI failed or not configured
+        if not self._client and deepinfra_api_key:
+            try:
+                self._client = LLMClientDeepInfra(api_key=deepinfra_api_key)
+                self._provider = "deepinfra"
+                logger.info(f"LLM test validator initialized with DeepInfra (fallback) - model={model}")
+            except Exception as e:
+                logger.warning(f"Failed to initialize DeepInfra client: {e}")
+                self._client = None
+
+        # If no client could be initialized, disable validation
+        if not self._client:
             logger.warning(
-                "DEEPINFRA_API_KEY not set - LLM validation will be skipped. "
-                "Set DEEPINFRA_API_KEY environment variable to enable."
+                "No LLM provider available - validation will be skipped. "
+                "Configure VERTEX_AI_API_KEY or DEEPINFRA_API_KEY in config/local/.secrets.toml"
             )
             self._enabled = False
-            self._client = None
             return
 
-        # Initialize DeepInfra client
-        self._client = LLMClientDeepInfra(api_key=api_key)
         self._model = model
-        logger.info(f"LLM test validator initialized with model={model}")
+
+        # Initialize custom prompt generation components
+        from tests.helpers.test_metadata_extractor import TestMetadataExtractor
+        from tests.helpers.validation_prompt_generator import ValidationPromptGenerator
+
+        self._metadata_extractor = TestMetadataExtractor()
+        self._prompt_generator = ValidationPromptGenerator()
+
+        logger.info(f"LLM test validator ready with {self._provider} provider and custom prompt generation")
 
     @property
     def enabled(self) -> bool:
@@ -135,9 +231,11 @@ class LLMTestValidator:
         expected_behavior: str,
         conversation_id: Optional[str] = None,
         additional_context: Optional[dict[str, Any]] = None,
+        test_func: Optional[Any] = None,  # NEW: Pass test function for metadata extraction
+        conversation_history: Optional[list[dict]] = None,  # NEW: For multi-step tests
     ) -> ValidationResult:
         """
-        Validate a single test response using LLM semantic analysis.
+        Validate a single test response using LLM semantic analysis with custom prompts.
 
         Args:
             test_name: Name of the test (for logging)
@@ -146,9 +244,11 @@ class LLMTestValidator:
             expected_behavior: Description of what should happen
             conversation_id: Optional conversation ID for context
             additional_context: Optional additional context (e.g., test metadata)
+            test_func: Optional test function for metadata extraction (NEW)
+            conversation_history: Optional conversation history for multi-step tests (NEW)
 
         Returns:
-            ValidationResult with verdict, confidence, reasoning, and metrics
+            ValidationResult with verdict, confidence, reasoning, and enhanced metrics
         """
         if not self._enabled:
             return ValidationResult(
@@ -163,15 +263,33 @@ class LLMTestValidator:
 
         start_time = datetime.utcnow()
 
-        # Build validation prompt
-        prompt = self._build_single_validation_prompt(
-            test_name=test_name,
-            user_input=user_input,
-            agent_output=agent_output,
-            expected_behavior=expected_behavior,
-            conversation_id=conversation_id,
-            additional_context=additional_context,
-        )
+        # NEW: Extract metadata if test_func provided
+        test_metadata = None
+        if test_func:
+            try:
+                test_metadata = self._metadata_extractor.extract_metadata(test_func)
+            except Exception as e:
+                logger.warning(f"Failed to extract metadata for {test_name}: {e}")
+
+        # NEW: Generate custom prompt based on test type
+        if test_metadata:
+            prompt = self._prompt_generator.generate_prompt(
+                test_metadata=test_metadata,
+                user_input=user_input,
+                agent_output=agent_output,
+                expected_behavior=expected_behavior,
+                conversation_history=conversation_history,
+            )
+        else:
+            # Fallback to generic prompt if no metadata
+            prompt = self._build_single_validation_prompt(
+                test_name=test_name,
+                user_input=user_input,
+                agent_output=agent_output,
+                expected_behavior=expected_behavior,
+                conversation_id=conversation_id,
+                additional_context=additional_context,
+            )
 
         # Call LLM for validation
         try:
@@ -185,16 +303,17 @@ class LLMTestValidator:
                 ],
                 model=self._model,
                 temperature=0.1,  # Low temperature for consistent validation
-                max_tokens=1000,
+                max_tokens=1500,  # Increased for enhanced response
             )
 
-            # Parse validation result
+            # NEW: Parse enhanced JSON response
             validation_data = self._parse_validation_response(response["content"])
 
             end_time = datetime.utcnow()
             validation_time_ms = int((end_time - start_time).total_seconds() * 1000)
 
-            return ValidationResult(
+            # Build basic result
+            result = ValidationResult(
                 verdict=ValidationVerdict(validation_data.get("verdict", "FAIL")),
                 confidence=validation_data.get("confidence", 0.0),
                 reasoning=validation_data.get("reasoning", ""),
@@ -203,6 +322,44 @@ class LLMTestValidator:
                 validation_time_ms=validation_time_ms,
                 timestamp=datetime.utcnow(),
             )
+
+            # NEW: Add enhanced fields if present
+            if "scoring" in validation_data:
+                try:
+                    result.scoring = ScoringBreakdown(
+                        accuracy_score=validation_data["scoring"]["accuracy_score"],
+                        relevance_score=validation_data["scoring"]["relevance_score"],
+                        safety_score=validation_data["scoring"]["safety_score"],
+                        coherence_score=validation_data["scoring"]["coherence_score"],
+                        overall_score=validation_data["scoring"]["overall_score"],
+                    )
+                except (KeyError, TypeError) as e:
+                    logger.warning(f"Failed to parse scoring breakdown: {e}")
+
+            if "test_metadata" in validation_data:
+                try:
+                    result.metadata = ValidationMetadata(
+                        test_category=validation_data["test_metadata"]["test_category"],
+                        test_type=validation_data["test_metadata"]["test_type"],
+                        expected_intents=validation_data["test_metadata"]["expected_intents"],
+                        token_usage=validation_data["test_metadata"]["token_usage"],
+                        validation_latency_ms=validation_data["test_metadata"]["validation_latency_ms"],
+                        model_used=validation_data["test_metadata"]["model_used"],
+                    )
+                except (KeyError, TypeError) as e:
+                    logger.warning(f"Failed to parse test metadata: {e}")
+
+            if "recommendations" in validation_data:
+                try:
+                    result.recommendations = ActionableRecommendations(
+                        improvement_suggestions=validation_data["recommendations"]["improvement_suggestions"],
+                        critical_issues=validation_data["recommendations"]["critical_issues"],
+                        next_steps=validation_data["recommendations"]["next_steps"],
+                    )
+                except (KeyError, TypeError) as e:
+                    logger.warning(f"Failed to parse recommendations: {e}")
+
+            return result
 
         except Exception as e:
             logger.error(f"LLM validation failed for {test_name}: {e}")

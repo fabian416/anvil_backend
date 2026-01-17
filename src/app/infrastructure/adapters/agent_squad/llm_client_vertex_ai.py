@@ -180,8 +180,8 @@ class LLMClientVertexAI:
         completion_tokens = 0
 
         if hasattr(response, 'usage_metadata'):
-            prompt_tokens = response.usage_metadata.prompt_token_count
-            completion_tokens = response.usage_metadata.candidates_token_count
+            prompt_tokens = response.usage_metadata.prompt_token_count or 0
+            completion_tokens = response.usage_metadata.candidates_token_count or 0
             tokens_used = prompt_tokens + completion_tokens
 
         return {

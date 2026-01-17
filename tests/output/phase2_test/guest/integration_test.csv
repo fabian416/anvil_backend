@@ -1,0 +1,2 @@
+test_id,s_multistep,input,output,test_label_sequence,output_expected,status,date,quality,qa_status,qa_output
+phase2_integration_test_001,false,What's the sentiment for BTC today?,Bitcoin sentiment is currently bullish.,hunter_sentiment,BTC sentiment analysis,PASS,2026-01-16T16:54:16.875322,0.95,PASS,Response provides clear sentiment analysis

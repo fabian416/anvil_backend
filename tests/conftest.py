@@ -604,14 +604,15 @@ def csv_tracker():
 
     async def track(user_type: str, category: str, data: dict):
         """
-        Track test execution.
+        Track test execution with standard or enhanced fields.
 
         Args:
             user_type: "guest" or "user"
             category: Test category (hunter, ultra, agent_squad, etc.)
-            data: Dictionary with test execution data
+            data: Dictionary with test execution data (11 standard + 12 optional enhanced fields)
         """
         execution_data = TestExecutionData(
+            # Standard 11 fields
             test_id=data["test_id"],
             s_multistep=data.get("s_multistep", False),
             input=data["input"],
@@ -623,6 +624,19 @@ def csv_tracker():
             quality=data.get("quality"),
             qa_status=data.get("qa_status"),
             qa_output=data.get("qa_output"),
+            # NEW: Enhanced fields (optional)
+            accuracy_score=data.get("accuracy_score"),
+            relevance_score=data.get("relevance_score"),
+            safety_score=data.get("safety_score"),
+            coherence_score=data.get("coherence_score"),
+            test_category=data.get("test_category"),
+            test_type=data.get("test_type"),
+            expected_intents=data.get("expected_intents"),
+            token_usage=data.get("token_usage"),
+            improvement_suggestions=data.get("improvement_suggestions"),
+            critical_issues=data.get("critical_issues"),
+            next_steps=data.get("next_steps"),
+            model_used=data.get("model_used"),
         )
         tracker.track(user_type, category, execution_data)
 
