@@ -132,8 +132,8 @@ class CSVTestTracker:
         import os
 
         self.base_path = Path(base_path)
-        # NEW: Check if enhanced CSV export is enabled
-        self.write_enhanced = os.getenv("WRITE_ENHANCED_CSV", "false").lower() == "true"
+        # NEW: Check if enhanced CSV export is enabled (default: true for Phase 3+)
+        self.write_enhanced = os.getenv("WRITE_ENHANCED_CSV", "true").lower() == "true"
 
         if self.write_enhanced:
             logger.info("Enhanced CSV export ENABLED (23 columns)")

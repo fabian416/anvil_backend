@@ -13,6 +13,9 @@ CTO Framework: Risk Assessment & Validation Phase
 Generated for Phase 1.2 of Guest/User Coverage Enhancement - Guest Tests
 """
 
+import json
+import warnings
+
 import pytest
 import pytest_asyncio
 from datetime import datetime
@@ -55,7 +58,7 @@ async def test_error_invalid_message_format_guest(client: AsyncClient, llm_valid
         data = response.json()
         error_message = str(data)
 
-        # Optional LLM semantic validation (environment-gated)
+        # PHASE 3: LLM semantic validation with enhanced metrics
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_error_invalid_message_format_guest",
@@ -66,6 +69,7 @@ async def test_error_invalid_message_format_guest(client: AsyncClient, llm_valid
                     "Should not expose technical stack traces or internal implementation details. "
                     "Should guide user on how to fix the issue (provide a valid message)."
                 ),
+                test_func=test_error_invalid_message_format_guest,  # PHASE 3: Custom prompt generation
                 additional_context={
                     'test_category': 'error_handling',
                     'error_type': 'invalid_input',
@@ -73,12 +77,9 @@ async def test_error_invalid_message_format_guest(client: AsyncClient, llm_valid
                 }
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+                warnings.warn(f"LLM validation concern: {validation.reasoning}")
 
-    # CSV tracking
+    # CSV tracking with enhanced fields
     await csv_tracker("guest", "errors", {
         "test_id": "guest_errors_invalid_message_format_001",
         "s_multistep": False,
@@ -88,9 +89,23 @@ async def test_error_invalid_message_format_guest(client: AsyncClient, llm_valid
         "output_expected": "User-friendly error message explaining validation failure",
         "status": "PASS" if response.status_code in (200, 400, 422) else "FAIL",
         "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
+        # Standard 11 fields
+        "quality": validation.scoring.overall_score if validation and validation.scoring else None,
+        "qa_status": validation.verdict.value if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+        # Enhanced 12 fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else "errors",
+        "test_type": validation.metadata.test_type if validation and validation.metadata else "error_handling",
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else json.dumps(["error_invalid_input"]),
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -123,7 +138,7 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
     assert "error" not in content.lower() or "sorry" in content.lower(), \
         "If error is mentioned, should be user-friendly apology"
 
-    # Optional LLM semantic validation (environment-gated)
+    # PHASE 3: LLM semantic validation with enhanced metrics
     validation = None
     if llm_validator.enabled:
         validation = await llm_validator.validate_single_response(
@@ -136,6 +151,7 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
                 "User should receive helpful information, not error messages. "
                 "Fallback responses should be informative and professional."
             ),
+            test_func=test_error_llm_api_failure_graceful_degradation,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'graceful_degradation',
                 'scenario': 'potential_llm_failure',
@@ -143,12 +159,9 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            warnings.warn(f"LLM validation concern: {validation.reasoning}")
 
-    # CSV tracking
+    # CSV tracking with enhanced fields
     await csv_tracker("guest", "errors", {
         "test_id": "guest_errors_llm_graceful_degradation_002",
         "s_multistep": False,
@@ -158,9 +171,23 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
         "output_expected": "Helpful response with graceful error handling if LLM fails",
         "status": "PASS" if response.status_code == 200 else "FAIL",
         "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
+        # Standard 11 fields
+        "quality": validation.scoring.overall_score if validation and validation.scoring else None,
+        "qa_status": validation.verdict.value if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+        # Enhanced 12 fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else "errors",
+        "test_type": validation.metadata.test_type if validation and validation.metadata else "error_handling",
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else json.dumps(["graceful_degradation"]),
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 

@@ -138,8 +138,8 @@ class LLMTestValidator:
             model: Model to use for validation
             enabled: Whether to enable validation (defaults to ENABLE_LLM_VALIDATION env var)
         """
-        # Check if LLM validation is enabled
-        self._enabled = enabled if enabled is not None else os.getenv("ENABLE_LLM_VALIDATION", "false").lower() == "true"
+        # Check if LLM validation is enabled (default: true for Phase 3+)
+        self._enabled = enabled if enabled is not None else os.getenv("ENABLE_LLM_VALIDATION", "true").lower() == "true"
 
         if not self._enabled:
             logger.info("LLM test validation is DISABLED (set ENABLE_LLM_VALIDATION=true to enable)")

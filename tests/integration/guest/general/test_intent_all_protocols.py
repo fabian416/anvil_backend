@@ -12,6 +12,10 @@ Tests intent detection for specific DeFi protocols:
 These tests advance Intent Detection coverage from 85% toward 95%.
 """
 
+import json
+import warnings
+from datetime import datetime
+
 import pytest
 from httpx import AsyncClient
 from fastapi import status
@@ -24,7 +28,7 @@ class TestAllProtocolIntents:
     """Test intent detection for all major DeFi protocols."""
 
     @pytest.mark.llm_validation
-    async def test_compound_protocol_specific_intent(self, client: AsyncClient, llm_validator):
+    async def test_compound_protocol_specific_intent(self, client: AsyncClient, llm_validator, csv_tracker):
         """
         Test Compound protocol-specific queries.
 
@@ -50,22 +54,50 @@ class TestAllProtocolIntents:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive Compound protocol information"
 
-        # Optional LLM semantic validation (environment-gated)
+        # PHASE 3: LLM semantic validation with enhanced metrics
+        validation = None
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_compound_protocol_specific_intent",
                 user_input="What are the current lending rates on Compound protocol?",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate information about Compound protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
                 ),
+                test_func=self.test_compound_protocol_specific_intent,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'defi_protocol', 'protocol': 'Compound'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+                warnings.warn(f"LLM validation concern: {validation.reasoning}")
+
+        # CSV tracking with enhanced fields
+        await csv_tracker("guest", "general", {
+            "test_id": "guest_intent_compound_protocol_001",
+            "s_multistep": False,
+            "input": "What are the current lending rates on Compound protocol?",
+            "output": agent_response,
+            "test_label_sequence": "intent_defi_protocol",
+            "output_expected": "Accurate Compound protocol information with lending rates explanation",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            # Standard 11 fields
+            "quality": validation.scoring.overall_score if validation and validation.scoring else None,
+            "qa_status": validation.verdict.value if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced 12 fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+            "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+            "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+            "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+            "test_category": validation.metadata.test_category if validation and validation.metadata else "general",
+            "test_type": validation.metadata.test_type if validation and validation.metadata else "intent_detection",
+            "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else json.dumps(["defi_protocol", "compound"]),
+            "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+            "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+            "model_used": validation.metadata.model_used if validation and validation.metadata else None,
+        })
 
 
     @pytest.mark.llm_validation

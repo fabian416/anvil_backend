@@ -4,6 +4,8 @@ Integration tests for guest Hunter AI risk signals.
 Tests the market risk warning and indicator feature for guest users with real data.
 """
 
+import json
+import warnings
 import pytest
 from datetime import datetime
 
@@ -51,13 +53,15 @@ class TestGuestHunterRiskSignals:
                 user_input="What are the risk signals for BTC?",
                 agent_output=content,
                 expected_behavior="Response should provide risk signals and market warnings for BTC. Should include risk level classification and indicators.",
+                test_func=self.test_risk_signals_basic,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_risk_signals', 'user_type': 'guest', 'token': 'BTC', 'feature': 'basic_risk'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern: {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
+            # Standard 11 fields
             "test_id": "guest_hunter_risk_signals_basic_001",
             "s_multistep": False,
             "input": "What are the risk signals for BTC?",
@@ -66,9 +70,22 @@ class TestGuestHunterRiskSignals:
             "output_expected": "Risk signals and market warnings for BTC with risk level classification",
             "status": "PASS" if response.status_code == 200 else "FAIL",
             "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
+            "quality": validation.scoring.overall_score if validation and validation.scoring else None,
+            "qa_status": validation.verdict.value if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+            # Enhanced 12 fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+            "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+            "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+            "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+            "test_category": validation.metadata.test_category if validation and validation.metadata else "hunter",
+            "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+            "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+            "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+            "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio

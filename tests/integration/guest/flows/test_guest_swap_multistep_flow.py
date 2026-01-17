@@ -4,6 +4,10 @@ Integration tests for multi-step guest swap flow.
 Tests the complete conversational flow from initiation through confirmation.
 """
 
+import json
+import warnings
+from datetime import datetime
+
 import pytest
 
 
@@ -11,8 +15,11 @@ class TestGuestSwapMultiStepFlow:
     """Test multi-step swap conversational flow."""
 
     @pytest.mark.asyncio
-    async def test_complete_swap_flow_btc_to_eth(self, client):
+    async def test_complete_swap_flow_btc_to_eth(self, client, llm_validator, csv_tracker):
         """Test complete 5-step swap flow: BTC → ETH."""
+
+        # Build conversation history for multi-step validation
+        conversation_history = []
 
         # Step 1: Initiate swap
         response = await client.post(
@@ -24,14 +31,17 @@ class TestGuestSwapMultiStepFlow:
 
         # Verify step 1 response
         assert "agent_message" in data
-        content = data["agent_message"]["content"]
-        assert "🔄" in content or "Start Swap" in content
-        assert "FROM" in content or "swap FROM" in content.lower()
-        assert any(token in content for token in ["BTC", "ETH", "SOL", "USDC"])
+        step1_content = data["agent_message"]["content"]
+        assert "🔄" in step1_content or "Start Swap" in step1_content
+        assert "FROM" in step1_content or "swap FROM" in step1_content.lower()
+        assert any(token in step1_content for token in ["BTC", "ETH", "SOL", "USDC"])
 
         # Verify metadata
         assert data["enrichment"]["swap_flow"] == "step1_from_token"
         assert data["registration_required"]["required"] is True
+
+        # Track step 1
+        conversation_history.append({"user": "swap", "agent": step1_content})
 
         # Step 2: Select FROM token (BTC)
         response = await client.post(
@@ -42,11 +52,14 @@ class TestGuestSwapMultiStepFlow:
         data = response.json()
 
         # Verify step 2 response
-        content = data["agent_message"]["content"]
-        assert "BTC" in content
-        assert "receive" in content.lower() or "to" in content.lower()
+        step2_content = data["agent_message"]["content"]
+        assert "BTC" in step2_content
+        assert "receive" in step2_content.lower() or "to" in step2_content.lower()
         assert data["enrichment"]["swap_flow"] == "step2_to_token"
         assert data["enrichment"]["from_token"] == "BTC"
+
+        # Track step 2
+        conversation_history.append({"user": "BTC", "agent": step2_content})
 
         # Step 3: Select TO token (ETH)
         response = await client.post(
@@ -57,13 +70,16 @@ class TestGuestSwapMultiStepFlow:
         data = response.json()
 
         # Verify step 3 response
-        content = data["agent_message"]["content"]
-        assert "BTC" in content and "ETH" in content
-        assert "→" in content or "to" in content
-        assert "amount" in content.lower() or "how much" in content.lower()
+        step3_content = data["agent_message"]["content"]
+        assert "BTC" in step3_content and "ETH" in step3_content
+        assert "→" in step3_content or "to" in step3_content
+        assert "amount" in step3_content.lower() or "how much" in step3_content.lower()
         assert data["enrichment"]["swap_flow"] == "step3_amount"
         assert data["enrichment"]["from_token"] == "BTC"
         assert data["enrichment"]["to_token"] == "ETH"
+
+        # Track step 3
+        conversation_history.append({"user": "ETH", "agent": step3_content})
 
         # Step 4: Enter amount
         response = await client.post(
@@ -74,13 +90,13 @@ class TestGuestSwapMultiStepFlow:
         data = response.json()
 
         # Verify step 4 response (quote)
-        content = data["agent_message"]["content"]
-        assert "0.01" in content or "0.0100" in content
-        assert "BTC" in content and "ETH" in content
-        assert "confirm" in content.lower()
+        step4_content = data["agent_message"]["content"]
+        assert "0.01" in step4_content or "0.0100" in step4_content
+        assert "BTC" in step4_content and "ETH" in step4_content
+        assert "confirm" in step4_content.lower()
 
         # Verify quote information present
-        assert any(keyword in content.lower() for keyword in ["rate", "exchange", "price"])
+        assert any(keyword in step4_content.lower() for keyword in ["rate", "exchange", "price"])
 
         # Verify metadata
         assert data["enrichment"]["swap_flow"] == "step4_confirmation"
@@ -88,6 +104,9 @@ class TestGuestSwapMultiStepFlow:
         assert data["enrichment"]["to_token"] == "eth"
         assert data["enrichment"]["amount"] == "0.01"
         assert "quote" in data["enrichment"]
+
+        # Track step 4
+        conversation_history.append({"user": "0.01", "agent": step4_content})
 
         # Step 5: Confirm swap
         response = await client.post(
@@ -98,11 +117,74 @@ class TestGuestSwapMultiStepFlow:
         data = response.json()
 
         # Verify step 5 response (execution)
-        content = data["agent_message"]["content"]
-        assert "✅" in content or "Confirmed" in content
-        assert "sign up" in content.lower() or "signup" in content.lower()
+        step5_content = data["agent_message"]["content"]
+        assert "✅" in step5_content or "Confirmed" in step5_content
+        assert "sign up" in step5_content.lower() or "signup" in step5_content.lower()
         assert data["enrichment"]["swap_flow"] == "execution"
         assert data["registration_required"]["required"] is True
+
+        # Track step 5
+        conversation_history.append({"user": "confirm", "agent": step5_content})
+
+        # PHASE 3: LLM validation with multi-step conversation history
+        validation = None
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_complete_swap_flow_btc_to_eth",
+                user_input="confirm",  # Final user input
+                agent_output=step5_content,  # Final agent output
+                expected_behavior=(
+                    "Multi-step swap flow validation: "
+                    "1) User initiates swap with 'swap' → Agent asks for FROM token "
+                    "2) User selects BTC → Agent asks for TO token "
+                    "3) User selects ETH → Agent asks for amount "
+                    "4) User enters 0.01 → Agent shows quote with rate, fees, and confirmation prompt "
+                    "5) User confirms → Agent executes swap and prompts for signup. "
+                    "Response must maintain context across all 5 steps, show proper progression, "
+                    "include confirmation emoji (✅), and direct user to sign up for execution."
+                ),
+                test_func=self.test_complete_swap_flow_btc_to_eth,  # PHASE 3: Custom prompt generation
+                conversation_history=conversation_history,  # PHASE 3: Multi-step context
+                additional_context={
+                    "test_category": "flows",
+                    "flow_type": "swap_multistep",
+                    "flow_steps": 5,
+                    "from_token": "BTC",
+                    "to_token": "ETH",
+                    "amount": "0.01",
+                },
+            )
+            if validation.verdict != "PASS":
+                warnings.warn(f"LLM validation concern: {validation.reasoning}")
+
+        # CSV tracking with enhanced fields
+        await csv_tracker("guest", "flows", {
+            "test_id": "guest_swap_multistep_flow_btc_to_eth_001",
+            "s_multistep": True,  # Multi-step flow
+            "input": "5-step flow: swap → BTC → ETH → 0.01 → confirm",
+            "output": step5_content,
+            "test_label_sequence": "flows_swap_multistep",
+            "output_expected": "Complete swap flow with context continuity and signup prompt",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            # Standard 11 fields
+            "quality": validation.scoring.overall_score if validation and validation.scoring else None,
+            "qa_status": validation.verdict.value if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced 12 fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+            "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+            "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+            "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+            "test_category": validation.metadata.test_category if validation and validation.metadata else "flows",
+            "test_type": validation.metadata.test_type if validation and validation.metadata else "multi_step",
+            "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else json.dumps(["swap_flow"]),
+            "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+            "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+            "model_used": validation.metadata.model_used if validation and validation.metadata else None,
+        })
 
     @pytest.mark.asyncio
     async def test_complete_swap_flow_usdc_to_sol(self, client):
