@@ -320,10 +320,47 @@ class AaveAdapter(AaveGateway):
     # =========================================================================
 
     def _get_fallback_markets(self, chain: str) -> list[AaveMarket]:
-        """Get fallback market data for development."""
+        """Get fallback market data for development with correct chain-specific addresses."""
+        # Asset addresses by chain
+        ASSET_ADDRESSES = {
+            "ethereum": {
+                "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                "WBTC": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+            },
+            "base": {
+                "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "WETH": "0x4200000000000000000000000000000000000006",  # Base WETH
+                "WBTC": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",  # Base WBTC (wrapped)
+            },
+            "polygon": {
+                "USDC": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+                "WETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+                "WBTC": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
+            },
+            "arbitrum": {
+                "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+                "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+                "WBTC": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+            },
+            "optimism": {
+                "USDC": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+                "WETH": "0x4200000000000000000000000000000000000006",
+                "WBTC": "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
+            },
+            "avalanche": {
+                "USDC": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+                "WETH": "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",  # WETH.e
+                "WBTC": "0x50b7545627a5162F82A992c33b87aDc75187B218",  # WBTC.e
+            },
+        }
+
+        # Get addresses for the current chain, fallback to Ethereum
+        addresses = ASSET_ADDRESSES.get(chain, ASSET_ADDRESSES["ethereum"])
+
         return [
             AaveMarket(
-                asset_address="0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                asset_address=addresses["USDC"],
                 symbol="USDC",
                 name="USD Coin",
                 chain=chain,
@@ -337,14 +374,21 @@ class AaveAdapter(AaveGateway):
                 total_borrowed_usd=Decimal("1800000000"),
                 utilization_rate=Decimal("72"),
                 liquidity_available=Decimal("700000000"),
+                available_liquidity_usd=Decimal("700000000"),
+                supply_cap_remaining=Decimal("500000000"),
                 ltv=Decimal("0.80"),
                 liquidation_threshold=Decimal("0.85"),
                 liquidation_bonus=Decimal("0.05"),
                 price_usd=Decimal("1.0"),
+                is_active=True,
+                is_frozen=False,
+                is_paused=False,
+                is_borrowable=True,
+                is_suppliable=True,
                 updated_at=datetime.now(timezone.utc),
             ),
             AaveMarket(
-                asset_address="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                asset_address=addresses["WETH"],
                 symbol="WETH",
                 name="Wrapped Ether",
                 chain=chain,
@@ -358,14 +402,21 @@ class AaveAdapter(AaveGateway):
                 total_borrowed_usd=Decimal("700000000"),
                 utilization_rate=Decimal("70"),
                 liquidity_available=Decimal("150000"),
+                available_liquidity_usd=Decimal("300000000"),
+                supply_cap_remaining=Decimal("100000"),
                 ltv=Decimal("0.82"),
                 liquidation_threshold=Decimal("0.86"),
                 liquidation_bonus=Decimal("0.05"),
                 price_usd=Decimal("2000"),
+                is_active=True,
+                is_frozen=False,
+                is_paused=False,
+                is_borrowable=True,
+                is_suppliable=True,
                 updated_at=datetime.now(timezone.utc),
             ),
             AaveMarket(
-                asset_address="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+                asset_address=addresses["WBTC"],
                 symbol="WBTC",
                 name="Wrapped Bitcoin",
                 chain=chain,
@@ -379,10 +430,17 @@ class AaveAdapter(AaveGateway):
                 total_borrowed_usd=Decimal("360000000"),
                 utilization_rate=Decimal("60"),
                 liquidity_available=Decimal("6000"),
+                available_liquidity_usd=Decimal("240000000"),
+                supply_cap_remaining=Decimal("5000"),
                 ltv=Decimal("0.72"),
                 liquidation_threshold=Decimal("0.78"),
                 liquidation_bonus=Decimal("0.06"),
                 price_usd=Decimal("40000"),
+                is_active=True,
+                is_frozen=False,
+                is_paused=False,
+                is_borrowable=True,
+                is_suppliable=True,
                 updated_at=datetime.now(timezone.utc),
             ),
         ]

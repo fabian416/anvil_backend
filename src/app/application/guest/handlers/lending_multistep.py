@@ -31,11 +31,16 @@ class LendingMultiStepHandler:
     }
 
     # Vaults with known issues (exclude from selection)
+    # ALL Morpho USDC vaults on Base are currently failing deposits
     EXCLUDED_VAULTS = {
         '0x8773447e6369472D9B72f064Ea62e405216E9084',  # MEV Frontier USDC - consistent transaction failures
         '0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657',  # Clearstar USDC Reactor - transaction failures
         '0xB7890CEE6CF4792cdCC13489D36D9d42726ab863',  # Universal USDC (UUSDC) - deposit fails without revert reason
+        '0x23479229e52Ab6aaD312D0B03DF9F33B46753B5e',  # Extrafi XLend USDC (exmUSDC) - deposit fails (tx: 0xfc677976...)
     }
+
+    # Force Aave V3 for USDC until Morpho vaults are stable
+    FORCE_AAVE_ASSETS = {'USDC'}
 
     def __init__(
         self,
@@ -387,46 +392,9 @@ class LendingMultiStepHandler:
         execute_data = None
         if is_authenticated and wallet_address:
             try:
-                vaults = await self._morpho.get_vaults(
-                    chain="base",
-                    asset=asset,
-                )
-
-                # Filter for whitelisted vaults only, excluding problematic ones
-                whitelisted_vaults = [
-                    v for v in vaults
-                    if v.whitelisted and v.address not in self.EXCLUDED_VAULTS
-                ]
-
-                # Sort by APY (highest first)
-                sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
-
-                best_vault = sorted_vaults[0] if sorted_vaults else None
-
-                if best_vault:
-                    logger.info(f"[LENDING_DEBUG] Best vault found: {best_vault.name}")
-                    logger.info(f"[LENDING_DEBUG] Vault address: {best_vault.address}")
-                    logger.info(f"[LENDING_DEBUG] Asset address: {best_vault.asset_address}")
-                    logger.info(f"[LENDING_DEBUG] Asset symbol: {best_vault.asset}")
-
-                    execute_data = {
-                        "action_type": "deposit",
-                        "provider": "morpho",
-                        "protocol": "morpho",
-                        "chain": "base",
-                        "vault_address": best_vault.address,
-                        "asset_address": best_vault.asset_address,
-                        "asset_symbol": best_vault.asset,
-                        "amount": amount,
-                        "slippage": 0.5,
-                        "vault_name": best_vault.name,
-                        "vault_apy": best_vault.apy,
-                        "vault_tvl": best_vault.total_assets,
-                    }
-                    logger.info(f"[LENDING_DEBUG] execute_data generated: {execute_data}")
-                else:
-                    logger.warning(f"[LENDING_DEBUG] No best vault found for {asset} on base")
-                    # Try Aave V3 fallback
+                # Force Aave V3 for certain assets with problematic Morpho vaults
+                if asset.upper() in self.FORCE_AAVE_ASSETS:
+                    logger.info(f"[LENDING_DEBUG] Forcing Aave V3 for {asset} (all Morpho vaults failing)")
                     execute_data = await self._try_aave_fallback(
                         asset=asset,
                         amount=amount,
@@ -434,7 +402,57 @@ class LendingMultiStepHandler:
                         wallet_address=wallet_address,
                     )
                     if execute_data:
-                        logger.info(f"[LENDING_DEBUG] Using Aave V3 fallback for {asset}")
+                        logger.info(f"[LENDING_DEBUG] Using Aave V3 (forced) for {asset}")
+                else:
+                    # Try Morpho first for non-forced assets
+                    vaults = await self._morpho.get_vaults(
+                        chain="base",
+                        asset=asset,
+                    )
+
+                    # Filter for whitelisted vaults only, excluding problematic ones
+                    whitelisted_vaults = [
+                        v for v in vaults
+                        if v.whitelisted and v.address not in self.EXCLUDED_VAULTS
+                    ]
+
+                    # Sort by APY (highest first)
+                    sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
+
+                    best_vault = sorted_vaults[0] if sorted_vaults else None
+
+                    if best_vault:
+                        logger.info(f"[LENDING_DEBUG] Best vault found: {best_vault.name}")
+                        logger.info(f"[LENDING_DEBUG] Vault address: {best_vault.address}")
+                        logger.info(f"[LENDING_DEBUG] Asset address: {best_vault.asset_address}")
+                        logger.info(f"[LENDING_DEBUG] Asset symbol: {best_vault.asset}")
+
+                        execute_data = {
+                            "action_type": "deposit",
+                            "provider": "morpho",
+                            "protocol": "morpho",
+                            "chain": "base",
+                            "vault_address": best_vault.address,
+                            "asset_address": best_vault.asset_address,
+                            "asset_symbol": best_vault.asset,
+                            "amount": amount,
+                            "slippage": 0.5,
+                            "vault_name": best_vault.name,
+                            "vault_apy": best_vault.apy,
+                            "vault_tvl": best_vault.total_assets,
+                        }
+                        logger.info(f"[LENDING_DEBUG] execute_data generated: {execute_data}")
+                    else:
+                        logger.warning(f"[LENDING_DEBUG] No best vault found for {asset} on base")
+                        # Try Aave V3 fallback
+                        execute_data = await self._try_aave_fallback(
+                            asset=asset,
+                            amount=amount,
+                            chain="base",
+                            wallet_address=wallet_address,
+                        )
+                        if execute_data:
+                            logger.info(f"[LENDING_DEBUG] Using Aave V3 fallback for {asset}")
             except Exception as e:
                 logger.error(f"Error fetching vault data for execute_data: {e}", exc_info=True)
 
