@@ -144,25 +144,81 @@ async def get_optional_user(
         return None
 
     try:
+        from sqlalchemy import text
+        from app.infrastructure.persistence_sqla.db_uow import get_async_session
+        from app.presentation.http.auth.access_token_processor_jwt import (
+            JwtAccessTokenProcessor,
+        )
+        from app.setup.config import get_config
+
         token = authorization.replace("Bearer ", "")
 
-        # TODO: Implement JWT verification
-        # For now, this is a placeholder that will be implemented in Day 2-3
-        # when we integrate with the existing authentication system
-        #
-        # Expected implementation:
-        # from app.infrastructure.auth.jwt_handler import verify_jwt_token
-        # user = await verify_jwt_token(token)
-        # return user
+        # Get JWT secret from config
+        config = get_config()
+        jwt_secret = config.auth.jwt_secret
 
-        logger.warning(
-            "JWT verification not yet implemented - treating as guest user"
-        )
-        return None
+        # Decode and validate JWT token
+        jwt_processor = JwtAccessTokenProcessor(secret=jwt_secret, algorithm="HS256")
+        auth_session_id = jwt_processor.decode_auth_session_id(token)
+
+        if not auth_session_id:
+            logger.debug("Invalid JWT token - treating as guest user")
+            return None
+
+        # Get database session from Dishka container (stored in request state)
+        async_session = request.state.dishka_container.get(get_async_session)
+
+        # Query database to validate session and get user
+        query = text("""
+            SELECT u.id, u.email, u.first_name, u.last_name, u.role,
+                   u.is_active, u.is_verified
+            FROM auth_sessions s
+            JOIN users u ON u.id = s.user_id
+            WHERE s.id = :session_id
+              AND s.expiration > NOW()
+              AND u.is_active = TRUE
+        """)
+
+        async with async_session() as session:
+            result = await session.execute(query, {"session_id": auth_session_id})
+            row = result.fetchone()
+
+            if not row:
+                logger.debug(
+                    "Session not found or expired - treating as guest user",
+                    extra={"session_id": auth_session_id}
+                )
+                return None
+
+            # Create User entity from database row
+            from app.domain.value_objects.user_id import UserId
+            from app.domain.value_objects.email import Email
+
+            user = User(
+                id=UserId(row[0]),  # user.id
+                email=Email(row[1]),  # user.email
+                first_name=row[2],
+                last_name=row[3],
+                role=row[4],
+                is_active=row[5],
+                is_verified=row[6],
+            )
+
+            logger.info(
+                "User authenticated successfully",
+                extra={
+                    "user_id": row[0],
+                    "email": row[1],
+                    "session_id": auth_session_id,
+                }
+            )
+
+            return user
 
     except Exception as e:
         logger.warning(
-            f"Error verifying JWT token: {e} - treating as guest user"
+            f"Error verifying JWT token: {e} - treating as guest user",
+            exc_info=True
         )
         return None
 
