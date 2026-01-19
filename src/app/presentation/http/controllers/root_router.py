@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
 
 from app.presentation.http.controllers.api_v1_router import create_api_v1_router
+from app.presentation.http.health import router as health_router
 
 
 def create_root_router() -> APIRouter:
@@ -15,7 +16,10 @@ def create_root_router() -> APIRouter:
         """
         return RedirectResponse(url="docs/")
 
-    sub_routers = (create_api_v1_router(),)
+    sub_routers = (
+        health_router,  # Health check endpoints (no prefix)
+        create_api_v1_router(),  # API v1 endpoints (/api/v1/*)
+    )
 
     for sub_router in sub_routers:
         router.include_router(sub_router)
