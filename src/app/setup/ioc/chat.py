@@ -35,6 +35,7 @@ from app.infrastructure.adapters.chat_repository_sqla import (
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.caching.guest_cache import GuestCache
 from app.infrastructure.caching.redis_cache import RedisCache
+from app.infrastructure.rate_limiting.rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +137,27 @@ class ChatProvider(Provider):
         Currently at 96.1% hit rate with 5-10min TTL for Hunter AI responses.
         """
         return GuestCache(redis_cache=redis_cache)
+
+    @provide(scope=Scope.APP)
+    async def provide_rate_limiter(
+        self,
+        redis_cache: RedisCache,
+    ) -> RateLimiter:
+        """
+        Provide RateLimiter for chat endpoints.
+
+        Implements tiered rate limiting:
+        - Guest: 800 messages/hour (IP-based)
+        - Free: 1000 messages/hour (user ID)
+        - Premium: 10000 messages/hour (user ID)
+        - Enterprise: 10000 messages/hour (user ID)
+
+        Uses Redis sliding window counter with fail-open strategy.
+        """
+        # Ensure Redis is connected
+        if redis_cache._client is None:
+            await redis_cache.connect()
+        return RateLimiter(redis_client=redis_cache._client)
 
     # ========== Unified Chat Handler ==========
 

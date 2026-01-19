@@ -4,9 +4,10 @@ This module provides a single unified endpoint that serves both guest and
 authenticated users through context detection and polymorphic handling.
 """
 import logging
+from datetime import datetime, timezone
 from typing import Optional, Annotated
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Header, Request, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.domain.chat.value_objects import (
@@ -16,10 +17,14 @@ from app.domain.chat.value_objects import (
 )
 from app.application.chat.handlers.unified_chat_handler import UnifiedChatHandler
 from app.domain.entities.user import User
+from app.infrastructure.rate_limiting.rate_limiter import (
+    RateLimiter,
+    UserTier,
+)
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1", tags=["Universal Chat"])
+router = APIRouter(tags=["Universal Chat"])
 
 
 # ============================================================================
@@ -319,6 +324,7 @@ async def universal_chat(
     user: Annotated[Optional[User], Depends(get_optional_user)],
     ip_address: Annotated[str, Depends(get_client_ip)],
     handler: FromDishka[UnifiedChatHandler],
+    rate_limiter: FromDishka[RateLimiter],
 ) -> ChatResponse:
     """Universal chat endpoint for guest and authenticated users.
 
@@ -362,6 +368,75 @@ async def universal_chat(
             "ip_address": ip_address,
             "language": request_data.language,
             "content_length": len(request_data.content),
+        },
+    )
+
+    # Check rate limit
+    is_authenticated = user is not None
+    identifier = str(user.id.value) if user else ip_address
+    user_tier = UserTier.FREE if user else UserTier.GUEST  # TODO: Get actual tier from user
+
+    rate_limit_result = await rate_limiter.check_rate_limit(
+        identifier=identifier,
+        user_tier=user_tier,
+        is_authenticated=is_authenticated,
+    )
+
+    # Add rate limit headers to response
+    # Note: FastAPI doesn't easily allow setting headers on HTTPException,
+    # so we'll add them to the normal response later
+
+    if not rate_limit_result.allowed:
+        # Rate limit exceeded - return 429 with detailed message
+        user_type_str = "authenticated users" if is_authenticated else "guest users"
+        tier_limit = rate_limit_result.limit
+        reset_time = rate_limit_result.reset_at.strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        error_message = (
+            f"Rate limit exceeded. {user_type_str.capitalize()}: "
+            f"{tier_limit} messages/hour. "
+            f"Current usage: {rate_limit_result.current}/{tier_limit}. "
+            f"Limit resets at {reset_time}."
+        )
+
+        if not is_authenticated:
+            error_message += " Please register for higher limits (1,000+ messages/hour)."
+
+        logger.warning(
+            "Rate limit exceeded",
+            extra={
+                "identifier": identifier,
+                "is_authenticated": is_authenticated,
+                "tier": user_tier.value,
+                "current": rate_limit_result.current,
+                "limit": tier_limit,
+                "reset_at": reset_time,
+            },
+        )
+
+        # Calculate retry-after in seconds
+        now = datetime.now(timezone.utc)
+        retry_after_seconds = max(0, int((rate_limit_result.reset_at - now).total_seconds()))
+
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=error_message,
+            headers={
+                "X-RateLimit-Limit": str(rate_limit_result.limit),
+                "X-RateLimit-Remaining": str(rate_limit_result.remaining),
+                "X-RateLimit-Reset": str(int(rate_limit_result.reset_at.timestamp())),
+                "Retry-After": str(retry_after_seconds),
+            },
+        )
+
+    logger.info(
+        "Rate limit check passed",
+        extra={
+            "identifier": identifier,
+            "tier": user_tier.value,
+            "current": rate_limit_result.current,
+            "limit": rate_limit_result.limit,
+            "remaining": rate_limit_result.remaining,
         },
     )
 
