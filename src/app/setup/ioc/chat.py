@@ -191,9 +191,11 @@ class ChatProvider(Provider):
             Guest handlers (get_or_create_guest_user, etc.) and hunter_service
             are currently NOT injected via Dishka. They will be added when
             we fully migrate the guest system to use the unified handler.
-            For now, the handler raises NotImplementedError for guest context.
+
+            For now, hunter_service must be injected directly in the endpoint
+            function to avoid Request context dependency issues.
         """
-        logger.info("Creating UnifiedChatHandler with authenticated support only")
+        logger.info("Creating UnifiedChatHandler (hunter_service will be set by endpoint)")
 
         return UnifiedChatHandler(
             # Guest handlers (not yet migrated to unified handler)
@@ -206,7 +208,7 @@ class ChatProvider(Provider):
             create_chat_message=create_chat_message,
             # Shared infrastructure
             cache=cache,
-            hunter_service=None,  # TODO: Add when Hunter AI is available via DI
+            hunter_service=None,  # Will be injected in endpoint via setter
         )
 
 

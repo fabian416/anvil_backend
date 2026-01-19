@@ -1,0 +1,286 @@
+{
+  "dashboard": {
+    "title": "Anvil Chat System Overview",
+    "tags": ["chat", "production", "day5"],
+    "timezone": "UTC",
+    "schemaVersion": 30,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate (req/s)",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "rate(chat_requests_total[5m])",
+            "legendFormat": "{{agent}} - {{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {
+            "show": true,
+            "asTable": true,
+            "rightSide": false
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Error Rate (%)",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "rate(chat_errors_total[5m]) / rate(chat_requests_total[5m]) * 100",
+            "legendFormat": "Error Rate",
+            "refId": "A"
+          }
+        ],
+        "alert": {
+          "name": "High Error Rate",
+          "conditions": [
+            {
+              "evaluator": {
+                "type": "gt",
+                "params": [5]
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": ["A", "5m", "now"]
+              },
+              "reducer": {
+                "type": "avg"
+              },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "60s",
+          "handler": 1,
+          "message": "Error rate is above 5%",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 3,
+        "title": "Response Time (p50, p95, p99)",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(chat_response_time_seconds_bucket[5m]))",
+            "legendFormat": "p50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(chat_response_time_seconds_bucket[5m]))",
+            "legendFormat": "p95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(chat_response_time_seconds_bucket[5m]))",
+            "legendFormat": "p99",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Response Time"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Cache Hit Rate (%)",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "targets": [
+          {
+            "expr": "rate(chat_cache_hits_total[5m]) / (rate(chat_cache_hits_total[5m]) + rate(chat_cache_misses_total[5m])) * 100",
+            "legendFormat": "Cache Hit Rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "percent",
+            "max": 100,
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Rate Limiting Status",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "targets": [
+          {
+            "expr": "rate(anvil_rate_limit_exceeded_total[5m])",
+            "legendFormat": "Rate Limit Exceeded ({{user_tier}})",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(anvil_rate_limit_checked_total[5m])",
+            "legendFormat": "Rate Limit Checks ({{user_tier}})",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "reqps",
+            "label": "Requests/s"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Active Requests",
+        "type": "gauge",
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 16
+        },
+        "targets": [
+          {
+            "expr": "chat_active_requests",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 100
+                }
+              ]
+            },
+            "max": 200,
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Total Cost (USD)",
+        "type": "stat",
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 16
+        },
+        "targets": [
+          {
+            "expr": "chat_cost_usd_total",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "decimals": 4
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "System Health Components",
+        "type": "table",
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        },
+        "targets": [
+          {
+            "expr": "anvil_component_health",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "renameByName": {
+                "component": "Component",
+                "status": "Status",
+                "latency_ms": "Latency (ms)"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    }
+  },
+  "overwrite": true
+}

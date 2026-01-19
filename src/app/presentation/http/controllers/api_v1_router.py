@@ -98,6 +98,7 @@ from app.presentation.http.controllers.hunter.trading_signals import (
 # Markets router
 from app.presentation.http.controllers.markets.router import create_markets_router
 from app.presentation.http.controllers.metrics.router import router as metrics_router
+from app.presentation.http.controllers.monitoring.router import router as monitoring_router
 
 # ML routers
 from app.presentation.http.controllers.ml import network_router, prediction_router
@@ -160,6 +161,7 @@ def create_api_v1_router() -> APIRouter:
         create_payment_router(),
         create_auth_router(),
         metrics_router,
+        monitoring_router,  # Prometheus metrics and health checks
         create_chat_router(),
         create_chat_websocket_router(),
         create_intent_detection_router(),
