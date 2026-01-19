@@ -48,6 +48,9 @@ class TestGuestHunterAIMissingIntents:
         assert "agent_message" in data
         assert len(data["agent_message"]["content"]) > 0
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -80,6 +83,9 @@ class TestGuestHunterAIMissingIntents:
         # Should respond with ETH-specific risk information
         assert "agent_message" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -111,6 +117,9 @@ class TestGuestHunterAIMissingIntents:
 
         # Should provide pattern analysis
         assert "agent_message" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -145,6 +154,9 @@ class TestGuestHunterAIMissingIntents:
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 0
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -176,6 +188,9 @@ class TestGuestHunterAIMissingIntents:
 
         # Should handle multi-token queries
         assert "agent_message" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -213,6 +228,9 @@ class TestGuestHunterAIMissingIntents:
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert "agent_message" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -255,6 +273,9 @@ class TestGuestULTRAMissingIntents:
         # Should explain MEV protection
         assert "agent_message" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -287,6 +308,9 @@ class TestGuestULTRAMissingIntents:
         # Should provide MEV protection details
         assert "agent_message" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -318,6 +342,9 @@ class TestGuestULTRAMissingIntents:
 
         # Should explain auto executor
         assert "agent_message" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -354,6 +381,9 @@ class TestGuestULTRAMissingIntents:
         # May have registration requirement
         if data.get("registration_required"):
             assert data["registration_required"]["required"] is True
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -401,6 +431,9 @@ class TestGuestPortfolioAccess:
             assert data["registration_required"]["required"] is True
             assert "message" in data["registration_required"]
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -432,6 +465,9 @@ class TestGuestPortfolioAccess:
 
         # Should have registration requirement field
         assert "registration_required" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -474,6 +510,9 @@ class TestGuestPortfolioAccess:
             if reg_req["message"]:
                 assert "en" in reg_req["message"] or len(reg_req["message"]) > 0
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -505,6 +544,9 @@ class TestGuestPortfolioAccess:
 
         # Should provide guidance on next steps
         assert "agent_message" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -547,6 +589,9 @@ class TestGuestLendingAccess:
         # Execution requires registration
         assert "registration_required" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -579,6 +624,9 @@ class TestGuestLendingAccess:
         # Should provide rate information
         assert "agent_message" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -610,6 +658,9 @@ class TestGuestLendingAccess:
 
         # Should require registration for execution
         assert "registration_required" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -648,6 +699,9 @@ class TestGuestLendingAccess:
         if data.get("registration_required"):
             # If present, it might be about execution, not viewing
             pass
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -691,6 +745,9 @@ class TestGuestMultiStepFlows:
         # Should indicate registration is needed for execution
         assert "registration_required" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -724,6 +781,9 @@ class TestGuestMultiStepFlows:
         # Should explain the process
         assert "agent_message" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -755,6 +815,9 @@ class TestGuestMultiStepFlows:
 
         # Should require registration
         assert "registration_required" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -788,6 +851,9 @@ class TestGuestMultiStepFlows:
         # Should have clear guidance
         assert "agent_message" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -820,6 +886,9 @@ class TestGuestMultiStepFlows:
         # Should require registration for personal data
         assert "registration_required" in data or "agent_message" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -851,6 +920,9 @@ class TestGuestMultiStepFlows:
 
         # Should explain features
         assert "agent_message" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
@@ -903,6 +975,9 @@ class TestGuestAgentSquad:
             agent_content = data["agent_message"]["content"]
             assert len(agent_content) > 0
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -935,6 +1010,9 @@ class TestGuestAgentSquad:
         # Should route to Hunter AI
         assert "agent_message" in data
 
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
+
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
@@ -966,6 +1044,9 @@ class TestGuestAgentSquad:
 
         # Should route to ULTRA agent
         assert "agent_message" in data
+
+        # Extract agent response for validation
+        content = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
         if llm_validator.enabled:

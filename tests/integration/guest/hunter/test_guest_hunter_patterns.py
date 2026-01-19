@@ -6,6 +6,8 @@ Tests the chart pattern detection and analysis feature for guest users with real
 
 import pytest
 from datetime import datetime
+import json
+import warnings
 
 
 class TestGuestHunterPatterns:
@@ -52,10 +54,11 @@ class TestGuestHunterPatterns:
                 user_input="What patterns do you see in BTC chart?",
                 agent_output=content,
                 expected_behavior="Response should identify and describe chart patterns or candlestick patterns in BTC price chart. Should include pattern analysis with formations, trends, and technical analysis insights.",
+                test_func=self.test_pattern_detection_basic,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'BTC', 'feature': 'basic_pattern_detection'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -70,6 +73,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -102,10 +118,11 @@ class TestGuestHunterPatterns:
                 user_input="ETH chart patterns",
                 agent_output=content,
                 expected_behavior="Response should provide ETH chart pattern analysis with proper pattern classification (chart patterns or candlestick patterns). Should identify pattern types like head and shoulders, triangles, wedges, doji, hammer, etc.",
+                test_func=self.test_pattern_types_classification,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'ETH', 'feature': 'pattern_classification'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -120,6 +137,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -153,7 +183,7 @@ class TestGuestHunterPatterns:
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'tokens_tested': tokens, 'feature': 'multiple_tokens'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -168,6 +198,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -200,10 +243,11 @@ class TestGuestHunterPatterns:
                 user_input="BTC chart analysis",
                 agent_output=content,
                 expected_behavior="Response should provide BTC chart analysis with timeframe context. Should discuss patterns across different time periods (hourly, daily, weekly) to give comprehensive technical analysis.",
+                test_func=self.test_pattern_timeframe_analysis,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'BTC', 'feature': 'timeframe_analysis'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -218,6 +262,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -253,10 +310,11 @@ class TestGuestHunterPatterns:
                 user_input="ETH chart patterns",
                 agent_output=content,
                 expected_behavior="Response should provide ETH chart patterns with confidence scores indicating reliability of detected patterns. Should include terms like confidence, strong, weak, likely, or probability.",
+                test_func=self.test_pattern_confidence_scores,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'ETH', 'feature': 'confidence_scores'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -271,6 +329,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -303,10 +374,11 @@ class TestGuestHunterPatterns:
                 user_input="SOL chart patterns",
                 agent_output=content,
                 expected_behavior="Response should provide SOL chart patterns with bullish/bearish implications. Should indicate whether patterns suggest bullish, bearish, reversal, continuation, or breakout signals.",
+                test_func=self.test_pattern_bullish_bearish_signals,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'SOL', 'feature': 'bullish_bearish_signals'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -321,6 +393,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -353,10 +438,11 @@ class TestGuestHunterPatterns:
                 user_input="BTC pattern analysis",
                 agent_output=content,
                 expected_behavior="Response should provide BTC pattern analysis with price target projections. Should mention target levels, resistance/support levels, or price projections based on detected patterns.",
+                test_func=self.test_pattern_price_targets,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'BTC', 'feature': 'price_targets'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -371,6 +457,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -398,10 +497,11 @@ class TestGuestHunterPatterns:
                 user_input="ETH chart patterns",
                 agent_output=content,
                 expected_behavior="Response should provide ETH chart patterns and include proper hunter_tool enrichment tag identifying pattern_recognizer as the tool used.",
+                test_func=self.test_pattern_hunter_tool_tag,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'ETH', 'feature': 'hunter_tool_tag'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -416,6 +516,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -448,10 +561,11 @@ class TestGuestHunterPatterns:
                 user_input="BTC patterns",
                 agent_output=content,
                 expected_behavior="Response should provide BTC pattern analysis using real chart data. Should include actual pattern names detected from chart analysis.",
+                test_func=self.test_pattern_uses_real_chart_data,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'BTC', 'feature': 'real_chart_data'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -466,6 +580,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -496,10 +623,11 @@ class TestGuestHunterPatterns:
                 user_input="patrones de gráfico para ETH",
                 agent_output=content,
                 expected_behavior="Response should provide ETH chart pattern analysis, ideally in Spanish but English fallback is acceptable. Should contain meaningful content about pattern detection.",
+                test_func=self.test_pattern_multilingual_spanish,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns', 'user_type': 'guest', 'token': 'ETH', 'feature': 'multilingual_spanish', 'language': 'es'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -514,6 +642,19 @@ class TestGuestHunterPatterns:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
 
@@ -542,10 +683,11 @@ class TestGuestHunterPatternsStorytellingQuality:
                 user_input="BTC chart patterns",
                 agent_output=content,
                 expected_behavior="Response should provide BTC chart pattern analysis with emojis for visual appeal. Should use chart/trend-related emojis to enhance readability and engagement.",
+                test_func=self.test_pattern_uses_emojis,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns_storytelling', 'user_type': 'guest', 'token': 'BTC', 'feature': 'emojis'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -560,6 +702,19 @@ class TestGuestHunterPatternsStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -587,10 +742,11 @@ class TestGuestHunterPatternsStorytellingQuality:
                 user_input="ETH pattern analysis",
                 agent_output=content,
                 expected_behavior="Response should provide ETH pattern analysis with clear visual formatting using markdown. Should use bold text, structured sections, and line breaks for readability.",
+                test_func=self.test_pattern_clear_formatting,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns_storytelling', 'user_type': 'guest', 'token': 'ETH', 'feature': 'formatting'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -605,6 +761,19 @@ class TestGuestHunterPatternsStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -630,10 +799,11 @@ class TestGuestHunterPatternsStorytellingQuality:
                 user_input="SOL chart patterns",
                 agent_output=content,
                 expected_behavior="Response should provide SOL chart pattern analysis with visual descriptions. Patterns should be described in visual terms that help users understand what the charts look like.",
+                test_func=self.test_pattern_visual_descriptions,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns_storytelling', 'user_type': 'guest', 'token': 'SOL', 'feature': 'visual_descriptions'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -648,6 +818,19 @@ class TestGuestHunterPatternsStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -673,10 +856,11 @@ class TestGuestHunterPatternsStorytellingQuality:
                 user_input="BTC patterns",
                 agent_output=content,
                 expected_behavior="Response should provide BTC pattern analysis with actionable insights. Should offer trading context or practical implications of detected patterns.",
+                test_func=self.test_pattern_actionable_insights,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns_storytelling', 'user_type': 'guest', 'token': 'BTC', 'feature': 'actionable_insights'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -691,6 +875,19 @@ class TestGuestHunterPatternsStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -716,10 +913,11 @@ class TestGuestHunterPatternsStorytellingQuality:
                 user_input="ETH chart analysis",
                 agent_output=content,
                 expected_behavior="Response should provide ETH chart pattern analysis with educational explanations. Should explain what detected patterns mean and their typical implications.",
+                test_func=self.test_pattern_educational_context,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_patterns_storytelling', 'user_type': 'guest', 'token': 'ETH', 'feature': 'educational_context'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -734,4 +932,17 @@ class TestGuestHunterPatternsStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })

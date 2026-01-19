@@ -20,6 +20,8 @@ from httpx import AsyncClient, ASGITransport
 from uuid import uuid4
 
 from app.run import make_app
+import json
+import warnings
 
 # Access token for ops@anvilcrypto.com (generated 2026-01-10, expires 2027-01-10)
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ0ZXN0X3Nlc3Npb25fMjAyNl8xNzY4MDY2MDc5IiwiZXhwIjoxNzk5NjAyMDc5fQ.OUFFmZW2_QACkgrIphLFcOOB3Qb-1ckVB_RvZ-VTaF0"
@@ -139,10 +141,10 @@ async def test_user_shortcut_examples_detect_correct_intent(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "shortcuts", {
@@ -235,10 +237,10 @@ async def test_user_shortcut_examples_not_generic_fallback(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "shortcuts", {
@@ -365,10 +367,10 @@ async def test_user_shortcut_examples_have_meaningful_content(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "shortcuts", {

@@ -13,6 +13,9 @@ These tests advance Historical Chat coverage from 80% toward 90%.
 import pytest
 from httpx import AsyncClient
 from fastapi import status
+import json
+import warnings
+from datetime import datetime
 
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.historical_chat]
@@ -46,21 +49,26 @@ class TestHistoricalChatDataIntegrity:
         assert len(data["agent_message"]["content"]) > 20
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_empty_conversation_history",
                 user_input="This is my first message",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_empty_conversation_history,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -113,21 +121,26 @@ class TestHistoricalChatDataIntegrity:
         assert len(data3["agent_message"]["content"]) > 50
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_deleted_message_handling",
                 user_input="Tell me about Bitcoin",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_deleted_message_handling,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -168,21 +181,26 @@ class TestHistoricalChatDataIntegrity:
         assert conversation_id is not None
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_conversation_timestamp_consistency",
                 user_input="Message 1",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_conversation_timestamp_consistency,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -236,20 +254,25 @@ class TestHistoricalChatDataIntegrity:
         assert "agent_message" in data_final
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_large_conversation_performance",
                 user_input="Start of long conversation",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_large_conversation_performance,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
         assert len(data_final["agent_message"]["content"]) > 50

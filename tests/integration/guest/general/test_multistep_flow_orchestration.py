@@ -16,6 +16,9 @@ These tests advance Multi-Step Flows coverage from 85% toward 95%.
 import pytest
 from httpx import AsyncClient
 from fastapi import status
+import json
+import warnings
+from datetime import datetime
 
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multi_step_flows]
@@ -52,21 +55,26 @@ class TestMultiStepFlowOrchestration:
         assert len(agent_response) > 100, "Should provide comprehensive response for nested flow (100+ chars)"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_nested_flow_execution",
                 user_input="I want to swap ETH for USDC and then lend the USDC on Aave",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_nested_flow_execution,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -96,21 +104,26 @@ class TestMultiStepFlowOrchestration:
         assert len(agent_response) > 100, "Should address all parallel requests (100+ chars)"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_parallel_flow_execution",
                 user_input="Check Bitcoin price, Ethereum gas fees, and Solana network status",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_parallel_flow_execution,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -151,21 +164,26 @@ class TestMultiStepFlowOrchestration:
         assert len(agent_response) > 50, "Should understand context from previous message"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_flow_state_persistence",
                 user_input="I want to buy $1000 worth of Bitcoin",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_flow_state_persistence,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -196,21 +214,26 @@ class TestMultiStepFlowOrchestration:
         assert len(agent_response) > 50, "Should provide response even for complex query"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_flow_timeout_handling",
                 user_input="Analyze all DeFi protocols, compare their TVL, APY, risks, ",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_flow_timeout_handling,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -241,21 +264,26 @@ class TestMultiStepFlowOrchestration:
         assert len(agent_response) > 50, "Should handle dependent steps logically"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_flow_dependency_resolution",
                 user_input="First check if I have enough ETH, then estimate gas for a swap, ",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_flow_dependency_resolution,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -286,21 +314,26 @@ class TestMultiStepFlowOrchestration:
         assert len(agent_response) > 50, "Should provide conditional recommendation"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_conditional_flow_branching",
                 user_input="If ETH price is above $2000, recommend buying, ",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_conditional_flow_branching,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -330,20 +363,25 @@ class TestMultiStepFlowOrchestration:
         agent_response = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_flow_result_aggregation",
                 user_input="Get prices for BTC, ETH, and SOL, then calculate my total ",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_flow_result_aggregation,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
         assert len(agent_response) > 100, "Should provide aggregated calculation result (100+ chars)"

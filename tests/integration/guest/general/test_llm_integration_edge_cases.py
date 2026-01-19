@@ -12,6 +12,9 @@ These tests advance LLM Integration coverage from 85% toward 100%.
 import pytest
 from httpx import AsyncClient
 from fastapi import status
+import json
+import warnings
+from datetime import datetime
 
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.llm]
@@ -48,21 +51,26 @@ class TestLLMIntegrationEdgeCases:
             assert len(data["agent_message"]["content"]) > 30
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_provider_selection_load_balancing",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_provider_selection_load_balancing,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -94,21 +102,26 @@ class TestLLMIntegrationEdgeCases:
         assert len(agent_response) > 50, "Should provide meaningful response"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_llm_timeout_handling_comprehensive",
                 user_input="Provide comprehensive analysis of all major cryptocurrencies, ",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_llm_timeout_handling_comprehensive,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -142,20 +155,25 @@ class TestLLMIntegrationEdgeCases:
             assert "agent_message" in data
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_llm_error_recovery_patterns",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_llm_error_recovery_patterns,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
             assert data["agent_message"]["content"]

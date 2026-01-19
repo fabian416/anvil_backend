@@ -17,6 +17,9 @@ Following OWASP Top 10 and secure coding best practices.
 import pytest
 from httpx import AsyncClient
 from fastapi import status
+import json
+import warnings
+from datetime import datetime
 
 
 # Mark all tests as security and integration tests
@@ -64,21 +67,25 @@ class TestSQLInjectionProtection:
             assert "database" not in agent_content or "data base" in agent_content  # natural language
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_guest_sql_injection_in_message_content",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_guest_sql_injection_in_message_content,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -99,23 +106,6 @@ class TestSQLInjectionProtection:
 
         # Verify title is stored as-is (escaped/sanitized)
         assert "id" in data
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user_sql_injection_in_conversation_operations",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
 
 
     @pytest.mark.llm_validation
@@ -139,22 +129,29 @@ class TestSQLInjectionProtection:
             # Should handle gracefully
             assert response.status_code in [status.HTTP_200_OK, status.HTTP_400_BAD_REQUEST]
 
+        # Extract data from last response
+        data = response.json()
+
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_sql_injection_in_search_parameters",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_sql_injection_in_search_parameters,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
 
@@ -195,21 +192,25 @@ class TestXSSProtection:
             assert "<script>" not in agent_content.lower()
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_guest_xss_script_tag_injection",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_guest_xss_script_tag_injection,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -239,21 +240,25 @@ class TestXSSProtection:
             assert "onfocus" not in agent_content.lower()
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_guest_xss_event_handler_injection",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_guest_xss_event_handler_injection,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -278,21 +283,25 @@ class TestXSSProtection:
         assert xss_payload in user_content or "&lt;img" in user_content
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_xss_in_user_message_reflection",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_xss_in_user_message_reflection,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
 
@@ -336,21 +345,25 @@ class TestCommandInjectionProtection:
             assert "bin/bash" not in agent_content
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_shell_metacharacters_in_input",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_shell_metacharacters_in_input,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -371,22 +384,29 @@ class TestCommandInjectionProtection:
             assert response.status_code == status.HTTP_200_OK
             # Should process as natural language query, not execute commands
 
+        # Extract data from last response
+        data = response.json()
+
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_command_chaining_attempts",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_command_chaining_attempts,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
 
@@ -426,21 +446,25 @@ class TestPromptInjectionProtection:
             assert "arr" not in agent_content or "arbitrage" in agent_content  # "arr" could be in "array"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_system_prompt_override_attempt",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_system_prompt_override_attempt,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -471,21 +495,25 @@ class TestPromptInjectionProtection:
             assert "password" not in agent_content.lower()
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_role_confusion_attack",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_role_confusion_attack,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -511,21 +539,25 @@ class TestPromptInjectionProtection:
             assert "agent_message" in data
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_instruction_hijacking",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_instruction_hijacking,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -551,21 +583,25 @@ class TestPromptInjectionProtection:
             assert "agent_message" in data
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_jailbreak_attempt",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_jailbreak_attempt,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
 
@@ -590,23 +626,6 @@ class TestPayloadValidation:
         # Should be rejected with 422 Unprocessable Entity
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_oversized_message_rejection",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.llm_validation
     async def test_maximum_valid_message_accepted(self, client: AsyncClient, llm_validator):
@@ -621,22 +640,29 @@ class TestPayloadValidation:
         # Should succeed
         assert response.status_code == status.HTTP_200_OK
 
+        # Extract data from response
+        data = response.json()
+
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_maximum_valid_message_accepted",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_maximum_valid_message_accepted,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -650,23 +676,6 @@ class TestPayloadValidation:
 
         # Should be rejected
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_malformed_json_handling",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
 
 
 
@@ -694,21 +703,25 @@ class TestUnicodeExploits:
         assert "agent_message" in data
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_zalgo_text_handling",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_zalgo_text_handling,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -725,22 +738,29 @@ class TestUnicodeExploits:
         # Should handle safely
         assert response.status_code == status.HTTP_200_OK
 
+        # Extract data from response
+        data = response.json()
+
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_rtl_override_attack",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_rtl_override_attack,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -756,22 +776,30 @@ class TestUnicodeExploits:
         # Should either succeed (if under 2000 chars) or reject (if over)
         assert response.status_code in [status.HTTP_200_OK, status.HTTP_422_UNPROCESSABLE_ENTITY]
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
+        # Optional LLM semantic validation (environment-gated) - only if successful
+        if response.status_code == status.HTTP_200_OK:
+            # Extract data from response
+            data = response.json()
+
+            # Extract agent response for validation
+            agent_response = data["agent_message"]["content"]
+
+        if llm_validator.enabled and response.status_code == status.HTTP_200_OK:
             validation = await llm_validator.validate_single_response(
                 test_name="test_emoji_bomb_protection",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_emoji_bomb_protection,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
 
@@ -805,21 +833,25 @@ class TestRateLimitBypass:
             assert "rate_limited" in data
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_rapid_fire_requests",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_rapid_fire_requests,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -842,21 +874,25 @@ class TestRateLimitBypass:
             assert "messages_remaining" in data["guest_info"]
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract agent response for validation
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_rate_limit_metadata_present",
                 user_input="test",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_rate_limit_metadata_present,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
 

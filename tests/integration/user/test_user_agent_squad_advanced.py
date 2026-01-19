@@ -11,6 +11,8 @@ from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 from app.run import make_app
+import json
+import warnings
 
 # Access token for ops@anvilcrypto.com (expires 2027-01-10)
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ0ZXN0X3Nlc3Npb25fMjAyNl8xNzY4MDY2MDc5IiwiZXhwIjoxNzk5NjAyMDc5fQ.OUFFmZW2_QACkgrIphLFcOOB3Qb-1ckVB_RvZ-VTaF0"
@@ -80,7 +82,7 @@ async def test_user_agent_squad_context_preservation_multi_turn(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_context_preservation_multi_turn",
             user_input="Compare it to Compound (referring to Aave from previous messages)",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should compare Aave and Compound based on conversation history. "
                 "Response should demonstrate context awareness by referencing previous discussion "
@@ -94,10 +96,10 @@ async def test_user_agent_squad_context_preservation_multi_turn(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "agent_squad", {
@@ -112,6 +114,19 @@ async def test_user_agent_squad_context_preservation_multi_turn(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -145,12 +160,13 @@ async def test_user_agent_squad_handoff_transition_smoothness(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_handoff_transition_smoothness",
             user_input="What's the current ETH price and should I buy or provide liquidity?",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should handle handoff between Hunter AI (price info) and ULTRA (strategy advice). "
                 "Response should flow naturally without explicitly mentioning agent switching. "
                 "Should integrate price data with actionable strategy recommendations."
             ),
+            test_func=self.test_user_agent_squad_handoff_transition_smoothness,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'agent_handoff',
                 'user_type': 'authenticated',
@@ -158,10 +174,10 @@ async def test_user_agent_squad_handoff_transition_smoothness(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "agent_squad", {
@@ -176,6 +192,19 @@ async def test_user_agent_squad_handoff_transition_smoothness(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -209,12 +238,13 @@ async def test_user_agent_squad_parallel_agent_coordination(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_parallel_agent_coordination",
             user_input="Analyze Bitcoin from technical, fundamental, and sentiment perspectives",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should coordinate multiple analysis dimensions (technical, fundamental, sentiment). "
                 "Response should integrate insights from different analytical perspectives. "
                 "Should provide holistic view without obvious agent separation."
             ),
+            test_func=self.test_user_agent_squad_parallel_agent_coordination,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'parallel_coordination',
                 'user_type': 'authenticated',
@@ -222,10 +252,10 @@ async def test_user_agent_squad_parallel_agent_coordination(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "agent_squad", {
@@ -240,6 +270,19 @@ async def test_user_agent_squad_parallel_agent_coordination(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -275,12 +318,13 @@ async def test_user_agent_squad_specialization_routing_accuracy(
             test_name="test_user_agent_squad_specialization_routing_accuracy",
             user_input="I want to explore DeFi yields but I'm worried about smart contract risks. "
                       "What should I consider for Curve vs Convex?",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should route to appropriate specialist agents (yield analysis + risk assessment). "
                 "Response should address both yield opportunities and security concerns. "
                 "Should compare Curve vs Convex with balanced perspective."
             ),
+            test_func=self.test_user_agent_squad_specialization_routing_accuracy,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'specialization_routing',
                 'user_type': 'authenticated',
@@ -289,10 +333,10 @@ async def test_user_agent_squad_specialization_routing_accuracy(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "agent_squad", {
@@ -307,6 +351,19 @@ async def test_user_agent_squad_specialization_routing_accuracy(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -340,12 +397,13 @@ async def test_user_agent_squad_fallback_agent_quality(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_fallback_agent_quality",
             user_input="What's happening with crypto today?",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should handle ambiguous query gracefully. Response should provide relevant "
                 "crypto market overview (prices, news, trends) without asking for clarification. "
                 "Fallback agent should provide value even with vague query."
             ),
+            test_func=self.test_user_agent_squad_fallback_agent_quality,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'fallback_handling',
                 'user_type': 'authenticated',
@@ -353,10 +411,10 @@ async def test_user_agent_squad_fallback_agent_quality(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "agent_squad", {
@@ -371,6 +429,19 @@ async def test_user_agent_squad_fallback_agent_quality(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -423,6 +494,7 @@ async def test_user_agent_squad_memory_utilization_long_context(
                 "capital efficiency, risks) and provide informed recommendation for beginners. "
                 "Should demonstrate long-context memory retention."
             ),
+            test_func=self.test_user_agent_squad_memory_utilization_long_context,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'long_context_memory',
                 'user_type': 'authenticated',
@@ -431,10 +503,10 @@ async def test_user_agent_squad_memory_utilization_long_context(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "agent_squad", {
@@ -449,4 +521,17 @@ async def test_user_agent_squad_memory_utilization_long_context(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })

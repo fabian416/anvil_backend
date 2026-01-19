@@ -87,7 +87,7 @@ async def test_cancellation_mid_hunter_analysis(
         validation = await llm_validator.validate_single_response(
             test_name="test_cancellation_mid_hunter_analysis",
             user_input="Analyze Bitcoin market sentiment and provide detailed arbitrage opportunities across 5 exchanges",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Response should provide market analysis for Bitcoin. "
                 "If workflow is interrupted, system should acknowledge cancellation gracefully. "
@@ -162,7 +162,7 @@ async def test_cancellation_mid_ultra_execution(
         validation = await llm_validator.validate_single_response(
             test_name="test_cancellation_mid_ultra_execution",
             user_input="Execute a multi-hop swap: ETH → USDC → DAI with best routing",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Response should explain the swap routing strategy. "
                 "If execution is cancelled mid-process, should ensure no partial trades occurred. "
@@ -241,7 +241,7 @@ async def test_cancellation_multi_step_workflow_cleanup(
         validation = await llm_validator.validate_single_response(
             test_name="test_cancellation_multi_step_workflow_cleanup",
             user_input="Now execute the top opportunity (following previous yield analysis)",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Response should reference the previous yield analysis and explain execution plan. "
                 "If workflow is cancelled, all agent contexts should be cleaned up. "
@@ -327,7 +327,7 @@ async def test_cancellation_conversation_state_consistency(
         validation = await llm_validator.validate_single_response(
             test_name="test_cancellation_conversation_state_consistency",
             user_input="Compare staking rewards across validators (following discussion about Ethereum staking)",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Response should compare staking rewards across validators. "
                 "Should maintain context from earlier messages about Ethereum staking. "
@@ -403,7 +403,7 @@ async def test_cancellation_resource_cleanup_verified(
         validation = await llm_validator.validate_single_response(
             test_name="test_cancellation_resource_cleanup_verified",
             user_input="Analyze top 10 DeFi protocols with TVL, APY, and risk scores",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Response should analyze DeFi protocols with specific metrics (TVL, APY, risk). "
                 "System should manage resources efficiently during analysis. "
@@ -477,7 +477,7 @@ async def test_cancellation_idempotency_guarantee(
         validation = await llm_validator.validate_single_response(
             test_name="test_cancellation_idempotency_guarantee",
             user_input="Explain flash loans in detail",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Response should explain flash loans comprehensively. "
                 "If cancellation is requested multiple times, system should be idempotent. "

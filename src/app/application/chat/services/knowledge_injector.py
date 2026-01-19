@@ -36,8 +36,10 @@ class KnowledgeInjector:
         """
         if knowledge_base_path is None:
             # Default to project root / anvil_knowledge
+            # File is at: src/app/application/chat/services/knowledge_injector.py
+            # Need 6 parents to get to project root: services -> chat -> application -> app -> src -> anvil_backend
             current_file = Path(__file__)
-            project_root = current_file.parent.parent.parent.parent.parent
+            project_root = current_file.parent.parent.parent.parent.parent.parent
             knowledge_base_path = project_root / "anvil_knowledge"
 
         self.knowledge_base_path = knowledge_base_path
@@ -57,7 +59,7 @@ class KnowledgeInjector:
             Parsed JSON as dictionary
         """
         if filename not in self._cache:
-            file_path = self.features_path / f"{filename}.json"
+            file_path = self.features_path / f"{filename.value}.json"
             with open(file_path, 'r', encoding='utf-8') as f:
                 self._cache[filename] = json.load(f)
 

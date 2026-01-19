@@ -71,25 +71,8 @@ class TestFrenchLanguageSupport:
         self,
         authenticated_client: AsyncClient,
         french_auth_headers: dict,
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_french_001_price_query",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
-                ),
-                additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
         french_conversation: str,
+        llm_validator,
     ):
         """
         GIVEN a French-language conversation
@@ -115,6 +98,24 @@ class TestFrenchLanguageSupport:
         # Validate substantive response
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should provide substantive response"
+
+        # Optional LLM semantic validation (environment-gated)
+        if llm_validator.enabled:
+            validation = await llm_validator.validate_single_response(
+                test_name="test_french_001_price_query",
+                user_input="Quel est le prix du Bitcoin?",
+                agent_output=agent_response,
+                expected_behavior=(
+                    "Should provide accurate cryptocurrency price information in French with clear format. "
+                    "Response must reference Bitcoin specifically and include current price data with USD denomination."
+                ),
+                additional_context={'test_category': 'price_query', 'token': 'BTC', 'language': 'fr'}
+            )
+            if validation.verdict != "PASS":
+                pytest.warn(UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                ))
 
     @pytest.mark.llm_validation
     async def test_french_002_sentiment_analysis(

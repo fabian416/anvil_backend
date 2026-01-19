@@ -20,6 +20,8 @@ from httpx import AsyncClient, ASGITransport
 import asyncio
 
 from app.run import make_app
+import json
+import warnings
 
 # Access token for ops@anvilcrypto.com (registered user)
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ0ZXN0X3Nlc3Npb25fMjAyNl8xNzY4MDY2MDc5IiwiZXhwIjoxNzk5NjAyMDc5fQ.OUFFmZW2_QACkgrIphLFcOOB3Qb-1ckVB_RvZ-VTaF0"
@@ -79,6 +81,7 @@ async def test_error_invalid_message_format_user(client: AsyncClient, llm_valida
                     "Should not expose technical details or authentication tokens. "
                     "Should guide user on proper message format."
                 ),
+                test_func=self.test_error_invalid_message_format_user,  # PHASE 3: Custom prompt generation
                 additional_context={
                     'test_category': 'error_handling',
                     'error_type': 'invalid_input',
@@ -86,10 +89,10 @@ async def test_error_invalid_message_format_user(client: AsyncClient, llm_valida
                 }
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
     # CSV tracking
     await csv_tracker("user", "errors", {
@@ -104,6 +107,19 @@ async def test_error_invalid_message_format_user(client: AsyncClient, llm_valida
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -154,7 +170,7 @@ async def test_error_context_corruption_detection(client: AsyncClient, llm_valid
         validation = await llm_validator.validate_single_response(
             test_name="test_error_context_corruption_detection",
             user_input="Compare them for me (referring to Bitcoin and Ethereum from previous messages)",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Response should compare Bitcoin and Ethereum based on conversation history. "
                 "Should demonstrate context awareness from previous messages. "
@@ -169,10 +185,10 @@ async def test_error_context_corruption_detection(client: AsyncClient, llm_valid
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "errors", {
@@ -187,6 +203,19 @@ async def test_error_context_corruption_detection(client: AsyncClient, llm_valid
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -239,12 +268,13 @@ async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_valid
             validation = await llm_validator.validate_single_response(
                 test_name="test_error_concurrent_request_conflicts",
                 user_input="Query 0",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Response should be coherent and relevant to the query. "
                     "System should handle concurrent requests without corruption. "
                     "Each response should be complete and well-formed."
                 ),
+                test_func=self.test_error_concurrent_request_conflicts,  # PHASE 3: Custom prompt generation
                 additional_context={
                     'test_category': 'concurrency',
                     'scenario': 'concurrent_messages',
@@ -253,10 +283,10 @@ async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_valid
                 }
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
     # CSV tracking
     await csv_tracker("user", "errors", {
@@ -271,4 +301,17 @@ async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_valid
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })

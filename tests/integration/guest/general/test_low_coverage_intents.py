@@ -30,38 +30,38 @@ class TestMoneyMarketIntent:
     async def test_money_market_compare_protocols(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_money_market_compare_protocols",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
-                ),
-                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants to compare money market protocols
-        WHEN they ask about rates comparison
-        THEN system provides Aave vs Compound comparison
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Compare money market rates on Aave vs Compound",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.1.1.1"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_money_market_compare_protocols",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+            ),
+            additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants to compare money market protocols
+    WHEN they ask about rates comparison
+    THEN system provides Aave vs Compound comparison
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Compare money market rates on Aave vs Compound",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.1.1.1"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -74,38 +74,38 @@ class TestMoneyMarketIntent:
     async def test_money_market_best_yields(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_money_market_best_yields",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
-                ),
-                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants to find best yields
-        WHEN they ask for highest APY
-        THEN system provides yield comparison
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "What are the best money market yields for USDC?",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.1.1.2"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_money_market_best_yields",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+            ),
+            additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants to find best yields
+    WHEN they ask for highest APY
+    THEN system provides yield comparison
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "What are the best money market yields for USDC?",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.1.1.2"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -118,38 +118,38 @@ class TestMoneyMarketIntent:
     async def test_money_market_supply_withdraw(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_money_market_supply_withdraw",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
-                ),
-                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants to understand supply/withdraw
-        WHEN they ask about money market mechanics
-        THEN system explains supply and withdrawal process
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "How do I supply and withdraw from money markets?",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.1.1.3"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_money_market_supply_withdraw",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+            ),
+            additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants to understand supply/withdraw
+    WHEN they ask about money market mechanics
+    THEN system explains supply and withdrawal process
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "How do I supply and withdraw from money markets?",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.1.1.3"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -162,38 +162,38 @@ class TestMoneyMarketIntent:
     async def test_money_market_spanish(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_money_market_spanish",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
-                ),
-                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a Spanish-speaking user
-        WHEN they ask about money markets
-        THEN system responds in Spanish
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "¿Cuáles son las mejores tasas de mercado monetario?",
-                "language": "es",
-            },
-            headers={"X-Forwarded-For": "10.1.1.4"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_money_market_spanish",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+            ),
+            additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a Spanish-speaking user
+    WHEN they ask about money markets
+    THEN system responds in Spanish
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "¿Cuáles son las mejores tasas de mercado monetario?",
+            "language": "es",
+        },
+        headers={"X-Forwarded-For": "10.1.1.4"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -212,41 +212,41 @@ class TestSendIntent:
     async def test_send_specific_amount(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_send_specific_amount",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a guest user wants to send specific amount
-        WHEN they specify token and amount
-        THEN system responds with registration prompt (Send requires auth)
-
-        NOTE: Send operations require authentication. Guest users get
-        a welcome message prompting them to sign up.
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.2.1.1"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_send_specific_amount",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a guest user wants to send specific amount
+    WHEN they specify token and amount
+    THEN system responds with registration prompt (Send requires auth)
+
+    NOTE: Send operations require authentication. Guest users get
+    a welcome message prompting them to sign up.
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.2.1.1"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -264,42 +264,42 @@ class TestSendIntent:
     async def test_send_to_ens_name(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_send_to_ens_name",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a guest user wants to send to ENS name
-        WHEN they use .eth domain with amount
-        THEN system misclassifies as Swap intent (MoonPay)
-
-        NOTE: "Send 50 USDC to vitalik.eth" gets classified as swap_moonpay
-        instead of send. This reveals a classification issue where
-        [amount] [token] with ENS is interpreted as swap.
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Send 50 USDC to vitalik.eth",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.2.1.2"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_send_to_ens_name",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a guest user wants to send to ENS name
+    WHEN they use .eth domain with amount
+    THEN system misclassifies as Swap intent (MoonPay)
+
+    NOTE: "Send 50 USDC to vitalik.eth" gets classified as swap_moonpay
+    instead of send. This reveals a classification issue where
+    [amount] [token] with ENS is interpreted as swap.
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Send 50 USDC to vitalik.eth",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.2.1.2"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -318,38 +318,38 @@ class TestSendIntent:
     async def test_send_max_balance(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_send_max_balance",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants to send entire balance
-        WHEN they use 'all' or 'max' keyword
-        THEN system confirms max send amount
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Send all my ETH to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.2.1.3"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_send_max_balance",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants to send entire balance
+    WHEN they use 'all' or 'max' keyword
+    THEN system confirms max send amount
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Send all my ETH to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.2.1.3"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -368,38 +368,38 @@ class TestReceiveIntent:
     async def test_receive_show_address(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_receive_show_address",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants to receive crypto
-        WHEN they ask for wallet address
-        THEN system shows deposit address
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Show me my wallet address to receive USDC",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.3.1.1"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_receive_show_address",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants to receive crypto
+    WHEN they ask for wallet address
+    THEN system shows deposit address
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Show me my wallet address to receive USDC",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.3.1.1"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -412,38 +412,38 @@ class TestReceiveIntent:
     async def test_receive_qr_code(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_receive_qr_code",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants QR code
-        WHEN they ask for QR to receive
-        THEN system provides QR code or address
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Generate QR code to receive ETH",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.3.1.2"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_receive_qr_code",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants QR code
+    WHEN they ask for QR to receive
+    THEN system provides QR code or address
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Generate QR code to receive ETH",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.3.1.2"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -456,38 +456,38 @@ class TestReceiveIntent:
     async def test_receive_specific_token(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_receive_specific_token",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants to receive specific token
-        WHEN they specify token type
-        THEN system shows appropriate address
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "How do I receive USDT on Ethereum?",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.3.1.3"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_receive_specific_token",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants to receive specific token
+    WHEN they specify token type
+    THEN system shows appropriate address
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "How do I receive USDT on Ethereum?",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.3.1.3"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -506,38 +506,38 @@ class TestBuyIntent:
     async def test_buy_with_card(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_buy_with_card",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants to buy crypto with card
-        WHEN they specify card payment
-        THEN system provides MoonPay or card purchase flow
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Buy 100 USDC with my credit card",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.4.1.1"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_buy_with_card",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants to buy crypto with card
+    WHEN they specify card payment
+    THEN system provides MoonPay or card purchase flow
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Buy 100 USDC with my credit card",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.4.1.1"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -550,38 +550,38 @@ class TestBuyIntent:
     async def test_buy_portuguese(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_buy_portuguese",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a Portuguese-speaking user
-        WHEN they want to buy crypto
-        THEN system responds in Portuguese
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Quero comprar Bitcoin com cartão de crédito",
-                "language": "pt",
-            },
-            headers={"X-Forwarded-For": "10.4.1.2"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_buy_portuguese",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a Portuguese-speaking user
+    WHEN they want to buy crypto
+    THEN system responds in Portuguese
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Quero comprar Bitcoin com cartão de crédito",
+            "language": "pt",
+        },
+        headers={"X-Forwarded-For": "10.4.1.2"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()
@@ -600,38 +600,38 @@ class TestIntentEdgeCases:
     async def test_send_invalid_address(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_send_invalid_address",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user provides invalid address
-        WHEN sending crypto
-        THEN system should validate and provide helpful error
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Send 100 USDC to invalid-address",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.5.1.1"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_send_invalid_address",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user provides invalid address
+    WHEN sending crypto
+    THEN system should validate and provide helpful error
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Send 100 USDC to invalid-address",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.5.1.1"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         # Should handle gracefully (may ask for valid address or explain format)
@@ -642,38 +642,38 @@ class TestIntentEdgeCases:
     async def test_receive_multi_chain(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_receive_multi_chain",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        client: AsyncClient,
-    ):
-        """
-        GIVEN a user wants to receive on specific chain
-        WHEN they specify network
-        THEN system provides correct chain address
-        """
-        response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Show my address to receive USDC on Polygon",
-                "language": "en",
-            },
-            headers={"X-Forwarded-For": "10.5.1.2"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_receive_multi_chain",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    client: AsyncClient,
+    ):
+    """
+    GIVEN a user wants to receive on specific chain
+    WHEN they specify network
+    THEN system provides correct chain address
+    """
+    response = await client.post(
+        "/api/v1/guest/chat",
+        json={
+            "content": "Show my address to receive USDC on Polygon",
+            "language": "en",
+        },
+        headers={"X-Forwarded-For": "10.5.1.2"},
+    )
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "").lower()

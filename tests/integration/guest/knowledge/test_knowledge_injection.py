@@ -312,7 +312,7 @@ class TestPromptAugmentation:
         assert len(enhanced_prompt) > 500  # Should be substantial
         assert "KNOWLEDGE BASE" in enhanced_prompt
         assert "RESPONSE GUIDELINES" in enhanced_prompt
-        assert "Core Capabilities" in enhanced_prompt or "core_capabilities" in enhanced_prompt.lower()
+        assert "ANVIL CAPABILITIES" in enhanced_prompt or "anvil capabilities" in enhanced_prompt.lower()
 
     def test_augment_prompt_with_custom_base(self, injector):
         """Test prompt augmentation with custom base prompt"""
@@ -363,7 +363,7 @@ class TestConvenienceFunction:
 
         assert len(enhanced_prompt) > 500
         assert "KNOWLEDGE BASE" in enhanced_prompt
-        assert "Core Capabilities" in enhanced_prompt or "core_capabilities" in enhanced_prompt.lower()
+        assert "ANVIL CAPABILITIES" in enhanced_prompt or "anvil capabilities" in enhanced_prompt.lower()
 
     def test_inject_knowledge_with_custom_prompt(self):
         """Test inject_knowledge with custom base prompt"""

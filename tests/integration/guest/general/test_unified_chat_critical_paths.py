@@ -68,22 +68,22 @@ async def test_conversation(authenticated_client):
     conversation_data = response.json()
     return conversation_data["id"]
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_conversation",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_conversation",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
 
@@ -94,49 +94,49 @@ class TestUnifiedChatCriticalPaths:
     @pytest.mark.parametrize("test_case", get_critical_test_cases(), ids=lambda tc: tc["id"])
     @pytest.mark.llm_validation
     async def test_send_message_with_critical_test_case(
-        self,
-        authenticated_client: AuthenticatedClient,
-        test_conversation: str,
+    self,
+    authenticated_client: AuthenticatedClient,
+    test_conversation: str,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_send_message_with_critical_test_case",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        test_case: dict,
-    ):
-        """
-        GIVEN a critical test case from test_data.json
-        WHEN user sends a message to the unified chat endpoint
-        THEN the system SHALL:
-        - Route to correct handler based on intent
-        - Return a valid UnifiedChatResponse structure
-        - Include appropriate enrichment data
-        - Store both user and agent messages
-
-        This is a full HTTP end-to-end test covering the entire request/response cycle.
-        """
-        # Arrange
-        conversation_id = test_conversation
-        message_content = test_case["input"]["content"]
-
-        # Act: Send message to unified chat endpoint
-        response = await authenticated_client.post(
-            f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-            json={"content": message_content},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_send_message_with_critical_test_case",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    test_case: dict,
+    ):
+    """
+    GIVEN a critical test case from test_data.json
+    WHEN user sends a message to the unified chat endpoint
+    THEN the system SHALL:
+    - Route to correct handler based on intent
+    - Return a valid UnifiedChatResponse structure
+    - Include appropriate enrichment data
+    - Store both user and agent messages
+
+    This is a full HTTP end-to-end test covering the entire request/response cycle.
+    """
+    # Arrange
+    conversation_id = test_conversation
+    message_content = test_case["input"]["content"]
+
+    # Act: Send message to unified chat endpoint
+    response = await authenticated_client.post(
+        f"/api/v1/user/chat/conversations/{conversation_id}/messages",
+        json={"content": message_content},
+    )
 
         # Assert: Response status
         assert response.status_code == 201, (
@@ -245,67 +245,67 @@ class TestUnifiedChatErrorHandling:
         self,
         authenticated_client: AuthenticatedClient,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_send_message_empty_content",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        test_conversation: str,
-    ):
-        """
-        WHEN user sends empty message
-        THEN system SHALL return 422 validation error
-        """
-        response = await authenticated_client.post(
-            f"/api/v1/user/chat/conversations/{test_conversation}/messages",
-            json={"content": ""},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_send_message_empty_content",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    test_conversation: str,
+    ):
+    """
+    WHEN user sends empty message
+    THEN system SHALL return 422 validation error
+    """
+    response = await authenticated_client.post(
+        f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+        json={"content": ""},
+    )
         assert response.status_code == 422, f"Expected 422 for empty content, got {response.status_code}"
 
     @pytest.mark.llm_validation
     async def test_send_message_invalid_conversation(
         self,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_send_message_invalid_conversation",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        authenticated_client: AuthenticatedClient,
-    ):
-        """
-        WHEN user sends message to non-existent conversation
-        THEN system SHALL return 404 not found
-        """
-        fake_uuid = "00000000-0000-0000-0000-000000000000"
-        response = await authenticated_client.post(
-            f"/api/v1/user/chat/conversations/{fake_uuid}/messages",
-            json={"content": "Test message"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_send_message_invalid_conversation",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    authenticated_client: AuthenticatedClient,
+    ):
+    """
+    WHEN user sends message to non-existent conversation
+    THEN system SHALL return 404 not found
+    """
+    fake_uuid = "00000000-0000-0000-0000-000000000000"
+    response = await authenticated_client.post(
+        f"/api/v1/user/chat/conversations/{fake_uuid}/messages",
+        json={"content": "Test message"},
+    )
         assert response.status_code == 404, (
             f"Expected 404 for invalid conversation, got {response.status_code}"
         )
@@ -315,38 +315,38 @@ class TestUnifiedChatErrorHandling:
         self,
         test_app,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_send_message_unauthorized",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        test_conversation: str,
-    ):
-        """
-        WHEN unauthenticated user sends message
-        THEN system SHALL return 401 unauthorized
-        """
-        # Create unauthenticated client
-        client = AuthenticatedClient()
-        client.set_app(test_app)
-        # Don't set token - leave client unauthenticated
-
-        response = await client.post(
-            f"/api/v1/user/chat/conversations/{test_conversation}/messages",
-            json={"content": "Test message"},
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_send_message_unauthorized",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    test_conversation: str,
+    ):
+    """
+    WHEN unauthenticated user sends message
+    THEN system SHALL return 401 unauthorized
+    """
+    # Create unauthenticated client
+    client = AuthenticatedClient()
+    client.set_app(test_app)
+    # Don't set token - leave client unauthenticated
+
+    response = await client.post(
+        f"/api/v1/user/chat/conversations/{test_conversation}/messages",
+        json={"content": "Test message"},
+    )
         assert response.status_code == 401, (
             f"Expected 401 for unauthorized request, got {response.status_code}"
         )

@@ -99,36 +99,36 @@ class TestChatMessageRepository:
         chat_conversation_repo: ChatConversationRepository,
         chat_user_repo: ChatUserRepository,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_create_message",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        legacy_user,
-    ):
-        """
-        GIVEN a conversation
-        WHEN creating a message
-        THEN message should be created with metadata
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_create_message",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    legacy_user,
+    ):
+    """
+    GIVEN a conversation
+    WHEN creating a message
+    THEN message should be created with metadata
+    """
+    # Arrange
+    chat_user = ChatUser(
+        id_=uuid4(),
+        user_id=legacy_user.id,
+        email=legacy_user.email,
+    )
         chat_user = await chat_user_repo.create(chat_user)
 
         conversation = ChatConversation(
@@ -171,36 +171,36 @@ class TestChatMessageRepository:
         chat_conversation_repo: ChatConversationRepository,
         chat_user_repo: ChatUserRepository,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_list_by_conversation",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        legacy_user,
-    ):
-        """
-        GIVEN multiple messages in a conversation
-        WHEN listing by conversation
-        THEN all messages should be returned in order
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_list_by_conversation",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    legacy_user,
+    ):
+    """
+    GIVEN multiple messages in a conversation
+    WHEN listing by conversation
+    THEN all messages should be returned in order
+    """
+    # Arrange
+    chat_user = ChatUser(
+        id_=uuid4(),
+        user_id=legacy_user.id,
+        email=legacy_user.email,
+    )
         chat_user = await chat_user_repo.create(chat_user)
 
         conversation = ChatConversation(
@@ -246,39 +246,39 @@ class TestCommandHandlers:
         self,
         chat_user_repo: ChatUserRepository,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_get_or_create_chat_user_command",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        legacy_user,
-    ):
-        """
-        GIVEN a legacy user
-        WHEN executing GetOrCreateChatUser command
-        THEN chat user should be created or retrieved
-        """
-        # Arrange
-        command = GetOrCreateChatUserCommand(chat_user_repository=chat_user_repo)
-
-        # Act - First call creates
-        chat_user1 = await command.execute(
-            user_id=legacy_user.id,
-            email=legacy_user.email,
-            subscription_tier="free",
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_get_or_create_chat_user_command",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    legacy_user,
+    ):
+    """
+    GIVEN a legacy user
+    WHEN executing GetOrCreateChatUser command
+    THEN chat user should be created or retrieved
+    """
+    # Arrange
+    command = GetOrCreateChatUserCommand(chat_user_repository=chat_user_repo)
+
+    # Act - First call creates
+    chat_user1 = await command.execute(
+        user_id=legacy_user.id,
+        email=legacy_user.email,
+        subscription_tier="free",
+    )
 
         # Act - Second call retrieves
         chat_user2 = await command.execute(
@@ -296,39 +296,39 @@ class TestCommandHandlers:
         self,
         chat_user_repo: ChatUserRepository,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_get_or_create_chat_user_updates_tier",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        legacy_user,
-    ):
-        """
-        GIVEN an existing chat user with free tier
-        WHEN executing command with premium tier
-        THEN subscription tier should be updated
-        """
-        # Arrange
-        command = GetOrCreateChatUserCommand(chat_user_repository=chat_user_repo)
-
-        # Act - Create with free tier
-        chat_user1 = await command.execute(
-            user_id=legacy_user.id,
-            email=legacy_user.email,
-            subscription_tier="free",
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_get_or_create_chat_user_updates_tier",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    legacy_user,
+    ):
+    """
+    GIVEN an existing chat user with free tier
+    WHEN executing command with premium tier
+    THEN subscription tier should be updated
+    """
+    # Arrange
+    command = GetOrCreateChatUserCommand(chat_user_repository=chat_user_repo)
+
+    # Act - Create with free tier
+    chat_user1 = await command.execute(
+        user_id=legacy_user.id,
+        email=legacy_user.email,
+        subscription_tier="free",
+    )
 
         # Act - Update to premium tier
         chat_user2 = await command.execute(
@@ -347,36 +347,36 @@ class TestCommandHandlers:
         chat_user_repo: ChatUserRepository,
         chat_conversation_repo: ChatConversationRepository,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_get_or_create_conversation_command",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        legacy_user,
-    ):
-        """
-        GIVEN a chat user
-        WHEN executing GetOrCreateChatConversation command
-        THEN active conversation should be returned
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_get_or_create_conversation_command",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    legacy_user,
+    ):
+    """
+    GIVEN a chat user
+    WHEN executing GetOrCreateChatConversation command
+    THEN active conversation should be returned
+    """
+    # Arrange
+    chat_user = ChatUser(
+        id_=uuid4(),
+        user_id=legacy_user.id,
+        email=legacy_user.email,
+    )
         chat_user = await chat_user_repo.create(chat_user)
 
         command = GetOrCreateChatConversationCommand(
@@ -400,36 +400,36 @@ class TestCommandHandlers:
         chat_conversation_repo: ChatConversationRepository,
         chat_message_repo: ChatMessageRepository,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_create_message_command",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        legacy_user,
-    ):
-        """
-        GIVEN a conversation
-        WHEN executing CreateChatMessage command
-        THEN message should be created and count incremented
-        """
-        # Arrange
-        chat_user = ChatUser(
-            id_=uuid4(),
-            user_id=legacy_user.id,
-            email=legacy_user.email,
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_create_message_command",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    legacy_user,
+    ):
+    """
+    GIVEN a conversation
+    WHEN executing CreateChatMessage command
+    THEN message should be created and count incremented
+    """
+    # Arrange
+    chat_user = ChatUser(
+        id_=uuid4(),
+        user_id=legacy_user.id,
+        email=legacy_user.email,
+    )
         chat_user = await chat_user_repo.create(chat_user)
 
         conversation = ChatConversation(

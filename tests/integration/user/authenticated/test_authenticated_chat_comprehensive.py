@@ -35,55 +35,55 @@ class TestAuthenticatedChatEndpoint:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
-        conversation_id = str(uuid4())
+    """Create a new conversation for testing."""
+    user, token = test_user
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -118,53 +118,53 @@ class TestAuthenticatedChatEndpoint:
         # Should return 401, 403 (unauthorized), or 422 (validation error for non-existent conversation)
         assert response.status_code in [401, 403, 422]
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_authenticated_endpoint_requires_auth",
-                user_input="What",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_authenticated_endpoint_requires_auth",
+            user_input="What",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_authenticated_user_can_send_message(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_authenticated_user_can_send_message",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test that authenticated user can send a message."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "What's my balance?", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_authenticated_user_can_send_message",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test that authenticated user can send a message."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "What's my balance?", "language": "en"}
+    )
 
         # Should succeed (200 or 201)
         assert response.status_code in [200, 201], f"Unexpected status: {response.status_code}"
@@ -186,56 +186,56 @@ class TestAuthenticatedMultiStepFlows:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
+    """Create a new conversation for testing."""
+    user, token = test_user
 
-        conversation_id = str(uuid4())
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -265,35 +265,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_lending_step1_initiate(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lending_step1_initiate",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        LENDING Step 1: User initiates lending flow.
-
-        Expected: System asks for asset to deposit.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "I want to lend my crypto", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_lending_step1_initiate",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    LENDING Step 1: User initiates lending flow.
+
+    Expected: System asks for asset to deposit.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "I want to lend my crypto", "language": "en"}
+    )
 
         assert response.status_code in [200, 201], f"Status: {response.status_code}"
         data = response.json()
@@ -309,36 +309,36 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_lending_step2_select_asset(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lending_step2_select_asset",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        LENDING Step 2: User selects asset (USDC).
-
-        Expected: System asks for amount to deposit.
-        """
-        # Step 1: Initiate
-        await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "lending", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_lending_step2_select_asset",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    LENDING Step 2: User selects asset (USDC).
+
+    Expected: System asks for amount to deposit.
+    """
+    # Step 1: Initiate
+    await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "lending", "language": "en"}
+    )
 
         # Step 2: Select asset
         response = await client.post(
@@ -359,36 +359,36 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_lending_step3_enter_amount(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lending_step3_enter_amount",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        LENDING Step 3: User enters amount (1000 USDC).
-
-        Expected: System shows vault options with APY quotes.
-        """
-        # Step 1: Initiate
-        await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "lending", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_lending_step3_enter_amount",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    LENDING Step 3: User enters amount (1000 USDC).
+
+    Expected: System shows vault options with APY quotes.
+    """
+    # Step 1: Initiate
+    await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "lending", "language": "en"}
+    )
 
         # Step 2: Select asset
         await client.post(
@@ -416,36 +416,36 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_lending_step4_confirm_deposit(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lending_step4_confirm_deposit",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        LENDING Step 4: User confirms deposit.
-
-        Expected: For authenticated users, should proceed without signup prompt.
-        """
-        # Complete flow to confirmation
-        await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "lending", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_lending_step4_confirm_deposit",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    LENDING Step 4: User confirms deposit.
+
+    Expected: For authenticated users, should proceed without signup prompt.
+    """
+    # Complete flow to confirmation
+    await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "lending", "language": "en"}
+    )
         await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
@@ -476,54 +476,54 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_lending_no_signup_prompt_for_auth(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lending_no_signup_prompt_for_auth",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_lending_no_signup_prompt_for_auth",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
-        self, client: AsyncClient, auth_headers, conversation_id
+    self, client: AsyncClient, auth_headers, conversation_id
     ):
-        """
-        LENDING Step 5: Validate no signup prompts shown to authenticated users.
+    """
+    LENDING Step 5: Validate no signup prompts shown to authenticated users.
 
-        Expected: Full flow completes without "sign up" messages.
-        """
-        # Complete full lending flow
-        responses = []
+    Expected: Full flow completes without "sign up" messages.
+    """
+    # Complete full lending flow
+    responses = []
 
-        responses.append(await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "deposit USDC", "language": "en"}
-        ))
+    responses.append(await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "deposit USDC", "language": "en"}
+    ))
 
-        responses.append(await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "1000", "language": "en"}
-        ))
+    responses.append(await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "1000", "language": "en"}
+    ))
 
-        # Check all responses for signup prompts
-        for response in responses:
-            if response.status_code in [200, 201]:
-                data = response.json()
-                content = str(data).lower()
+    # Check all responses for signup prompts
+    for response in responses:
+        if response.status_code in [200, 201]:
+            data = response.json()
+            content = str(data).lower()
 
-                # Should NOT contain signup language
-                assert "sign up" not in content, "Authenticated users shouldn't see signup prompts"
-                assert "create account" not in content, "Authenticated users shouldn't see account creation prompts"
+            # Should NOT contain signup language
+            assert "sign up" not in content, "Authenticated users shouldn't see signup prompts"
+            assert "create account" not in content, "Authenticated users shouldn't see account creation prompts"
 
     # ===== SWAP FLOW TESTS (4 steps) =====
 
@@ -531,35 +531,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_swap_step1_initiate(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_swap_step1_initiate",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        SWAP Step 1: User initiates swap.
-
-        Expected: System asks for source token and target token.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "swap", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_swap_step1_initiate",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    SWAP Step 1: User initiates swap.
+
+    Expected: System asks for source token and target token.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "swap", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -573,35 +573,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_swap_step2_get_quote(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_swap_step2_get_quote",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        SWAP Step 2: User provides swap details (100 USDC to ETH).
-
-        Expected: System shows quote with exchange rate.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Swap 100 USDC to ETH", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_swap_step2_get_quote",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    SWAP Step 2: User provides swap details (100 USDC to ETH).
+
+    Expected: System shows quote with exchange rate.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Swap 100 USDC to ETH", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -615,36 +615,36 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_swap_step3_confirm(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_swap_step3_confirm",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        SWAP Step 3: User confirms swap.
-
-        Expected: For authenticated users, proceeds without signup.
-        """
-        # Get quote
-        await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Swap 100 USDC to ETH", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_swap_step3_confirm",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    SWAP Step 3: User confirms swap.
+
+    Expected: For authenticated users, proceeds without signup.
+    """
+    # Get quote
+    await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Swap 100 USDC to ETH", "language": "en"}
+    )
 
         # Confirm
         response = await client.post(
@@ -665,35 +665,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_swap_no_signup_prompt(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_swap_no_signup_prompt",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        SWAP Step 4: Validate no signup prompts in swap flow.
-
-        Expected: Authenticated users complete swap without signup prompts.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Swap 50 USDC to ETH", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_swap_no_signup_prompt",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    SWAP Step 4: Validate no signup prompts in swap flow.
+
+    Expected: Authenticated users complete swap without signup prompts.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Swap 50 USDC to ETH", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -709,35 +709,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_moonpay_swap_step1_initiate(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_moonpay_swap_step1_initiate",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        MOONPAY SWAP Step 1: User initiates fiat-to-crypto swap via MoonPay.
-
-        Expected: System explains MoonPay integration and asks for details.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "buy crypto with card", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_moonpay_swap_step1_initiate",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    MOONPAY SWAP Step 1: User initiates fiat-to-crypto swap via MoonPay.
+
+    Expected: System explains MoonPay integration and asks for details.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "buy crypto with card", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -751,35 +751,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_moonpay_swap_step2_get_quote(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_moonpay_swap_step2_get_quote",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        MOONPAY SWAP Step 2: User requests quote for fiat purchase.
-
-        Expected: System shows MoonPay quote with fees.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Buy 100 USD of ETH with card", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_moonpay_swap_step2_get_quote",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    MOONPAY SWAP Step 2: User requests quote for fiat purchase.
+
+    Expected: System shows MoonPay quote with fees.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Buy 100 USD of ETH with card", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -793,35 +793,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_moonpay_swap_no_signup_for_auth(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_moonpay_swap_no_signup_for_auth",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        MOONPAY SWAP Step 3: Validate authenticated users can proceed.
-
-        Expected: No signup prompts, direct MoonPay integration.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Buy 50 USD ETH with card", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_moonpay_swap_no_signup_for_auth",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    MOONPAY SWAP Step 3: Validate authenticated users can proceed.
+
+    Expected: No signup prompts, direct MoonPay integration.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Buy 50 USD ETH with card", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -836,35 +836,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_buy_step1_initiate(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_buy_step1_initiate",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        BUY Step 1: User initiates token purchase.
-
-        Expected: System asks which token to buy.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "buy tokens", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_buy_step1_initiate",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    BUY Step 1: User initiates token purchase.
+
+    Expected: System asks which token to buy.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "buy tokens", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -878,35 +878,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_buy_step2_show_options(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_buy_step2_show_options",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        BUY Step 2: User specifies token (ETH).
-
-        Expected: System shows buying options (DEX, CEX, MoonPay).
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Buy ETH", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_buy_step2_show_options",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    BUY Step 2: User specifies token (ETH).
+
+    Expected: System shows buying options (DEX, CEX, MoonPay).
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Buy ETH", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -920,35 +920,35 @@ class TestAuthenticatedMultiStepFlows:
     @pytest.mark.llm_validation
     async def test_buy_no_signup_for_auth(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_buy_no_signup_for_auth",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        BUY Step 3: Validate no signup prompts for authenticated users.
-
-        Expected: Buy flow completes without signup requirements.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "I want to buy 0.1 ETH", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_buy_no_signup_for_auth",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    BUY Step 3: Validate no signup prompts for authenticated users.
+
+    Expected: Buy flow completes without signup requirements.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "I want to buy 0.1 ETH", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -975,56 +975,56 @@ class TestAuthenticatedVsGuestBehavior:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
+    """Create a new conversation for testing."""
+    user, token = test_user
 
-        conversation_id = str(uuid4())
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -1052,38 +1052,38 @@ class TestAuthenticatedVsGuestBehavior:
     @pytest.mark.llm_validation
     async def test_authenticated_no_signup_prompts(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_authenticated_no_signup_prompts",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test that authenticated users never see signup prompts.
-
-        Validates:
-        - No "Sign up" messages
-        - No "Create an account" prompts
-        - No demo data disclaimers
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "What's my balance?", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_authenticated_no_signup_prompts",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test that authenticated users never see signup prompts.
+
+    Validates:
+    - No "Sign up" messages
+    - No "Create an account" prompts
+    - No demo data disclaimers
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "What's my balance?", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -1114,39 +1114,39 @@ class TestAuthenticatedVsGuestBehavior:
     @pytest.mark.llm_validation
     async def test_authenticated_real_data_not_demo(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_authenticated_real_data_not_demo",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test that authenticated users see real data, not demo data.
-
-        Validates:
-        - No fake $3,000 demo balance
-        - No fake $21,525 portfolio
-        - No "demo" disclaimers
-        """
-        # Test balance
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Show my balance", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_authenticated_real_data_not_demo",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test that authenticated users see real data, not demo data.
+
+    Validates:
+    - No fake $3,000 demo balance
+    - No fake $21,525 portfolio
+    - No "demo" disclaimers
+    """
+    # Test balance
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Show my balance", "language": "en"}
+    )
 
         if response.status_code in [200, 201]:
             data = response.json()
@@ -1170,55 +1170,55 @@ class TestAuthenticatedVsGuestBehavior:
     @pytest.mark.llm_validation
     async def test_authenticated_higher_rate_limits(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_authenticated_higher_rate_limits",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_authenticated_higher_rate_limits",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
-        self, client: AsyncClient, auth_headers, conversation_id
+    self, client: AsyncClient, auth_headers, conversation_id
     ):
-        """
-        Test that authenticated users have higher rate limits than guests.
+    """
+    Test that authenticated users have higher rate limits than guests.
 
-        Validates:
-        - Authenticated users can make more requests
-        - If rate limit hit, it's higher than guest limit (20/hour)
-        """
-        # Send multiple requests
-        request_count = 0
-        max_requests = 30  # More than guest limit (20)
+    Validates:
+    - Authenticated users can make more requests
+    - If rate limit hit, it's higher than guest limit (20/hour)
+    """
+    # Send multiple requests
+    request_count = 0
+    max_requests = 30  # More than guest limit (20)
 
-        for i in range(max_requests):
-            response = await client.post(
-                f"/api/v1/conversations/{conversation_id}/messages",
-                headers=auth_headers,
-                json={"content": f"Test message {i}", "language": "en"}
-            )
+    for i in range(max_requests):
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": f"Test message {i}", "language": "en"}
+        )
 
-            if response.status_code == 429:  # Rate limit hit
-                # If we hit rate limit, verify it's higher than guest limit
-                assert i > 20, f"Authenticated user hit rate limit at {i} requests (guest limit: 20)"
-                break
-            elif response.status_code in [200, 201]:
-                request_count += 1
-            else:
-                # Other error - skip test
-                pytest.skip(f"Unexpected status: {response.status_code}")
+        if response.status_code == 429:  # Rate limit hit
+            # If we hit rate limit, verify it's higher than guest limit
+            assert i > 20, f"Authenticated user hit rate limit at {i} requests (guest limit: 20)"
+            break
+        elif response.status_code in [200, 201]:
+            request_count += 1
+        else:
+            # Other error - skip test
+            pytest.skip(f"Unexpected status: {response.status_code}")
 
-        # If we made it past 20 requests without rate limit, test passes
-        assert request_count >= 20 or request_count == max_requests
+    # If we made it past 20 requests without rate limit, test passes
+    assert request_count >= 20 or request_count == max_requests
 
 
 @pytest.mark.integration
@@ -1229,64 +1229,64 @@ class TestAuthenticatedIntents:
     @pytest_asyncio.fixture
     @pytest.mark.llm_validation
     async def test_user(self, async_db_session: AsyncSession):
-        """Create a test user in the database."""
-        user, token = await AuthHelper.create_test_user_in_db(
-            db_session=async_db_session,
-            role="user",
-            email="test_intents@example.com",
-        )
+    """Create a test user in the database."""
+    user, token = await AuthHelper.create_test_user_in_db(
+        db_session=async_db_session,
+        role="user",
+        email="test_intents@example.com",
+    )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
+    """Create a new conversation for testing."""
+    user, token = test_user
 
-        conversation_id = str(uuid4())
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -1314,31 +1314,31 @@ class TestAuthenticatedIntents:
     @pytest.mark.llm_validation
     async def test_balance_intent(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_balance_intent",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test BALANCE intent for authenticated user."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "What's my balance?", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_balance_intent",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test BALANCE intent for authenticated user."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "What's my balance?", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -1355,31 +1355,31 @@ class TestAuthenticatedIntents:
     @pytest.mark.llm_validation
     async def test_portfolio_intent(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_portfolio_intent",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test PORTFOLIO intent for authenticated user."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Show my portfolio", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_portfolio_intent",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test PORTFOLIO intent for authenticated user."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Show my portfolio", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -1396,31 +1396,31 @@ class TestAuthenticatedIntents:
     @pytest.mark.llm_validation
     async def test_activity_intent(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_activity_intent",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test ACTIVITY intent for authenticated user."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Show my recent activity", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_activity_intent",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test ACTIVITY intent for authenticated user."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Show my recent activity", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -1437,31 +1437,31 @@ class TestAuthenticatedIntents:
     @pytest.mark.llm_validation
     async def test_receive_intent(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_receive_intent",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test RECEIVE intent for authenticated user."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Show my wallet address", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_receive_intent",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test RECEIVE intent for authenticated user."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Show my wallet address", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -1491,56 +1491,56 @@ class TestAuthenticatedMultiLanguage:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
+    """Create a new conversation for testing."""
+    user, token = test_user
 
-        conversation_id = str(uuid4())
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -1568,31 +1568,31 @@ class TestAuthenticatedMultiLanguage:
     @pytest.mark.llm_validation
     async def test_spanish_support(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_spanish_support",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Spanish language support."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "¿Cuál es mi saldo?", "language": "es"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_spanish_support",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Spanish language support."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "¿Cuál es mi saldo?", "language": "es"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -1600,31 +1600,31 @@ class TestAuthenticatedMultiLanguage:
     @pytest.mark.llm_validation
     async def test_portuguese_support(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_portuguese_support",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Portuguese language support."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Qual é o meu saldo?", "language": "pt"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_portuguese_support",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Portuguese language support."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Qual é o meu saldo?", "language": "pt"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -1632,31 +1632,31 @@ class TestAuthenticatedMultiLanguage:
     @pytest.mark.llm_validation
     async def test_chinese_support(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_chinese_support",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Chinese language support."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "我的余额是多少？", "language": "zh"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_chinese_support",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Chinese language support."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "我的余额是多少？", "language": "zh"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -1677,81 +1677,81 @@ class TestAuthenticatedDatabasePersistence:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_conversation_created_in_database(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_conversation_created_in_database",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, test_user, async_db_session: AsyncSession
-    ):
-        """
-        Test that authenticated conversations are created in database.
-
-        Validates:
-        - Conversation has user_id (not NULL like guests)
-        - Conversation is accessible
-        """
-        user, token = test_user
-        conversation_id = str(uuid4())
-
-        # Extract INTEGER user_id from TestUser UUID
-        user_id_int = int(user.id.int)
-
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_conversation_created_in_database",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, test_user, async_db_session: AsyncSession
+    ):
+    """
+    Test that authenticated conversations are created in database.
+
+    Validates:
+    - Conversation has user_id (not NULL like guests)
+    - Conversation is accessible
+    """
+    user, token = test_user
+    conversation_id = str(uuid4())
+
+    # Extract INTEGER user_id from TestUser UUID
+    user_id_int = int(user.id.int)
+
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with chat_user_id
@@ -1796,54 +1796,54 @@ class TestAuthenticatedDatabasePersistence:
     @pytest.mark.llm_validation
     async def test_messages_stored_with_user_id(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_messages_stored_with_user_id",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, test_user, async_db_session: AsyncSession
-    ):
-        """
-        Test that messages are stored with correct user_id.
-
-        Validates:
-        - Messages have conversation_id
-        - Messages are retrievable
-        - Timestamps are set
-        """
-        user, token = test_user
-        conversation_id = str(uuid4())
-
-        # Extract INTEGER user_id from TestUser UUID
-        user_id_int = int(user.id.int)
-
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_messages_stored_with_user_id",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, test_user, async_db_session: AsyncSession
+    ):
+    """
+    Test that messages are stored with correct user_id.
+
+    Validates:
+    - Messages have conversation_id
+    - Messages are retrievable
+    - Timestamps are set
+    """
+    user, token = test_user
+    conversation_id = str(uuid4())
+
+    # Extract INTEGER user_id from TestUser UUID
+    user_id_int = int(user.id.int)
+
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with chat_user_id
@@ -1903,56 +1903,56 @@ class TestAuthenticatedErrorHandling:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
+    """Create a new conversation for testing."""
+    user, token = test_user
 
-        conversation_id = str(uuid4())
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -1980,31 +1980,31 @@ class TestAuthenticatedErrorHandling:
     @pytest.mark.llm_validation
     async def test_empty_message_rejected(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_empty_message_rejected",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test that empty messages are rejected."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_empty_message_rejected",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test that empty messages are rejected."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "", "language": "en"}
+    )
 
         # Should return validation error (422)
         assert response.status_code == 422
@@ -2013,31 +2013,31 @@ class TestAuthenticatedErrorHandling:
     @pytest.mark.llm_validation
     async def test_invalid_language_rejected(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_invalid_language_rejected",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test that invalid language codes are rejected."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Test message", "language": "invalid"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_invalid_language_rejected",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test that invalid language codes are rejected."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Test message", "language": "invalid"}
+    )
 
         # Should return validation error (422)
         assert response.status_code == 422
@@ -2046,31 +2046,31 @@ class TestAuthenticatedErrorHandling:
     @pytest.mark.llm_validation
     async def test_nonexistent_conversation_handled(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_nonexistent_conversation_handled",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers
-    ):
-        """Test that requests to non-existent conversations are handled gracefully."""
-        response = await client.post(
-            "/api/v1/conversations/nonexistent_conv_123/messages",
-            headers=auth_headers,
-            json={"content": "Test message", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_nonexistent_conversation_handled",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers
+    ):
+    """Test that requests to non-existent conversations are handled gracefully."""
+    response = await client.post(
+        "/api/v1/conversations/nonexistent_conv_123/messages",
+        headers=auth_headers,
+        json={"content": "Test message", "language": "en"}
+    )
 
         # Should return 404 or handle gracefully
         assert response.status_code in [404, 400, 422]
@@ -2097,55 +2097,55 @@ class TestAuthenticatedHunterAI:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
-        conversation_id = str(uuid4())
+    """Create a new conversation for testing."""
+    user, token = test_user
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -2173,31 +2173,31 @@ class TestAuthenticatedHunterAI:
     @pytest.mark.llm_validation
     async def test_sentiment_analysis(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_sentiment_analysis",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
-                ),
-                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Hunter AI sentiment analysis intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "What's the sentiment for BTC?", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_sentiment_analysis",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+            ),
+            additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Hunter AI sentiment analysis intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "What's the sentiment for BTC?", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2214,31 +2214,31 @@ class TestAuthenticatedHunterAI:
     @pytest.mark.llm_validation
     async def test_price_prediction(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_price_prediction",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
-                ),
-                additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Hunter AI price prediction intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Predict ETH price", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_price_prediction",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
+            ),
+            additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Hunter AI price prediction intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Predict ETH price", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2253,31 +2253,31 @@ class TestAuthenticatedHunterAI:
     @pytest.mark.llm_validation
     async def test_risk_signals(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_risk_signals",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Hunter AI risk signals intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Risk signals for SOL", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_risk_signals",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Hunter AI risk signals intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Risk signals for SOL", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2292,31 +2292,31 @@ class TestAuthenticatedHunterAI:
     @pytest.mark.llm_validation
     async def test_trading_signals(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Hunter AI trading signals intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Should I buy BTC?", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_trading_signals",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Hunter AI trading signals intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Should I buy BTC?", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2331,31 +2331,31 @@ class TestAuthenticatedHunterAI:
     @pytest.mark.llm_validation
     async def test_pattern_recognition(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_pattern_recognition",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Hunter AI pattern recognition intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Chart patterns for ETH", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_pattern_recognition",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Hunter AI pattern recognition intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Chart patterns for ETH", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2370,31 +2370,31 @@ class TestAuthenticatedHunterAI:
     @pytest.mark.llm_validation
     async def test_portfolio_optimization(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_portfolio_optimization",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test Hunter AI portfolio optimization intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Optimize my portfolio", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_portfolio_optimization",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test Hunter AI portfolio optimization intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Optimize my portfolio", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2422,55 +2422,55 @@ class TestAuthenticatedULTRA:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
-        conversation_id = str(uuid4())
+    """Create a new conversation for testing."""
+    user, token = test_user
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -2498,31 +2498,31 @@ class TestAuthenticatedULTRA:
     @pytest.mark.llm_validation
     async def test_arbitrage_discovery(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_arbitrage_discovery",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test ULTRA arbitrage discovery intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Find arbitrage opportunities", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_arbitrage_discovery",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test ULTRA arbitrage discovery intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Find arbitrage opportunities", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2537,31 +2537,31 @@ class TestAuthenticatedULTRA:
     @pytest.mark.llm_validation
     async def test_flash_loans(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_flash_loans",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test ULTRA flash loans intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Best flash loan for USDC", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_flash_loans",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test ULTRA flash loans intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Best flash loan for USDC", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2576,31 +2576,31 @@ class TestAuthenticatedULTRA:
     @pytest.mark.llm_validation
     async def test_mev_protection(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_mev_protection",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test ULTRA MEV protection intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Execute with Flashbots", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_mev_protection",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test ULTRA MEV protection intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Execute with Flashbots", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2615,31 +2615,31 @@ class TestAuthenticatedULTRA:
     @pytest.mark.llm_validation
     async def test_auto_executor(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_auto_executor",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test ULTRA auto executor intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Start trading bot", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_auto_executor",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test ULTRA auto executor intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Start trading bot", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2667,55 +2667,55 @@ class TestAuthenticatedGraphRAG:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
-        conversation_id = str(uuid4())
+    """Create a new conversation for testing."""
+    user, token = test_user
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -2743,31 +2743,31 @@ class TestAuthenticatedGraphRAG:
     @pytest.mark.llm_validation
     async def test_protocol_search(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_protocol_search",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
-                ),
-                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test GraphRAG protocol search intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Find low-risk staking protocols", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_protocol_search",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+            ),
+            additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test GraphRAG protocol search intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Find low-risk staking protocols", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2782,31 +2782,31 @@ class TestAuthenticatedGraphRAG:
     @pytest.mark.llm_validation
     async def test_risk_assessment(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_risk_assessment",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test GraphRAG risk assessment intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Is Aave safe?", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_risk_assessment",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test GraphRAG risk assessment intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Is Aave safe?", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2821,31 +2821,31 @@ class TestAuthenticatedGraphRAG:
     @pytest.mark.llm_validation
     async def test_similar_protocols(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_similar_protocols",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
-                ),
-                additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test GraphRAG similar protocols intent."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Protocols like Uniswap", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_similar_protocols",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
+            ),
+            additional_context={'test_category': 'defi_protocol', 'protocol': 'DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test GraphRAG similar protocols intent."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Protocols like Uniswap", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2873,55 +2873,55 @@ class TestAuthenticatedAgentSquad:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
-        conversation_id = str(uuid4())
+    """Create a new conversation for testing."""
+    user, token = test_user
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        # TestUser.id is UUID(int=users.id), so we get the int back
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    # TestUser.id is UUID(int=users.id), so we get the int back
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -2949,31 +2949,31 @@ class TestAuthenticatedAgentSquad:
     @pytest.mark.llm_validation
     async def test_specialist_task(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_specialist_task",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test specialist agent routing."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Best USDC yield strategy", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_specialist_task",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test specialist agent routing."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Best USDC yield strategy", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -2990,31 +2990,31 @@ class TestAuthenticatedAgentSquad:
     @pytest.mark.llm_validation
     async def test_complex_workflow(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_complex_workflow",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """Test complex workflow orchestration."""
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Create balanced portfolio strategy", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_complex_workflow",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """Test complex workflow orchestration."""
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Create balanced portfolio strategy", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -3044,54 +3044,54 @@ class TestAuthenticatedShortcutsAndQuality:
         )
         return user, token
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
 
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-        """Get authentication headers for test user."""
-        user, token = test_user
-        return AuthHelper.get_auth_headers(token)
+    """Get authentication headers for test user."""
+    user, token = test_user
+    return AuthHelper.get_auth_headers(token)
 
     @pytest_asyncio.fixture
     async def conversation_id(self, test_user, async_db_session: AsyncSession):
-        """Create a new conversation for testing."""
-        user, token = test_user
-        conversation_id = str(uuid4())
+    """Create a new conversation for testing."""
+    user, token = test_user
+    conversation_id = str(uuid4())
 
-        # Extract INTEGER user_id from TestUser UUID
-        user_id_int = int(user.id.int)
+    # Extract INTEGER user_id from TestUser UUID
+    user_id_int = int(user.id.int)
 
-        # Insert into unified chat_users (with user_type) and get auto-generated UUID
-        result = await async_db_session.execute(
-            text("""
-                INSERT INTO chat_users (user_type, identifier, email, preferred_language)
-                VALUES (:user_type, :identifier, :email, :language)
-                ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
-                RETURNING id
-            """),
-            {
-                "user_type": "authenticated",
-                "identifier": str(user_id_int),
-                "email": user.email,
-                "language": "en"
-            }
-        )
+    # Insert into unified chat_users (with user_type) and get auto-generated UUID
+    result = await async_db_session.execute(
+        text("""
+            INSERT INTO chat_users (user_type, identifier, email, preferred_language)
+            VALUES (:user_type, :identifier, :email, :language)
+            ON CONFLICT (user_type, identifier) DO UPDATE SET email = EXCLUDED.email
+            RETURNING id
+        """),
+        {
+            "user_type": "authenticated",
+            "identifier": str(user_id_int),
+            "email": user.email,
+            "language": "en"
+        }
+    )
         unified_chat_user_uuid = result.scalar_one()
 
         # Create conversation with user_id (UUID FK to chat_users.id)
@@ -3120,35 +3120,35 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_shortcut_balance(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_balance",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test BALANCE shortcut for authenticated users.
-
-        Expected: Shows real wallet balance (not demo data).
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "balance", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_shortcut_balance",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test BALANCE shortcut for authenticated users.
+
+    Expected: Shows real wallet balance (not demo data).
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "balance", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -3162,35 +3162,35 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_shortcut_portfolio(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_portfolio",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test PORTFOLIO shortcut for authenticated users.
-
-        Expected: Shows portfolio breakdown with holdings.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "portfolio", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_shortcut_portfolio",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test PORTFOLIO shortcut for authenticated users.
+
+    Expected: Shows portfolio breakdown with holdings.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "portfolio", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -3204,35 +3204,35 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_shortcut_activity(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_activity",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test ACTIVITY shortcut for authenticated users.
-
-        Expected: Shows recent transaction activity.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "activity", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_shortcut_activity",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test ACTIVITY shortcut for authenticated users.
+
+    Expected: Shows recent transaction activity.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "activity", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -3246,35 +3246,35 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_shortcut_send(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_send",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test SEND shortcut for authenticated users.
-
-        Expected: Initiates send flow without signup prompt.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "send 10 USDC", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_shortcut_send",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test SEND shortcut for authenticated users.
+
+    Expected: Initiates send flow without signup prompt.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "send 10 USDC", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -3291,35 +3291,35 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_shortcut_receive(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_receive",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test RECEIVE shortcut for authenticated users.
-
-        Expected: Shows wallet address for receiving funds.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "receive", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_shortcut_receive",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test RECEIVE shortcut for authenticated users.
+
+    Expected: Shows wallet address for receiving funds.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "receive", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -3333,35 +3333,35 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_shortcut_money_market(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_money_market",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
-                ),
-                additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test MONEY_MARKET shortcut for authenticated users.
-
-        Expected: Shows DeFi lending/borrowing rates.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "money market rates", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_shortcut_money_market",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
+            ),
+            additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test MONEY_MARKET shortcut for authenticated users.
+
+    Expected: Shows DeFi lending/borrowing rates.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "money market rates", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -3375,36 +3375,36 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_shortcut_multi_language_support(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_multi_language_support",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test shortcuts work with multi-language support.
-
-        Expected: Shortcuts respond in requested language.
-        """
-        # Test with Spanish
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "balance", "language": "es"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_shortcut_multi_language_support",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test shortcuts work with multi-language support.
+
+    Expected: Shortcuts respond in requested language.
+    """
+    # Test with Spanish
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "balance", "language": "es"}
+    )
 
         assert response.status_code in [200, 201]
         # Response should be successful (language translation happens in handler)
@@ -3413,38 +3413,38 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_shortcut_response_time(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcut_response_time",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test shortcuts respond quickly (performance check).
-
-        Expected: Response within reasonable time (< 5 seconds).
-        """
-        import time
-
-        start_time = time.time()
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "balance", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_shortcut_response_time",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test shortcuts respond quickly (performance check).
+
+    Expected: Response within reasonable time (< 5 seconds).
+    """
+    import time
+
+    start_time = time.time()
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "balance", "language": "en"}
+    )
         elapsed_time = time.time() - start_time
 
         assert response.status_code in [200, 201]
@@ -3456,36 +3456,36 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_error_handling_invalid_conversation(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_error_handling_invalid_conversation",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers
-    ):
-        """
-        Test error handling for invalid conversation ID.
-
-        Expected: Clear error message, appropriate status code.
-        """
-        invalid_conv_id = str(uuid4())
-        response = await client.post(
-            f"/api/v1/conversations/{invalid_conv_id}/messages",
-            headers=auth_headers,
-            json={"content": "test", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_error_handling_invalid_conversation",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers
+    ):
+    """
+    Test error handling for invalid conversation ID.
+
+    Expected: Clear error message, appropriate status code.
+    """
+    invalid_conv_id = str(uuid4())
+    response = await client.post(
+        f"/api/v1/conversations/{invalid_conv_id}/messages",
+        headers=auth_headers,
+        json={"content": "test", "language": "en"}
+    )
 
         # Should return error status (404 or 422)
         assert response.status_code in [404, 422], f"Should return error for invalid conversation: {response.status_code}"
@@ -3499,35 +3499,35 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_error_handling_empty_message(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_error_handling_empty_message",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test error handling for empty message content.
-
-        Expected: Validation error with clear message.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_error_handling_empty_message",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test error handling for empty message content.
+
+    Expected: Validation error with clear message.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "", "language": "en"}
+    )
 
         # Should return validation error (422)
         assert response.status_code == 422, f"Should return 422 for empty message: {response.status_code}"
@@ -3536,100 +3536,100 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_response_format_consistency(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_response_format_consistency",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_response_format_consistency",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
-        self, client: AsyncClient, auth_headers, conversation_id
+    self, client: AsyncClient, auth_headers, conversation_id
     ):
-        """
-        Test response format consistency across different intents.
+    """
+    Test response format consistency across different intents.
 
-        Expected: All responses follow same structure.
-        """
-        test_queries = ["balance", "swap", "portfolio", "lending"]
-        response_formats = []
+    Expected: All responses follow same structure.
+    """
+    test_queries = ["balance", "swap", "portfolio", "lending"]
+    response_formats = []
 
-        for query in test_queries:
-            response = await client.post(
-                f"/api/v1/conversations/{conversation_id}/messages",
-                headers=auth_headers,
-                json={"content": query, "language": "en"}
-            )
+    for query in test_queries:
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": query, "language": "en"}
+        )
 
-            if response.status_code in [200, 201]:
-                data = response.json()
-                # Check for consistent top-level keys
-                has_agent_message = "agent_message" in data
-                has_message = "message" in data
-                has_routing = "routing" in data
+        if response.status_code in [200, 201]:
+            data = response.json()
+            # Check for consistent top-level keys
+            has_agent_message = "agent_message" in data
+            has_message = "message" in data
+            has_routing = "routing" in data
 
-                response_formats.append({
-                    "query": query,
-                    "has_agent_message": has_agent_message,
-                    "has_message": has_message,
-                    "has_routing": has_routing
-                })
+            response_formats.append({
+                "query": query,
+                "has_agent_message": has_agent_message,
+                "has_message": has_message,
+                "has_routing": has_routing
+            })
 
-        # All responses should have similar structure
-        assert len(response_formats) > 0, "Should have at least one successful response"
+    # All responses should have similar structure
+    assert len(response_formats) > 0, "Should have at least one successful response"
 
-        # Check consistency (at least one common key across all responses)
-        common_keys = ["agent_message", "message", "routing"]
-        for key in common_keys:
-            key_count = sum(1 for fmt in response_formats if fmt.get(f"has_{key}"))
-            if key_count > 0:
-                # At least this key appears in responses
-                break
-        else:
-            assert False, "No common response structure found"
+    # Check consistency (at least one common key across all responses)
+    common_keys = ["agent_message", "message", "routing"]
+    for key in common_keys:
+        key_count = sum(1 for fmt in response_formats if fmt.get(f"has_{key}"))
+        if key_count > 0:
+            # At least this key appears in responses
+            break
+    else:
+        assert False, "No common response structure found"
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_rate_limit_headers_present(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_rate_limit_headers_present",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test rate limit information in response headers.
-
-        Expected: Rate limit headers present for authenticated users.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "balance", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_rate_limit_headers_present",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test rate limit information in response headers.
+
+    Expected: Rate limit headers present for authenticated users.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "balance", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
 
@@ -3650,36 +3650,36 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_conversation_context_persistence(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_conversation_context_persistence",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test conversation context is maintained across messages.
-
-        Expected: Subsequent messages have context from previous messages.
-        """
-        # Message 1: Ask for balance
-        response1 = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "What's my balance?", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_conversation_context_persistence",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test conversation context is maintained across messages.
+
+    Expected: Subsequent messages have context from previous messages.
+    """
+    # Message 1: Ask for balance
+    response1 = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "What's my balance?", "language": "en"}
+    )
 
         assert response1.status_code in [200, 201]
 
@@ -3699,78 +3699,78 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_authenticated_vs_guest_rate_limits(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_authenticated_vs_guest_rate_limits",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_authenticated_vs_guest_rate_limits",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+        )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
 
-        self, client: AsyncClient, auth_headers, conversation_id
+    self, client: AsyncClient, auth_headers, conversation_id
     ):
-        """
-        Test authenticated users have higher rate limits than guests.
+    """
+    Test authenticated users have higher rate limits than guests.
 
-        Expected: Authenticated users can make more requests.
-        """
-        # Make multiple rapid requests (authenticated users should handle this)
-        responses = []
-        for i in range(5):
-            response = await client.post(
-                f"/api/v1/conversations/{conversation_id}/messages",
-                headers=auth_headers,
-                json={"content": f"balance check {i}", "language": "en"}
-            )
-            responses.append(response)
+    Expected: Authenticated users can make more requests.
+    """
+    # Make multiple rapid requests (authenticated users should handle this)
+    responses = []
+    for i in range(5):
+        response = await client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={"content": f"balance check {i}", "language": "en"}
+        )
+        responses.append(response)
 
-        # All requests should succeed (authenticated users have higher limits)
-        success_count = sum(1 for r in responses if r.status_code in [200, 201])
-        assert success_count >= 4, f"Authenticated users should handle rapid requests: {success_count}/5 succeeded"
+    # All requests should succeed (authenticated users have higher limits)
+    success_count = sum(1 for r in responses if r.status_code in [200, 201])
+    assert success_count >= 4, f"Authenticated users should handle rapid requests: {success_count}/5 succeeded"
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_authenticated_premium_features_access(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_authenticated_premium_features_access",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test authenticated users can access premium features.
-
-        Expected: Hunter AI and Agent Squad work for authenticated users.
-        """
-        # Test Hunter AI (premium feature)
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Analyze BTC sentiment", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_authenticated_premium_features_access",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test authenticated users can access premium features.
+
+    Expected: Hunter AI and Agent Squad work for authenticated users.
+    """
+    # Test Hunter AI (premium feature)
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Analyze BTC sentiment", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -3784,35 +3784,35 @@ class TestAuthenticatedShortcutsAndQuality:
     @pytest.mark.llm_validation
     async def test_authenticated_real_data_integration(
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_authenticated_real_data_integration",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        self, client: AsyncClient, auth_headers, conversation_id
-    ):
-        """
-        Test authenticated users receive real data (not demo data).
-
-        Expected: Responses include real wallet data, not demo values.
-        """
-        response = await client.post(
-            f"/api/v1/conversations/{conversation_id}/messages",
-            headers=auth_headers,
-            json={"content": "Show my portfolio", "language": "en"}
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_authenticated_real_data_integration",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    self, client: AsyncClient, auth_headers, conversation_id
+    ):
+    """
+    Test authenticated users receive real data (not demo data).
+
+    Expected: Responses include real wallet data, not demo values.
+    """
+    response = await client.post(
+        f"/api/v1/conversations/{conversation_id}/messages",
+        headers=auth_headers,
+        json={"content": "Show my portfolio", "language": "en"}
+    )
 
         assert response.status_code in [200, 201]
         data = response.json()

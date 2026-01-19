@@ -56,6 +56,10 @@ class TestAllProtocolIntents:
 
         # PHASE 3: LLM semantic validation with enhanced metrics
         validation = None
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_compound_protocol_specific_intent",
@@ -127,11 +131,15 @@ class TestAllProtocolIntents:
         assert len(agent_response) > 50, "Should provide substantive Uniswap information"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_uniswap_protocol_specific_intent",
                 user_input="How do I swap tokens on Uniswap?",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate information about Uniswap protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
                 ),
@@ -171,11 +179,15 @@ class TestAllProtocolIntents:
         assert len(agent_response) > 50, "Should provide substantive Curve protocol information"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_curve_protocol_specific_intent",
                 user_input="What are the best stablecoin pools on Curve Finance?",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate information about Curve protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
                 ),
@@ -215,11 +227,15 @@ class TestAllProtocolIntents:
         assert len(agent_response) > 50, "Should provide substantive Balancer information"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_balancer_protocol_specific_intent",
                 user_input="How do weighted pools work on Balancer?",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
                 ),
@@ -259,11 +275,15 @@ class TestAllProtocolIntents:
         assert len(agent_response) > 50, "Should provide substantive Yearn protocol information"
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_yearn_protocol_specific_intent",
                 user_input="What are the highest yielding Yearn vaults right now?",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate information about DeFi protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
                 ),
@@ -302,11 +322,15 @@ class TestAllProtocolIntents:
         agent_response = data["agent_message"]["content"]
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_protocol_version_specific_intent",
                 user_input="What",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate information about Uniswap protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
                 ),

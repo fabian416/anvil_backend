@@ -11,6 +11,8 @@ from datetime import datetime
 from httpx import AsyncClient, ASGITransport
 
 from app.run import make_app
+import json
+import warnings
 
 # Access token for ops@anvilcrypto.com (expires 2027-01-10)
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ0ZXN0X3Nlc3Npb25fMjAyNl8xNzY4MDY2MDc5IiwiZXhwIjoxNzk5NjAyMDc5fQ.OUFFmZW2_QACkgrIphLFcOOB3Qb-1ckVB_RvZ-VTaF0"
@@ -63,12 +65,13 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_flash_loan_arbitrage_explanation",
             user_input="Explain how flash loan arbitrage works and the risks involved",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should explain flash loan mechanics, arbitrage opportunities, and associated risks. "
                 "Response should cover uncollateralized loans, same-transaction execution, "
                 "profit potential, and failure risks. Should be technically accurate."
             ),
+            test_func=self.test_user_ultra_flash_loan_arbitrage_explanation,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'flash_loan_education',
                 'user_type': 'authenticated',
@@ -76,10 +79,10 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "ultra", {
@@ -94,6 +97,19 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -124,12 +140,13 @@ async def test_user_ultra_mev_protection_strategies(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_mev_protection_strategies",
             user_input="How can I protect my transactions from MEV bots using Flashbots?",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should explain MEV (Maximum Extractable Value) and protection strategies. "
                 "Response should cover Flashbots, private transactions, RPC endpoints, "
                 "and practical steps for MEV protection."
             ),
+            test_func=self.test_user_ultra_mev_protection_strategies,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'mev_protection',
                 'user_type': 'authenticated',
@@ -137,10 +154,10 @@ async def test_user_ultra_mev_protection_strategies(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "ultra", {
@@ -155,6 +172,19 @@ async def test_user_ultra_mev_protection_strategies(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -185,12 +215,13 @@ async def test_user_ultra_slippage_tolerance_recommendations(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_slippage_tolerance_recommendations",
             user_input="What slippage tolerance should I set for a $10,000 ETH swap on Uniswap?",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should provide slippage tolerance recommendations for large swap ($10k). "
                 "Response should consider liquidity depth, market conditions, typical slippage rates, "
                 "and provide specific percentage recommendations (e.g., 0.5%-2%)."
             ),
+            test_func=self.test_user_ultra_slippage_tolerance_recommendations,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'slippage_recommendation',
                 'user_type': 'authenticated',
@@ -199,10 +230,10 @@ async def test_user_ultra_slippage_tolerance_recommendations(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "ultra", {
@@ -217,6 +248,19 @@ async def test_user_ultra_slippage_tolerance_recommendations(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -247,12 +291,13 @@ async def test_user_ultra_gas_price_prediction_accuracy(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_gas_price_prediction_accuracy",
             user_input="Estimate gas costs for swapping tokens on Ethereum right now",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should provide current gas price estimates for Ethereum token swaps. "
                 "Response should mention gas price in gwei, estimated USD cost, "
                 "and context about whether gas is currently high/normal/low."
             ),
+            test_func=self.test_user_ultra_gas_price_prediction_accuracy,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'gas_estimation',
                 'user_type': 'authenticated',
@@ -261,10 +306,10 @@ async def test_user_ultra_gas_price_prediction_accuracy(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "ultra", {
@@ -279,6 +324,19 @@ async def test_user_ultra_gas_price_prediction_accuracy(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -309,12 +367,13 @@ async def test_user_ultra_multi_hop_swap_routing(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_multi_hop_swap_routing",
             user_input="What's the best route to swap LINK to MATIC with minimal slippage?",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should analyze optimal routing for LINK to MATIC swap. "
                 "Response should mention potential intermediate tokens (e.g., LINK->ETH->MATIC), "
                 "compare direct vs multi-hop routes, and explain trade-offs."
             ),
+            test_func=self.test_user_ultra_multi_hop_swap_routing,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'swap_routing',
                 'user_type': 'authenticated',
@@ -323,10 +382,10 @@ async def test_user_ultra_multi_hop_swap_routing(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "ultra", {
@@ -341,6 +400,19 @@ async def test_user_ultra_multi_hop_swap_routing(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -371,12 +443,13 @@ async def test_user_ultra_impermanent_loss_warnings(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_impermanent_loss_warnings",
             user_input="Explain impermanent loss risk for providing ETH/USDC liquidity",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should explain impermanent loss (IL) concept for ETH/USDC pair. "
                 "Response should cover how IL occurs with price divergence, "
                 "magnitude of losses at different price changes, and risk mitigation strategies."
             ),
+            test_func=self.test_user_ultra_impermanent_loss_warnings,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'impermanent_loss',
                 'user_type': 'authenticated',
@@ -384,10 +457,10 @@ async def test_user_ultra_impermanent_loss_warnings(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "ultra", {
@@ -402,6 +475,19 @@ async def test_user_ultra_impermanent_loss_warnings(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -432,12 +518,13 @@ async def test_user_ultra_yield_farming_roi_calculations(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_yield_farming_roi_calculations",
             user_input="Calculate real APY for Curve 3pool considering all fees and IL",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should analyze Curve 3pool yield with comprehensive ROI calculation. "
                 "Response should consider trading fees, CRV rewards, gas costs, and IL risks. "
                 "Should provide realistic APY estimates, not just headline rates."
             ),
+            test_func=self.test_user_ultra_yield_farming_roi_calculations,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'yield_calculation',
                 'user_type': 'authenticated',
@@ -446,10 +533,10 @@ async def test_user_ultra_yield_farming_roi_calculations(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "ultra", {
@@ -464,6 +551,19 @@ async def test_user_ultra_yield_farming_roi_calculations(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })
 
 
@@ -494,12 +594,13 @@ async def test_user_ultra_liquidation_risk_monitoring(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_ultra_liquidation_risk_monitoring",
             user_input="How can I monitor my Aave position to avoid liquidation?",
-            agent_output=content,
+            agent_output=agent_response,
             expected_behavior=(
                 "Should explain liquidation risk monitoring for Aave leveraged positions. "
                 "Response should cover health factor monitoring, price alerts, "
                 "liquidation thresholds, and preventive actions. Should be practical and actionable."
             ),
+            test_func=self.test_user_ultra_liquidation_risk_monitoring,  # PHASE 3: Custom prompt generation
             additional_context={
                 'test_category': 'liquidation_monitoring',
                 'user_type': 'authenticated',
@@ -507,10 +608,10 @@ async def test_user_ultra_liquidation_risk_monitoring(
             }
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
+            warnings.warn(
                 f"LLM validation concern (confidence={validation.confidence:.2f}): "
                 f"{validation.reasoning}"
-            ))
+            )
 
     # CSV tracking
     await csv_tracker("user", "ultra", {
@@ -525,4 +626,17 @@ async def test_user_ultra_liquidation_risk_monitoring(
         "quality": validation.confidence if validation else None,
         "qa_status": validation.verdict if validation else "SKIPPED",
         "qa_output": validation.reasoning if validation else None,
+    # Enhanced validation fields (PHASE 3)
+    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
     })

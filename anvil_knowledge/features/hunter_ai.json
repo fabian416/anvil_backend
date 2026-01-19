@@ -43,6 +43,13 @@
       "intent": "HUNTER_PATTERNS",
       "description": "Identifies chart patterns and market trends using computer vision AI",
       "patterns_detected": ["Head and shoulders", "Double top/bottom", "Triangle patterns", "Support/resistance levels"]
+    },
+    {
+      "name": "Portfolio Optimization",
+      "intent": "HUNTER_PORTFOLIO",
+      "description": "Track multiple assets, correlation analysis, and automated rebalancing recommendations for portfolio management",
+      "features": ["Multi-asset tracking", "Correlation analysis", "Risk-adjusted returns", "Rebalancing signals", "Diversification scoring"],
+      "metrics": ["Portfolio beta", "Sharpe ratio", "Maximum drawdown", "Asset correlation matrix"]
     }
   ],
 

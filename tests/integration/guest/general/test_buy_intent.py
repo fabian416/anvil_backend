@@ -42,42 +42,42 @@ class TestBuyIntent:
         self,
         async_client: AsyncClient,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_buy_crypto_shows_wallet_for_authenticated_user",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        ops_auth_headers: dict,
-    ):
-        """
-        Test that buy intent shows wallet address for authenticated user.
-
-        User: ops@anvilcrypto.com (user_id=239)
-        Expected wallet: 0xc42c83fff8891a368b2579ebd3e964dcef6e0e97
-
-        To run this test:
-        1. Update the password in ops_auth_token fixture
-        2. Remove @pytest.mark.skip decorator
-        3. Run: pytest tests/integration/chat/test_buy_intent.py -v -s
-        """
-        # Step 1: Create a conversation
-        create_response = await async_client.post(
-            "/api/v1/conversations",
-            json={"title": "Buy Crypto Test", "language": "en"},
-            headers=ops_auth_headers,
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_buy_crypto_shows_wallet_for_authenticated_user",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    ops_auth_headers: dict,
+    ):
+    """
+    Test that buy intent shows wallet address for authenticated user.
+
+    User: ops@anvilcrypto.com (user_id=239)
+    Expected wallet: 0xc42c83fff8891a368b2579ebd3e964dcef6e0e97
+
+    To run this test:
+    1. Update the password in ops_auth_token fixture
+    2. Remove @pytest.mark.skip decorator
+    3. Run: pytest tests/integration/chat/test_buy_intent.py -v -s
+    """
+    # Step 1: Create a conversation
+    create_response = await async_client.post(
+        "/api/v1/conversations",
+        json={"title": "Buy Crypto Test", "language": "en"},
+        headers=ops_auth_headers,
+    )
         assert create_response.status_code == 201
         conversation_data = create_response.json()
         conversation_id = conversation_data["id"]
@@ -147,33 +147,33 @@ class TestBuyIntent:
         self,
         async_client: AsyncClient,
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_buy_crypto_different_phrasings",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        auth_headers_ops: dict,
-    ):
-        """Test that different buy phrasings trigger the buy intent."""
-
-        # Create conversation
-        create_response = await async_client.post(
-            "/api/v1/conversations",
-            json={"title": "Buy Intent Test", "language": "en"},
-            headers=auth_headers_ops,
+    # Optional LLM semantic validation (environment-gated)
+    if llm_validator.enabled:
+        validation = await llm_validator.validate_single_response(
+            test_name="test_buy_crypto_different_phrasings",
+            user_input="query",
+            agent_output=agent_response,
+            expected_behavior=(
+                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
+            ),
+            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
         )
+        if validation.verdict != "PASS":
+            pytest.warn(UserWarning(
+                f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                f"{validation.reasoning}"
+            ))
+
+    auth_headers_ops: dict,
+    ):
+    """Test that different buy phrasings trigger the buy intent."""
+
+    # Create conversation
+    create_response = await async_client.post(
+        "/api/v1/conversations",
+        json={"title": "Buy Intent Test", "language": "en"},
+        headers=auth_headers_ops,
+    )
         conversation_id = create_response.json()["id"]
 
         test_phrases = [

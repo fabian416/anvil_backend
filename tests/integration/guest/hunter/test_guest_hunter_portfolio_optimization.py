@@ -6,6 +6,8 @@ Tests the portfolio optimization suggestion feature for guest users with real da
 
 import pytest
 from datetime import datetime
+import json
+import warnings
 
 
 class TestGuestHunterPortfolioOptimization:
@@ -52,10 +54,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="How can I optimize my crypto portfolio?",
                 agent_output=content,
                 expected_behavior="Response should provide portfolio optimization suggestions including asset allocation recommendations, expected returns, risk metrics, or appropriate disclaimers if optimization service is unavailable.",
+                test_func=self.test_portfolio_optimization_basic,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'basic_optimization'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -70,6 +73,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -106,10 +122,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="portfolio optimization recommendations",
                 agent_output=content,
                 expected_behavior="Response should provide portfolio allocation recommendations with percentages, weights, or distribution ratios for different assets, or disclaimers if service is unavailable.",
+                test_func=self.test_portfolio_allocation_recommendations,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'allocation_recommendations'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -124,6 +141,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -161,7 +191,7 @@ class TestGuestHunterPortfolioOptimization:
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'risk_levels_tested': risk_levels, 'feature': 'risk_tolerance'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         # CSV tracking
         await csv_tracker("guest", "hunter", {
@@ -176,6 +206,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -211,10 +254,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="portfolio diversification strategy",
                 agent_output=content,
                 expected_behavior="Response should provide diversification advice including strategies to spread investments across multiple assets, or disclaimers if service unavailable.",
+                test_func=self.test_portfolio_diversification_suggestions,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'diversification'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_diversification_004",
@@ -228,6 +272,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -258,10 +315,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="crypto portfolio recommendations",
                 agent_output=content,
                 expected_behavior="Response should recommend specific crypto assets for portfolio inclusion with rationale or disclaimers.",
+                test_func=self.test_portfolio_asset_recommendations,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'asset_recommendations'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_assets_005",
@@ -275,6 +333,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -305,10 +376,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="portfolio rebalancing strategy",
                 agent_output=content,
                 expected_behavior="Response should provide rebalancing recommendations to maintain target allocation or disclaimers.",
+                test_func=self.test_portfolio_rebalancing_advice,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'rebalancing'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_rebalancing_006",
@@ -322,6 +394,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -352,10 +437,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="optimize portfolio risk",
                 agent_output=content,
                 expected_behavior="Response should provide risk metrics like Sharpe ratio, volatility, or value at risk, or disclaimers if service unavailable.",
+                test_func=self.test_portfolio_risk_metrics,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'risk_metrics'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_risk_metrics_007",
@@ -369,6 +455,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -399,10 +498,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="portfolio optimization returns",
                 agent_output=content,
                 expected_behavior="Response should provide expected return projections for the portfolio or disclaimers if service unavailable.",
+                test_func=self.test_portfolio_expected_returns,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'expected_returns'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_returns_008",
@@ -416,6 +516,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -447,10 +560,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="portfolio optimization",
                 agent_output=content,
                 expected_behavior="Response should include portfolio optimization analysis with hunter_tool tag in enrichment metadata.",
+                test_func=self.test_portfolio_hunter_tool_tag,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'hunter_tool_tag'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_tool_tag_009",
@@ -464,6 +578,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -494,10 +621,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="crypto portfolio recommendations",
                 agent_output=content,
                 expected_behavior="Response should use real market data for portfolio recommendations with actual allocation percentages.",
+                test_func=self.test_portfolio_uses_real_market_data,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'feature': 'real_market_data'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_real_data_010",
@@ -511,6 +639,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -538,10 +679,11 @@ class TestGuestHunterPortfolioOptimization:
                 user_input="optimización de cartera cripto",
                 agent_output=content,
                 expected_behavior="Response should provide portfolio optimization in Spanish or English fallback with proper multilingual support.",
+                test_func=self.test_portfolio_multilingual_spanish,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio', 'user_type': 'guest', 'language': 'es', 'feature': 'multilingual'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_spanish_011",
@@ -555,6 +697,19 @@ class TestGuestHunterPortfolioOptimization:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
 
@@ -584,10 +739,11 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
                 user_input="portfolio optimization",
                 agent_output=content,
                 expected_behavior="Response should use emojis for visual appeal and engagement.",
+                test_func=self.test_portfolio_uses_emojis,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio_quality', 'user_type': 'guest', 'feature': 'emojis'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_emojis_012",
@@ -601,6 +757,19 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -626,10 +795,11 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
                 user_input="crypto portfolio recommendations",
                 agent_output=content,
                 expected_behavior="Response should have clear visual formatting with markdown, headers, and structure.",
+                test_func=self.test_portfolio_clear_formatting,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio_quality', 'user_type': 'guest', 'feature': 'formatting'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_formatting_013",
@@ -643,6 +813,19 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -668,10 +851,11 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
                 user_input="portfolio allocation strategy",
                 agent_output=content,
                 expected_behavior="Response should clearly show allocation percentages for each asset.",
+                test_func=self.test_portfolio_clear_percentages,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio_quality', 'user_type': 'guest', 'feature': 'percentages'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_percentages_014",
@@ -685,6 +869,19 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -710,10 +907,11 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
                 user_input="how to optimize portfolio",
                 agent_output=content,
                 expected_behavior="Response should provide actionable steps for portfolio optimization.",
+                test_func=self.test_portfolio_actionable_steps,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio_quality', 'user_type': 'guest', 'feature': 'actionable_steps'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_steps_015",
@@ -727,6 +925,19 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -752,10 +963,11 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
                 user_input="portfolio optimization strategy",
                 agent_output=content,
                 expected_behavior="Response should educate about portfolio risk and risk management.",
+                test_func=self.test_portfolio_risk_education,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio_quality', 'user_type': 'guest', 'feature': 'risk_education'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_risk_edu_016",
@@ -769,6 +981,19 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })
 
     @pytest.mark.asyncio
@@ -794,10 +1019,11 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
                 user_input="portfolio optimization",
                 agent_output=content,
                 expected_behavior="Response should include signup CTA encouraging users to create account for portfolio execution.",
+                test_func=self.test_portfolio_signup_cta,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'hunter_portfolio_quality', 'user_type': 'guest', 'feature': 'signup_cta'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
+                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
 
         await csv_tracker("guest", "hunter", {
             "test_id": "guest_hunter_portfolio_cta_017",
@@ -811,4 +1037,17 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
             "quality": validation.confidence if validation else None,
             "qa_status": validation.verdict if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
+        # Enhanced validation fields (PHASE 3)
+        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
+        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
+        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
+        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
+        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
+        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
+        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
+        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
+        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
+        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
+        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
+        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
         })

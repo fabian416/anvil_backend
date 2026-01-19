@@ -145,7 +145,8 @@
         "description": "Protects against front-running and sandwich attacks",
         "method": "Private mempool submission via Flashbots/MEV Blocker"
       }
-    },
+    }
+  },
 
   "supported_flows": {
     "basic_swap": {

@@ -13,6 +13,9 @@ These tests advance Security coverage from 85% toward 100%.
 import pytest
 from httpx import AsyncClient
 from fastapi import status
+import json
+import warnings
+from datetime import datetime
 
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.security]
@@ -62,6 +65,10 @@ class TestSecurityAdvancedXSSPrevention:
             assert len(agent_response) > 20, "Should provide valid response"
 
             # Optional LLM semantic security validation (environment-gated)
+            # Extract response data
+            data = response.json()
+            agent_response = data["agent_message"]["content"]
+
             if llm_validator.enabled:
                 validation = await llm_validator.validate_single_response(
                     test_name=f"test_advanced_xss_script_injection[{payload[:20]}]",
@@ -83,10 +90,10 @@ class TestSecurityAdvancedXSSPrevention:
                     }
                 )
                 if validation.verdict != "PASS":
-                    pytest.warn(UserWarning(
+                    warnings.warn(
                         f"LLM security validation concern for payload '{payload[:30]}' "
                         f"(confidence={validation.confidence:.2f}): {validation.reasoning}"
-                    ))
+                    )
 
     @pytest.mark.llm_validation
     async def test_xss_in_response_content(self, client: AsyncClient, llm_validator):
@@ -118,21 +125,26 @@ class TestSecurityAdvancedXSSPrevention:
             assert "```" in agent_response or "&lt;" in agent_response or "\\<" in agent_response
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_xss_in_response_content",
                 user_input="Show me an example of JavaScript code for blockchain",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_xss_in_response_content,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -169,21 +181,26 @@ class TestSecurityAdvancedXSSPrevention:
         assert response_with_token.status_code == status.HTTP_200_OK
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_csrf_token_validation_edge_cases",
                 user_input="What is Ethereum?",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_csrf_token_validation_edge_cases,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
 
     @pytest.mark.llm_validation
@@ -206,20 +223,25 @@ class TestSecurityAdvancedXSSPrevention:
         # Verify response has headers (actual security headers may be set by proxy)
 
         # Optional LLM semantic validation (environment-gated)
+        # Extract response data
+        data = response.json()
+        agent_response = data["agent_message"]["content"]
+
         if llm_validator.enabled:
             validation = await llm_validator.validate_single_response(
                 test_name="test_security_headers_comprehensive",
                 user_input="query",
-                agent_output=content,
+                agent_output=agent_response,
                 expected_behavior=(
                     "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
                 ),
+                test_func=self.test_security_headers_comprehensive,  # PHASE 3: Custom prompt generation
                 additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
             )
             if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
+                warnings.warn(
                     f"LLM validation concern (confidence={validation.confidence:.2f}): "
                     f"{validation.reasoning}"
-                ))
+                )
 
         assert len(headers) > 0, "Should have response headers"
