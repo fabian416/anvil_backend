@@ -223,12 +223,187 @@ class SendGuestMessage:
             ])
         )
         
+        # ✨ DIRECT LLM PATH FOR SIMPLE GREETINGS ✨
+        # Skip all intent detection, distillation, and supervisor coordinator for simple greetings
+        # Go directly to LLM (ChatAgent) for natural, conversational responses
+        import re
+        is_simple_greeting = bool(re.search(
+            r"^(hi|hello|hey|hola|holi|hey there|greetings|good (morning|afternoon|evening))(\s|$|!|\?|\.)",
+            content_lower
+        ))
+        
+        if is_simple_greeting and self._agent_orchestrator:
+            try:
+                logger.info(
+                    "✨ Direct LLM path: Simple greeting - skipping intents/distillation/supervisor",
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                        "content": content[:100],
+                    }
+                )
+                
+                # Build minimal context for ChatAgent
+                from app.domain.value_objects.conversation_id import ConversationId
+                from app.domain.value_objects.message_content import MessageContent
+                from app.domain.value_objects.agent_squad.conversation_context import (
+                    ConversationContext as AgentSquadContext,
+                )
+                from app.domain.enums.agent_type import AgentType
+                
+                messages = await self._guest_repo.get_messages(conversation.id, limit=5)
+                conversation_history = [
+                    {
+                        "role": msg.role.value,
+                        "content": msg.content,
+                        "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                    }
+                    for msg in messages
+                ]
+                conversation_history.append({
+                    "role": "user",
+                    "content": content,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                })
+                
+                agent_squad_context = AgentSquadContext(
+                    conversation_history=conversation_history,
+                    user_metadata={"language": language, "is_guest": True},
+                    session_metadata={"ip_address": ip_address},
+                )
+                
+                # Execute ChatAgent directly (no intents, no distillation, no supervisor)
+                import time
+                greeting_start_time = time.time()
+                
+                response = await self._agent_orchestrator.execute_agent(
+                    agent_type=AgentType.CHAT,  # Use ChatAgent with greeting prompt
+                    message=content,
+                    conversation_context=agent_squad_context,
+                )
+                
+                greeting_execution_time_ms = int((time.time() - greeting_start_time) * 1000)
+                
+                # Create user message
+                user_message = GuestMessage.create_user_message(
+                    conversation_id=conversation.id,
+                    content=content,
+                    language=language,
+                )
+                await self._guest_repo.create_message(user_message)
+                
+                # Create agent message
+                agent_message = GuestMessage.create_assistant_message(
+                    conversation_id=conversation.id,
+                    content=response.content if hasattr(response, "content") else str(response),
+                    intent="GREETING",
+                    handler="chat_agent_direct",
+                    confidence=0.95,
+                    language=language,
+                    is_restricted_action=False,
+                )
+                await self._guest_repo.create_message(agent_message)
+                
+                # Update counters
+                guest.increment_messages()
+                conversation.increment_messages()
+                await self._guest_repo.update_guest(guest)
+                await self._guest_repo.update_conversation(conversation)
+                
+                # Get sources from response
+                sources = []
+                if hasattr(response, "sources") and response.sources:
+                    sources = [s.to_dict() if hasattr(s, "to_dict") else s for s in response.sources]
+                
+                # Check if debug timing is enabled
+                from app.setup.config.settings import load_settings
+                settings = load_settings()
+                debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
+                
+                # Build enrichment
+                enrichment = {
+                    "agent_squad": True,
+                    "workflow_type": "chat_agent_direct",
+                    "task_count": 1,
+                    "disclaimer": get_demo_disclaimer(language),
+                    "agents_used": ["chat"],
+                }
+                
+                if debug_timing_enabled:
+                    enrichment["agent_timings"] = [{
+                        "agent_type": "chat",
+                        "task_description": "Direct LLM greeting response | Tools: LLM (Vertex AI/DeepInfra)",
+                        "execution_time_ms": greeting_execution_time_ms,
+                        "status": "completed",
+                    }]
+                
+                # Log telemetry
+                await self._guest_repo.log_telemetry(
+                    guest_user_id=guest.id,
+                    conversation_id=conversation.id,
+                    event_type="message_sent",
+                    event_data={
+                        "intent": "GREETING",
+                        "handler": "chat_agent_direct",
+                        "message_length": len(content),
+                    },
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    referer=referer,
+                    language=language,
+                )
+                
+                # Calculate remaining messages
+                hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                messages_this_hour = await self._guest_repo.get_message_count_since(
+                    guest.id, hour_ago
+                )
+                messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+                
+                return GuestMessageResult(
+                    conversation_id=conversation.id,
+                    message_id=agent_message.id,
+                    user_message={
+                        "id": str(user_message.id),
+                        "role": user_message.role.value,
+                        "content": user_message.content,
+                        "created_at": user_message.created_at.isoformat(),
+                    },
+                    agent_message={
+                        "id": str(agent_message.id),
+                        "role": agent_message.role.value,
+                        "content": agent_message.content,
+                        "created_at": agent_message.created_at.isoformat(),
+                        "sources": sources,
+                    },
+                    routing={
+                        "intent": "GREETING",
+                        "confidence": 0.95,
+                        "handler": "chat_agent_direct",
+                        "language": language,
+                        "is_demo_mode": False,
+                        "is_live_data": False,
+                    },
+                    enrichment=enrichment,
+                    sources=sources if sources else None,
+                    registration_required=None,
+                    guest_info={
+                        "messages_remaining": messages_remaining,
+                        "session_active": True,
+                    },
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Direct LLM path for greeting failed: {e}, falling back to normal flow",
+                    exc_info=True,
+                )
+                # Fall through to normal flow
+        
         # ✨ FAST PATH FOR COMMON MULTI-INTENT PATTERNS ✨
         # Detect common multi-intent patterns that can skip Supervisor Coordinator planning
         # This is checked BEFORE restricted intent check to avoid unnecessary processing
         is_simple_multi_intent = False
-        if not is_simple_info_query:
-            import re
+        if not is_simple_info_query and not is_simple_greeting:
             # Pattern: greeting + price query (e.g., "hi, how are you? what is the price of btc?")
             # More flexible pattern: greeting anywhere + price query anywhere
             has_greeting = bool(re.search(r"(hi|hello|hey|hola|how are you|greetings)", content_lower))
