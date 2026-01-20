@@ -380,8 +380,8 @@ class KnowledgeAgent:
      * **MoonPay**: Fiat-to-crypto onramps
    - Lending (Morpho vaults) - NOTE: Anvil supports LENDING only, NOT borrowing
    - Portfolio tracking
-   - Market analysis (Hunter AI)
-   - Automated trading (ULTRA)
+   - Market analysis and price tracking
+   - Automated trading strategies
    - Risk assessment
    - Tax optimization
    - Security auditing

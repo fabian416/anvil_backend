@@ -2661,13 +2661,13 @@ class SendGuestMessage:
                 "zh": "🤖 ULTRA Auto-Executor 全天候运行您的交易策略！设置 DCA、限价单、止损和条件交易。目前正在为用户执行 1,000+ 策略。注册以自动化您的交易。",
             },
             # ========================================
-            # General Conversation (Fallback)
+            # General Conversation / Off-Topic (Fallback)
             # ========================================
             ChatIntent.GENERAL_CONVERSATION: {
-                "en": "I'm your AI assistant for DeFi! I can help with market analysis (Hunter AI), automated trading (ULTRA), lending rates, swaps, and more. Ask me about protocols, yields, risks, or how to get started. Sign up for full access to all features.",
-                "es": "¡Soy tu asistente de IA para DeFi! Puedo ayudar con análisis de mercado (Hunter AI), trading automatizado (ULTRA), tasas de préstamo, swaps y más. Pregúntame sobre protocolos, rendimientos, riesgos o cómo empezar. Regístrate para acceso completo.",
-                "pt": "Sou seu assistente de IA para DeFi! Posso ajudar com análise de mercado (Hunter AI), trading automatizado (ULTRA), taxas de empréstimo, swaps e mais. Pergunte-me sobre protocolos, rendimentos, riscos ou como começar. Cadastre-se para acesso completo.",
-                "zh": "我是您的 DeFi AI 助手！我可以帮助进行市场分析（Hunter AI）、自动交易（ULTRA）、借贷利率、交换等。问我关于协议、收益、风险或如何开始。注册以获得完整功能访问。",
+                "en": "I'm specialized in crypto and DeFi. I can help you with token prices, swaps, lending rates, yield opportunities, and understanding DeFi protocols. What would you like to know?",
+                "es": "Me especializo en crypto y DeFi. Puedo ayudarte con precios de tokens, swaps, tasas de préstamo, oportunidades de rendimiento y entender protocolos DeFi. ¿Qué te gustaría saber?",
+                "pt": "Sou especializado em crypto e DeFi. Posso ajudar com preços de tokens, swaps, taxas de empréstimo, oportunidades de rendimento e entender protocolos DeFi. O que você gostaria de saber?",
+                "zh": "我专注于加密货币和 DeFi。我可以帮助您了解代币价格、交换、借贷利率、收益机会和理解 DeFi 协议。您想了解什么？",
             },
         }
 
