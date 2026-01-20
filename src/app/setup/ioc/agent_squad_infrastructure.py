@@ -40,6 +40,9 @@ from app.setup.config.settings import AppSettings
 from app.infrastructure.adapters.agent_squad.agents.chat_agent_openai import (
     ChatAgentOpenAI,
 )
+from app.infrastructure.adapters.agent_squad.agents.guest_auth_agent_openai import (
+    GuestAuthAgentOpenAI,
+)
 from app.infrastructure.adapters.agent_squad.agents.hunter_ai_agent_openai import (
     HunterAIAgentOpenAI,
 )
@@ -345,6 +348,11 @@ class AgentSquadInfrastructureProvider(Provider):
         return ChatAgentOpenAI(llm_client=llm_client)
 
     @provide
+    def provide_guest_auth_agent(self, llm_client: LLMClientGateway) -> GuestAuthAgentOpenAI:
+        """Provide Guest Auth agent for handling authentication requirements."""
+        return GuestAuthAgentOpenAI(llm_client=llm_client)
+
+    @provide
     def provide_hunter_ai_agent(
         self,
         llm_client: LLMClientGateway,
@@ -565,6 +573,7 @@ class AgentSquadInfrastructureProvider(Provider):
         self,
         # Core agents
         chat_agent: ChatAgentOpenAI,
+        guest_auth_agent: GuestAuthAgentOpenAI,
         hunter_ai_agent: HunterAIAgentOpenAI,
         research_agent: ResearchAgentPerplexity,
         execution_agent: ExecutionAgentPrivy,
@@ -593,6 +602,7 @@ class AgentSquadInfrastructureProvider(Provider):
         return {
             # Core agents
             AgentType.CHAT: chat_agent,
+            AgentType.GUEST_AUTH: guest_auth_agent,
             AgentType.HUNTER_AI: hunter_ai_agent,
             AgentType.RESEARCH: research_agent,
             AgentType.EXECUTION: execution_agent,

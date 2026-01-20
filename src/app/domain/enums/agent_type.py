@@ -13,8 +13,9 @@ class AgentType(Enum):
     """
     Agent types for Agent Squad multi-agent orchestration.
     
-    Core User-Facing Agents (10):
+    Core User-Facing Agents (11):
     - CHAT: General conversation
+    - GUEST_AUTH: Authentication requirements for restricted features (guest users)
     - HUNTER_AI: Market sentiment & predictions
     - RESEARCH: Deep protocol analysis
     - EXECUTION: Transaction execution (Privy wallet)
@@ -36,8 +37,9 @@ class AgentType(Enum):
     - DAO_GOVERNANCE: Voting, proposals, delegation
     """
     
-    # Core User-Facing Agents (10)
+    # Core User-Facing Agents (11)
     CHAT = "chat"
+    GUEST_AUTH = "guest_auth"
     HUNTER_AI = "hunter_ai"
     RESEARCH = "research"
     EXECUTION = "execution"
@@ -83,6 +85,7 @@ class AgentType(Enum):
         """Get list of core user-facing agents."""
         return [
             cls.CHAT,
+            cls.GUEST_AUTH,
             cls.HUNTER_AI,
             cls.RESEARCH,
             cls.EXECUTION,

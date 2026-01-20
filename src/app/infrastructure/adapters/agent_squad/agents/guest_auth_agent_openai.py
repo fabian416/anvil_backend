@@ -46,9 +46,7 @@ class GuestAuthAgentOpenAI:
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
-        # Use CHAT type - supervisor will route restricted queries to this agent
-        # The agent detects which restricted feature and returns custom message
-        return AgentType.CHAT
+        return AgentType.GUEST_AUTH
     
     async def execute(
         self,

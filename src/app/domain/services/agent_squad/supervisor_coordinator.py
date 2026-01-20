@@ -450,19 +450,19 @@ Respond with JSON:
 Guidelines:
 - **CRITICAL: RESTRICTED FEATURES FOR GUEST USERS (REQUIRE AUTHENTICATION)**
   * These features require wallet connection and authentication - DO NOT call restricted agents for guests:
-  * **SOLUTION**: Create a SINGLE "chat" task - the CHAT agent will automatically detect the restricted feature and return the appropriate custom registration message
+  * **SOLUTION**: Create a SINGLE "guest_auth" task - the GUEST_AUTH agent will automatically detect the restricted feature and return the appropriate custom registration message
   
-  **Restricted Features (all handled by CHAT agent):**
-  * If the user asks about ANY of these restricted features, create a SINGLE "chat" task:
+  **Restricted Features (all handled by GUEST_AUTH agent):**
+  * If the user asks about ANY of these restricted features, create a SINGLE "guest_auth" task:
     - BALANCE: "my balance", "what's my balance", "check my balance", "how much do I have", "wallet balance"
     - ACTIVITY: "my transactions", "transaction history", "show my activity", "recent activity", "my activity"
     - RECEIVE: "my address", "wallet address", "receive crypto", "deposit address", "QR code", "I want to receive"
     - BUY: "buy crypto", "purchase bitcoin", "buy with card", "how to buy ETH", "I want to buy"
     - SEND: "send crypto", "transfer tokens", "send to wallet", "send to friend", "I want to send"
     - PORTFOLIO: "my portfolio", "my holdings", "list my tokens", "what tokens do I have", "show my holdings"
-  * Task description: "Detect which restricted feature the user is asking about and return the appropriate custom registration message. The CHAT agent has built-in detection for restricted features and will automatically use the correct custom message."
+  * Task description: "Detect which restricted feature the user is asking about and return the appropriate custom registration message. The GUEST_AUTH agent has built-in detection for restricted features and will automatically use the correct custom message."
   * DO NOT call portfolio, execution, or any wallet-related agents for guest users
-  * The CHAT agent will handle all restricted features with custom messages automatically
+  * The GUEST_AUTH agent will handle all restricted features with custom messages automatically
 - **CRITICAL: OFF-TOPIC QUERY DETECTION**
   * If the user asks about topics NOT related to DeFi, crypto, blockchain, Web3, or Anvil:
     - Create a SINGLE "chat" task with task_description: "Politely decline the off-topic query and redirect to DeFi topics. DO NOT provide information about [topic]. Say you're specialized in DeFi and crypto."
@@ -492,7 +492,7 @@ Guidelines:
   * This ensures the CHAT agent runs LAST and receives all previous responses
 - Limit to {self._max_agents} agents
 - For single-agent queries, return the agent's response directly (no aggregation needed)
-- **IMPORTANT**: Use exact agent_type values: "hunter_ai", "chat", "execution", "portfolio", "defi_yield", "research", "risk_analyzer", etc.
+- **IMPORTANT**: Use exact agent_type values: "hunter_ai", "chat", "guest_auth", "execution", "portfolio", "defi_yield", "research", "risk_analyzer", etc.
 - **SPEED**: Prefer single-agent workflows for simple queries to minimize latency
 """
     
