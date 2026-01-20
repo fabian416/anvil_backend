@@ -403,16 +403,38 @@ class SendGuestMessage:
         # Detect common multi-intent patterns that can skip Supervisor Coordinator planning
         # This is checked BEFORE restricted intent check to avoid unnecessary processing
         is_simple_multi_intent = False
+        is_simple_price_query = False  # NEW: Direct price query without greeting
+        
+        # Multilingual price detection patterns
+        # English: price, cost, worth, how much
+        # Spanish: precio, cuanto cuesta, cuanto vale, valor
+        # Portuguese: preço, quanto custa, quanto vale
+        # Chinese: 价格 (jiàgé)
+        price_keywords = r"(price|precio|preço|cost|cuesta|custo|worth|vale|valor|how much|cuanto|quanto|价格)"
+        token_keywords = r"(btc|eth|usdc|usdt|bitcoin|ethereum|sol|solana|bnb|xrp|ada|doge|matic|avax|link|uni|aave)"
+        
         if not is_simple_info_query and not is_simple_greeting:
             # Pattern: greeting + price query (e.g., "hi, how are you? what is the price of btc?")
             # More flexible pattern: greeting anywhere + price query anywhere
-            has_greeting = bool(re.search(r"(hi|hello|hey|hola|how are you|greetings)", content_lower))
-            has_price_query = bool(re.search(r"(price|cost|worth|how much).*(btc|eth|usdc|bitcoin|ethereum)", content_lower))
+            has_greeting = bool(re.search(r"(hi|hello|hey|hola|holi|how are you|greetings|buenos|buenas)", content_lower))
+            has_price_query = bool(re.search(price_keywords + r".*" + token_keywords, content_lower)) or \
+                              bool(re.search(token_keywords + r".*" + price_keywords, content_lower))
             
             if has_greeting and has_price_query:
                 is_simple_multi_intent = True
                 logger.info(
                     "✨ Fast path: Detected greeting + price query pattern",
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                        "content": content[:100],
+                    }
+                )
+            elif has_price_query and not has_greeting:
+                # Simple price query without greeting (e.g., "cual es el precio de btc")
+                is_simple_price_query = True
+                logger.info(
+                    "✨ Fast path: Detected simple price query pattern",
                     extra={
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
@@ -649,6 +671,149 @@ class SendGuestMessage:
                     exc_info=True,
                 )
                 # Fall through to standard SupervisorCoordinator path
+        
+        # ✨ FAST PATH FOR SIMPLE PRICE QUERIES (no greeting) ✨
+        # Direct to Hunter AI for price queries like "cual es el precio de btc"
+        if is_simple_price_query and self._agent_orchestrator:
+            try:
+                logger.info(
+                    "✨ Fast path: Simple price query - direct to Hunter AI",
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                        "content": content[:100],
+                    }
+                )
+                
+                from app.domain.value_objects.conversation_id import ConversationId
+                from app.domain.value_objects.agent_squad.conversation_context import (
+                    ConversationContext as AgentSquadContext,
+                )
+                from app.domain.enums.agent_type import AgentType
+                import time as time_module
+                
+                # Build minimal context
+                messages = await self._guest_repo.get_messages(conversation.id, limit=5)
+                conversation_history = [
+                    {
+                        "role": msg.role.value,
+                        "content": msg.content,
+                        "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                    }
+                    for msg in messages
+                ]
+                conversation_history.append({
+                    "role": "user",
+                    "content": content,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                })
+                
+                agent_squad_context = AgentSquadContext(
+                    conversation_history=conversation_history,
+                    user_metadata={"language": language, "is_guest": True},
+                    session_metadata={"ip_address": ip_address},
+                )
+                
+                # Execute Hunter AI directly (no workflow planning needed)
+                price_start_time = time_module.time()
+                response = await self._agent_orchestrator.execute_agent(
+                    agent_type=AgentType.HUNTER_AI,
+                    message=content,
+                    conversation_context=agent_squad_context,
+                )
+                price_execution_time_ms = int((time_module.time() - price_start_time) * 1000)
+                
+                # Create user message
+                user_message = GuestMessage.create_user_message(
+                    conversation_id=conversation.id,
+                    content=content,
+                    language=language,
+                )
+                await self._guest_repo.create_message(user_message)
+                
+                # Create agent message
+                agent_content = response.content if response else "Unable to fetch price data."
+                agent_message = GuestMessage.create_assistant_message(
+                    conversation_id=conversation.id,
+                    content=agent_content,
+                    intent="PRICE_QUERY",
+                    handler="hunter_ai_fast_path",
+                    confidence=0.95,
+                    language=language,
+                    is_restricted_action=False,
+                )
+                await self._guest_repo.create_message(agent_message)
+                
+                # Get sources from response
+                sources = []
+                if response and hasattr(response, 'sources') and response.sources:
+                    for s in response.sources:
+                        if hasattr(s, "to_dict"):
+                            sources.append(s.to_dict())
+                        elif isinstance(s, dict):
+                            sources.append(s)
+                        else:
+                            sources.append(str(s))
+                
+                # Build enrichment
+                enrichment = {
+                    "agent_squad": True,
+                    "workflow_type": "hunter_ai_fast_path",
+                    "task_count": 1,
+                    "disclaimer": get_demo_disclaimer(language),
+                    "agents_used": ["hunter_ai"],
+                }
+                
+                # Add timing info if enabled
+                debug_timing_enabled = True  # Always enabled for now
+                if debug_timing_enabled:
+                    enrichment["agent_timings"] = [{
+                        "agent_type": "hunter_ai",
+                        "task_description": "Get token price data",
+                        "execution_time_ms": price_execution_time_ms,
+                        "status": "completed",
+                    }]
+                
+                messages_remaining = await self._get_messages_remaining(guest)
+                
+                return GuestMessageResult(
+                    conversation_id=conversation.id,
+                    message_id=agent_message.id,
+                    user_message={
+                        "id": str(user_message.id),
+                        "role": "user",
+                        "content": user_message.content,
+                        "created_at": user_message.created_at.isoformat(),
+                    },
+                    agent_message={
+                        "id": str(agent_message.id),
+                        "role": "assistant",
+                        "content": agent_content,
+                        "created_at": agent_message.created_at.isoformat(),
+                        "sources": sources if sources else [],
+                    },
+                    routing={
+                        "intent": "PRICE_QUERY",
+                        "confidence": 0.95,
+                        "handler": "hunter_ai_fast_path",
+                        "language": language,
+                        "is_demo_mode": False,
+                        "is_live_data": True,
+                    },
+                    enrichment=enrichment,
+                    sources=sources if sources else None,
+                    registration_required=None,
+                    guest_info={
+                        "messages_remaining": messages_remaining,
+                        "session_active": True,
+                    },
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Fast path for price query failed: {e}, falling back to standard flow",
+                    exc_info=True,
+                )
+                # Fall through to standard flow
         
         # 4b. ✨ EARLY RESTRICTED INTENT CHECK ✨
         # Check if this is a restricted intent BEFORE Agent Squad processing
