@@ -107,7 +107,8 @@ class DistillationRouter:
             )
         
         # Step 7: Check static response availability
-        if static_available:
+        # BUT: Skip static responses for GREETING and SMALL_TALK - use LLM for natural, conversational responses
+        if static_available and intent not in [Intent.GREETING, Intent.SMALL_TALK]:
             return DistillationResult(
                 should_process=False,
                 route_type=RouteType.STATIC,
@@ -129,6 +130,20 @@ class DistillationRouter:
                 entities=entities,
                 suggested_model_tier="premium",
                 suggested_agent=self._suggest_agent(intent),
+                cache_key=cache_key,
+                classification_confidence=intent_confidence,
+            )
+        
+        # Step 8.5: Force GREETING and SMALL_TALK to use LLM (not static) for natural, conversational responses
+        if intent in [Intent.GREETING, Intent.SMALL_TALK]:
+            return DistillationResult(
+                should_process=True,
+                route_type=RouteType.LIGHT_LLM,  # Use fast LLM for greetings (natural, conversational)
+                intent=intent,
+                complexity=complexity,
+                entities=entities,
+                suggested_model_tier="economy",  # Fast, cost-effective model for simple greetings
+                suggested_agent="chat",  # Use chat agent for natural conversation
                 cache_key=cache_key,
                 classification_confidence=intent_confidence,
             )
