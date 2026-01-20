@@ -1047,17 +1047,18 @@ class SendGuestMessage:
                 # Calculate distillation timing
                 distillation_timing_ms = int((time.time() - distillation_start_time) * 1000)
                 
-                # If distillation routed to STATIC response, use it directly
+                # ✨ NO STATIC RESPONSES - Everything goes to LLM ✨
+                # Distillation now only checks cache, then routes to LLM
+                # If cache hit, use cached response
                 if (
-                    distillation_result.route_type == RouteType.STATIC
-                    and distillation_result.static_response
+                    distillation_result.route_type == RouteType.CACHE
+                    and distillation_result.cached_response
                 ):
                     logger.info(
-                        "✨ Distillation static response used",
+                        "✨ Distillation cache hit used",
                         extra={
                             "ip_address": ip_address,
                             "conversation_id": str(conversation.id),
-                            "intent": distillation_result.intent.value,
                             "route_type": distillation_result.route_type.value,
                         }
                     )
@@ -1070,13 +1071,13 @@ class SendGuestMessage:
                     )
                     await self._guest_repo.create_message(user_message)
                     
-                    # Create agent message with static response
+                    # Create agent message with cached response
                     agent_message = GuestMessage.create_assistant_message(
                         conversation_id=conversation.id,
-                        content=distillation_result.static_response,
-                        intent=distillation_result.intent.value,
-                        handler="distillation_static",
-                        confidence=distillation_result.classification_confidence or 0.95,
+                        content=distillation_result.cached_response,
+                        intent="COMPLEX_WORKFLOW",  # Generic intent (not used)
+                        handler="distillation_cache",
+                        confidence=1.0,
                         language=language,
                         is_restricted_action=False,
                     )
@@ -1094,8 +1095,7 @@ class SendGuestMessage:
                         conversation_id=conversation.id,
                         event_type="message_sent",
                         event_data={
-                            "intent": distillation_result.intent.value,
-                            "handler": "distillation_static",
+                            "handler": "distillation_cache",
                             "route_type": distillation_result.route_type.value,
                             "message_length": len(content),
                         },
@@ -1128,9 +1128,9 @@ class SendGuestMessage:
                             "created_at": agent_message.created_at.isoformat(),
                         },
                         routing={
-                            "intent": distillation_result.intent.value,
-                            "confidence": distillation_result.classification_confidence or 0.95,
-                            "handler": "distillation_static",
+                            "intent": "COMPLEX_WORKFLOW",  # Generic intent (not used)
+                            "confidence": 1.0,
+                            "handler": "distillation_cache",
                             "language": language,
                             "is_demo_mode": False,
                             "is_live_data": False,
@@ -1144,6 +1144,16 @@ class SendGuestMessage:
                             "session_active": True,
                         },
                     )
+                
+                # If distillation routes to LLM (which is always now), continue to Agent Squad
+                # Distillation result is only used for cache hits and timing
+                logger.debug(
+                    "Distillation routed to LLM, continuing to Agent Squad",
+                    extra={
+                        "route_type": distillation_result.route_type.value,
+                        "should_process": distillation_result.should_process,
+                    }
+                )
             except Exception as e:
                 # If distillation fails, continue with normal flow
                 logger.warning(

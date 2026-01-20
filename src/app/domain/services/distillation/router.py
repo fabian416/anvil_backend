@@ -12,7 +12,7 @@ from app.domain.value_objects.distillation import (
     DistillationConfig,
     DistillationResult,
     ExtractedEntities,
-    Intent,
+    Intent,  # Kept for compatibility but not used for routing
     RouteType,
 )
 
@@ -59,122 +59,68 @@ class DistillationRouter:
         Returns:
             DistillationResult with routing decision
         """
+        # ✨ NO INTENT CLASSIFICATION - Direct routing to LLM ✨
+        # We don't use intents - everything goes to LLM for natural responses
+        
         # Normalize query
         normalized_query = self._normalize_query(text)
         
-        # Step 1: Classify intent (async, supports LLM-based classification with conversation history)
-        intent, intent_confidence = await self.intent_classifier.classify(
-            text=text,
-            conversation_history=conversation_history,  # Pass conversation history for context-aware classification
-        )
+        # Step 1: Assess complexity (without intent - just based on query text)
+        # Simple heuristic: short queries are simple, long queries are complex
+        query_length = len(text.split())
+        if query_length <= 3:
+            complexity = ComplexityLevel.SIMPLE
+        elif query_length <= 10:
+            complexity = ComplexityLevel.MODERATE
+        else:
+            complexity = ComplexityLevel.COMPLEX
         
-        # Step 2: Assess complexity
-        complexity = self.complexity_assessor.assess(text, intent)
-        
-        # Step 3: Extract entities
+        # Step 2: Extract entities (for cache key generation only)
         entities = self.entity_extractor.extract(text)
         
-        # Step 4: Generate cache key
-        cache_key = self._build_cache_key(intent, entities, normalized_query)
+        # Step 3: Generate cache key (without intent)
+        cache_key = self._build_cache_key_no_intent(entities, normalized_query)
         
-        # Step 5: Check for rejection
-        if self._should_reject(intent, text):
-            return DistillationResult(
-                should_process=False,
-                route_type=RouteType.REJECT,
-                intent=intent,
-                complexity=complexity,
-                entities=entities,
-                rejection_reason=self._get_rejection_reason(intent),
-                rejection_code="DISTILL_REJECTED",
-                classification_confidence=intent_confidence,
-            )
-        
-        # Step 6: Check cache hit
+        # Step 4: Check cache hit
         if cache_lookup is not None:
             return DistillationResult(
                 should_process=False,
                 route_type=RouteType.CACHE,
-                intent=intent,
+                intent=Intent.UNCLEAR,  # Dummy intent for compatibility (not used)
                 complexity=complexity,
                 entities=entities,
                 cache_key=cache_key,
                 cache_hit=True,
-                cache_level=CacheLevel.EXACT,  # Will be updated by cache manager
+                cache_level=CacheLevel.EXACT,
                 cached_response=cache_lookup,
-                classification_confidence=intent_confidence,
+                classification_confidence=1.0,
                 estimated_cost_saved_usd=self._estimate_cost_saved(complexity),
             )
         
-        # Step 7: Check static response availability
-        # BUT: Skip static responses for GREETING and SMALL_TALK - use LLM for natural, conversational responses
-        if static_available and intent not in [Intent.GREETING, Intent.SMALL_TALK]:
-            return DistillationResult(
-                should_process=False,
-                route_type=RouteType.STATIC,
-                intent=intent,
-                complexity=complexity,
-                entities=entities,
-                cache_key=cache_key,
-                classification_confidence=intent_confidence,
-                estimated_cost_saved_usd=self._estimate_cost_saved(complexity),
-            )
-        
-        # Step 8: Check if forced to full LLM
-        if intent in self.config.force_full_llm_intents:
-            return DistillationResult(
-                should_process=True,
-                route_type=RouteType.FULL_LLM,
-                intent=intent,
-                complexity=complexity,
-                entities=entities,
-                suggested_model_tier="premium",
-                suggested_agent=self._suggest_agent(intent),
-                cache_key=cache_key,
-                classification_confidence=intent_confidence,
-            )
-        
-        # Step 8.5: Force GREETING and SMALL_TALK to use LLM (not static) for natural, conversational responses
-        if intent in [Intent.GREETING, Intent.SMALL_TALK]:
-            return DistillationResult(
-                should_process=True,
-                route_type=RouteType.LIGHT_LLM,  # Use fast LLM for greetings (natural, conversational)
-                intent=intent,
-                complexity=complexity,
-                entities=entities,
-                suggested_model_tier="economy",  # Fast, cost-effective model for simple greetings
-                suggested_agent="chat",  # Use chat agent for natural conversation
-                cache_key=cache_key,
-                classification_confidence=intent_confidence,
-            )
-        
-        # Step 9: Route based on complexity
-        model_tier = self._select_model_tier(intent, complexity)
-        
+        # Step 5: Route based on complexity only (NO intent-based routing)
+        # Everything goes to LLM for natural, conversational responses
         if complexity in [ComplexityLevel.TRIVIAL, ComplexityLevel.SIMPLE]:
             route_type = RouteType.LIGHT_LLM
+            model_tier = "economy"
         else:
             route_type = RouteType.FULL_LLM
+            model_tier = "standard"
         
         return DistillationResult(
             should_process=True,
             route_type=route_type,
-            intent=intent,
+            intent=Intent.UNCLEAR,  # Dummy intent for compatibility (not used)
             complexity=complexity,
             entities=entities,
             suggested_model_tier=model_tier,
-            suggested_agent=self._suggest_agent(intent),
+            suggested_agent="chat",  # Default to chat agent
             cache_key=cache_key,
-            classification_confidence=intent_confidence,
+            classification_confidence=1.0,  # No classification, so confidence is 1.0
         )
     
     def _should_reject(self, intent: Intent, text: str) -> bool:
-        """Check if request should be rejected."""
-        # Reject off-topic
-        if intent == Intent.OFF_TOPIC:
-            return True
-        
-        # Reject harmful/policy violations (basic patterns)
+        """Check if request should be rejected (NO INTENT-BASED - pattern-based only)."""
+        # Reject harmful/policy violations (basic patterns only - no intent classification)
         harmful_patterns = [
             r"(how to|teach me|explain).*(hack|exploit|attack)",
             r"(generate|create).*(illegal|fake|fraudulent)",
@@ -190,10 +136,7 @@ class DistillationRouter:
     
     def _get_rejection_reason(self, intent: Intent) -> str:
         """Get human-readable rejection reason."""
-        if intent == Intent.OFF_TOPIC:
-            return "I'm specialized in DeFi and crypto assistance. I can help you with swaps, staking, lending, and other DeFi operations. What would you like to do?"
-        
-        return "I cannot assist with that request."
+        return "I'm specialized in DeFi and crypto assistance. I can help you with swaps, staking, lending, and other DeFi operations. What would you like to do?"
     
     def _normalize_query(self, text: str) -> str:
         """Normalize query for caching."""
@@ -208,16 +151,14 @@ class DistillationRouter:
         
         return normalized
     
-    def _build_cache_key(
+    def _build_cache_key_no_intent(
         self,
-        intent: Intent,
         entities: ExtractedEntities,
         normalized_query: str,
     ) -> str:
-        """Generate cache key from distillation results."""
-        # Build key components
+        """Generate cache key without intent (intent-free routing)."""
+        # Build key components (no intent)
         components = [
-            intent.value,
             ",".join(sorted(entities.tokens)),
             ",".join(sorted(entities.protocols)),
             normalized_query,
@@ -227,26 +168,25 @@ class DistillationRouter:
         key_string = "|".join(components)
         hash_digest = hashlib.sha256(key_string.encode()).hexdigest()
         
-        return f"distill:v1:{hash_digest[:16]}"
+        return f"distill:v2:{hash_digest[:16]}"
+    
+    def _build_cache_key(
+        self,
+        intent: Intent,
+        entities: ExtractedEntities,
+        normalized_query: str,
+    ) -> str:
+        """Generate cache key from distillation results (legacy - not used)."""
+        # This method is kept for compatibility but not used
+        return self._build_cache_key_no_intent(entities, normalized_query)
     
     def _select_model_tier(
         self,
         intent: Intent,
         complexity: ComplexityLevel,
     ) -> str:
-        """Select appropriate model tier based on intent and complexity."""
-        # High-stakes intents always get premium
-        high_stakes = {
-            Intent.SWAP_REQUEST,
-            Intent.BORROW_REQUEST,
-            Intent.RISK_ASSESSMENT,
-            Intent.STRATEGY_ADVICE,
-        }
-        
-        if intent in high_stakes:
-            return "premium"
-        
-        # Complexity-based selection
+        """Select appropriate model tier based on complexity only (NO INTENT)."""
+        # Complexity-based selection only
         tier_map = {
             ComplexityLevel.TRIVIAL: "economy",
             ComplexityLevel.SIMPLE: "economy",
@@ -258,20 +198,9 @@ class DistillationRouter:
         return tier_map.get(complexity, "standard")
     
     def _suggest_agent(self, intent: Intent) -> str:
-        """Suggest appropriate agent for intent."""
-        # Map intents to agents
-        agent_map = {
-            Intent.SWAP_REQUEST: "trading",
-            Intent.STAKE_REQUEST: "staking",
-            Intent.LEND_REQUEST: "savings",
-            Intent.BORROW_REQUEST: "aave",
-            Intent.BRIDGE_REQUEST: "bridge",
-            Intent.PORTFOLIO_ANALYSIS: "portfolio",
-            Intent.RISK_ASSESSMENT: "risk",
-            Intent.YIELD_OPTIMIZATION: "earning",
-        }
-        
-        return agent_map.get(intent, "general")
+        """Suggest appropriate agent (default to chat - NO INTENT-BASED ROUTING)."""
+        # Always default to chat agent - Supervisor Coordinator will route correctly
+        return "chat"
     
     def _estimate_cost_saved(self, complexity: ComplexityLevel) -> Decimal:
         """Estimate cost saved by routing decision."""

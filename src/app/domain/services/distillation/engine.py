@@ -16,6 +16,7 @@ from app.domain.value_objects.distillation import (
     CacheLevel,
     DistillationResult,
     DistillationTelemetry,
+    Intent,
 )
 from app.infrastructure.distillation.cache_manager import CacheManager
 from app.infrastructure.distillation.static_responder import StaticResponder
@@ -81,35 +82,56 @@ class DistillationEngine:
         config = await self.config_repo.get_config()
         if not config.enabled:
             # Distillation disabled, pass through
+            from app.domain.value_objects.distillation import RouteType, ComplexityLevel, Intent, ExtractedEntities
             return DistillationResult(
                 should_process=True,
-                route_type="FULL_LLM",
-                intent="UNCLEAR",
-                complexity="MODERATE",
-                entities={},
+                route_type=RouteType.FULL_LLM,
+                intent=Intent.UNCLEAR,  # Dummy intent for compatibility
+                complexity=ComplexityLevel.MODERATE,
+                entities=ExtractedEntities(),
             )
         
-        # Step 1: Classify intent (with conversation history for context)
-        intent, intent_confidence = await self.intent_classifier.classify(
-            text=query,
-            conversation_history=conversation_history,
+        # ✨ NO INTENT CLASSIFICATION - Direct routing to LLM ✨
+        # We don't use intents - everything goes to LLM for natural responses
+        
+        from app.domain.value_objects.distillation import (
+            RouteType,
+            ComplexityLevel,
+            Intent,
+            ExtractedEntities,
         )
         
-        # Step 2: Assess complexity
-        complexity = self.complexity_assessor.assess(query, intent)
+        # Step 1: Assess complexity (without intent - just based on query text)
+        # Simple heuristic: short queries are simple, long queries are complex
+        query_length = len(query.split())
+        if query_length <= 3:
+            complexity = ComplexityLevel.SIMPLE
+        elif query_length <= 10:
+            complexity = ComplexityLevel.MODERATE
+        else:
+            complexity = ComplexityLevel.COMPLEX
         
-        # Step 3: Extract entities
+        # Step 2: Extract entities (for cache key generation only)
         entities = self.entity_extractor.extract(query)
         
-        # Step 4: Check cache (if enabled)
+        # Step 3: Check cache (if enabled)
         cache_hit_content = None
         cache_level = CacheLevel.NONE
+        cache_key = None
         
         if config.cache_enabled:
-            # Generate cache key
+            # Generate cache key (without intent)
             normalized = query.lower().strip()
             import hashlib
-            cache_key = f"distill:v1:{hashlib.sha256(normalized.encode()).hexdigest()[:16]}"
+            # Build key without intent
+            key_components = [
+                ",".join(sorted(entities.tokens)),
+                ",".join(sorted(entities.protocols)),
+                normalized,
+            ]
+            key_string = "|".join(key_components)
+            hash_digest = hashlib.sha256(key_string.encode()).hexdigest()
+            cache_key = f"distill:v2:{hash_digest[:16]}"
             
             # Try cache lookup
             cache_hit_content, cache_level = await self.cache_manager.get(
@@ -120,31 +142,53 @@ class DistillationEngine:
         else:
             cache_hit_content = None
             cache_level = CacheLevel.NONE
+            # Still generate cache key for result
+            normalized = query.lower().strip()
+            import hashlib
+            key_components = [
+                ",".join(sorted(entities.tokens)),
+                ",".join(sorted(entities.protocols)),
+                normalized,
+            ]
+            key_string = "|".join(key_components)
+            hash_digest = hashlib.sha256(key_string.encode()).hexdigest()
+            cache_key = f"distill:v2:{hash_digest[:16]}"
         
-        # Step 5: Check static response availability (if enabled)
-        static_available = False
-        if config.static_responses_enabled and not cache_hit_content:
-            static_available = await self.static_responder.check_available(
-                intent=intent,
+        # Step 4: Route decision - NO static responses, NO intent-based routing
+        # Everything goes to LLM for natural, conversational responses
+        
+        # If cache hit, return cached response
+        if cache_hit_content:
+            result = DistillationResult(
+                should_process=False,
+                route_type=RouteType.CACHE,
+                intent=Intent.UNCLEAR,  # Dummy intent for compatibility (not used)
+                complexity=complexity,
                 entities=entities,
+                cache_key=cache_key,
+                cache_hit=True,
+                cache_level=cache_level,
+                cached_response=cache_hit_content,
+                classification_confidence=1.0,
             )
-        
-        # Step 6: Route decision (with conversation history for context-aware routing)
-        result = await self.router.route(
-            text=query,
-            cache_lookup=cache_hit_content,
-            static_available=static_available,
-            conversation_history=conversation_history,  # Pass conversation history to router
-        )
-        
-        # Step 7: Generate static response if routed
-        if result.route_type == "STATIC":
-            static_response = await self.static_responder.generate(
-                intent=intent,
+        else:
+            # Route to LLM based on complexity only (no intent classification)
+            if complexity in [ComplexityLevel.TRIVIAL, ComplexityLevel.SIMPLE]:
+                route_type = RouteType.LIGHT_LLM
+            else:
+                route_type = RouteType.FULL_LLM
+            
+            result = DistillationResult(
+                should_process=True,
+                route_type=route_type,
+                intent=Intent.UNCLEAR,  # Dummy intent for compatibility (not used)
+                complexity=complexity,
                 entities=entities,
-                user_context=user_context,
+                suggested_model_tier="economy" if complexity in [ComplexityLevel.TRIVIAL, ComplexityLevel.SIMPLE] else "standard",
+                suggested_agent="chat",  # Default to chat agent
+                cache_key=cache_key,
+                classification_confidence=1.0,  # No classification, so confidence is 1.0
             )
-            result.static_response = static_response
         
         # Calculate latency
         end_time = time.time()

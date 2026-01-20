@@ -589,19 +589,37 @@ class SupervisorCoordinator:
         conversation_context: "ConversationContext",
         available_agents: list[AgentType],
     ) -> str:
-        """Build workflow planning prompt for LLM."""
+        """Build workflow planning prompt for LLM (NO INTENTS - pure LLM-based routing)."""
         agents_str = ", ".join([agent.value for agent in available_agents])
         
+        # Build conversation history context
+        context_section = ""
+        if conversation_context.conversation_history:
+            context_section = "\n\n**Conversation History (for context):**\n"
+            recent_history = conversation_context.conversation_history[-5:]  # Last 5 messages
+            for msg in recent_history:
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
+                if content:
+                    context_section += f"- {role}: {content[:200]}\n"  # Truncate long messages
+        
         return f"""
-You are a workflow supervisor coordinating multiple AI agents.
+You are a workflow supervisor coordinating multiple AI agents for Anvil, a DeFi platform.
 
-User Request:
+**User Request:**
 {message.value}
+{context_section}
 
-Available Agents:
+**Available Agents:**
 {agents_str}
 
-Create a workflow plan with multiple agent tasks.
+**Your Task:**
+Analyze the user's request and create a workflow plan that uses the appropriate agents to provide a natural, helpful response.
+
+**IMPORTANT: NO INTENT CLASSIFICATION**
+- Do NOT classify intents or categorize the query
+- Simply understand what the user wants and route to the right agents
+- Focus on providing natural, conversational responses using LLMs
 
 Respond with JSON:
 {{
