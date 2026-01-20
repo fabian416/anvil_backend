@@ -181,10 +181,22 @@ class ChatAgent:
         conversation_context: ConversationContext,
     ) -> list[dict]:
         """Build messages for OpenAI API."""
+        # Detect if this is a greeting or small talk
+        message_lower = message.value.lower().strip()
+        is_greeting = any([
+            message_lower in ["hi", "hello", "hey", "hola", "holi", "hey there"],
+            message_lower.startswith(("hi ", "hello ", "hey ", "hola ")),
+            "how are you" in message_lower,
+            "good morning" in message_lower or "good afternoon" in message_lower or "good evening" in message_lower,
+        ])
+        
+        # Use conversational prompt for greetings, standard prompt for others
+        system_prompt = self._get_greeting_prompt() if is_greeting else self._get_system_prompt()
+        
         messages = [
             {
                 "role": "system",
-                "content": self._get_system_prompt(),
+                "content": system_prompt,
             }
         ]
         
@@ -307,6 +319,18 @@ Create a single, well-structured response that combines all unique insights with
         cta = get_cta_message(language)
         
         return f"{message}\n\n👉 {cta}: /signup"
+    
+    def _get_greeting_prompt(self) -> str:
+        """Get conversational prompt for greetings."""
+        return """You are a friendly DeFi assistant for Anvil. 
+
+When users greet you:
+- Respond naturally and conversationally (e.g., "Hi! How can I help you today?" or "Hello! What would you like to know about DeFi?")
+- Keep it brief and warm - don't give a long platform description
+- Wait for the user to ask a specific question before providing detailed information
+- Be personable but professional
+
+If the user asks a follow-up question, then provide detailed, helpful information about DeFi, crypto, or Anvil's features."""
     
     def _get_system_prompt(self) -> str:
         """Get system prompt for chat agent."""
