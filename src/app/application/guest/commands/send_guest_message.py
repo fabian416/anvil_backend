@@ -200,9 +200,74 @@ class SendGuestMessage:
         # 4. Get conversation history for context (conversational memory)
         context = await self._build_conversation_context(conversation.id)
 
-        # ✨ FAST PATH CHECK (BEFORE CONTINUATION) ✨
-        # Simple informational queries should bypass continuation flows and workflow planning
-        # Check this FIRST to avoid continuation flow interference
+        # ============================================================
+        # ✨ LLM-BASED ROUTING (NO INTENTS, NO FAST-PATHS) ✨
+        # ============================================================
+        # The CEO directive: NO intent classification, NO regex patterns.
+        # Send EVERYTHING to SupervisorCoordinator which uses LLM to:
+        # 1. Understand the user's request semantically
+        # 2. Determine what agents/actions are needed
+        # 3. Execute the workflow
+        # 
+        # The ONLY pattern check is for harmful content (security).
+        # ============================================================
+        
+        if self._supervisor_coordinator and self._agent_orchestrator:
+            # Security check (harmful content only)
+            content_lower = content.lower()
+            harmful_patterns = [
+                "ignore previous instructions",
+                "ignore all instructions", 
+                "disregard your instructions",
+                "forget your training",
+                "jailbreak",
+                "dan mode",
+                "developer mode",
+                "bypass your filters",
+            ]
+            
+            is_harmful = any(pattern in content_lower for pattern in harmful_patterns)
+            
+            if not is_harmful:
+                try:
+                    logger.info(
+                        "🎯 LLM-based routing: ALL queries go to SupervisorCoordinator",
+                        extra={
+                            "ip_address": ip_address,
+                            "conversation_id": str(conversation.id),
+                            "content_preview": content[:100],
+                        }
+                    )
+                    
+                    # Process with SupervisorCoordinator (LLM-based action detection)
+                    result = await self._process_with_llm_supervisor(
+                        content=content,
+                        language=language,
+                        conversation=conversation,
+                        guest=guest,
+                        context=context,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        referer=referer,
+                    )
+                    
+                    if result is not None:
+                        return result
+                        
+                except Exception as e:
+                    logger.warning(
+                        f"LLM-based routing failed: {e}, falling back to legacy flow",
+                        exc_info=True,
+                    )
+                    # Fall through to legacy flow if LLM routing fails
+        
+        # ============================================================
+        # LEGACY FLOW (FALLBACK ONLY)
+        # ============================================================
+        # This code below is kept for backward compatibility but should
+        # rarely execute now that LLM routing is the primary path.
+        # ============================================================
+        
         content_lower = content.lower().strip()
         simple_info_patterns = [
             content_lower.startswith("what is "),
@@ -1622,6 +1687,191 @@ class SendGuestMessage:
             return True, 0
 
         return False, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
+
+    # ========================================
+    # LLM-Based Routing (Primary Path)
+    # ========================================
+
+    async def _process_with_llm_supervisor(
+        self,
+        content: str,
+        language: str,
+        conversation: GuestConversation,
+        guest: GuestUser,
+        context: str,
+        ip_address: str,
+        user_agent: str | None = None,
+        referer: str | None = None,
+    ) -> GuestMessageResult | None:
+        """
+        Process message with LLM-based SupervisorCoordinator.
+        
+        NO INTENTS. NO REGEX PATTERNS.
+        
+        The Supervisor uses LLM to:
+        1. Understand the user's request semantically
+        2. Determine what agents/actions are needed  
+        3. Create and execute workflow plan
+        
+        Returns:
+            GuestMessageResult if successful, None to fall back to legacy flow
+        """
+        from app.domain.value_objects.conversation_id import ConversationId
+        from app.domain.value_objects.message_content import MessageContent
+        from app.domain.value_objects.agent_squad.conversation_context import (
+            ConversationContext as AgentSquadContext,
+        )
+        from app.domain.enums.agent_type import AgentType
+        import time as time_module
+        
+        start_time = time_module.time()
+        
+        # Build conversation context for agents
+        messages = await self._guest_repo.get_messages(conversation.id, limit=10)
+        conversation_history = [
+            {
+                "role": msg.role.value,
+                "content": msg.content,
+                "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+            }
+            for msg in messages
+        ]
+        conversation_history.append({
+            "role": "user",
+            "content": content,
+            "timestamp": datetime.now(UTC).isoformat(),
+        })
+        
+        agent_squad_context = AgentSquadContext(
+            conversation_history=conversation_history,
+            user_metadata={"language": language, "is_guest": True},
+            session_metadata={"ip_address": ip_address},
+        )
+        
+        # Available agents for guest users
+        available_agents = [
+            AgentType.CHAT,
+            AgentType.HUNTER_AI,
+            AgentType.KNOWLEDGE,
+            AgentType.DEFI_YIELD,
+            AgentType.RISK_ANALYZER,
+            AgentType.GAS_OPTIMIZER,
+            AgentType.GUEST_AUTH,  # For restricted features
+        ]
+        
+        # === LLM-BASED WORKFLOW PLANNING ===
+        # The Supervisor uses LLM to understand the query and create workflow
+        workflow_plan = await self._supervisor_coordinator.create_workflow_plan(
+            conversation_id=ConversationId(conversation.id),
+            message=MessageContent(content),
+            conversation_context=agent_squad_context,
+            available_agents=available_agents,
+        )
+        
+        logger.info(
+            f"📋 LLM Workflow: {len(workflow_plan.tasks)} tasks planned",
+            extra={
+                "tasks": [t.agent_type.value for t in workflow_plan.tasks],
+                "conversation_id": str(conversation.id),
+            }
+        )
+        
+        # === EXECUTE WORKFLOW ===
+        response_content, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
+            conversation_id=ConversationId(conversation.id),
+            workflow_plan=workflow_plan,
+            conversation_context=agent_squad_context,
+        )
+        
+        # Calculate total time
+        total_time_ms = int((time_module.time() - start_time) * 1000)
+        
+        # Convert sources to serializable format
+        sources = []
+        if sources_raw:
+            for s in sources_raw:
+                if hasattr(s, "to_dict"):
+                    sources.append(s.to_dict())
+                elif isinstance(s, dict):
+                    sources.append(s)
+                else:
+                    sources.append(str(s))
+        
+        # Create user message
+        user_message = GuestMessage.create_user_message(
+            conversation_id=conversation.id,
+            content=content,
+            language=language,
+        )
+        await self._guest_repo.create_message(user_message)
+        
+        # Create agent message
+        agent_message = GuestMessage.create_assistant_message(
+            conversation_id=conversation.id,
+            content=response_content,
+            intent="LLM_WORKFLOW",  # No specific intent - LLM decided
+            handler="supervisor_llm",
+            confidence=1.0,  # LLM-based, no classification confidence
+            language=language,
+            is_restricted_action=False,
+        )
+        await self._guest_repo.create_message(agent_message)
+        
+        # Update counters
+        guest.increment_messages()
+        conversation.increment_messages()
+        await self._guest_repo.update_guest(guest)
+        await self._guest_repo.update_conversation(conversation)
+        
+        # Get messages remaining
+        messages_remaining = await self._get_messages_remaining(guest)
+        
+        # Build enrichment
+        enrichment = {
+            "agent_squad": True,
+            "workflow_type": "llm_planned",
+            "task_count": len(workflow_plan.tasks),
+            "agents_used": [t.agent_type.value for t in workflow_plan.tasks],
+            "total_time_ms": total_time_ms,
+            "disclaimer": get_demo_disclaimer(language),
+        }
+        
+        if agent_timings:
+            enrichment["agent_timings"] = agent_timings
+        
+        return GuestMessageResult(
+            conversation_id=conversation.id,
+            message_id=agent_message.id,
+            user_message={
+                "id": str(user_message.id),
+                "role": "user",
+                "content": content,
+                "created_at": user_message.created_at.isoformat(),
+            },
+            agent_message={
+                "id": str(agent_message.id),
+                "role": "assistant",
+                "content": response_content,
+                "created_at": agent_message.created_at.isoformat(),
+                "sources": sources,
+            },
+            routing={
+                "intent": "LLM_WORKFLOW",
+                "confidence": 1.0,
+                "handler": "supervisor_llm",
+                "language": language,
+                "is_demo_mode": False,
+                "is_live_data": True,
+                "is_llm_based": True,
+            },
+            enrichment=enrichment,
+            sources=sources if sources else None,
+            registration_required=None,
+            guest_info={
+                "messages_remaining": messages_remaining,
+                "session_active": True,
+            },
+        )
 
     # ========================================
     # Conversational Memory
