@@ -407,62 +407,90 @@ class SupervisorCoordinator:
                 task.error = str(e)
                 raise
         
-        # ✨ MULTI-AGENT WORKFLOW ✨
-        # Execute tasks in order with dependencies
+        # ✨ MULTI-AGENT WORKFLOW WITH PARALLEL EXECUTION ✨
+        # Execute independent tasks in parallel for better performance
         import logging
+        import asyncio
+        import time
         logger = logging.getLogger(__name__)
         
-        # Execute all tasks that are ready (dependencies satisfied)
-        while True:
-            next_task = workflow_plan.get_next_task()
-            if next_task is None:
-                # No more tasks ready to execute
-                break
-            
-            # Execute task
-            next_task.status = TaskStatus.IN_PROGRESS
-            logger.info(f"🔄 Executing task: {next_task.agent_type.value} - {next_task.task_description[:50]}...")
+        from app.domain.value_objects.message_content import MessageContent
+        
+        async def execute_single_task(task: AgentTask) -> None:
+            """Execute a single task and update its status."""
+            task.status = TaskStatus.IN_PROGRESS
+            logger.info(f"🔄 Executing task: {task.agent_type.value} - {task.task_description[:50]}...")
             
             try:
-                import time
                 start_time = time.time()
                 
-                # Use the original user message, not task_description
-                # Task description is for planning, but agents need the actual user message
-                from app.domain.value_objects.message_content import MessageContent
-                
                 # For CHAT agent aggregation tasks, pass aggregated content from other agents
-                if next_task.agent_type.value == "chat" and "aggregate" in next_task.task_description.lower():
+                if task.agent_type.value == "chat" and "aggregate" in task.task_description.lower():
                     # Build aggregated message from previous agent responses
-                    aggregated_content = self._build_aggregation_message(workflow_plan, next_task)
+                    aggregated_content = self._build_aggregation_message(workflow_plan, task)
                     message_content = MessageContent(aggregated_content)
                 else:
                     # Use the original user message for other agents
-                    original_message = conversation_context.conversation_history[-1].get("content", next_task.task_description) if conversation_context.conversation_history else next_task.task_description
+                    original_message = conversation_context.conversation_history[-1].get("content", task.task_description) if conversation_context.conversation_history else task.task_description
                     message_content = MessageContent(original_message)
                 
                 result = await self._agent_executor.execute_agent(
                     conversation_id=conversation_id,
-                    agent_type=next_task.agent_type,
+                    agent_type=task.agent_type,
                     message=message_content,
                     conversation_context=conversation_context,
                 )
                 
                 # Calculate execution time
                 execution_time_ms = int((time.time() - start_time) * 1000)
-                next_task.execution_time_ms = execution_time_ms
+                task.execution_time_ms = execution_time_ms
                 
                 # Store full AgentResponse in task result
-                next_task.result = result
-                next_task.status = TaskStatus.COMPLETED
-                logger.info(f"✅ Task completed: {next_task.agent_type.value} ({execution_time_ms}ms)")
+                task.result = result
+                task.status = TaskStatus.COMPLETED
+                logger.info(f"✅ Task completed: {task.agent_type.value} ({execution_time_ms}ms)")
                 
             except Exception as e:
-                next_task.error = str(e)
-                next_task.status = TaskStatus.FAILED
-                logger.error(f"❌ Task failed: {next_task.agent_type.value} - {str(e)}", exc_info=True)
-                # Continue with other tasks even if one fails
-                continue
+                task.error = str(e)
+                task.status = TaskStatus.FAILED
+                logger.error(f"❌ Task failed: {task.agent_type.value} - {str(e)}", exc_info=True)
+        
+        def get_ready_tasks() -> list[AgentTask]:
+            """Get all tasks that are ready to execute (dependencies satisfied)."""
+            ready = []
+            for task in workflow_plan.tasks:
+                if task.status != TaskStatus.PENDING:
+                    continue
+                
+                # Check dependencies
+                dependencies_satisfied = all(
+                    workflow_plan.tasks[dep_idx].status == TaskStatus.COMPLETED
+                    for dep_idx in task.depends_on
+                )
+                
+                if dependencies_satisfied:
+                    ready.append(task)
+            return ready
+        
+        # Execute tasks in waves - parallel execution of independent tasks
+        max_iterations = len(workflow_plan.tasks) + 1  # Safety limit
+        iteration = 0
+        
+        while iteration < max_iterations:
+            iteration += 1
+            ready_tasks = get_ready_tasks()
+            
+            if not ready_tasks:
+                # No more tasks ready to execute
+                break
+            
+            if len(ready_tasks) == 1:
+                # Single task - execute directly
+                await execute_single_task(ready_tasks[0])
+            else:
+                # Multiple tasks ready - execute in parallel
+                logger.info(f"⚡ Executing {len(ready_tasks)} tasks in parallel: {[t.agent_type.value for t in ready_tasks]}")
+                await asyncio.gather(*[execute_single_task(task) for task in ready_tasks])
         
         # Aggregate results
         final_response = await self._aggregate_results(workflow_plan)

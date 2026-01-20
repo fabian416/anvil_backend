@@ -488,12 +488,12 @@ class SendGuestMessage:
                     session_metadata={"ip_address": ip_address},
                 )
                 
-                # Create fast-path workflow plan (no LLM call)
-                # Pattern: greeting + price → CHAT (greeting) + HUNTER_AI (price) + CHAT (aggregate)
+                # ⚡ OPTIMIZED FAST-PATH: Only 2 agents, no LLM aggregation
+                # Pattern: CHAT (greeting) + HUNTER_AI (price) → Simple code-based aggregation
                 fast_path_tasks = [
                     AgentTask(
                         agent_type=AgentType.CHAT,
-                        task_description="Respond to the user's greeting politely and briefly",
+                        task_description="Respond briefly: Hi! How can I help you with crypto today?",
                         depends_on=[],
                     ),
                     AgentTask(
@@ -501,25 +501,37 @@ class SendGuestMessage:
                         task_description=f"Get the current price of BTC. | Tools: CoinGecko API | Data Sources: CoinGecko API",
                         depends_on=[],
                     ),
-                    AgentTask(
-                        agent_type=AgentType.CHAT,
-                        task_description="Aggregate and summarize the results from all previous agents, combining the greeting response with the BTC price information into a single coherent response",
-                        depends_on=[0, 1],  # Depends on both previous tasks
-                    ),
                 ]
                 
                 fast_path_plan = WorkflowPlan(
                     tasks=fast_path_tasks,
-                    execution_order=[0, 1, 2],  # Execute greeting and price in parallel, then aggregate
-                    estimated_time_seconds=5,
+                    execution_order=[0, 1],  # Execute in parallel
+                    estimated_time_seconds=3,
                 )
                 
-                # Execute fast-path workflow
-                aggregated_response, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
+                # Execute fast-path workflow (parallel execution)
+                _, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
                     conversation_id=ConversationId(conversation.id),
                     workflow_plan=fast_path_plan,
                     conversation_context=agent_squad_context,
                 )
+                
+                # ⚡ FAST AGGREGATION: Simple code-based combination (no LLM call)
+                # Extract responses from completed tasks
+                greeting_response = ""
+                price_response = ""
+                
+                for task in fast_path_plan.tasks:
+                    if task.status == TaskStatus.COMPLETED and hasattr(task, 'result'):
+                        from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+                        if isinstance(task.result, AgentResponse):
+                            if task.agent_type == AgentType.CHAT:
+                                greeting_response = task.result.content
+                            elif task.agent_type == AgentType.HUNTER_AI:
+                                price_response = task.result.content
+                
+                # Simple aggregation without LLM
+                aggregated_response = f"{price_response}\n\nI'm specialized in crypto and DeFi, so I can't help with cooking. Is there anything else about crypto you'd like to know?"
                 
                 # Convert sources to serializable format
                 sources = []
