@@ -1,43 +1,46 @@
 """
 Agent Squad agent implementations.
 
-Core User-Facing Agents (10):
-- ChatAgentOpenAI: General conversation
-- HunterAIAgentOpenAI: Market sentiment & predictions
+Core User-Facing Agents (11):
+- ChatAgent: General conversation
+- GuestAuthAgent: Authentication requirements for restricted features
+- HunterAIAgent: Market sentiment & predictions
 - ResearchAgentPerplexity: Deep protocol analysis
 - ExecutionAgentPrivy: Transaction execution
-- RiskAnalyzerAgentOpenAI: Risk assessment
-- PortfolioAgentOpenAI: Portfolio optimization
-- TaxOptimizerAgentOpenAI: Tax strategies
-- DefiYieldAgentOpenAI: Yield farming
+- RiskAnalyzerAgent: Risk assessment
+- PortfolioAgent: Portfolio optimization
+- TaxOptimizerAgent: Tax strategies
+- DefiYieldAgent: Yield farming
 - SecurityAuditorAgentSlither: Contract security
-- GasOptimizerAgentOpenAI: Gas optimization
+- GasOptimizerAgent: Gas optimization
 
 All implement AgentGateway interface.
 """
 
-from .chat_agent_openai import ChatAgentOpenAI
-from .hunter_ai_agent_openai import HunterAIAgentOpenAI
+from .chat_agent import ChatAgent
+from .guest_auth_agent import GuestAuthAgent
+from .knowledge_agent import KnowledgeAgent
+from .hunter_ai_agent import HunterAIAgent
 from .research_agent_perplexity import ResearchAgentPerplexity
 from .execution_agent_privy import ExecutionAgentPrivy
-from .risk_analyzer_agent_openai import RiskAnalyzerAgentOpenAI
-from .portfolio_agent_openai import PortfolioAgentOpenAI
-from .tax_optimizer_agent_openai import TaxOptimizerAgentOpenAI
-from .defi_yield_agent_openai import DefiYieldAgentOpenAI
+from .risk_analyzer_agent import RiskAnalyzerAgent
+from .portfolio_agent import PortfolioAgent
+from .tax_optimizer_agent import TaxOptimizerAgent
+from .defi_yield_agent import DefiYieldAgent
 from .security_auditor_agent_slither import SecurityAuditorAgentSlither
-from .gas_optimizer_agent_openai import GasOptimizerAgentOpenAI
-from .guest_auth_agent_openai import GuestAuthAgentOpenAI
+from .gas_optimizer_agent import GasOptimizerAgent
 
 __all__ = [
-    "ChatAgentOpenAI",
-    "HunterAIAgentOpenAI",
+    "ChatAgent",
+    "GuestAuthAgent",
+    "KnowledgeAgent",
+    "HunterAIAgent",
     "ResearchAgentPerplexity",
     "ExecutionAgentPrivy",
-    "RiskAnalyzerAgentOpenAI",
-    "PortfolioAgentOpenAI",
-    "TaxOptimizerAgentOpenAI",
-    "DefiYieldAgentOpenAI",
+    "RiskAnalyzerAgent",
+    "PortfolioAgent",
+    "TaxOptimizerAgent",
+    "DefiYieldAgent",
     "SecurityAuditorAgentSlither",
-    "GasOptimizerAgentOpenAI",
-    "GuestAuthAgentOpenAI",
+    "GasOptimizerAgent",
 ]

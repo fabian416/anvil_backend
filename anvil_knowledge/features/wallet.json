@@ -1,0 +1,227 @@
+{
+  "feature_name": "Wallet Management",
+  "tagline": "Secure multi-chain wallet management and operations",
+  "description": "Anvil's Wallet Management provides secure wallet creation, synchronization, and operations across multiple blockchain networks. Manage your wallets, export keys securely, and track swap transactions all in one place.",
+  
+  "core_capabilities": [
+    {
+      "name": "Wallet Synchronization",
+      "description": "Sync wallets from frontend and manage multiple wallets per user",
+      "endpoints": [
+        "GET /api/v1/wallet/me",
+        "POST /api/v1/wallet/sync"
+      ],
+      "code_location": "src/app/presentation/http/controllers/wallet/my_wallets.py",
+      "features": [
+        "Multi-wallet support per user",
+        "Frontend wallet synchronization",
+        "Wallet address management",
+        "Default chain configuration",
+        "Wallet metadata storage"
+      ]
+    },
+    {
+      "name": "Secure Wallet Export",
+      "description": "Export wallet private keys with HPKE encryption for secure key management",
+      "endpoints": [
+        "POST /api/v1/wallet/export"
+      ],
+      "code_location": "src/app/presentation/http/controllers/wallet/export_wallet.py",
+      "features": [
+        "HPKE-encrypted private key export",
+        "Secure key transmission",
+        "User authentication required",
+        "Wallet ownership verification"
+      ]
+    },
+    {
+      "name": "Swap Transaction Tracking",
+      "description": "Save and track completed swap transactions for portfolio history",
+      "endpoints": [
+        "POST /api/v1/wallet/swaps/complete"
+      ],
+      "code_location": "src/app/presentation/http/controllers/wallet/complete_swap.py",
+      "features": [
+        "Swap transaction recording",
+        "Transaction hash storage",
+        "Swap details (from/to tokens, amounts)",
+        "Timestamp tracking",
+        "Integration with portfolio history"
+      ]
+    }
+  ],
+  
+  "how_it_works": "Wallet Management works by:\n1. Users connect wallets through frontend integration\n2. Wallets are synchronized to backend via POST /api/v1/wallet/sync\n3. Wallet addresses and metadata are stored securely\n4. Users can export private keys with HPKE encryption when needed\n5. Swap transactions are automatically tracked and saved\n6. Wallet data integrates with portfolio and transaction systems",
+  
+  "supported_chains": [
+    "Ethereum",
+    "Base",
+    "Arbitrum",
+    "Polygon",
+    "Optimism",
+    "Bitcoin (address format detection)"
+  ],
+  
+  "api_endpoints": [
+    {
+      "path": "/api/v1/wallet/me",
+      "method": "GET",
+      "description": "Get all wallets for the current authenticated user",
+      "auth_required": true,
+      "response": {
+        "wallets": "Array of user wallets with address, chain, and metadata"
+      }
+    },
+    {
+      "path": "/api/v1/wallet/sync",
+      "method": "POST",
+      "description": "Sync wallets from frontend to backend",
+      "auth_required": true,
+      "request": {
+        "wallets": "Array of wallet objects to sync"
+      },
+      "response": {
+        "wallets": "Synced wallets with updated metadata"
+      }
+    },
+    {
+      "path": "/api/v1/wallet/export",
+      "method": "POST",
+      "description": "Export wallet private key with HPKE encryption",
+      "auth_required": true,
+      "request": {
+        "wallet_id": "UUID of wallet to export",
+        "encryption_key": "HPKE encryption key"
+      },
+      "response": {
+        "wallet_id": "Wallet UUID",
+        "address": "Wallet address",
+        "encrypted_private_key": "HPKE-encrypted private key"
+      },
+      "security_note": "Private keys are encrypted using HPKE (Hybrid Public Key Encryption) before transmission"
+    },
+    {
+      "path": "/api/v1/wallet/swaps/complete",
+      "method": "POST",
+      "description": "Save completed swap transaction",
+      "auth_required": true,
+      "request": {
+        "transaction_hash": "On-chain transaction hash",
+        "from_token": "Source token symbol",
+        "to_token": "Destination token symbol",
+        "from_amount": "Amount swapped from",
+        "to_amount": "Amount received",
+        "chain": "Blockchain where swap occurred"
+      },
+      "response": {
+        "transaction_id": "Saved transaction ID",
+        "status": "Transaction status"
+      }
+    }
+  ],
+  
+  "features": [
+    "Multi-wallet support per user",
+    "Frontend wallet synchronization",
+    "HPKE-encrypted private key export",
+    "Secure wallet address storage",
+    "Default chain configuration",
+    "Swap transaction tracking",
+    "Bitcoin address format detection",
+    "EVM wallet filtering",
+    "Wallet metadata management"
+  ],
+  
+  "competitive_advantages": [
+    "HPKE encryption for secure key export (industry-leading security)",
+    "Multi-wallet management in single interface",
+    "Automatic swap transaction tracking",
+    "Bitcoin address detection and filtering",
+    "Seamless frontend-backend synchronization",
+    "Integration with portfolio and transaction systems"
+  ],
+  
+  "getting_started": {
+    "for_users": {
+      "quick_start": "To get started with Wallet Management:\n1. Connect your wallet through the Anvil frontend\n2. Wallets are automatically synchronized to your account\n3. View your wallets: GET /api/v1/wallet/me\n4. Export private keys securely when needed: POST /api/v1/wallet/export\n5. Swap transactions are automatically tracked",
+      "example_commands": [
+        "Show my wallets",
+        "List my wallets",
+        "Export my wallet",
+        "Sync my wallets"
+      ],
+      "use_cases": [
+        "Manage multiple wallets across different chains",
+        "Securely export private keys when needed",
+        "Track swap transaction history",
+        "Organize wallets by purpose or chain"
+      ]
+    },
+    "for_investors": {
+      "value_proposition": "Wallet Management provides enterprise-grade security with HPKE encryption, enabling secure key management while maintaining user control.",
+      "market_position": "One of the few platforms offering HPKE-encrypted key export with multi-wallet management and automatic transaction tracking.",
+      "competitive_advantages": [
+        "HPKE encryption is more secure than traditional methods",
+        "Multi-wallet support reduces need for multiple tools",
+        "Automatic transaction tracking provides audit trail",
+        "Bitcoin address detection enables cross-chain support"
+      ]
+    }
+  },
+  
+  "common_questions": [
+    {
+      "question": "How do I connect my wallet?",
+      "answer": "Connect your wallet through the Anvil frontend. Wallets are automatically synchronized to your account via POST /api/v1/wallet/sync. You can then view all your wallets using GET /api/v1/wallet/me."
+    },
+    {
+      "question": "Is it safe to export my private key?",
+      "answer": "Yes! Private keys are exported using HPKE (Hybrid Public Key Encryption), which provides industry-leading security. The key is encrypted before transmission and can only be decrypted with your encryption key."
+    },
+    {
+      "question": "Can I have multiple wallets?",
+      "answer": "Yes! Anvil supports multiple wallets per user. Each wallet can be configured with a default chain and metadata. Use GET /api/v1/wallet/me to see all your wallets."
+    },
+    {
+      "question": "How are swap transactions tracked?",
+      "answer": "When you complete a swap through Anvil, the transaction is automatically saved via POST /api/v1/wallet/swaps/complete. This creates a record with transaction hash, tokens swapped, amounts, and timestamp for portfolio history."
+    },
+    {
+      "question": "What chains are supported?",
+      "answer": "Wallet Management supports Ethereum, Base, Arbitrum, Polygon, Optimism, and Bitcoin (address format detection). EVM wallets are used for portfolio tracking, while Bitcoin addresses are detected and filtered appropriately."
+    }
+  ],
+  
+  "technical_details": {
+    "code_modules": [
+      "src/app/presentation/http/controllers/wallet/router.py",
+      "src/app/presentation/http/controllers/wallet/my_wallets.py",
+      "src/app/presentation/http/controllers/wallet/export_wallet.py",
+      "src/app/presentation/http/controllers/wallet/complete_swap.py"
+    ],
+    "dependencies": [
+      "PostgreSQL (wallet storage)",
+      "HPKE library (encryption)",
+      "Privy (wallet integration)"
+    ],
+    "data_sources": [
+      "Frontend wallet synchronization",
+      "On-chain transaction data",
+      "User wallet metadata"
+    ],
+    "security": {
+      "encryption": "HPKE (Hybrid Public Key Encryption)",
+      "authentication": "JWT bearer tokens",
+      "authorization": "User ownership verification",
+      "key_storage": "Encrypted keys never stored in plaintext"
+    }
+  },
+  
+  "example_use_cases": [
+    "Managing multiple wallets for different purposes",
+    "Securely exporting keys for backup or migration",
+    "Tracking swap transaction history",
+    "Organizing wallets by chain or purpose",
+    "Integrating wallet data with portfolio tracking"
+  ]
+}

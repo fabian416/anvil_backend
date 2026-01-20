@@ -33,6 +33,14 @@
       "supported_chains": ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
       "typical_gas": "Low (gasless for some routes)",
       "mcp_server": "mcp.oneinch"
+    },
+    {
+      "name": "LiFi",
+      "description": "Cross-chain bridge and swap aggregator for seamless multi-chain swaps",
+      "supported_chains": ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Base", "Avalanche", "BSC"],
+      "typical_gas": "Varies by chain",
+      "mcp_server": "mcp.lifi",
+      "unique_features": ["Cross-chain swaps", "Bridge aggregation", "Multi-chain routing"]
     }
   ],
 

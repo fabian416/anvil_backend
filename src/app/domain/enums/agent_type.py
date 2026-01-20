@@ -37,9 +37,10 @@ class AgentType(Enum):
     - DAO_GOVERNANCE: Voting, proposals, delegation
     """
     
-    # Core User-Facing Agents (11)
+    # Core User-Facing Agents (12)
     CHAT = "chat"
     GUEST_AUTH = "guest_auth"
+    KNOWLEDGE = "knowledge"  # Knowledge Anvil - Educational queries and Anvil knowledge
     HUNTER_AI = "hunter_ai"
     RESEARCH = "research"
     EXECUTION = "execution"
@@ -86,6 +87,7 @@ class AgentType(Enum):
         return [
             cls.CHAT,
             cls.GUEST_AUTH,
+            cls.KNOWLEDGE,
             cls.HUNTER_AI,
             cls.RESEARCH,
             cls.EXECUTION,

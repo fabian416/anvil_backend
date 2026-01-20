@@ -1,5 +1,5 @@
 """
-Tax Optimizer Agent OpenAI - Tax-loss harvesting & reporting.
+Tax Optimizer Agent - Tax-loss harvesting & reporting.
 """
 
 import time
@@ -12,9 +12,9 @@ from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentRespon
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 
-class TaxOptimizerAgentOpenAI:
+class TaxOptimizerAgent:
     """
-    Tax Optimizer Agent OpenAI implementation.
+    Tax Optimizer Agent implementation.
     
     Implements: AgentGateway
     
@@ -28,7 +28,7 @@ class TaxOptimizerAgentOpenAI:
     - Tax reporting (Form 8949, Schedule D)
     - FIFO/LIFO/HIFO cost basis selection
     
-    Model: gpt-4o (complex tax reasoning)
+    Model: gemini-2.0-flash (Vertex AI, complex tax reasoning)
     Temperature: 0.2 (factual, precise)
     """
     
@@ -106,7 +106,7 @@ class TaxOptimizerAgentOpenAI:
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
-            tools_used=["openai_api"],  # TODO: Add tax calculation tools
+            tools_used=["llm_gateway"],  # TODO: Add tax calculation tools
             sources=sources,
             metadata={
                 "tokens_used": response.get("tokens_used"),

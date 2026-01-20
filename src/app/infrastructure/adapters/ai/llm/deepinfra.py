@@ -2,8 +2,20 @@ import ssl
 import time
 import aiohttp
 import orjson
+import logging
 from typing import List, Dict, Any, Tuple
 from app.infrastructure.adapters.ai.llm.strategy import LLMStrategy
+
+logger = logging.getLogger(__name__)
+
+# Vertex AI to DeepInfra model mapping
+VERTEX_TO_DEEPINFRA_MODEL_MAP = {
+    "gemini-2.0-flash": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    "gemini-2.0-flash-exp": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    "gemini-1.5-flash": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    "gemini-1.5-pro": "meta-llama/Meta-Llama-3.1-405B-Instruct",
+    "gemini-2.0-pro": "meta-llama/Meta-Llama-3.1-405B-Instruct",
+}
 
 class DeepInfraStrategy(LLMStrategy):
     """
@@ -13,12 +25,38 @@ class DeepInfraStrategy(LLMStrategy):
         self.api_key = api_key
         self.base_url = "https://api.deepinfra.com/v1/openai"
 
+    def _resolve_model(self, model_name: str) -> str:
+        """
+        Resolve model name to DeepInfra model.
+        
+        Maps Vertex AI (Gemini) models to DeepInfra (Llama) equivalents.
+        """
+        # If it's already a DeepInfra model, return as-is
+        if model_name.startswith("meta-llama/"):
+            return model_name
+        
+        # If it's a Vertex AI model, map to DeepInfra equivalent
+        if model_name in VERTEX_TO_DEEPINFRA_MODEL_MAP:
+            mapped = VERTEX_TO_DEEPINFRA_MODEL_MAP[model_name]
+            logger.info(f"🔄 DeepInfra: Mapping '{model_name}' → '{mapped}'")
+            return mapped
+        
+        # Unknown model - use default DeepInfra model
+        default_model = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+        logger.warning(
+            f"⚠️ DeepInfra: Unknown model '{model_name}', using default: {default_model}"
+        )
+        return default_model
+
     async def generate(
         self, 
         model_name: str, 
         messages: List[Dict[str, str]], 
         **kwargs
     ) -> Tuple[str, Dict[str, Any]]:
+        
+        # Resolve model name (map Vertex AI models to DeepInfra)
+        resolved_model = self._resolve_model(model_name)
         
         start_time = time.time()
         
@@ -28,7 +66,7 @@ class DeepInfraStrategy(LLMStrategy):
         }
         
         payload = {
-            "model": model_name,
+            "model": resolved_model,
             "messages": messages,
             "temperature": kwargs.get("temperature", 0.7),
             "max_tokens": kwargs.get("max_tokens", 1024),
@@ -70,7 +108,8 @@ class DeepInfraStrategy(LLMStrategy):
         
         metadata = {
             "provider": "deepinfra",
-            "model": model_name,
+            "model": resolved_model,  # Use resolved model (may be different from input)
+            "original_model": model_name,  # Keep original for reference
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
             "latency_ms": latency_ms,

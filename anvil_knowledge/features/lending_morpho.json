@@ -1,0 +1,319 @@
+{
+  "feature_name": "Lending (Morpho)",
+  "tagline": "Supply assets to Morpho vaults and earn yield",
+  "description": "Anvil's Lending feature enables users to supply assets to Morpho MetaMorpho vaults and earn competitive APY. Access real-time vault data, compare yields, and manage lending positions across Ethereum and Base networks. **IMPORTANT: Anvil supports LENDING (supply assets to earn yield) only, NOT borrowing.**",
+  
+  "core_capabilities": [
+    {
+      "name": "Vault Discovery & Analysis",
+      "description": "Discover and analyze MetaMorpho vaults with APY, risk tier, and TVL data",
+      "endpoints": [
+        "GET /api/v1/morpho/vaults",
+        "GET /api/v1/morpho/vaults/{vault_address}",
+        "GET /api/v1/morpho/vaults/{vault_address}/apy"
+      ],
+      "code_location": "src/app/presentation/http/controllers/defi/morpho_router.py",
+      "features": [
+        "List all available MetaMorpho vaults",
+        "Filter by asset, risk tier, minimum APY",
+        "Sort by APY, TVL, or risk",
+        "Get detailed vault information",
+        "View APY breakdown with historical data",
+        "Market allocation details",
+        "Risk tier classification (low, medium, high, very_high)"
+      ]
+    },
+    {
+      "name": "Yield Comparison",
+      "description": "Compare yields across protocols for specific assets",
+      "endpoints": [
+        "GET /api/v1/morpho/compare"
+      ],
+      "code_location": "src/app/presentation/http/controllers/defi/morpho_router.py",
+      "features": [
+        "Compare Morpho yields with other protocols",
+        "Identify best yield opportunities",
+        "APY advantage calculations",
+        "Risk tier comparisons"
+      ]
+    },
+    {
+      "name": "Position Management",
+      "description": "Track user lending positions and earnings",
+      "endpoints": [
+        "GET /api/v1/morpho/positions/{user_address}"
+      ],
+      "code_location": "src/app/presentation/http/controllers/defi/morpho_router.py",
+      "features": [
+        "View all user vault positions",
+        "Track total deposited amounts",
+        "Monitor current position values",
+        "Calculate total earnings",
+        "Average APY across positions",
+        "Position summary statistics"
+      ]
+    },
+    {
+      "name": "Market Information",
+      "description": "Access Morpho Blue lending markets with rates and utilization",
+      "endpoints": [
+        "GET /api/v1/morpho/markets"
+      ],
+      "code_location": "src/app/presentation/http/controllers/defi/morpho_router.py",
+      "features": [
+        "View Morpho Blue markets",
+        "Filter by collateral and loan assets",
+        "Supply APY and utilization data",
+        "Market sorting options"
+      ]
+    }
+  ],
+  
+  "how_it_works": "Lending on Anvil works by:\n1. Users browse available MetaMorpho vaults via GET /api/v1/morpho/vaults\n2. Compare yields and risk tiers to find best opportunities\n3. Supply assets (USDC, ETH, etc.) to selected vaults\n4. Earn APY on supplied assets (yield is automatically compounded)\n5. Track positions and earnings via GET /api/v1/morpho/positions/{address}\n6. Withdraw assets when needed\n\n**CRITICAL: Anvil supports LENDING (supply assets to earn yield) only. Anvil does NOT support BORROWING (taking loans against collateral).**",
+  
+  "supported_chains": [
+    "Ethereum",
+    "Base"
+  ],
+  
+  "supported_assets": [
+    "USDC (most common)",
+    "ETH",
+    "WETH",
+    "Other assets available in Morpho vaults"
+  ],
+  
+  "api_endpoints": [
+    {
+      "path": "/api/v1/morpho/vaults",
+      "method": "GET",
+      "description": "Get available MetaMorpho vaults with APY and risk data",
+      "auth_required": false,
+      "parameters": {
+        "asset": "Optional. Filter by asset (e.g., USDC, ETH)",
+        "risk_tier": "Optional. Filter by risk tier (low, medium, high, very_high)",
+        "min_apy": "Optional. Minimum APY filter",
+        "sort_by": "Optional. Sort field (apy, tvl, risk). Default: apy",
+        "chain": "Required. Blockchain (ethereum, base). Default: ethereum",
+        "limit": "Optional. Max results (1-100). Default: 50"
+      },
+      "response": {
+        "vaults": "Array of vault objects with address, name, asset, APY, risk tier, TVL",
+        "top_opportunities": "Top yield opportunities",
+        "total_count": "Total number of vaults"
+      }
+    },
+    {
+      "path": "/api/v1/morpho/vaults/{vault_address}",
+      "method": "GET",
+      "description": "Get detailed vault information with market allocations",
+      "auth_required": false,
+      "parameters": {
+        "vault_address": "Required. Vault contract address",
+        "chain": "Required. Blockchain (ethereum, base). Default: ethereum"
+      },
+      "response": {
+        "vault_address": "Vault contract address",
+        "vault_name": "Vault name",
+        "asset": "Asset symbol",
+        "apy": "Current APY",
+        "risk_tier": "Risk tier classification",
+        "tvl": "Total Value Locked",
+        "markets": "Market allocations"
+      }
+    },
+    {
+      "path": "/api/v1/morpho/vaults/{vault_address}/apy",
+      "method": "GET",
+      "description": "Get detailed APY breakdown with historical data",
+      "auth_required": false,
+      "parameters": {
+        "vault_address": "Required. Vault contract address",
+        "chain": "Required. Blockchain (ethereum, base). Default: ethereum"
+      },
+      "response": {
+        "apy": "Current APY",
+        "fee_impact": "Fee impact on APY",
+        "historical_data": "Historical APY trends"
+      }
+    },
+    {
+      "path": "/api/v1/morpho/markets",
+      "method": "GET",
+      "description": "Get Morpho Blue lending markets with rates and utilization",
+      "auth_required": false,
+      "parameters": {
+        "collateral_asset": "Optional. Filter by collateral asset",
+        "loan_asset": "Optional. Filter by loan asset",
+        "sort_by": "Optional. Sort field (supply_apy, tvl, utilization). Default: supply_apy",
+        "chain": "Required. Blockchain (ethereum, base). Default: ethereum",
+        "limit": "Optional. Max results (1-100). Default: 50"
+      },
+      "response": {
+        "markets": "Array of market objects with collateral, loan asset, supply APY, TVL, utilization",
+        "count": "Number of markets returned"
+      }
+    },
+    {
+      "path": "/api/v1/morpho/positions/{user_address}",
+      "method": "GET",
+      "description": "Get user's vault positions with earnings",
+      "auth_required": false,
+      "parameters": {
+        "user_address": "Required. User wallet address",
+        "chain": "Required. Blockchain (ethereum, base). Default: ethereum"
+      },
+      "response": {
+        "positions": "Array of position objects with vault, deposited amount, current value, earnings",
+        "summary": {
+          "total_positions": "Number of positions",
+          "total_deposited": "Total amount deposited",
+          "total_current_value": "Current total value",
+          "total_earnings": "Total earnings",
+          "average_apy": "Average APY across positions"
+        }
+      }
+    },
+    {
+      "path": "/api/v1/morpho/compare",
+      "method": "GET",
+      "description": "Compare yields across protocols for an asset",
+      "auth_required": false,
+      "parameters": {
+        "asset": "Required. Asset to compare (e.g., USDC, ETH)",
+        "chain": "Required. Blockchain (ethereum, base). Default: ethereum"
+      },
+      "response": {
+        "asset": "Asset symbol",
+        "comparisons": "Array of protocol comparisons with APY and risk tier",
+        "best_option": "Best yield opportunity identified"
+      }
+    }
+  ],
+  
+  "features": [
+    "Real-time vault APY data",
+    "Risk tier classification (low, medium, high, very_high)",
+    "Multi-chain support (Ethereum, Base)",
+    "Yield comparison across protocols",
+    "Position tracking and earnings monitoring",
+    "Market utilization data",
+    "Historical APY trends",
+    "Fee impact analysis",
+    "Top opportunities identification",
+    "Asset and risk filtering",
+    "Sorting by APY, TVL, or risk"
+  ],
+  
+  "competitive_advantages": [
+    "Real-time APY data from Morpho protocol",
+    "Risk tier classification for informed decisions",
+    "Yield comparison with other protocols",
+    "Multi-chain support (Ethereum and Base)",
+    "Comprehensive position tracking",
+    "Market utilization insights",
+    "Historical APY trend analysis",
+    "Top opportunities identification"
+  ],
+  
+  "getting_started": {
+    "for_users": {
+      "quick_start": "To get started with Lending:\n1. Browse available vaults: GET /api/v1/morpho/vaults\n2. Compare yields: GET /api/v1/morpho/compare?asset=USDC\n3. View vault details: GET /api/v1/morpho/vaults/{vault_address}\n4. Supply assets to selected vault\n5. Track positions: GET /api/v1/morpho/positions/{your_address}\n\n**Remember: Anvil supports LENDING (supply assets to earn yield) only, NOT borrowing.**",
+      "example_commands": [
+        "Show me Morpho vaults",
+        "What are the best lending rates for USDC?",
+        "Compare yields for ETH",
+        "Show my lending positions",
+        "What's the APY for [vault_name]?"
+      ],
+      "use_cases": [
+        "Earn yield on idle assets",
+        "Compare lending rates across protocols",
+        "Track lending position performance",
+        "Identify best yield opportunities",
+        "Monitor risk tiers before lending"
+      ]
+    },
+    "for_investors": {
+      "value_proposition": "Lending on Anvil provides access to Morpho's competitive lending rates with real-time APY data, risk classification, and comprehensive position tracking.",
+      "market_position": "Integrated Morpho lending with real-time data, risk analysis, and yield comparison capabilities.",
+      "competitive_advantages": [
+        "Real-time APY data from Morpho protocol",
+        "Risk tier classification enables informed decisions",
+        "Yield comparison helps find best opportunities",
+        "Multi-chain support expands options",
+        "Comprehensive position tracking for portfolio management"
+      ]
+    }
+  },
+  
+  "common_questions": [
+    {
+      "question": "How do I lend assets on Anvil?",
+      "answer": "Browse available Morpho vaults using GET /api/v1/morpho/vaults, compare yields, and supply assets to selected vaults. Anvil supports LENDING (supply assets to earn yield) only. Anvil does NOT support BORROWING."
+    },
+    {
+      "question": "What assets can I lend?",
+      "answer": "Most commonly USDC, ETH, and WETH. Available assets depend on Morpho vault offerings. Use GET /api/v1/morpho/vaults to see all available options."
+    },
+    {
+      "question": "What chains are supported?",
+      "answer": "Lending is available on Ethereum and Base networks. Specify the chain parameter in API calls (ethereum or base)."
+    },
+    {
+      "question": "How do I track my lending positions?",
+      "answer": "Use GET /api/v1/morpho/positions/{your_address} to view all your vault positions, total deposited amounts, current values, earnings, and average APY."
+    },
+    {
+      "question": "Can I compare yields with other protocols?",
+      "answer": "Yes! Use GET /api/v1/morpho/compare?asset=USDC to compare Morpho yields with other protocols and identify the best opportunities."
+    },
+    {
+      "question": "What is risk tier classification?",
+      "answer": "Vaults are classified by risk tier (low, medium, high, very_high) based on protocol security, TVL, and other factors. Use this to make informed lending decisions."
+    },
+    {
+      "question": "Does Anvil support borrowing?",
+      "answer": "**NO. Anvil supports LENDING (supply assets to earn yield) only. Anvil does NOT support BORROWING (taking loans against collateral).** When discussing lending, we only mention supplying/lending assets, never borrowing."
+    }
+  ],
+  
+  "technical_details": {
+    "code_modules": [
+      "src/app/presentation/http/controllers/defi/morpho_router.py",
+      "src/app/application/queries/morpho/",
+      "src/app/domain/exceptions/morpho.py"
+    ],
+    "dependencies": [
+      "Morpho Protocol API",
+      "PostgreSQL (position tracking)",
+      "DeFiLlama API (yield comparison)"
+    ],
+    "data_sources": [
+      "Morpho Protocol API for vault and market data",
+      "On-chain data for positions",
+      "DeFiLlama API for protocol comparisons"
+    ],
+    "protocol_integration": {
+      "morpho_metamorpho": "MetaMorpho vaults for lending",
+      "morpho_blue": "Morpho Blue markets for lending rates"
+    }
+  },
+  
+  "example_use_cases": [
+    "Earning yield on idle USDC",
+    "Comparing lending rates before depositing",
+    "Tracking lending position performance",
+    "Identifying best yield opportunities",
+    "Monitoring risk tiers for safety",
+    "Analyzing APY trends over time"
+  ],
+  
+  "important_notes": [
+    "**CRITICAL: Anvil supports LENDING (supply assets to earn yield) only, NOT borrowing.**",
+    "When discussing lending, always use terms like 'supply assets', 'lend assets', 'deposit assets' - NOT 'borrow' or 'take a loan'.",
+    "In Spanish: Use 'suministro de activos' or 'depositar activos' - NOT 'préstamos' (which means borrowing).",
+    "Yield is automatically compounded in Morpho vaults.",
+    "Users can withdraw assets when needed."
+  ]
+}

@@ -12,7 +12,7 @@ from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentRespon
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 
-class GuestAuthAgentOpenAI:
+class GuestAuthAgent:
     """
     Guest Auth Agent implementation.
     

@@ -140,7 +140,12 @@ telemetry_sample_rate = 1.0  # 0.0-1.0
 enabled = true
 model = "gemini-2.0-flash"  # Fast responses for general chat (Vertex AI)
 temperature = 0.7
-max_tokens = 1000
+
+[agent_squad.agents.knowledge]
+enabled = true
+model = "gemini-2.0-flash"  # Educational queries and Anvil knowledge (Vertex AI)
+temperature = 0.5  # Lower temperature for factual responses
+max_tokens = 1500  # More tokens for detailed explanations
 
 [agent_squad.agents.hunter_ai]
 enabled = true

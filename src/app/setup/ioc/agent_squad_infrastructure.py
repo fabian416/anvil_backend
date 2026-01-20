@@ -4,10 +4,36 @@ Agent Squad Infrastructure Layer Providers.
 Provides infrastructure adapters and external service clients.
 """
 
-from typing import Any
+from typing import Any, Protocol
 import os
 
 from dishka import Provider, Scope, provide
+
+
+class DefiLlamaClientProtocol(Protocol):
+    """Protocol for DefiLlamaClient to help Dishka distinguish it from other types."""
+    async def get_protocol_yields(self, protocol: str | None = None, chain: str | None = None) -> Any: ...
+    async def get_protocol_tvl(self, protocol: str) -> Any: ...
+    async def get_all_protocols(self) -> Any: ...
+    async def close(self) -> None: ...
+
+
+class Web3ClientProtocol(Protocol):
+    """Protocol for Web3Client to help Dishka distinguish it from other types."""
+    async def get_gas_price(self) -> Any: ...
+    async def get_block_number(self) -> int: ...
+    async def is_connected(self) -> bool: ...
+
+
+class OneInchClientProtocol(Protocol):
+    """Protocol for OneInchClient to help Dishka distinguish it from other types."""
+    async def get_swap_quote(
+        self,
+        from_token: str,
+        to_token: str,
+        amount: str,
+        slippage: float = 1.0,
+    ) -> Any: ...
 from redis.asyncio import Redis
 
 from app.domain.enums.agent_type import AgentType
@@ -36,15 +62,18 @@ from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClien
 from app.setup.config.agent_squad import AgentSquadSettings
 from app.setup.config.settings import AppSettings
 
-# Core user-facing agents (10)
-from app.infrastructure.adapters.agent_squad.agents.chat_agent_openai import (
-    ChatAgentOpenAI,
+# Core user-facing agents (11)
+from app.infrastructure.adapters.agent_squad.agents.chat_agent import (
+    ChatAgent,
 )
-from app.infrastructure.adapters.agent_squad.agents.guest_auth_agent_openai import (
-    GuestAuthAgentOpenAI,
+from app.infrastructure.adapters.agent_squad.agents.guest_auth_agent import (
+    GuestAuthAgent,
 )
-from app.infrastructure.adapters.agent_squad.agents.hunter_ai_agent_openai import (
-    HunterAIAgentOpenAI,
+from app.infrastructure.adapters.agent_squad.agents.knowledge_agent import (
+    KnowledgeAgent,
+)
+from app.infrastructure.adapters.agent_squad.agents.hunter_ai_agent import (
+    HunterAIAgent,
 )
 from app.infrastructure.adapters.agent_squad.agents.research_agent_perplexity import (
     ResearchAgentPerplexity,
@@ -52,23 +81,23 @@ from app.infrastructure.adapters.agent_squad.agents.research_agent_perplexity im
 from app.infrastructure.adapters.agent_squad.agents.execution_agent_privy import (
     ExecutionAgentPrivy,
 )
-from app.infrastructure.adapters.agent_squad.agents.risk_analyzer_agent_openai import (
-    RiskAnalyzerAgentOpenAI,
+from app.infrastructure.adapters.agent_squad.agents.risk_analyzer_agent import (
+    RiskAnalyzerAgent,
 )
-from app.infrastructure.adapters.agent_squad.agents.portfolio_agent_openai import (
-    PortfolioAgentOpenAI,
+from app.infrastructure.adapters.agent_squad.agents.portfolio_agent import (
+    PortfolioAgent,
 )
-from app.infrastructure.adapters.agent_squad.agents.tax_optimizer_agent_openai import (
-    TaxOptimizerAgentOpenAI,
+from app.infrastructure.adapters.agent_squad.agents.tax_optimizer_agent import (
+    TaxOptimizerAgent,
 )
-from app.infrastructure.adapters.agent_squad.agents.defi_yield_agent_openai import (
-    DefiYieldAgentOpenAI,
+from app.infrastructure.adapters.agent_squad.agents.defi_yield_agent import (
+    DefiYieldAgent,
 )
 from app.infrastructure.adapters.agent_squad.agents.security_auditor_agent_slither import (
     SecurityAuditorAgentSlither,
 )
-from app.infrastructure.adapters.agent_squad.agents.gas_optimizer_agent_openai import (
-    GasOptimizerAgentOpenAI,
+from app.infrastructure.adapters.agent_squad.agents.gas_optimizer_agent import (
+    GasOptimizerAgent,
 )
 
 # Enterprise agents (4)
@@ -248,8 +277,8 @@ class AgentSquadInfrastructureProvider(Provider):
         api_key = os.getenv("COINGECKO_API_KEY")  # Optional
         return CoinGeckoClient(api_key=api_key)
     
-    @provide
-    def provide_oneinch_client(self, settings: AgentSquadSettings) -> Any:
+    @provide(scope=Scope.APP)
+    def provide_oneinch_client(self, settings: AgentSquadSettings) -> OneInchClientProtocol | None:
         """Provide 1inch API client if enabled."""
         if not settings.external_apis.enable_1inch:
             return None
@@ -258,15 +287,44 @@ class AgentSquadInfrastructureProvider(Provider):
         api_key = os.getenv("ONEINCH_API_KEY", "")
         if not api_key:
             # Log warning but don't fail - can still work with some features
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning("⚠️ ONEINCH_API_KEY not set - 1inch client will be None")
             return None
         return OneInchClient(api_key=api_key)
     
-    @provide
-    def provide_defillama_client(self, settings: AgentSquadSettings) -> Any:
+    @provide(scope=Scope.APP)
+    def provide_web3_client(self, settings: AgentSquadSettings) -> Web3ClientProtocol | None:
+        """Provide Web3Client for Ethereum gas prices if enabled."""
+        # Web3Client requires API keys - check if available
+        # Try both direct env vars and RPC_ prefixed (from .secrets.toml export)
+        alchemy_key = os.getenv("ALCHEMY_API_KEY") or os.getenv("RPC_ALCHEMY_API_KEY", "")
+        infura_key = os.getenv("INFURA_API_KEY") or os.getenv("RPC_INFURA_API_KEY", "")
+        
+        if not alchemy_key and not infura_key:
+            # No RPC provider keys - return None
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning("⚠️ ALCHEMY_API_KEY/RPC_ALCHEMY_API_KEY and INFURA_API_KEY/RPC_INFURA_API_KEY not set - Web3Client will be None")
+            return None
+        
+        from app.infrastructure.adapters.external.web3_client import Web3Client, Chain
+        return Web3Client(
+            alchemy_api_key=alchemy_key if alchemy_key else None,
+            infura_api_key=infura_key if infura_key else None,
+            chain=Chain.ETHEREUM,  # Default to Ethereum for gas prices
+        )
+    
+    @provide(scope=Scope.APP)  # APP scope - single instance shared across requests
+    def provide_defillama_client(
+        self, 
+        settings: AgentSquadSettings
+    ) -> DefiLlamaClientProtocol | None:
         """Provide DeFiLlama API client if enabled."""
         if not settings.external_apis.enable_defillama:
             return None
         
+        # Import here to avoid circular dependencies
         from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
         return DefiLlamaClient()  # No API key required
     
@@ -343,23 +401,28 @@ class AgentSquadInfrastructureProvider(Provider):
     # ========================================
 
     @provide
-    def provide_chat_agent(self, llm_client: LLMClientGateway) -> ChatAgentOpenAI:
+    def provide_chat_agent(self, llm_client: LLMClientGateway) -> ChatAgent:
         """Provide Chat agent."""
-        return ChatAgentOpenAI(llm_client=llm_client)
+        return ChatAgent(llm_client=llm_client)
 
     @provide
-    def provide_guest_auth_agent(self, llm_client: LLMClientGateway) -> GuestAuthAgentOpenAI:
+    def provide_guest_auth_agent(self, llm_client: LLMClientGateway) -> GuestAuthAgent:
         """Provide Guest Auth agent for handling authentication requirements."""
-        return GuestAuthAgentOpenAI(llm_client=llm_client)
+        return GuestAuthAgent(llm_client=llm_client)
+    
+    @provide
+    def provide_knowledge_agent(self, llm_client: LLMClientGateway) -> KnowledgeAgent:
+        """Provide Knowledge Anvil agent for educational queries and Anvil knowledge."""
+        return KnowledgeAgent(llm_client=llm_client)
 
     @provide
     def provide_hunter_ai_agent(
         self,
         llm_client: LLMClientGateway,
         coingecko_client: CoinGeckoClient | None,  # Type-annotated for explicit DI resolution
-    ) -> HunterAIAgentOpenAI:
+    ) -> HunterAIAgent:
         """Provide Hunter AI agent with optional CoinGecko integration."""
-        return HunterAIAgentOpenAI(
+        return HunterAIAgent(
             llm_client=llm_client,
             coingecko_client=coingecko_client,
         )
@@ -407,9 +470,12 @@ class AgentSquadInfrastructureProvider(Provider):
 
     @provide
     def provide_execution_agent(
-        self, llm_client: LLMClientGateway, settings: AppSettings
+        self,
+        llm_client: LLMClientGateway,
+        settings: AppSettings,
+        oneinch_client: OneInchClientProtocol | None,  # Injected from provide_oneinch_client
     ) -> ExecutionAgentPrivy:
-        """Provide Execution agent."""
+        """Provide Execution agent with optional OneInch integration."""
         from unittest.mock import MagicMock
 
         # Mock Privy client for testing (avoids external wallet dependencies)
@@ -422,35 +488,51 @@ class AgentSquadInfrastructureProvider(Provider):
             llm_client=llm_client,
             privy_client=privy_client,
             swap_gateway=swap_gateway,
+            oneinch_client=oneinch_client,
         )
 
     @provide
     def provide_risk_analyzer_agent(
-        self, llm_client: LLMClientGateway
-    ) -> RiskAnalyzerAgentOpenAI:
-        """Provide Risk Analyzer agent."""
-        return RiskAnalyzerAgentOpenAI(llm_client=llm_client)
+        self,
+        llm_client: LLMClientGateway,
+        defi_llama_client: DefiLlamaClientProtocol | None,  # Injected from provide_defillama_client
+    ) -> RiskAnalyzerAgent:
+        """Provide Risk Analyzer agent with optional DeFiLlama integration."""
+        return RiskAnalyzerAgent(
+            llm_client=llm_client,
+            defi_llama_client=defi_llama_client,
+        )
 
     @provide
     def provide_portfolio_agent(
-        self, llm_client: LLMClientGateway
-    ) -> PortfolioAgentOpenAI:
-        """Provide Portfolio agent."""
-        return PortfolioAgentOpenAI(llm_client=llm_client)
+        self,
+        llm_client: LLMClientGateway,
+        coingecko_client: CoinGeckoClient | None,  # Injected from provide_coingecko_client
+    ) -> PortfolioAgent:
+        """Provide Portfolio agent with optional CoinGecko integration."""
+        return PortfolioAgent(
+            llm_client=llm_client,
+            coingecko_client=coingecko_client,
+        )
 
     @provide
     def provide_tax_optimizer_agent(
         self, llm_client: LLMClientGateway
-    ) -> TaxOptimizerAgentOpenAI:
+    ) -> TaxOptimizerAgent:
         """Provide Tax Optimizer agent."""
-        return TaxOptimizerAgentOpenAI(llm_client=llm_client)
+        return TaxOptimizerAgent(llm_client=llm_client)
 
     @provide
     def provide_defi_yield_agent(
-        self, llm_client: LLMClientGateway
-    ) -> DefiYieldAgentOpenAI:
-        """Provide DeFi Yield agent."""
-        return DefiYieldAgentOpenAI(llm_client=llm_client)
+        self,
+        llm_client: LLMClientGateway,
+        defi_llama_client: DefiLlamaClientProtocol | None,  # Injected from provide_defillama_client
+    ) -> DefiYieldAgent:
+        """Provide DeFi Yield agent with optional DeFiLlama integration."""
+        return DefiYieldAgent(
+            llm_client=llm_client,
+            defi_llama_client=defi_llama_client,
+        )
 
     @provide
     def provide_security_auditor_agent(
@@ -461,10 +543,17 @@ class AgentSquadInfrastructureProvider(Provider):
 
     @provide
     def provide_gas_optimizer_agent(
-        self, llm_client: LLMClientGateway
-    ) -> GasOptimizerAgentOpenAI:
-        """Provide Gas Optimizer agent."""
-        return GasOptimizerAgentOpenAI(llm_client=llm_client)
+        self,
+        llm_client: LLMClientGateway,
+        web3_client: Web3ClientProtocol | None,  # Injected from provide_web3_client
+    ) -> GasOptimizerAgent:
+        """
+        Provide Gas Optimizer agent with optional Web3Client integration.
+        """
+        return GasOptimizerAgent(
+            llm_client=llm_client,
+            web3_client=web3_client,
+        )
 
     # ========================================
     # Enterprise Agents (4)
@@ -572,17 +661,18 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_agent_registry(
         self,
         # Core agents
-        chat_agent: ChatAgentOpenAI,
-        guest_auth_agent: GuestAuthAgentOpenAI,
-        hunter_ai_agent: HunterAIAgentOpenAI,
+        chat_agent: ChatAgent,
+        guest_auth_agent: GuestAuthAgent,
+        knowledge_agent: KnowledgeAgent,
+        hunter_ai_agent: HunterAIAgent,
         research_agent: ResearchAgentPerplexity,
         execution_agent: ExecutionAgentPrivy,
-        risk_analyzer_agent: RiskAnalyzerAgentOpenAI,
-        portfolio_agent: PortfolioAgentOpenAI,
-        tax_optimizer_agent: TaxOptimizerAgentOpenAI,
-        defi_yield_agent: DefiYieldAgentOpenAI,
+        risk_analyzer_agent: RiskAnalyzerAgent,
+        portfolio_agent: PortfolioAgent,
+        tax_optimizer_agent: TaxOptimizerAgent,
+        defi_yield_agent: DefiYieldAgent,
         security_auditor_agent: SecurityAuditorAgentSlither,
-        gas_optimizer_agent: GasOptimizerAgentOpenAI,
+        gas_optimizer_agent: GasOptimizerAgent,
         # Enterprise agents
         compliance_monitor_agent: ComplianceMonitorAgentChainalysis,
         multisig_coordinator_agent: MultiSigCoordinatorAgentGnosis,
@@ -603,6 +693,7 @@ class AgentSquadInfrastructureProvider(Provider):
             # Core agents
             AgentType.CHAT: chat_agent,
             AgentType.GUEST_AUTH: guest_auth_agent,
+            AgentType.KNOWLEDGE: knowledge_agent,
             AgentType.HUNTER_AI: hunter_ai_agent,
             AgentType.RESEARCH: research_agent,
             AgentType.EXECUTION: execution_agent,

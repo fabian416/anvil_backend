@@ -76,22 +76,43 @@ Final Response
 
 ### Overview
 
-**Important**: The Distillation Engine does **NOT use LLM prompts**. It uses **rule-based pattern matching** for:
-- Intent classification
-- Complexity assessment
-- Entity extraction
+**Updated**: The Distillation Engine now uses **hybrid classification**:
+- **Rule-based patterns** (fast, ~90% accuracy) - for common, clear queries
+- **LLM-based classification** (Vertex AI with DeepInfra fallback) - for ambiguous/complex queries
 
-This design choice prioritizes **speed and cost-efficiency** over LLM-based classification.
+This hybrid approach provides:
+- **Speed**: Rule-based patterns for fast classification of common queries
+- **Accuracy**: LLM-based classification for ambiguous queries that don't match patterns
+- **Context-awareness**: Uses conversation history for better intent detection
+- **Cost-efficiency**: Only uses LLM when rule-based patterns fail
 
 ### IntentClassifier
 
 **File**: `src/app/domain/services/distillation/intent_classifier.py`
 
-**Method**: `classify(text: str) -> Tuple[Intent, float]`
+**Method**: `async classify(text: str, conversation_history: Optional[List[Dict]] = None) -> Tuple[Intent, float]`
 
-**Approach**: Regex pattern matching (no LLM prompts)
+**Approach**: **Hybrid classification** (rule-based + LLM)
 
-**Pattern Structure**:
+**Classification Flow**:
+```
+1. Try rule-based patterns (fast, high confidence)
+   ↓ (if match found)
+   Return intent with 0.95 confidence
+   
+   ↓ (if no match)
+2. Use LLM classification (Vertex AI with DeepInfra fallback)
+   ↓
+   Build classification prompt with conversation history
+   ↓
+   Call llm_client.classify_intent(prompt, model="gemini-2.0-flash")
+   ↓
+   Parse JSON response: {intent, confidence, reasoning}
+   ↓
+   Return intent if confidence >= 0.85, else UNCLEAR
+```
+
+**Rule-Based Patterns** (First Tier):
 ```python
 INTENT_PATTERNS = {
     Intent.PRICE_CHECK: [
@@ -99,16 +120,86 @@ INTENT_PATTERNS = {
         r"what('s| is) (\w+|ETH|BTC) (price|worth|trading at)",
         # ... more patterns
     ],
-    Intent.SWAP_REQUEST: [
-        r"\b(swap|exchange|trade|convert) \d+",
-        r"buy (\w+) with (\w+)",
-        # ... more patterns
-    ],
     # ... 20+ intent categories
 }
 ```
 
-**No Prompt Injection**: Pure regex matching, no LLM calls
+**LLM-Based Classification** (Second Tier):
+- **Trigger**: When no rule-based pattern matches
+- **LLM Client**: `LLMClientGateway` (Vertex AI primary, DeepInfra fallback)
+- **Model**: `gemini-2.0-flash` (fast, cost-effective)
+- **Fallback**: Automatic fallback to DeepInfra if Vertex AI fails
+
+**Prompt Injection**:
+```python
+def _build_classification_prompt(
+    self,
+    text: str,
+    conversation_history: Optional[List[Dict[str, Any]]] = None,
+) -> str:
+    """
+    Build classification prompt with conversation history context.
+    
+    Prompt Structure:
+    1. Role definition
+    2. Available intent categories
+    3. User query (injected)
+    4. Conversation history (injected for context)
+    5. Classification instructions
+    6. Examples
+    7. Output format (JSON)
+    """
+    # Build context from conversation history
+    context_section = ""
+    if conversation_history:
+        context_section = "\n\n**Conversation History (for context):**\n"
+        for msg in conversation_history[-3:]:  # Last 3 messages
+            context_section += f"- {msg['role']}: {msg['content'][:200]}\n"
+    
+    prompt = f"""Classify the user's intent from this DeFi/crypto query.
+
+**Available Intent Categories:**
+[... intent categories ...]
+
+**User Query:**
+{text}  # ← USER INPUT INJECTED HERE
+{context_section}  # ← CONVERSATION HISTORY INJECTED HERE
+
+**Classification Instructions:**
+[... instructions ...]
+
+**Examples:**
+[... examples ...]
+
+**Respond with ONLY valid JSON:**
+{{
+    "intent": "intent_name",
+    "confidence": 0.95,
+    "reasoning": "brief explanation"
+}}
+"""
+    return prompt
+```
+
+**LLM Call**:
+```python
+response = await self._llm_client.classify_intent(
+    prompt=prompt,  # ← Prompt with user input + conversation history
+    model="gemini-2.0-flash",  # Fast Vertex AI model
+)
+# LLMClientWithFallback automatically handles fallback to DeepInfra if needed
+```
+
+**Response Parsing**:
+```python
+if isinstance(response, dict):
+    intent_str = response.get("intent", "unclear")
+    confidence = float(response.get("confidence", 0.5))
+    
+    # Map string intent to Intent enum
+    intent = Intent(intent_str.lower())
+    return intent, confidence
+```
 
 ### ComplexityAssessor
 
@@ -149,18 +240,37 @@ INTENT_PATTERNS = {
 
 ### Summary: Distillation Engine
 
-**Prompt Injection**: ❌ **NONE** (Rule-based only)
+**Prompt Injection**: ✅ **HYBRID** (Rule-based + LLM with conversation history)
+
+**Classification Strategy**:
+1. **First Tier**: Rule-based patterns (fast, ~90% accuracy)
+   - No LLM calls for common queries
+   - Instant classification
+   - High confidence (0.95)
+
+2. **Second Tier**: LLM-based classification (for ambiguous queries)
+   - Uses Vertex AI (`gemini-2.0-flash`) with DeepInfra fallback
+   - Includes conversation history for context
+   - Helps Supervisor Coordinator route correctly
+   - Only used when rule-based patterns fail
 
 **Rationale**:
-- **Speed**: Regex matching is faster than LLM calls
-- **Cost**: No LLM API costs for classification
-- **Reliability**: Deterministic results, no LLM variability
-- **Accuracy**: ~90% accuracy with rule-based patterns
+- **Speed**: Rule-based patterns for fast classification of common queries
+- **Accuracy**: LLM for ambiguous queries that don't match patterns
+- **Context-awareness**: Conversation history improves intent detection
+- **Cost-efficiency**: LLM only used when needed (ambiguous queries)
+- **Reliability**: Rule-based fallback ensures deterministic results
+
+**Benefits**:
+- Better routing for complex/ambiguous queries
+- Context-aware classification (uses conversation history)
+- Automatic fallback (Vertex AI → DeepInfra)
+- Cost-effective (LLM only for ambiguous queries)
 
 **Trade-offs**:
-- Less flexible than LLM-based classification
-- Requires manual pattern maintenance
-- May miss novel query patterns
+- Slightly higher latency for ambiguous queries (LLM call)
+- Additional LLM API costs for ambiguous queries (minimal due to fast model)
+- Requires LLM client availability (gracefully degrades to rule-based if unavailable)
 
 ---
 

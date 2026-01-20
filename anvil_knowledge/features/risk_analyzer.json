@@ -1,0 +1,256 @@
+{
+  "feature_name": "Risk Analyzer Agent",
+  "tagline": "Protocol risk assessment and scoring with real-time TVL data",
+  "description": "The Risk Analyzer Agent provides comprehensive risk assessment for DeFi protocols, analyzing protocol size, stability, smart contract risks, and providing risk scores (0-100) based on real-time TVL data from DeFiLlama.",
+  
+  "core_capabilities": [
+    {
+      "name": "Protocol Risk Scoring",
+      "description": "Calculate risk scores (0-100) for DeFi protocols based on multiple factors",
+      "code_location": "src/app/infrastructure/adapters/agent_squad/agents/risk_analyzer_agent.py",
+      "features": [
+        "Risk score calculation (0-100 scale)",
+        "Protocol size analysis (TVL-based)",
+        "Stability assessment",
+        "Smart contract risk evaluation",
+        "Liquidation risk analysis",
+        "Concentration risk assessment",
+        "Market risk (volatility) analysis",
+        "Counterparty risk evaluation"
+      ],
+      "data_sources": [
+        "DeFiLlama API for protocol TVL data",
+        "Protocol size classification",
+        "Chain distribution analysis"
+      ]
+    },
+    {
+      "name": "Real-Time TVL Analysis",
+      "description": "Fetch and analyze protocol TVL (Total Value Locked) from DeFiLlama",
+      "features": [
+        "Real-time TVL fetching",
+        "Protocol size classification",
+        "Chain distribution analysis",
+        "7-day TVL change tracking",
+        "Top protocols comparison"
+      ],
+      "data_sources": [
+        "DeFiLlama API for protocol-specific TVL",
+        "DeFiLlama API for all protocols list"
+      ]
+    },
+    {
+      "name": "Risk Factor Analysis",
+      "description": "Analyze specific risk factors for protocols",
+      "features": [
+        "Smart contract risk assessment",
+        "Liquidation risk (health factor) analysis",
+        "Impermanent loss calculation",
+        "Concentration risk evaluation",
+        "Market risk (volatility) assessment",
+        "Counterparty risk analysis"
+      ]
+    },
+    {
+      "name": "Protocol Comparison",
+      "description": "Compare risk profiles across multiple protocols",
+      "features": [
+        "Top protocols by TVL comparison",
+        "Risk score comparison",
+        "Size-based risk classification",
+        "Stability trends analysis"
+      ]
+    }
+  ],
+  
+  "how_it_works": "The Risk Analyzer Agent works by:\n1. Detecting protocol names from user query (Aave, Morpho, Compound, Curve, Uniswap, etc.)\n2. Fetching real-time TVL data from DeFiLlama API\n3. Analyzing protocol size (Very Large >$1B, Large >$100M, Medium >$10M, Small <$10M)\n4. Evaluating chain distribution and stability\n5. Calculating risk scores (0-100) based on size, stability, and other factors\n6. Providing risk assessment with recommendations\n7. Comparing with top protocols for context",
+  
+  "risk_score_scale": {
+    "0-20": {
+      "level": "Very Low Risk",
+      "description": "Large, established protocols with high TVL and proven track record",
+      "examples": "Aave, Uniswap, Compound (typically >$1B TVL)"
+    },
+    "21-40": {
+      "level": "Low Risk",
+      "description": "Well-established protocols with good TVL and stability",
+      "examples": "Morpho, Curve, MakerDAO (typically >$100M TVL)"
+    },
+    "41-60": {
+      "level": "Moderate Risk",
+      "description": "Medium-sized protocols with moderate TVL",
+      "examples": "Smaller DeFi protocols (typically >$10M TVL)"
+    },
+    "61-80": {
+      "level": "High Risk",
+      "description": "Small protocols with limited TVL or new protocols",
+      "examples": "New or experimental protocols (typically <$10M TVL)"
+    },
+    "81-100": {
+      "level": "Very High Risk",
+      "description": "Very small or unproven protocols with significant risks",
+      "examples": "Experimental or unaudited protocols"
+    }
+  },
+  
+  "protocol_size_classification": {
+    "very_large": {
+      "threshold": "> $1,000,000,000 TVL",
+      "risk_indicator": "Lower risk due to scale",
+      "description": "Protocols with over $1B in Total Value Locked"
+    },
+    "large": {
+      "threshold": "> $100,000,000 TVL",
+      "risk_indicator": "Moderate risk",
+      "description": "Protocols with $100M-$1B in TVL"
+    },
+    "medium": {
+      "threshold": "> $10,000,000 TVL",
+      "risk_indicator": "Higher risk",
+      "description": "Protocols with $10M-$100M in TVL"
+    },
+    "small": {
+      "threshold": "< $10,000,000 TVL",
+      "risk_indicator": "Higher risk",
+      "description": "Protocols with less than $10M in TVL"
+    }
+  },
+  
+  "supported_protocols": [
+    "Aave",
+    "Morpho",
+    "Compound",
+    "Curve",
+    "Uniswap",
+    "MakerDAO",
+    "And 100+ other DeFi protocols via DeFiLlama"
+  ],
+  
+  "features": [
+    "Real-time protocol TVL fetching from DeFiLlama",
+    "Risk score calculation (0-100 scale)",
+    "Protocol size classification",
+    "Chain distribution analysis",
+    "7-day TVL change tracking",
+    "Top protocols comparison",
+    "Smart contract risk assessment",
+    "Liquidation risk analysis",
+    "Concentration risk evaluation",
+    "Market risk assessment",
+    "Counterparty risk analysis"
+  ],
+  
+  "competitive_advantages": [
+    "Real-time TVL data from DeFiLlama API",
+    "Quantitative risk scoring (0-100 scale)",
+    "Protocol size-based risk classification",
+    "Multi-chain distribution analysis",
+    "Top protocols comparison for context",
+    "Comprehensive risk factor analysis",
+    "Data-driven risk assessment"
+  ],
+  
+  "getting_started": {
+    "for_users": {
+      "quick_start": "To use the Risk Analyzer Agent:\n1. Ask about protocol risk: 'What's the risk of Aave?'\n2. Compare protocols: 'Compare risk of Aave vs Compound'\n3. Get risk analysis: 'Analyze risk for Morpho'\n4. Check protocol safety: 'Is Uniswap safe?'",
+      "example_commands": [
+        "What's the risk of Aave?",
+        "Analyze risk for Morpho",
+        "Is Compound safe?",
+        "Compare risk of Aave vs Compound",
+        "What's the TVL of Curve?",
+        "Protocol risk analysis for Uniswap",
+        "Is this protocol safe to use?"
+      ],
+      "use_cases": [
+        "Assess risk before investing in protocols",
+        "Compare risk profiles across protocols",
+        "Understand protocol size and stability",
+        "Make informed DeFi investment decisions",
+        "Monitor protocol risk changes over time"
+      ]
+    },
+    "for_investors": {
+      "value_proposition": "The Risk Analyzer Agent provides institutional-grade risk assessment with quantitative scoring and real-time TVL data, enabling data-driven DeFi investment decisions.",
+      "market_position": "One of the few AI agents providing real-time protocol risk analysis with quantitative scoring and DeFiLlama integration.",
+      "competitive_advantages": [
+        "Real-time TVL data from DeFiLlama",
+        "Quantitative risk scoring enables comparison",
+        "Protocol size classification provides context",
+        "Multi-chain analysis shows distribution",
+        "Top protocols comparison for benchmarking"
+      ]
+    }
+  },
+  
+  "common_questions": [
+    {
+      "question": "How do you calculate risk scores?",
+      "answer": "Risk scores (0-100) are calculated based on multiple factors: protocol TVL (size), stability (7-day TVL changes), chain distribution, smart contract risks, and other factors. Larger protocols (>$1B TVL) typically have lower risk scores, while smaller protocols have higher risk scores."
+    },
+    {
+      "question": "What does TVL mean?",
+      "answer": "TVL (Total Value Locked) is the total value of assets deposited in a protocol. It's a key indicator of protocol size and stability. Higher TVL generally indicates lower risk due to scale and proven track record."
+    },
+    {
+      "question": "Which protocols are safest?",
+      "answer": "Protocols with very large TVL (>$1B) like Aave, Uniswap, and Compound typically have the lowest risk scores (0-20). The agent can compare protocols and provide specific risk scores for any protocol."
+    },
+    {
+      "question": "How often is risk data updated?",
+      "answer": "TVL data is fetched in real-time from DeFiLlama API when you ask about a protocol. The agent provides current TVL, 7-day changes, and risk assessment based on the latest data."
+    },
+    {
+      "question": "Can you analyze any protocol?",
+      "answer": "Yes! The agent can analyze any protocol listed in DeFiLlama (100+ protocols). Just ask 'What's the risk of [protocol name]?' and the agent will fetch TVL data and provide risk assessment."
+    }
+  ],
+  
+  "technical_details": {
+    "code_modules": [
+      "src/app/infrastructure/adapters/agent_squad/agents/risk_analyzer_agent.py",
+      "src/app/infrastructure/adapters/external/defillama_client.py"
+    ],
+    "dependencies": [
+      "DeFiLlama Client for TVL data",
+      "LLM Client Gateway (Vertex AI/DeepInfra)"
+    ],
+    "data_sources": [
+      "DeFiLlama API for protocol-specific TVL",
+      "DeFiLlama API for all protocols list",
+      "7-day TVL change data",
+      "Chain distribution data"
+    ],
+    "api_integration": {
+      "provider": "DeFiLlama",
+      "endpoints": [
+        "Protocol TVL endpoint",
+        "All protocols endpoint"
+      ],
+      "configuration": "Enable DeFiLlama in agent_squad config"
+    },
+    "model": {
+      "name": "gemini-2.0-flash",
+      "provider": "Vertex AI (primary), DeepInfra (fallback)",
+      "temperature": 0.2,
+      "max_tokens": 1500
+    }
+  },
+  
+  "example_use_cases": [
+    "Assess risk before depositing assets",
+    "Compare risk profiles across protocols",
+    "Understand protocol size and stability",
+    "Monitor risk changes over time",
+    "Make informed DeFi investment decisions",
+    "Identify safest protocols for large deposits"
+  ],
+  
+  "important_notes": [
+    "Risk scores are calculated based on real-time TVL data from DeFiLlama",
+    "Larger protocols (>$1B TVL) typically have lower risk scores",
+    "TVL is a key indicator but not the only risk factor",
+    "The agent provides quantitative risk scoring (0-100) for comparison",
+    "Risk assessment includes size, stability, and other factors"
+  ]
+}

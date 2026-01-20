@@ -18,6 +18,11 @@ class KnowledgeFile(str, Enum):
     HUNTER_AI = "hunter_ai"
     ULTRA = "ultra"
     SHORTCUTS = "shortcuts"
+    PORTFOLIO = "portfolio"
+    WALLET = "wallet"
+    LENDING_MORPHO = "lending_morpho"
+    GAS_OPTIMIZER = "gas_optimizer"
+    RISK_ANALYZER = "risk_analyzer"
 
 
 class KnowledgeInjector:
@@ -103,6 +108,26 @@ class KnowledgeInjector:
         # Command help / shortcuts
         if any(kw in query_lower for kw in ["command", "how do i", "how to", "syntax", "example"]):
             return self._get_shortcuts_knowledge(detected_intent)
+
+        # Portfolio queries
+        if any(kw in query_lower for kw in ["portfolio", "balance", "holdings", "my assets", "my tokens"]):
+            return self._get_portfolio_knowledge(user_type)
+
+        # Wallet queries
+        if any(kw in query_lower for kw in ["wallet", "wallets", "my wallet", "export wallet", "sync wallet"]):
+            return self._get_wallet_knowledge(user_type)
+
+        # Lending queries (Morpho)
+        if any(kw in query_lower for kw in ["lending", "lend", "morpho", "vault", "supply", "deposit assets", "earn yield"]):
+            return self._get_lending_morpho_knowledge(user_type)
+
+        # Gas optimizer queries
+        if any(kw in query_lower for kw in ["gas", "gas price", "gas cost", "transaction fee", "optimize gas"]):
+            return self._get_gas_optimizer_knowledge(user_type)
+
+        # Risk analyzer queries
+        if any(kw in query_lower for kw in ["risk", "safe", "safety", "protocol risk", "tvl", "risk analysis"]):
+            return self._get_risk_analyzer_knowledge(user_type)
 
         # Default to overview
         return self._get_overview_knowledge(user_type)
@@ -232,9 +257,17 @@ class KnowledgeInjector:
         base_knowledge = {
             "feature_name": swap["feature_name"],
             "description": swap["description"],
-            "how_it_works": swap["how_it_works"],
-            "supported_aggregators": swap["supported_aggregators"]
         }
+        
+        # Always include aggregator details for "what type" queries
+        if any(kw in query_lower for kw in ["what type", "what types", "what can", "types of", "which", "what swaps"]):
+            base_knowledge["supported_aggregators"] = swap["supported_aggregators"]
+            base_knowledge["supported_tokens"] = swap.get("supported_tokens", {})
+            base_knowledge["features"] = swap.get("features", [])
+            base_knowledge["command_formats"] = swap.get("command_formats", {})
+        else:
+            base_knowledge["how_it_works"] = swap.get("how_it_works", {})
+            base_knowledge["supported_aggregators"] = swap["supported_aggregators"]
 
         # Add rate comparison example if asking about rates or savings
         if any(kw in query_lower for kw in ["rate", "price", "cost", "save", "cheap", "best"]):
@@ -267,6 +300,102 @@ class KnowledgeInjector:
             "power_user_tips": shortcuts["power_user_tips"],
             "multi_step_flows": shortcuts["multi_step_flows"]
         }
+
+    def _get_portfolio_knowledge(self, user_type: str) -> Dict[str, Any]:
+        """Get portfolio management knowledge"""
+        portfolio = self._load_json(KnowledgeFile.PORTFOLIO)
+
+        base_knowledge = {
+            "feature_name": portfolio["feature_name"],
+            "tagline": portfolio["tagline"],
+            "description": portfolio["description"],
+            "core_capabilities": portfolio["core_capabilities"],
+            "api_endpoints": portfolio["api_endpoints"],
+            "features": portfolio["features"]
+        }
+
+        if user_type == "investor":
+            base_knowledge["competitive_advantages"] = portfolio["competitive_advantages"]
+            base_knowledge["getting_started"] = portfolio["getting_started"]["for_investors"]
+
+        return base_knowledge
+
+    def _get_wallet_knowledge(self, user_type: str) -> Dict[str, Any]:
+        """Get wallet management knowledge"""
+        wallet = self._load_json(KnowledgeFile.WALLET)
+
+        base_knowledge = {
+            "feature_name": wallet["feature_name"],
+            "tagline": wallet["tagline"],
+            "description": wallet["description"],
+            "core_capabilities": wallet["core_capabilities"],
+            "api_endpoints": wallet["api_endpoints"],
+            "features": wallet["features"]
+        }
+
+        if user_type == "investor":
+            base_knowledge["competitive_advantages"] = wallet["competitive_advantages"]
+            base_knowledge["getting_started"] = wallet["getting_started"]["for_investors"]
+
+        return base_knowledge
+
+    def _get_lending_morpho_knowledge(self, user_type: str) -> Dict[str, Any]:
+        """Get Morpho lending knowledge"""
+        lending = self._load_json(KnowledgeFile.LENDING_MORPHO)
+
+        base_knowledge = {
+            "feature_name": lending["feature_name"],
+            "tagline": lending["tagline"],
+            "description": lending["description"],
+            "core_capabilities": lending["core_capabilities"],
+            "api_endpoints": lending["api_endpoints"],
+            "features": lending["features"],
+            "important_notes": lending.get("important_notes", [])
+        }
+
+        if user_type == "investor":
+            base_knowledge["competitive_advantages"] = lending["competitive_advantages"]
+            base_knowledge["getting_started"] = lending["getting_started"]["for_investors"]
+
+        return base_knowledge
+
+    def _get_gas_optimizer_knowledge(self, user_type: str) -> Dict[str, Any]:
+        """Get gas optimizer agent knowledge"""
+        gas_optimizer = self._load_json(KnowledgeFile.GAS_OPTIMIZER)
+
+        base_knowledge = {
+            "feature_name": gas_optimizer["feature_name"],
+            "tagline": gas_optimizer["tagline"],
+            "description": gas_optimizer["description"],
+            "core_capabilities": gas_optimizer["core_capabilities"],
+            "supported_chains": gas_optimizer["supported_chains"],
+            "features": gas_optimizer["features"]
+        }
+
+        if user_type == "investor":
+            base_knowledge["competitive_advantages"] = gas_optimizer["competitive_advantages"]
+            base_knowledge["getting_started"] = gas_optimizer["getting_started"]["for_investors"]
+
+        return base_knowledge
+
+    def _get_risk_analyzer_knowledge(self, user_type: str) -> Dict[str, Any]:
+        """Get risk analyzer agent knowledge"""
+        risk_analyzer = self._load_json(KnowledgeFile.RISK_ANALYZER)
+
+        base_knowledge = {
+            "feature_name": risk_analyzer["feature_name"],
+            "tagline": risk_analyzer["tagline"],
+            "description": risk_analyzer["description"],
+            "core_capabilities": risk_analyzer["core_capabilities"],
+            "risk_score_scale": risk_analyzer["risk_score_scale"],
+            "features": risk_analyzer["features"]
+        }
+
+        if user_type == "investor":
+            base_knowledge["competitive_advantages"] = risk_analyzer["competitive_advantages"]
+            base_knowledge["getting_started"] = risk_analyzer["getting_started"]["for_investors"]
+
+        return base_knowledge
 
     def augment_system_prompt(
         self,

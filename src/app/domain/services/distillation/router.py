@@ -1,7 +1,7 @@
 """Distillation routing service."""
 import hashlib
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 from app.domain.services.distillation.complexity_assessor import ComplexityAssessor
 from app.domain.services.distillation.entity_extractor import EntityExtractor
@@ -46,6 +46,7 @@ class DistillationRouter:
         text: str,
         cache_lookup: Optional[str] = None,
         static_available: bool = False,
+        conversation_history: Optional[List[Dict[str, Any]]] = None,
     ) -> DistillationResult:
         """
         Determine optimal route for request.
@@ -61,8 +62,11 @@ class DistillationRouter:
         # Normalize query
         normalized_query = self._normalize_query(text)
         
-        # Step 1: Classify intent
-        intent, intent_confidence = self.intent_classifier.classify(text)
+        # Step 1: Classify intent (async, supports LLM-based classification with conversation history)
+        intent, intent_confidence = await self.intent_classifier.classify(
+            text=text,
+            conversation_history=conversation_history,  # Pass conversation history for context-aware classification
+        )
         
         # Step 2: Assess complexity
         complexity = self.complexity_assessor.assess(text, intent)

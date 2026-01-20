@@ -112,13 +112,26 @@ class DefiLlamaClient:
         
         protocols = []
         for item in data:
+            # Handle TVL - can be None, int, float, or missing
+            tvl_value = item.get("tvl")
+            if tvl_value is None:
+                tvl_value = 0.0
+            elif isinstance(tvl_value, (int, float)):
+                tvl_value = float(tvl_value)
+            else:
+                # Try to convert string or other types
+                try:
+                    tvl_value = float(tvl_value)
+                except (ValueError, TypeError):
+                    tvl_value = 0.0
+            
             protocols.append(
                 Protocol(
-                    id=item["slug"],
-                    name=item["name"],
+                    id=item.get("slug", ""),
+                    name=item.get("name", ""),
                     symbol=item.get("symbol", ""),
                     chain=item.get("chain", "Multi-Chain"),
-                    tvl=float(item.get("tvl", 0)),
+                    tvl=tvl_value,
                     change_1d=item.get("change_1d"),
                     change_7d=item.get("change_7d"),
                     category=item.get("category"),
@@ -147,18 +160,60 @@ class DefiLlamaClient:
         response.raise_for_status()
         data = response.json()
         
-        # Calculate chain TVLs
+        # Calculate chain TVLs - handle various response formats
         chain_tvls = {}
-        for chain, value in data.get("chainTvls", {}).items():
-            if isinstance(value, dict):
-                # Some chains return dict with tvl key
-                chain_tvls[chain] = float(value.get("tvl", 0))
-            elif isinstance(value, (int, float)):
-                chain_tvls[chain] = float(value)
+        chain_tvls_data = data.get("chainTvls", {})
+        if not isinstance(chain_tvls_data, dict):
+            # If chainTvls is not a dict, skip it
+            chain_tvls_data = {}
+        
+        for chain, value in chain_tvls_data.items():
+            try:
+                if isinstance(value, dict):
+                    # Some chains return dict with tvl key
+                    tvl_value = value.get("tvl", 0)
+                    chain_tvls[chain] = float(tvl_value) if tvl_value is not None else 0.0
+                elif isinstance(value, (int, float)):
+                    chain_tvls[chain] = float(value)
+                elif isinstance(value, list):
+                    # Some chains return list of TVL values - use the latest
+                    if len(value) > 0:
+                        latest = value[-1]
+                        if isinstance(latest, (int, float)):
+                            chain_tvls[chain] = float(latest)
+                        elif isinstance(latest, dict):
+                            tvl_val = latest.get("tvl", 0)
+                            chain_tvls[chain] = float(tvl_val) if tvl_val is not None else 0.0
+                        else:
+                            chain_tvls[chain] = 0.0
+                    else:
+                        chain_tvls[chain] = 0.0
+                else:
+                    # Unknown format - skip this chain
+                    continue
+            except (ValueError, TypeError) as e:
+                # Skip chains with invalid data
+                continue
+        
+        # Extract total TVL - handle different response formats
+        total_tvl = 0.0
+        tvl_data = data.get("tvl", None)
+        if tvl_data:
+            if isinstance(tvl_data, (int, float)):
+                total_tvl = float(tvl_data)
+            elif isinstance(tvl_data, list) and len(tvl_data) > 0:
+                # TVL is a list of historical data points
+                latest_tvl = tvl_data[-1]
+                if isinstance(latest_tvl, dict):
+                    total_tvl = float(latest_tvl.get("totalLiquidityUSD", latest_tvl.get("tvl", 0)) or 0)
+                elif isinstance(latest_tvl, (int, float)):
+                    total_tvl = float(latest_tvl)
+            elif isinstance(tvl_data, dict):
+                total_tvl = float(tvl_data.get("totalLiquidityUSD", tvl_data.get("tvl", 0)) or 0)
         
         return ProtocolTVL(
-            protocol=data["name"],
-            tvl=float(data.get("tvl", [{}])[-1].get("totalLiquidityUSD", 0)) if data.get("tvl") else 0,
+            protocol=data.get("name", protocol),
+            tvl=total_tvl,
             chain_tvls=chain_tvls,
             tokens_in_usd=data.get("tokensInUsd"),
         )

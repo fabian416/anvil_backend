@@ -1,0 +1,233 @@
+{
+  "feature_name": "Portfolio Management",
+  "tagline": "Comprehensive cross-chain portfolio tracking and analysis",
+  "description": "Anvil's Portfolio Management provides real-time tracking of your DeFi assets across multiple blockchain networks. Get instant visibility into your token holdings, USD values, portfolio composition, and advanced risk analysis with cascade failure simulation.",
+  
+  "core_capabilities": [
+    {
+      "name": "Multi-Chain Balance Tracking",
+      "description": "Track balances across Ethereum, Base, Arbitrum, Polygon, and Optimism in real-time",
+      "endpoints": [
+        "/api/v1/user/portfolio/me",
+        "/api/v1/user/portfolio/{wallet_address}"
+      ],
+      "code_location": "src/app/presentation/http/controllers/portfolio/router.py",
+      "features": [
+        "Real-time on-chain balance fetching via RPC",
+        "USD price resolution via DeFiLlama",
+        "Native token balance tracking (ETH, BASE, etc.)",
+        "ERC-20 token holdings with decimals",
+        "Portfolio snapshot history (optional)",
+        "Multi-wallet support"
+      ]
+    },
+    {
+      "name": "Portfolio Risk Analysis",
+      "description": "Comprehensive risk assessment with protocol-level scoring and cascade failure simulation",
+      "endpoints": [
+        "/api/v1/user/portfolio/risk",
+        "/api/v1/user/portfolio/risk/simulate-cascade"
+      ],
+      "code_location": "src/app/application/portfolio/",
+      "features": [
+        "Overall risk score (weighted by exposure)",
+        "Risk distribution by level (low, medium, high, very_high)",
+        "Protocols at elevated risk identification",
+        "Dependency risk analysis",
+        "Systemic risk scoring",
+        "Concentration risk assessment",
+        "Chain-specific risk distribution",
+        "Actionable recommendations",
+        "Cascade failure simulation",
+        "Value at Risk (VaR) calculations"
+      ]
+    }
+  ],
+  
+  "how_it_works": "Portfolio Management works by:\n1. Fetching on-chain balances via RPC calls to supported chains\n2. Resolving USD prices through DeFiLlama API integration\n3. Calculating total portfolio value and token percentages\n4. Performing risk analysis using protocol TVL data and risk scores\n5. Simulating cascade failures to identify contagion risks\n6. Providing actionable recommendations based on risk assessment",
+  
+  "supported_chains": [
+    "Ethereum",
+    "Base",
+    "Arbitrum",
+    "Polygon",
+    "Optimism"
+  ],
+  
+  "api_endpoints": [
+    {
+      "path": "/api/v1/user/portfolio/me",
+      "method": "GET",
+      "description": "Get authenticated user's portfolio",
+      "auth_required": true,
+      "parameters": {
+        "chain": "Optional. Filter by chain (ethereum, base, arbitrum, polygon, optimism)",
+        "save_snapshot": "Optional. Whether to save portfolio snapshot for history (default: false)"
+      },
+      "response": {
+        "wallet_address": "Wallet address",
+        "chain": "Chain name",
+        "total_usd": "Total portfolio value in USD",
+        "native_balance": "Native token balance (ETH, BASE, etc.)",
+        "native_usd_value": "Native token USD value",
+        "tokens": "Array of token holdings with symbol, amount, USD value, percentage"
+      }
+    },
+    {
+      "path": "/api/v1/user/portfolio/{wallet_address}",
+      "method": "GET",
+      "description": "Get portfolio for any wallet address (public, no auth required)",
+      "auth_required": false,
+      "parameters": {
+        "wallet_address": "Required. 42-character hex address starting with 0x",
+        "chain": "Required. Chain to calculate for (default: base)",
+        "save_snapshot": "Optional. Save snapshot if wallet is registered"
+      }
+    },
+    {
+      "path": "/api/v1/user/portfolio/risk",
+      "method": "GET",
+      "description": "Get comprehensive risk analysis for user's portfolio",
+      "auth_required": true,
+      "response": {
+        "overall_risk_score": "Weighted risk score (0-100)",
+        "risk_distribution": "Risk levels breakdown",
+        "protocols_at_risk": "Array of protocols with elevated risk",
+        "dependency_risks": "Protocol dependency analysis",
+        "systemic_risk_score": "System-wide risk assessment",
+        "concentration_risk": "Portfolio concentration metrics",
+        "chain_risk_distribution": "Risk by blockchain",
+        "recommendations": "Actionable risk mitigation steps",
+        "total_value_at_risk_usd": "Total VaR in USD"
+      }
+    },
+    {
+      "path": "/api/v1/user/portfolio/risk/simulate-cascade",
+      "method": "POST",
+      "description": "Simulate cascade failure impact on portfolio",
+      "auth_required": true,
+      "request": {
+        "origin_protocol_id": "Protocol ID that fails (UUID)"
+      },
+      "response": {
+        "cascade_impacts": "Direct and indirect impacts",
+        "worst_case_loss_usd": "Maximum potential loss",
+        "worst_case_loss_percentage": "Loss as percentage of portfolio",
+        "protocols_to_exit": "Protocols to exit immediately",
+        "protocols_to_reduce": "Protocols to reduce exposure",
+        "safe_protocols": "Unaffected protocols"
+      }
+    }
+  ],
+  
+  "features": [
+    "Real-time balance updates via on-chain RPC calls",
+    "Multi-chain aggregation (Ethereum, Base, Arbitrum, Polygon, Optimism)",
+    "USD price resolution through DeFiLlama integration",
+    "Portfolio snapshot history (optional)",
+    "Advanced risk analysis with protocol-level scoring",
+    "Cascade failure simulation",
+    "Value at Risk (VaR) calculations",
+    "Concentration risk assessment",
+    "Chain-specific risk distribution",
+    "Actionable risk mitigation recommendations",
+    "Multi-wallet support",
+    "Public portfolio lookup (no auth required for address-based queries)"
+  ],
+  
+  "competitive_advantages": [
+    "Multi-chain portfolio aggregation in one view",
+    "Real-time risk analysis with cascade simulation",
+    "Protocol-level risk scoring (0-100 scale)",
+    "Actionable recommendations based on risk assessment",
+    "Value at Risk calculations for informed decision-making",
+    "Public portfolio lookup for transparency",
+    "Historical snapshot support for trend analysis"
+  ],
+  
+  "getting_started": {
+    "for_users": {
+      "quick_start": "To get started with Portfolio Management:\n1. Connect your wallet to Anvil\n2. Use 'Check my portfolio' or 'Show my balances' in chat\n3. View your portfolio via API: GET /api/v1/user/portfolio/me\n4. Get risk analysis: GET /api/v1/user/portfolio/risk\n5. Simulate cascade failures: POST /api/v1/user/portfolio/risk/simulate-cascade",
+      "example_commands": [
+        "Check my portfolio",
+        "Show my balances",
+        "What's my portfolio value?",
+        "Analyze my portfolio risk",
+        "Simulate what happens if Aave fails"
+      ],
+      "use_cases": [
+        "Track all your DeFi assets in one place",
+        "Monitor portfolio value in real-time",
+        "Identify risky positions before they become problems",
+        "Understand portfolio concentration risks",
+        "Simulate worst-case scenarios for risk management"
+      ]
+    },
+    "for_investors": {
+      "value_proposition": "Portfolio Management provides institutional-grade risk analysis with cascade failure simulation, enabling sophisticated risk management strategies for DeFi portfolios.",
+      "market_position": "One of the few platforms offering multi-chain portfolio aggregation with advanced risk analysis and cascade simulation capabilities.",
+      "competitive_advantages": [
+        "Multi-chain aggregation reduces need for multiple tools",
+        "Cascade failure simulation is unique in the market",
+        "Protocol-level risk scoring enables data-driven decisions",
+        "Value at Risk calculations provide quantitative risk metrics"
+      ]
+    }
+  },
+  
+  "common_questions": [
+    {
+      "question": "How do I track my portfolio?",
+      "answer": "Your portfolio is automatically tracked when you connect your wallet. Use 'Check my portfolio' in chat or call GET /api/v1/user/portfolio/me to see your current holdings, USD values, and token percentages across all supported chains."
+    },
+    {
+      "question": "What chains are supported?",
+      "answer": "Portfolio Management supports Ethereum, Base, Arbitrum, Polygon, and Optimism. You can filter by chain or view aggregated balances across all chains."
+    },
+    {
+      "question": "How does risk analysis work?",
+      "answer": "Risk analysis evaluates your portfolio using protocol TVL data, risk scores, and dependency mapping. It provides an overall risk score, identifies protocols at elevated risk, analyzes dependency risks, and calculates Value at Risk. You can also simulate cascade failures to see impact of protocol failures."
+    },
+    {
+      "question": "What is cascade failure simulation?",
+      "answer": "Cascade failure simulation shows what would happen if a specific protocol in your portfolio fails. It identifies direct impacts (your exposure to that protocol) and indirect impacts (protocols that depend on the failed protocol), helping you understand contagion risks."
+    },
+    {
+      "question": "Can I view someone else's portfolio?",
+      "answer": "Yes! Use GET /api/v1/user/portfolio/{wallet_address} with any wallet address. This is a public endpoint that doesn't require authentication, useful for transparency and analysis."
+    }
+  ],
+  
+  "technical_details": {
+    "code_modules": [
+      "src/app/presentation/http/controllers/portfolio/router.py",
+      "src/app/application/portfolio/",
+      "src/app/domain/portfolio/"
+    ],
+    "dependencies": [
+      "PostgreSQL (portfolio snapshots)",
+      "Redis (caching)",
+      "RPC providers (Alchemy, Infura) for on-chain data",
+      "DeFiLlama API for USD price resolution"
+    ],
+    "data_sources": [
+      "On-chain RPC calls for balance fetching",
+      "DeFiLlama API for token prices",
+      "DeFiLlama API for protocol TVL and risk data"
+    ],
+    "performance": {
+      "balance_fetching": "Real-time via RPC (typically <2 seconds)",
+      "price_resolution": "Cached via DeFiLlama (typically <500ms)",
+      "risk_analysis": "Computed on-demand (typically <3 seconds)"
+    }
+  },
+  
+  "example_use_cases": [
+    "Daily portfolio value tracking",
+    "Risk assessment before making new investments",
+    "Identifying over-concentrated positions",
+    "Simulating worst-case scenarios for risk management",
+    "Comparing portfolio composition across chains",
+    "Monitoring protocol risk changes over time"
+  ]
+}

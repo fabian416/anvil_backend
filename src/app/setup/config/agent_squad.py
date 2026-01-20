@@ -15,9 +15,10 @@ class AgentConfigModel(BaseModel):
 
 
 class AgentSquadAgentsConfig(BaseModel):
-    """All 18 agent configurations."""
+    """All 19 agent configurations."""
     # Core user-facing agents
     chat: AgentConfigModel = Field(default_factory=AgentConfigModel)
+    knowledge: AgentConfigModel = Field(default_factory=AgentConfigModel)
     hunter_ai: AgentConfigModel = Field(default_factory=AgentConfigModel)
     research: AgentConfigModel = Field(default_factory=AgentConfigModel)
     execution: AgentConfigModel = Field(default_factory=AgentConfigModel)

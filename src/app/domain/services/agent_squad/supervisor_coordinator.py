@@ -306,12 +306,91 @@ class SupervisorCoordinator:
                         elif hasattr(result, 'provider'):
                             provider_info = result.provider
                     
+                    # Extract tools_used from AgentResponse if available
+                    tools_used_info = []
+                    if isinstance(result, AgentResponse):
+                        if hasattr(result, 'tools_used'):
+                            tools_used_info = result.tools_used if result.tools_used else []
+                    
+                    # Extract data sources from AgentResponse sources
+                    data_sources = []
+                    if isinstance(result, AgentResponse) and hasattr(result, 'sources') and result.sources:
+                        for source in result.sources:
+                            source_type = getattr(source, 'source_type', None)
+                            source_name = getattr(source, 'source_name', '')
+                            provider = getattr(source, 'provider', '')
+                            
+                            # Map source types to readable names
+                            if source_type:
+                                if source_type.value == "api":
+                                    data_sources.append(f"{source_name} API" if source_name else "External API")
+                                elif source_type.value == "database":
+                                    data_sources.append("Database")
+                                elif source_type.value == "mcp_server":
+                                    data_sources.append(f"MCP: {source_name}" if source_name else "MCP Server")
+                                elif source_type.value == "blockchain":
+                                    data_sources.append(f"Blockchain ({source_name})" if source_name else "Blockchain")
+                                elif source_type.value == "knowledge_base":
+                                    data_sources.append("Knowledge Base")
+                                elif source_type.value == "rss_feed":
+                                    data_sources.append("RSS Feed")
+                                elif source_type.value == "social_media":
+                                    data_sources.append(f"Social Media ({source_name})" if source_name else "Social Media")
+                            
+                            # Add specific providers (non-LLM)
+                            if provider and provider not in ["Vertex AI", "DeepInfra"]:
+                                if provider not in data_sources:
+                                    data_sources.append(provider)
+                    
+                    # Build enhanced task description
+                    task_desc_parts = [task.task_description]
+                    
+                    # Add tools information
+                    if tools_used_info:
+                        tool_names = []
+                        for tool in tools_used_info:
+                            tool_lower = tool.lower()
+                            if "knowledge_base" in tool_lower or "knowledge" in tool_lower:
+                                tool_names.append("Knowledge Base")
+                            elif "web3" in tool_lower or "web3_client" in tool_lower:
+                                tool_names.append("Web3Client")
+                            elif "coingecko" in tool_lower:
+                                tool_names.append("CoinGecko API")
+                            elif "defillama" in tool_lower or "defi_llama" in tool_lower:
+                                tool_names.append("DeFiLlama API")
+                            elif "1inch" in tool_lower or "oneinch" in tool_lower:
+                                tool_names.append("1inch API")
+                            elif "morpho" in tool_lower:
+                                tool_names.append("Morpho")
+                            elif "graphrag" in tool_lower or "graph_rag" in tool_lower:
+                                tool_names.append("GraphRAG")
+                            elif "database" in tool_lower or "db" in tool_lower:
+                                tool_names.append("Database")
+                            elif "llm" in tool_lower or "llm_gateway" in tool_lower:
+                                tool_names.append("LLM Gateway")
+                            elif "perplexity" in tool_lower:
+                                tool_names.append("Perplexity")
+                            elif "thegraph" in tool_lower or "the_graph" in tool_lower:
+                                tool_names.append("The Graph")
+                            else:
+                                tool_names.append(tool.replace("_", " ").title())
+                        
+                        if tool_names:
+                            task_desc_parts.append(f"Tools: {', '.join(tool_names)}")
+                    
+                    # Add data sources information
+                    if data_sources:
+                        task_desc_parts.append(f"Data Sources: {', '.join(data_sources)}")
+                    
+                    enhanced_task_description = " | ".join(task_desc_parts)
+                    
                     agent_timings = [{
                         "agent_type": task.agent_type.value,
-                        "task_description": task.task_description,  # Full description for debugging
+                        "task_description": enhanced_task_description,  # Enhanced with tools and data sources
                         "execution_time_ms": task.execution_time_ms,
                         "status": task.status.value,
                         "provider": provider_info,  # Include LLM provider for debugging
+                        "tools_used": tools_used_info if tools_used_info else [],  # Include tools used (API clients, etc.)
                     }] if hasattr(task, 'execution_time_ms') and task.execution_time_ms is not None else []
                     return result.content, sources, agent_timings
                 # Fallback if result is already a string (shouldn't happen with updated port)
@@ -378,6 +457,8 @@ class SupervisorCoordinator:
                 next_task.error = str(e)
                 next_task.status = TaskStatus.FAILED
                 logger.error(f"❌ Task failed: {next_task.agent_type.value} - {str(e)}", exc_info=True)
+                # Continue with other tasks even if one fails
+                continue
         
         # Aggregate results
         final_response = await self._aggregate_results(workflow_plan)
@@ -404,12 +485,96 @@ class SupervisorCoordinator:
                     elif hasattr(task.result, 'provider'):
                         provider_info = task.result.provider
                 
+                # Extract tools_used from AgentResponse if available
+                tools_used_info = []
+                if hasattr(task, 'result') and task.result:
+                    from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+                    if isinstance(task.result, AgentResponse):
+                        if hasattr(task.result, 'tools_used'):
+                            tools_used_info = task.result.tools_used if task.result.tools_used else []
+                
+                # Extract data sources from AgentResponse sources
+                data_sources = []
+                if hasattr(task, 'result') and task.result:
+                    from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+                    if isinstance(task.result, AgentResponse) and hasattr(task.result, 'sources') and task.result.sources:
+                        for source in task.result.sources:
+                            source_type = getattr(source, 'source_type', None)
+                            source_name = getattr(source, 'source_name', '')
+                            provider = getattr(source, 'provider', '')
+                            
+                            # Map source types to readable names
+                            if source_type:
+                                if source_type.value == "api":
+                                    data_sources.append(f"{source_name} API" if source_name else "External API")
+                                elif source_type.value == "database":
+                                    data_sources.append("Database")
+                                elif source_type.value == "mcp_server":
+                                    data_sources.append(f"MCP: {source_name}" if source_name else "MCP Server")
+                                elif source_type.value == "blockchain":
+                                    data_sources.append(f"Blockchain ({source_name})" if source_name else "Blockchain")
+                                elif source_type.value == "knowledge_base":
+                                    data_sources.append("Knowledge Base")
+                                elif source_type.value == "rss_feed":
+                                    data_sources.append("RSS Feed")
+                                elif source_type.value == "social_media":
+                                    data_sources.append(f"Social Media ({source_name})" if source_name else "Social Media")
+                                # Skip LLM as it's already in provider
+                            
+                            # Add specific providers (non-LLM)
+                            if provider and provider not in ["Vertex AI", "DeepInfra"]:
+                                if provider not in data_sources:
+                                    data_sources.append(provider)
+                
+                # Build enhanced task description with tools and data sources
+                task_desc_parts = [task.task_description]
+                
+                # Add tools information
+                if tools_used_info:
+                    tool_names = []
+                    for tool in tools_used_info:
+                        tool_lower = tool.lower()
+                        if "knowledge_base" in tool_lower or "knowledge" in tool_lower:
+                            tool_names.append("Knowledge Base")
+                        elif "web3" in tool_lower or "web3_client" in tool_lower:
+                            tool_names.append("Web3Client")
+                        elif "coingecko" in tool_lower:
+                            tool_names.append("CoinGecko API")
+                        elif "defillama" in tool_lower or "defi_llama" in tool_lower:
+                            tool_names.append("DeFiLlama API")
+                        elif "1inch" in tool_lower or "oneinch" in tool_lower:
+                            tool_names.append("1inch API")
+                        elif "morpho" in tool_lower:
+                            tool_names.append("Morpho")
+                        elif "graphrag" in tool_lower or "graph_rag" in tool_lower:
+                            tool_names.append("GraphRAG")
+                        elif "database" in tool_lower or "db" in tool_lower:
+                            tool_names.append("Database")
+                        elif "llm" in tool_lower or "llm_gateway" in tool_lower:
+                            tool_names.append("LLM Gateway")
+                        elif "perplexity" in tool_lower:
+                            tool_names.append("Perplexity")
+                        elif "thegraph" in tool_lower or "the_graph" in tool_lower:
+                            tool_names.append("The Graph")
+                        else:
+                            tool_names.append(tool.replace("_", " ").title())
+                    
+                    if tool_names:
+                        task_desc_parts.append(f"Tools: {', '.join(tool_names)}")
+                
+                # Add data sources information
+                if data_sources:
+                    task_desc_parts.append(f"Data Sources: {', '.join(data_sources)}")
+                
+                enhanced_task_description = " | ".join(task_desc_parts)
+                
                 agent_timings.append({
                     "agent_type": task.agent_type.value,
-                    "task_description": task.task_description,  # Full description for debugging
+                    "task_description": enhanced_task_description,  # Enhanced with tools and data sources
                     "execution_time_ms": task.execution_time_ms,
                     "status": task.status.value,
                     "provider": provider_info,  # Include LLM provider for debugging
+                    "tools_used": tools_used_info if tools_used_info else [],  # Include tools used (API clients, etc.)
                 })
         
         return final_response, all_sources, agent_timings
@@ -475,12 +640,18 @@ Guidelines:
 - **Single-agent queries** → Create 1-task workflow (no aggregation needed):
   * Price queries (single or multiple tokens) → Use "hunter_ai" as agent_type
   * Market sentiment queries → Use "hunter_ai" as agent_type
-  * Anvil knowledge → Use "chat" as agent_type
-  * General DeFi questions → Use "chat" as agent_type
+  * Anvil knowledge → Use "knowledge" as agent_type (Knowledge Anvil agent for educational queries)
+  * General DeFi questions → Use "knowledge" as agent_type (Knowledge Anvil agent for educational queries)
+  * **CRITICAL: Yield farming/APY queries** (e.g., "best yield opportunities", "show me APY data", "yield farming", "lending rates", "APY", "yield") → MUST use "defi_yield" as agent_type (has real DeFiLlama API integration for live APY data)
+  * **CRITICAL: Risk analysis queries** (e.g., "risk of Aave", "analyze protocol risk", "safety of protocol", "protocol risk", "TVL") → MUST use "risk_analyzer" as agent_type (has real DeFiLlama API integration for protocol TVL data)
+  * **CRITICAL: Gas price queries** (e.g., "gas prices on ethereum", "gas costs", "optimize gas", "gas on polygon", "gas prices", "ethereum gas", "polygon gas") → MUST use "gas_optimizer" as agent_type (has real Web3Client integration for live gas prices) - DO NOT use "hunter_ai" for gas queries
+  * **CRITICAL: Swap INFORMATION queries** (e.g., "what type of swaps", "what swaps can I make", "explain swaps", "how do swaps work") → Use "knowledge" or "chat" agent_type (informational, NOT execution)
+  * **CRITICAL: Swap EXECUTION queries** (e.g., "swap ETH for USDC", "swap 100 USDC to ETH", "I want to swap 1 BTC for SOL") → MUST use "execution" as agent_type (has real 1inch API integration for live swap quotes) - ONLY use execution agent when user provides SPECIFIC tokens and amounts
   * Shortcuts → Use appropriate agent_type (swap_tokens → "execution", lending → "defi_yield", portfolio → "portfolio" ONLY for authenticated users, etc.)
-- **Multi-intent queries** (e.g., "price of btc and eth, and explain swaps") → Create separate tasks:
+- **Multi-intent queries** (e.g., "price of btc and eth, and explain swaps", "what type of swaps can I make? what is the price?") → Create separate tasks:
   * ONE "hunter_ai" task for ALL price queries (it can handle multiple tokens)
-  * ONE "chat" task for informational/Anvil knowledge queries
+  * ONE "knowledge" task for informational/Anvil knowledge queries (use Knowledge Anvil agent)
+  * **IMPORTANT**: For "what type of swaps" or "what swaps can I make" → Use "knowledge" agent (informational), NOT "execution" agent (execution requires specific tokens/amounts)
 - **Multi-agent queries** → Break down into agent-specific subtasks (ONLY for DeFi/crypto topics)
 - Use dependencies to ensure correct order
 - Each agent should have a clear, specific task
@@ -492,7 +663,13 @@ Guidelines:
   * This ensures the CHAT agent runs LAST and receives all previous responses
 - Limit to {self._max_agents} agents
 - For single-agent queries, return the agent's response directly (no aggregation needed)
-- **IMPORTANT**: Use exact agent_type values: "hunter_ai", "chat", "guest_auth", "execution", "portfolio", "defi_yield", "research", "risk_analyzer", etc.
+- **IMPORTANT**: Use exact agent_type values: "hunter_ai", "chat", "guest_auth", "execution", "portfolio", "defi_yield", "research", "risk_analyzer", "gas_optimizer", etc.
+- **SPECIALIZED AGENTS WITH REAL API DATA**:
+  * "defi_yield" - For yield farming, APY, lending rates (uses DeFiLlama API for real APY data)
+  * "risk_analyzer" - For protocol risk analysis, TVL analysis (uses DeFiLlama API for real protocol data)
+  * "gas_optimizer" - For gas price queries, gas optimization (uses Web3Client for real-time gas prices)
+  * "execution" - For swap quotes, execution planning (uses 1inch API for real swap quotes)
+  * When user explicitly asks for "real data", "APY", "risk analysis", "gas prices", or "swap quotes", use these specialized agents
 - **SPEED**: Prefer single-agent workflows for simple queries to minimize latency
 """
     
@@ -531,8 +708,34 @@ Guidelines:
             if task.status == TaskStatus.COMPLETED
         ]
         
+        failed_tasks = [
+            task for task in workflow_plan.tasks
+            if task.status == TaskStatus.FAILED
+        ]
+        
         if not completed_tasks:
-            return "No tasks completed successfully."
+            # Check if all tasks failed due to rate limiting
+            rate_limit_errors = [
+                task for task in failed_tasks
+                if task.error and ("429" in str(task.error) or "rate limit" in str(task.error).lower() or "resource exhausted" in str(task.error).lower())
+            ]
+            
+            if rate_limit_errors:
+                return "I'm currently experiencing high demand. Please try again in a few moments. If the issue persists, the service may be temporarily unavailable."
+            
+            # Check if all tasks failed for other reasons
+            if failed_tasks:
+                error_summary = f"Unable to process your request. {len(failed_tasks)} task(s) failed."
+                # Include first error for debugging (but sanitize it)
+                if failed_tasks[0].error:
+                    error_msg = str(failed_tasks[0].error)
+                    if "429" in error_msg or "rate limit" in error_msg.lower():
+                        error_summary = "I'm currently experiencing high demand. Please try again in a few moments."
+                    elif len(error_msg) < 200:  # Only include short error messages
+                        error_summary += f" Error: {error_msg[:100]}"
+                return error_summary
+            
+            return "No tasks completed successfully. Please try again."
         
         # If only one task, return its content directly (no aggregation header)
         if len(completed_tasks) == 1:
@@ -609,6 +812,8 @@ Guidelines:
             "Aggregate and summarize the following responses from specialist agents.",
             "Remove duplicates, create a coherent single response, and include only ONE disclaimer.",
             "",
+            "CRITICAL: FILTER OUT authentication/registration messages (like 'Account Required', 'Wallet Required') UNLESS the user explicitly asked about account requirements. These are error messages, not answers to informational queries.",
+            "",
             "Agent Responses:",
             "",
         ]
@@ -621,6 +826,11 @@ Guidelines:
                 content = task.result
             else:
                 content = str(task.result) if task.result else "(No response)"
+            
+            # Skip authentication messages unless explicitly about auth
+            if content and any(kw in content.lower() for kw in ["account required", "wallet required", "sign up", "create an account"]) and "what type" in chat_task.task_description.lower():
+                # This is likely an error - skip it
+                continue
             
             parts.append(f"--- Response from {task.agent_type.value.upper()} Agent ---")
             parts.append(content)

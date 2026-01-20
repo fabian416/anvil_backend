@@ -1,5 +1,5 @@
 """
-Hunter AI Agent OpenAI - Market sentiment & predictions.
+Hunter AI Agent - Market sentiment & predictions.
 """
 
 import time
@@ -14,9 +14,9 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
 
 
-class HunterAIAgentOpenAI:
+class HunterAIAgent:
     """
-    Hunter AI Agent OpenAI implementation.
+    Hunter AI Agent implementation.
     
     Implements: AgentGateway
     
@@ -29,7 +29,7 @@ class HunterAIAgentOpenAI:
     - News sentiment
     - Fear & Greed Index
     
-    Model: gpt-4o (advanced reasoning)
+    Model: gemini-2.0-flash (Vertex AI, advanced reasoning)
     Temperature: 0.3 (factual, less creative)
     """
     

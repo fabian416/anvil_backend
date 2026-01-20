@@ -63,10 +63,17 @@ class AgentGateway(Protocol):
     - Handle errors gracefully
     
     Implementing adapters:
-    - ChatAgentOpenAI
-    - HunterAIAgentOpenAI
+    - ChatAgent
+    - GuestAuthAgent
+    - HunterAIAgent
     - ResearchAgentPerplexity
     - ExecutionAgentPrivy
+    - RiskAnalyzerAgent
+    - PortfolioAgent
+    - TaxOptimizerAgent
+    - DefiYieldAgent
+    - SecurityAuditorAgentSlither
+    - GasOptimizerAgent
     - ... (all 18 agents)
     """
     

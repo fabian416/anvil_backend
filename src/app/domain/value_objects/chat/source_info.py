@@ -22,6 +22,7 @@ class SourceType(str, Enum):
     BLOCKCHAIN = "blockchain"  # On-chain data (RPC calls)
     LLM = "llm"  # LLM-generated content
     AGGREGATED = "aggregated"  # Aggregated from multiple sources
+    KNOWLEDGE_BASE = "knowledge_base"  # Anvil knowledge base (JSON files)
 
 
 @dataclass

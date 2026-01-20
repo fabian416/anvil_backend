@@ -1,0 +1,267 @@
+{
+  "feature_name": "Gas Optimizer Agent",
+  "tagline": "Real-time gas price analysis and optimization recommendations",
+  "description": "The Gas Optimizer Agent provides real-time gas price analysis, optimal transaction timing recommendations, and Layer 2 migration suggestions to help users minimize transaction costs across multiple blockchain networks.",
+  
+  "core_capabilities": [
+    {
+      "name": "Real-Time Gas Price Analysis",
+      "description": "Fetch and analyze current gas prices from multiple chains",
+      "code_location": "src/app/infrastructure/adapters/agent_squad/agents/gas_optimizer_agent.py",
+      "features": [
+        "Real-time gas price fetching via Web3Client",
+        "Multi-chain support (Ethereum, Polygon, Arbitrum, Optimism, Base, Avalanche, BSC)",
+        "Slow/Standard/Fast gas price tiers",
+        "USD cost estimation for transactions",
+        "Base fee and priority fee breakdown",
+        "Timing recommendations based on current prices"
+      ],
+      "data_sources": [
+        "Web3Client (Alchemy/Infura RPC) for Ethereum",
+        "Chain-specific RPC providers for other chains"
+      ]
+    },
+    {
+      "name": "Optimal Transaction Timing",
+      "description": "Recommend best times to send transactions based on gas price trends",
+      "features": [
+        "Low gas price detection",
+        "High gas price warnings",
+        "Optimal timing suggestions",
+        "Wait vs. execute recommendations"
+      ]
+    },
+    {
+      "name": "Layer 2 Migration Recommendations",
+      "description": "Suggest Layer 2 alternatives when gas prices are high",
+      "features": [
+        "Arbitrum recommendations (~90% cheaper)",
+        "Optimism recommendations (~85% cheaper)",
+        "Base recommendations (~90% cheaper)",
+        "Polygon recommendations (~95% cheaper)",
+        "Cost comparison between chains"
+      ]
+    },
+    {
+      "name": "Gas-Efficient Alternatives",
+      "description": "Suggest gas-saving strategies and alternatives",
+      "features": [
+        "Batch transaction suggestions",
+        "Gas-efficient contract recommendations",
+        "Transaction optimization tips",
+        "Cost-saving strategies"
+      ]
+    }
+  ],
+  
+  "how_it_works": "The Gas Optimizer Agent works by:\n1. Detecting chain from user query (Ethereum, Polygon, Arbitrum, etc.)\n2. Fetching real-time gas prices via Web3Client (Alchemy/Infura RPC)\n3. Calculating Slow/Standard/Fast tiers with USD cost estimates\n4. Analyzing current prices and providing timing recommendations\n5. Suggesting Layer 2 alternatives when gas prices are high\n6. Providing gas-efficient strategies and optimization tips",
+  
+  "supported_chains": [
+    {
+      "chain": "Ethereum",
+      "typical_gas": "20-200 gwei",
+      "typical_cost": "$1-50 per transaction",
+      "real_time_support": true,
+      "rpc_provider": "Alchemy/Infura"
+    },
+    {
+      "chain": "Polygon",
+      "typical_gas": "30-100 gwei",
+      "typical_cost": "$0.01-0.05 per transaction",
+      "real_time_support": false,
+      "cost_savings": "~95% cheaper than Ethereum"
+    },
+    {
+      "chain": "Arbitrum",
+      "typical_gas": "0.1-0.5 gwei",
+      "typical_cost": "$0.10-0.50 per transaction",
+      "real_time_support": false,
+      "cost_savings": "~90% cheaper than Ethereum"
+    },
+    {
+      "chain": "Optimism",
+      "typical_gas": "0.1-1 gwei",
+      "typical_cost": "$0.10-1.00 per transaction",
+      "real_time_support": false,
+      "cost_savings": "~85% cheaper than Ethereum"
+    },
+    {
+      "chain": "Base",
+      "typical_gas": "0.1-0.5 gwei",
+      "typical_cost": "$0.10-0.50 per transaction",
+      "real_time_support": false,
+      "cost_savings": "~90% cheaper than Ethereum"
+    },
+    {
+      "chain": "Avalanche",
+      "typical_gas": "25-30 nAVAX",
+      "typical_cost": "$0.01-0.05 per transaction",
+      "real_time_support": false,
+      "cost_savings": "Very cheap"
+    },
+    {
+      "chain": "BSC",
+      "typical_gas": "3-5 gwei",
+      "typical_cost": "$0.10-0.50 per transaction",
+      "real_time_support": false,
+      "cost_savings": "Much cheaper than Ethereum"
+    }
+  ],
+  
+  "gas_price_tiers": {
+    "slow": {
+      "description": "Lowest priority, cheapest option",
+      "use_case": "Non-urgent transactions",
+      "estimation": "Base fee only"
+    },
+    "standard": {
+      "description": "Balanced priority and cost",
+      "use_case": "Most transactions",
+      "estimation": "Base fee + priority fee"
+    },
+    "fast": {
+      "description": "Highest priority, fastest confirmation",
+      "use_case": "Time-sensitive transactions",
+      "estimation": "Max fee (base + priority)"
+    }
+  },
+  
+  "recommendations": {
+    "low_gas": {
+      "threshold": "< 30 gwei",
+      "message": "Gas prices are LOW - good time to send transactions",
+      "action": "Execute transactions now"
+    },
+    "moderate_gas": {
+      "threshold": "30-100 gwei",
+      "message": "Gas prices are MODERATE - standard transactions should work well",
+      "action": "Proceed with standard transactions"
+    },
+    "high_gas": {
+      "threshold": "> 100 gwei",
+      "message": "Gas prices are HIGH - consider waiting or using Layer 2",
+      "action": "Wait for lower prices or migrate to Layer 2"
+    }
+  },
+  
+  "features": [
+    "Real-time gas price fetching for Ethereum",
+    "Multi-chain gas price guidance",
+    "Slow/Standard/Fast tier analysis",
+    "USD cost estimation",
+    "Base fee and priority fee breakdown",
+    "Optimal timing recommendations",
+    "Layer 2 migration suggestions",
+    "Gas-efficient strategy recommendations",
+    "Batch transaction suggestions",
+    "Cost comparison across chains"
+  ],
+  
+  "competitive_advantages": [
+    "Real-time gas price data from Web3Client (Alchemy/Infura)",
+    "Multi-chain support with cost comparisons",
+    "Intelligent timing recommendations",
+    "Layer 2 migration suggestions when appropriate",
+    "USD cost estimation for informed decisions",
+    "Gas-efficient strategy recommendations"
+  ],
+  
+  "getting_started": {
+    "for_users": {
+      "quick_start": "To use the Gas Optimizer Agent:\n1. Ask about gas prices: 'What are gas prices on Ethereum?'\n2. Get timing recommendations: 'When should I send this transaction?'\n3. Compare chains: 'Compare gas prices on Ethereum vs Arbitrum'\n4. Get optimization tips: 'How can I reduce gas costs?'",
+      "example_commands": [
+        "What are gas prices on Ethereum?",
+        "Gas prices on Polygon",
+        "When is the best time to send a transaction?",
+        "Compare gas costs on Ethereum vs Arbitrum",
+        "How can I reduce gas fees?",
+        "Should I use Layer 2 for this transaction?",
+        "Optimize gas for my transaction"
+      ],
+      "use_cases": [
+        "Check current gas prices before sending transactions",
+        "Find optimal timing for transactions",
+        "Compare costs across different chains",
+        "Get recommendations for Layer 2 migration",
+        "Learn gas optimization strategies"
+      ]
+    },
+    "for_investors": {
+      "value_proposition": "The Gas Optimizer Agent helps users minimize transaction costs through real-time gas analysis and intelligent recommendations, improving overall DeFi experience and cost efficiency.",
+      "market_position": "One of the few AI agents providing real-time gas price analysis with multi-chain support and Layer 2 migration recommendations.",
+      "competitive_advantages": [
+        "Real-time data from Web3Client integration",
+        "Multi-chain support enables cost comparison",
+        "Intelligent recommendations based on current prices",
+        "Layer 2 migration suggestions reduce costs significantly"
+      ]
+    }
+  },
+  
+  "common_questions": [
+    {
+      "question": "What are current gas prices?",
+      "answer": "Ask 'What are gas prices on [chain]?' and the Gas Optimizer Agent will fetch real-time gas prices showing Slow, Standard, and Fast tiers with USD cost estimates. For Ethereum, it uses real-time data. For other chains, it provides typical price guidance."
+    },
+    {
+      "question": "When should I send my transaction?",
+      "answer": "The agent analyzes current gas prices and provides timing recommendations. If prices are low (<30 gwei), it recommends executing now. If high (>100 gwei), it suggests waiting or using Layer 2 alternatives."
+    },
+    {
+      "question": "Which chain is cheapest?",
+      "answer": "Layer 2 chains (Arbitrum, Optimism, Base, Polygon) are typically 85-95% cheaper than Ethereum. The agent can compare costs across chains and recommend the best option for your transaction."
+    },
+    {
+      "question": "How can I reduce gas costs?",
+      "answer": "The agent suggests: 1) Wait for lower gas prices, 2) Use Layer 2 chains (Arbitrum, Optimism, Base), 3) Batch multiple transactions, 4) Use gas-efficient contracts, 5) Optimize transaction parameters."
+    },
+    {
+      "question": "What's the difference between Slow, Standard, and Fast?",
+      "answer": "Slow uses base fee only (cheapest, slowest confirmation). Standard adds priority fee (balanced). Fast uses max fee (fastest confirmation, most expensive). The agent helps you choose based on urgency."
+    }
+  ],
+  
+  "technical_details": {
+    "code_modules": [
+      "src/app/infrastructure/adapters/agent_squad/agents/gas_optimizer_agent.py",
+      "src/app/infrastructure/adapters/external/web3_client.py"
+    ],
+    "dependencies": [
+      "Web3Client (Alchemy/Infura RPC)",
+      "LLM Client Gateway (Vertex AI/DeepInfra)"
+    ],
+    "data_sources": [
+      "Web3Client for real-time Ethereum gas prices",
+      "Chain-specific RPC providers (when available)",
+      "Typical gas price guidance for other chains"
+    ],
+    "rpc_providers": {
+      "primary": "Alchemy API",
+      "fallback": "Infura API",
+      "configuration": "Set ALCHEMY_API_KEY or INFURA_API_KEY in config/local/.secrets.toml"
+    },
+    "model": {
+      "name": "gemini-2.0-flash",
+      "provider": "Vertex AI (primary), DeepInfra (fallback)",
+      "temperature": 0.2,
+      "max_tokens": 1000
+    }
+  },
+  
+  "example_use_cases": [
+    "Check gas prices before sending transactions",
+    "Find optimal timing for large transactions",
+    "Compare costs before choosing a chain",
+    "Get recommendations for Layer 2 migration",
+    "Learn gas optimization strategies",
+    "Estimate transaction costs in USD"
+  ],
+  
+  "important_notes": [
+    "Real-time gas prices are available for Ethereum via Web3Client (Alchemy/Infura)",
+    "Other chains provide typical price guidance (real-time requires chain-specific RPC)",
+    "Layer 2 chains are typically 85-95% cheaper than Ethereum",
+    "Gas prices fluctuate based on network congestion",
+    "The agent provides timing recommendations based on current prices"
+  ]
+}

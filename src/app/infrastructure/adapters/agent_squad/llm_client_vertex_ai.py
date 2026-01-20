@@ -55,39 +55,71 @@ class LLMClientVertexAI:
         self._default_model = default_model
 
     def _resolve_model(self, model: str) -> str:
-        """Resolve model name, using default if empty or invalid."""
-        if not model or not model.startswith("gemini"):
+        """
+        Resolve model name, using default if empty or invalid.
+        
+        For intent classification, we prefer gemini-2.0-flash (fast, cost-effective).
+        If model is not a Gemini model, use default (for fallback scenarios).
+        """
+        # For intent classification, prefer fast Gemini model
+        if not model:
+            return "gemini-2.0-flash"  # Fast model for classification
+        
+        # If it's already a Gemini model, use it
+        if model.startswith("gemini"):
+            return model
+        
+        # If it's a DeepInfra model name (for fallback), return default
+        # The fallback handler will map it correctly
+        if model.startswith("meta-llama/"):
             return self._default_model
-        return model
+        
+        # Unknown model - use fast Gemini model for classification
+        return "gemini-2.0-flash"
 
     async def classify_intent(
         self,
         prompt: str,
-        model: str,
+        model: str = "gemini-2.0-flash",  # Default to fast model for classification
     ) -> dict:
         """
         Classify intent using Gemini.
 
+        Uses gemini-2.0-flash by default for fast, cost-effective classification.
+        Automatically falls back to DeepInfra if Vertex AI is unavailable.
+
         Returns JSON with: intent, confidence, reasoning
         """
+        # Use fast Gemini model for classification (optimized for speed and cost)
         gemini_model = self._resolve_model(model)
+        
+        # If model is not a Gemini model (e.g., DeepInfra model for fallback), 
+        # this will be handled by the fallback mechanism
+        if not gemini_model.startswith("gemini"):
+            # This shouldn't happen, but if it does, use default
+            gemini_model = "gemini-2.0-flash"
 
         full_prompt = (
             "You are an intent classification assistant. Always respond with valid JSON.\n\n"
             f"{prompt}"
         )
 
-        response = self._client.models.generate_content(
-            model=gemini_model,
-            contents=full_prompt,
-            config={
-                "temperature": 0.1,
-                "response_mime_type": "application/json",
-            },
-        )
+        try:
+            response = self._client.models.generate_content(
+                model=gemini_model,
+                contents=full_prompt,
+                config={
+                    "temperature": 0.1,  # Low temperature for consistent classification
+                    "response_mime_type": "application/json",
+                },
+            )
 
-        content = response.text
-        return self._parse_json(content)
+            content = response.text
+            return self._parse_json(content)
+        except Exception as e:
+            # Log error and re-raise (fallback will be handled by LLMClientWithFallback)
+            logger.error(f"Vertex AI classification error: {e}")
+            raise
 
     async def recommend_agents(
         self,

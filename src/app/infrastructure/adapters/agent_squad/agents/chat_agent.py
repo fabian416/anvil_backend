@@ -1,5 +1,5 @@
 """
-Chat Agent OpenAI - General conversation agent.
+Chat Agent - General conversation agent.
 """
 
 import time
@@ -13,9 +13,9 @@ from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentRespon
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 
-class ChatAgentOpenAI:
+class ChatAgent:
     """
-    Chat Agent OpenAI implementation.
+    Chat Agent implementation.
     
     Implements: AgentGateway
     
@@ -27,7 +27,7 @@ class ChatAgentOpenAI:
     - Guide users to specialist agents
     - Maintain friendly, helpful tone
     
-    Model: gpt-4o-mini (fast, cost-effective)
+    Model: gemini-2.0-flash (Vertex AI, fast, cost-effective)
     Temperature: 0.7 (balanced creativity)
     """
     
@@ -42,8 +42,8 @@ class ChatAgentOpenAI:
         Initialize chat agent.
         
         Args:
-            llm_client: OpenAI LLM client
-            model: Model to use (default: gpt-4o-mini)
+            llm_client: LLM client gateway (Vertex AI or DeepInfra)
+            model: Model to use (default: gemini-2.0-flash)
             temperature: Sampling temperature (default: 0.7)
             max_tokens: Maximum response tokens (default: 1000)
         """
@@ -205,18 +205,23 @@ class ChatAgentOpenAI:
                 "content": f"""You are aggregating responses from multiple specialist agents. 
 
 IMPORTANT INSTRUCTIONS:
-1. **Deduplicate**: Remove repeated disclaimers, explanations, and facts
-2. **Summarize**: Create a single, coherent response (not a concatenation)
-3. **Remove redundancy**: If multiple agents provided the same information, mention it only once
-4. **Structure**: Organize information logically (swap types, recommendations, risks, etc.)
-5. **Single disclaimer**: Include ONE "not financial advice" disclaimer at the end
-6. **No repetition**: Do NOT repeat the same information multiple times
-7. **Clean flow**: Use smooth transitions, avoid multiple "Okay, let's..." openings
+1. **PRESERVE REAL-TIME DATA**: If you see sections marked "**REAL-TIME APY DATA FROM DEFILLAMA:**" or "**PROTOCOL DATA FROM DEFILLAMA:**", you MUST include this data prominently in your response. DO NOT remove or summarize this real-time data - it is the PRIMARY source of accurate information.
+2. **FILTER OUT AUTHENTICATION MESSAGES**: If you see messages like "Account Required", "Wallet Required", or registration prompts, DO NOT include them in the final response UNLESS the user explicitly asked about authentication requirements. These are error messages, not answers to informational queries.
+3. **PRESERVE SPECIFIC DETAILS**: If responses mention specific aggregators (1inch, Hyperliquid, UniswapX, LiFi), protocols, chains, or features, include ALL of them in your summary. Do NOT generalize or remove specific names.
+4. **Deduplicate**: Remove repeated disclaimers, explanations, and general facts (but NOT real-time data from APIs or specific feature names)
+5. **Summarize**: Create a single, coherent response (not a concatenation), but preserve all specific numbers, APY values, TVL data, protocol rankings, aggregator names, and token names
+6. **Remove redundancy**: If multiple agents provided the same general information, mention it only once (but keep all unique data points and specific names)
+7. **Structure**: Organize information logically - start with real-time data if available, then specific features/aggregators, then general recommendations
+8. **Single disclaimer**: Include ONE "not financial advice" disclaimer at the end
+9. **No repetition**: Do NOT repeat the same general information multiple times, but DO include all specific data points, aggregator names, and feature details
+10. **Clean flow**: Use smooth transitions, avoid multiple "Okay, let's..." openings
+11. **Answer the question**: Make sure your response actually answers the user's question. If the user asked "what type of swaps can I make?", provide information about swap types (1inch, Hyperliquid, UniswapX, LiFi), NOT authentication prompts.
+12. **Complete summary**: Your summary should be comprehensive - include information from ALL agents, not just one. If one agent provided swap types and another provided prices, include BOTH in your response.
 
 Agent Responses to Aggregate:
 {message.value}
 
-Create a single, well-structured response that combines all unique insights without repetition.""",
+Create a single, well-structured response that combines all unique insights without repetition, but ALWAYS preserve and prominently display any real-time data from DeFiLlama (APY values, TVL data, protocol rankings). FILTER OUT any authentication/registration messages unless the user explicitly asked about account requirements.""",
             })
         else:
             # Normal conversation flow
@@ -309,12 +314,14 @@ Create a single, well-structured response that combines all unique insights with
 
 **WHEN AGGREGATING MULTIPLE AGENT RESPONSES:**
 - If you receive responses from multiple agents (Hunter AI, Research, Risk Analyzer, Portfolio, etc.):
-  * **Deduplicate information**: Remove repeated disclaimers, explanations, and facts
-  * **Create a coherent summary**: Combine insights into a single, well-structured response
-  * **Remove redundancy**: If multiple agents say the same thing, mention it only once
-  * **Maintain key information**: Keep unique insights from each agent
+  * **PRESERVE REAL-TIME DATA**: If you see sections marked "**REAL-TIME APY DATA FROM DEFILLAMA:**" or "**PROTOCOL DATA FROM DEFILLAMA:**", you MUST include this data prominently. DO NOT remove or summarize this real-time data - it is the PRIMARY source of accurate information.
+  * **Deduplicate information**: Remove repeated disclaimers, explanations, and general facts (but NOT real-time API data)
+  * **Create a coherent summary**: Combine insights into a single, well-structured response, but preserve all specific numbers, APY values, TVL data, and protocol rankings
+  * **Remove redundancy**: If multiple agents say the same general thing, mention it only once (but keep all unique data points)
+  * **Maintain key information**: Keep unique insights from each agent, especially real-time data from APIs
+  * **Structure**: Start with real-time data if available, then general recommendations
   * **Single disclaimer**: Include ONE "not financial advice" disclaimer at the end
-  * **No repetition**: Do NOT repeat the same swap types, risks, or recommendations multiple times
+  * **No repetition**: Do NOT repeat the same general swap types, risks, or recommendations multiple times, but DO include all specific data points
   * **Clean transitions**: Use smooth transitions between different topics, avoid "Okay, let's..." multiple times
 
 **CRITICAL: ANVIL IS A REAL PLATFORM**
@@ -365,7 +372,10 @@ Anvil is a comprehensive REAL DeFi platform that provides:
   * **LiFi**: Cross-chain swaps and bridges
   * **Hyperliquid**: Perpetual swaps and derivatives
   * **MoonPay**: Fiat-to-crypto onramps
-- Lending/borrowing through Morpho vaults
+- Lending (supply assets to earn yield) through Morpho vaults
+  * **NOTE**: Anvil supports LENDING only (supply assets to earn APY), NOT borrowing
+  * Users can supply assets like USDC, ETH, etc. to Morpho vaults to earn yield
+  * Anvil does NOT support borrowing (taking loans against collateral)
 - Portfolio tracking and analytics
 - Market sentiment analysis (Hunter AI)
 - Automated trading strategies (ULTRA)
@@ -403,6 +413,7 @@ Anvil is a comprehensive REAL DeFi platform that provides:
 - DO NOT say "need more information" or "hypothetical" - provide real examples and data
 - Include specific protocol names (1inch, LiFi, Morpho, Aave) with actual features
 - Mention real APY ranges when discussing lending (e.g., "USDC lending typically offers 3-5% APY")
+- When discussing lending, only mention supplying/lending assets to earn yield - NEVER mention borrowing
 - Provide concrete swap examples (e.g., "Swap ETH to USDC via 1inch aggregator")
 
 **CRITICAL: WHEN AGGREGATING MULTIPLE AGENT RESPONSES**
@@ -425,8 +436,14 @@ Anvil is a comprehensive REAL DeFi platform that provides:
 Users can use shortcuts like:
 - "Swap BTC to ETH" → Token swap
 - "Show my portfolio" → Portfolio view
-- "Lend USDC" → Lending operations
+- "Lend USDC" or "Supply USDC" → Lending operations (supply assets to earn yield)
 - "What's my balance?" → Balance check
+
+**CRITICAL: LENDING vs BORROWING**
+- Anvil supports LENDING: Users can supply assets (USDC, ETH, etc.) to Morpho vaults to earn yield/APY
+- Anvil does NOT support BORROWING: Users cannot take loans against collateral
+- When users ask about "borrowing" or "taking a loan", explain that Anvil supports lending (supply assets) but not borrowing
+- Use terms like "supply assets", "lend assets", "deposit to earn yield" - NOT "borrow" or "take a loan"
 
 Keep responses:
 - Clear and concise

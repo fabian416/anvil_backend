@@ -1,7 +1,7 @@
 """Main distillation engine orchestrator."""
 import time
 from datetime import datetime, UTC
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
 
 from app.domain.ports.distillation_repository import (
@@ -61,6 +61,7 @@ class DistillationEngine:
         query: str,
         user_id: Optional[UUID] = None,
         user_context: Optional[dict] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None,
     ) -> DistillationResult:
         """
         Run distillation pass on query.
@@ -88,8 +89,11 @@ class DistillationEngine:
                 entities={},
             )
         
-        # Step 1: Classify intent
-        intent, intent_confidence = self.intent_classifier.classify(query)
+        # Step 1: Classify intent (with conversation history for context)
+        intent, intent_confidence = await self.intent_classifier.classify(
+            text=query,
+            conversation_history=conversation_history,
+        )
         
         # Step 2: Assess complexity
         complexity = self.complexity_assessor.assess(query, intent)
@@ -125,11 +129,12 @@ class DistillationEngine:
                 entities=entities,
             )
         
-        # Step 6: Route decision
+        # Step 6: Route decision (with conversation history for context-aware routing)
         result = await self.router.route(
             text=query,
             cache_lookup=cache_hit_content,
             static_available=static_available,
+            conversation_history=conversation_history,  # Pass conversation history to router
         )
         
         # Step 7: Generate static response if routed

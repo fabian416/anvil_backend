@@ -10,21 +10,13 @@ fields = [
     # Uvicorn from config
     "uvicorn.HOST",
     "uvicorn.PORT",
-    # Celery from secrets
-    "celery.APP_NAME",
-    "celery.BROKER_URL",
-    "celery.RESULT_BACKEND",
-    # Env overrides consumed by docker-compose
-    "celery.APP_NAME",
-    "celery.BROKER_URL",
-    "celery.RESULT_BACKEND",
-    # Mailgun from secrets
-    "mailgun.DOMAIN",
-    "mailgun.API_KEY",
-    # Stripe from secrets
+    # Stripe from config (has default value)
     "stripe.STRIPE_API_KEY",
     # Admin configuration
     "admin.USER_ADMIN",
     # DeepInfra from secrets (for embeddings)
     "deepinfra.API_KEY",
+    # RPC providers from secrets (for Web3 client and gas optimizer)
+    "rpc.ALCHEMY_API_KEY",
+    "rpc.INFURA_API_KEY",
 ]

@@ -76,8 +76,8 @@ class IntentClassifier:
     INTENT_AGENT_MAP = {
         # Core user intents
         "general_chat": AgentType.CHAT,
-        "anvil_knowledge": AgentType.CHAT,  # Anvil knowledge → Chat agent
-        "general_question": AgentType.CHAT,  # General questions → Chat agent
+        "anvil_knowledge": AgentType.KNOWLEDGE,  # Anvil knowledge → Knowledge agent
+        "general_question": AgentType.KNOWLEDGE,  # General questions → Knowledge agent
         "price_query": AgentType.HUNTER_AI,  # Price queries → Hunter AI
         "market_sentiment": AgentType.HUNTER_AI,
         "research_protocol": AgentType.RESEARCH,

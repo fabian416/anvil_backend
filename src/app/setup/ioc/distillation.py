@@ -1,5 +1,6 @@
 """Dependency injection providers for distillation system."""
 from dishka import Provider, Scope, provide
+from typing import TYPE_CHECKING, Optional
 
 from app.infrastructure.adapters.types import MainAsyncSession
 
@@ -14,6 +15,9 @@ from app.domain.services.distillation.engine import DistillationEngine
 from app.domain.services.distillation.entity_extractor import EntityExtractor
 from app.domain.services.distillation.intent_classifier import IntentClassifier
 from app.domain.services.distillation.router import DistillationRouter
+
+if TYPE_CHECKING:
+    from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 from app.infrastructure.distillation.cache_manager import CacheManager
 from app.infrastructure.distillation.static_responder import (
     StaticResponder,
@@ -40,9 +44,41 @@ class DistillationProvider(Provider):
     
     # Domain services (singleton - stateless)
     @provide(scope=Scope.APP)
-    def get_intent_classifier(self) -> IntentClassifier:
-        """Get intent classifier."""
-        return IntentClassifier()
+    def get_intent_classifier(
+        self,
+        llm_client: Optional["LLMClientGateway"] = None,
+    ) -> IntentClassifier:
+        """
+        Get intent classifier with optional LLM client for LLM-based classification.
+        
+        The LLM client is provided by AgentSquadInfrastructureProvider if available.
+        Since AgentSquadInfrastructureProvider is registered AFTER DistillationProvider,
+        Dishka will inject the LLM client if available.
+        
+        If LLM client is not available (Agent Squad not configured), IntentClassifier
+        will gracefully fall back to rule-based classification only.
+        
+        Args:
+            llm_client: Optional LLM client gateway (Vertex AI/DeepInfra) for LLM-based classification.
+                      Injected from AgentSquadInfrastructureProvider if available.
+                      If None, uses rule-based classification only.
+        
+        Returns:
+            IntentClassifier instance with LLM support if available, rule-based only otherwise
+        """
+        # Log whether LLM client is available
+        import logging
+        logger = logging.getLogger(__name__)
+        if llm_client:
+            logger.info("✅ IntentClassifier initialized with LLM client (Vertex AI + DeepInfra fallback)")
+        else:
+            logger.info("⚠️ IntentClassifier initialized without LLM client (rule-based only)")
+        
+        return IntentClassifier(
+            llm_client=llm_client,  # Will be None if Agent Squad not available, which is fine
+            use_llm_for_ambiguous=True,  # Enable LLM for ambiguous queries when available
+            llm_confidence_threshold=0.85,  # Minimum confidence to use LLM result
+        )
     
     @provide(scope=Scope.APP)
     def get_complexity_assessor(self) -> ComplexityAssessor:

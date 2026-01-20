@@ -353,10 +353,10 @@ class SendGuestMessage:
         # (is_restricted will be checked in step 6, but we check here to skip Agent Squad early)
         if supervisor_coordinator and hasattr(supervisor_coordinator, "create_workflow_plan") and not continuation_step:
             try:
-                # ✨ FAST PATH: Simple informational queries go directly to Chat agent (no workflow planning) ✨
+                # ✨ FAST PATH: Simple informational queries go directly to Knowledge agent (no workflow planning) ✨
                 if is_simple_info_query:
                     logger.info(
-                        "⚡ Fast path: Simple informational query → Chat agent (bypassing workflow planning)",
+                        "⚡ Fast path: Simple informational query → Knowledge agent (bypassing workflow planning)",
                         extra={
                             "ip_address": ip_address,
                             "conversation_id": str(conversation.id),
@@ -405,7 +405,7 @@ class SendGuestMessage:
                             fast_path_start_time = time.time()
                             
                             response = await self._agent_orchestrator.execute_agent(
-                                agent_type=AgentType.CHAT,
+                                agent_type=AgentType.KNOWLEDGE,  # Use Knowledge agent for educational queries
                                 message=content,
                                 conversation_context=agent_squad_context,
                             )
@@ -455,7 +455,7 @@ class SendGuestMessage:
                                 "workflow_type": "fast_path",
                                 "task_count": 1,
                                 "disclaimer": get_demo_disclaimer(language),
-                                "agents_used": ["chat"],
+                                "agents_used": ["knowledge"],
                             }
                             
                             # Add timing if debug enabled
@@ -468,12 +468,83 @@ class SendGuestMessage:
                                 if not provider_info and hasattr(response, 'provider'):
                                     provider_info = response.provider
                                 
+                                # Extract tools_used from response
+                                tools_used_info = []
+                                if hasattr(response, 'tools_used'):
+                                    tools_used_info = response.tools_used if response.tools_used else []
+                                
+                                # Extract data sources from response sources
+                                data_sources = []
+                                if hasattr(response, 'sources') and response.sources:
+                                    for source in response.sources:
+                                        source_type = getattr(source, 'source_type', None)
+                                        source_name = getattr(source, 'source_name', '')
+                                        provider = getattr(source, 'provider', '')
+                                        
+                                        # Map source types to readable names
+                                        if source_type:
+                                            if source_type.value == "api":
+                                                data_sources.append(f"{source_name} API" if source_name else "External API")
+                                            elif source_type.value == "database":
+                                                data_sources.append("Database")
+                                            elif source_type.value == "mcp_server":
+                                                data_sources.append(f"MCP: {source_name}" if source_name else "MCP Server")
+                                            elif source_type.value == "blockchain":
+                                                data_sources.append(f"Blockchain ({source_name})" if source_name else "Blockchain")
+                                            elif source_type.value == "knowledge_base":
+                                                data_sources.append("Knowledge Base")
+                                            elif source_type.value == "llm":
+                                                # Skip LLM as it's already in provider
+                                                pass
+                                        
+                                        # Add specific providers
+                                        if provider and provider not in ["Vertex AI", "DeepInfra"]:
+                                            if provider not in data_sources:
+                                                data_sources.append(provider)
+                                
+                                # Build enhanced task description
+                                task_desc_parts = ["Fast path execution"]
+                                if tools_used_info:
+                                    # Map tools to readable names
+                                    tool_names = []
+                                    for tool in tools_used_info:
+                                        tool_lower = tool.lower()
+                                        if "knowledge_base" in tool_lower or "knowledge" in tool_lower:
+                                            tool_names.append("Knowledge Base")
+                                        elif "web3" in tool_lower or "web3_client" in tool_lower:
+                                            tool_names.append("Web3Client")
+                                        elif "coingecko" in tool_lower:
+                                            tool_names.append("CoinGecko API")
+                                        elif "defillama" in tool_lower or "defi_llama" in tool_lower:
+                                            tool_names.append("DeFiLlama API")
+                                        elif "1inch" in tool_lower or "oneinch" in tool_lower:
+                                            tool_names.append("1inch API")
+                                        elif "morpho" in tool_lower:
+                                            tool_names.append("Morpho")
+                                        elif "graphrag" in tool_lower or "graph_rag" in tool_lower:
+                                            tool_names.append("GraphRAG")
+                                        elif "database" in tool_lower or "db" in tool_lower:
+                                            tool_names.append("Database")
+                                        elif "llm" in tool_lower or "llm_gateway" in tool_lower:
+                                            tool_names.append("LLM Gateway")
+                                        else:
+                                            tool_names.append(tool.replace("_", " ").title())
+                                    
+                                    if tool_names:
+                                        task_desc_parts.append(f"Tools: {', '.join(tool_names)}")
+                                
+                                if data_sources:
+                                    task_desc_parts.append(f"Data Sources: {', '.join(data_sources)}")
+                                
+                                enhanced_task_description = " | ".join(task_desc_parts)
+                                
                                 enrichment["agent_timings"] = [{
-                                    "agent_type": "chat",
-                                    "task_description": "Fast path execution",
+                                    "agent_type": response.agent_type.value if hasattr(response, 'agent_type') else "knowledge",
+                                    "task_description": enhanced_task_description,
                                     "execution_time_ms": fast_path_execution_time_ms,
                                     "status": "completed",
                                     "provider": provider_info,  # Include LLM provider for debugging
+                                    "tools_used": tools_used_info,  # Include tools used
                                 }]
                             
                             # Calculate remaining messages
@@ -563,13 +634,25 @@ class SendGuestMessage:
 
         # 4e. ✨ DISTILLATION CHECK ✨
         # Check if distillation can handle this query (educational questions, static responses)
+        # Now uses LLM-based classification with conversation history for better routing
         distillation_result = None
         if self._distillation_engine and not continuation_step:
             try:
+                # Build conversation history for context-aware classification
+                conversation_history_for_distillation = []
+                if context:
+                    # Convert context to format expected by IntentClassifier
+                    for msg in context[-5:]:  # Last 5 messages for context
+                        conversation_history_for_distillation.append({
+                            "role": msg.get("role", "user"),
+                            "content": msg.get("content", ""),
+                        })
+                
                 distillation_result = await self._distillation_engine.distill(
                     query=content,
                     user_id=None,  # Guest users don't have UUID
                     user_context={"language": language},
+                    conversation_history=conversation_history_for_distillation,  # Pass conversation history
                 )
                 
                 # If distillation routed to STATIC response, use it directly
@@ -1730,6 +1813,7 @@ class SendGuestMessage:
             # NOTE: PORTFOLIO is NOT accessible to guests - requires authentication
             GUEST_ACCESSIBLE_AGENTS = [
                 AgentType.CHAT,
+                AgentType.KNOWLEDGE,  # Knowledge Anvil - Educational queries
                 AgentType.RESEARCH,
                 AgentType.RISK_ANALYZER,
                 AgentType.HUNTER_AI,  # Market analysis

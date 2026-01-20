@@ -19,11 +19,13 @@ DEFAULT_MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 # Vertex AI to DeepInfra model mapping
 VERTEX_TO_DEEPINFRA_MAPPING = {
-    # Standard models
+    # Standard models (most common)
+    "gemini-2.0-flash": "meta-llama/Meta-Llama-3.1-70B-Instruct",  # Most common Vertex AI model
     "gemini-2.0-flash-exp": "meta-llama/Meta-Llama-3.1-70B-Instruct",
     "gemini-1.5-flash": "meta-llama/Meta-Llama-3.1-70B-Instruct",
     # Premium models
     "gemini-1.5-pro": "meta-llama/Meta-Llama-3.1-405B-Instruct",
+    "gemini-2.0-pro": "meta-llama/Meta-Llama-3.1-405B-Instruct",
     # Legacy fallbacks (in case old names slip through)
     "gpt-4o": "meta-llama/Meta-Llama-3.1-70B-Instruct",
     "gpt-4o-mini": "meta-llama/Llama-3.2-3B-Instruct",
