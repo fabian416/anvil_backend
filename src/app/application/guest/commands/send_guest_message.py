@@ -818,6 +818,7 @@ class SendGuestMessage:
                     ip_address=ip_address,
                     user_agent=user_agent,
                     referer=referer,
+                    distillation_timing_ms=distillation_timing_ms,  # Pass distillation timing
                 )
                 
                 if agent_squad_result is not None:
@@ -845,8 +846,12 @@ class SendGuestMessage:
         # Check if distillation can handle this query (educational questions, static responses)
         # Now uses LLM-based classification with conversation history for better routing
         distillation_result = None
+        distillation_timing_ms = None
         if self._distillation_engine and not continuation_step:
             try:
+                import time
+                distillation_start_time = time.time()
+                
                 # Build conversation history for context-aware classification
                 conversation_history_for_distillation = []
                 if context:
@@ -863,6 +868,9 @@ class SendGuestMessage:
                     user_context={"language": language},
                     conversation_history=conversation_history_for_distillation,  # Pass conversation history
                 )
+                
+                # Calculate distillation timing
+                distillation_timing_ms = int((time.time() - distillation_start_time) * 1000)
                 
                 # If distillation routed to STATIC response, use it directly
                 if (
@@ -1966,6 +1974,7 @@ class SendGuestMessage:
         ip_address: str,
         user_agent: str | None = None,
         referer: str | None = None,
+        distillation_timing_ms: int | None = None,  # Pass distillation timing from caller
     ) -> GuestMessageResult:
         """
         Handle complex query with Agent Squad SupervisorCoordinator.
@@ -2058,6 +2067,10 @@ class SendGuestMessage:
                 session_metadata={"ip_address": ip_address},
             )
             
+            # Track supervisor coordinator planning time
+            import time
+            supervisor_planning_start = time.time()
+            
             # Create workflow plan
             workflow_plan = await self._supervisor_coordinator.create_workflow_plan(
                 conversation_id=ConversationId(conversation.id),
@@ -2065,6 +2078,8 @@ class SendGuestMessage:
                 conversation_context=agent_squad_context,
                 available_agents=GUEST_ACCESSIBLE_AGENTS,
             )
+            
+            supervisor_planning_time_ms = int((time.time() - supervisor_planning_start) * 1000)
             
             logger.info(
                 "🎭 Agent Squad workflow plan created",
@@ -2106,8 +2121,33 @@ class SendGuestMessage:
             }
             
             # Add timing if debug enabled
-            if debug_timing_enabled and agent_timings:
-                enrichment["agent_timings"] = agent_timings
+            if debug_timing_enabled:
+                # Initialize agent_timings list
+                all_timings = []
+                
+                # Add distillation timing if available
+                if distillation_timing_ms is not None:
+                    all_timings.append({
+                        "agent_type": "distillation",
+                        "task_description": "Intent classification and routing | Tools: Rule-based patterns, LLM (Vertex AI/DeepInfra)",
+                        "execution_time_ms": distillation_timing_ms,
+                        "status": "completed",
+                    })
+                
+                # Add supervisor coordinator planning timing
+                all_timings.append({
+                    "agent_type": "supervisor_coordinator",
+                    "task_description": f"Create workflow plan with {len(workflow_plan.tasks)} tasks | Tools: LLM (Vertex AI/DeepInfra)",
+                    "execution_time_ms": supervisor_planning_time_ms,
+                    "status": "completed",
+                })
+                
+                # Add agent execution timings from workflow
+                if agent_timings:
+                    all_timings.extend(agent_timings)
+                
+                if all_timings:
+                    enrichment["agent_timings"] = all_timings
             
             # Create agent message with aggregated response
             agent_message = GuestMessage.create_assistant_message(
