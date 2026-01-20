@@ -14,7 +14,9 @@ class RetryHandler:
         try:
             return await self._strategy.generate(model_name, messages, **kwargs)
         except Exception as e:
-            print(f"Handler failed: {e}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"LLM provider failed: {e}, trying fallback...")
             if self._next_handler:
                 return await self._next_handler.handle(model_name, messages, **kwargs)
             raise e

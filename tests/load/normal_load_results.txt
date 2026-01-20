@@ -1,0 +1,47 @@
+
+================================================================================
+ANVIL CHAT API LOAD TESTING
+================================================================================
+
+Target API: http://localhost:8080
+Test Endpoint: http://localhost:8080/api/v1/guest/chat
+Start Time: 2026-01-19 16:37:17
+
+🔍 Checking API accessibility...
+✅ API is accessible
+
+🔄 Running Scenario 1: Normal Load (100 users, 1000 requests, 10 min)
+
+================================================================================
+LOAD TEST RESULTS: Normal Load
+================================================================================
+
+📊 Overall Performance:
+  Duration: 836.12s
+  Total Requests: 1000
+  Successful: 547 (54.7%)
+  Failed: 453
+  Requests/sec: 1.2
+
+⏱️  Response Times:
+  Min: 121.3ms
+  Avg: 20826.06ms
+  Median: 25696.55ms
+  P95: 37979.64ms
+  P99: 43477.53ms
+  Max: 44224.5ms
+
+📈 Status Codes:
+  0: 453 requests
+  200: 547 requests
+
+🎯 Performance Verdict:
+  ❌ NEEDS IMPROVEMENT - High latency or low success rate
+
+================================================================================
+
+
+✅ Load testing complete
+End Time: 2026-01-19 16:51:13
+================================================================================
+

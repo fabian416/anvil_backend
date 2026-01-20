@@ -119,29 +119,57 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 def configure_app(
     app: FastAPI,
     root_router: APIRouter,
+    environment: str = "local",
 ) -> None:
+    """
+    Configure FastAPI application with middleware and routing.
+
+    Args:
+        app: FastAPI application instance
+        root_router: Root API router
+        environment: Environment name (local, dev, prod)
+    """
     app.include_router(root_router)
     app.add_middleware(ASGIAuthMiddleware)
 
-    # CORS middleware for frontend (Vite dev server on 5173)
-    origins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
+    # CORS middleware with environment-specific origins
+    from app.presentation.http.middleware.cors_config import get_cors_config
+
+    cors_config = get_cors_config(environment)
+
+    # For local development, allow flexible localhost ports
+    allow_origin_regex = None
+    if environment == "local":
+        allow_origin_regex = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
-        # Be flexible for local development (e.g. Vite preview/dev can use
-        # different ports) while keeping the scope restricted to localhost.
-        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=cors_config["allow_origins"],
+        allow_origin_regex=allow_origin_regex,
+        allow_credentials=cors_config["allow_credentials"],
+        allow_methods=cors_config["allow_methods"],
+        allow_headers=cors_config["allow_headers"],
+        expose_headers=cors_config["expose_headers"],
+        max_age=cors_config["max_age"],
     )
-    # https://github.com/encode/starlette/discussions/2451
+
+    # Security headers middleware (OWASP best practices)
+    from app.presentation.http.middleware.security_headers import (
+        SecurityHeadersMiddleware,
+        HTTPSRedirectMiddleware,
+    )
+
+    # Add HTTPS redirect for production
+    is_production = environment in ("prod", "production")
+    if is_production:
+        app.add_middleware(HTTPSRedirectMiddleware, enabled=True)
+
+    # Add security headers
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        enable_hsts=is_production,  # HSTS only in production with HTTPS
+        enable_csp=True,  # Content Security Policy in all environments
+    )
 
     # Register global exception handlers for standardized error responses
     from app.presentation.http.errors.handlers import register_exception_handlers

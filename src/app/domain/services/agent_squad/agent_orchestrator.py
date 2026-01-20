@@ -2,12 +2,15 @@
 Agent Orchestrator domain service - Routes messages to correct agent.
 """
 
+import logging
 from typing import Protocol
 from dataclasses import dataclass
 
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -209,11 +212,43 @@ class AgentOrchestrator:
         if not agent:
             raise ValueError(f"Agent {agent_type.value} not found in registry")
         
+        # Get conversation_id from context
+        # Try to get from conversation_id property (if added via monkey-patch - deprecated)
+        # Otherwise try to get from session_metadata
+        conv_id = getattr(conversation_context, "conversation_id", None)
+        if conv_id is None:
+            # Try to get from session metadata
+            session_conv_id = conversation_context.session_metadata.get("conversation_id")
+            if session_conv_id:
+                # Handle both ConversationId object and string UUID
+                if isinstance(session_conv_id, ConversationId):
+                    conv_id = session_conv_id
+                elif isinstance(session_conv_id, str):
+                    conv_id = ConversationId(session_conv_id)
+                else:
+                    # Try to convert UUID object
+                    conv_id = ConversationId(str(session_conv_id))
+            else:
+                # Fallback: create a temporary conversation_id
+                # This shouldn't happen in normal flow, but provides safety
+                from uuid import uuid4
+                conv_id = ConversationId(uuid4())
+                logger.warning(
+                    "ConversationContext missing conversation_id, using temporary ID",
+                    extra={"context_metadata": conversation_context.session_metadata},
+                )
+        
         # Execute agent
+        # Note: agent.execute expects MessageContent object, not str
+        from app.domain.value_objects.message_content import MessageContent
+        
+        # Convert message string to MessageContent if needed
+        message_content = message if isinstance(message, MessageContent) else MessageContent(message)
+        
         response = await agent.execute(
-            conversation_id=conversation_context.conversation_id,
-            message=message,
-            context=conversation_context,
+            conversation_id=conv_id,
+            message=message_content,
+            conversation_context=conversation_context,
         )
         
         return response

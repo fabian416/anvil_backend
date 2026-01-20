@@ -31,7 +31,7 @@ class AgentSquadDomainProvider(Provider):
         """Provide intent classifier domain service."""
         return IntentClassifier(
             llm_client=llm_client,
-            classification_model="gpt-4o-mini",  # Fast classification
+            classification_model="meta-llama/Meta-Llama-3.1-8B-Instruct",  # DeepInfra-compatible model
         )
 
     @provide
@@ -60,11 +60,15 @@ class AgentSquadDomainProvider(Provider):
     def provide_supervisor_coordinator(
         self,
         llm_client: LLMClientGateway,
+        agent_orchestrator: AgentOrchestrator,
     ) -> SupervisorCoordinator:
         """Provide supervisor coordinator domain service."""
-        from unittest.mock import MagicMock
-        # Mock agent_executor for testing (real implementation pending)
-        agent_executor = MagicMock()
+        from app.infrastructure.adapters.agent_squad.agent_executor_adapter import (
+            AgentExecutorAdapter,
+        )
+        
+        # Create real agent executor using orchestrator
+        agent_executor = AgentExecutorAdapter(orchestrator=agent_orchestrator)
 
         return SupervisorCoordinator(
             llm_client=llm_client,

@@ -64,7 +64,7 @@ class CrisisManagerAgentForta:
         forta_client: Any,  # FortaClient
         execution_client: Any,  # ExecutionClient (Privy)
         auto_exit_threshold_usd: Decimal = Decimal("1000"),
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.1,
         max_tokens: int = 2000,
     ):

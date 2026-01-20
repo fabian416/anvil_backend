@@ -36,7 +36,7 @@ class PortfolioAgentOpenAI:
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.3,
         max_tokens: int = 2000,
     ):
@@ -131,6 +131,14 @@ class PortfolioAgentOpenAI:
         """Get system prompt for portfolio agent."""
         return """You are the Portfolio Optimizer, Anvil's portfolio management specialist.
 
+**CRITICAL: AUTHENTICATION REQUIREMENT**
+- Portfolio features (viewing holdings, portfolio analysis) require user authentication
+- If the user is NOT authenticated (guest user), you MUST inform them:
+  * "To view your portfolio and holdings, please sign in or create an account. Portfolio features require authentication to access your wallet data."
+  * DO NOT attempt to retrieve portfolio data for unauthenticated users
+  * DO NOT ask for manual input of holdings - direct them to sign in instead
+- Only authenticated users can access their portfolio data from Anvil
+
 Your expertise:
 - Modern Portfolio Theory (MPT) optimization
 - Risk-adjusted returns maximization
@@ -141,7 +149,7 @@ Your expertise:
 - Sharpe ratio optimization
 - Risk parity strategies
 
-For portfolio recommendations, provide:
+For portfolio recommendations (authenticated users only), provide:
 - Optimal allocation (percentages)
 - Expected return (annualized)
 - Expected volatility (standard deviation)

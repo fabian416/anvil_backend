@@ -49,6 +49,8 @@ enabled = true
 # Demo mode: Use pre-built demo handlers instead of real LLM calls
 # Set to false to enable real LLM for authenticated users
 use_demo_mode = false
+# Debug: Include agent execution timing in responses (for performance analysis)
+# Set via .secrets.toml: [agent_squad.debug] enable_agent_timing = true
 
 # ========================================
 # External API Feature Flags (Phase 7)
@@ -82,7 +84,7 @@ enable_unified_routing = true  # Enable intelligent intent-based routing
 unified_routing_use_llm = true  # Use LLM for intent classification (fallback to keywords if false)
 
 # Intent classification
-intent_classification_model = "gemini-2.0-flash-exp"  # Fast model for routing
+intent_classification_model = "gemini-2.0-flash"  # Fast model for routing (Vertex AI)
 intent_confidence_threshold = 0.85  # Min confidence (0.0-1.0)
 fallback_agent = "chat"  # Fallback if intent unclear
 
@@ -107,7 +109,7 @@ enable_ultra_auto_executor = true  # Automated trading bot control
 
 # Supervisor coordination
 enable_supervisor = true
-supervisor_model = "gemini-2.0-flash-exp"  # Standard model for coordination
+supervisor_model = "gemini-2.0-flash"  # Standard model for coordination (Vertex AI)
 supervisor_max_agents = 5
 supervisor_timeout_seconds = 120
 
@@ -133,113 +135,113 @@ telemetry_sample_rate = 1.0  # 0.0-1.0
 # ========================================
 
 # Core User-Facing Agents (10) - ENABLED
-# Models: gemini-2.0-flash-exp (standard), gemini-1.5-pro (premium)
+# Models: gemini-2.0-flash (standard, Generative AI API - Vertex AI), gemini-1.5-pro (premium)
 [agent_squad.agents.chat]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Fast responses for general chat
+model = "gemini-2.0-flash"  # Fast responses for general chat (Vertex AI)
 temperature = 0.7
 max_tokens = 1000
 
 [agent_squad.agents.hunter_ai]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Market analysis
+model = "gemini-2.0-flash"  # Market analysis
 temperature = 0.3
 max_tokens = 1500
 
 [agent_squad.agents.research]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Deep protocol analysis
+model = "gemini-2.0-flash"  # Deep protocol analysis
 temperature = 0.2
 max_tokens = 2000
 
 [agent_squad.agents.execution]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Transaction execution (low temp for precision)
+model = "gemini-2.0-flash"  # Transaction execution (low temp for precision)
 temperature = 0.1
 max_tokens = 1000
 
 [agent_squad.agents.risk_analyzer]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Risk assessment
+model = "gemini-2.0-flash"  # Risk assessment
 temperature = 0.2
 max_tokens = 1500
 
 [agent_squad.agents.portfolio]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Portfolio optimization
+model = "gemini-2.0-flash"  # Portfolio optimization
 temperature = 0.3
 max_tokens = 2000
 
 [agent_squad.agents.tax_optimizer]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Tax strategies
+model = "gemini-2.0-flash"  # Tax strategies
 temperature = 0.2
 max_tokens = 1500
 
 [agent_squad.agents.defi_yield]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Yield farming
+model = "gemini-2.0-flash"  # Yield farming
 temperature = 0.3
 max_tokens = 1500
 
 [agent_squad.agents.security_auditor]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Security analysis (low temp for accuracy)
+model = "gemini-2.0-flash"  # Security analysis (low temp for accuracy)
 temperature = 0.1
 max_tokens = 2000
 
 [agent_squad.agents.gas_optimizer]
 enabled = true
-model = "gemini-2.0-flash-exp"  # Gas optimization
+model = "gemini-2.0-flash"  # Gas optimization
 temperature = 0.2
 max_tokens = 1000
 
 # Enterprise Agents (8) - DISABLED (enable per tier)
 [agent_squad.agents.compliance_monitor]
 enabled = false  # Enterprise only
-model = "gemini-2.0-flash-exp"  # AML/KYC compliance
+model = "gemini-2.0-flash"  # AML/KYC compliance
 temperature = 0.1
 max_tokens = 2000
 
 [agent_squad.agents.multisig_coordinator]
 enabled = false  # Enterprise only
-model = "gemini-2.0-flash-exp"  # Treasury management
+model = "gemini-2.0-flash"  # Treasury management
 temperature = 0.2
 max_tokens = 1500
 
 [agent_squad.agents.alert_monitoring]
 enabled = false  # Pro/Enterprise
-model = "gemini-2.0-flash-exp"  # Real-time alerts
+model = "gemini-2.0-flash"  # Real-time alerts
 temperature = 0.3
 max_tokens = 1000
 
 [agent_squad.agents.crisis_manager]
 enabled = false  # Enterprise only
-model = "gemini-2.0-flash-exp"  # Emergency response
+model = "gemini-2.0-flash"  # Emergency response
 temperature = 0.1
 max_tokens = 2000
 
 [agent_squad.agents.bridge_crosschain]
 enabled = false  # Pro tier+
-model = "gemini-2.0-flash-exp"  # Cross-chain operations
+model = "gemini-2.0-flash"  # Cross-chain operations
 temperature = 0.2
 max_tokens = 1500
 
 [agent_squad.agents.lending_borrowing]
 enabled = false  # Pro tier+
-model = "gemini-2.0-flash-exp"  # Leverage strategies
+model = "gemini-2.0-flash"  # Leverage strategies
 temperature = 0.2
 max_tokens = 1500
 
 [agent_squad.agents.nft_asset_manager]
 enabled = false  # Pro tier (NFT focused)
-model = "gemini-2.0-flash-exp"  # NFT portfolio
+model = "gemini-2.0-flash"  # NFT portfolio
 temperature = 0.3
 max_tokens = 1500
 
 [agent_squad.agents.dao_governance]
 enabled = false  # Pro tier (DAO focused)
-model = "gemini-2.0-flash-exp"  # DAO voting
+model = "gemini-2.0-flash"  # DAO voting
 temperature = 0.3
 max_tokens = 1500
 enable_multi_agent_routing = true
@@ -269,11 +271,13 @@ use_unified_gateway = true
 # ----------------------------------------
 [llm_provider.vertex_ai]
 # Uses credentials from [vertex_ai] section in .secrets.toml
-# Available models:
-#   - gemini-2.0-flash-exp  (fast, cost-effective - recommended)
-#   - gemini-1.5-pro        (premium, complex reasoning)
-#   - gemini-1.5-flash      (balanced)
-default_model = "gemini-2.0-flash-exp"
+# Available models (Generative AI API):
+#   - gemini-2.0-flash      (fast, cost-effective - recommended)
+#   - gemini-2.0-flash-001  (alternative flash model)
+#   - gemini-2.5-flash      (newer flash model)
+#   - gemini-1.5-pro        (premium, complex reasoning - requires Platform API)
+#   - gemini-1.5-flash      (balanced - requires Platform API)
+# default_model moved to [llm_provider.vertex_ai] section below
 
 # ----------------------------------------
 # DeepInfra Configuration (Fallback)
@@ -284,12 +288,14 @@ default_model = "gemini-2.0-flash-exp"
 #   - meta-llama/Llama-3.2-3B-Instruct       (fast, 3B params) ← USING THIS (70B is overloaded)
 #   - meta-llama/Meta-Llama-3.1-70B-Instruct (standard, 70B params)
 #   - meta-llama/Meta-Llama-3.1-405B-Instruct (premium, 405B params)
-default_model = "meta-llama/Llama-3.2-3B-Instruct"
+default_model = "meta-llama/Llama-3.2-3B-Instruct"  # Default DeepInfra model (fallback only)
 
 # Model mapping: Vertex AI names -> DeepInfra equivalents (for fallback)
 # NOTE: Using 3B model because 70B is frequently overloaded ("Model busy")
+# This mapping is used when Vertex AI fails and we need to fallback to DeepInfra
 [llm_provider.deepinfra.model_mapping]
-"gemini-2.0-flash-exp" = "meta-llama/Llama-3.2-3B-Instruct"
+"gemini-2.0-flash" = "meta-llama/Llama-3.2-3B-Instruct"
+"gemini-2.0-flash-001" = "meta-llama/Llama-3.2-3B-Instruct"
 "gemini-1.5-flash" = "meta-llama/Llama-3.2-3B-Instruct"
 "gemini-1.5-pro" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
@@ -345,7 +351,7 @@ project_number = "369224500418"  # Project number
 location = "us-central1"
 credentials_path = ""  # Set via VERTEX_AI_CREDENTIALS_PATH or use API key
 api_key = ""  # Set in .secrets.toml - API Key for simplified auth
-model = "gemini-2.0-flash-exp"  # Latest available: gemini-2.5-flash, gemini-2.0-flash-exp, etc.
+model = "gemini-2.0-flash"  # Latest available: gemini-2.5-flash, gemini-2.0-flash-exp, etc.
 
 [distillation.deepinfra]
 api_key = ""  # Set via DEEPINFRA_API_KEY

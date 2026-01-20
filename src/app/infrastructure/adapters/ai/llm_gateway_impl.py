@@ -44,26 +44,49 @@ class LLMGatewayImpl(LLMGateway):
         Provider Priority: Vertex AI (Primary) -> DeepInfra (Fallback)
         """
 
-        # Try Vertex AI first, fallback to DeepInfra if not available/implemented
+        # Try Vertex AI first, fallback to DeepInfra if not available/configured
         primary_strategy = None
+        fallback_strategy = None
+        provider_used = None
 
+        # Try to get Vertex AI strategy (primary)
         try:
             primary_strategy = self._factory.get_strategy(LLMProvider.VERTEX)
-        except (NotImplementedError, KeyError, ValueError) as e:
-            # Fallback to DeepInfra if Vertex AI not implemented/configured
-            # This is expected until VertexStrategy adapter is implemented
-            try:
-                primary_strategy = self._factory.get_strategy(LLMProvider.DEEPINFRA)
-            except Exception as fallback_error:
+            provider_used = "vertex_ai"
+        except (NotImplementedError, KeyError, ValueError, Exception) as e:
+            # Vertex AI not available, will use DeepInfra fallback
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Vertex AI not available: {e}, falling back to DeepInfra")
+        
+        # Get DeepInfra strategy (fallback)
+        try:
+            fallback_strategy = self._factory.get_strategy(LLMProvider.DEEPINFRA)
+        except Exception as fallback_error:
+            if primary_strategy is None:
                 raise RuntimeError(
                     f"Failed to initialize LLM providers. "
-                    f"Vertex AI: {str(e)}, DeepInfra: {str(fallback_error)}"
+                    f"Vertex AI: {str(e) if 'e' in locals() else 'not configured'}, "
+                    f"DeepInfra: {str(fallback_error)}"
                 ) from fallback_error
 
-        if primary_strategy is None:
+        # Use primary if available, otherwise fallback
+        strategy_to_use = primary_strategy if primary_strategy else fallback_strategy
+        if strategy_to_use is None:
             raise RuntimeError("No LLM provider strategy available")
-
-        chain = RetryHandler(primary_strategy)
+        
+        # Track which provider will be used (for metadata)
+        if not provider_used:
+            provider_used = "deepinfra" if fallback_strategy else "unknown"
+        
+        # Create retry chain with fallback
+        if primary_strategy and fallback_strategy:
+            # Chain: primary -> fallback
+            fallback_chain = RetryHandler(fallback_strategy)
+            chain = RetryHandler(primary_strategy, fallback_chain)
+        else:
+            # Single strategy (no fallback)
+            chain = RetryHandler(strategy_to_use)
 
         response_data = await chain.handle(
             model,
@@ -84,7 +107,7 @@ class LLMGatewayImpl(LLMGateway):
                 "model": provider_metadata.get("model", model),
                 "latency_ms": provider_metadata.get("latency_ms", 0),
                 "finish_reason": "stop",
-                "provider": provider_metadata.get("provider", "unknown"),
+                "provider": provider_metadata.get("provider", provider_used or "unknown"),
                 "cost_usd": provider_metadata.get("cost_usd", 0),
             }
             return text, metadata

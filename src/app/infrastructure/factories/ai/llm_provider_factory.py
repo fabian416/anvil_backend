@@ -2,7 +2,7 @@ from typing import Dict
 from app.domain.enums.ai.llm_provider import LLMProvider
 from app.infrastructure.adapters.ai.llm.strategy import LLMStrategy
 from app.infrastructure.adapters.ai.llm.deepinfra import DeepInfraStrategy
-# from app.infrastructure.adapters.ai.llm.vertex import VertexStrategy (Future)
+from app.infrastructure.adapters.ai.llm.vertex import VertexStrategy
 # from app.infrastructure.adapters.ai.llm.bedrock import BedrockStrategy (Future)
 
 class LLMProviderFactory:
@@ -24,20 +24,18 @@ class LLMProviderFactory:
         
         # Primary: Vertex AI
         if provider == LLMProvider.VERTEX:
-            # TODO: Implement VertexStrategy adapter
-            # For now, Vertex AI is used via the new orchestrator system
-            # This factory is for the legacy LLM Gateway system
-            # When VertexStrategy is implemented, uncomment:
-            # strategy = VertexStrategy(
-            #     project_id=self._config.get("VERTEX_AI_PROJECT_ID", ""),
-            #     credentials_path=self._config.get("VERTEX_AI_CREDENTIALS_PATH", ""),
-            # )
-            # self._strategies[provider] = strategy
-            # return strategy
-            raise NotImplementedError(
-                "Vertex AI strategy not yet implemented for legacy LLM Gateway. "
-                "Use the new LLM Orchestrator system or DeepInfra as fallback."
+            project_id = self._config.get("VERTEX_AI_PROJECT_ID", "")
+            if not project_id:
+                raise ValueError("VERTEX_AI_PROJECT_ID is required for Vertex AI")
+            
+            strategy = VertexStrategy(
+                project_id=project_id,
+                location=self._config.get("VERTEX_AI_LOCATION", "us-central1"),
+                api_key=self._config.get("VERTEX_AI_API_KEY", None),
+                credentials_path=self._config.get("VERTEX_AI_CREDENTIALS_PATH", None),
             )
+            self._strategies[provider] = strategy
+            return strategy
         
         # Fallback: DeepInfra
         if provider == LLMProvider.DEEPINFRA:

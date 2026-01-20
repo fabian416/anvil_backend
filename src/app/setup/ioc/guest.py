@@ -15,6 +15,7 @@ from app.application.guest.commands.send_guest_message import SendGuestMessage
 
 logger = logging.getLogger(__name__)
 from app.application.guest.handlers.guest_handler_service import GuestHandlerService
+from app.domain.services.distillation.engine import DistillationEngine
 from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
@@ -30,6 +31,19 @@ from app.infrastructure.adapters.chat.keyword_intent_detection_adapter import (
 )
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
+
+# Agent Squad imports - import at runtime for Dishka type analysis
+# Dishka needs actual types at runtime, not string literals
+try:
+    from app.domain.services.agent_squad.intent_classifier import IntentClassifier
+    from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
+    from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
+except ImportError:
+    # Agent Squad not available - create dummy types for type hints
+    from typing import Any
+    IntentClassifier = Any  # type: ignore
+    SupervisorCoordinator = Any  # type: ignore
+    AgentOrchestrator = Any  # type: ignore
 
 
 class GuestProvider(Provider):
@@ -230,11 +244,10 @@ class GuestProvider(Provider):
         """
         Provide intent detector for guest users.
 
-        Uses only keyword-based detection (no LLM calls) for:
-        - Fast response times
-        - Zero cost
-        - Deterministic results
+        Currently uses keyword-based detection.
+        Agent Squad integration will be added via SupervisorCoordinator as primary handler.
         """
+        logger.info("Using keyword-based intent detection for guest chat")
         return IntentDetectorService(intent_port=keyword_adapter)
 
     @provide(scope=Scope.REQUEST)
@@ -243,19 +256,30 @@ class GuestProvider(Provider):
         guest_repository: GuestRepository,
         handler_service: GuestHandlerService,
         intent_detector: IntentDetectorService,
+        supervisor_coordinator: SupervisorCoordinator = None,  # type: ignore
+        agent_orchestrator: AgentOrchestrator = None,  # type: ignore
     ) -> SendGuestMessage:
         """
-        Provide SendGuestMessage command with real handlers and intent detection.
-
-        Now includes KeywordIntentDetectionAdapter for:
-        - Proper MoonPay swap detection (handles amounts like "swap 0.5 BTC to ETH")
-        - Multi-token pair detection
-        - Better pattern matching than simple keyword checks
+        Provide SendGuestMessage command with Agent Squad Supervisor as PRIMARY handler.
+        
+        Agent Squad SupervisorCoordinator is the PRIMARY handler - it routes ALL queries
+        to appropriate agents. This provides intelligent routing without manual patterns.
+        
+        SupervisorCoordinator is injected from AgentSquadDomainProvider if available.
+        If not available (None), falls back to normal intent detection flow.
         """
+        distillation_engine = None
+        
+        # SupervisorCoordinator is PRIMARY - handles all routing intelligently
+        # If None, command will fall back to normal flow gracefully
+        
         return SendGuestMessage(
             guest_repository=guest_repository,
             intent_detector=intent_detector,
             handler_service=handler_service,
+            distillation_engine=distillation_engine,
+            supervisor_coordinator=supervisor_coordinator,  # PRIMARY handler (from AgentSquadDomainProvider)
+            agent_orchestrator=agent_orchestrator,  # From AgentSquadDomainProvider
         )
 
 

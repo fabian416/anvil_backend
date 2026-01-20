@@ -9,6 +9,10 @@ from datetime import datetime, timedelta, UTC
 
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Request, status
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
 
 from app.application.guest.commands.send_guest_message import (
     RATE_LIMIT_MESSAGES_PER_HOUR,
@@ -86,22 +90,43 @@ def create_guest_router() -> APIRouter:
         command: FromDishka[SendGuestMessage],
     ) -> GuestChatResponse:
         """
+        Send a guest message with Agent Squad Supervisor as primary handler.
+        
+        SupervisorCoordinator is injected if available from AgentSquadDomainProvider.
+        """
+        """
         Send a guest chat message.
 
         Automatically creates guest user and conversation based on IP.
         """
-        # Extract client info
-        ip_address = _get_client_ip(http_request)
-        user_agent = http_request.headers.get("user-agent")
-        referer = http_request.headers.get("referer")
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # Extract client info
+            ip_address = _get_client_ip(http_request)
+            user_agent = http_request.headers.get("user-agent")
+            referer = http_request.headers.get("referer")
 
-        result = await command.execute(
-            ip_address=ip_address,
-            content=request_body.content,
-            language=request_body.language,
-            user_agent=user_agent,
-            referer=referer,
-        )
+            result = await command.execute(
+                ip_address=ip_address,
+                content=request_body.content,
+                language=request_body.language,
+                user_agent=user_agent,
+                referer=referer,
+            )
+        except Exception as e:
+            logger.error(
+                f"Error processing guest message: {e}",
+                exc_info=True,
+                extra={
+                    "ip_address": _get_client_ip(http_request),
+                    "content_length": len(request_body.content) if request_body.content else 0,
+                    "language": request_body.language,
+                }
+            )
+            # Re-raise to let FastAPI's error handler deal with it
+            raise
 
         # Build response
         routing = GuestRoutingData(

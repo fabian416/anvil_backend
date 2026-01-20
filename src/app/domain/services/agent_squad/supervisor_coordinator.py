@@ -2,13 +2,16 @@
 Supervisor Coordinator domain service - Coordinates multi-agent workflows.
 """
 
-from typing import Protocol
+from typing import Protocol, TYPE_CHECKING, Any
 from dataclasses import dataclass
 from enum import Enum
 
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
+
+if TYPE_CHECKING:
+    from app.domain.ports.agent_squad.agent_gateway import AgentResponse
 
 
 class TaskStatus(Enum):
@@ -28,15 +31,18 @@ class AgentTask:
     - agent_type: Which agent to use
     - task_description: What the agent should do
     - depends_on: Task dependencies (must complete first)
-    - status: Task status
-    - result: Agent response (after completion)
+    - result: AgentResponse | str | None from execution (set after completion)
+    - status: TaskStatus (pending, in_progress, completed, failed)
+    - error: str | None (error message if failed)
+    - execution_time_ms: int | None (execution time in milliseconds, for debug)
     """
     agent_type: AgentType
     task_description: str
     depends_on: list[int]  # Task indices that must complete first
     status: TaskStatus = TaskStatus.PENDING
-    result: str | None = None
+    result: "AgentResponse | str | None" = None  # AgentResponse (preferred) or str (fallback)
     error: str | None = None
+    execution_time_ms: int | None = None  # Execution time in milliseconds (for debug)
     
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -47,6 +53,7 @@ class AgentTask:
             "status": self.status.value,
             "result": self.result,
             "error": self.error,
+            "execution_time_ms": self.execution_time_ms,
         }
 
 
@@ -174,11 +181,23 @@ class SupervisorCoordinator:
         
         # Parse workflow plan
         tasks = []
+        import logging
+        logger = logging.getLogger(__name__)
+        
         for task_data in response.get("tasks", []):
-            agent_type_str = task_data.get("agent_type", "chat")
+            # Support both "agent_type" and "agent" for backward compatibility
+            agent_type_str = task_data.get("agent_type") or task_data.get("agent", "chat")
+            # Normalize agent names (hunter_ai -> HUNTER_AI, hunter-ai -> HUNTER_AI, etc.)
+            agent_type_str = agent_type_str.replace("-", "_").replace(" ", "_").lower()
+            
+            logger.info(f"🔍 Parsing workflow task: agent_type_str={agent_type_str}, task_data={task_data}")
+            
             try:
                 agent_type = AgentType[agent_type_str.upper()]
+                logger.info(f"✅ Mapped '{agent_type_str}' to AgentType.{agent_type.name}")
             except KeyError:
+                # Default to CHAT if agent type not recognized
+                logger.warning(f"⚠️ Unknown agent type '{agent_type_str}', defaulting to CHAT. Available: {[e.name for e in AgentType]}")
                 agent_type = AgentType.CHAT
             
             task = AgentTask(
@@ -187,6 +206,24 @@ class SupervisorCoordinator:
                 depends_on=task_data.get("depends_on", []),
             )
             tasks.append(task)
+        
+        # For multi-agent workflows (3+ tasks), ensure CHAT agent is added as final aggregator
+        if len(tasks) >= 3:
+            # Check if CHAT agent already exists as aggregator
+            has_chat_aggregator = any(
+                task.agent_type.value == "chat" and "aggregate" in task.task_description.lower()
+                for task in tasks
+            )
+            
+            if not has_chat_aggregator:
+                # Add CHAT agent as final aggregator
+                all_previous_indices = list(range(len(tasks)))
+                chat_task = AgentTask(
+                    agent_type=AgentType.CHAT,
+                    task_description="Aggregate and summarize the results from all previous agents, removing duplicates and creating a single coherent response with only ONE disclaimer",
+                    depends_on=all_previous_indices,
+                )
+                tasks.append(chat_task)
         
         # Determine execution order
         execution_order = self._calculate_execution_order(tasks)
@@ -205,9 +242,19 @@ class SupervisorCoordinator:
         conversation_id: ConversationId,
         workflow_plan: WorkflowPlan,
         conversation_context: "ConversationContext",
-    ) -> str:
+    ) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
         """
         Execute multi-agent workflow.
+        
+        Returns:
+            Tuple of (response_content, sources_list, agent_timings_list)
+        """
+        """
+        Execute multi-agent workflow.
+        
+        Handles both single-agent and multi-agent workflows:
+        - Single-agent: Returns agent response directly
+        - Multi-agent: Aggregates results from all agents
         
         Args:
             conversation_id: Conversation identifier
@@ -215,40 +262,157 @@ class SupervisorCoordinator:
             conversation_context: Conversation context
             
         Returns:
-            Final aggregated response from all agents
+            Final response (single agent response or aggregated multi-agent response)
         """
-        # Execute tasks in order
-        for task in workflow_plan.tasks:
-            if task.status != TaskStatus.PENDING:
-                continue
+        # ✨ SINGLE-AGENT WORKFLOW ✨
+        # If only one task, execute and return directly (no aggregation needed)
+        if len(workflow_plan.tasks) == 1:
+            task = workflow_plan.tasks[0]
+            task.status = TaskStatus.IN_PROGRESS
             
-            # Check dependencies
+            try:
+                import time
+                start_time = time.time()
+                
+                # Use the original user message, not task_description
+                # Task description is for planning, but agents need the actual user message
+                from app.domain.value_objects.message_content import MessageContent
+                
+                # Get original message from conversation context if available
+                original_message = conversation_context.conversation_history[-1].get("content", task.task_description) if conversation_context.conversation_history else task.task_description
+                
+                result = await self._agent_executor.execute_agent(
+                    conversation_id=conversation_id,
+                    agent_type=task.agent_type,
+                    message=MessageContent(original_message),
+                    conversation_context=conversation_context,
+                )
+                
+                # Calculate execution time
+                execution_time_ms = int((time.time() - start_time) * 1000)
+                task.execution_time_ms = execution_time_ms
+                
+                task.result = result
+                task.status = TaskStatus.COMPLETED
+                # Return content and sources from AgentResponse
+                from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+                if isinstance(result, AgentResponse):
+                    sources = [s.to_dict() for s in result.sources] if result.sources else []
+                    # Include timing for single-agent workflow
+                    provider_info = None
+                    if isinstance(result, AgentResponse):
+                        if hasattr(result, 'metadata') and isinstance(result.metadata, dict):
+                            provider_info = result.metadata.get('provider')
+                        elif hasattr(result, 'provider'):
+                            provider_info = result.provider
+                    
+                    agent_timings = [{
+                        "agent_type": task.agent_type.value,
+                        "task_description": task.task_description,  # Full description for debugging
+                        "execution_time_ms": task.execution_time_ms,
+                        "status": task.status.value,
+                        "provider": provider_info,  # Include LLM provider for debugging
+                    }] if hasattr(task, 'execution_time_ms') and task.execution_time_ms is not None else []
+                    return result.content, sources, agent_timings
+                # Fallback if result is already a string (shouldn't happen with updated port)
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"⚠️ Agent executor returned non-AgentResponse: {type(result)}")
+                return str(result), [], []
+            except Exception as e:
+                task.status = TaskStatus.FAILED
+                task.error = str(e)
+                raise
+        
+        # ✨ MULTI-AGENT WORKFLOW ✨
+        # Execute tasks in order with dependencies
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Execute all tasks that are ready (dependencies satisfied)
+        while True:
             next_task = workflow_plan.get_next_task()
             if next_task is None:
+                # No more tasks ready to execute
                 break
             
             # Execute task
             next_task.status = TaskStatus.IN_PROGRESS
+            logger.info(f"🔄 Executing task: {next_task.agent_type.value} - {next_task.task_description[:50]}...")
             
             try:
+                import time
+                start_time = time.time()
+                
+                # Use the original user message, not task_description
+                # Task description is for planning, but agents need the actual user message
+                from app.domain.value_objects.message_content import MessageContent
+                
+                # For CHAT agent aggregation tasks, pass aggregated content from other agents
+                if next_task.agent_type.value == "chat" and "aggregate" in next_task.task_description.lower():
+                    # Build aggregated message from previous agent responses
+                    aggregated_content = self._build_aggregation_message(workflow_plan, next_task)
+                    message_content = MessageContent(aggregated_content)
+                else:
+                    # Use the original user message for other agents
+                    original_message = conversation_context.conversation_history[-1].get("content", next_task.task_description) if conversation_context.conversation_history else next_task.task_description
+                    message_content = MessageContent(original_message)
+                
                 result = await self._agent_executor.execute_agent(
                     conversation_id=conversation_id,
                     agent_type=next_task.agent_type,
-                    message=MessageContent(next_task.task_description),
+                    message=message_content,
                     conversation_context=conversation_context,
                 )
                 
+                # Calculate execution time
+                execution_time_ms = int((time.time() - start_time) * 1000)
+                next_task.execution_time_ms = execution_time_ms
+                
+                # Store full AgentResponse in task result
                 next_task.result = result
                 next_task.status = TaskStatus.COMPLETED
+                logger.info(f"✅ Task completed: {next_task.agent_type.value} ({execution_time_ms}ms)")
                 
             except Exception as e:
                 next_task.error = str(e)
                 next_task.status = TaskStatus.FAILED
+                logger.error(f"❌ Task failed: {next_task.agent_type.value} - {str(e)}", exc_info=True)
         
         # Aggregate results
         final_response = await self._aggregate_results(workflow_plan)
         
-        return final_response
+        # Collect sources from all completed tasks
+        all_sources = []
+        for task in workflow_plan.tasks:
+            if task.status == TaskStatus.COMPLETED and hasattr(task, 'result'):
+                from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+                if isinstance(task.result, AgentResponse) and task.result.sources:
+                    all_sources.extend([s.to_dict() for s in task.result.sources])
+        
+        # Collect timing information for debug mode
+        agent_timings = []
+        for task in workflow_plan.tasks:
+            if hasattr(task, 'execution_time_ms') and task.execution_time_ms is not None:
+                # Extract provider info from task result if available
+                provider_info = None
+                if hasattr(task, 'result') and task.result:
+                    # AgentResponse has metadata dict
+                    if hasattr(task.result, 'metadata') and isinstance(task.result.metadata, dict):
+                        provider_info = task.result.metadata.get('provider')
+                    # Fallback: check if result has provider attribute directly
+                    elif hasattr(task.result, 'provider'):
+                        provider_info = task.result.provider
+                
+                agent_timings.append({
+                    "agent_type": task.agent_type.value,
+                    "task_description": task.task_description,  # Full description for debugging
+                    "execution_time_ms": task.execution_time_ms,
+                    "status": task.status.value,
+                    "provider": provider_info,  # Include LLM provider for debugging
+                })
+        
+        return final_response, all_sources, agent_timings
     
     def _build_planning_prompt(
         self,
@@ -284,11 +448,52 @@ Respond with JSON:
 }}
 
 Guidelines:
-- Break down complex task into agent-specific subtasks
+- **CRITICAL: RESTRICTED FEATURES FOR GUEST USERS (REQUIRE AUTHENTICATION)**
+  * These features require wallet connection and authentication - DO NOT call restricted agents for guests:
+  * **SOLUTION**: Create a SINGLE "chat" task - the CHAT agent will automatically detect the restricted feature and return the appropriate custom registration message
+  
+  **Restricted Features (all handled by CHAT agent):**
+  * If the user asks about ANY of these restricted features, create a SINGLE "chat" task:
+    - BALANCE: "my balance", "what's my balance", "check my balance", "how much do I have", "wallet balance"
+    - ACTIVITY: "my transactions", "transaction history", "show my activity", "recent activity", "my activity"
+    - RECEIVE: "my address", "wallet address", "receive crypto", "deposit address", "QR code", "I want to receive"
+    - BUY: "buy crypto", "purchase bitcoin", "buy with card", "how to buy ETH", "I want to buy"
+    - SEND: "send crypto", "transfer tokens", "send to wallet", "send to friend", "I want to send"
+    - PORTFOLIO: "my portfolio", "my holdings", "list my tokens", "what tokens do I have", "show my holdings"
+  * Task description: "Detect which restricted feature the user is asking about and return the appropriate custom registration message. The CHAT agent has built-in detection for restricted features and will automatically use the correct custom message."
+  * DO NOT call portfolio, execution, or any wallet-related agents for guest users
+  * The CHAT agent will handle all restricted features with custom messages automatically
+- **CRITICAL: OFF-TOPIC QUERY DETECTION**
+  * If the user asks about topics NOT related to DeFi, crypto, blockchain, Web3, or Anvil:
+    - Create a SINGLE "chat" task with task_description: "Politely decline the off-topic query and redirect to DeFi topics. DO NOT provide information about [topic]. Say you're specialized in DeFi and crypto."
+    - Examples of OFF-TOPIC: cooking recipes, baking, general knowledge, non-crypto topics
+    - DO NOT create tasks for "research", "hunter_ai", or other agents for off-topic queries
+    - DO NOT ask agents to find recipes, cooking instructions, or non-DeFi information
+
+- **Simple informational queries** (e.g., "what is btc?", "what is eth?", "explain DeFi") → Create 1-task workflow with "chat" agent_type (FAST - single agent)
+- **Price queries** (e.g., "what is the price of btc?", "how much is ETH?") → Create 1-task workflow with "hunter_ai" agent_type (ONE task can handle multiple tokens)
+- **Single-agent queries** → Create 1-task workflow (no aggregation needed):
+  * Price queries (single or multiple tokens) → Use "hunter_ai" as agent_type
+  * Market sentiment queries → Use "hunter_ai" as agent_type
+  * Anvil knowledge → Use "chat" as agent_type
+  * General DeFi questions → Use "chat" as agent_type
+  * Shortcuts → Use appropriate agent_type (swap_tokens → "execution", lending → "defi_yield", portfolio → "portfolio" ONLY for authenticated users, etc.)
+- **Multi-intent queries** (e.g., "price of btc and eth, and explain swaps") → Create separate tasks:
+  * ONE "hunter_ai" task for ALL price queries (it can handle multiple tokens)
+  * ONE "chat" task for informational/Anvil knowledge queries
+- **Multi-agent queries** → Break down into agent-specific subtasks (ONLY for DeFi/crypto topics)
 - Use dependencies to ensure correct order
 - Each agent should have a clear, specific task
-- Final task should aggregate/summarize results
+- For price queries with multiple tokens, create ONE hunter_ai task (not multiple)
+- **CRITICAL**: For multi-agent workflows (3+ agents), ALWAYS add a final "chat" task that:
+  * Has agent_type: "chat"
+  * Has task_description: "Aggregate and summarize the results from all previous agents, removing duplicates and creating a single coherent response"
+  * Has depends_on: [list of all previous task indices] (e.g., [0, 1, 2] if there are 3 previous tasks)
+  * This ensures the CHAT agent runs LAST and receives all previous responses
 - Limit to {self._max_agents} agents
+- For single-agent queries, return the agent's response directly (no aggregation needed)
+- **IMPORTANT**: Use exact agent_type values: "hunter_ai", "chat", "execution", "portfolio", "defi_yield", "research", "risk_analyzer", etc.
+- **SPEED**: Prefer single-agent workflows for simple queries to minimize latency
 """
     
     def _calculate_execution_order(
@@ -329,12 +534,97 @@ Guidelines:
         if not completed_tasks:
             return "No tasks completed successfully."
         
-        # Build aggregated response
-        parts = ["Here's the analysis from our specialist agents:\n"]
+        # If only one task, return its content directly (no aggregation header)
+        if len(completed_tasks) == 1:
+            task = completed_tasks[0]
+            from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+            if isinstance(task.result, AgentResponse):
+                return task.result.content or "(No response)"
+            elif isinstance(task.result, str):
+                return task.result
+            else:
+                return str(task.result) if task.result else "(No response)"
+        
+        # Multiple tasks - check if CHAT agent is the final aggregator
+        chat_task = None
+        other_tasks = []
+        for task in completed_tasks:
+            if task.agent_type.value == "chat" and "aggregate" in task.task_description.lower():
+                chat_task = task
+            else:
+                other_tasks.append(task)
+        
+        # If CHAT agent was used as aggregator, use its response (it should have summarized)
+        if chat_task:
+            from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+            if isinstance(chat_task.result, AgentResponse):
+                return chat_task.result.content or "(No response)"
+            elif isinstance(chat_task.result, str):
+                return chat_task.result
+            else:
+                return str(chat_task.result) if chat_task.result else "(No response)"
+        
+        # No CHAT aggregator - intelligently combine responses with deduplication
+        parts = []
+        seen_content = set()  # Track seen content to avoid duplicates
         
         for task in completed_tasks:
-            parts.append(f"\n**{task.agent_type.value.upper()}**:")
-            parts.append(task.result or "(No response)")
+            # Extract content from AgentResponse if needed
+            from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+            if isinstance(task.result, AgentResponse):
+                content = task.result.content or "(No response)"
+            elif isinstance(task.result, str):
+                content = task.result
+            else:
+                content = str(task.result) if task.result else "(No response)"
+            
+            # Simple deduplication: check if similar content already exists
+            # Use first 100 chars as a signature to detect duplicates
+            content_sig = content[:100].lower().strip()
+            if content_sig and content_sig not in seen_content:
+                parts.append(content)
+                seen_content.add(content_sig)
+        
+        # Join with double newline for readability
+        return "\n\n".join(parts)
+    
+    def _build_aggregation_message(
+        self,
+        workflow_plan: WorkflowPlan,
+        chat_task: AgentTask,
+    ) -> str:
+        """Build message for CHAT agent to aggregate other agent responses."""
+        # Get all completed tasks except the CHAT aggregator task
+        other_tasks = [
+            task for task in workflow_plan.tasks
+            if task.status == TaskStatus.COMPLETED and task != chat_task
+        ]
+        
+        if not other_tasks:
+            # No other tasks to aggregate, use original message
+            return chat_task.task_description
+        
+        # Build aggregation message
+        parts = [
+            "Aggregate and summarize the following responses from specialist agents.",
+            "Remove duplicates, create a coherent single response, and include only ONE disclaimer.",
+            "",
+            "Agent Responses:",
+            "",
+        ]
+        
+        for i, task in enumerate(other_tasks, 1):
+            from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+            if isinstance(task.result, AgentResponse):
+                content = task.result.content or "(No response)"
+            elif isinstance(task.result, str):
+                content = task.result
+            else:
+                content = str(task.result) if task.result else "(No response)"
+            
+            parts.append(f"--- Response from {task.agent_type.value.upper()} Agent ---")
+            parts.append(content)
+            parts.append("")  # Empty line between responses
         
         return "\n".join(parts)
 
@@ -362,6 +652,6 @@ class AgentExecutorPort(Protocol):
         agent_type: AgentType,
         message: MessageContent,
         conversation_context: "ConversationContext",
-    ) -> str:
-        """Execute specific agent."""
+    ) -> "AgentResponse":
+        """Execute specific agent and return full AgentResponse with sources."""
         ...

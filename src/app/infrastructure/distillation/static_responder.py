@@ -4,6 +4,7 @@ import re
 
 from app.domain.ports.distillation_repository import StaticResponseRepository
 from app.domain.value_objects.distillation import ExtractedEntities, Intent
+from app.infrastructure.distillation.educational_responses import get_educational_response
 
 
 class StaticResponder:
@@ -36,11 +37,20 @@ class StaticResponder:
         Args:
             intent: Classified intent
             entities: Extracted entities from query
-            user_context: Optional user context (time of day, etc.)
+            user_context: Optional user context (time of day, language, etc.)
             
         Returns:
             Generated response or None if not available
         """
+        # Check educational responses FIRST (for EXPLAIN_CONCEPT with tokens)
+        if intent == Intent.EXPLAIN_CONCEPT and entities.tokens:
+            language = (user_context or {}).get("language", "en")
+            # Try each token until we find a response
+            for token in entities.tokens:
+                educational_response = get_educational_response(token, language)
+                if educational_response:
+                    return educational_response
+        
         # Select appropriate variant
         variant = self._select_variant(intent, user_context or {})
         
@@ -91,7 +101,14 @@ class StaticResponder:
         Returns:
             True if static response can be generated
         """
-        # Get default variant
+        # Check educational responses FIRST (for EXPLAIN_CONCEPT with tokens)
+        if intent == Intent.EXPLAIN_CONCEPT and entities.tokens:
+            # Check if we have educational response for any token
+            for token in entities.tokens:
+                if get_educational_response(token, "en"):  # Check English as base
+                    return True
+        
+        # Get default variant from repository
         static_response = await self.static_response_repo.get_response(intent, "default")
         
         if not static_response or not static_response.is_active:

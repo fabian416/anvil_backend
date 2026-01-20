@@ -49,7 +49,7 @@ class MultiSigCoordinatorAgentGnosis:
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         gnosis_safe_client: Any,  # GnosisSafeClient
         max_transaction_usd: Decimal = Decimal("100000"),
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.1,
         max_tokens: int = 2000,
     ):

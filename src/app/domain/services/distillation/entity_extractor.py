@@ -56,10 +56,39 @@ class EntityExtractor:
         """Extract token symbols from text."""
         tokens = []
         
-        # Check against known tokens
+        # Token name mappings (common names -> symbols)
+        token_mappings = {
+            "bitcoin": "BTC",
+            "btc": "BTC",
+            "ethereum": "ETH",
+            "eth": "ETH",
+            "usdc": "USDC",
+            "usdt": "USDT",
+            "dai": "DAI",
+            "solana": "SOL",
+            "sol": "SOL",
+            "polygon": "MATIC",
+            "matic": "MATIC",
+            "cardano": "ADA",
+            "ada": "ADA",
+            "chainlink": "LINK",
+            "link": "LINK",
+            "uniswap": "UNI",
+            "uni": "UNI",
+            "aave": "AAVE",
+        }
+        
+        # Check for token names in educational queries (e.g., "what is bitcoin")
+        text_lower = text.lower()
+        for token_name, token_symbol in token_mappings.items():
+            if re.search(r"\b" + token_name + r"\b", text_lower):
+                tokens.append(token_symbol)
+        
+        # Check against known tokens (for other tokens)
         for token in self.KNOWN_TOKENS:
-            if re.search(r"\b" + token + r"\b", text):
-                tokens.append(token.upper())
+            if token not in token_mappings:  # Avoid duplicates
+                if re.search(r"\b" + token + r"\b", text_lower):
+                    tokens.append(token.upper())
         
         # Look for $ prefixed tokens (e.g., $ETH)
         dollar_tokens = re.findall(r"\$([A-Z]{2,6})\b", text.upper())

@@ -410,6 +410,7 @@ class InfrastructureProvider(Provider):
         vertex_ai_api_key = ""
         vertex_ai_project_id = ""
         vertex_ai_credentials_path = ""
+        vertex_ai_location = "us-central1"
         
         try:
             raw_config = load_full_config(env=get_current_env())
@@ -424,6 +425,7 @@ class InfrastructureProvider(Provider):
             vertex_ai_api_key = vertex_config.get("API_KEY", "")
             vertex_ai_project_id = vertex_config.get("PROJECT_ID", "")
             vertex_ai_credentials_path = vertex_config.get("CREDENTIALS_PATH", "")
+            vertex_ai_location = vertex_config.get("LOCATION", "us-central1")
             
         except Exception as e:
             logger.debug(f"Could not load config from .secrets.toml: {e}")
@@ -440,6 +442,8 @@ class InfrastructureProvider(Provider):
             vertex_ai_project_id = os.environ.get("VERTEX_AI_PROJECT_ID", "")
         if not vertex_ai_credentials_path:
             vertex_ai_credentials_path = os.environ.get("VERTEX_AI_CREDENTIALS_PATH", "")
+        if vertex_ai_location == "us-central1":  # Only override if still default
+            vertex_ai_location = os.environ.get("VERTEX_AI_LOCATION", "us-central1")
         
         google_credentials = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
         
@@ -453,6 +457,7 @@ class InfrastructureProvider(Provider):
             # Primary: Vertex AI
             "VERTEX_AI_PROJECT_ID": vertex_ai_project_id,
             "VERTEX_AI_API_KEY": vertex_ai_api_key,
+            "VERTEX_AI_LOCATION": vertex_ai_location,
             "VERTEX_AI_CREDENTIALS_PATH": vertex_ai_credentials_path,
             "GOOGLE_APPLICATION_CREDENTIALS": google_credentials,
             # Fallback: DeepInfra (only used if Vertex AI fails)

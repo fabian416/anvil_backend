@@ -4,18 +4,31 @@ CONFIGS_DIG := config
 TOML_CONFIG_MANAGER := $(CONFIGS_DIG)/toml_config_manager.py
 APP_ENV := local
 
-.PHONY: env dotenv
+.PHONY: env dotenv venv install clean-install
 env:
 	@echo APP_ENV=$(APP_ENV)
 
 venv:
 	$(PYTHON) -m venv env
 
+install: venv
+	@echo "Installing all dependencies (including dev and test)..."
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Using uv for fast package installation..."; \
+		. env/bin/activate && uv pip install -e '.[dev,test]'; \
+	else \
+		echo "uv not found, using pip..."; \
+		. env/bin/activate && \
+		./env/bin/python -m pip install --upgrade pip setuptools wheel && \
+		./env/bin/pip install -e '.[dev,test]'; \
+	fi
+	@echo "✅ Dependencies installed successfully"
+
 clean-install:
 	rm -rf env
 	$(PYTHON) -m venv env
 	./env/bin/python -m pip install --upgrade pip setuptools wheel
-	./env/bin/pip install -e .
+	./env/bin/pip install -e '.[dev,test]'
 
 dotenv:
 	@$(PYTHON) $(TOML_CONFIG_MANAGER) ${APP_ENV}

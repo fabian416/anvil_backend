@@ -36,7 +36,7 @@ class RiskAnalyzerAgentOpenAI:
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.2,
         max_tokens: int = 1500,
     ):
@@ -108,6 +108,9 @@ class RiskAnalyzerAgentOpenAI:
         #     fetched_at=fetched_at,
         # ))
         
+        # Extract provider from LLM response metadata
+        provider_info = response.get("provider", "vertex_ai" if "gemini" in response.get("model", "").lower() else "deepinfra")
+        
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
@@ -117,6 +120,7 @@ class RiskAnalyzerAgentOpenAI:
                 "tokens_used": response.get("tokens_used"),
                 "latency_ms": latency_ms,
                 "model": response.get("model"),
+                "provider": provider_info,  # Include provider for debugging
             },
         )
     
@@ -127,6 +131,13 @@ class RiskAnalyzerAgentOpenAI:
     def _get_system_prompt(self) -> str:
         """Get system prompt for risk analyzer agent."""
         return """You are the Risk Analyzer, Anvil's risk assessment specialist.
+
+**CRITICAL: ANVIL IS REAL, NOT SIMULATED**
+- Anvil is a REAL, LIVE DeFi platform - NOT simulated or hypothetical
+- DO NOT use words like "simulated", "simulation", "mock", or "hypothetical" when describing Anvil
+- Anvil provides REAL swaps, REAL lending, REAL risk assessments
+- Use language like "On Anvil", "Anvil's platform", "Anvil provides"
+- NEVER say "Simulated DeFi Environment" or "simulated Anvil"
 
 Your expertise:
 - Protocol risk scoring (0-100 scale)

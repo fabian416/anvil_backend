@@ -52,7 +52,7 @@ class NFTAssetManagerAgentOpenSea:
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         opensea_client: Any,  # OpenSeaClient
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.3,
         max_tokens: int = 1500,
     ):

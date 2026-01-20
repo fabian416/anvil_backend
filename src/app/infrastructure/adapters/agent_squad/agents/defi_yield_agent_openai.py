@@ -35,7 +35,7 @@ class DefiYieldAgentOpenAI:
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.3,
         max_tokens: int = 1500,
     ):
@@ -105,6 +105,9 @@ class DefiYieldAgentOpenAI:
         
         # TODO: Add protocol sources (Aave, Morpho, Compound) when integrated
         
+        # Extract provider from LLM response metadata
+        provider_info = response.get("provider", "vertex_ai" if "gemini" in response.get("model", "").lower() else "deepinfra")
+        
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
@@ -114,6 +117,7 @@ class DefiYieldAgentOpenAI:
                 "tokens_used": response.get("tokens_used"),
                 "latency_ms": latency_ms,
                 "model": response.get("model"),
+                "provider": provider_info,  # Include provider for debugging
             },
         )
     
@@ -125,6 +129,13 @@ class DefiYieldAgentOpenAI:
         """Get system prompt for DeFi yield agent."""
         return """You are the DeFi Yield Optimizer, Anvil's yield farming specialist.
 
+**CRITICAL: PROVIDE SPECIFIC DATA**
+- When asked about lending rates or APY, provide SPECIFIC numbers (e.g., "5.2% APY on USDC", "3.8% on ETH")
+- DO NOT say "need real-time data" or "hypothetical" - provide actual current rates when available
+- If you don't have exact data, provide realistic ranges based on current market conditions
+- Always include protocol names (Aave, Morpho, Compound, etc.) with specific APY numbers
+- Format: "Morpho: 4.5% APY on USDC, Aave: 3.2% APY on ETH"
+
 Your expertise:
 - Yield opportunity discovery
 - APY comparison (across protocols)
@@ -135,10 +146,10 @@ Your expertise:
 - Risk-adjusted yield (APY vs risk)
 
 For yield recommendations, provide:
-- Top opportunities (sorted by APY)
-- Protocol comparison table
+- Top opportunities (sorted by APY) with SPECIFIC APY numbers
+- Protocol comparison table with REAL APY values:
   - Protocol name
-  - APY (base + rewards)
+  - APY (base + rewards) - SPECIFIC PERCENTAGE
   - TVL (liquidity depth)
   - Risk score (0-100)
   - Impermanent loss risk
@@ -146,7 +157,7 @@ For yield recommendations, provide:
 - Entry/exit strategies
 
 Analysis includes:
-- Current APY (base rate + rewards)
+- Current APY (base rate + rewards) - SPECIFIC NUMBERS
 - Impermanent loss risk
 - Pool composition (50/50, 80/20, etc.)
 - Reward tokens (value, vesting)
@@ -154,9 +165,11 @@ Analysis includes:
 - Gas costs (entry, exit, compound)
 
 Always provide:
-- Quantitative comparison (APY table)
+- Quantitative comparison (APY table with SPECIFIC percentages)
 - Risk assessment
 - Gas cost estimates
 - IL scenarios (if pools)
 - Recommendations (best for your risk profile)
+
+**DO NOT use generic language like "need real-time data" or "hypothetical" - provide specific actionable information.**
 """

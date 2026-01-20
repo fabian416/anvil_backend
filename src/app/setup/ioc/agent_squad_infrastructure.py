@@ -32,6 +32,7 @@ from app.infrastructure.adapters.agent_squad.feature_flags_config import (
 from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClientVertexAI
 from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
 from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
+from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
 from app.setup.config.agent_squad import AgentSquadSettings
 from app.setup.config.settings import AppSettings
 
@@ -236,12 +237,11 @@ class AgentSquadInfrastructureProvider(Provider):
         return AgentLLMGateway(llm_gateway=llm_gateway)
 
     @provide
-    def provide_coingecko_client(self, settings: AgentSquadSettings) -> Any:
+    def provide_coingecko_client(self, settings: AgentSquadSettings) -> CoinGeckoClient | None:
         """Provide CoinGecko API client if enabled."""
         if not settings.external_apis.enable_coingecko:
             return None
         
-        from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
         api_key = os.getenv("COINGECKO_API_KEY")  # Optional
         return CoinGeckoClient(api_key=api_key)
     
@@ -348,7 +348,7 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_hunter_ai_agent(
         self,
         llm_client: LLMClientGateway,
-        coingecko_client: Any,
+        coingecko_client: CoinGeckoClient | None,  # Type-annotated for explicit DI resolution
     ) -> HunterAIAgentOpenAI:
         """Provide Hunter AI agent with optional CoinGecko integration."""
         return HunterAIAgentOpenAI(

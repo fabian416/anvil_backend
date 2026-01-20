@@ -114,16 +114,30 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
             "tell me about bitcoin", "tell me about ethereum", "tell me about",
             "what is defi", "what is nft", "what is dao", "what is stablecoin",
             "explain bitcoin", "explain ethereum", "explain defi",
+            # Additional variations for better detection
+            "bitcoin explained", "what does btc mean", "bitcoin definition",
+            "what is crypto", "what is cryptocurrency", "what is blockchain",
+            "bitcoin basics", "bitcoin for beginners", "learn about bitcoin",
+            "ethereum explained", "what does eth mean", "ethereum definition",
+            "tell me about btc", "explain btc", "what's bitcoin", "what's btc",
         ],
         "es": [
             "qué es bitcoin", "qué es ethereum", "qué es btc", "qué es eth",
             "qué es usdc", "qué es usdt", "qué es solana", "qué es defi",
             "cuéntame sobre bitcoin", "háblame de ethereum", "explica bitcoin",
+            # Additional variations
+            "qué es cripto", "qué es criptomoneda", "qué es blockchain",
+            "bitcoin explicado", "qué significa btc", "definición de bitcoin",
+            "cuéntame sobre btc", "explica btc", "qué es el bitcoin",
         ],
         "pt": [
             "o que é bitcoin", "o que é ethereum", "o que é btc", "o que é eth",
             "o que é usdc", "o que é usdt", "o que é solana", "o que é defi",
             "fale sobre bitcoin", "me conte sobre ethereum", "explique bitcoin",
+            # Additional variations
+            "o que é cripto", "o que é criptomoeda", "o que é blockchain",
+            "bitcoin explicado", "o que significa btc", "definição de bitcoin",
+            "fale sobre btc", "explique btc", "o que é o bitcoin",
         ],
         "zh": [
             "什么是比特币", "什么是以太坊", "什么是btc", "什么是eth",

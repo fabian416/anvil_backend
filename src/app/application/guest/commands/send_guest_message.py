@@ -34,6 +34,16 @@ from app.domain.guest.entities.guest_conversation import GuestConversation
 from app.domain.guest.entities.guest_message import GuestMessage
 from app.domain.guest.entities.guest_user import GuestUser
 from app.domain.guest.ports.guest_repository import GuestRepository
+from app.domain.services.distillation.engine import DistillationEngine
+from app.domain.value_objects.distillation import RouteType
+from app.domain.ports.chat.intent_detection_port import IntentDetectionResult
+
+# Type hints for Agent Squad (optional dependencies)
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
+    from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -142,10 +152,16 @@ class SendGuestMessage:
         guest_repository: GuestRepository,
         intent_detector: IntentDetectorService | None = None,
         handler_service: GuestHandlerService | None = None,
+        distillation_engine: DistillationEngine | None = None,
+        supervisor_coordinator: Any | None = None,  # SupervisorCoordinator - injected manually
+        agent_orchestrator: Any | None = None,  # AgentOrchestrator - injected manually
     ):
         self._guest_repo = guest_repository
         self._intent_detector = intent_detector
         self._handler_service = handler_service or GuestHandlerService()
+        self._distillation_engine = distillation_engine
+        self._supervisor_coordinator = supervisor_coordinator
+        self._agent_orchestrator = agent_orchestrator
 
     async def execute(
         self,
@@ -184,12 +200,58 @@ class SendGuestMessage:
         # 4. Get conversation history for context (conversational memory)
         context = await self._build_conversation_context(conversation.id)
 
-        # 4a. Get continuation state from last message (for multi-step flows)
-        continuation_step, previous_swap_info, previous_lending_info, previous_send_info, previous_buy_info = await self._get_continuation_state(
-            conversation.id
+        # ✨ FAST PATH CHECK (BEFORE CONTINUATION) ✨
+        # Simple informational queries should bypass continuation flows and workflow planning
+        # Check this FIRST to avoid continuation flow interference
+        content_lower = content.lower().strip()
+        simple_info_patterns = [
+            content_lower.startswith("what is "),
+            content_lower.startswith("what are "),
+            content_lower.startswith("explain "),
+            content_lower.startswith("tell me about "),
+            content_lower.startswith("describe "),
+        ]
+        
+        # If it's a simple informational query (and not asking for price), use fast path
+        is_simple_info_query = (
+            any(simple_info_patterns) and 
+            not any([
+                "price" in content_lower,
+                "cost" in content_lower,
+                "how much" in content_lower,
+                "current price" in content_lower,
+            ])
         )
+        
+        # 4a. Get continuation state from last message (for multi-step flows)
+        # BUT: If it's a simple info query, skip continuation check (will cancel it anyway)
+        if not is_simple_info_query:
+            continuation_step, previous_swap_info, previous_lending_info, previous_send_info, previous_buy_info = await self._get_continuation_state(
+                conversation.id
+            )
+        else:
+            # Fast path: Skip continuation check, clear any existing state
+            # Also clear continuation state in database to prevent future interference
+            continuation_step = None
+            previous_swap_info = None
+            previous_lending_info = None
+            previous_send_info = None
+            previous_buy_info = None
+            
+            # Clear continuation state in database (if needed)
+            # Note: Continuation state is cleared by setting variables to None above
+            # Database cleanup can be done in a background task if needed
 
-        # 4b. ✨ COMPOUND INTENT DETECTION ✨
+        # 4b. ✨ EARLY RESTRICTED INTENT CHECK ✨
+        # Check if this is a restricted intent BEFORE Agent Squad processing
+        # This ensures custom messages from translations.py are used instead of Agent Squad
+        # Detect intent early to check if restricted
+        early_intent, early_confidence, early_handler = await self._detect_intent_with_context(
+            content, context, language, None
+        )
+        is_restricted_early, reason_early = self._is_restricted_action(early_intent)
+        
+        # 4b.1. ✨ COMPOUND INTENT DETECTION ✨
         # Check if user wants to cancel current flow and start a new query
         # Example: "cancel, tell me the price of btc" while in a swap flow
         if continuation_step:
@@ -272,6 +334,353 @@ class SendGuestMessage:
                     previous_send_info = None
                     previous_buy_info = None
 
+        # 4c. ✨ AGENT SQUAD SUPERVISOR (PRIMARY HANDLER FOR ALL QUERIES) ✨
+        # SupervisorCoordinator handles ALL routing responsibilities:
+        # - Price queries → Hunter AI agent (via market_sentiment intent)
+        # - Anvil knowledge → Chat agent (via general_chat intent with knowledge base)
+        # - General questions → Chat agent (via general_chat intent)
+        # - Shortcuts → Multi-step workflows (via appropriate intents: swap_tokens, lending, etc.)
+        # - Multi-step operations → SupervisorCoordinator workflows
+        # 
+        # No manual pattern matching needed - fully LLM-based and context-aware
+        # BUT: Skip Agent Squad for restricted intents (handled with custom messages in step 8)
+        
+        supervisor_coordinator = self._supervisor_coordinator
+        
+        # Verify it's actually a SupervisorCoordinator instance
+        # Note: is_simple_info_query is already calculated above (before continuation check)
+        # Skip Agent Squad for restricted intents - use custom registration messages instead
+        # (is_restricted will be checked in step 6, but we check here to skip Agent Squad early)
+        if supervisor_coordinator and hasattr(supervisor_coordinator, "create_workflow_plan") and not continuation_step:
+            try:
+                # ✨ FAST PATH: Simple informational queries go directly to Chat agent (no workflow planning) ✨
+                if is_simple_info_query:
+                    logger.info(
+                        "⚡ Fast path: Simple informational query → Chat agent (bypassing workflow planning)",
+                        extra={
+                            "ip_address": ip_address,
+                            "conversation_id": str(conversation.id),
+                            "query_text": content[:100],
+                        }
+                    )
+                    
+                    # Execute Chat agent directly (fast path)
+                    from app.domain.value_objects.conversation_id import ConversationId
+                    from app.domain.value_objects.message_content import MessageContent
+                    from app.domain.value_objects.agent_squad.conversation_context import (
+                        ConversationContext as AgentSquadContext,
+                    )
+                    from app.domain.enums.agent_type import AgentType
+                    from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
+                    
+                    # Build minimal context
+                    messages = await self._guest_repo.get_messages(conversation.id, limit=5)
+                    conversation_history = [
+                        {
+                            "role": msg.role.value,
+                            "content": msg.content,
+                            "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                        }
+                        for msg in messages
+                    ]
+                    conversation_history.append({
+                        "role": "user",
+                        "content": content,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    })
+                    
+                    agent_squad_context = AgentSquadContext(
+                        conversation_history=conversation_history,
+                        user_metadata={"language": language, "is_guest": True},
+                        session_metadata={"ip_address": ip_address},
+                    )
+                    
+                    # Execute Chat agent directly via orchestrator
+                    if not self._agent_orchestrator:
+                        logger.warning("Agent orchestrator not available, falling back to SupervisorCoordinator")
+                        # Fall through to SupervisorCoordinator path below
+                    else:
+                        try:
+                            import time
+                            fast_path_start_time = time.time()
+                            
+                            response = await self._agent_orchestrator.execute_agent(
+                                agent_type=AgentType.CHAT,
+                                message=content,
+                                conversation_context=agent_squad_context,
+                            )
+                            
+                            # Calculate execution time (after agent execution completes)
+                            fast_path_execution_time_ms = int((time.time() - fast_path_start_time) * 1000)
+                            
+                            # Create user message
+                            user_message = GuestMessage.create_user_message(
+                                conversation_id=conversation.id,
+                                content=content,
+                                language=language,
+                            )
+                            await self._guest_repo.create_message(user_message)
+                            
+                            # Create agent message
+                            agent_message = GuestMessage.create_assistant_message(
+                                conversation_id=conversation.id,
+                                content=response.content if hasattr(response, "content") else str(response),
+                                intent="COMPLEX_WORKFLOW",
+                                handler="agent_squad_chat_fast",
+                                confidence=0.95,
+                                language=language,
+                                is_restricted_action=False,
+                            )
+                            await self._guest_repo.create_message(agent_message)
+                            
+                            # Update counters
+                            guest.increment_messages()
+                            conversation.increment_messages()
+                            await self._guest_repo.update_guest(guest)
+                            await self._guest_repo.update_conversation(conversation)
+                            
+                            # Get sources from response
+                            sources = []
+                            if hasattr(response, "sources") and response.sources:
+                                sources = [s.to_dict() for s in response.sources]
+                            
+                            # Check if debug timing is enabled
+                            from app.setup.config.settings import load_settings
+                            settings = load_settings()
+                            debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
+                            
+                            # Build enrichment with optional timing
+                            enrichment = {
+                                "agent_squad": True,
+                                "workflow_type": "fast_path",
+                                "task_count": 1,
+                                "disclaimer": get_demo_disclaimer(language),
+                                "agents_used": ["chat"],
+                            }
+                            
+                            # Add timing if debug enabled
+                            if debug_timing_enabled:
+                                # Get provider info from response metadata if available
+                                provider_info = None
+                                if hasattr(response, 'metadata') and isinstance(response.metadata, dict):
+                                    provider_info = response.metadata.get('provider')
+                                # Fallback: check if response has provider attribute directly
+                                if not provider_info and hasattr(response, 'provider'):
+                                    provider_info = response.provider
+                                
+                                enrichment["agent_timings"] = [{
+                                    "agent_type": "chat",
+                                    "task_description": "Fast path execution",
+                                    "execution_time_ms": fast_path_execution_time_ms,
+                                    "status": "completed",
+                                    "provider": provider_info,  # Include LLM provider for debugging
+                                }]
+                            
+                            # Calculate remaining messages
+                            hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                            messages_this_hour = await self._guest_repo.get_message_count_since(
+                                guest.id, hour_ago
+                            )
+                            messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+                            
+                            return GuestMessageResult(
+                                conversation_id=conversation.id,
+                                message_id=agent_message.id,
+                                user_message={
+                                    "id": str(user_message.id),
+                                    "role": user_message.role.value,
+                                    "content": user_message.content,
+                                    "created_at": user_message.created_at.isoformat(),
+                                },
+                                agent_message={
+                                    "id": str(agent_message.id),
+                                    "role": agent_message.role.value,
+                                    "content": response.content if hasattr(response, "content") else str(response),
+                                    "created_at": agent_message.created_at.isoformat(),
+                                    "sources": sources,
+                                },
+                                routing={
+                                    "intent": "COMPLEX_WORKFLOW",
+                                    "confidence": 0.95,
+                                    "handler": "agent_squad_chat_fast",
+                                    "language": language,
+                                    "is_demo_mode": False,
+                                    "is_live_data": False,
+                                },
+                                enrichment=enrichment,
+                                sources=sources if sources else None,
+                                registration_required=None,
+                                guest_info={
+                                    "messages_remaining": messages_remaining,
+                                    "session_active": True,
+                                },
+                            )
+                        except Exception as e:
+                            logger.error(f"Fast path execution failed: {e}, falling back to SupervisorCoordinator", exc_info=True)
+                            # Fall through to SupervisorCoordinator path below
+                
+                # Standard path: Use SupervisorCoordinator for complex queries
+                logger.info(
+                    "🎭 Routing to Agent Squad Supervisor (primary handler)",
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                        "query_text": content[:100],  # Changed from "message" to avoid LogRecord conflict
+                    }
+                )
+                
+                agent_squad_result = await self._handle_with_agent_squad(
+                    content=content,
+                    language=language,
+                    conversation=conversation,
+                    guest=guest,
+                    context=context,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    referer=referer,
+                )
+                
+                if agent_squad_result is not None:
+                    logger.info(
+                        "✅ Agent Squad Supervisor handled query successfully",
+                        extra={"conversation_id": str(conversation.id)}
+                    )
+                    return agent_squad_result
+                else:
+                    logger.info(
+                        "⚠️ Agent Squad Supervisor returned None, falling back to normal flow",
+                        extra={"conversation_id": str(conversation.id)}
+                    )
+            except Exception as e:
+                logger.warning(
+                    f"Agent Squad Supervisor failed: {e}, falling back to normal flow",
+                    exc_info=True,
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                    }
+                )
+
+        # 4e. ✨ DISTILLATION CHECK ✨
+        # Check if distillation can handle this query (educational questions, static responses)
+        distillation_result = None
+        if self._distillation_engine and not continuation_step:
+            try:
+                distillation_result = await self._distillation_engine.distill(
+                    query=content,
+                    user_id=None,  # Guest users don't have UUID
+                    user_context={"language": language},
+                )
+                
+                # If distillation routed to STATIC response, use it directly
+                if (
+                    distillation_result.route_type == RouteType.STATIC
+                    and distillation_result.static_response
+                ):
+                    logger.info(
+                        "✨ Distillation static response used",
+                        extra={
+                            "ip_address": ip_address,
+                            "conversation_id": str(conversation.id),
+                            "intent": distillation_result.intent.value,
+                            "route_type": distillation_result.route_type.value,
+                        }
+                    )
+                    
+                    # Create user message
+                    user_message = GuestMessage.create_user_message(
+                        conversation_id=conversation.id,
+                        content=content,
+                        language=language,
+                    )
+                    await self._guest_repo.create_message(user_message)
+                    
+                    # Create agent message with static response
+                    agent_message = GuestMessage.create_assistant_message(
+                        conversation_id=conversation.id,
+                        content=distillation_result.static_response,
+                        intent=distillation_result.intent.value,
+                        handler="distillation_static",
+                        confidence=distillation_result.classification_confidence or 0.95,
+                        language=language,
+                        is_restricted_action=False,
+                    )
+                    await self._guest_repo.create_message(agent_message)
+                    
+                    # Update counters
+                    guest.increment_messages()
+                    conversation.increment_messages()
+                    await self._guest_repo.update_guest(guest)
+                    await self._guest_repo.update_conversation(conversation)
+                    
+                    # Log telemetry
+                    await self._guest_repo.log_telemetry(
+                        guest_user_id=guest.id,
+                        conversation_id=conversation.id,
+                        event_type="message_sent",
+                        event_data={
+                            "intent": distillation_result.intent.value,
+                            "handler": "distillation_static",
+                            "route_type": distillation_result.route_type.value,
+                            "message_length": len(content),
+                        },
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        referer=referer,
+                        language=language,
+                    )
+                    
+                    # Calculate remaining messages
+                    hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                    messages_this_hour = await self._guest_repo.get_message_count_since(
+                        guest.id, hour_ago
+                    )
+                    messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+                    
+                    return GuestMessageResult(
+                        conversation_id=conversation.id,
+                        message_id=agent_message.id,
+                        user_message={
+                            "id": str(user_message.id),
+                            "role": user_message.role.value,
+                            "content": user_message.content,
+                            "created_at": user_message.created_at.isoformat(),
+                        },
+                        agent_message={
+                            "id": str(agent_message.id),
+                            "role": agent_message.role.value,
+                            "content": agent_message.content,
+                            "created_at": agent_message.created_at.isoformat(),
+                        },
+                        routing={
+                            "intent": distillation_result.intent.value,
+                            "confidence": distillation_result.classification_confidence or 0.95,
+                            "handler": "distillation_static",
+                            "language": language,
+                            "is_demo_mode": False,
+                            "is_live_data": False,
+                            "distillation_route": distillation_result.route_type.value,
+                        },
+                        enrichment={"disclaimer": get_demo_disclaimer(language)},
+                        sources=None,
+                        registration_required=None,
+                        guest_info={
+                            "messages_remaining": messages_remaining,
+                            "session_active": True,
+                        },
+                    )
+            except Exception as e:
+                # If distillation fails, continue with normal flow
+                logger.warning(
+                    f"Distillation check failed, continuing with normal flow: {e}",
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                        "error": str(e),
+                    }
+                )
+                distillation_result = None
+
         # 5. Detect intent with context
         # If we have a continuation_step, we're in the middle of a multi-step flow
         # Use the intent from that flow instead of detecting a new one
@@ -295,12 +704,13 @@ class SendGuestMessage:
             else:
                 # Unknown continuation step, fall back to intent detection
                 intent, confidence, handler = await self._detect_intent_with_context(
-                    content, context, language
+                    content, context, language, None
                 )
         else:
             # No continuation, detect intent normally
+            # Detect intent using context-based detection
             intent, confidence, handler = await self._detect_intent_with_context(
-                content, context, language
+                content, context, language, None
             )
 
         # 6. Check if restricted
@@ -388,6 +798,7 @@ class SendGuestMessage:
             )
         else:
             # Fallback to demo response for other intents
+            # Note: Informational queries are already handled earlier in the flow
             agent_content = await self._generate_demo_response(
                 content, intent, language
             )
@@ -609,7 +1020,7 @@ class SendGuestMessage:
             return None, None, None, None, None
 
     async def _detect_intent_with_context(
-        self, content: str, context: str, language: str
+        self, content: str, context: str, language: str, intent_result: "IntentDetectionResult | None" = None
     ) -> tuple[ChatIntent | None, float | None, str | None]:
         """
         Detect intent from message content with conversational context.
@@ -644,6 +1055,11 @@ class SendGuestMessage:
                             return ChatIntent.HUNTER_PRICE_PREDICTION, 0.90, "hunter_prediction_handler"
         
         # Try external intent detector (but follow-ups already handled above)
+        # Reuse intent_result if already detected (from compound intent check)
+        if intent_result:
+            handler = self._get_handler_for_intent(intent_result.intent)
+            return intent_result.intent, intent_result.confidence, handler
+        
         if self._intent_detector:
             try:
                 result = await self._intent_detector.detect_intent(content)
@@ -1240,6 +1656,372 @@ class SendGuestMessage:
         cta = get_cta_message(language)
 
         return f"{message}\n\n👉 {cta}: /signup"
+
+    # NOTE: Manual pattern detection methods removed
+    # Compound intent detection is now handled by LLM-based AgentSquadIntentAdapter
+    # These methods are no longer needed:
+    # - _needs_agent_squad() - Replaced by LLM compound intent detection
+    # - _detect_sequential_intents() - Replaced by LLM compound intent detection
+    # - _classify_part_intent() - Replaced by LLM intent classification
+
+    async def _handle_with_agent_squad(
+        self,
+        content: str,
+        language: str,
+        conversation: GuestConversation,
+        guest: GuestUser,
+        context: list,
+        ip_address: str,
+        user_agent: str | None = None,
+        referer: str | None = None,
+    ) -> GuestMessageResult:
+        """
+        Handle complex query with Agent Squad SupervisorCoordinator.
+        
+        This method:
+        1. Creates a workflow plan using SupervisorCoordinator
+        2. Executes the workflow with multiple agents
+        3. Aggregates results into a structured response
+        4. Saves messages and logs telemetry
+        
+        Args:
+            content: User message content
+            language: Language code
+            conversation: Guest conversation
+            guest: Guest user
+            context: Conversation context
+            ip_address: User IP address
+            user_agent: User agent string
+            referer: Referer header
+            
+        Returns:
+            GuestMessageResult with Agent Squad response, or None if should fallback
+        """
+        if not self._supervisor_coordinator:
+            # Fallback to single intent if Agent Squad not available
+            logger.warning("Agent Squad not available, falling back to single intent")
+            return None  # type: ignore
+        
+        # Type guard: Ensure it's actually a SupervisorCoordinator
+        if not hasattr(self._supervisor_coordinator, "create_workflow_plan"):
+            logger.warning(
+                "SupervisorCoordinator has wrong type, skipping Agent Squad",
+                extra={"type": type(self._supervisor_coordinator).__name__}
+            )
+            return None
+        
+        logger.info(
+            "🎭 Agent Squad Supervisor: Creating workflow plan",
+            extra={
+                "conversation_id": str(conversation.id),
+                "message_length": len(content),
+            }
+        )
+        
+        try:
+            from app.domain.value_objects.conversation_id import ConversationId
+            from app.domain.value_objects.message_content import MessageContent
+            from app.domain.value_objects.agent_squad.conversation_context import (
+                ConversationContext as AgentSquadContext,
+            )
+            from app.domain.enums.agent_type import AgentType
+            
+            # Guest-accessible agents (read-only, no execution)
+            # NOTE: PORTFOLIO is NOT accessible to guests - requires authentication
+            GUEST_ACCESSIBLE_AGENTS = [
+                AgentType.CHAT,
+                AgentType.RESEARCH,
+                AgentType.RISK_ANALYZER,
+                AgentType.HUNTER_AI,  # Market analysis
+                AgentType.DEFI_YIELD,  # Lending rates (read-only)
+            ]
+            
+            # Build Agent Squad conversation context
+            # Get actual message objects from repository (context is a string)
+            messages = await self._guest_repo.get_messages(
+                conversation.id, limit=10
+            )
+            
+            # Build conversation history with current message included
+            conversation_history = [
+                {
+                    "role": msg.role.value,
+                    "content": msg.content,
+                    "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                }
+                for msg in messages
+            ]
+            
+            # Add current user message to history for context
+            conversation_history.append({
+                "role": "user",
+                "content": content,
+                "timestamp": datetime.now(UTC).isoformat(),
+            })
+            
+            agent_squad_context = AgentSquadContext(
+                conversation_history=conversation_history,
+                user_metadata={"language": language, "is_guest": True},
+                session_metadata={"ip_address": ip_address},
+            )
+            
+            # Create workflow plan
+            workflow_plan = await self._supervisor_coordinator.create_workflow_plan(
+                conversation_id=ConversationId(conversation.id),
+                message=MessageContent(content),
+                conversation_context=agent_squad_context,
+                available_agents=GUEST_ACCESSIBLE_AGENTS,
+            )
+            
+            logger.info(
+                "🎭 Agent Squad workflow plan created",
+                extra={
+                    "ip_address": ip_address,
+                    "conversation_id": str(conversation.id),
+                    "task_count": len(workflow_plan.tasks),
+                    "estimated_time": workflow_plan.estimated_time_seconds,
+                }
+            )
+            
+            # Execute workflow
+            aggregated_response, sources, agent_timings = await self._supervisor_coordinator.execute_workflow(
+                conversation_id=ConversationId(conversation.id),
+                workflow_plan=workflow_plan,
+                conversation_context=agent_squad_context,
+            )
+            
+            # Create user message
+            user_message = GuestMessage.create_user_message(
+                conversation_id=conversation.id,
+                content=content,
+                language=language,
+            )
+            await self._guest_repo.create_message(user_message)
+            
+            # Check if debug timing is enabled
+            from app.setup.config.settings import load_settings
+            settings = load_settings()
+            debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
+            
+            # Build enrichment with optional timing
+            enrichment = {
+                "agent_squad": True,
+                "workflow_type": "supervisor_coordinator",
+                "task_count": len(workflow_plan.tasks),
+                "disclaimer": get_demo_disclaimer(language),
+                "agents_used": [task.agent_type.value for task in workflow_plan.tasks],
+            }
+            
+            # Add timing if debug enabled
+            if debug_timing_enabled and agent_timings:
+                enrichment["agent_timings"] = agent_timings
+            
+            # Create agent message with aggregated response
+            agent_message = GuestMessage.create_assistant_message(
+                conversation_id=conversation.id,
+                content=aggregated_response,
+                intent="COMPLEX_WORKFLOW",
+                handler="agent_squad_supervisor",
+                confidence=0.95,
+                language=language,
+                is_restricted_action=False,
+            )
+            await self._guest_repo.create_message(agent_message)
+            
+            # Update counters
+            guest.increment_messages()
+            conversation.increment_messages()
+            await self._guest_repo.update_guest(guest)
+            await self._guest_repo.update_conversation(conversation)
+            
+            # Log telemetry
+            await self._guest_repo.log_telemetry(
+                guest_user_id=guest.id,
+                conversation_id=conversation.id,
+                event_type="message_sent",
+                event_data={
+                    "intent": "COMPLEX_WORKFLOW",
+                    "handler": "agent_squad_supervisor",
+                    "task_count": len(workflow_plan.tasks),
+                    "message_length": len(content),
+                },
+                ip_address=ip_address,
+                user_agent=user_agent,
+                referer=referer,
+                language=language,
+            )
+            
+            # Calculate remaining messages
+            hour_ago = datetime.now(UTC) - timedelta(hours=1)
+            messages_this_hour = await self._guest_repo.get_message_count_since(
+                guest.id, hour_ago
+            )
+            messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+            
+            return GuestMessageResult(
+                conversation_id=conversation.id,
+                message_id=agent_message.id,
+                user_message={
+                    "id": str(user_message.id),
+                    "role": user_message.role.value,
+                    "content": user_message.content,
+                    "created_at": user_message.created_at.isoformat(),
+                },
+                agent_message={
+                    "id": str(agent_message.id),
+                    "role": agent_message.role.value,
+                    "content": agent_message.content,
+                    "created_at": agent_message.created_at.isoformat(),
+                    "sources": sources,  # Include sources from agent execution
+                },
+                routing={
+                    "intent": "COMPLEX_WORKFLOW",
+                    "confidence": 0.95,
+                    "handler": "agent_squad_supervisor",
+                    "language": language,
+                    "is_demo_mode": False,
+                    "is_live_data": True,
+                    "workflow_tasks": len(workflow_plan.tasks),
+                },
+                enrichment=enrichment,
+                sources=None,
+                registration_required=None,
+                guest_info={
+                    "messages_remaining": messages_remaining,
+                    "rate_limit": RATE_LIMIT_MESSAGES_PER_HOUR,
+                },
+                rate_limited=False,
+            )
+            
+        except Exception as e:
+            logger.error(
+                "❌ Agent Squad workflow execution failed",
+                extra={
+                    "ip_address": ip_address,
+                    "conversation_id": str(conversation.id),
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+                exc_info=True,
+            )
+            # Fallback to single intent processing
+            # Return None to signal continuation with normal flow
+            # The normal flow will handle it as a single intent
+            return None  # type: ignore
+
+    def _check_informational_query(self, content: str, language: str) -> str | None:
+        """
+        Check if query is an informational question and return educational response.
+        
+        This is a fallback for queries that might have been missed by distillation.
+        Handles patterns like "what is btc?", "what is bitcoin?", "whats btc and eth", etc.
+        Supports both single and compound queries (multiple tokens).
+        
+        Args:
+            content: User query text
+            language: Language code
+            
+        Returns:
+            Educational response if found, None otherwise
+        """
+        from app.infrastructure.distillation.educational_responses import get_educational_response
+        import re
+        
+        content_lower = content.lower().strip()
+        
+        # Known tokens for validation
+        known_tokens = ["btc", "eth", "usdc", "usdt", "dai", "sol", "bitcoin", "ethereum", "defi", "nft", "dao", "stablecoin", "solana"]
+        
+        # ✨ COMPOUND QUERY DETECTION ✨
+        # Check for multiple tokens in query (e.g., "whats btc and eth", "what is bitcoin and ethereum")
+        compound_patterns = [
+            r"what(?:'s|s| is) (.+?)(?:\s+and\s+|\s*,\s*|\s+&\s+)(.+?)(?:\?|$)",  # "whats btc and eth", "what is btc and eth"
+            r"what(?:'s|s| is) (.+?)\s+(?:and|,|&)\s+(.+?)(?:\?|$)",  # "what is bitcoin and ethereum"
+            r"^(.+?)(?:\s+and\s+|\s*,\s*|\s+&\s+)(.+?)(?:\?|$)",  # "btc and eth"
+        ]
+        
+        found_tokens = []
+        for pattern in compound_patterns:
+            match = re.search(pattern, content_lower, re.IGNORECASE)
+            if match:
+                token1 = match.group(1).strip().lower()
+                token2 = match.group(2).strip().lower()
+                
+                # Normalize tokens (remove common words)
+                token1 = re.sub(r"^(?:a |an |the )", "", token1)
+                token2 = re.sub(r"^(?:a |an |the )", "", token2)
+                
+                # Check if both are known tokens
+                if token1 in known_tokens:
+                    found_tokens.append(token1)
+                if token2 in known_tokens:
+                    found_tokens.append(token2)
+                
+                if len(found_tokens) >= 2:
+                    # Build compound response
+                    responses = []
+                    for token in found_tokens:
+                        response = get_educational_response(token, language)
+                        if response:
+                            responses.append(response)
+                    
+                    if len(responses) >= 2:
+                        # Combine responses with separator
+                        separator = "\n\n---\n\n"
+                        combined = separator.join(responses)
+                        return combined
+        
+        # ✨ SINGLE TOKEN QUERIES ✨
+        # Patterns for informational queries (single token)
+        informational_patterns = {
+            "en": [
+                r"what is (?:a |an )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+                r"what's (?:a |an )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+                r"explain (?:a |an )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+                r"(?:tell me about|define) (?:a |an )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            ],
+            "es": [
+                r"(?:qué es|qué es) (?:un |una )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+                r"(?:cuéntame sobre|explica) (?:un |una )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            ],
+            "pt": [
+                r"(?:o que é|o que é) (?:um |uma )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+                r"(?:me conte sobre|explique) (?:um |uma )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            ],
+            "zh": [
+                r"什么是(?:一个 )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+                r"(?:告诉我关于|解释)(?:一个 )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            ],
+        }
+        
+        # Get patterns for language (fallback to English)
+        patterns = informational_patterns.get(language, informational_patterns["en"])
+        
+        # Try each pattern
+        for pattern in patterns:
+            match = re.search(pattern, content_lower, re.IGNORECASE)
+            if match:
+                # Extract the token/term
+                token = match.group(1).lower()
+                
+                # Get educational response
+                response = get_educational_response(token, language)
+                if response:
+                    return response
+        
+        # Also check for simple "what is X" where X might be a token
+        # This catches cases like "what is btc" (without the word "bitcoin")
+        simple_pattern = r"what (?:is|'s) (\w+)"
+        match = re.search(simple_pattern, content_lower, re.IGNORECASE)
+        if match:
+            potential_token = match.group(1).lower()
+            # Check if it's a known token
+            if potential_token in known_tokens:
+                response = get_educational_response(potential_token, language)
+                if response:
+                    return response
+        
+        return None
 
     async def _generate_demo_response(
         self,

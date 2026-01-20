@@ -75,6 +75,7 @@ class AgentLLMGateway:
                 "model": metadata.get("model", model),
                 "finish_reason": metadata.get("finish_reason", "stop"),
                 "latency_ms": latency_ms,
+                "provider": metadata.get("provider", "unknown"),  # Include provider info for debugging
             }
             
         except Exception:
@@ -205,7 +206,7 @@ Return JSON: {"agents": ["agent1", "agent2"], "reasoning": "..."}""",
             {
                 "role": "system",
                 "content": f"""You are a workflow planner. Create a plan with up to {max_agents} agents.
-Return JSON: {{"tasks": [{{"agent": "...", "task": "...", "order": 1}}]}}""",
+Return JSON: {{"tasks": [{{"agent_type": "agent_name", "task_description": "...", "depends_on": []}}]}}""",
             },
             {"role": "user", "content": prompt},
         ]
@@ -213,8 +214,8 @@ Return JSON: {{"tasks": [{{"agent": "...", "task": "...", "order": 1}}]}}""",
         response = await self._llm.generate(
             model="meta-llama/Meta-Llama-3.1-70B-Instruct",
             messages=messages,
-            temperature=0.3,
-            max_tokens=800,
+            temperature=0.2,  # Lower temperature for faster, more deterministic planning
+            max_tokens=400,  # Reduced from 800 for faster responses
         )
 
         return self._parse_json_response(response, {"tasks": []})

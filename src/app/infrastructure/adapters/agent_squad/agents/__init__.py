@@ -26,6 +26,7 @@ from .tax_optimizer_agent_openai import TaxOptimizerAgentOpenAI
 from .defi_yield_agent_openai import DefiYieldAgentOpenAI
 from .security_auditor_agent_slither import SecurityAuditorAgentSlither
 from .gas_optimizer_agent_openai import GasOptimizerAgentOpenAI
+from .guest_auth_agent_openai import GuestAuthAgentOpenAI
 
 __all__ = [
     "ChatAgentOpenAI",
@@ -38,4 +39,5 @@ __all__ = [
     "DefiYieldAgentOpenAI",
     "SecurityAuditorAgentSlither",
     "GasOptimizerAgentOpenAI",
+    "GuestAuthAgentOpenAI",
 ]

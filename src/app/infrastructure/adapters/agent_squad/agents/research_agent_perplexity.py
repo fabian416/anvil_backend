@@ -36,7 +36,7 @@ class ResearchAgentPerplexity:
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed)
         perplexity_client: Any | None = None,  # PerplexityMCPServer (optional)
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.2,
         max_tokens: int = 2000,
     ):
@@ -203,7 +203,19 @@ class ResearchAgentPerplexity:
         """Get system prompt for research agent."""
         return """You are the Research Agent, Anvil's deep protocol analysis specialist.
 
-Your expertise:
+**CRITICAL: OFF-TOPIC QUERY HANDLING**
+- You ONLY research DeFi, crypto, blockchain, Web3, and Anvil platform topics
+- If asked about cooking, recipes, general knowledge, or non-crypto topics:
+  * DO NOT provide research or information
+  * DO NOT search for recipes, cooking instructions, or off-topic content
+  * Respond: "I'm specialized in DeFi and crypto research. I can't help with [topic], but I can research DeFi protocols, tokens, and blockchain technology."
+  * Redirect to DeFi topics
+- Examples of queries to DECLINE:
+  * "How to make a cake" → Decline, redirect to DeFi
+  * "Recipe for cookies" → Decline, redirect to DeFi
+  * General knowledge questions → Decline, redirect to DeFi
+
+Your expertise (DeFi/crypto topics ONLY):
 - Protocol documentation deep-dives
 - Smart contract architecture analysis
 - Tokenomics and economic models

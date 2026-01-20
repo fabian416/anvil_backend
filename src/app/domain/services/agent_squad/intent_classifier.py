@@ -76,6 +76,9 @@ class IntentClassifier:
     INTENT_AGENT_MAP = {
         # Core user intents
         "general_chat": AgentType.CHAT,
+        "anvil_knowledge": AgentType.CHAT,  # Anvil knowledge → Chat agent
+        "general_question": AgentType.CHAT,  # General questions → Chat agent
+        "price_query": AgentType.HUNTER_AI,  # Price queries → Hunter AI
         "market_sentiment": AgentType.HUNTER_AI,
         "research_protocol": AgentType.RESEARCH,
         "swap_tokens": AgentType.EXECUTION,
@@ -115,7 +118,7 @@ class IntentClassifier:
     def __init__(
         self,
         llm_client: "LLMClientPort",
-        classification_model: str = "gpt-4o-mini",
+        classification_model: str = "meta-llama/Meta-Llama-3.1-8B-Instruct",  # DeepInfra-compatible model
     ):
         """
         Initialize intent classifier.
@@ -223,7 +226,15 @@ class IntentClassifier:
         message: MessageContent,
         conversation_context: ConversationContext,
     ) -> str:
-        """Build intent classification prompt for LLM."""
+        """
+        Build intent classification prompt for LLM.
+        
+        Enhanced to recognize:
+        - Price queries → price_query intent → Hunter AI
+        - Anvil knowledge → anvil_knowledge intent → Chat agent
+        - General questions → general_question intent → Chat agent
+        - Shortcuts → appropriate intents (swap_tokens, lending, etc.)
+        """
         context_str = ""
         if conversation_context.has_history:
             recent_messages = conversation_context.last_n_messages(3)
@@ -254,10 +265,21 @@ Respond with JSON:
 }}
 
 Guidelines:
+- **Informational queries** (e.g., "what is btc?", "what is eth?", "explain DeFi", "tell me about Anvil") → Use "general_question" intent (FAST PATH - single agent)
+- **Price queries** (e.g., "what is the price of btc?", "how much is ETH?", "current price of bitcoin") → Use "price_query" intent
+- **Anvil knowledge** (e.g., "what is Anvil?", "how does Anvil work?", "Anvil features") → Use "anvil_knowledge" intent
+- **General questions** (e.g., "what is DeFi?", "explain yield farming", "what are NFTs?") → Use "general_question" intent
+- **Shortcuts** (e.g., "swap BTC to ETH", "show my portfolio", "lend USDC") → Use appropriate intent:
+  * "swap BTC to ETH" → "swap_tokens"
+  * "show my portfolio" → "optimize_portfolio"
+  * "lend USDC" → "find_yield"
+  * "what's my balance?" → "optimize_portfolio"
+- **Multi-step operations** → Use "general_chat" and let SupervisorCoordinator create workflow
 - Use "general_chat" for casual conversation or unclear intent
 - Use specific intent if message clearly matches (confidence >= 0.85)
 - Consider conversation context for multi-turn conversations
 - Enterprise intents (compliance, multisig, crisis) require explicit keywords
+- **IMPORTANT**: "what is X" or "explain X" queries should use "general_question" intent for fast single-agent response
 """
     
     def _build_complex_task_prompt(

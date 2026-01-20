@@ -128,11 +128,15 @@ try:
 except (ImportError, AttributeError):
     ANALYTICS_WEBSOCKET_AVAILABLE = False
 
+# Import JwtAccessTokenProcessor for type hints (always available)
+from app.presentation.http.auth.access_token_processor_jwt import JwtAccessTokenProcessor
+
 try:
     from app.presentation.http.websocket.template_handler import TemplateExecutionWebSocketHandler
     TEMPLATE_WEBSOCKET_AVAILABLE = True
 except (ImportError, AttributeError):
     TEMPLATE_WEBSOCKET_AVAILABLE = False
+    TemplateExecutionWebSocketHandler = None  # type: ignore
 
 # Application Services
 from app.application.chat.services.advanced_intent_detector import AdvancedIntentDetector
@@ -499,13 +503,15 @@ class ChatPhase2Provider(Provider):
         self,
         connection_manager: ConnectionManager,
         template_execution_repository: TemplateExecutionRepository,
+        jwt_processor: JwtAccessTokenProcessor,
     ) -> Optional[Any]:
         """Provide template execution WebSocket handler (REQUEST-scoped to access repository)."""
         if not TEMPLATE_WEBSOCKET_AVAILABLE:
             return None
         return TemplateExecutionWebSocketHandler(
+            execution_repository=template_execution_repository,
+            jwt_processor=jwt_processor,
             connection_manager=connection_manager,
-            template_execution_repository=template_execution_repository,
         )
 
     # ========================================

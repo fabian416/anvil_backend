@@ -159,3 +159,12 @@ class DistillationProvider(Provider):
             config_repo=config_repo,
             telemetry_repo=telemetry_repo,
         )
+
+    # Optional engine for guest chat (allows None)
+    @provide(scope=Scope.REQUEST)
+    def get_optional_distillation_engine(
+        self,
+        engine: DistillationEngine,
+    ) -> DistillationEngine | None:
+        """Get optional distillation engine (allows None for backwards compatibility)."""
+        return engine

@@ -47,9 +47,18 @@ class IntentClassifier:
         # Educational
         Intent.EXPLAIN_CONCEPT: [
             r"what is (a |an )?(\w+)",
+            r"what('s| is) (\w+)",
             r"explain (\w+)",
             r"(tell me about|define) (\w+)",
             r"how does (\w+) work",
+            # Token-specific patterns (check these FIRST for crypto tokens)
+            r"what is (bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            r"what('s| is) (bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            r"explain (bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            r"(tell me about|define) (bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            # Multi-language patterns
+            r"(qué es|o que é|什么是) (bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
+            r"(cuéntame sobre|fale sobre|告诉我关于) (bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
         ],
         Intent.HOW_TO: [
             r"how (do i|to) (\w+)",

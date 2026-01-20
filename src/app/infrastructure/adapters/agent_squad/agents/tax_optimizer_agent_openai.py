@@ -35,7 +35,7 @@ class TaxOptimizerAgentOpenAI:
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.2,
         max_tokens: int = 1500,
     ):

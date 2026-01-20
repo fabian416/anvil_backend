@@ -49,7 +49,7 @@ class ComplianceMonitorAgentChainalysis:
         chainalysis_client: Any,  # ChainalysisClient
         risk_threshold_block: int = 80,
         risk_threshold_review: int = 60,
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.1,
         max_tokens: int = 2000,
     ):

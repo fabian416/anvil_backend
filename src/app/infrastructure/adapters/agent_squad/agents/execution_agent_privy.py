@@ -46,7 +46,7 @@ class ExecutionAgentPrivy:
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
         privy_client: Any,  # PrivyClient (TODO: type properly)
         swap_gateway: Any,  # SwapGateway (1inch, Uniswap)
-        model: str = "gpt-4o",
+        model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.1,
         max_tokens: int = 1000,
         max_transaction_value_usd: Decimal = Decimal("10000"),
