@@ -515,11 +515,22 @@ class SendGuestMessage:
                 )
                 
                 # Execute fast-path workflow
-                aggregated_response, sources, agent_timings = await self._supervisor_coordinator.execute_workflow(
+                aggregated_response, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
                     conversation_id=ConversationId(conversation.id),
                     workflow_plan=fast_path_plan,
                     conversation_context=agent_squad_context,
                 )
+                
+                # Convert sources to serializable format
+                sources = []
+                if sources_raw:
+                    for s in sources_raw:
+                        if hasattr(s, "to_dict"):
+                            sources.append(s.to_dict())
+                        elif isinstance(s, dict):
+                            sources.append(s)
+                        else:
+                            sources.append(str(s))
                 
                 # Create user message
                 user_message = GuestMessage.create_user_message(
@@ -602,6 +613,7 @@ class SendGuestMessage:
                         "role": agent_message.role.value,
                         "content": agent_message.content,
                         "created_at": agent_message.created_at.isoformat(),
+                        "sources": sources if sources else [],
                     },
                     routing={
                         "intent": "COMPLEX_WORKFLOW",
@@ -612,7 +624,7 @@ class SendGuestMessage:
                         "is_live_data": True,
                     },
                     enrichment=enrichment,
-                    sources=sources,
+                    sources=sources if sources else None,
                     registration_required=None,
                     guest_info={
                         "messages_remaining": messages_remaining,
