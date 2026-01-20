@@ -156,7 +156,7 @@ class IntentClassifier:
         
         # Off-topic / Other
         Intent.GREETING: [
-            r"^(hello|hi|hey|greetings|good (morning|afternoon|evening))",
+            r"^(hello|hi|hey|greetings|good (morning|afternoon|evening)|hola|holi|hey there)",
         ],
         Intent.SMALL_TALK: [
             r"how are you",
