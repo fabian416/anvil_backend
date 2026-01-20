@@ -11,7 +11,8 @@ The Anvil messaging system provides a unified, multi-agent orchestration platfor
 **Key Design Principles:**
 - **Unified Architecture**: Same core structure for guest and authenticated users
 - **Agent-Based Orchestration**: Multi-agent workflows with dependency management
-- **Intelligent Routing**: LLM-powered intent detection and complexity assessment
+- **Intelligent Routing**: Hybrid intent classification (rule-based + LLM) with conversation history
+- **Context-Aware Processing**: Conversation history used for better intent detection and routing
 - **Observability**: Comprehensive telemetry and agent timing tracking
 - **Scalability**: Stateless design with Redis-backed session management
 
@@ -94,8 +95,9 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
 - **Responsibilities**:
   - Guest user creation/retrieval (by IP)
   - Conversation management
+  - Conversation history building (last 5 messages)
   - Intent detection with context
-  - Distillation pass
+  - Distillation pass (with conversation history)
   - Supervisor coordination
   - Telemetry logging
   - Rate limiting
@@ -104,8 +106,9 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
 - **Responsibilities**:
   - User authentication verification
   - Conversation ownership check
+  - Conversation history building (last N messages)
   - Intent detection with context
-  - Distillation pass
+  - Distillation pass (with conversation history)
   - Supervisor coordination
   - Telemetry logging
   - Rate limiting (user-tier based)
@@ -124,7 +127,7 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
 **DistillationEngine** (`src/app/domain/services/distillation/engine.py`):
 - **Purpose**: Optimize query processing (cache, static responses, routing)
 - **Components**:
-  - `IntentClassifier`: Classify query intent
+  - `IntentClassifier`: Hybrid classification (rule-based + LLM with conversation history)
   - `ComplexityAssessor`: Assess query complexity
   - `EntityExtractor`: Extract entities (tokens, protocols, etc.)
   - `DistillationRouter`: Route decision (FULL_LLM, CACHED, STATIC)
@@ -189,7 +192,10 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    5. Distillation Engine (Optional)             │
-│  - Intent classification                                       │
+│  - Intent classification (hybrid: rule-based + LLM)           │
+│    * Rule-based patterns first (fast, high confidence)          │
+│    * LLM classification for ambiguous queries                  │
+│    * Uses conversation history for context-aware classification│
 │  - Complexity assessment                                       │
 │  - Entity extraction                                           │
 │  - Cache check (exact → semantic)                              │
@@ -478,16 +484,25 @@ response = await agent.execute(
 
 The `DistillationEngine` optimizes query processing by:
 
-1. **Caching**: Exact and semantic cache lookups
-2. **Static Responses**: Pre-defined responses for common queries
-3. **Routing**: Decision to use FULL_LLM, CACHED, or STATIC response
-4. **Complexity Assessment**: Determine if query needs full LLM processing
+1. **Hybrid Intent Classification**: Rule-based patterns + LLM classification with conversation history
+2. **Caching**: Exact and semantic cache lookups
+3. **Static Responses**: Pre-defined responses for common queries
+4. **Routing**: Decision to use FULL_LLM, CACHED, or STATIC response
+5. **Complexity Assessment**: Determine if query needs full LLM processing
 
 ### Components
 
-**IntentClassifier**:
-- Classifies query intent (SWAP, LENDING, PRICE, etc.)
-- Returns intent and confidence score
+**IntentClassifier** (`src/app/domain/services/distillation/intent_classifier.py`):
+- **Hybrid Classification Approach**:
+  1. **Rule-based patterns** (first tier): Fast regex matching for common queries (~90% accuracy, 0.95 confidence)
+  2. **LLM-based classification** (second tier): Vertex AI (`gemini-2.0-flash`) with DeepInfra fallback for ambiguous queries
+- **Conversation History Support**: Uses last 3 messages for context-aware classification
+- **Benefits**:
+  - Fast classification for common queries (rule-based)
+  - Accurate classification for ambiguous queries (LLM)
+  - Context-aware routing (conversation history)
+  - Helps Supervisor Coordinator route correctly
+- **Returns**: Intent and confidence score (0.0-1.0)
 
 **ComplexityAssessor**:
 - Assesses query complexity (SIMPLE, MODERATE, COMPLEX)
@@ -502,6 +517,7 @@ The `DistillationEngine` optimizes query processing by:
   - `FULL_LLM`: Process with Agent Squad
   - `CACHED`: Return cached response
   - `STATIC`: Return pre-defined response
+- **Context-aware routing**: Uses conversation history for better classification
 
 **CacheManager**:
 - Exact cache: Hash-based lookup
@@ -514,7 +530,24 @@ The `DistillationEngine` optimizes query processing by:
 ### Distillation Flow
 
 ```
-Query → Intent Classification → Complexity Assessment → Entity Extraction
+Query + Conversation History
+  ↓
+Intent Classification (Hybrid):
+  ├─ [1] Rule-based patterns (fast, 0.95 confidence)
+  │   ↓ (if match)
+  │   Return intent immediately
+  │   ↓ (if no match)
+  ├─ [2] LLM Classification (Vertex AI + DeepInfra fallback)
+  │   ├─ Build prompt with conversation history
+  │   ├─ Call llm_client.classify_intent()
+  │   ├─ Parse JSON response
+  │   └─ Return intent if confidence >= 0.85
+  │   ↓ (if LLM fails or low confidence)
+  └─ [3] Fallback to UNCLEAR (0.5 confidence)
+  ↓
+Complexity Assessment
+  ↓
+Entity Extraction
   ↓
 Cache Check (Exact → Semantic)
   ↓
@@ -526,6 +559,37 @@ If FULL_LLM: Continue to Supervisor Coordinator
 If CACHED: Return cached response
 If STATIC: Return static response
 ```
+
+### Intent Classification Details
+
+**Rule-Based Patterns** (First Tier):
+- Fast regex matching for common query patterns
+- ~90% accuracy for standard queries
+- High confidence (0.95) when matched
+- No LLM API costs
+- Examples:
+  - `"what is the price of BTC?"` → `PRICE_CHECK` (0.95 confidence)
+  - `"swap 100 USDC for ETH"` → `SWAP_REQUEST` (0.95 confidence)
+
+**LLM-Based Classification** (Second Tier):
+- Triggered when no rule-based pattern matches
+- Uses Vertex AI (`gemini-2.0-flash`) with automatic DeepInfra fallback
+- Includes conversation history (last 3 messages) for context
+- Helps disambiguate ambiguous queries
+- Examples:
+  - `"what type of swaps can I make?"` → `EXPLAIN_CONCEPT` (0.90 confidence)
+  - `"what's the price?"` (after swap discussion) → `PRICE_CHECK` (context-aware)
+
+**Conversation History Integration**:
+- Last 3 messages included in classification prompt
+- Provides context for ambiguous queries
+- Example: If previous message was about swaps, `"what's the price?"` likely refers to swap prices
+
+**LLM Client Integration**:
+- Uses `LLMClientGateway` from `AgentSquadInfrastructureProvider`
+- Automatic fallback: Vertex AI → DeepInfra (on rate limits or errors)
+- Model mapping: `gemini-2.0-flash` → `meta-llama/Meta-Llama-3.1-70B-Instruct`
+- Graceful degradation: Falls back to rule-based if LLM client unavailable
 
 ---
 
@@ -665,10 +729,11 @@ If STATIC: Return static response
 Both systems use:
 - **SupervisorCoordinator**: Same workflow planning logic
 - **Agent Squad**: Same 18 agents
-- **DistillationEngine**: Same optimization logic
-- **Intent Detection**: Same LLM-based detection
+- **DistillationEngine**: Same optimization logic with hybrid classification
+- **Intent Detection**: Same hybrid classification (rule-based + LLM with conversation history)
 - **Agent Orchestration**: Same execution flow
 - **Response Aggregation**: Same aggregation logic
+- **Conversation History**: Both build and use conversation history for context-aware processing
 
 ---
 
@@ -694,9 +759,11 @@ class SendGuestMessage:
         1. Get or create guest user (by IP)
         2. Get or create conversation
         3. Create user message
-        4. Build conversation context
-        5. Detect intent
-        6. Distillation pass (optional)
+        4. Build conversation context (last 5 messages)
+        5. Detect intent (with conversation history)
+        6. Distillation pass (optional, with conversation history)
+           - Hybrid intent classification (rule-based + LLM)
+           - Context-aware routing
         7. Supervisor coordination
         8. Agent orchestration
         9. Response aggregation
@@ -707,7 +774,21 @@ class SendGuestMessage:
         self,
         conversation_id: UUID,
     ) -> list[dict]:
-        """Build context from last N messages."""
+        """
+        Build context from last N messages.
+        
+        Returns conversation history in format:
+        [
+            {"role": "user", "content": "..."},
+            {"role": "assistant", "content": "..."},
+            ...
+        ]
+        
+        This history is passed to:
+        - DistillationEngine (for context-aware intent classification)
+        - SupervisorCoordinator (for workflow planning)
+        - Individual agents (for conversational context)
+        """
     
     async def _detect_intent_with_context(
         self,
@@ -743,9 +824,11 @@ async def send_message(
     Main execution flow (same as guest):
     1. Authenticate user (JWT)
     2. Get conversation (verify ownership)
-    3. Get conversation context
-    4. Detect intent
-    5. Distillation pass (optional)
+    3. Get conversation context (last N messages)
+    4. Detect intent (with conversation history)
+    5. Distillation pass (optional, with conversation history)
+       - Hybrid intent classification (rule-based + LLM)
+       - Context-aware routing
     6. Supervisor coordination
     7. Agent orchestration
     8. Response aggregation
@@ -890,6 +973,9 @@ The Anvil messaging system provides a robust, scalable architecture for handling
 
 ---
 
-*Document Version: 1.0*  
+*Document Version: 1.1*  
 *Last Updated: 2026-01-20*  
 *Author: Anvil Engineering Team*
+
+**Changelog**:
+- **v1.1** (2026-01-20): Updated Distillation Engine section to reflect hybrid classification (rule-based + LLM) with conversation history support
