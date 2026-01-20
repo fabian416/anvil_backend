@@ -223,6 +223,28 @@ class SendGuestMessage:
             ])
         )
         
+        # ✨ FAST PATH FOR COMMON MULTI-INTENT PATTERNS ✨
+        # Detect common multi-intent patterns that can skip Supervisor Coordinator planning
+        # This is checked BEFORE restricted intent check to avoid unnecessary processing
+        is_simple_multi_intent = False
+        if not is_simple_info_query:
+            import re
+            # Pattern: greeting + price query (e.g., "hi, how are you? what is the price of btc?")
+            # More flexible pattern: greeting anywhere + price query anywhere
+            has_greeting = bool(re.search(r"(hi|hello|hey|hola|how are you|greetings)", content_lower))
+            has_price_query = bool(re.search(r"(price|cost|worth|how much).*(btc|eth|usdc|bitcoin|ethereum)", content_lower))
+            
+            if has_greeting and has_price_query:
+                is_simple_multi_intent = True
+                logger.info(
+                    "✨ Fast path: Detected greeting + price query pattern",
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                        "content": content[:100],
+                    }
+                )
+        
         # 4a. Get continuation state from last message (for multi-step flows)
         # BUT: If it's a simple info query, skip continuation check (will cancel it anyway)
         if not is_simple_info_query:
@@ -242,6 +264,193 @@ class SendGuestMessage:
             # Note: Continuation state is cleared by setting variables to None above
             # Database cleanup can be done in a background task if needed
 
+        # ✨ FAST PATH FOR COMMON MULTI-INTENT PATTERNS ✨
+        # Detect common multi-intent patterns that can skip Supervisor Coordinator planning
+        # This should be checked BEFORE restricted intent check to avoid unnecessary processing
+        if is_simple_multi_intent and self._supervisor_coordinator and self._agent_orchestrator:
+            try:
+                logger.info(
+                    "✨ Fast path: Simple multi-intent query (greeting + price) - skipping LLM planning",
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                        "content": content[:100],
+                    }
+                )
+                
+                # Create optimized workflow plan directly (skip LLM planning)
+                from app.domain.value_objects.conversation_id import ConversationId
+                from app.domain.value_objects.message_content import MessageContent
+                from app.domain.value_objects.agent_squad.conversation_context import (
+                    ConversationContext as AgentSquadContext,
+                )
+                from app.domain.enums.agent_type import AgentType
+                from app.domain.services.agent_squad.supervisor_coordinator import (
+                    WorkflowPlan,
+                    AgentTask,
+                    TaskStatus,
+                )
+                
+                # Build context
+                messages = await self._guest_repo.get_messages(conversation.id, limit=10)
+                conversation_history = [
+                    {
+                        "role": msg.role.value,
+                        "content": msg.content,
+                        "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                    }
+                    for msg in messages
+                ]
+                conversation_history.append({
+                    "role": "user",
+                    "content": content,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                })
+                
+                agent_squad_context = AgentSquadContext(
+                    conversation_history=conversation_history,
+                    user_metadata={"language": language, "is_guest": True},
+                    session_metadata={"ip_address": ip_address},
+                )
+                
+                # Create fast-path workflow plan (no LLM call)
+                # Pattern: greeting + price → CHAT (greeting) + HUNTER_AI (price) + CHAT (aggregate)
+                fast_path_tasks = [
+                    AgentTask(
+                        agent_type=AgentType.CHAT,
+                        task_description="Respond to the user's greeting politely and briefly",
+                        depends_on=[],
+                    ),
+                    AgentTask(
+                        agent_type=AgentType.HUNTER_AI,
+                        task_description=f"Get the current price of BTC. | Tools: CoinGecko API | Data Sources: CoinGecko API",
+                        depends_on=[],
+                    ),
+                    AgentTask(
+                        agent_type=AgentType.CHAT,
+                        task_description="Aggregate and summarize the results from all previous agents, combining the greeting response with the BTC price information into a single coherent response",
+                        depends_on=[0, 1],  # Depends on both previous tasks
+                    ),
+                ]
+                
+                fast_path_plan = WorkflowPlan(
+                    tasks=fast_path_tasks,
+                    execution_order=[0, 1, 2],  # Execute greeting and price in parallel, then aggregate
+                    estimated_time_seconds=5,
+                )
+                
+                # Execute fast-path workflow
+                aggregated_response, sources, agent_timings = await self._supervisor_coordinator.execute_workflow(
+                    conversation_id=ConversationId(conversation.id),
+                    workflow_plan=fast_path_plan,
+                    conversation_context=agent_squad_context,
+                )
+                
+                # Create user message
+                user_message = GuestMessage.create_user_message(
+                    conversation_id=conversation.id,
+                    content=content,
+                    language=language,
+                )
+                await self._guest_repo.create_message(user_message)
+                
+                # Check if debug timing is enabled
+                from app.setup.config.settings import load_settings
+                settings = load_settings()
+                debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
+                
+                # Build enrichment
+                enrichment = {
+                    "agent_squad": True,
+                    "workflow_type": "supervisor_coordinator_fast_path",
+                    "task_count": len(fast_path_plan.tasks),
+                    "disclaimer": get_demo_disclaimer(language),
+                    "agents_used": [task.agent_type.value for task in fast_path_plan.tasks],
+                }
+                
+                if debug_timing_enabled and agent_timings:
+                    enrichment["agent_timings"] = agent_timings
+                
+                # Create agent message
+                agent_message = GuestMessage.create_assistant_message(
+                    conversation_id=conversation.id,
+                    content=aggregated_response,
+                    intent="COMPLEX_WORKFLOW",
+                    handler="agent_squad_supervisor_fast_path",
+                    confidence=0.95,
+                    language=language,
+                    is_restricted_action=False,
+                )
+                await self._guest_repo.create_message(agent_message)
+                
+                # Update counters
+                guest.increment_messages()
+                conversation.increment_messages()
+                await self._guest_repo.update_guest(guest)
+                await self._guest_repo.update_conversation(conversation)
+                
+                # Log telemetry
+                await self._guest_repo.log_telemetry(
+                    guest_user_id=guest.id,
+                    conversation_id=conversation.id,
+                    event_type="message_sent",
+                    event_data={
+                        "intent": "COMPLEX_WORKFLOW",
+                        "handler": "agent_squad_supervisor_fast_path",
+                        "task_count": len(fast_path_plan.tasks),
+                        "message_length": len(content),
+                    },
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    referer=referer,
+                    language=language,
+                )
+                
+                # Calculate remaining messages
+                hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                messages_this_hour = await self._guest_repo.get_message_count_since(
+                    guest.id, hour_ago
+                )
+                messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+                
+                return GuestMessageResult(
+                    conversation_id=conversation.id,
+                    message_id=agent_message.id,
+                    user_message={
+                        "id": str(user_message.id),
+                        "role": user_message.role.value,
+                        "content": user_message.content,
+                        "created_at": user_message.created_at.isoformat(),
+                    },
+                    agent_message={
+                        "id": str(agent_message.id),
+                        "role": agent_message.role.value,
+                        "content": agent_message.content,
+                        "created_at": agent_message.created_at.isoformat(),
+                    },
+                    routing={
+                        "intent": "COMPLEX_WORKFLOW",
+                        "confidence": 0.95,
+                        "handler": "agent_squad_supervisor_fast_path",
+                        "language": language,
+                        "is_demo_mode": False,
+                        "is_live_data": True,
+                    },
+                    enrichment=enrichment,
+                    sources=sources,
+                    registration_required=None,
+                    guest_info={
+                        "messages_remaining": messages_remaining,
+                        "session_active": True,
+                    },
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Fast path for multi-intent query failed: {e}, falling back to SupervisorCoordinator",
+                    exc_info=True,
+                )
+                # Fall through to standard SupervisorCoordinator path
+        
         # 4b. ✨ EARLY RESTRICTED INTENT CHECK ✨
         # Check if this is a restricted intent BEFORE Agent Squad processing
         # This ensures custom messages from translations.py are used instead of Agent Squad

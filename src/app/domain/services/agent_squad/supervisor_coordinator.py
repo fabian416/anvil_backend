@@ -173,7 +173,11 @@ class SupervisorCoordinator:
             available_agents,
         )
         
+        # Detect if this is a simple multi-intent query (for faster model selection)
+        is_simple_multi_intent = self._is_simple_multi_intent(message.value)
+        
         # Call LLM for workflow planning
+        # Use faster model for simple multi-intent queries to reduce latency
         response = await self._llm_client.plan_workflow(
             prompt=prompt,
             max_agents=self._max_agents,
@@ -697,6 +701,41 @@ Guidelines:
             visit(idx)
         
         return order
+    
+    def _is_simple_multi_intent(self, message: str) -> bool:
+        """
+        Detect simple multi-intent patterns that can use faster LLM model.
+        
+        Simple patterns:
+        - Greeting + price query
+        - Greeting + knowledge query
+        - Price query + knowledge query
+        
+        Args:
+            message: User message text
+            
+        Returns:
+            True if this is a simple multi-intent query
+        """
+        import re
+        message_lower = message.lower()
+        
+        # Pattern: greeting + price
+        greeting_price_pattern = r"(hi|hello|hey|hola|how are you).*(price|cost|worth).*(btc|eth|usdc|bitcoin|ethereum)"
+        if re.search(greeting_price_pattern, message_lower):
+            return True
+        
+        # Pattern: greeting + knowledge
+        greeting_knowledge_pattern = r"(hi|hello|hey|hola|how are you).*(what is|explain|tell me about)"
+        if re.search(greeting_knowledge_pattern, message_lower):
+            return True
+        
+        # Pattern: price + knowledge
+        price_knowledge_pattern = r"(price|cost|worth).*(btc|eth|usdc|bitcoin|ethereum).*(what is|explain|tell me about)"
+        if re.search(price_knowledge_pattern, message_lower):
+            return True
+        
+        return False
     
     async def _aggregate_results(
         self,
