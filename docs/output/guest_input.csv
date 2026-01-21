@@ -356,3 +356,262 @@ As soon as the API issue is resolved, I will be able to provide you with the cur
 ",,,supervisor_llm,edge_case,2978,PASS,PASS: Edge case handled
 97,2026-01-21T03:15:06.385064,🔥🔥🔥🔥🔥,en,"Okay, I understand. I will focus exclusively on DeFi and cryptocurrency-related inquiries and politely decline to answer questions outside of that domain.
 ",,,supervisor_llm,edge_case,3573,PASS,PASS: Edge case handled
+98,2026-01-21T03:28:28.337956,Quel est le prix du Bitcoin?,fr,"Le prix actuel du Bitcoin est de 89 131,00 $ avec une variation de -3,48 % sur 24 heures.
+",,,supervisor_llm,multilang,3838,PASS,PASS: Response generated (90 chars)
+99,2026-01-21T03:28:34.695708,Quel est le sentiment pour Ethereum?,fr,"Voici une analyse du sentiment actuel pour Ethereum :
+
+**Sentiment général :** Neutre à légèrement baissier
+
+**Score de sentiment :** 45/100
+
+**Classification :** Légèrement baissier
+
+**Facteurs clés du sentiment :**
+
+*   **Sentiment des médias sociaux (Twitter, Reddit) :** Le sentiment est mitigé, avec des discussions sur les mises à niveau d’Ethereum et les développements de la couche 2, contreb",,,supervisor_llm,multilang,6154,PASS,PASS: Response generated (400 chars)
+100,2026-01-21T03:28:36.797295,Vérifier mon solde,fr,"Create an account to execute DeFi transactions securely.
+
+👉 Sign Up Free: /signup",,,supervisor_llm,multilang,1901,PASS,PASS: Response generated (81 chars)
+101,2026-01-21T03:28:41.136227,Comment fonctionne le staking?,fr,"Le staking consiste à bloquer vos cryptomonnaies dans un portefeuille ou une plateforme pour soutenir le fonctionnement d'une blockchain et obtenir des récompenses en retour. Voici comment ça fonctionne généralement :
+
+*   **Sélection d'une cryptomonnaie à staker :** Vous choisissez une cryptomonnaie qui utilise le mécanisme de consensus de preuve d'enjeu (Proof-of-Stake ou PoS).
+*   **Blocage des",,,supervisor_llm,multilang,4138,PASS,PASS: Response generated (400 chars)
+102,2026-01-21T03:28:49.267900,Quels sont les meilleurs rendements DeFi?,fr,"| Protocol | Pool | Chain | APY (%) | TVL | Risk Score (0-100) | Impermanent Loss Risk |
+|----------|------|-------|---------|-----|-------------------|----------------------|
+| uniswap-v4 | WETH-USDT | Ethereum | 455359.75% | $116.95K | 95 | Yes |
+| spectra-v2 | ASDCRV | Ethereum | 445259.23% | $261.93K | 95 | No |
+| uniswap-v4 | USDC-WETH | Ethereum | 421518.23% | $2.66M | 95 | Yes |
+| beefy | D",,,supervisor_llm,multilang,7931,PASS,PASS: Response generated (400 chars)
+103,2026-01-21T03:28:52.465911,Qual é o preço do Bitcoin?,pt,"I am currently unable to retrieve the real-time Bitcoin price due to an issue with the CoinGecko API. I am receiving a ""429 Too Many Requests"" error, which means I am being rate-limited.
+
+As soon as the API issue is resolved, I will provide you with the current Bitcoin price.
+",,,supervisor_llm,multilang,2997,PASS,PASS: Response generated (277 chars)
+104,2026-01-21T03:28:57.224902,Como funciona o DeFi?,pt,"DeFi, ou Finanças Descentralizadas, funciona através de aplicações financeiras construídas em blockchains, principalmente Ethereum. Aqui estão os principais componentes:
+
+*   **Contratos Inteligentes:** São acordos autoexecutáveis escritos em código que automatizam transações e processos financeiros.
+*   **DApps (Aplicações Descentralizadas):** Interfaces que permitem aos usuários interagir com os",,,supervisor_llm,multilang,4558,PASS,PASS: Response generated (400 chars)
+105,2026-01-21T03:29:08.697026,Quero fazer um swap de ETH para USDC,pt,"Okay, I understand you want to swap ETH for USDC and are looking at yield opportunities. Based on the DeFiLlama data you provided, here's a breakdown of potential options and considerations:
+
+| Protocol | Pool | Chain | APY (%) | TVL | Risk Score (0-100) | Impermanent Loss Risk |
+|----------|------|-------|---------|-----|-------------------|----------------------|
+| uniswap-v4 | WETH-USDT | Ether",,,supervisor_llm,multilang,11271,PASS,PASS: Response generated (400 chars)
+106,2026-01-21T03:29:20.874718,Mostre meus rendimentos,pt,"Here are the top yield opportunities based on the DeFiLlama data you provided. Please be aware that extremely high APYs often come with very high risk. Always do your own research before investing.
+
+**Top Yield Opportunities (from DeFiLlama):**
+
+| Protocol | Pool | Chain | APY (%) | TVL | Risk Score (0-100) | Impermanent Loss Risk |
+|----------|------|-------|---------|-----|-------------------|--",,,supervisor_llm,multilang,11977,PASS,PASS: Response generated (400 chars)
+107,2026-01-21T03:29:28.107479,比特币价格是多少？,zh,"好的，这是根据实时市场数据得出的比特币价格信息：
+
+**当前比特币价格：**
+
+*   价格：$69,409.00
+*   24 小时涨跌：+0.8%
+
+**市场情绪分析：**
+
+*   总体情绪：中性偏乐观 (65/100)
+*   Twitter 情绪：乐观，主要讨论现货比特币 ETF 的积极影响。
+*   Reddit 情绪：中性，关注比特币的长期价值存储属性，但也对短期波动表示担忧。
+*   新闻情绪：乐观，主要报道机构对比特币的持续兴趣和采用。
+*   恐慌与贪婪指数：72 (贪婪)
+
+**关键情绪驱动因素：**
+
+*   积极因素：现货比特币 ETF 的持续流入，机构采用增加，市场对减半事件的预期。
+*   消极因素：监管不确定性，宏观经济风险，潜在的市场回调。
+
+**风险因素：**
+
+*   市场波动性：比特币价格可能出现剧烈波动。
+*   监管风险：监管政策的变化可能对比特",,,supervisor_llm,multilang,7032,PASS,PASS: Response generated (400 chars)
+108,2026-01-21T03:29:33.392471,什么是去中心化金融？,zh,"去中心化金融 (DeFi) 是一种基于区块链的金融系统，旨在消除对银行等传统金融中介机构的需求。 它使用智能合约在去中心化的网络上自动执行金融服务。
+
+以下是一些关键概念：
+
+*   **无需许可：** 任何人都可以访问 DeFi 协议，无需许可或中介。
+*   **透明：** 所有交易都记录在区块链上，公开且可验证。
+*   **可组合性：** DeFi 应用程序可以相互构建，从而实现创新和效率。
+*   **智能合约：** 自动执行协议条款的自执行合约。
+
+DeFi 的一些常见用例包括：
+
+*   **去中心化交易所 (DEX)：** 允许用户直接交易加密货币，无需中介。
+*   **借贷协议：** 允许用户借出或借入加密货币，赚取利息或获得贷款。
+*   **稳定币：** 旨在保持稳定价值的加密货币，通常与美元等法定货币挂钩。
+*   **收益耕作：** 通过向 DeFi 协议提供流",,,supervisor_llm,multilang,5084,PASS,PASS: Response generated (400 chars)
+109,2026-01-21T03:29:38.167019,我想交换以太坊,zh,"Okay, I can provide some sentiment analysis and predictions to help inform your decision to swap Ethereum. However, I need more information.
+
+**To give you the most relevant analysis, please tell me:**
+
+1.  **What are you swapping Ethereum for?** (e.g., ""I want to swap Ethereum for Bitcoin,"" or ""I want to swap Ethereum for USDC"")
+2.  **What is your time horizon?** (e.g., ""I'm looking for a short-t",,,supervisor_llm,multilang,4570,PASS,PASS: Response generated (400 chars)
+110,2026-01-21T03:29:41.809573,如何进行质押？,zh,"质押是指将您的加密货币锁定在区块链网络中一段时间，以支持网络运营并获得奖励的过程。
+
+虽然 Anvil 平台本身目前不直接提供传统的质押功能，但您可以通过 Anvil 访问 DeFi 协议，在这些协议中您可以供应资产以赚取收益，这可以被认为是质押的替代方案。Anvil 通过 Morpho 金库支持资产供应。
+",,,supervisor_llm,multilang,3438,PASS,PASS: Response generated (155 chars)
+111,2026-01-21T03:29:53.184633,Swap 500 USDC from Ethereum to Base,en,"🔄 **Let's Start Your Swap!**
+
+Great choice! Swapping crypto is easy with MoonPay.
+
+**Step 1 of 4:** Which crypto do you want to swap FROM?
+
+💎 Available tokens:
+• **BTC** (Bitcoin)
+• **ETH** (Ethereum)
+• **SOL** (Solana)
+• **USDC** (USD Coin)
+
+💡 *Just type the token symbol, like ""BTC""*",,,moonpay_swap_handler,crosschain,11174,PASS,PASS: Response generated (285 chars)
+112,2026-01-21T03:29:55.434891,Bridge ETH from Ethereum to Arbitrum,en,"Create an account to execute DeFi transactions securely.
+
+👉 Sign Up Free: /signup",,,supervisor_llm,crosschain,2050,PASS,PASS: Response generated (81 chars)
+113,2026-01-21T03:29:58.968910,What are the fees for bridging to Polygon?,en,"The fees for bridging to Polygon depend on the bridge used. Anvil uses LiFi as a cross-chain bridge aggregator. LiFi finds the most efficient route for your cross-chain swap, considering gas fees and slippage to minimize costs. You'll see a breakdown of estimated fees before confirming the transaction on Anvil.
+",,,supervisor_llm,crosschain,3333,PASS,PASS: Response generated (313 chars)
+114,2026-01-21T03:30:01.327459,Transfer USDC from Optimism to Base,en,"Create an account to execute DeFi transactions securely.
+
+👉 Sign Up Free: /signup",,,supervisor_llm,crosschain,2158,PASS,PASS: Response generated (81 chars)
+115,2026-01-21T03:30:04.898796,How long does bridging take?,en,"The time it takes to bridge tokens can vary depending on the bridge being used and the networks involved. Some bridges can complete transactions in minutes, while others may take hours or even days. Factors that influence bridging time include network congestion, security protocols, and the specific technology used by the bridge.
+",,,supervisor_llm,crosschain,3371,PASS,PASS: Response generated (332 chars)
+116,2026-01-21T03:30:07.966869,What is the current APY for USDC on Aave?,en,"I can provide an overview of USDC lending rates across different protocols. Please note that these rates can fluctuate frequently.
+
+Aave: The APY for supplying USDC on Aave is approximately 3.2%.
+",,,supervisor_llm,defi_advanced,2867,PASS,PASS: Response generated (196 chars)
+117,2026-01-21T03:30:12.438192,Compare lending rates on Compound vs Aave,en,"Here's a comparison of lending rates on Compound and Aave, based on current market conditions.
+
+**Compound vs. Aave Lending Rates**
+
+| Asset | Compound APY | Aave APY |
+|---|---|---|
+| USDC | ~3.8% | ~4.2% |
+| ETH | ~0.5% | ~0.7% |
+| DAI | ~2.9% | ~3.3% |
+| WBTC | ~0.2% | ~0.3% |
+
+**Analysis:**
+
+*   **USDC:** Aave currently offers a slightly higher APY on USDC lending compared to Compound.
+*   **E",,,supervisor_llm,defi_advanced,4271,PASS,PASS: Response generated (400 chars)
+118,2026-01-21T03:30:16.287860,What is the liquidation threshold for ETH on Aave?,en,"I am specialized in DeFi and crypto knowledge. I cannot provide real-time liquidation thresholds for specific assets on Aave. These parameters can change based on market conditions and governance decisions. You can find the most up-to-date liquidation thresholds on Aave's official website or documentation.
+
+What would you like to know about DeFi, crypto, or NFTs?
+",,,supervisor_llm,defi_advanced,3649,PASS,PASS: Response generated (366 chars)
+119,2026-01-21T03:30:27.196307,Show me the best stablecoin yields,en,"Here are the top stablecoin yield opportunities based on the DeFiLlama data you provided. Note that many of these high APYs come with significant risk.
+
+| Protocol | Pool | Chain | APY (%) | TVL | Risk Score (0-100) | Impermanent Loss Risk |
+|----------|------|-------|---------|-----|-------------------|----------------------|
+| uniswap-v4 | WETH-USDT | Ethereum | 455359.75% | $116.95K | 95 | Yes ",,,supervisor_llm,defi_advanced,10708,PASS,PASS: Response generated (400 chars)
+120,2026-01-21T03:30:37.268593,What is the TVL of Uniswap?,en,"Okay, here's a risk assessment of Uniswap, as performed by Anvil's Risk Analyzer.
+
+**Uniswap Risk Assessment**
+
+**Overall Risk Score: 42 (Medium Risk)**
+
+While Uniswap is a well-established DeFi protocol, it's crucial to acknowledge the inherent risks associated with decentralized exchanges and the broader DeFi ecosystem. This assessment reflects a balanced view of Uniswap's strengths and potentia",,,supervisor_llm,defi_advanced,9872,PASS,PASS: Response generated (400 chars)
+121,2026-01-21T03:30:41.845250,Explain flash loans,en,"A flash loan is a type of uncollateralized loan in DeFi that allows you to borrow assets without providing any upfront collateral, as long as the loan is repaid within the same blockchain transaction.
+
+Here's a breakdown:
+
+*   **No Collateral Required:** Unlike traditional loans, you don't need to provide any assets as security to take out a flash loan.
+*   **Single Transaction:** The borrowing, u",,,supervisor_llm,defi_advanced,4376,PASS,PASS: Response generated (400 chars)
+122,2026-01-21T03:30:44.563367,What is a liquidity mining program?,en,"A liquidity mining program is a way for decentralized finance (DeFi) platforms to attract users to provide liquidity to their protocols. In these programs, users who deposit tokens into liquidity pools are rewarded with additional tokens, often the platform's native token. This incentivizes users to provide liquidity, which is essential for the smooth functioning of decentralized exchanges (DEXs) ",,,supervisor_llm,defi_advanced,2517,PASS,PASS: Response generated (400 chars)
+123,2026-01-21T03:30:47.397579,How do I provide liquidity on Curve?,en,"I am sorry, but I cannot provide specific instructions for providing liquidity on Curve. However, on Anvil, you can supply assets to lending protocols like Morpho to earn yield. Would you like to learn more about supplying assets on Anvil?
+",,,supervisor_llm,defi_advanced,2633,PASS,PASS: Response generated (240 chars)
+124,2026-01-21T03:30:58.014168,What is the risk of impermanent loss on Uniswap?,en,"Here's an assessment of the risk of impermanent loss (IL) on Uniswap, provided by Anvil's Risk Analyzer.
+
+**Impermanent Loss Risk Assessment on Uniswap**
+
+**Overall Risk Score: 55 (Medium Risk)**
+
+**Risk Category Breakdown:**
+
+*   **Impermanent Loss Sensitivity:** 70 (High) - Uniswap's AMM model is inherently susceptible to IL.
+*   **Volatility of Assets:** 65 (High) - IL is directly correlated wi",,,supervisor_llm,risk,10416,PASS,PASS: Response generated (400 chars)
+125,2026-01-21T03:31:08.706020,Is it safe to use this bridge?,en,"Okay, I will analyze the safety of using a bridge, providing a comprehensive risk assessment based on my expertise. Since you haven't specified *which* bridge, I will provide a general risk assessment framework applicable to most cross-chain bridges, highlighting key areas to investigate for any specific bridge you are considering.
+
+**General Cross-Chain Bridge Risk Assessment**
+
+**Overall Risk Sc",,,supervisor_llm,risk,10491,PASS,PASS: Response generated (400 chars)
+126,2026-01-21T03:31:20.100269,What are the smart contract risks?,en,"Okay, I'm ready to analyze smart contract risks. To provide a comprehensive assessment, I need specific details about the smart contracts in question. Please provide the following:
+
+1.  **Contract Addresses:** The specific blockchain addresses of the smart contracts you want me to analyze.
+2.  **Contract Functionality:** A detailed description of what the smart contracts are designed to do (e.g., ",,,supervisor_llm,risk,11193,PASS,PASS: Response generated (400 chars)
+127,2026-01-21T03:31:30.685277,Analyze the risk of staking on Lido,en,"Here's a risk assessment of staking on Lido, performed by Anvil's Risk Analyzer.
+
+**Overall Risk Score: 68/100 (High Risk)**
+
+While Lido offers a convenient way to participate in Ethereum staking, several factors contribute to a high-risk profile.
+
+**Risk Category Breakdown:**
+
+*   **Smart Contract Risk (20%):** 65/100
+*   **Liquidity Risk (15%):** 70/100
+*   **Centralization Risk (30%):** 85/100
+",,,supervisor_llm,risk,10384,PASS,PASS: Response generated (400 chars)
+128,2026-01-21T03:31:36.980713,Best time to buy Bitcoin?,en,"Determining the ""best"" time to buy Bitcoin is inherently speculative and depends on individual investment goals and risk tolerance. However, I can provide a sentiment analysis based on current market data and indicators.
+
+**Current Market Sentiment:**
+
+*   **Overall Sentiment:** Neutral to slightly bearish.
+*   **Sentiment Score:** 45/100
+*   **Classification:** Leaning towards Bearish.
+
+**Key Dri",,,supervisor_llm,trading,6095,PASS,PASS: Response generated (400 chars)
+129,2026-01-21T03:31:40.728837,Show me ETH/USDC chart,en,"I am sorry, I do not have the capability to generate charts. However, I can provide you with the current prices for ETH and USDC.
+
+ETHEREUM:
+- Current Price: $2,967.10
+- 24h Change: -6.80%
+
+USD-COIN:
+- Current Price: $1.00
+- 24h Change: -0.00%
+",,,supervisor_llm,trading,3547,PASS,PASS: Response generated (244 chars)
+130,2026-01-21T03:31:44.085547,What is the 24h volume for BTC?,en,"The 24h volume for Bitcoin is $63.48B.
+",,,supervisor_llm,trading,3156,PASS,PASS: Response generated (39 chars)
+131,2026-01-21T03:31:51.821561,Set price alert for ETH at $3000,en,"Okay, I will set a price alert for ETH at $3,000. I will notify you if the price of ETH reaches or exceeds this level.
+
+Since I am currently unable to fetch real-time data from CoinGecko due to API rate limits, I cannot provide you with the current price of ETH, 24h change, market sentiment analysis, or predictions at this time.
+
+However, I can outline the general process I would typically follow:",,,supervisor_llm,trading,7535,PASS,PASS: Response generated (400 chars)
+132,2026-01-21T03:31:53.990497,Show my portfolio allocation,en,"💼 **Unlock Your Complete Portfolio Dashboard**
+
+Track all your DeFi positions in one place! With a free account, you'll get:
+
+✨ **Real-time Portfolio Tracking**
+• View all your assets across multiple chains
+• Monitor your total portfolio value
+• Track performance over time
+
+📊 **Advanced Analytics**
+• Asset allocation breakdown
+• Profit/loss analysis
+• Risk exposure metrics
+
+🔔 **Smart Alerts**
+• Pr",,,supervisor_llm,portfolio,1968,PASS,PASS: Response generated (400 chars)
+133,2026-01-21T03:31:56.015580,What is my total balance?,en,"Create an account to execute DeFi transactions securely.
+
+👉 Sign Up Free: /signup",,,supervisor_llm,portfolio,1824,PASS,PASS: Response generated (81 chars)
+134,2026-01-21T03:32:07.669516,Track my DeFi positions,en,"Here are the top yield opportunities based on the DeFiLlama data you provided:
+
+| Protocol | Pool | Chain | APY (%) | TVL | Risk Score (0-100) | Impermanent Loss Risk |
+|----------|------|-------|---------|-----|-------------------|----------------------|
+| uniswap-v4 | WETH-USDT | Ethereum | 455359.75% | $116.95K | 95 | Yes |
+| spectra-v2 | ASDCRV | Ethereum | 445259.23% | $261.93K | 95 | No |
+| ",,,supervisor_llm,portfolio,11453,PASS,PASS: Response generated (400 chars)
+135,2026-01-21T03:32:11.409511,Optimize my portfolio,en,"Anvil offers comprehensive portfolio management tools to help you optimize your DeFi portfolio. This includes real-time tracking of your assets across multiple blockchain networks, USD value calculations, portfolio composition analysis, and advanced risk analysis. With Anvil, you can gain insights into your portfolio's performance and make informed decisions to improve your returns.
+",,,supervisor_llm,portfolio,3539,PASS,PASS: Response generated (386 chars)
+136,2026-01-21T03:32:16.863815,0x742d35Cc6634C0532925a3b844Bc9e7595f,en,"I'm specialized in DeFi and crypto assistance. I can't help you with that, but I can help you with swaps, staking, lending, and other DeFi operations. What would you like to know about DeFi?
+",,,supervisor_llm,edge_case,5254,PASS,PASS: Response generated (191 chars)
+137,2026-01-21T03:32:24.940331,btc:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh,en,"Okay, I understand. I am Hunter AI, Anvil's market sentiment and prediction specialist. I will provide data-driven and objective analysis, focusing on real-time market data when available, and adhering to the critical rules regarding price accuracy and the description of Anvil.
+
+Since I am currently unable to fetch live data from CoinGecko due to a ""Too Many Requests"" error, I will have to rely on",,,supervisor_llm,edge_case,7876,PASS,PASS: Response generated (400 chars)
+138,2026-01-21T03:32:28.269260,👋 hello,en,"Hello! How can I help you with your DeFi journey today? Are you interested in exploring token swaps, lending opportunities, or learning more about a specific DeFi concept?
+",,,supervisor_llm,edge_case,3128,PASS,PASS: Response generated (172 chars)
+139,2026-01-21T03:32:37.538474,SWAP ETH USDC NOW!!!,en,"Okay, I understand. I'm Hunter AI, Anvil's market sentiment and prediction specialist. I will focus on providing data-driven, objective analysis, and adhere to the critical rules regarding price accuracy and the nature of Anvil as a real DeFi platform.
+
+Unfortunately, I am currently unable to fetch live data from CoinGecko due to a ""Too Many Requests"" error. This limits my ability to provide you w",,,supervisor_llm,edge_case,9068,PASS,PASS: Response generated (400 chars)
+140,2026-01-21T03:32:41.555712,what... is... defi???,en,"DeFi (Decentralized Finance) is a term for financial applications built on blockchain technology, typically using smart contracts. Instead of relying on central intermediaries like banks, DeFi aims to create an open, permissionless, and transparent financial system. Key aspects of DeFi include:
+
+*   **Decentralized Exchanges (DEXs):** Platforms for trading cryptocurrencies directly with others, wi",,,supervisor_llm,edge_case,3816,PASS,PASS: Response generated (400 chars)
