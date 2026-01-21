@@ -6,13 +6,13 @@
 
 ## Executive Summary
 
-The Anvil messaging system provides a unified, multi-agent orchestration platform for handling user queries across both guest (unauthenticated) and authenticated user contexts. The architecture leverages a **Supervisor Coordinator** pattern with **18 specialized AI agents**, **distillation engine** for query optimization, and comprehensive **telemetry** for observability.
+The Anvil messaging system provides a unified, multi-agent orchestration platform for handling user queries across both guest (unauthenticated) and authenticated user contexts. The architecture leverages a **Supervisor Coordinator** pattern with **LLM-based semantic routing** (no intent classification), **18 specialized AI agents**, and comprehensive **telemetry** for observability.
 
 **Key Design Principles:**
 - **Unified Architecture**: Same core structure for guest and authenticated users
-- **Agent-Based Orchestration**: Multi-agent workflows with dependency management
-- **Intelligent Routing**: Hybrid intent classification (rule-based + LLM) with conversation history
-- **Context-Aware Processing**: Conversation history used for better intent detection and routing
+- **LLM-Based Routing**: Pure semantic understanding - NO intent classification
+- **Agent-Based Orchestration**: Multi-agent workflows with dependency management and parallel execution
+- **Context-Aware Processing**: Conversation history used for better routing decisions
 - **Observability**: Comprehensive telemetry and agent timing tracking
 - **Scalability**: Stateless design with Redis-backed session management
 
@@ -25,7 +25,7 @@ The Anvil messaging system provides a unified, multi-agent orchestration platfor
 3. [Message Flow](#message-flow)
 4. [Supervisor Coordinator](#supervisor-coordinator)
 5. [Agent Squad](#agent-squad)
-6. [Distillation Engine](#distillation-engine)
+6. [LLM-Based Routing](#llm-based-routing)
 7. [Telemetry & Observability](#telemetry--observability)
 8. [Guest vs Authenticated Differences](#guest-vs-authenticated-differences)
 9. [Implementation Details](#implementation-details)
@@ -39,18 +39,17 @@ The Anvil messaging system provides a unified, multi-agent orchestration platfor
 
 **Endpoint**: `POST /api/v1/guest/chat`
 
-**Flow**:
+**Flow** (LLM-Based Routing - NO Intents):
 ```
 User Message → Guest User Creation (by IP) → Conversation Creation → 
-Intent Detection → Distillation Engine → Supervisor Coordinator → 
-Agent Orchestration → Response Aggregation → Telemetry Logging
+Security Check (harmful content only) → Supervisor Coordinator (LLM Planning) → 
+Agent Orchestration (Parallel Execution) → Response Aggregation → Telemetry Logging
 ```
 
 **Key Components**:
 - `SendGuestMessage` command handler
-- `SupervisorCoordinator` for workflow planning
+- `SupervisorCoordinator` for LLM-based workflow planning
 - `AgentOrchestrator` for agent execution
-- `DistillationEngine` for query optimization
 - `GuestRepository` for persistence
 
 ### Future Implementation: Conversations/Message
@@ -60,8 +59,8 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
 **Flow** (Same structure as guest):
 ```
 User Message → User Authentication → Conversation Retrieval → 
-Intent Detection → Distillation Engine → Supervisor Coordinator → 
-Agent Orchestration → Response Aggregation → Telemetry Logging
+Security Check → Supervisor Coordinator (LLM Planning) → 
+Agent Orchestration (Parallel Execution) → Response Aggregation → Telemetry Logging
 ```
 
 **Key Differences**:
@@ -96,41 +95,40 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
   - Guest user creation/retrieval (by IP)
   - Conversation management
   - Conversation history building (last 5 messages)
-  - Intent detection with context
-  - Distillation pass (with conversation history)
-  - Supervisor coordination
+  - **Security check** (harmful content detection only)
+  - **LLM-based routing** via Supervisor Coordinator
+  - Agent orchestration with parallel execution
   - Telemetry logging
   - Rate limiting
+
+**Key Method**: `_process_with_llm_supervisor()`
+- Builds conversation context
+- Calls `SupervisorCoordinator.create_workflow_plan()` for LLM-based action detection
+- Calls `SupervisorCoordinator.execute_workflow()` for parallel agent execution
+- Handles sources and response aggregation
 
 **SendConversationMessage** (Future - same structure):
 - **Responsibilities**:
   - User authentication verification
   - Conversation ownership check
   - Conversation history building (last N messages)
-  - Intent detection with context
-  - Distillation pass (with conversation history)
-  - Supervisor coordination
+  - **Security check** (harmful content detection only)
+  - **LLM-based routing** via Supervisor Coordinator
+  - Agent orchestration with parallel execution
   - Telemetry logging
   - Rate limiting (user-tier based)
 
 ### Layer 3: Domain (Business Logic)
 
 **SupervisorCoordinator** (`src/app/domain/services/agent_squad/supervisor_coordinator.py`):
-- **Purpose**: Plan multi-agent workflows based on query complexity
+- **Purpose**: Plan multi-agent workflows using LLM semantic understanding
 - **Input**: User message, conversation context
 - **Output**: `WorkflowPlan` with agent tasks and dependencies
 - **Key Methods**:
-  - `create_workflow_plan()`: Generate task plan
-  - `_calculate_execution_order()`: Topological sort for dependencies
+  - `create_workflow_plan()`: LLM-based action detection and task planning
+  - `execute_workflow()`: Parallel execution of independent tasks
+  - `_build_planning_prompt()`: Optimized prompt for LLM routing
   - `_aggregate_results()`: Combine agent responses
-
-**DistillationEngine** (`src/app/domain/services/distillation/engine.py`):
-- **Purpose**: Optimize query processing (cache, static responses, routing)
-- **Components**:
-  - `IntentClassifier`: Hybrid classification (rule-based + LLM with conversation history)
-  - `ComplexityAssessor`: Assess query complexity
-  - `EntityExtractor`: Extract entities (tokens, protocols, etc.)
-  - `DistillationRouter`: Route decision (FULL_LLM, CACHED, STATIC)
 
 **AgentOrchestrator** (`src/app/domain/services/agent_squad/agent_orchestrator.py`):
 - **Purpose**: Execute agents based on `AgentType`
@@ -150,13 +148,12 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
 **Repositories**:
 - `GuestRepository`: Guest user/conversation persistence
 - `ChatMessageRepositorySqla`: Authenticated message persistence
-- `DistillationTelemetryRepository`: Telemetry storage
 
 ---
 
 ## Message Flow
 
-### Detailed Flow Diagram
+### Detailed Flow Diagram (LLM-Based Routing)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -176,63 +173,49 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
 ┌─────────────────────────────────────────────────────────────────┐
 │                    3. Conversation Context Building              │
 │  - Load last N messages (conversational memory)                 │
-│  - Check continuation state (multi-step flows)                  │
 │  - Build context object with metadata                           │
+│  - Include user language preference                             │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    4. Intent Detection                          │
-│  - IntentDetectorService (LLM-based)                           │
-│  - Context-aware detection                                     │
-│  - Multi-language support (en, es, pt, zh)                     │
-│  - Restricted action detection                                 │
+│                    4. Security Check (ONLY)                     │
+│  - Harmful content detection (launder, exploit, rug pull, etc.) │
+│  - If harmful: Block request                                    │
+│  - NO intent classification - just security                     │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    5. Distillation Engine (Optional)             │
-│  - Intent classification (hybrid: rule-based + LLM)           │
-│    * Rule-based patterns first (fast, high confidence)          │
-│    * LLM classification for ambiguous queries                  │
-│    * Uses conversation history for context-aware classification│
-│  - Complexity assessment                                       │
-│  - Entity extraction                                           │
-│  - Cache check (exact → semantic)                              │
-│  - Static response check                                       │
-│  - Route decision: FULL_LLM | CACHED | STATIC                  │
+│                    5. Supervisor Coordinator (LLM Planning)     │
+│  - Build optimized planning prompt with:                        │
+│    * User request                                               │
+│    * Conversation context (last 3 messages)                     │
+│    * Available agents                                           │
+│    * Routing rules (off-topic, crypto topics)                   │
+│    * Few-shot examples                                          │
+│  - Call LLM to create workflow plan                            │
+│  - Parse JSON response into AgentTasks                         │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    6. Fast Path Check                           │
-│  Simple info queries → Knowledge agent (bypass workflow)        │
-│  Restricted intents → Custom registration messages              │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    7. Supervisor Coordinator                     │
-│  - Analyze query complexity                                    │
-│  - Plan multi-agent workflow                                   │
-│  - Create agent tasks with dependencies                         │
-│  - Calculate execution order (topological sort)                 │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    8. Agent Orchestration                       │
-│  For each task (in dependency order):                           │
+│                    6. Agent Orchestration (Parallel)            │
+│  For each task (parallel execution of independent tasks):       │
 │    - Resolve agent from DI container                            │
 │    - Build conversation context                                 │
+│    - Handle off-topic: Pass [SYSTEM INSTRUCTION] to chat agent  │
 │    - Execute agent with message                                │
 │    - Collect AgentResponse (content, sources, tools_used)      │
 │    - Handle errors (continue on failure)                        │
+│                                                                 │
+│  ⚡ Independent tasks execute in PARALLEL (asyncio.gather)      │
+│  ⏳ Dependent tasks execute SEQUENTIALLY                        │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    9. Response Aggregation                     │
+│                    7. Response Aggregation                     │
 │  - If single agent: Return response directly                   │
 │  - If multiple agents:                                          │
 │    * Find CHAT aggregator task                                 │
@@ -244,7 +227,7 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    10. Telemetry & Logging                      │
+│                    8. Telemetry & Logging                      │
 │  - Log message to database                                      │
 │  - Record agent timings                                         │
 │  - Track tools_used and sources                                 │
@@ -254,17 +237,17 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    11. Response Formatting                      │
+│                    9. Response Formatting                      │
 │  - Build GuestChatResponse / ChatResponse                       │
-│  - Include routing metadata                                     │
-│  - Include enrichment (agent_timings, tools_used)             │
+│  - Include routing metadata (handler: supervisor_llm)          │
+│  - Include enrichment (agent_timings, tools_used, agents_used) │
 │  - Include sources (API calls, LLM providers)                   │
 │  - Include registration prompts (if restricted)                │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    12. HTTP Response                            │
+│                    10. HTTP Response                            │
 │  Status: 200 OK / 201 Created                                   │
 │  Body: JSON with message, routing, enrichment, sources         │
 └─────────────────────────────────────────────────────────────────┘
@@ -276,78 +259,71 @@ Agent Orchestration → Response Aggregation → Telemetry Logging
 
 ### Purpose
 
-The `SupervisorCoordinator` is the **brain** of the multi-agent system. It analyzes user queries and creates optimal workflows by:
+The `SupervisorCoordinator` is the **brain** of the multi-agent system. It uses **LLM semantic understanding** (NOT intent classification) to:
 
-1. **Understanding Query Intent**: LLM-based analysis of what the user wants
-2. **Assessing Complexity**: Determining if single or multi-agent workflow is needed
-3. **Planning Tasks**: Creating agent tasks with dependencies
-4. **Optimizing Execution**: Calculating optimal execution order
+1. **Understand User Request**: Parse what the user wants naturally
+2. **Detect Actions Needed**: Determine which agents should handle the request
+3. **Plan Workflow**: Create agent tasks with dependencies
+4. **Execute in Parallel**: Run independent tasks concurrently for speed
 
-### Workflow Planning Logic
+### LLM-Based Routing (NO Intents)
 
-**Single-Agent Workflows** (Fast Path):
-- Simple informational queries → `KNOWLEDGE` agent
-- Price queries → `HUNTER_AI` agent
-- General questions → `CHAT` agent
-- Yield farming queries → `DEFI_YIELD` agent
-- Risk analysis → `RISK_ANALYZER` agent
-- Gas price queries → `GAS_OPTIMIZER` agent
+**CEO Directive**: The system does NOT use intent classification. Instead:
 
-**Multi-Agent Workflows** (Complex Queries):
-- "What is Anvil? What's the price of BTC?" → `KNOWLEDGE` + `HUNTER_AI` → `CHAT` (aggregator)
-- "Show me yield opportunities and analyze risks" → `DEFI_YIELD` + `RISK_ANALYZER` → `CHAT` (aggregator)
-- "Swap 100 USDC for ETH, check gas prices" → `EXECUTION` + `GAS_OPTIMIZER` → `CHAT` (aggregator)
+1. **Security Check Only**: Only pattern matching for harmful content (security)
+2. **LLM Planning**: Supervisor uses LLM to semantically understand and route
+3. **Dynamic Detection**: LLM determines actions based on natural understanding
 
-**Task Dependencies**:
-- Tasks can depend on previous tasks (e.g., `HUNTER_AI` depends on `KNOWLEDGE`)
-- Topological sort ensures correct execution order
-- Failed tasks don't block dependent tasks (continue on error)
+**Planning Prompt Structure**:
+```
+You are a DeFi workflow router. Route to the correct agent. JSON only.
 
-### Key Methods
+<request>{user_message}</request>
+<context>{last_3_messages}</context>
+<agents>{available_agents}</agents>
+
+<rules>
+1. OFF-TOPIC FIRST: If NOT about crypto/DeFi/blockchain/Web3, use "chat" + "Decline off-topic politely"
+2. CRYPTO TOPICS:
+   - Prices → "hunter_ai"
+   - DeFi education → "knowledge"
+   - Yield/APY → "defi_yield"
+   - Risk/TVL → "risk_analyzer"
+   - Gas → "gas_optimizer"
+   - Wallet (balance/send/receive) → "guest_auth"
+   - Greetings → "chat"
+</rules>
+
+<examples>
+"hola" → {"tasks":[{"agent_type":"chat","task_description":"Greet warmly","depends_on":[]}]}
+"btc price" → {"tasks":[{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}]}
+"make a cake" → {"tasks":[{"agent_type":"chat","task_description":"Decline off-topic politely, I only help with DeFi","depends_on":[]}]}
+</examples>
+
+{"tasks":[{"agent_type":"...","task_description":"...","depends_on":[]}]}
+```
+
+### Parallel Execution
+
+**New Feature**: Independent tasks execute in parallel using `asyncio.gather`:
 
 ```python
-class SupervisorCoordinator:
-    async def create_workflow_plan(
-        self,
-        conversation_id: ConversationId,
-        message: MessageContent,
-        conversation_context: ConversationContext,
-    ) -> WorkflowPlan:
-        """
-        Create multi-agent workflow plan.
+async def execute_workflow(...):
+    while iteration < max_iterations:
+        ready_tasks = get_ready_tasks()  # Tasks with all dependencies met
         
-        Returns:
-            WorkflowPlan with:
-            - tasks: List of AgentTask (agent_type, task_description, depends_on)
-            - execution_order: Optimal execution order (topological sort)
-            - estimated_time_seconds: Estimated completion time
-        """
-    
-    async def execute_workflow(
-        self,
-        workflow_plan: WorkflowPlan,
-        conversation_id: ConversationId,
-        message: MessageContent,
-        conversation_context: ConversationContext,
-    ) -> str:
-        """
-        Execute workflow plan and aggregate results.
-        
-        Returns:
-            Final aggregated response string
-        """
-    
-    async def _aggregate_results(
-        self,
-        workflow_plan: WorkflowPlan,
-    ) -> str:
-        """
-        Aggregate results from all completed tasks.
-        
-        - If CHAT aggregator exists: Use its response
-        - Otherwise: Intelligently combine responses with deduplication
-        """
+        if len(ready_tasks) == 1:
+            await execute_single_task(ready_tasks[0])
+        else:
+            # ⚡ PARALLEL EXECUTION
+            logger.info(f"Executing {len(ready_tasks)} tasks in parallel")
+            await asyncio.gather(*[execute_single_task(task) for task in ready_tasks])
 ```
+
+**Performance Impact**:
+- Before: Sequential execution (~21s for multi-agent queries)
+- After: Parallel execution (~6-8s for multi-agent queries)
+- **~70% faster** for complex workflows
 
 ### Workflow Plan Structure
 
@@ -361,7 +337,7 @@ class WorkflowPlan:
 @dataclass
 class AgentTask:
     agent_type: AgentType  # Which agent to use
-    task_description: str  # What the agent should do
+    task_description: str  # What the agent should do (used for off-topic handling)
     depends_on: list[int]  # Task indices that must complete first
     status: TaskStatus  # pending, in_progress, completed, failed
     result: AgentResponse | str | None  # Execution result
@@ -378,10 +354,10 @@ class AgentTask:
 The Agent Squad consists of **18 specialized AI agents**, each designed for specific DeFi/crypto tasks:
 
 **Core User-Facing Agents (12)**:
-1. **CHAT** - General conversation, aggregation
+1. **CHAT** - General conversation, off-topic handling, aggregation
 2. **GUEST_AUTH** - Authentication requirements (guest users)
 3. **KNOWLEDGE** - Educational queries, Anvil knowledge
-4. **HUNTER_AI** - Market sentiment, price predictions
+4. **HUNTER_AI** - Market sentiment, price data (CoinGecko)
 5. **RESEARCH** - Deep protocol analysis (Perplexity)
 6. **EXECUTION** - Transaction execution (Privy wallet, 1inch)
 7. **RISK_ANALYZER** - Risk assessment, TVL analysis (DeFiLlama)
@@ -391,222 +367,94 @@ The Agent Squad consists of **18 specialized AI agents**, each designed for spec
 11. **SECURITY_AUDITOR** - Smart contract security (Slither)
 12. **GAS_OPTIMIZER** - Gas fee optimization (Web3Client)
 
-**Enterprise Agents (8)**:
-13. **COMPLIANCE_MONITOR** - AML/KYC, regulatory compliance (Chainalysis)
-14. **MULTISIG_COORDINATOR** - Multi-sig treasury management (Gnosis)
-15. **ALERT_MONITORING** - Real-time alerts, anomaly detection (Forta)
-16. **CRISIS_MANAGER** - Emergency response, circuit breaker (Forta)
-17. **BRIDGE_CROSSCHAIN** - Layer 2, cross-chain operations (Axelar)
-18. **LENDING_BORROWING** - Leverage, collateral optimization (Aave)
-19. **NFT_ASSET_MANAGER** - NFT portfolio, valuation (OpenSea)
-20. **DAO_GOVERNANCE** - Voting, proposals, delegation (Snapshot)
+**Enterprise Agents (6)**:
+13. **COMPLIANCE_MONITOR** - AML/KYC, regulatory compliance
+14. **MULTISIG_COORDINATOR** - Multi-sig treasury management
+15. **ALERT_MONITORING** - Real-time alerts, anomaly detection
+16. **CRISIS_MANAGER** - Emergency response, circuit breaker
+17. **BRIDGE_CROSSCHAIN** - Layer 2, cross-chain operations
+18. **LENDING_BORROWING** - Leverage, collateral optimization
 
 ### Agent Tools & Data Sources
-
-Each agent uses specific tools and data sources:
 
 | Agent | Tools | Data Sources | LLM Provider |
 |-------|-------|--------------|--------------|
 | **CHAT** | LLM Gateway | Knowledge Base | Vertex AI (gemini-2.0-flash) |
 | **KNOWLEDGE** | Knowledge Injector | Anvil Knowledge Base (JSON) | Vertex AI / DeepInfra |
-| **HUNTER_AI** | OpenAI API, CoinGecko API | CoinGecko, RSS News, Reddit | Vertex AI |
-| **RESEARCH** | Perplexity API | Perplexity Search | Perplexity |
-| **EXECUTION** | Privy Wallet, 1inch API, LLM Gateway | 1inch, Privy | Vertex AI |
-| **RISK_ANALYZER** | DeFiLlama API | DeFiLlama Protocol Data | Vertex AI |
+| **HUNTER_AI** | CoinGecko API | CoinGecko, RSS News | Vertex AI |
 | **DEFI_YIELD** | DeFiLlama API | DeFiLlama Yield Data | Vertex AI |
+| **RISK_ANALYZER** | DeFiLlama API | DeFiLlama Protocol Data | Vertex AI |
 | **GAS_OPTIMIZER** | Web3Client (Alchemy/Infura) | Ethereum Gas Oracle | Vertex AI |
-| **PORTFOLIO** | GraphRAG, Database | Multi-chain RPC, Database | Vertex AI |
-| **TAX_OPTIMIZER** | Database, Transaction History | Blockchain RPC | Vertex AI |
-| **SECURITY_AUDITOR** | Slither, Static Analysis | Smart Contract Code | Vertex AI |
-| **GUEST_AUTH** | Auth Detection | Translation Service | Vertex AI |
+| **GUEST_AUTH** | Auth Detection | Translation Service | N/A (rule-based) |
 
-### Agent Response Structure
+### Off-Topic Handling
 
-All agents return `AgentResponse`:
+When the LLM detects an off-topic query:
 
-```python
-@dataclass
-class AgentResponse:
-    content: str  # Response text
-    agent_type: AgentType  # Agent that generated response
-    tools_used: list[str]  # Tools used (e.g., ["1inch_api", "privy_wallet"])
-    sources: list[SourceInfo]  # Data sources (APIs, LLMs, databases)
-    metadata: dict  # Additional metadata (tokens_used, latency_ms, etc.)
-```
-
-**SourceInfo Structure**:
-```python
-@dataclass
-class SourceInfo:
-    source_type: SourceType  # API, LLM, DATABASE, KNOWLEDGE_BASE, BLOCKCHAIN
-    source_name: str  # "1inch", "CoinGecko", "gemini-2.0-flash"
-    citation_text: str  # Human-readable citation
-    fetched_at: datetime  # When data was fetched
-    provider: str  # "Vertex AI", "CoinGecko API", etc.
-    endpoint: str | None  # API endpoint if applicable
-    query_params: dict | None  # Query parameters if applicable
-    relevance_score: float | None  # Relevance score (0.0-1.0)
-    metadata: dict | None  # Additional metadata
-```
-
-### Agent Execution Flow
+1. **LLM Planning**: Creates task with `"Decline off-topic politely"` in task_description
+2. **Supervisor**: Detects `"decline"` or `"off-topic"` in task_description
+3. **Message Enhancement**: Passes `[SYSTEM INSTRUCTION: {task_description}]` to chat agent
+4. **Chat Agent**: Parses instruction and generates polite decline response
 
 ```python
-# 1. Agent resolved from DI container
-agent = await container.get(AgentGateway, agent_type=AgentType.HUNTER_AI)
-
-# 2. Build conversation context
-context = ConversationContext(
-    conversation_history=[...],  # Last N messages
-    user_metadata={"language": "en", "is_guest": True},
-    session_metadata={"ip_address": "..."},
-)
-
-# 3. Execute agent
-response = await agent.execute(
-    conversation_id=conversation_id,
-    message=MessageContent("What's the price of BTC?"),
-    conversation_context=context,
-)
-
-# 4. Response contains:
-# - content: "Bitcoin (BTC): $89,433.00"
-# - tools_used: ["coingecko_api", "openai_api"]
-# - sources: [SourceInfo(source_type=API, source_name="CoinGecko", ...)]
-# - metadata: {"tokens_used": 150, "latency_ms": 1835}
+# In supervisor_coordinator.py
+if "decline" in task_desc_lower or "off-topic" in task_desc_lower or "politely" in task_desc_lower:
+    logger.info(f"🚫 OFF-TOPIC detected: {task.task_description}")
+    message_content = MessageContent(f"[SYSTEM INSTRUCTION: {task.task_description}]\n\nUser message: \"{original_message}\"")
 ```
 
 ---
 
-## Distillation Engine
+## LLM-Based Routing
 
-### Purpose
+### Why No Intent Classification?
 
-The `DistillationEngine` optimizes query processing by:
+**CEO Directive**: Remove all intent classification in favor of pure LLM-based routing.
 
-1. **Hybrid Intent Classification**: Rule-based patterns + LLM classification with conversation history
-2. **Caching**: Exact and semantic cache lookups
-3. **Static Responses**: Pre-defined responses for common queries
-4. **Routing**: Decision to use FULL_LLM, CACHED, or STATIC response
-5. **Complexity Assessment**: Determine if query needs full LLM processing
+**Before** (Intent-Based):
+1. Intent Classifier (regex + LLM) → Classify intent
+2. Fast-path patterns → Shortcut common queries
+3. Distillation Engine → Route based on intent
+4. Supervisor → Plan based on intent
 
-### Components
+**After** (LLM-Based):
+1. Security Check → Only block harmful content
+2. Supervisor LLM → Semantically understand and route
+3. Execute → Run planned agents
 
-**IntentClassifier** (`src/app/domain/services/distillation/intent_classifier.py`):
-- **Hybrid Classification Approach**:
-  1. **Rule-based patterns** (first tier): Fast regex matching for common queries (~90% accuracy, 0.95 confidence)
-  2. **LLM-based classification** (second tier): Vertex AI (`gemini-2.0-flash`) with DeepInfra fallback for ambiguous queries
-- **Conversation History Support**: Uses last 3 messages for context-aware classification
-- **Benefits**:
-  - Fast classification for common queries (rule-based)
-  - Accurate classification for ambiguous queries (LLM)
-  - Context-aware routing (conversation history)
-  - Helps Supervisor Coordinator route correctly
-- **Returns**: Intent and confidence score (0.0-1.0)
+**Benefits**:
+- **Simpler Architecture**: One LLM call for routing instead of multiple classification steps
+- **More Natural**: LLM understands context better than regex patterns
+- **Flexible**: Easy to add new agent types without adding patterns
+- **Multilingual**: Works across languages without separate patterns
 
-**ComplexityAssessor**:
-- Assesses query complexity (SIMPLE, MODERATE, COMPLEX)
-- Factors: query length, entity count, multi-intent detection
+### Routing Rules
 
-**EntityExtractor**:
-- Extracts entities (tokens, protocols, amounts, addresses)
-- Returns structured entity dictionary
+**Off-Topic Detection**:
+- Cooking, recipes, weather, sports, general knowledge → Decline politely
+- Redirect to DeFi topics
 
-**DistillationRouter**:
-- Makes routing decision:
-  - `FULL_LLM`: Process with Agent Squad
-  - `CACHED`: Return cached response
-  - `STATIC`: Return pre-defined response
-- **Context-aware routing**: Uses conversation history for better classification
-
-**CacheManager**:
-- Exact cache: Hash-based lookup
-- Semantic cache: Vector similarity search
-
-**StaticResponder**:
-- Pre-defined responses for common queries
-- Language-specific responses
-
-### Distillation Flow
-
-```
-Query + Conversation History
-  ↓
-Intent Classification (Hybrid):
-  ├─ [1] Rule-based patterns (fast, 0.95 confidence)
-  │   ↓ (if match)
-  │   Return intent immediately
-  │   ↓ (if no match)
-  ├─ [2] LLM Classification (Vertex AI + DeepInfra fallback)
-  │   ├─ Build prompt with conversation history
-  │   ├─ Call llm_client.classify_intent()
-  │   ├─ Parse JSON response
-  │   └─ Return intent if confidence >= 0.85
-  │   ↓ (if LLM fails or low confidence)
-  └─ [3] Fallback to UNCLEAR (0.5 confidence)
-  ↓
-Complexity Assessment
-  ↓
-Entity Extraction
-  ↓
-Cache Check (Exact → Semantic)
-  ↓
-Static Response Check
-  ↓
-Route Decision: FULL_LLM | CACHED | STATIC
-  ↓
-If FULL_LLM: Continue to Supervisor Coordinator
-If CACHED: Return cached response
-If STATIC: Return static response
-```
-
-### Intent Classification Details
-
-**Rule-Based Patterns** (First Tier):
-- Fast regex matching for common query patterns
-- ~90% accuracy for standard queries
-- High confidence (0.95) when matched
-- No LLM API costs
-- Examples:
-  - `"what is the price of BTC?"` → `PRICE_CHECK` (0.95 confidence)
-  - `"swap 100 USDC for ETH"` → `SWAP_REQUEST` (0.95 confidence)
-
-**LLM-Based Classification** (Second Tier):
-- Triggered when no rule-based pattern matches
-- Uses Vertex AI (`gemini-2.0-flash`) with automatic DeepInfra fallback
-- Includes conversation history (last 3 messages) for context
-- Helps disambiguate ambiguous queries
-- Examples:
-  - `"what type of swaps can I make?"` → `EXPLAIN_CONCEPT` (0.90 confidence)
-  - `"what's the price?"` (after swap discussion) → `PRICE_CHECK` (context-aware)
-
-**Conversation History Integration**:
-- Last 3 messages included in classification prompt
-- Provides context for ambiguous queries
-- Example: If previous message was about swaps, `"what's the price?"` likely refers to swap prices
-
-**LLM Client Integration**:
-- Uses `LLMClientGateway` from `AgentSquadInfrastructureProvider`
-- Automatic fallback: Vertex AI → DeepInfra (on rate limits or errors)
-- Model mapping: `gemini-2.0-flash` → `meta-llama/Meta-Llama-3.1-70B-Instruct`
-- Graceful degradation: Falls back to rule-based if LLM client unavailable
+**Crypto Topics**:
+- Prices, market data → `hunter_ai`
+- Education, explanations → `knowledge`
+- Yield/APY/lending → `defi_yield`
+- Risk/TVL analysis → `risk_analyzer`
+- Gas prices → `gas_optimizer`
+- Wallet actions → `guest_auth`
+- Greetings, general chat → `chat`
 
 ---
 
 ## Telemetry & Observability
 
-### Telemetry Data Structure
+### Response Metadata
 
-**Agent Timings** (in `enrichment.agent_timings`):
+**Routing Info**:
 ```json
 {
-  "agent_type": "hunter_ai",
-  "task_description": "Provide the current price of BTC | Tools: CoinGecko API | Data Sources: CoinGecko API",
-  "execution_time_ms": 1835,
-  "status": "completed",
-  "provider": "vertex_ai",
-  "tools_used": ["coingecko_api", "openai_api"],
-  "sources": ["CoinGecko API"]
+  "handler": "supervisor_llm",
+  "intent": "LLM_WORKFLOW",
+  "workflow_type": "llm_planned"
 }
 ```
 
@@ -615,51 +463,20 @@ If STATIC: Return static response
 {
   "agent_squad": true,
   "workflow_type": "supervisor_coordinator",
-  "task_count": 3,
+  "task_count": 2,
   "disclaimer": "You're in demo mode. Some features require registration.",
-  "agents_used": ["knowledge", "hunter_ai", "chat"],
-  "agent_timings": [...]
+  "agents_used": ["hunter_ai", "chat"],
+  "agent_timings": [
+    {
+      "agent_type": "hunter_ai",
+      "task_description": "Get BTC price | Tools: CoinGecko API",
+      "execution_time_ms": 2699,
+      "status": "completed",
+      "provider": "vertex_ai"
+    }
+  ]
 }
 ```
-
-**Sources Tracking**:
-- **API Sources**: External APIs (CoinGecko, 1inch, DeFiLlama)
-- **LLM Sources**: LLM providers (Vertex AI, DeepInfra, Perplexity)
-- **Database Sources**: Internal database queries
-- **Knowledge Base Sources**: Anvil knowledge base files
-- **Blockchain Sources**: On-chain data (RPC calls)
-
-### Telemetry Logging Points
-
-1. **Message Sent**: Log user message with intent, language, length
-2. **Agent Execution**: Log agent type, execution time, tools used, sources
-3. **Workflow Completion**: Log workflow plan, task count, total time
-4. **Error Events**: Log agent failures, rate limit hits, authentication failures
-5. **Rate Limiting**: Track messages per hour/day, remaining quota
-
-### Database Telemetry
-
-**Guest Telemetry** (`guest_telemetry` table):
-- `guest_user_id`: Guest user identifier
-- `conversation_id`: Conversation identifier
-- `event_type`: "message_sent", "registration_prompt", "rate_limit_hit"
-- `event_data`: JSON with intent, is_restricted, message_length
-- `ip_address`: Client IP
-- `user_agent`: Browser user agent
-- `referer`: HTTP referer
-- `language`: User language
-- `created_at`: Timestamp
-
-**Distillation Telemetry** (`distillation_telemetry` table):
-- `request_id`: Unique request identifier
-- `query`: User query text
-- `intent`: Detected intent
-- `complexity`: Query complexity
-- `entities`: Extracted entities (JSON)
-- `route_type`: FULL_LLM | CACHED | STATIC
-- `cache_hit`: Boolean
-- `processing_time_ms`: Processing time
-- `user_id`: Optional user ID
 
 ---
 
@@ -670,7 +487,7 @@ If STATIC: Return static response
 **User Identification**:
 - IP address-based guest user creation
 - No authentication required
-- Session management via IP + fingerprint
+- Session management via IP
 
 **Rate Limiting**:
 - 5000 messages/hour (testing)
@@ -678,21 +495,10 @@ If STATIC: Return static response
 - IP-based tracking
 
 **Restricted Features**:
-- Portfolio access → Registration prompt
+- Portfolio access → Registration prompt via `guest_auth` agent
 - Balance queries → Registration prompt
 - Transaction execution → Registration prompt
 - Wallet address → Registration prompt
-
-**Conversation Management**:
-- Auto-create guest user on first message
-- Auto-create conversation on first message
-- Archive conversation after inactivity
-- IP-based conversation retrieval
-
-**Telemetry**:
-- Log to `guest_telemetry` table
-- Track by IP address
-- No user_id (null)
 
 ### Conversations/Message System
 
@@ -713,27 +519,14 @@ If STATIC: Return static response
 - Transaction execution (with wallet connection)
 - Wallet address retrieval
 
-**Conversation Management**:
-- User must create conversation explicitly
-- Conversation ownership verification
-- User can have multiple conversations
-- Conversation metadata (title, message_count)
-
-**Telemetry**:
-- Log to `chat_message` table
-- Track by user_id
-- Include wallet_address in context
-
 ### Shared Components
 
 Both systems use:
-- **SupervisorCoordinator**: Same workflow planning logic
+- **SupervisorCoordinator**: Same LLM-based workflow planning
 - **Agent Squad**: Same 18 agents
-- **DistillationEngine**: Same optimization logic with hybrid classification
-- **Intent Detection**: Same hybrid classification (rule-based + LLM with conversation history)
-- **Agent Orchestration**: Same execution flow
+- **Agent Orchestration**: Same parallel execution flow
 - **Response Aggregation**: Same aggregation logic
-- **Conversation History**: Both build and use conversation history for context-aware processing
+- **Conversation History**: Both build and use history for context
 
 ---
 
@@ -743,162 +536,70 @@ Both systems use:
 
 **File**: `src/app/application/guest/commands/send_guest_message.py`
 
-**Key Methods**:
+**Key Method**: `_process_with_llm_supervisor()`
+
 ```python
-class SendGuestMessage:
-    async def execute(
-        self,
-        ip_address: str,
-        content: str,
-        language: str = "en",
-        user_agent: str | None = None,
-        referer: str | None = None,
-    ) -> GuestMessageResult:
-        """
-        Main execution flow:
-        1. Get or create guest user (by IP)
-        2. Get or create conversation
-        3. Create user message
-        4. Build conversation context (last 5 messages)
-        5. Detect intent (with conversation history)
-        6. Distillation pass (optional, with conversation history)
-           - Hybrid intent classification (rule-based + LLM)
-           - Context-aware routing
-        7. Supervisor coordination
-        8. Agent orchestration
-        9. Response aggregation
-        10. Telemetry logging
-        """
-    
-    async def _build_conversation_context(
-        self,
-        conversation_id: UUID,
-    ) -> list[dict]:
-        """
-        Build context from last N messages.
-        
-        Returns conversation history in format:
-        [
-            {"role": "user", "content": "..."},
-            {"role": "assistant", "content": "..."},
-            ...
-        ]
-        
-        This history is passed to:
-        - DistillationEngine (for context-aware intent classification)
-        - SupervisorCoordinator (for workflow planning)
-        - Individual agents (for conversational context)
-        """
-    
-    async def _detect_intent_with_context(
-        self,
-        content: str,
-        context: list[dict],
-        language: str,
-        continuation_step: str | None,
-    ) -> tuple[ChatIntent, float, str]:
-        """Detect intent with conversation context."""
-    
-    async def _get_continuation_state(
-        self,
-        conversation_id: UUID,
-    ) -> tuple[str | None, dict | None, ...]:
-        """Get continuation state for multi-step flows."""
-```
-
-### Conversation Message Handler (Future)
-
-**File**: `src/app/presentation/http/controllers/chat/conversations_router.py`
-
-**Key Methods**:
-```python
-@router.post("/{conversation_id}/messages")
-async def send_message(
-    conversation_id: UUID,
-    request_body: SendMessageRequest,
-    current_user: FromDishka[CurrentUserService],
-    conversation_service: FromDishka[ConversationService],
-    # ... other dependencies
-) -> ChatResponse:
+async def _process_with_llm_supervisor(
+    self, content: str, language: str, conversation: GuestConversation, guest: GuestUser,
+    context: str, ip_address: str, user_agent: str | None = None, referer: str | None = None,
+) -> GuestMessageResult | None:
     """
-    Main execution flow (same as guest):
-    1. Authenticate user (JWT)
-    2. Get conversation (verify ownership)
-    3. Get conversation context (last N messages)
-    4. Detect intent (with conversation history)
-    5. Distillation pass (optional, with conversation history)
-       - Hybrid intent classification (rule-based + LLM)
-       - Context-aware routing
-    6. Supervisor coordination
-    7. Agent orchestration
-    8. Response aggregation
-    9. Telemetry logging
-    """
-```
-
-### Supervisor Coordinator Implementation
-
-**File**: `src/app/domain/services/agent_squad/supervisor_coordinator.py`
-
-**Key Methods**:
-```python
-class SupervisorCoordinator:
-    async def create_workflow_plan(
-        self,
-        conversation_id: ConversationId,
-        message: MessageContent,
-        conversation_context: ConversationContext,
-    ) -> WorkflowPlan:
-        """
-        Create workflow plan using LLM.
-        
-        LLM Prompt:
-        - Analyze query complexity
-        - Identify required agents
-        - Create tasks with dependencies
-        - Estimate execution time
-        """
+    Process message using LLM-based routing (NO intents).
     
-    async def execute_workflow(
-        self,
-        workflow_plan: WorkflowPlan,
-        conversation_id: ConversationId,
-        message: MessageContent,
-        conversation_context: ConversationContext,
-    ) -> str:
-        """
-        Execute workflow plan:
-        1. Get execution order (topological sort)
-        2. For each task:
-           - Wait for dependencies
-           - Execute agent
-           - Collect response
-           - Continue on error
-        3. Aggregate results
-        """
+    Flow:
+    1. Build conversation history
+    2. Create workflow plan via SupervisorCoordinator
+    3. Execute workflow (parallel agent execution)
+    4. Handle sources and build response
+    """
+    # Build conversation context
+    agent_squad_context = ConversationContext(
+        conversation_history=history,
+        user_metadata={"language": language, "is_guest": True},
+    )
+    
+    # LLM-based action detection
+    workflow_plan = await self._supervisor_coordinator.create_workflow_plan(
+        conversation_id=ConversationId(conversation.id),
+        message=MessageContent(content),
+        conversation_context=agent_squad_context,
+        available_agents=available_agents,
+    )
+    
+    # Execute with parallel execution
+    response_content, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
+        workflow_plan=workflow_plan,
+        conversation_id=ConversationId(conversation.id),
+        message=MessageContent(content),
+        conversation_context=agent_squad_context,
+    )
 ```
 
-### Agent Orchestrator Implementation
+### Main Execute Flow
 
-**File**: `src/app/domain/services/agent_squad/agent_orchestrator.py`
-
-**Key Methods**:
 ```python
-class AgentOrchestrator:
-    async def execute_agent(
-        self,
-        conversation_id: ConversationId,
-        agent_type: AgentType,
-        message: MessageContent,
-        conversation_context: ConversationContext,
-    ) -> AgentResponse:
-        """
-        Execute agent:
-        1. Resolve agent from DI container
-        2. Build conversation context
-        3. Execute agent.execute()
-        4. Return AgentResponse
-        """
+async def execute(...) -> GuestMessageResult:
+    # 1. Get/create guest user
+    # 2. Check rate limits
+    # 3. Get/create conversation
+    # 4. Build conversation history
+    
+    # ============================================================
+    # ✨ LLM-BASED ROUTING (NO INTENTS, NO FAST-PATHS) ✨
+    # ============================================================
+    # The ONLY pattern check is for harmful content (security).
+    
+    if self._supervisor_coordinator and self._agent_orchestrator:
+        # Security check only
+        is_harmful = any(pattern in content_lower for pattern in harmful_patterns)
+        
+        if not is_harmful:
+            result = await self._process_with_llm_supervisor(...)
+            if result is not None:
+                return result
+    
+    # LEGACY FLOW (FALLBACK ONLY)
+    # ...
 ```
 
 ---
@@ -912,52 +613,38 @@ class AgentOrchestrator:
    - Progressive response updates
    - Token-by-token streaming
 
-2. **Advanced Caching**:
-   - Semantic cache with vector similarity
-   - Multi-level caching (Redis → Database → LLM)
-   - Cache invalidation strategies
+2. **Enhanced Parallel Execution**:
+   - Wave-based execution for complex dependencies
+   - Dynamic parallelism based on agent availability
+   - Load balancing across LLM providers
 
-3. **Agent Learning**:
-   - Agent performance tracking
-   - Automatic agent selection optimization
-   - A/B testing for agent configurations
+3. **Prompt Optimization**:
+   - A/B testing for prompt variants
+   - Performance metrics per prompt version
+   - Automated prompt tuning
 
-4. **Enhanced Telemetry**:
-   - Real-time dashboard for agent performance
-   - Cost tracking per agent
-   - User satisfaction metrics
-
-5. **Multi-Modal Support**:
-   - Image input processing
-   - Chart generation
-   - Voice input/output
-
-### Architecture Evolution
-
-**Current**: Monolithic agent execution
-**Future**: Microservices architecture with:
-- Agent services as separate services
-- Message queue for agent communication
-- Distributed caching
-- Load balancing for agent execution
+4. **Context Compression**:
+   - Summarize long conversation history
+   - Compress knowledge base context
+   - Optimize token usage
 
 ---
 
 ## Conclusion
 
-The Anvil messaging system provides a robust, scalable architecture for handling user queries across both guest and authenticated contexts. The **Supervisor Coordinator** pattern enables intelligent multi-agent workflows, while the **Distillation Engine** optimizes query processing. Comprehensive **telemetry** ensures observability and performance monitoring.
+The Anvil messaging system provides a robust, scalable architecture for handling user queries across both guest and authenticated contexts. The **LLM-based routing** (without intent classification) enables intelligent, context-aware multi-agent workflows, while **parallel execution** ensures optimal performance.
 
 **Key Strengths**:
+- Pure LLM-based semantic routing (no intents)
+- Parallel agent execution for speed
+- Comprehensive off-topic handling
 - Unified architecture for guest and authenticated users
-- Flexible agent orchestration
-- Comprehensive observability
-- Scalable design
 
-**Areas for Improvement**:
-- Streaming response support
-- Advanced caching strategies
-- Agent performance optimization
-- Multi-modal capabilities
+**Performance Metrics** (from tests):
+- Average response time: ~6-8s for single-agent queries
+- Parallel execution: ~70% faster than sequential
+- Off-topic detection: 91% accuracy
+- Agent routing: 91% pass rate
 
 ---
 
@@ -965,17 +652,22 @@ The Anvil messaging system provides a robust, scalable architecture for handling
 
 - **Supervisor Coordinator**: `src/app/domain/services/agent_squad/supervisor_coordinator.py`
 - **Agent Orchestrator**: `src/app/domain/services/agent_squad/agent_orchestrator.py`
-- **Distillation Engine**: `src/app/domain/services/distillation/engine.py`
 - **Guest Message Handler**: `src/app/application/guest/commands/send_guest_message.py`
 - **Conversations Router**: `src/app/presentation/http/controllers/chat/conversations_router.py`
 - **Agent Types**: `src/app/domain/enums/agent_type.py`
-- **CTO Methodology**: `cto.md`
+- **Test Results**: `docs/output/guest_input.csv`
 
 ---
 
-*Document Version: 1.1*  
-*Last Updated: 2026-01-20*  
+*Document Version: 2.0*  
+*Last Updated: 2026-01-21*  
 *Author: Anvil Engineering Team*
 
 **Changelog**:
-- **v1.1** (2026-01-20): Updated Distillation Engine section to reflect hybrid classification (rule-based + LLM) with conversation history support
+- **v2.0** (2026-01-21): Major rewrite for LLM-based routing architecture
+  - Removed intent classification (CEO directive)
+  - Added parallel execution documentation
+  - Updated flow diagrams for new architecture
+  - Added performance metrics from test results
+  - Simplified routing rules and prompt structure
+- **v1.1** (2026-01-20): Updated Distillation Engine section
