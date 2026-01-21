@@ -181,8 +181,17 @@ class ChatAgent:
         conversation_context: ConversationContext,
     ) -> list[dict]:
         """Build messages for OpenAI API."""
+        message_value = message.value
+        message_lower = message_value.lower().strip()
+        
+        # Check for supervisor instruction (off-topic handling)
+        has_instruction = message_value.startswith("[SYSTEM INSTRUCTION:")
+        if has_instruction:
+            # Extract instruction and original message
+            # Format: [SYSTEM INSTRUCTION: task_description]\n\nUser message: "original"
+            return self._build_instruction_messages(message_value)
+        
         # Detect if this is a greeting or small talk
-        message_lower = message.value.lower().strip()
         is_greeting = any([
             message_lower in ["hi", "hello", "hey", "hola", "holi", "hey there"],
             message_lower.startswith(("hi ", "hello ", "hey ", "hola ")),
@@ -319,6 +328,39 @@ Create a single, well-structured response that combines all unique insights with
         cta = get_cta_message(language)
         
         return f"{message}\n\n👉 {cta}: /signup"
+    
+    def _build_instruction_messages(self, message_value: str) -> list[dict]:
+        """Build messages when supervisor provides a specific instruction (e.g., off-topic)."""
+        # Parse the instruction format: [SYSTEM INSTRUCTION: task]\n\nUser message: "original"
+        import re
+        
+        # Extract instruction
+        instruction_match = re.search(r'\[SYSTEM INSTRUCTION: ([^\]]+)\]', message_value)
+        instruction = instruction_match.group(1) if instruction_match else "Respond naturally"
+        
+        # Extract original user message
+        user_match = re.search(r'User message: ["\']?([^"\']+)["\']?', message_value)
+        original_message = user_match.group(1) if user_match else message_value
+        
+        # Build focused system prompt for instruction handling
+        system_prompt = f"""You are Anvil's AI assistant, specialized in DeFi and cryptocurrency.
+
+**YOUR INSTRUCTION:** {instruction}
+
+**CRITICAL RULES:**
+1. Follow the instruction above EXACTLY
+2. If the instruction says "decline off-topic" or similar, politely tell the user you can't help with that topic
+3. Be friendly but firm - redirect to DeFi topics
+4. Keep response SHORT (2-3 sentences max)
+
+**Example off-topic response:**
+"I'm specialized in DeFi and crypto assistance. I can't help with [topic], but I can help you with swaps, staking, lending, and other DeFi operations. What would you like to know about DeFi?"
+"""
+        
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": original_message},
+        ]
     
     def _get_greeting_prompt(self) -> str:
         """Get conversational prompt for greetings."""

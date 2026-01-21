@@ -428,13 +428,16 @@ class SupervisorCoordinator:
                 original_message = conversation_context.conversation_history[-1].get("content", task.task_description) if conversation_context.conversation_history else task.task_description
                 
                 # Determine message content based on task type
-                if task.agent_type.value == "chat" and "aggregate" in task.task_description.lower():
+                task_desc_lower = task.task_description.lower()
+                
+                if task.agent_type.value == "chat" and "aggregate" in task_desc_lower:
                     # Aggregation tasks: pass aggregated content from other agents
                     aggregated_content = self._build_aggregation_message(workflow_plan, task)
                     message_content = MessageContent(aggregated_content)
-                elif "decline" in task.task_description.lower() or "off-topic" in task.task_description.lower():
+                elif "decline" in task_desc_lower or "off-topic" in task_desc_lower or "politely" in task_desc_lower:
                     # Off-topic handling: include instruction in message
-                    message_content = MessageContent(f"[INSTRUCTION: {task.task_description}]\n\nUser said: {original_message}")
+                    logger.info(f"🚫 OFF-TOPIC detected: {task.task_description}")
+                    message_content = MessageContent(f"[SYSTEM INSTRUCTION: {task.task_description}]\n\nUser message: \"{original_message}\"")
                 else:
                     # Normal tasks: use original user message
                     message_content = MessageContent(original_message)
