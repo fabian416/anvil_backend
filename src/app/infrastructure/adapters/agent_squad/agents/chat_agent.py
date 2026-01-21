@@ -244,6 +244,13 @@ Agent Responses to Aggregate:
 
 Create a single, well-structured response that combines all unique insights without repetition, but ALWAYS preserve and prominently display any real-time data from DeFiLlama (APY values, TVL data, protocol rankings). FILTER OUT any authentication/registration messages unless the user explicitly asked about account requirements.""",
             })
+        elif is_greeting:
+            # ✨ GREETING: NO HISTORY - respond only to the greeting
+            # This prevents context bleeding from previous messages
+            messages.append({
+                "role": "user",
+                "content": message.value,
+            })
         else:
             # Normal conversation flow
             # Add conversation history (last 5 messages)
