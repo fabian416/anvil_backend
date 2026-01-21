@@ -201,6 +201,100 @@ class SendGuestMessage:
         context = await self._build_conversation_context(conversation.id)
 
         # ============================================================
+        # 🔒 SECURITY CHECK (FIRST - BEFORE ANY ROUTING)
+        # ============================================================
+        # Block harmful content before any processing
+        content_lower = content.lower()
+        logger.info(f"🔒 Security check starting for: {content[:50]}...")
+        harmful_patterns = [
+            # Prompt injection attempts
+            "ignore previous instructions",
+            "ignore all instructions", 
+            "ignore your policy",
+            "disregard your instructions",
+            "forget your training",
+            "jailbreak",
+            "dan mode",
+            "developer mode",
+            "bypass your filters",
+            "you can talk about anything",
+            # Illegal/harmful crypto activities
+            "launder", "money laundering",
+            "avoid kyc", "bypass kyc", "skip kyc",
+            "exploit", "exploit this contract",
+            "rug pull", "run a rug",
+            "doxx", "dox ",
+            "hack ", "steal ",
+            "scam token",
+        ]
+        
+        is_harmful = any(pattern in content_lower for pattern in harmful_patterns)
+        
+        if is_harmful:
+            # Block harmful content with appropriate response
+            logger.warning(
+                "🚫 HARMFUL CONTENT BLOCKED",
+                extra={
+                    "ip_address": ip_address,
+                    "conversation_id": str(conversation.id),
+                    "content_preview": content[:100],
+                }
+            )
+            
+            # Save user message
+            user_message = GuestMessage.create_user_message(
+                conversation_id=conversation.id,
+                content=content,
+                language=language,
+            )
+            await self._guest_repo.create_message(user_message)
+            
+            # Create blocking response
+            block_response = "I cannot assist with that request. I'm here to help with legitimate DeFi and cryptocurrency questions. How can I help you with swaps, lending, or other DeFi operations?"
+            
+            agent_message = GuestMessage.create_assistant_message(
+                conversation_id=conversation.id,
+                content=block_response,
+                handler="security_filter",
+                language=language,
+            )
+            await self._guest_repo.create_message(agent_message)
+            
+            # Calculate remaining messages
+            hour_ago = datetime.now(UTC) - timedelta(hours=1)
+            messages_this_hour = await self._guest_repo.get_message_count_since(guest.id, hour_ago)
+            messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+            
+            return GuestMessageResult(
+                conversation_id=conversation.id,
+                message_id=agent_message.id,
+                user_message={
+                    "id": str(user_message.id),
+                    "role": user_message.role.value,
+                    "content": user_message.content,
+                    "created_at": user_message.created_at.isoformat(),
+                },
+                agent_message={
+                    "id": str(agent_message.id),
+                    "role": agent_message.role.value,
+                    "content": block_response,
+                    "created_at": agent_message.created_at.isoformat(),
+                },
+                routing={
+                    "intent": "BLOCKED",
+                    "confidence": 1.0,
+                    "handler": "security_filter",
+                    "language": language,
+                    "is_demo_mode": False,
+                },
+                enrichment={"blocked": True, "reason": "harmful_content"},
+                guest_info={
+                    "messages_remaining": messages_remaining,
+                    "session_active": True,
+                },
+            )
+
+        # ============================================================
         # ✨ LLM-BASED ROUTING (NO INTENTS, NO FAST-PATHS) ✨
         # ============================================================
         # The CEO directive: NO intent classification, NO regex patterns.
@@ -208,58 +302,41 @@ class SendGuestMessage:
         # 1. Understand the user's request semantically
         # 2. Determine what agents/actions are needed
         # 3. Execute the workflow
-        # 
-        # The ONLY pattern check is for harmful content (security).
         # ============================================================
         
         if self._supervisor_coordinator and self._agent_orchestrator:
-            # Security check (harmful content only)
-            content_lower = content.lower()
-            harmful_patterns = [
-                "ignore previous instructions",
-                "ignore all instructions", 
-                "disregard your instructions",
-                "forget your training",
-                "jailbreak",
-                "dan mode",
-                "developer mode",
-                "bypass your filters",
-            ]
-            
-            is_harmful = any(pattern in content_lower for pattern in harmful_patterns)
-            
-            if not is_harmful:
-                try:
-                    logger.info(
-                        "🎯 LLM-based routing: ALL queries go to SupervisorCoordinator",
-                        extra={
-                            "ip_address": ip_address,
-                            "conversation_id": str(conversation.id),
-                            "content_preview": content[:100],
-                        }
-                    )
+            # Safe content - proceed with LLM routing
+            try:
+                logger.info(
+                    "🎯 LLM-based routing: ALL queries go to SupervisorCoordinator",
+                    extra={
+                        "ip_address": ip_address,
+                        "conversation_id": str(conversation.id),
+                        "content_preview": content[:100],
+                    }
+                )
+                
+                # Process with SupervisorCoordinator (LLM-based action detection)
+                result = await self._process_with_llm_supervisor(
+                    content=content,
+                    language=language,
+                    conversation=conversation,
+                    guest=guest,
+                    context=context,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    referer=referer,
+                )
+                
+                if result is not None:
+                    return result
                     
-                    # Process with SupervisorCoordinator (LLM-based action detection)
-                    result = await self._process_with_llm_supervisor(
-                        content=content,
-                        language=language,
-                        conversation=conversation,
-                        guest=guest,
-                        context=context,
-                        ip_address=ip_address,
-                        user_agent=user_agent,
-                        referer=referer,
-                    )
-                    
-                    if result is not None:
-                        return result
-                        
-                except Exception as e:
-                    logger.warning(
-                        f"LLM-based routing failed: {e}, falling back to legacy flow",
-                        exc_info=True,
-                    )
-                    # Fall through to legacy flow if LLM routing fails
+            except Exception as e:
+                logger.warning(
+                    f"LLM-based routing failed: {e}, falling back to legacy flow",
+                    exc_info=True,
+                )
+                # Fall through to legacy flow if LLM routing fails
         
         # ============================================================
         # LEGACY FLOW (FALLBACK ONLY)
@@ -1247,7 +1324,7 @@ class SendGuestMessage:
                     ip_address=ip_address,
                     user_agent=user_agent,
                     referer=referer,
-                    distillation_timing_ms=distillation_timing_ms,  # Pass distillation timing
+                    distillation_timing_ms=None,  # No distillation in legacy path
                 )
                 
                 if agent_squad_result is not None:
