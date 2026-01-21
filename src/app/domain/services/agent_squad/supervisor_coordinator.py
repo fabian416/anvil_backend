@@ -424,14 +424,19 @@ class SupervisorCoordinator:
             try:
                 start_time = time.time()
                 
-                # For CHAT agent aggregation tasks, pass aggregated content from other agents
+                # Get original user message
+                original_message = conversation_context.conversation_history[-1].get("content", task.task_description) if conversation_context.conversation_history else task.task_description
+                
+                # Determine message content based on task type
                 if task.agent_type.value == "chat" and "aggregate" in task.task_description.lower():
-                    # Build aggregated message from previous agent responses
+                    # Aggregation tasks: pass aggregated content from other agents
                     aggregated_content = self._build_aggregation_message(workflow_plan, task)
                     message_content = MessageContent(aggregated_content)
+                elif "decline" in task.task_description.lower() or "off-topic" in task.task_description.lower():
+                    # Off-topic handling: include instruction in message
+                    message_content = MessageContent(f"[INSTRUCTION: {task.task_description}]\n\nUser said: {original_message}")
                 else:
-                    # Use the original user message for other agents
-                    original_message = conversation_context.conversation_history[-1].get("content", task.task_description) if conversation_context.conversation_history else task.task_description
+                    # Normal tasks: use original user message
                     message_content = MessageContent(original_message)
                 
                 result = await self._agent_executor.execute_agent(
