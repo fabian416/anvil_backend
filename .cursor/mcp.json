@@ -15,6 +15,13 @@
         "@pimzino/spec-workflow-mcp@latest",
         "/home/ubuntu/anvil_backend"
       ]
+    },
+    "mcp-mermaid": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-mermaid"
+      ]
     }
   }
 }
