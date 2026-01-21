@@ -647,38 +647,37 @@ class SupervisorCoordinator:
                         context_section += f"{role}: {content}\n"
                 context_section += "</context>\n"
         
-        return f"""Route this request to the right agent(s). Output JSON only.
+        return f"""You are a DeFi workflow router. Route to the correct agent. JSON only.
 
 <request>{message.value}</request>
 {context_section}
 <agents>{agents_str}</agents>
 
-<routing_rules>
-SINGLE-AGENT (prefer for speed):
-- Greetings/chat → "chat"
-- Price queries (any language: price/precio/preço) → "hunter_ai"  
-- DeFi education/explanations → "knowledge"
-- Yield/APY/lending rates → "defi_yield"
-- Risk/TVL analysis → "risk_analyzer"
-- Gas prices → "gas_optimizer"
-- Wallet actions (balance/send/receive/portfolio) → "guest_auth"
-
-OFF-TOPIC (cooking, recipes, non-crypto):
-→ "chat" with task: "Decline politely, redirect to DeFi"
-
-MULTI-AGENT (only if truly needed):
-- Add "chat" as final aggregator with depends_on all previous tasks
-</routing_rules>
+<rules>
+1. OFF-TOPIC FIRST: If NOT about crypto/DeFi/blockchain/Web3, use "chat" + "Decline off-topic politely"
+   Examples: cooking, recipes, weather, sports, general knowledge → OFF-TOPIC
+   
+2. CRYPTO TOPICS:
+   - Prices → "hunter_ai"
+   - DeFi education → "knowledge"  
+   - Yield/APY → "defi_yield"
+   - Risk/TVL → "risk_analyzer"
+   - Gas → "gas_optimizer"
+   - Wallet (balance/send/receive) → "guest_auth"
+   - Greetings → "chat"
+</rules>
 
 <examples>
-User: "hola" → {{"tasks":[{{"agent_type":"chat","task_description":"Greet user warmly","depends_on":[]}}]}}
-User: "btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
-User: "what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi","depends_on":[]}}]}}
-User: "make a cake" → {{"tasks":[{{"agent_type":"chat","task_description":"Decline off-topic, I specialize in DeFi","depends_on":[]}}]}}
-User: "my balance" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle restricted feature","depends_on":[]}}]}}
+"hola" → {{"tasks":[{{"agent_type":"chat","task_description":"Greet warmly","depends_on":[]}}]}}
+"btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
+"what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi","depends_on":[]}}]}}
+"make a cake" → {{"tasks":[{{"agent_type":"chat","task_description":"Decline off-topic politely, I only help with DeFi","depends_on":[]}}]}}
+"how to cook pasta" → {{"tasks":[{{"agent_type":"chat","task_description":"Decline off-topic politely, I specialize in crypto","depends_on":[]}}]}}
+"weather today" → {{"tasks":[{{"agent_type":"chat","task_description":"Decline off-topic politely, redirect to DeFi topics","depends_on":[]}}]}}
+"my balance" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle restricted feature","depends_on":[]}}]}}
+"best yield farms" → {{"tasks":[{{"agent_type":"defi_yield","task_description":"Find best yield opportunities","depends_on":[]}}]}}
 </examples>
 
-Output format:
 {{"tasks":[{{"agent_type":"...","task_description":"...","depends_on":[]}}]}}"""
     
     def _calculate_execution_order(
