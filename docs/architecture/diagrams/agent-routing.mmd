@@ -1,0 +1,129 @@
+graph TB
+    subgraph "📥 Input Processing"
+        UserMsg[User Message + Conversation History]
+        ConvHistory[Last 5 Messages Contextual Memory]
+    end
+
+    subgraph "🧠 Supervisor Coordinator LLM-Based Routing"
+        SupervisorLLM[Vertex AI gemini-2.0-flash-exp]
+
+        subgraph "Routing Rules 8 Semantic Patterns"
+            Rule1[Price Market Hunter AI CoinGecko]
+            Rule2[Research Analysis Research Graph Perplexity]
+            Rule3[Portfolio Portfolio Agent MCP]
+            Rule4[DeFi Yield DeFi Yield Aave Morpho Curve]
+            Rule5[Security Security Auditor Graph]
+            Rule6[Execution Execution Agent 1inch]
+            Rule7[Bridge Crosschain Bridge LayerZero]
+            Rule8[Lending Borrowing Lending Agent Aave]
+        end
+    end
+
+    subgraph "🤖 Agent Squad 18 Agents"
+        subgraph "Core Agents 12"
+            A1[Chat Agent General conversation]
+            A2[Hunter AI Market intelligence]
+            A3[Research Agent Deep analysis]
+            A4[Execution Agent Trade execution]
+            A5[Risk Analyzer Risk assessment]
+            A6[Portfolio Agent Portfolio tracking]
+            A7[Tax Optimizer Tax strategies]
+            A8[DeFi Yield Yield opportunities]
+            A9[Security Auditor Contract audits]
+            A10[Gas Optimizer Gas strategies]
+            A11[Bridge Crosschain Cross-chain transfers]
+            A12[Lending Borrowing Lending protocols]
+        end
+
+        subgraph "Enterprise Agents 6"
+            E1[Compliance Monitor Regulatory checks]
+            E2[Multi-Sig Coordinator Multi-sig ops]
+            E3[Alert Monitoring System alerts]
+            E4[Crisis Manager Emergency response]
+            E5[NFT Asset Manager NFT operations]
+            E6[DAO Governance Governance participation]
+        end
+    end
+
+    subgraph "🔌 MCP Servers 11 Tools"
+        MCP1[1inch DEX 8081 DEX aggregation]
+        MCP2[DefiLlama 8082 Protocol data]
+        MCP3[The Graph 8083 Blockchain queries]
+        MCP4[CoinGecko 8084 Price feeds]
+        MCP5[Aave 8085 Lending protocol]
+        MCP6[Portfolio 8086 Portfolio tracking]
+        MCP7[Perplexity 8087 Web research]
+        MCP8[Morpho 8088 Lending optimizer]
+        MCP9[Curve 8089 Stablecoin DEX]
+        MCP10[Hyperliquid 8090 Perpetuals]
+        MCP11[LayerZero 8091 Cross-chain bridge]
+    end
+
+    subgraph "📤 Output Processing"
+        Aggregator[Response Aggregator Combine agent outputs]
+        Response[Final Response Routing Metadata]
+    end
+
+    UserMsg --> SupervisorLLM
+    ConvHistory --> SupervisorLLM
+
+    SupervisorLLM --> Rule1
+    SupervisorLLM --> Rule2
+    SupervisorLLM --> Rule3
+    SupervisorLLM --> Rule4
+    SupervisorLLM --> Rule5
+    SupervisorLLM --> Rule6
+    SupervisorLLM --> Rule7
+    SupervisorLLM --> Rule8
+
+    Rule1 --> A2
+    Rule2 --> A3
+    Rule3 --> A6
+    Rule4 --> A8
+    Rule5 --> A9
+    Rule6 --> A4
+    Rule7 --> A11
+    Rule8 --> A12
+
+    A1 --> Aggregator
+    A2 --> MCP1
+    A2 --> MCP2
+    A2 --> MCP4
+    A3 --> MCP3
+    A3 --> MCP7
+    A4 --> MCP1
+    A5 --> MCP3
+    A6 --> MCP6
+    A7 --> MCP6
+    A8 --> MCP5
+    A8 --> MCP8
+    A8 --> MCP9
+    A9 --> MCP3
+    A10 --> MCP1
+    A11 --> MCP11
+    A12 --> MCP5
+
+    E1 --> Aggregator
+    E2 --> Aggregator
+    E3 --> Aggregator
+    E4 --> Aggregator
+    E5 --> Aggregator
+    E6 --> Aggregator
+
+    MCP1 --> Aggregator
+    MCP2 --> Aggregator
+    MCP3 --> Aggregator
+    MCP4 --> Aggregator
+    MCP5 --> Aggregator
+    MCP6 --> Aggregator
+    MCP7 --> Aggregator
+    MCP8 --> Aggregator
+    MCP9 --> Aggregator
+    MCP10 --> Aggregator
+    MCP11 --> Aggregator
+
+    Aggregator --> Response
+
+    style SupervisorLLM fill:#fff3cd
+    style Aggregator fill:#d4edda
+    style Response fill:#d1ecf1

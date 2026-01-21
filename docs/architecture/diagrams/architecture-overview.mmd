@@ -1,0 +1,122 @@
+graph TB
+    subgraph "🌐 HTTP Layer"
+        HTTP[HTTP Request POST api v1 guest chat]
+    end
+
+    subgraph "🛡️ Presentation Layer"
+        Router[Guest Router guest router py]
+        Validate[Request Validation Pydantic Schemas]
+    end
+
+    subgraph "💼 Application Layer"
+        Command[SendGuestMessage Command Handler]
+        Security[Security Check Harmful Content Only]
+        Supervisor[Supervisor Coordinator LLM-Based Planning]
+    end
+
+    subgraph "🤖 Agent Orchestration"
+        Orchestrator[Agent Orchestrator Parallel Execution]
+
+        subgraph "Core Agents 12"
+            ChatAgent[Chat Agent]
+            HunterAI[Hunter AI]
+            ResearchAgent[Research Agent]
+            ExecutionAgent[Execution Agent]
+            RiskAnalyzer[Risk Analyzer]
+            PortfolioAgent[Portfolio Agent]
+            TaxOptimizer[Tax Optimizer]
+            DeFiYield[DeFi Yield Finder]
+            SecurityAuditor[Security Auditor]
+            GasOptimizer[Gas Optimizer]
+            BridgeCrosschain[Bridge Crosschain]
+            LendingBorrowing[Lending Borrowing]
+        end
+
+        subgraph "Enterprise Agents 6"
+            ComplianceMonitor[Compliance Monitor]
+            MultiSigCoordinator[Multi-Sig Coordinator]
+            AlertMonitoring[Alert Monitoring]
+            CrisisManager[Crisis Manager]
+            NFTAssetManager[NFT Asset Manager]
+            DAOGovernance[DAO Governance]
+        end
+    end
+
+    subgraph "🔌 MCP Servers 11"
+        MCP1[1inch DEX 8081]
+        MCP2[DefiLlama 8082]
+        MCP3[The Graph 8083]
+        MCP4[CoinGecko 8084]
+        MCP5[Aave 8085]
+        MCP6[Portfolio 8086]
+        MCP7[Perplexity 8087]
+        MCP8[Morpho 8088]
+        MCP9[Curve 8089]
+        MCP10[Hyperliquid 8090]
+        MCP11[LayerZero 8091]
+    end
+
+    subgraph "🤖 LLM Services"
+        VertexAI[Vertex AI gemini-2.0-flash-exp 0.10 per 1M tokens]
+        DeepInfra[DeepInfra Fallback Qwen QwQ-32B-Preview]
+    end
+
+    subgraph "💾 Data Layer"
+        PostgreSQL[(PostgreSQL Conversations Messages Telemetry)]
+        Redis[(Redis Sessions Rate Limiting)]
+    end
+
+    HTTP --> Router
+    Router --> Validate
+    Validate --> Command
+    Command --> Security
+    Security --> Supervisor
+    Supervisor --> Orchestrator
+
+    Orchestrator --> ChatAgent
+    Orchestrator --> HunterAI
+    Orchestrator --> ResearchAgent
+    Orchestrator --> ExecutionAgent
+    Orchestrator --> RiskAnalyzer
+    Orchestrator --> PortfolioAgent
+    Orchestrator --> TaxOptimizer
+    Orchestrator --> DeFiYield
+    Orchestrator --> SecurityAuditor
+    Orchestrator --> GasOptimizer
+    Orchestrator --> BridgeCrosschain
+    Orchestrator --> LendingBorrowing
+    Orchestrator --> ComplianceMonitor
+    Orchestrator --> MultiSigCoordinator
+    Orchestrator --> AlertMonitoring
+    Orchestrator --> CrisisManager
+    Orchestrator --> NFTAssetManager
+    Orchestrator --> DAOGovernance
+
+    ChatAgent --> VertexAI
+    HunterAI --> MCP1
+    HunterAI --> MCP2
+    HunterAI --> MCP4
+    ResearchAgent --> MCP3
+    ResearchAgent --> MCP7
+    ExecutionAgent --> MCP1
+    PortfolioAgent --> MCP6
+    DeFiYield --> MCP5
+    DeFiYield --> MCP8
+    DeFiYield --> MCP9
+    SecurityAuditor --> MCP3
+    BridgeCrosschain --> MCP11
+    LendingBorrowing --> MCP5
+
+    VertexAI -.Fallback.-> DeepInfra
+
+    Command --> PostgreSQL
+    Command --> Redis
+    Supervisor --> PostgreSQL
+    Orchestrator --> PostgreSQL
+
+    style HTTP fill:#e1f5ff
+    style Supervisor fill:#fff3cd
+    style Orchestrator fill:#d4edda
+    style VertexAI fill:#f8d7da
+    style PostgreSQL fill:#d1ecf1
+    style Redis fill:#f8d7da
