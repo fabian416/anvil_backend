@@ -617,111 +617,64 @@ class SupervisorCoordinator:
         conversation_context: "ConversationContext",
         available_agents: list[AgentType],
     ) -> str:
-        """Build workflow planning prompt for LLM (NO INTENTS - pure LLM-based routing)."""
+        """
+        Build optimized workflow planning prompt for LLM.
+        
+        Prompt Engineering Techniques Used:
+        - Clear role definition
+        - Structured output format with examples
+        - Decision tree for routing
+        - Few-shot examples for common patterns
+        - Concise guidelines (reduced from ~100 lines to ~50)
+        """
         agents_str = ", ".join([agent.value for agent in available_agents])
         
-        # Build conversation history context
+        # Build conversation history context (keep minimal)
         context_section = ""
         if conversation_context.conversation_history:
-            context_section = "\n\n**Conversation History (for context):**\n"
-            recent_history = conversation_context.conversation_history[-5:]  # Last 5 messages
-            for msg in recent_history:
-                role = msg.get("role", "user")
-                content = msg.get("content", "")
-                if content:
-                    context_section += f"- {role}: {content[:200]}\n"  # Truncate long messages
+            recent = conversation_context.conversation_history[-3:]  # Last 3 only
+            if recent:
+                context_section = "\n<context>\n"
+                for msg in recent:
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")[:150]
+                    if content:
+                        context_section += f"{role}: {content}\n"
+                context_section += "</context>\n"
         
-        return f"""
-You are a workflow supervisor coordinating multiple AI agents for Anvil, a DeFi platform.
+        return f"""Route this request to the right agent(s). Output JSON only.
 
-**User Request:**
-{message.value}
+<request>{message.value}</request>
 {context_section}
+<agents>{agents_str}</agents>
 
-**Available Agents:**
-{agents_str}
+<routing_rules>
+SINGLE-AGENT (prefer for speed):
+- Greetings/chat → "chat"
+- Price queries (any language: price/precio/preço) → "hunter_ai"  
+- DeFi education/explanations → "knowledge"
+- Yield/APY/lending rates → "defi_yield"
+- Risk/TVL analysis → "risk_analyzer"
+- Gas prices → "gas_optimizer"
+- Wallet actions (balance/send/receive/portfolio) → "guest_auth"
 
-**Your Task:**
-Analyze the user's request and create a workflow plan that uses the appropriate agents to provide a natural, helpful response.
+OFF-TOPIC (cooking, recipes, non-crypto):
+→ "chat" with task: "Decline politely, redirect to DeFi"
 
-**IMPORTANT: NO INTENT CLASSIFICATION**
-- Do NOT classify intents or categorize the query
-- Simply understand what the user wants and route to the right agents
-- Focus on providing natural, conversational responses using LLMs
+MULTI-AGENT (only if truly needed):
+- Add "chat" as final aggregator with depends_on all previous tasks
+</routing_rules>
 
-Respond with JSON:
-{{
-    "tasks": [
-        {{
-            "agent_type": "agent_name",
-            "task_description": "what this agent should do",
-            "depends_on": [0, 1]  // Task indices that must complete first
-        }},
-        ...
-    ],
-    "reasoning": "why this workflow makes sense"
-}}
+<examples>
+User: "hola" → {{"tasks":[{{"agent_type":"chat","task_description":"Greet user warmly","depends_on":[]}}]}}
+User: "btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
+User: "what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi","depends_on":[]}}]}}
+User: "make a cake" → {{"tasks":[{{"agent_type":"chat","task_description":"Decline off-topic, I specialize in DeFi","depends_on":[]}}]}}
+User: "my balance" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle restricted feature","depends_on":[]}}]}}
+</examples>
 
-Guidelines:
-- **CRITICAL: RESTRICTED FEATURES FOR GUEST USERS (REQUIRE AUTHENTICATION)**
-  * These features require wallet connection and authentication - DO NOT call restricted agents for guests:
-  * **SOLUTION**: Create a SINGLE "guest_auth" task - the GUEST_AUTH agent will automatically detect the restricted feature and return the appropriate custom registration message
-  
-  **Restricted Features (all handled by GUEST_AUTH agent):**
-  * If the user asks about ANY of these restricted features, create a SINGLE "guest_auth" task:
-    - BALANCE: "my balance", "what's my balance", "check my balance", "how much do I have", "wallet balance"
-    - ACTIVITY: "my transactions", "transaction history", "show my activity", "recent activity", "my activity"
-    - RECEIVE: "my address", "wallet address", "receive crypto", "deposit address", "QR code", "I want to receive"
-    - BUY: "buy crypto", "purchase bitcoin", "buy with card", "how to buy ETH", "I want to buy"
-    - SEND: "send crypto", "transfer tokens", "send to wallet", "send to friend", "I want to send"
-    - PORTFOLIO: "my portfolio", "my holdings", "list my tokens", "what tokens do I have", "show my holdings"
-  * Task description: "Detect which restricted feature the user is asking about and return the appropriate custom registration message. The GUEST_AUTH agent has built-in detection for restricted features and will automatically use the correct custom message."
-  * DO NOT call portfolio, execution, or any wallet-related agents for guest users
-  * The GUEST_AUTH agent will handle all restricted features with custom messages automatically
-- **CRITICAL: OFF-TOPIC QUERY DETECTION**
-  * If the user asks about topics NOT related to DeFi, crypto, blockchain, Web3, or Anvil:
-    - Create a SINGLE "chat" task with task_description: "Politely decline the off-topic query and redirect to DeFi topics. DO NOT provide information about [topic]. Say you're specialized in DeFi and crypto."
-    - Examples of OFF-TOPIC: cooking recipes, baking, general knowledge, non-crypto topics
-    - DO NOT create tasks for "research", "hunter_ai", or other agents for off-topic queries
-    - DO NOT ask agents to find recipes, cooking instructions, or non-DeFi information
-
-- **Simple informational queries** (e.g., "what is btc?", "what is eth?", "explain DeFi") → Create 1-task workflow with "chat" agent_type (FAST - single agent)
-- **Price queries** (e.g., "what is the price of btc?", "how much is ETH?") → Create 1-task workflow with "hunter_ai" agent_type (ONE task can handle multiple tokens)
-- **Single-agent queries** → Create 1-task workflow (no aggregation needed):
-  * Price queries (single or multiple tokens) → Use "hunter_ai" as agent_type
-  * Market sentiment queries → Use "hunter_ai" as agent_type
-  * Anvil knowledge → Use "knowledge" as agent_type (Knowledge Anvil agent for educational queries)
-  * General DeFi questions → Use "knowledge" as agent_type (Knowledge Anvil agent for educational queries)
-  * **CRITICAL: Yield farming/APY queries** (e.g., "best yield opportunities", "show me APY data", "yield farming", "lending rates", "APY", "yield") → MUST use "defi_yield" as agent_type (has real DeFiLlama API integration for live APY data)
-  * **CRITICAL: Risk analysis queries** (e.g., "risk of Aave", "analyze protocol risk", "safety of protocol", "protocol risk", "TVL") → MUST use "risk_analyzer" as agent_type (has real DeFiLlama API integration for protocol TVL data)
-  * **CRITICAL: Gas price queries** (e.g., "gas prices on ethereum", "gas costs", "optimize gas", "gas on polygon", "gas prices", "ethereum gas", "polygon gas") → MUST use "gas_optimizer" as agent_type (has real Web3Client integration for live gas prices) - DO NOT use "hunter_ai" for gas queries
-  * **CRITICAL: Swap INFORMATION queries** (e.g., "what type of swaps", "what swaps can I make", "explain swaps", "how do swaps work") → Use "knowledge" or "chat" agent_type (informational, NOT execution)
-  * **CRITICAL: Swap EXECUTION queries** (e.g., "swap ETH for USDC", "swap 100 USDC to ETH", "I want to swap 1 BTC for SOL") → MUST use "execution" as agent_type (has real 1inch API integration for live swap quotes) - ONLY use execution agent when user provides SPECIFIC tokens and amounts
-  * Shortcuts → Use appropriate agent_type (swap_tokens → "execution", lending → "defi_yield", portfolio → "portfolio" ONLY for authenticated users, etc.)
-- **Multi-intent queries** (e.g., "price of btc and eth, and explain swaps", "what type of swaps can I make? what is the price?") → Create separate tasks:
-  * ONE "hunter_ai" task for ALL price queries (it can handle multiple tokens)
-  * ONE "knowledge" task for informational/Anvil knowledge queries (use Knowledge Anvil agent)
-  * **IMPORTANT**: For "what type of swaps" or "what swaps can I make" → Use "knowledge" agent (informational), NOT "execution" agent (execution requires specific tokens/amounts)
-- **Multi-agent queries** → Break down into agent-specific subtasks (ONLY for DeFi/crypto topics)
-- Use dependencies to ensure correct order
-- Each agent should have a clear, specific task
-- For price queries with multiple tokens, create ONE hunter_ai task (not multiple)
-- **CRITICAL**: For multi-agent workflows (3+ agents), ALWAYS add a final "chat" task that:
-  * Has agent_type: "chat"
-  * Has task_description: "Aggregate and summarize the results from all previous agents, removing duplicates and creating a single coherent response"
-  * Has depends_on: [list of all previous task indices] (e.g., [0, 1, 2] if there are 3 previous tasks)
-  * This ensures the CHAT agent runs LAST and receives all previous responses
-- Limit to {self._max_agents} agents
-- For single-agent queries, return the agent's response directly (no aggregation needed)
-- **IMPORTANT**: Use exact agent_type values: "hunter_ai", "chat", "guest_auth", "execution", "portfolio", "defi_yield", "research", "risk_analyzer", "gas_optimizer", etc.
-- **SPECIALIZED AGENTS WITH REAL API DATA**:
-  * "defi_yield" - For yield farming, APY, lending rates (uses DeFiLlama API for real APY data)
-  * "risk_analyzer" - For protocol risk analysis, TVL analysis (uses DeFiLlama API for real protocol data)
-  * "gas_optimizer" - For gas price queries, gas optimization (uses Web3Client for real-time gas prices)
-  * "execution" - For swap quotes, execution planning (uses 1inch API for real swap quotes)
-  * When user explicitly asks for "real data", "APY", "risk analysis", "gas prices", or "swap quotes", use these specialized agents
-- **SPEED**: Prefer single-agent workflows for simple queries to minimize latency
-"""
+Output format:
+{{"tasks":[{{"agent_type":"...","task_description":"...","depends_on":[]}}]}}"""
     
     def _calculate_execution_order(
         self,
