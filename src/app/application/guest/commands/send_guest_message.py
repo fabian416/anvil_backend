@@ -1823,8 +1823,12 @@ class SendGuestMessage:
         await self._guest_repo.update_guest(guest)
         await self._guest_repo.update_conversation(conversation)
         
-        # Get messages remaining
-        messages_remaining = await self._get_messages_remaining(guest)
+        # Calculate messages remaining
+        hour_ago = datetime.now(UTC) - timedelta(hours=1)
+        messages_this_hour = await self._guest_repo.get_message_count_since(
+            guest.id, hour_ago
+        )
+        messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
         
         # Build enrichment
         enrichment = {
