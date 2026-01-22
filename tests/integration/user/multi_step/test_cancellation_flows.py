@@ -4,6 +4,7 @@ Cancellation Flow Tests for Authenticated Users.
 Tests workflow cancellation and resource cleanup across multi-step processes.
 Validates that cancellation is handled gracefully, resources are cleaned up,
 and system state remains consistent.
+Uses LLM (Vertex AI) validation for semantic output verification.
 
 Migrated from workflows/test_cancellation_flows.py to use new test infrastructure.
 """
@@ -19,6 +20,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
     create_conversation,
 )
 

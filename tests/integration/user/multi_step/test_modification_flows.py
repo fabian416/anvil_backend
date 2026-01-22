@@ -2,6 +2,7 @@
 Modification Flow Tests for Authenticated Users.
 
 Tests mid-workflow modifications like changing amounts, tokens, or parameters.
+Uses LLM (Vertex AI) validation for semantic output verification.
 """
 
 import asyncio
@@ -15,6 +16,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
     create_conversation,
 )
 

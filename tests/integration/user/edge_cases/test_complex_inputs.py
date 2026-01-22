@@ -2,6 +2,7 @@
 Complex Input Tests for Authenticated Users.
 
 Tests handling of complex, ambiguous, or challenging inputs.
+Uses LLM (Vertex AI) validation for semantic output verification.
 """
 
 import pytest
@@ -14,6 +15,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
 )
 
 

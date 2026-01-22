@@ -2,6 +2,7 @@
 Execution Agent Tests for Authenticated Users.
 
 Tests the execution flow for workflow actions.
+Uses LLM (Vertex AI) validation for semantic output verification.
 """
 
 import pytest
@@ -14,6 +15,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
     create_conversation,
 )
 

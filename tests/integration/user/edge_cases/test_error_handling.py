@@ -2,6 +2,7 @@
 Error Handling Tests for Authenticated Users.
 
 Tests invalid inputs, edge cases, and error recovery.
+Uses LLM (Vertex AI) validation for semantic output verification.
 """
 
 import pytest
@@ -14,6 +15,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
 )
 
 

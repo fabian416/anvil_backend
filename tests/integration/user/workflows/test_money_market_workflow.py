@@ -2,6 +2,7 @@
 Money Market Workflow Tests for Authenticated Users.
 
 Tests rate comparisons across Aave, Compound, and Morpho.
+Uses LLM (Vertex AI) validation for semantic output verification.
 """
 
 import pytest
@@ -14,6 +15,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
 )
 
 
@@ -112,24 +114,39 @@ MONEY_MARKET_TESTS = [
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.llm_validation
 class TestMoneyMarketWorkflow:
-    """Tests for Money Market workflow agent."""
+    """Tests for Money Market workflow agent with LLM validation."""
     
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter):
+    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
+        self.llm_validator = llm_validator
     
     @pytest.mark.parametrize("test_case", MONEY_MARKET_TESTS, ids=lambda t: t["test_id"])
     async def test_money_market(self, test_case: dict):
-        """Test money market workflow routing and response."""
+        """Test money market workflow routing and response with LLM validation."""
         response_data, response_time_ms = await send_message(
             self.client,
             self.conversation_id,
             test_case["input"],
         )
+        
+        # LLM Validation
+        llm_validation = None
+        if not response_data.get("error"):
+            parsed = parse_response(response_data)
+            llm_validation = await validate_with_llm(
+                llm_validator=self.llm_validator,
+                test_name=test_case["test_id"],
+                user_input=test_case["input"],
+                agent_output=parsed.get("content", ""),
+                expected_behavior="Response should compare lending rates across protocols (Aave, Compound, Morpho) with APY percentages.",
+                additional_context={"test_category": "money_market_workflow", "subcategory": test_case.get("subcategory", ""), "user_type": "authenticated"}
+            )
         
         result = create_test_result(
             test_id=test_case["test_id"],
@@ -137,6 +154,7 @@ class TestMoneyMarketWorkflow:
             response_data=response_data,
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
+            llm_validation=llm_validation,
         )
         
         self.reporter.add_result(result)

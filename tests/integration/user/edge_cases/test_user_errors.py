@@ -4,6 +4,7 @@ User Error Handling Tests.
 Tests error handling and graceful degradation for authenticated user chat.
 Validates that error messages are user-friendly and that the system
 degrades gracefully under various failure conditions.
+Uses LLM (Vertex AI) validation for semantic output verification.
 
 Migrated from errors/test_user_error_handling.py to use new test infrastructure.
 """
@@ -18,6 +19,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
     create_conversation,
 )
 

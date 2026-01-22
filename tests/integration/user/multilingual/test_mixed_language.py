@@ -2,6 +2,7 @@
 Mixed Language Tests for Authenticated Users.
 
 Tests handling of code-switching and mixed language inputs.
+Uses LLM (Vertex AI) validation for semantic output verification.
 """
 
 import pytest
@@ -14,6 +15,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
 )
 
 
@@ -136,19 +138,21 @@ LANGUAGE_SWITCH_FLOWS = [
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.llm_validation
 class TestMixedLanguage:
-    """Tests for mixed language handling."""
+    """Tests for mixed language handling with LLM validation."""
     
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter):
+    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
+        self.llm_validator = llm_validator
     
     @pytest.mark.parametrize("test_case", MIXED_LANGUAGE_TESTS, ids=lambda t: t["test_id"])
     async def test_mixed_language(self, test_case: dict):
-        """Test mixed language input handling."""
+        """Test mixed language input handling with LLM validation."""
         response_data, response_time_ms = await send_message(
             self.client,
             self.conversation_id,

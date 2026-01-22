@@ -3,6 +3,7 @@ Hunter AI Advanced Tests for Authenticated Users.
 
 Tests advanced Hunter AI features including cross-chain analysis,
 sentiment aggregation, historical patterns, and market analysis.
+Uses LLM (Vertex AI) validation for semantic output verification.
 
 Migrated from test_user_hunter_advanced.py to use new test infrastructure.
 """
@@ -17,6 +18,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
 )
 
 

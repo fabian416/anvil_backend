@@ -2,6 +2,7 @@
 Agent Squad Advanced Tests for Authenticated Users.
 
 Tests multi-agent coordination, context preservation, and agent handoffs.
+Uses LLM (Vertex AI) validation for semantic output verification.
 
 Migrated from test_user_agent_squad_advanced.py to use new test infrastructure.
 """
@@ -16,6 +17,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
     create_conversation,
 )
 
