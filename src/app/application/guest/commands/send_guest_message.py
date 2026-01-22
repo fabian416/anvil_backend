@@ -42,7 +42,7 @@ from app.domain.ports.chat.intent_detection_port import IntentDetectionResult
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
+    from app.domain.services.agent_squad.guest_supervisor import GuestSupervisorCoordinator
     from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 
 logger = logging.getLogger(__name__)
@@ -153,14 +153,24 @@ class SendGuestMessage:
         intent_detector: IntentDetectorService | None = None,
         handler_service: GuestHandlerService | None = None,
         distillation_engine: DistillationEngine | None = None,
-        supervisor_coordinator: Any | None = None,  # SupervisorCoordinator - injected manually
+        supervisor_coordinator: Any | None = None,  # GuestSupervisorCoordinator - ISOLATED from authenticated
         agent_orchestrator: Any | None = None,  # AgentOrchestrator - injected manually
     ):
+        """
+        Initialize guest message command.
+        
+        ARCHITECTURE NOTE:
+        supervisor_coordinator should be a GuestSupervisorCoordinator instance,
+        which is ISOLATED from AuthenticatedSupervisorCoordinator. This ensures:
+        - Changes to guest prompts don't affect authenticated users
+        - Changes to authenticated prompts don't affect guests
+        - Each user type can be optimized independently
+        """
         self._guest_repo = guest_repository
         self._intent_detector = intent_detector
         self._handler_service = handler_service or GuestHandlerService()
         self._distillation_engine = distillation_engine
-        self._supervisor_coordinator = supervisor_coordinator
+        self._supervisor_coordinator = supervisor_coordinator  # GuestSupervisorCoordinator
         self._agent_orchestrator = agent_orchestrator
 
     async def execute(
@@ -295,10 +305,107 @@ class SendGuestMessage:
             )
 
         # ============================================================
-        # ✨ LLM-BASED ROUTING (NO INTENTS, NO FAST-PATHS) ✨
+        # ✨ SWAP RATE FAST-PATH (Hyperliquid Spot) ✨
         # ============================================================
-        # The CEO directive: NO intent classification, NO regex patterns.
-        # Send EVERYTHING to SupervisorCoordinator which uses LLM to:
+        # The LLM supervisor incorrectly routes "swap rate" to defi_yield.
+        # This override ensures swap rate queries go directly to Hunter AI.
+        # ============================================================
+        content_lower = content.lower()
+        is_swap_rate_query = (
+            any(phrase in content_lower for phrase in ["swap rate", "exchange rate", "best rate", "convert"]) and
+            any(tok in content_lower for tok in ["eth", "btc", "usdc", "usdt"]) and
+            "yield" not in content_lower and "apy" not in content_lower and "farm" not in content_lower
+        )
+        
+        logger.info(f"🔍 SWAP RATE CHECK: is_swap_rate_query={is_swap_rate_query}, has_orchestrator={self._agent_orchestrator is not None}")
+        
+        if is_swap_rate_query and self._agent_orchestrator:
+            logger.info(
+                "🔄 SWAP RATE FAST-PATH: Routing directly to Hunter AI (bypassing LLM supervisor)",
+                extra={
+                    "ip_address": ip_address,
+                    "conversation_id": str(conversation.id),
+                    "content_preview": content[:100],
+                }
+            )
+            try:
+                # Call Hunter AI directly for swap rate queries
+                from app.domain.enums.agent_type import AgentType
+                from app.domain.value_objects.conversation_id import ConversationId
+                from app.domain.value_objects.message_content import MessageContent
+                from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+                
+                # Build context
+                conv_context = ConversationContext(
+                    conversation_history=[{"role": "user", "content": content}],
+                    user_metadata={"language": language, "user_type": "guest"},
+                )
+                
+                # Execute Hunter AI directly
+                response = await self._agent_orchestrator.execute_agent(
+                    conversation_id=ConversationId(conversation.id),
+                    agent_type=AgentType.HUNTER_AI,
+                    message=MessageContent(content),
+                    conversation_context=conv_context,
+                )
+                
+                # Save messages and return result
+                user_message = GuestMessage.create_user_message(
+                    conversation_id=conversation.id,
+                    content=content,
+                    language=language,
+                )
+                await self._guest_repo.create_message(user_message)
+                
+                agent_message = GuestMessage.create_assistant_message(
+                    conversation_id=conversation.id,
+                    content=response.content,
+                    handler="hunter_ai_swap_rate",
+                    language=language,
+                )
+                await self._guest_repo.create_message(agent_message)
+                
+                # Calculate remaining messages
+                hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                messages_this_hour = await self._guest_repo.get_message_count_since(guest.id, hour_ago)
+                messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+                
+                return GuestMessageResult(
+                    conversation_id=conversation.id,
+                    message_id=agent_message.id,
+                    user_message={
+                        "id": str(user_message.id),
+                        "role": user_message.role.value,
+                        "content": user_message.content,
+                        "created_at": user_message.created_at.isoformat(),
+                    },
+                    agent_message={
+                        "id": str(agent_message.id),
+                        "role": agent_message.role.value,
+                        "content": response.content,
+                        "created_at": agent_message.created_at.isoformat(),
+                    },
+                    routing={
+                        "intent": "SWAP_RATE",
+                        "confidence": 1.0,
+                        "handler": "hunter_ai_swap_rate",
+                        "language": language,
+                        "is_demo_mode": False,
+                    },
+                    enrichment={},
+                    sources=[s.to_dict() for s in response.sources] if response.sources else [],
+                    guest_info={
+                        "messages_remaining": messages_remaining,
+                        "session_active": True,
+                    },
+                )
+            except Exception as e:
+                logger.warning(f"Swap rate fast-path failed: {e}, falling back to LLM routing", exc_info=True)
+        
+        # ============================================================
+        # ✨ LLM-BASED ROUTING ✨
+        # ============================================================
+        # Send queries to SupervisorCoordinator which uses LLM to:
         # 1. Understand the user's request semantically
         # 2. Determine what agents/actions are needed
         # 3. Execute the workflow
@@ -352,6 +459,21 @@ class SendGuestMessage:
             content_lower.startswith("explain "),
             content_lower.startswith("tell me about "),
             content_lower.startswith("describe "),
+            # "Can I" questions about capabilities (informational, not action requests)
+            content_lower.startswith("can i "),
+            content_lower.startswith("can you "),
+            content_lower.startswith("do you "),
+            content_lower.startswith("how do i "),
+            content_lower.startswith("how to "),
+            # Spanish
+            content_lower.startswith("puedo "),
+            content_lower.startswith("como puedo "),
+            content_lower.startswith("cómo puedo "),
+            # Portuguese
+            content_lower.startswith("posso "),
+            content_lower.startswith("como posso "),
+            # Chinese
+            "可以" in content_lower and "?" in content or "？" in content,
         ]
         
         # If it's a simple informational query (and not asking for price), use fast path
@@ -362,6 +484,9 @@ class SendGuestMessage:
                 "cost" in content_lower,
                 "how much" in content_lower,
                 "current price" in content_lower,
+                # Exclude actual execution requests
+                " to " in content_lower and any(tok in content_lower for tok in ["swap", "convert", "exchange"]),  # "swap X to Y"
+                content_lower.startswith("swap ") and any(char.isdigit() for char in content_lower),  # "swap 100 USDC"
             ])
         )
         
@@ -370,9 +495,11 @@ class SendGuestMessage:
         # Go directly to LLM (ChatAgent) for natural, conversational responses
         import re
         is_simple_greeting = bool(re.search(
-            r"^(hi|hello|hey|hola|holi|hey there|greetings|good (morning|afternoon|evening))(\s|$|!|\?|\.)",
+            r"^(hi|hello|hey|hola|holi|hey there|greetings|buenos dias|buenas tardes|buenas noches|oi|olá|good (morning|afternoon|evening))(\s|$|!|\?|\.)*$",
             content_lower
         ))
+        
+        logger.info(f"🎯 Greeting check: is_simple_greeting={is_simple_greeting}, content='{content[:30]}', has_orchestrator={self._agent_orchestrator is not None}")
         
         if is_simple_greeting and self._agent_orchestrator:
             try:
@@ -674,10 +801,12 @@ class SendGuestMessage:
                 )
                 
                 # Execute fast-path workflow (parallel execution)
+                # Pass original_message explicitly to prevent conversation context pollution
                 _, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
                     conversation_id=ConversationId(conversation.id),
                     workflow_plan=fast_path_plan,
                     conversation_context=agent_squad_context,
+                    original_message=content,  # Explicitly pass current user message
                 )
                 
                 # ⚡ FAST AGGREGATION: Simple code-based combination (no LLM call)
@@ -1854,10 +1983,12 @@ class SendGuestMessage:
         )
         
         # === EXECUTE WORKFLOW ===
+        # Pass original_message explicitly to prevent conversation context pollution
         response_content, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
             conversation_id=ConversationId(conversation.id),
             workflow_plan=workflow_plan,
             conversation_context=agent_squad_context,
+            original_message=content,  # Explicitly pass current user message
         )
         
         # Calculate total time
@@ -2797,10 +2928,12 @@ class SendGuestMessage:
             )
             
             # Execute workflow
+            # Pass original_message explicitly to prevent conversation context pollution
             aggregated_response, sources, agent_timings = await self._supervisor_coordinator.execute_workflow(
                 conversation_id=ConversationId(conversation.id),
                 workflow_plan=workflow_plan,
                 conversation_context=agent_squad_context,
+                original_message=content,  # Explicitly pass current user message
             )
             
             # Create user message

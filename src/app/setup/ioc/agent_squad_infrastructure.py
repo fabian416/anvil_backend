@@ -34,6 +34,19 @@ class OneInchClientProtocol(Protocol):
         amount: str,
         slippage: float = 1.0,
     ) -> Any: ...
+
+
+class LiFiClientProtocol(Protocol):
+    """Protocol for LiFiClient to help Dishka distinguish it from other types."""
+    async def get_quote(
+        self,
+        from_chain: str,
+        to_chain: str,
+        from_token: str,
+        to_token: str,
+        from_amount: str,
+        from_address: str,
+    ) -> Any: ...
 from redis.asyncio import Redis
 
 from app.domain.enums.agent_type import AgentType
@@ -98,6 +111,19 @@ from app.infrastructure.adapters.agent_squad.agents.security_auditor_agent_slith
 )
 from app.infrastructure.adapters.agent_squad.agents.gas_optimizer_agent import (
     GasOptimizerAgent,
+)
+
+# Authenticated user agents
+from app.infrastructure.adapters.agent_squad.agents.wallet_agent import (
+    WalletAgent,
+)
+from app.infrastructure.adapters.agent_squad.agents.transaction_history_agent import (
+    TransactionHistoryAgent,
+)
+
+# Workflow agents (multi-step operations for authenticated users)
+from app.infrastructure.adapters.agent_squad.agents.workflows import (
+    SwapWorkflowAgent,
 )
 
 # Enterprise agents (4)
@@ -294,6 +320,19 @@ class AgentSquadInfrastructureProvider(Provider):
         return OneInchClient(api_key=api_key)
     
     @provide(scope=Scope.APP)
+    def provide_lifi_client(self, settings: AgentSquadSettings) -> LiFiClientProtocol | None:
+        """Provide LiFi API client for cross-chain swaps."""
+        # LiFi doesn't require an API key for public endpoints
+        try:
+            from app.infrastructure.adapters.external.lifi_client import LiFiClient
+            return LiFiClient()
+        except ImportError:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning("⚠️ LiFi client not available - cross-chain swaps disabled")
+            return None
+    
+    @provide(scope=Scope.APP)
     def provide_web3_client(self, settings: AgentSquadSettings) -> Web3ClientProtocol | None:
         """Provide Web3Client for Ethereum gas prices if enabled."""
         # Web3Client requires API keys - check if available
@@ -420,11 +459,25 @@ class AgentSquadInfrastructureProvider(Provider):
         self,
         llm_client: LLMClientGateway,
         coingecko_client: CoinGeckoClient | None,  # Type-annotated for explicit DI resolution
+        settings: AgentSquadSettings,
     ) -> HunterAIAgent:
-        """Provide Hunter AI agent with optional CoinGecko integration."""
+        """Provide Hunter AI agent with optional CoinGecko and Hyperliquid integration."""
+        # Get Hyperliquid client for spot swap quotes
+        hyperliquid_client = None
+        if settings.external_apis.enable_hyperliquid:
+            try:
+                from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+                hyperliquid_client = HyperliquidClient(testnet=False)
+                import logging
+                logging.getLogger(__name__).info("✅ Hyperliquid client enabled for Hunter AI swap quotes")
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"⚠️ Failed to create Hyperliquid client: {e}")
+        
         return HunterAIAgent(
             llm_client=llm_client,
             coingecko_client=coingecko_client,
+            hyperliquid_client=hyperliquid_client,
         )
 
     @provide
@@ -654,6 +707,69 @@ class AgentSquadInfrastructureProvider(Provider):
         )
 
     # ========================================
+    # Authenticated User Agents (requires login)
+    # ========================================
+
+    @provide
+    def provide_wallet_agent(
+        self, llm_client: LLMClientGateway
+    ) -> WalletAgent:
+        """
+        Provide Wallet Agent for authenticated users.
+        
+        This agent handles wallet queries:
+        - List connected wallets
+        - Show balances
+        - Wallet status and provider info
+        """
+        return WalletAgent(llm_client=llm_client)
+
+    @provide
+    def provide_transaction_history_agent(
+        self, llm_client: LLMClientGateway
+    ) -> TransactionHistoryAgent:
+        """
+        Provide Transaction History Agent for authenticated users.
+        
+        This agent handles transaction queries:
+        - View recent transactions
+        - Filter by chain/type/date
+        - Volume analytics
+        - Activity summaries
+        """
+        return TransactionHistoryAgent(llm_client=llm_client)
+
+    # ========================================
+    # Workflow Agents (multi-step operations)
+    # ========================================
+
+    @provide
+    def provide_swap_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+        oneinch_client: OneInchClientProtocol | None,
+        lifi_client: LiFiClientProtocol | None,
+    ) -> SwapWorkflowAgent:
+        """
+        Provide Swap Workflow Agent for authenticated users.
+        
+        This agent handles multi-step swap operations:
+        1. Parse swap request (tokens, amount)
+        2. Fetch quotes from 1inch/LiFi
+        3. Confirm with user
+        4. Generate execute_data for frontend
+        
+        Integrations:
+        - 1inch: Same-chain swaps
+        - LiFi: Cross-chain swaps
+        """
+        return SwapWorkflowAgent(
+            llm_client=llm_client,
+            oneinch_client=oneinch_client,
+            lifi_client=lifi_client,
+        )
+
+    # ========================================
     # Agent Registry
     # ========================================
 
@@ -673,6 +789,11 @@ class AgentSquadInfrastructureProvider(Provider):
         defi_yield_agent: DefiYieldAgent,
         security_auditor_agent: SecurityAuditorAgentSlither,
         gas_optimizer_agent: GasOptimizerAgent,
+        # Authenticated user agents
+        wallet_agent: WalletAgent,
+        transaction_history_agent: TransactionHistoryAgent,
+        # Workflow agents
+        swap_workflow_agent: SwapWorkflowAgent,
         # Enterprise agents
         compliance_monitor_agent: ComplianceMonitorAgentChainalysis,
         multisig_coordinator_agent: MultiSigCoordinatorAgentGnosis,
@@ -703,6 +824,11 @@ class AgentSquadInfrastructureProvider(Provider):
             AgentType.DEFI_YIELD: defi_yield_agent,
             AgentType.SECURITY_AUDITOR: security_auditor_agent,
             AgentType.GAS_OPTIMIZER: gas_optimizer_agent,
+            # Authenticated user agents
+            AgentType.WALLET: wallet_agent,
+            AgentType.TRANSACTION_HISTORY: transaction_history_agent,
+            # Workflow agents
+            AgentType.SWAP_WORKFLOW: swap_workflow_agent,
             # Enterprise agents
             AgentType.COMPLIANCE_MONITOR: compliance_monitor_agent,
             AgentType.MULTISIG_COORDINATOR: multisig_coordinator_agent,

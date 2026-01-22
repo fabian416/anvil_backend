@@ -1,0 +1,457 @@
+"""
+Authenticated Supervisor Coordinator.
+
+LLM-based multi-agent orchestration for authenticated users.
+Extends the base SupervisorCoordinator with:
+- Real wallet/portfolio data access via UserDataService
+- User preferences and history
+- Transaction preparation capabilities
+- Higher privileges for DeFi operations
+
+This supervisor is optimized for logged-in users who have:
+- Connected wallets
+- Transaction history
+- Portfolio data
+- User preferences
+
+Integration with AGNO agents:
+- Can delegate to AGNO PortfolioAgent for complex portfolio operations
+- Uses MCP tools via AGNO for real-time data
+"""
+
+import logging
+from typing import TYPE_CHECKING, Any
+
+from app.domain.enums.agent_type import AgentType
+from app.domain.value_objects.conversation_id import ConversationId
+from app.domain.value_objects.message_content import MessageContent
+from app.domain.services.agent_squad.supervisor_coordinator import (
+    SupervisorCoordinator,
+    WorkflowPlan,
+    AgentTask,
+    TaskStatus,
+)
+
+if TYPE_CHECKING:
+    from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+    from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+    from app.domain.ports.agent_squad.agent_executor_gateway import AgentExecutorPort
+    from app.application.chat.services.user_data_service import UserDataService, UserDataContext
+
+logger = logging.getLogger(__name__)
+
+
+class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
+    """
+    Supervisor Coordinator optimized for authenticated users.
+    
+    Key Differences from Guest Supervisor:
+    1. Access to real wallet data and portfolio via UserDataService
+    2. Can prepare actual transactions (not just demos)
+    3. User preferences and history context
+    4. No demo mode disclaimers
+    5. Higher complexity workflows allowed
+    6. Integration with AGNO agents for complex operations
+    
+    Architecture:
+    - Inherits from SupervisorCoordinator for core workflow logic
+    - Overrides prompt building to include auth-specific context
+    - Adds wallet/portfolio context injection via UserDataService
+    - Can delegate to AGNO agents for specialized operations
+    """
+    
+    def __init__(
+        self,
+        llm_client: "LLMClientGateway",
+        agent_executor: "AgentExecutorPort",
+        user_data_service: "UserDataService | None" = None,
+        max_agents: int = 6,  # Higher limit for authenticated users
+        timeout_seconds: int = 180,  # Longer timeout for complex workflows
+    ):
+        """
+        Initialize authenticated supervisor.
+        
+        Args:
+            llm_client: LLM client for workflow planning
+            agent_executor: Agent executor for running agents
+            user_data_service: Optional service for fetching user wallet/portfolio/tx data
+            max_agents: Maximum agents per workflow (default 6, higher than guest)
+            timeout_seconds: Workflow timeout (default 180s, longer than guest)
+        """
+        super().__init__(
+            llm_client=llm_client,
+            agent_executor=agent_executor,
+            max_agents=max_agents,
+            timeout_seconds=timeout_seconds,
+        )
+        self._user_data_service = user_data_service
+        self._user_context: dict[str, Any] = {}
+        self._user_data_context: "UserDataContext | None" = None
+    
+    def set_user_context(
+        self,
+        user_id: str | None = None,
+        wallet_address: str | None = None,
+        portfolio_summary: dict[str, Any] | None = None,
+        preferences: dict[str, Any] | None = None,
+    ) -> None:
+        """
+        Set user-specific context for workflow planning.
+        
+        This context is injected into the planning prompt to give
+        the LLM awareness of the user's situation.
+        
+        Args:
+            user_id: User identifier
+            wallet_address: Connected wallet address
+            portfolio_summary: Summary of user's holdings
+            preferences: User preferences (risk tolerance, favorite chains, etc.)
+        """
+        self._user_context = {
+            "user_id": user_id,
+            "wallet_address": wallet_address,
+            "portfolio_summary": portfolio_summary or {},
+            "preferences": preferences or {},
+            "is_authenticated": True,
+        }
+    
+    async def load_user_data(self, user_id: str) -> None:
+        """
+        Load complete user data from repositories via UserDataService.
+        
+        This fetches wallet, portfolio, and transaction data for the user
+        and stores it for context injection into workflows.
+        
+        Args:
+            user_id: The user's ID to fetch data for
+        """
+        if not self._user_data_service:
+            logger.debug("UserDataService not available, skipping user data load")
+            return
+        
+        try:
+            self._user_data_context = await self._user_data_service.get_user_context(
+                user_id=user_id,
+                include_portfolio=True,
+                include_transactions=True,
+                transaction_limit=5,  # Only need recent for context
+            )
+            
+            # Update user_context with loaded data
+            if self._user_data_context:
+                if self._user_data_context.primary_wallet:
+                    self._user_context["wallet_address"] = self._user_data_context.primary_wallet.address
+                    self._user_context["wallet_chain"] = self._user_data_context.primary_wallet.chain_type
+                
+                if self._user_data_context.portfolio:
+                    self._user_context["portfolio_summary"] = {
+                        "total_value_usd": self._user_data_context.portfolio.total_value_usd,
+                        "token_count": self._user_data_context.portfolio.token_count,
+                        "top_holdings": [h["symbol"] for h in self._user_data_context.portfolio.top_holdings[:3]],
+                    }
+                
+                if self._user_data_context.transactions:
+                    self._user_context["transaction_count"] = self._user_data_context.transactions.total_count
+                    self._user_context["volume_30d"] = self._user_data_context.transactions.volume_last_30_days
+            
+            logger.info(
+                f"✅ Loaded user data for authenticated supervisor",
+                extra={
+                    "user_id": user_id,
+                    "has_wallet": bool(self._user_context.get("wallet_address")),
+                    "portfolio_value": self._user_context.get("portfolio_summary", {}).get("total_value_usd", 0),
+                }
+            )
+            
+        except Exception as e:
+            logger.warning(f"Failed to load user data: {e}")
+    
+    async def get_transaction_history(
+        self,
+        user_id: str,
+        limit: int = 20,
+    ) -> list[dict[str, Any]]:
+        """
+        Get user's transaction history.
+        
+        Args:
+            user_id: User identifier
+            limit: Maximum transactions to return
+        
+        Returns:
+            List of transaction dictionaries
+        """
+        if not self._user_data_service:
+            return []
+        
+        return await self._user_data_service.get_transaction_history(
+            user_id=user_id,
+            limit=limit,
+        )
+    
+    async def get_wallet_balances(
+        self,
+        wallet_address: str,
+    ) -> dict[str, Any]:
+        """
+        Get token balances for a wallet.
+        
+        Args:
+            wallet_address: The wallet address
+        
+        Returns:
+            Dictionary with balance information
+        """
+        if not self._user_data_service:
+            return {"error": "User data service not available"}
+        
+        return await self._user_data_service.get_wallet_balances(
+            wallet_address=wallet_address,
+        )
+    
+    def _build_planning_prompt(
+        self,
+        message: MessageContent,
+        conversation_context: "ConversationContext",
+        available_agents: list[AgentType],
+    ) -> str:
+        """
+        Build workflow planning prompt for authenticated users.
+        
+        Extends base prompt with:
+        - User wallet context
+        - Real data access instructions
+        - No demo mode disclaimers
+        - Transaction preparation capabilities
+        """
+        agents_str = ", ".join([agent.value for agent in available_agents])
+        
+        # Build conversation history context (keep minimal)
+        context_section = ""
+        if conversation_context.conversation_history:
+            recent = conversation_context.conversation_history[-3:]
+            if recent:
+                context_section = "\n<context>\n"
+                for msg in recent:
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")[:150]
+                    if content:
+                        context_section += f"{role}: {content}\n"
+                context_section += "</context>\n"
+        
+        # Build user context section for authenticated users
+        user_context_section = ""
+        if self._user_context or self._user_data_context:
+            user_context_section = "\n<user_profile>\n"
+            user_context_section += "User Status: AUTHENTICATED (can execute REAL transactions)\n"
+            
+            # Use loaded user data context if available
+            if self._user_data_context:
+                user_context_section += self._user_data_context.to_context_string() + "\n"
+            elif self._user_context:
+                # Fallback to basic user context
+                if self._user_context.get("wallet_address"):
+                    addr = self._user_context["wallet_address"]
+                    user_context_section += f"Wallet: {addr[:10]}...{addr[-6:]}\n"
+                if self._user_context.get("portfolio_summary"):
+                    portfolio = self._user_context["portfolio_summary"]
+                    if portfolio.get("total_value_usd"):
+                        user_context_section += f"Portfolio Value: ${portfolio['total_value_usd']:,.2f}\n"
+                    if portfolio.get("top_holdings"):
+                        holdings = portfolio["top_holdings"][:3]
+                        if isinstance(holdings[0], dict):
+                            holdings = [h.get("symbol", str(h)) for h in holdings]
+                        user_context_section += f"Top Holdings: {', '.join(holdings)}\n"
+                if self._user_context.get("transaction_count"):
+                    user_context_section += f"Transaction History: {self._user_context['transaction_count']} total\n"
+                if self._user_context.get("volume_30d"):
+                    user_context_section += f"30-Day Volume: ${self._user_context['volume_30d']:,.2f}\n"
+            
+            user_context_section += "</user_profile>\n"
+        
+        return f"""You are a DeFi workflow router for AUTHENTICATED users. Route the CURRENT request only. JSON only.
+
+<request>{message.value}</request>
+{context_section}{user_context_section}
+<agents>{agents_str}</agents>
+
+<rules>
+CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history for routing decisions.
+
+⚠️ AUTHENTICATED USER CAPABILITIES:
+- User has a connected wallet and can execute REAL transactions
+- Portfolio queries return REAL data (not demo)
+- Swap/lending queries can prepare ACTUAL transactions
+- No need for registration prompts - user is logged in
+
+⚠️ GREETINGS - ALWAYS route to "chat" agent:
+- "hi", "hello", "hey", "hola", "oi", "olá" → ALWAYS route to "chat" agent, single task, ignore history
+- If the CURRENT request is ONLY a greeting (1-2 words), return: {{"tasks":[{{"agent_type":"chat","task_description":"Greet warmly","depends_on":[]}}]}}
+- Do NOT continue previous conversation context for standalone greetings
+
+⚠️ CREATIVE REQUESTS (poems, stories, analogies about crypto) → ALWAYS route to "chat" agent:
+- "write a poem about gas fees", "haceme un poema sobre ETH", "poem about bitcoin" → ALWAYS use "chat" agent
+- Creative writing about crypto topics is ALLOWED and should go to "chat" (which is more creative)
+- If user asks for POEM + DATA (e.g., "poem about gas + current price"), use BOTH "chat" (for poem) AND the data agent (e.g., "gas_optimizer" for price)
+
+⚠️ IMPORTANT DISTINCTION - SWAP RATE vs YIELD:
+- "swap rate", "exchange rate", "convert X to Y", "best rate for ETH to USDC" → ALWAYS use "hunter_ai" (token exchange pricing)
+- "yield", "APY", "yield farms", "lending rates" → use "defi_yield" (interest/returns on deposits)
+- If the query mentions converting/swapping one token to another → "hunter_ai", NOT defi_yield!
+
+1. OFF-TOPIC DETECTION (check FIRST):
+   - Cooking, recipes, non-crypto topics → Single "chat" task with "Explain DeFi focus"
+   
+2. WALLET QUERIES (authenticated - REAL data):
+   - "my wallets", "connected wallets", "wallet address" → "wallet" agent (REAL wallet data)
+   - "wallet info", "list wallets", "show wallets" → "wallet" agent
+   
+3. TRANSACTION HISTORY (authenticated - REAL data):
+   - "my transactions", "transaction history", "recent activity" → "transaction_history" agent
+   - "show transactions", "past swaps", "activity summary" → "transaction_history" agent
+   
+4. PORTFOLIO (authenticated - REAL data):
+   - "my portfolio", "my balance", "my holdings" → "portfolio" agent (returns REAL data)
+   - "portfolio value", "total holdings" → "portfolio" agent
+   
+5. SWAP EXECUTION (CRITICAL - Multi-step workflow):
+   - "swap X to Y", "exchange X for Y", "convert X to Y" (with specific amounts) → "swap_workflow" agent ONLY
+   - The swap_workflow agent handles the COMPLETE multi-step swap process autonomously
+   - Use "swap_workflow" when user wants to EXECUTE a swap (has specific amount like "0.5 ETH")
+   - Examples: "swap 1 ETH to USDC", "exchange 100 USDC for ETH", "convert 0.5 ETH to DAI"
+   - DO NOT combine swap_workflow with other agents - it handles everything internally
+   
+6. SWAP RATE INFO (price information only - no execution):
+   - "what's the rate for ETH to USDC", "best swap rate" (NO specific amount) → "hunter_ai"
+   - "price of ETH", "ETH price in USDC" → "hunter_ai"
+   - Use hunter_ai only when user wants PRICE INFO without execution intent
+   
+7. LENDING/YIELD:
+   - Supply/lend queries → "defi_yield" for rates + "risk_analyzer" for safety
+   - Yield farming → "defi_yield"
+   
+8. PRICE/MARKET DATA:
+   - Token prices → "hunter_ai"
+   - Gas prices → "gas_optimizer"
+   - Market sentiment → "hunter_ai"
+   
+9. RISK/SECURITY:
+   - Protocol risk → "risk_analyzer"
+   - Security audit → "security_auditor"
+   
+10. EDUCATIONAL:
+   - DeFi explanations → "knowledge"
+   - Protocol comparisons → "knowledge"
+</rules>
+
+<examples>
+"hi" → {{"tasks":[{{"agent_type":"chat","task_description":"Greet warmly","depends_on":[]}}]}}
+"hello" → {{"tasks":[{{"agent_type":"chat","task_description":"Greet warmly","depends_on":[]}}]}}
+"hola" → {{"tasks":[{{"agent_type":"chat","task_description":"Greet warmly in Spanish","depends_on":[]}}]}}
+"my wallets" → {{"tasks":[{{"agent_type":"wallet","task_description":"Show user's connected wallets","depends_on":[]}}]}}
+"show my wallet address" → {{"tasks":[{{"agent_type":"wallet","task_description":"Display user's wallet addresses","depends_on":[]}}]}}
+"my transactions" → {{"tasks":[{{"agent_type":"transaction_history","task_description":"Show user's transaction history","depends_on":[]}}]}}
+"recent activity" → {{"tasks":[{{"agent_type":"transaction_history","task_description":"Show recent transaction activity","depends_on":[]}}]}}
+"my portfolio" → {{"tasks":[{{"agent_type":"portfolio","task_description":"Get user's real portfolio data","depends_on":[]}}]}}
+"my balance" → {{"tasks":[{{"agent_type":"portfolio","task_description":"Get user's wallet balance","depends_on":[]}}]}}
+"swap 1 ETH to USDC" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 1 ETH to USDC","depends_on":[]}}]}}
+"exchange 100 USDC for ETH" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 100 USDC to ETH","depends_on":[]}}]}}
+"convert 0.5 ETH to DAI" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 0.5 ETH to DAI","depends_on":[]}}]}}
+"best swap rate ETH to USDC" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get swap rate for ETH to USDC","depends_on":[]}}]}}
+"best yield for USDC" → {{"tasks":[{{"agent_type":"defi_yield","task_description":"Find best yield opportunities for USDC","depends_on":[]}},{{"agent_type":"risk_analyzer","task_description":"Assess risk of top yield options","depends_on":["defi_yield"]}}]}}
+"write a poem about gas fees" → {{"tasks":[{{"agent_type":"chat","task_description":"Write a creative poem about Ethereum gas fees","depends_on":[]}}]}}
+"btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
+"what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi concepts","depends_on":[]}}]}}
+</examples>
+
+Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"...","depends_on":[]}}]}}"""
+    
+    async def execute_workflow(
+        self,
+        conversation_id: ConversationId,
+        workflow_plan: WorkflowPlan,
+        conversation_context: "ConversationContext",
+        original_message: str | None = None,
+    ) -> tuple[str, list[Any], list[dict[str, Any]]]:
+        """
+        Execute workflow with authenticated user context.
+        
+        Injects user context into the conversation context before execution.
+        
+        Args:
+            conversation_id: Conversation identifier
+            workflow_plan: Workflow plan to execute
+            conversation_context: Conversation context
+            original_message: The current user message (CRITICAL: prevents context pollution)
+        """
+        # Inject user context into conversation context metadata
+        if self._user_context and conversation_context.user_metadata:
+            conversation_context.user_metadata.update(self._user_context)
+        elif self._user_context:
+            conversation_context.user_metadata = self._user_context.copy()
+        
+        # Execute using parent implementation with original_message
+        return await super().execute_workflow(
+            conversation_id=conversation_id,
+            workflow_plan=workflow_plan,
+            conversation_context=conversation_context,
+            original_message=original_message,
+        )
+    
+    def _build_aggregation_message(
+        self,
+        workflow_plan: "WorkflowPlan",
+        chat_task: "AgentTask",
+    ) -> str:
+        """
+        Build aggregation message for authenticated users.
+        
+        Override parent method to be more explicit about using ONLY agent data,
+        preventing conversation history from polluting the response.
+        """
+        from app.domain.services.agent_squad.supervisor_coordinator import TaskStatus
+        from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+        
+        # Get all completed tasks except the CHAT aggregator task
+        other_tasks = [
+            task for task in workflow_plan.tasks
+            if task.status == TaskStatus.COMPLETED and task != chat_task
+        ]
+        
+        if not other_tasks:
+            return chat_task.task_description
+        
+        # Build aggregation message - more explicit for authenticated users
+        parts = [
+            "CRITICAL: Your ONLY job is to aggregate the specialist agent responses below.",
+            "DO NOT add information from conversation history or your own knowledge.",
+            "ONLY use the data provided in 'Agent Responses' section below.",
+            "",
+            "Instructions:",
+            "- Remove duplicates and create a single coherent response",
+            "- Include only ONE disclaimer at the end",
+            "- Focus on the ACTUAL DATA returned by the agents (prices, rates, percentages, etc.)",
+            "- DO NOT mention swaps, yield farming, or other topics unless they appear in Agent Responses",
+            "- FILTER OUT authentication messages ('Account Required', 'Sign up') - the user is already authenticated",
+            "",
+            "Agent Responses (USE ONLY THIS DATA):",
+            "",
+        ]
+        
+        for i, task in enumerate(other_tasks, 1):
+            if isinstance(task.result, AgentResponse):
+                content = task.result.content or "(No response)"
+            elif isinstance(task.result, str):
+                content = task.result
+            else:
+                content = str(task.result) if task.result else "(No response)"
+            
+            # Skip authentication messages for authenticated users
+            if content and any(kw in content.lower() for kw in ["account required", "wallet required", "sign up", "create an account"]):
+                continue
+            
+            parts.append(f"--- Response from {task.agent_type.value.upper()} Agent ---")
+            parts.append(content)
+            parts.append("")
+        
+        return "\n".join(parts)

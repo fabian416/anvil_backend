@@ -220,10 +220,12 @@ class SendGuestMessageV2:
         )
         
         # === EXECUTE WORKFLOW ===
+        # Pass original_message explicitly to prevent conversation context pollution
         response_content, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
             conversation_id=ConversationId(conversation.id),
             workflow_plan=workflow_plan,
             conversation_context=agent_squad_context,
+            original_message=content,  # Explicitly pass current user message
         )
         
         # Convert sources to serializable format

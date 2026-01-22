@@ -19,6 +19,7 @@ from app.application.chat.services.rate_limit_service import RateLimitService
 from app.application.chat.services.conversation_memory import ConversationMemory
 from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, RESTRICTED_INTENTS
 from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
+from app.application.chat.commands.send_message_with_supervisor import SendMessageWithSupervisor
 from app.application.chat.handlers.moonpay_swap_flow_handler import MoonPaySwapFlowHandler
 from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.application.chat.handlers.restricted_handler import RestrictedActionHandler
@@ -597,6 +598,7 @@ def create_conversations_router() -> APIRouter:
         message_repository: FromDishka[ChatMessageRepositorySqla],
         llm_gateway: FromDishka[LLMGateway],
         moonpay_swap_handler: FromDishka[MoonPaySwapHandler],
+        supervisor_command: FromDishka[SendMessageWithSupervisor] = None,  # NEW: Supervisor for authenticated users
     ) -> ChatResponse:
         """Send a message to a conversation."""
         from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
@@ -660,6 +662,170 @@ def create_conversations_router() -> APIRouter:
         # Get conversation context for memory
         context = await conversation_memory.get_context(conversation_id)
         
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # ============================================================
+        # ✨ AUTHENTICATED SUPERVISOR PATH (LLM-based Multi-Agent) ✨
+        # ============================================================
+        # For authenticated users, use the AuthenticatedSupervisorCoordinator
+        # for intelligent LLM-based routing to multiple agents.
+        # This provides the same quality as guest chat but with real data access.
+        # ============================================================
+        if not user.is_guest and supervisor_command is not None:
+            try:
+                logger.info(
+                    f"🔄 Using Authenticated Supervisor for user {user.identifier}",
+                    extra={
+                        "conversation_id": str(conversation_id),
+                        "message_preview": request_body.content[:100],
+                        "wallet_address": wallet_address[:10] + "..." if wallet_address else None,
+                    }
+                )
+                
+                # Build conversation history from context
+                conversation_history = []
+                if context.messages:
+                    for msg in context.messages[-5:]:  # Last 5 messages
+                        # ChatMessage objects have role and content attributes
+                        role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
+                        conversation_history.append({
+                            "role": role,
+                            "content": msg.content if hasattr(msg, 'content') else str(msg),
+                        })
+                
+                # Build user context for supervisor
+                user_context = {
+                    "user_id": user.identifier,
+                    "wallet_address": wallet_address,
+                    "is_authenticated": True,
+                }
+                
+                # Check for fast-path greeting
+                if supervisor_command.is_simple_greeting(request_body.content):
+                    supervisor_result = await supervisor_command.execute_fast_path_greeting(
+                        conversation_id=conversation_id,
+                        message=request_body.content,
+                        language=request_body.language,
+                    )
+                else:
+                    # Full supervisor workflow
+                    supervisor_result = await supervisor_command.execute(
+                        conversation_id=conversation_id,
+                        message=request_body.content,
+                        language=request_body.language,
+                        conversation_history=conversation_history,
+                        user_context=user_context,
+                    )
+                
+                # Create user message (timedelta already imported at module level)
+                user_timestamp = datetime.now(UTC)
+                from app.domain.chat.entities.chat_message import ChatMessage
+                
+                user_message = ChatMessage.create_user_message(
+                    conversation_id=conversation_id,
+                    content=request_body.content,
+                    language=request_body.language,
+                    created_at=user_timestamp,
+                )
+                await message_repository.save(user_message)
+                
+                # Create assistant message
+                assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
+                assistant_message = ChatMessage.create_assistant_message(
+                    conversation_id=conversation_id,
+                    content=supervisor_result.content,
+                    intent="SUPERVISOR_WORKFLOW",
+                    handler="authenticated_supervisor",
+                    is_restricted_action=False,
+                    language=request_body.language,
+                    metadata={
+                        "agents_used": supervisor_result.agents_used,
+                        "workflow_type": supervisor_result.workflow_type,
+                        "task_count": supervisor_result.task_count,
+                        "total_time_ms": supervisor_result.total_time_ms,
+                    },
+                    created_at=assistant_timestamp,
+                )
+                await message_repository.save(assistant_message)
+                
+                # Build response
+                routing = {
+                    "intent": "SUPERVISOR_WORKFLOW",
+                    "confidence": 1.0,
+                    "handler": "authenticated_supervisor",
+                    "language": request_body.language,
+                    "user_type": user.user_type.value,
+                    "agents_used": supervisor_result.agents_used,
+                }
+                
+                rate_limit_status = {
+                    "user_type": user.user_type.value,
+                    "remaining_hourly": rate_result.remaining_hourly,
+                    "remaining_daily": rate_result.remaining_daily,
+                }
+                
+                enrichment = {
+                    "agent_squad": True,
+                    "workflow_type": supervisor_result.workflow_type,
+                    "task_count": supervisor_result.task_count,
+                    "agents_used": supervisor_result.agents_used,
+                    "agent_timings": supervisor_result.agent_timings,
+                    "sources": supervisor_result.sources,
+                    "total_time_ms": supervisor_result.total_time_ms,
+                }
+                
+                # Extract execute_data from supervisor result (workflow agents like swap_workflow)
+                execute_action_data = None
+                if supervisor_result.execute_data:
+                    try:
+                        execute_action_data = ExecuteActionData(**supervisor_result.execute_data)
+                    except Exception as ed_err:
+                        logger.warning(f"Failed to parse execute_data: {ed_err}")
+                
+                return ChatResponse(
+                    conversation_id=str(conversation_id),
+                    message_id=str(assistant_message.id),
+                    user_message={
+                        "id": str(user_message.id),
+                        "role": user_message.role.value,
+                        "content": user_message.content,
+                        "created_at": user_message.created_at.isoformat(),
+                    },
+                    agent_message={
+                        "id": str(assistant_message.id),
+                        "role": assistant_message.role.value,
+                        "content": assistant_message.content,
+                        "created_at": assistant_message.created_at.isoformat(),
+                        "sources": supervisor_result.sources,  # Match guest endpoint structure
+                    },
+                    routing=routing,
+                    enrichment=enrichment,
+                    registration_required=None,  # Authenticated users don't need registration
+                    rate_limit_status=rate_limit_status,
+                    execute=execute_action_data,  # Execute data from workflow agents (swap, lending, etc.)
+                )
+                
+            except Exception as e:
+                import traceback
+                logger.warning(
+                    f"Authenticated Supervisor failed, falling back to legacy flow: {e}",
+                    extra={
+                        "conversation_id": str(conversation_id),
+                        "error": str(e),
+                        "traceback": traceback.format_exc(),
+                    },
+                )
+                # Print full traceback to console for debugging
+                print(f"[SUPERVISOR ERROR] {e}")
+                traceback.print_exc()
+                # Fall through to legacy flow below
+        
+        # ============================================================
+        # LEGACY FLOW (Keyword-based Intent Detection)
+        # Used for: Guests, or when Supervisor fails/unavailable
+        # ============================================================
+        
         # Detect intent with context
         intent_detector = IntentDetectorV2()
         intent_result = intent_detector.detect(
@@ -669,8 +835,6 @@ def create_conversations_router() -> APIRouter:
         )
         
         # Debug logging for intent detection
-        import logging
-        logger = logging.getLogger(__name__)
         logger.debug(
             f"Intent detected: {intent_result.intent.value} "
             f"(confidence: {intent_result.confidence}, "

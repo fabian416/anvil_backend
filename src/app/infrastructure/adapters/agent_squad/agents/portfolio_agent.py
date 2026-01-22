@@ -1,9 +1,12 @@
 """
 Portfolio Agent - Portfolio optimization & rebalancing.
+
+Enhanced for authenticated users with real portfolio data injection.
 """
 
+import logging
 import time
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
@@ -11,6 +14,11 @@ from app.domain.value_objects.message_content import MessageContent
 from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+
+if TYPE_CHECKING:
+    from app.application.chat.services.user_data_service import UserDataContext
+
+logger = logging.getLogger(__name__)
 
 
 class PortfolioAgent:
@@ -69,8 +77,23 @@ class PortfolioAgent:
         message: MessageContent,
         conversation_context: ConversationContext,
     ) -> AgentResponse:
-        """Execute portfolio agent - Portfolio optimization."""
+        """
+        Execute portfolio agent - Portfolio optimization.
+        
+        For authenticated users: Uses real portfolio data from UserDataContext
+        For guest users: Provides general portfolio advice
+        """
         start_time = time.time()
+        
+        # Check for authenticated user context
+        user_context = self._extract_user_context(conversation_context)
+        user_portfolio_context = ""
+        is_authenticated = False
+        
+        if user_context:
+            is_authenticated = True
+            user_portfolio_context = self._build_portfolio_context(user_context)
+            logger.info(f"📊 PortfolioAgent using real user data for authenticated user")
         
         # Fetch real-time token prices from CoinGecko if available
         price_data_context = ""
@@ -132,13 +155,27 @@ class PortfolioAgent:
                 logger.warning(f"⚠️ Failed to fetch CoinGecko prices: {e}, continuing with LLM-only response")
                 price_data_context = ""
         
-        # Build enhanced prompt with real price data
+        # Build enhanced prompt with real data
         enhanced_message = message.value
+        
+        # Add user portfolio context if authenticated
+        if user_portfolio_context:
+            enhanced_message = f"""User Query: {message.value}
+
+**USER'S PORTFOLIO DATA (REAL DATA - USE THIS):**
+{user_portfolio_context}
+
+Analyze and respond using the portfolio data provided above."""
+        
+        # Add price data context
         if price_data_context:
-            enhanced_message = f"{message.value}\n\n{price_data_context}"
+            enhanced_message = f"{enhanced_message}\n\n{price_data_context}"
+        
+        # Use authenticated or guest system prompt
+        system_prompt = self._get_authenticated_system_prompt() if is_authenticated else self._get_system_prompt()
         
         messages = [
-            {"role": "system", "content": self._get_system_prompt()},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": enhanced_message},
         ]
         
@@ -193,6 +230,10 @@ class PortfolioAgent:
         # Extract provider from LLM response metadata
         provider_info = response.get("provider", "vertex_ai" if "gemini" in response.get("model", "").lower() else "deepinfra")
         
+        # Add portfolio repository if we used real data
+        if is_authenticated and user_portfolio_context:
+            tools_used.append("portfolio_repository")
+        
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
@@ -202,13 +243,118 @@ class PortfolioAgent:
                 "tokens_used": response.get("tokens_used"),
                 "latency_ms": latency_ms,
                 "model": response.get("model"),
-                "provider": provider_info,  # Include provider for debugging
+                "provider": provider_info,
+                "is_authenticated": is_authenticated,
             },
         )
     
     async def is_available(self) -> bool:
         """Check if agent is available."""
         return True
+    
+    def _extract_user_context(self, conversation_context: ConversationContext) -> dict[str, Any] | None:
+        """Extract user context from conversation metadata."""
+        if not conversation_context.user_metadata:
+            return None
+        
+        # Check for user_context or direct portfolio data
+        if "user_context" in conversation_context.user_metadata:
+            return conversation_context.user_metadata["user_context"]
+        
+        # Check for direct portfolio data
+        if "portfolio" in conversation_context.user_metadata:
+            return conversation_context.user_metadata
+        
+        return None
+    
+    def _build_portfolio_context(self, user_context: dict[str, Any]) -> str:
+        """Build portfolio context string from user data."""
+        lines = []
+        
+        portfolio = user_context.get("portfolio", {})
+        primary_wallet = user_context.get("primary_wallet")
+        
+        if primary_wallet:
+            address = primary_wallet.get("address", "")
+            if address:
+                display_addr = f"{address[:10]}...{address[-6:]}" if len(address) > 20 else address
+                lines.append(f"**Connected Wallet:** `{display_addr}`")
+        
+        if not portfolio:
+            lines.append("\n**Portfolio Data:** No portfolio snapshot available yet.")
+            lines.append("Connect a wallet and make transactions to build your portfolio history.")
+            return "\n".join(lines)
+        
+        # Handle PortfolioSummary dataclass or dict
+        if hasattr(portfolio, "total_value_usd"):
+            total_value = portfolio.total_value_usd
+            token_count = portfolio.token_count
+            top_holdings = portfolio.top_holdings or []
+            last_updated = portfolio.last_updated
+            chains = portfolio.chains or []
+        else:
+            total_value = portfolio.get("total_value_usd", 0)
+            token_count = portfolio.get("token_count", 0)
+            top_holdings = portfolio.get("top_holdings", [])
+            last_updated = portfolio.get("last_updated")
+            chains = portfolio.get("chains", [])
+        
+        lines.append(f"\n**Portfolio Value:** ${total_value:,.2f}")
+        lines.append(f"**Token Count:** {token_count}")
+        
+        if chains:
+            lines.append(f"**Chains:** {', '.join(chains)}")
+        
+        if last_updated:
+            if hasattr(last_updated, "strftime"):
+                lines.append(f"**Last Updated:** {last_updated.strftime('%Y-%m-%d %H:%M')}")
+            else:
+                lines.append(f"**Last Updated:** {last_updated}")
+        
+        if top_holdings:
+            lines.append("\n**Top Holdings:**")
+            for holding in top_holdings[:5]:
+                symbol = holding.get("symbol", "Unknown")
+                amount = holding.get("amount", 0)
+                value_usd = holding.get("value_usd", 0)
+                lines.append(f"- {symbol}: {amount:,.4f} (${value_usd:,.2f})")
+        
+        return "\n".join(lines)
+    
+    def _get_authenticated_system_prompt(self) -> str:
+        """Get system prompt for authenticated users with real data."""
+        return """You are the Portfolio Optimizer, Anvil's portfolio management specialist.
+
+**USER IS AUTHENTICATED** - You have access to their REAL portfolio data.
+
+**IMPORTANT RULES:**
+1. Use ONLY the portfolio data provided in the context
+2. NEVER make up holdings or values - use what's given
+3. If data is missing, acknowledge it and suggest how to improve tracking
+4. Provide personalized recommendations based on their actual holdings
+
+**Your expertise:**
+- Modern Portfolio Theory (MPT) optimization
+- Risk-adjusted returns maximization
+- Efficient frontier analysis
+- Portfolio rebalancing strategies
+- Diversification analysis
+- Correlation analysis (reduce risk)
+- Sharpe ratio optimization
+
+**For this user's portfolio, provide:**
+- Analysis of current allocation
+- Diversification assessment
+- Risk metrics based on their holdings
+- Rebalancing recommendations (if needed)
+- Optimization suggestions
+
+**Response Format:**
+- Use markdown for clarity
+- Include specific numbers from their portfolio
+- Provide actionable recommendations
+- Add risk warnings where appropriate
+- Note gas costs for rebalancing"""
     
     def _get_system_prompt(self) -> str:
         """Get system prompt for portfolio agent."""

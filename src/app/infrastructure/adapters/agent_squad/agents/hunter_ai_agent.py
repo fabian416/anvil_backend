@@ -4,6 +4,8 @@ Hunter AI Agent - Market sentiment & predictions.
 
 import time
 import re
+import logging
+from typing import TYPE_CHECKING
 
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
@@ -12,6 +14,9 @@ from app.domain.value_objects.agent_squad.conversation_context import Conversati
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+
+logger = logging.getLogger(__name__)
 
 
 class HunterAIAgent:
@@ -20,7 +25,7 @@ class HunterAIAgent:
     
     Implements: AgentGateway
     
-    Purpose: Market sentiment & predictions
+    Purpose: Market sentiment & predictions + Swap quotes
     
     Capabilities:
     - Real-time market sentiment analysis
@@ -28,6 +33,7 @@ class HunterAIAgent:
     - Social media sentiment (Twitter, Reddit)
     - News sentiment
     - Fear & Greed Index
+    - **Spot swap quotes via Hyperliquid**
     
     Model: gemini-2.0-flash (Vertex AI, advanced reasoning)
     Temperature: 0.3 (factual, less creative)
@@ -37,6 +43,7 @@ class HunterAIAgent:
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed)
         coingecko_client: CoinGeckoClient | None = None,
+        hyperliquid_client: HyperliquidClient | None = None,
         model: str = "gemini-2.0-flash",  # Vertex AI model (default)
         temperature: float = 0.3,
         max_tokens: int = 1500,
@@ -44,6 +51,7 @@ class HunterAIAgent:
         """Initialize Hunter AI agent."""
         self._llm_client = llm_client
         self._coingecko_client = coingecko_client
+        self._hyperliquid_client = hyperliquid_client
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
@@ -71,8 +79,77 @@ class HunterAIAgent:
         
         # Extract tokens from message if present (supports multiple tokens)
         market_data_context = ""
-        import logging
-        logger = logging.getLogger(__name__)
+        swap_quote_context = ""
+        
+        # ========================================
+        # SWAP RATE QUERIES - Hyperliquid Spot
+        # ========================================
+        message_lower = message.value.lower()
+        is_swap_query = any(phrase in message_lower for phrase in [
+            "swap rate", "best rate", "exchange rate", "convert", 
+            "swap", "trade", "best swap", "best price for",
+            "eth to usdc", "btc to usdc", "usdc to eth",
+        ]) and any(tok in message_lower for tok in ["eth", "btc", "usdc", "usdt"])
+        
+        # Log whether Hyperliquid client is available
+        logger.info(f"🔄 Swap query check: is_swap_query={is_swap_query}, hyperliquid_client={self._hyperliquid_client is not None}")
+        
+        if is_swap_query and self._hyperliquid_client:
+            logger.info(f"🔄 Detected swap rate query: {message.value[:50]}...")
+            try:
+                # Extract token pair from message
+                swap_pair = self._extract_swap_pair(message.value)
+                if swap_pair:
+                    from_token, to_token, amount = swap_pair
+                    logger.info(f"📊 Fetching Hyperliquid spot quote: {amount} {from_token} → {to_token}")
+                    
+                    quote = await self._hyperliquid_client.get_spot_quote(
+                        from_token=from_token,
+                        to_token=to_token,
+                        amount=amount,
+                    )
+                    
+                    swap_quote_context = f"""
+REAL-TIME SWAP QUOTE (FROM HYPERLIQUID SPOT - USE THESE EXACT VALUES):
+
+**Swap: {quote.from_amount} {quote.from_token} → {quote.to_token}**
+- You receive: {quote.to_amount:,.4f} {quote.to_token}
+- Effective rate: 1 {quote.from_token} = {quote.price:,.2f} {quote.to_token}
+- Mid-market price: {quote.mid_price:,.2f}
+- Spread: {quote.spread_bps:.2f} bps
+
+CRITICAL: Use these EXACT values from Hyperliquid. This is a real-time quote.
+- Hyperliquid offers zero gas fees and high-speed execution
+- Quote valid for ~30 seconds
+"""
+                    tools_used.append("hyperliquid_spot")
+                    
+                    # Add Hyperliquid source
+                    sources.append(SourceInfo(
+                        source_type=SourceType.API,
+                        source_name="Hyperliquid",
+                        source_id=f"spot:{from_token}-{to_token}",
+                        url="https://app.hyperliquid.xyz/trade",
+                        citation_text=f"Real-time spot swap quote from Hyperliquid",
+                        fetched_at=fetched_at,
+                        provider="Hyperliquid API",
+                        endpoint="/info",
+                        query_params={"type": "l2Book"},
+                        relevance_score=1.0,
+                        data_points_used=1,
+                        metadata={
+                            "from_token": from_token,
+                            "to_token": to_token,
+                            "amount": amount,
+                            "output": quote.to_amount,
+                            "rate": quote.price,
+                        },
+                    ))
+                    
+            except Exception as e:
+                logger.warning(f"⚠️ Hyperliquid spot quote error: {e}")
+                # Hyperliquid doesn't have this market - calculate from CoinGecko prices
+                swap_quote_context = ""  # Will be calculated below from CoinGecko
         
         if self._coingecko_client:
             logger.info(f"✅ CoinGecko client available for Hunter AI")
@@ -166,6 +243,48 @@ CRITICAL: You MUST use the EXACT prices shown above. Do NOT estimate, guess, or 
 """
                         tools_used.append("coingecko_api")
                         
+                        # Calculate swap rate if this is a swap query and we have prices for both tokens
+                        if is_swap_query and not swap_quote_context and len(tokens) >= 2:
+                            try:
+                                prices_dict = await self._coingecko_client.get_prices_bulk(tokens)
+                                swap_pair = self._extract_swap_pair(message.value)
+                                if swap_pair:
+                                    from_token, to_token, amount = swap_pair
+                                    # Map token symbols to CoinGecko IDs
+                                    token_to_coingecko = {
+                                        "ETH": "ethereum", "BTC": "bitcoin", "USDC": "usd-coin", 
+                                        "USDT": "tether", "SOL": "solana", "MATIC": "matic-network",
+                                    }
+                                    from_id = token_to_coingecko.get(from_token.upper(), from_token.lower())
+                                    to_id = token_to_coingecko.get(to_token.upper(), to_token.lower())
+                                    
+                                    from_price = prices_dict.get(from_id)
+                                    to_price = prices_dict.get(to_id)
+                                    
+                                    if from_price and to_price and from_price.usd and to_price.usd:
+                                        swap_rate = from_price.usd / to_price.usd
+                                        output_amount = amount * swap_rate
+                                        
+                                        swap_quote_context = f"""
+CALCULATED SWAP RATE (FROM COINGECKO PRICES):
+
+**Swap: {amount} {from_token} → {to_token}**
+- {from_token} Price: ${from_price.usd:,.2f}
+- {to_token} Price: ${to_price.usd:,.2f}
+- **Swap Rate: 1 {from_token} = {swap_rate:,.4f} {to_token}**
+- **You would receive: ~{output_amount:,.4f} {to_token}**
+
+Note: This is a market rate calculation. Actual swap rates on DEXs may vary slightly due to:
+- Liquidity depth and slippage
+- DEX fees (typically 0.3% on Uniswap, varies by protocol)
+- Gas costs
+
+On Anvil, you can execute swaps through multiple DEX aggregators including 1inch, Hyperliquid, and UniswapX to get the best rate.
+"""
+                                        logger.info(f"📊 Calculated swap rate from CoinGecko: {amount} {from_token} = {output_amount:.4f} {to_token}")
+                            except Exception as calc_error:
+                                logger.warning(f"Could not calculate swap rate: {calc_error}")
+                        
             except Exception as e:
                 # Fall back to LLM-only if API fails
                 logger.error(f"❌ CoinGecko API error: {str(e)}", exc_info=True)
@@ -173,8 +292,15 @@ CRITICAL: You MUST use the EXACT prices shown above. Do NOT estimate, guess, or 
         else:
             logger.warning(f"⚠️ CoinGecko client not available - Hunter AI will use LLM-only mode")
         
+        # Combine all context
+        full_context = ""
+        if swap_quote_context:
+            full_context += swap_quote_context + "\n\n"
+        if market_data_context:
+            full_context += market_data_context
+        
         messages = [
-            {"role": "system", "content": self._get_system_prompt() + market_data_context},
+            {"role": "system", "content": self._get_system_prompt() + full_context},
             {"role": "user", "content": message.value},
         ]
         
@@ -275,6 +401,71 @@ CRITICAL: You MUST use the EXACT prices shown above. Do NOT estimate, guess, or 
         """
         tokens = self._extract_tokens(message)
         return tokens[0] if tokens else None
+    
+    def _extract_swap_pair(self, message: str) -> tuple[str, str, float] | None:
+        """
+        Extract swap pair and amount from message.
+        
+        Returns:
+            Tuple of (from_token, to_token, amount) or None if not found
+            
+        Examples:
+            "swap 1 ETH to USDC" → ("ETH", "USDC", 1.0)
+            "best rate for ETH to USDC" → ("ETH", "USDC", 1.0)
+            "convert 100 USDC to ETH" → ("USDC", "ETH", 100.0)
+        """
+        message_lower = message.lower()
+        
+        # Token symbol mapping for Hyperliquid spot
+        token_map = {
+            "eth": "ETH",
+            "ethereum": "ETH",
+            "btc": "BTC",
+            "bitcoin": "BTC",
+            "usdc": "USDC",
+            "usdt": "USDT",
+            "sol": "SOL",
+            "solana": "SOL",
+            "avax": "AVAX",
+            "matic": "MATIC",
+            "arb": "ARB",
+            "op": "OP",
+            "link": "LINK",
+            "uni": "UNI",
+            "aave": "AAVE",
+        }
+        
+        # Extract tokens mentioned
+        found_tokens = []
+        for token_name, symbol in token_map.items():
+            if token_name in message_lower and symbol not in found_tokens:
+                found_tokens.append(symbol)
+        
+        if len(found_tokens) < 2:
+            # Default pair for generic swap queries
+            if "eth" in message_lower:
+                return ("ETH", "USDC", 1.0)
+            return None
+        
+        # Determine order based on common patterns
+        # "X to Y" pattern
+        to_pattern = re.search(r"(\w+)\s+to\s+(\w+)", message_lower)
+        if to_pattern:
+            from_raw = to_pattern.group(1)
+            to_raw = to_pattern.group(2)
+            from_token = token_map.get(from_raw, from_raw.upper())
+            to_token = token_map.get(to_raw, to_raw.upper())
+            
+            # Extract amount if present
+            amount = 1.0
+            amount_match = re.search(r"(\d+(?:\.\d+)?)\s*" + from_raw, message_lower)
+            if amount_match:
+                amount = float(amount_match.group(1))
+            
+            return (from_token, to_token, amount)
+        
+        # Default: first token → second token
+        return (found_tokens[0], found_tokens[1], 1.0)
     
     async def is_available(self) -> bool:
         """Check if agent is available."""
