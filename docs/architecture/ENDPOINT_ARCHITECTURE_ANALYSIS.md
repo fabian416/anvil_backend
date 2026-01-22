@@ -8,18 +8,30 @@
 
 ## EXECUTIVE SUMMARY
 
-**Total Endpoints Discovered:** 350+  
-**Active Routers:** 73+  
-**Critical Finding:** 4 overlapping chat systems require consolidation  
-**Deprecation Deadline:** 2026-06-01 (legacy chat system sunset)  
+**Total Endpoints Discovered:** 350+
+**Active Routers:** 73+
+**Critical Finding:** 4 overlapping chat systems require consolidation
+**Migration Deadline:** 2026-06-01 (legacy chat system sunset)
 **Architecture Pattern:** Hexagonal + CQRS + DI (Dishka)
+
+### ⚠️ **IMPORTANT: This is a MIGRATION with IMPROVEMENTS, not a deprecation with feature loss**
+
+**All functionality from legacy endpoints is FULLY IMPLEMENTED in the new system with significant enhancements:**
+- ✅ **API Efficiency**: 50% fewer network calls (combined conversation + messages endpoint)
+- ✅ **Guest Support**: Full chat without authentication (IP-based)
+- ✅ **Multi-Language**: Native support for en/es/pt/zh
+- ✅ **Multi-Step Flows**: Conversational UX for complex actions (swap, buy, lending)
+- ✅ **Better Architecture**: Hexagonal + CQRS + Dishka DI
+- ✅ **Soft Delete**: Archive instead of permanent deletion
+- ✅ **Enhanced Features**: Intent detection, rate limiting, flow cancellation, execute data
 
 **Key Recommendations:**
 1. ✅ Complete legacy chat migration by 2026-06-01
-2. Maintain 3 chat endpoints until 2027 (conversations, guest, universal)
-3. Consolidate Hunter AI endpoints under `/user/hunter/*`
-4. Document all admin endpoints with RBAC matrix
-5. Create unified API documentation with migration guides
+2. ✅ **Authenticated users MUST use `/api/v1/conversations/*`** (all features available)
+3. Maintain 3 chat endpoints until 2027 (conversations, guest, universal)
+4. Consolidate Hunter AI endpoints under `/user/hunter/*`
+5. Document all admin endpoints with RBAC matrix
+6. Create unified API documentation with migration guides
 
 ---
 
@@ -68,7 +80,7 @@
 - `POST /conversations/{id}/system-message` - Create system message (no LLM)
 - `PATCH /conversations/{id}/messages/{mid}/swap-quote` - Save swap quote
 
-**Tables Used:** `chat_conversations`, `chat_messages`, `chat_users` (UUID user_id)  
+**Tables Used:** `chat_conversations`, `chat_messages`, `chat_users` (UUID user_id)
 **Features:**
 - Guest support (IP-based tracking)
 - Multi-language (en, es, pt, zh)
@@ -78,6 +90,66 @@
 - Multi-step flows (swap, lending, buy)
 - Conversational memory (last 10 messages)
 - Compound intent handling ("cancel, tell me about BTC")
+
+---
+
+### ⚠️ CRITICAL CLARIFICATION: Migration, Not Feature Loss
+
+**The "DEPRECATED" label is MISLEADING - All functionality is FULLY IMPLEMENTED in the new system with IMPROVEMENTS.**
+
+#### Complete Endpoint Mapping (Legacy → New)
+
+| Legacy Endpoint (DEPRECATED) | New Endpoint (IMPROVED) | Status |
+|------------------------------|-------------------------|--------|
+| `GET /user/chat/conversations/{id}` <br> + `GET /user/chat/conversations/{id}/messages` | `GET /conversations/{id}?limit=50` | ✅ **COMBINED INTO ONE** - Single API call returns both conversation + messages |
+| `PATCH /user/chat/conversations/{id}` | `PATCH /conversations/{id}` | ✅ **SAME + Guest Support** |
+| `DELETE /user/chat/conversations/{id}` | `DELETE /conversations/{id}` | ✅ **IMPROVED** - Soft delete (archive) instead of hard delete |
+| `POST /user/chat/conversations/{id}/messages` | `POST /conversations/{id}/messages` | ✅ **10x ENHANCED** - Multi-step flows, intent detection, multi-language, rate limiting |
+
+#### Key Improvements in New System
+
+**1. API Efficiency:**
+- **Before**: 2 API calls to get conversation + messages
+- **After**: 1 API call with `GET /conversations/{id}?limit=50`
+- **Result**: 50% reduction in network requests
+
+**2. User Support:**
+- **Before**: Authenticated users only (JWT required)
+- **After**: Guest (IP-based) + Authenticated (JWT/Privy)
+- **Result**: Demo-before-signup user flow enabled
+
+**3. Message Sending:**
+- **Before**: Basic message send with no context
+- **After**: Multi-step conversational flows, intent detection (15+ intents), multi-language (4 languages), flow cancellation detection, execute data in response
+- **Result**: Production-grade chat UX
+
+**4. Data Safety:**
+- **Before**: Hard delete (permanent data loss)
+- **After**: Soft delete/archive (recoverable)
+- **Result**: Better data governance
+
+**5. Architecture:**
+- **Before**: Mixed concerns, FastAPI-dependent
+- **After**: Hexagonal architecture, CQRS, Dishka DI
+- **Result**: Maintainable, testable, framework-independent
+
+#### For Authenticated Users (Logged In)
+
+**Recommended Path**: `/api/v1/conversations/*`
+
+**Endpoints Available:**
+- ✅ `POST /conversations` - Create conversation
+- ✅ `GET /conversations` - List conversations
+- ✅ `GET /conversations/{id}?limit=50` - Get conversation + messages (single call)
+- ✅ `PATCH /conversations/{id}` - Update title
+- ✅ `DELETE /conversations/{id}` - Archive conversation
+- ✅ `POST /conversations/{id}/messages` - Send message with full features
+- ✅ `POST /conversations/{id}/system-message` - Create system notification
+- ✅ `PATCH /conversations/{id}/messages/{mid}/swap-quote` - Save swap quote
+
+**All legacy endpoints have direct replacements with enhanced features.**
+
+---
 
 #### C. Guest System
 **File:** `src/app/presentation/http/controllers/guest/router.py`  
