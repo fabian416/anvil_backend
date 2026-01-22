@@ -55,6 +55,9 @@ from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageG
 from app.domain.ports.agent_squad.feature_flags_gateway import FeatureFlagsGateway
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
+from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.aave_gateway import AaveGateway
+from app.domain.ports.compound_gateway import CompoundGateway
 from app.infrastructure.adapters.agent_squad.agent_llm_gateway import AgentLLMGateway
 from app.domain.value_objects.agent_squad.agent_squad_config import (
     AgentSquadConfig,
@@ -124,6 +127,10 @@ from app.infrastructure.adapters.agent_squad.agents.transaction_history_agent im
 # Workflow agents (multi-step operations for authenticated users)
 from app.infrastructure.adapters.agent_squad.agents.workflows import (
     SwapWorkflowAgent,
+    LendingWorkflowAgent,
+    TransferWorkflowAgent,
+    BuyWorkflowAgent,
+    MoneyMarketWorkflowAgent,
 )
 
 # Enterprise agents (4)
@@ -769,6 +776,101 @@ class AgentSquadInfrastructureProvider(Provider):
             lifi_client=lifi_client,
         )
 
+    @provide
+    def provide_lending_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+        morpho_gateway: MorphoGateway,
+        aave_gateway: AaveGateway,
+    ) -> LendingWorkflowAgent:
+        """
+        Provide Lending Workflow Agent for authenticated users.
+        
+        This agent handles multi-step deposit/yield operations:
+        1. Parse deposit request (asset, amount)
+        2. Fetch best vault from Morpho (fallback to Aave)
+        3. Show quote with APY and earnings projection
+        4. Generate execute_data for frontend
+        
+        Integrations:
+        - Morpho: MetaMorpho vaults on Base
+        - Aave: Aave V3 markets as fallback
+        """
+        return LendingWorkflowAgent(
+            llm_client=llm_client,
+            morpho_gateway=morpho_gateway,
+            aave_gateway=aave_gateway,
+        )
+
+    @provide
+    def provide_transfer_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+    ) -> TransferWorkflowAgent:
+        """
+        Provide Transfer Workflow Agent for authenticated users.
+        
+        This agent handles multi-step token transfer operations:
+        1. Parse transfer request (token, amount, recipient)
+        2. Validate recipient address format
+        3. Show transfer review and wait for confirmation
+        4. Generate execute_data for frontend
+        
+        Features:
+        - Multi-chain address validation (EVM, Solana)
+        - Network detection from address format
+        - User modification support
+        """
+        return TransferWorkflowAgent(llm_client=llm_client)
+
+    @provide
+    def provide_buy_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+    ) -> BuyWorkflowAgent:
+        """
+        Provide Buy Workflow Agent for authenticated users.
+        
+        This agent handles multi-step crypto purchase operations:
+        1. Parse buy request (crypto, fiat amount, currency)
+        2. Validate supported assets
+        3. Show purchase review and wait for confirmation
+        4. Generate execute_data for Privy modal
+        
+        Integrations:
+        - Privy SDK for MoonPay/Coinbase on-ramp
+        """
+        return BuyWorkflowAgent(llm_client=llm_client)
+
+    @provide
+    def provide_money_market_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+        aave_gateway: AaveGateway,
+        compound_gateway: CompoundGateway,
+        morpho_gateway: MorphoGateway,
+    ) -> MoneyMarketWorkflowAgent:
+        """
+        Provide Money Market Workflow Agent for authenticated users.
+        
+        This agent handles multi-step rate comparison operations:
+        1. Parse comparison request (asset)
+        2. Fetch rates from Aave, Compound, Morpho
+        3. Show comparison with best recommendation
+        4. Allow user to select protocol for deposit
+        
+        Integrations:
+        - Aave V3 for lending markets
+        - Compound V3 for lending markets
+        - Morpho for vault rates
+        """
+        return MoneyMarketWorkflowAgent(
+            llm_client=llm_client,
+            aave_gateway=aave_gateway,
+            compound_gateway=compound_gateway,
+            morpho_gateway=morpho_gateway,
+        )
+
     # ========================================
     # Agent Registry
     # ========================================
@@ -794,6 +896,10 @@ class AgentSquadInfrastructureProvider(Provider):
         transaction_history_agent: TransactionHistoryAgent,
         # Workflow agents
         swap_workflow_agent: SwapWorkflowAgent,
+        lending_workflow_agent: LendingWorkflowAgent,
+        transfer_workflow_agent: TransferWorkflowAgent,
+        buy_workflow_agent: BuyWorkflowAgent,
+        money_market_workflow_agent: MoneyMarketWorkflowAgent,
         # Enterprise agents
         compliance_monitor_agent: ComplianceMonitorAgentChainalysis,
         multisig_coordinator_agent: MultiSigCoordinatorAgentGnosis,
@@ -829,6 +935,10 @@ class AgentSquadInfrastructureProvider(Provider):
             AgentType.TRANSACTION_HISTORY: transaction_history_agent,
             # Workflow agents
             AgentType.SWAP_WORKFLOW: swap_workflow_agent,
+            AgentType.LENDING_WORKFLOW: lending_workflow_agent,
+            AgentType.TRANSFER_WORKFLOW: transfer_workflow_agent,
+            AgentType.BUY_WORKFLOW: buy_workflow_agent,
+            AgentType.MONEY_MARKET_WORKFLOW: money_market_workflow_agent,
             # Enterprise agents
             AgentType.COMPLIANCE_MONITOR: compliance_monitor_agent,
             AgentType.MULTISIG_COORDINATOR: multisig_coordinator_agent,

@@ -25,6 +25,10 @@ from .base_workflow_agent import (
     UserContext,
 )
 from .swap_workflow_agent import SwapWorkflowAgent
+from .lending_workflow_agent import LendingWorkflowAgent
+from .transfer_workflow_agent import TransferWorkflowAgent
+from .buy_workflow_agent import BuyWorkflowAgent
+from .money_market_workflow_agent import MoneyMarketWorkflowAgent
 
 __all__ = [
     "BaseWorkflowAgent",
@@ -32,4 +36,8 @@ __all__ = [
     "WorkflowStep",
     "UserContext",
     "SwapWorkflowAgent",
+    "LendingWorkflowAgent",
+    "TransferWorkflowAgent",
+    "BuyWorkflowAgent",
+    "MoneyMarketWorkflowAgent",
 ]

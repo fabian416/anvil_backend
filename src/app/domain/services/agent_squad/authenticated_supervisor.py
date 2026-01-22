@@ -326,20 +326,49 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
    - "price of ETH", "ETH price in USDC" → "hunter_ai"
    - Use hunter_ai only when user wants PRICE INFO without execution intent
    
-7. LENDING/YIELD:
-   - Supply/lend queries → "defi_yield" for rates + "risk_analyzer" for safety
-   - Yield farming → "defi_yield"
+7. LENDING/DEPOSIT EXECUTION (CRITICAL - Multi-step workflow):
+   - "deposit X USDC", "lend X ETH", "earn yield on X USDC" (with specific amounts) → "lending_workflow" agent ONLY
+   - The lending_workflow agent handles the COMPLETE multi-step deposit process autonomously
+   - Use "lending_workflow" when user wants to EXECUTE a deposit (has specific amount like "1000 USDC")
+   - Examples: "deposit 1000 USDC", "lend 0.5 ETH", "deposit into morpho", "earn yield on 500 DAI"
+   - DO NOT combine lending_workflow with other agents - it handles everything internally
    
-8. PRICE/MARKET DATA:
+8. YIELD INFO (rates information only - no execution):
+   - "best yield for USDC", "compare lending rates" (NO specific amount) → "defi_yield"
+   - "what APY can I get", "yield farming options" → "defi_yield" + "risk_analyzer"
+   - Use defi_yield when user wants RATE INFO without deposit intent
+
+9. TRANSFER/SEND EXECUTION (CRITICAL - Multi-step workflow):
+   - "send X ETH to 0x...", "transfer X USDC to wallet" (with specific amounts) → "transfer_workflow" agent ONLY
+   - The transfer_workflow agent handles the COMPLETE multi-step transfer process autonomously
+   - Use "transfer_workflow" when user wants to SEND/TRANSFER tokens (has specific amount AND recipient)
+   - Examples: "send 100 USDC to 0x123...", "transfer 0.5 ETH to my friend", "send tokens"
+   - DO NOT combine transfer_workflow with other agents - it handles everything internally
+
+10. BUY CRYPTO EXECUTION (CRITICAL - Multi-step workflow):
+   - "buy $100 of ETH", "purchase crypto", "buy USDC with card" → "buy_workflow" agent ONLY
+   - The buy_workflow agent handles the COMPLETE multi-step purchase process autonomously
+   - Use "buy_workflow" when user wants to BUY crypto with fiat (card, Apple Pay, etc.)
+   - Examples: "buy $50 of ETH", "purchase 100 dollars of USDC", "buy crypto"
+   - DO NOT combine buy_workflow with other agents - it handles everything internally
+
+11. MONEY MARKET COMPARISON (CRITICAL - Multi-step workflow):
+   - "compare rates", "best APY for USDC", "where should I deposit" → "money_market_workflow" agent ONLY
+   - The money_market_workflow agent handles COMPLETE rate comparison across Aave, Compound, Morpho
+   - Use "money_market_workflow" when user wants to COMPARE rates across protocols
+   - Examples: "compare USDC rates", "best lending rates", "where to deposit ETH", "money market"
+   - DO NOT combine money_market_workflow with other agents - it handles comparison and deposit selection
+   
+12. PRICE/MARKET DATA:
    - Token prices → "hunter_ai"
    - Gas prices → "gas_optimizer"
    - Market sentiment → "hunter_ai"
    
-9. RISK/SECURITY:
+13. RISK/SECURITY:
    - Protocol risk → "risk_analyzer"
    - Security audit → "security_auditor"
    
-10. EDUCATIONAL:
+14. EDUCATIONAL:
    - DeFi explanations → "knowledge"
    - Protocol comparisons → "knowledge"
 </rules>
@@ -358,7 +387,19 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 "exchange 100 USDC for ETH" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 100 USDC to ETH","depends_on":[]}}]}}
 "convert 0.5 ETH to DAI" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 0.5 ETH to DAI","depends_on":[]}}]}}
 "best swap rate ETH to USDC" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get swap rate for ETH to USDC","depends_on":[]}}]}}
+"deposit 1000 USDC" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute deposit: 1000 USDC into vault","depends_on":[]}}]}}
+"lend 0.5 ETH" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute deposit: 0.5 ETH into vault","depends_on":[]}}]}}
+"earn yield on 500 DAI" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute deposit: 500 DAI into vault","depends_on":[]}}]}}
 "best yield for USDC" → {{"tasks":[{{"agent_type":"defi_yield","task_description":"Find best yield opportunities for USDC","depends_on":[]}},{{"agent_type":"risk_analyzer","task_description":"Assess risk of top yield options","depends_on":["defi_yield"]}}]}}
+"send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e" → {{"tasks":[{{"agent_type":"transfer_workflow","task_description":"Execute transfer: 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e","depends_on":[]}}]}}
+"transfer 0.5 ETH to my friend" → {{"tasks":[{{"agent_type":"transfer_workflow","task_description":"Execute transfer: 0.5 ETH - need recipient address","depends_on":[]}}]}}
+"send ETH" → {{"tasks":[{{"agent_type":"transfer_workflow","task_description":"Execute transfer: ETH - need amount and recipient","depends_on":[]}}]}}
+"buy $100 of ETH" → {{"tasks":[{{"agent_type":"buy_workflow","task_description":"Execute buy: $100 of ETH","depends_on":[]}}]}}
+"purchase 50 dollars of USDC" → {{"tasks":[{{"agent_type":"buy_workflow","task_description":"Execute buy: $50 of USDC","depends_on":[]}}]}}
+"buy crypto" → {{"tasks":[{{"agent_type":"buy_workflow","task_description":"Execute buy: need crypto and amount","depends_on":[]}}]}}
+"compare USDC rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across Aave, Compound, Morpho","depends_on":[]}}]}}
+"best lending rates for ETH" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare ETH lending rates across protocols","depends_on":[]}}]}}
+"where should I deposit DAI" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare DAI deposit rates and recommend best protocol","depends_on":[]}}]}}
 "write a poem about gas fees" → {{"tasks":[{{"agent_type":"chat","task_description":"Write a creative poem about Ethereum gas fees","depends_on":[]}}]}}
 "btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
 "what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi concepts","depends_on":[]}}]}}

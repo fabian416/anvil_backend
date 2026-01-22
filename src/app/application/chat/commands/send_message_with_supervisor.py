@@ -171,6 +171,10 @@ class SendMessageWithSupervisor:
             AgentType.TRANSACTION_HISTORY,
             # Workflow agents (multi-step operations)
             AgentType.SWAP_WORKFLOW,  # Multi-step swap execution
+            AgentType.LENDING_WORKFLOW,  # Multi-step deposit/yield
+            AgentType.TRANSFER_WORKFLOW,  # Multi-step token transfer
+            AgentType.BUY_WORKFLOW,  # Multi-step fiat on-ramp
+            AgentType.MONEY_MARKET_WORKFLOW,  # Multi-step rate comparison
         ]
         
         try:
