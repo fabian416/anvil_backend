@@ -89,7 +89,21 @@ class TestUserShortcuts:
             reporter = CSVReporter("shortcuts")
             for result in cls.results:
                 reporter.add_result(result)
-            reporter.finalize()
+            csv_path = reporter.write_csv()
+            summary_path = reporter.write_summary()
+            print(f"\n{'='*60}")
+            print(f"Test Results: shortcuts")
+            print(f"{'='*60}")
+            print(f"Total:   {len(cls.results)}")
+            pass_count = sum(1 for r in cls.results if r.status == "PASS")
+            fail_count = sum(1 for r in cls.results if r.status == "FAIL")
+            partial_count = sum(1 for r in cls.results if r.status == "PARTIAL")
+            print(f"PASS:    {pass_count} ({100*pass_count/len(cls.results):.1f}%)")
+            print(f"PARTIAL: {partial_count} ({100*partial_count/len(cls.results):.1f}%)")
+            print(f"FAIL:    {fail_count} ({100*fail_count/len(cls.results):.1f}%)")
+            print(f"{'='*60}")
+            print(f"CSV output: {csv_path}")
+            print(f"Summary: {summary_path}")
     
     @pytest.mark.asyncio
     async def test_shortcut_intent_detection(
@@ -172,8 +186,12 @@ class TestUserShortcuts:
                 }
                 response_data = {
                     "agent_message": {"content": content[:500]},
-                    "routing": {"intent": detected_intent},
-                    "agents_used": detected_intent.lower(),
+                    "routing": {
+                        "intent": detected_intent,
+                        "agents_used": [detected_intent.lower()],  # Must be a list
+                        "handler": data.get("routing", {}).get("handler", ""),
+                        "user_type": data.get("routing", {}).get("user_type", "authenticated"),
+                    },
                 }
                 result = create_test_result(
                     test_id=f"shortcut_{intent}_{command.replace(' ', '_')}",
@@ -253,6 +271,7 @@ class TestUserShortcuts:
                     passes.append(example)
                 
                 # Record result using correct signature
+                detected = data.get("routing", {}).get("intent", "unknown")
                 test_case = {
                     "category": "shortcuts",
                     "subcategory": f"{intent}_fallback",
@@ -261,7 +280,12 @@ class TestUserShortcuts:
                 }
                 response_data = {
                     "agent_message": {"content": content[:500]},
-                    "routing": {"intent": data.get("routing", {}).get("intent", "unknown")},
+                    "routing": {
+                        "intent": detected,
+                        "agents_used": [detected.lower()],
+                        "handler": data.get("routing", {}).get("handler", ""),
+                        "user_type": "authenticated",
+                    },
                 }
                 result = create_test_result(
                     test_id=f"shortcut_fallback_{intent}_{command.replace(' ', '_')}",
@@ -362,6 +386,7 @@ class TestUserShortcuts:
                     status = "PASS"
                 
                 # Record result using correct signature
+                detected = data.get("routing", {}).get("intent", "unknown")
                 test_case = {
                     "category": "shortcuts",
                     "subcategory": f"{intent}_content",
@@ -370,7 +395,12 @@ class TestUserShortcuts:
                 }
                 response_data = {
                     "agent_message": {"content": content[:500]},
-                    "routing": {"intent": data.get("routing", {}).get("intent", "unknown")},
+                    "routing": {
+                        "intent": detected,
+                        "agents_used": [detected.lower()],
+                        "handler": data.get("routing", {}).get("handler", ""),
+                        "user_type": "authenticated",
+                    },
                 }
                 result = create_test_result(
                     test_id=f"shortcut_content_{intent}_{command.replace(' ', '_')}",
