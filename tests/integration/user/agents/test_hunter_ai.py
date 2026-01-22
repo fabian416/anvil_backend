@@ -2,6 +2,7 @@
 Hunter AI Agent Tests for Authenticated Users.
 
 Tests price queries, sentiment analysis, trading signals, and news.
+Uses LLM (Vertex AI) validation for semantic output verification.
 """
 
 import pytest
@@ -14,6 +15,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
 )
 
 
@@ -137,24 +139,45 @@ HUNTER_AI_TESTS = [
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.llm_validation
 class TestHunterAI:
-    """Tests for Hunter AI agent."""
+    """Tests for Hunter AI agent with LLM validation."""
     
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter):
+    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
+        self.llm_validator = llm_validator
     
     @pytest.mark.parametrize("test_case", HUNTER_AI_TESTS, ids=lambda t: t["test_id"])
     async def test_hunter_ai(self, test_case: dict):
-        """Test Hunter AI routing and response quality."""
+        """Test Hunter AI routing and response quality with LLM validation."""
         response_data, response_time_ms = await send_message(
             self.client,
             self.conversation_id,
             test_case["input"],
         )
+        
+        # LLM Validation
+        llm_validation = None
+        if not response_data.get("error"):
+            parsed = parse_response(response_data)
+            expected_behavior = self._get_expected_behavior(test_case)
+            
+            llm_validation = await validate_with_llm(
+                llm_validator=self.llm_validator,
+                test_name=test_case["test_id"],
+                user_input=test_case["input"],
+                agent_output=parsed.get("content", ""),
+                expected_behavior=expected_behavior,
+                additional_context={
+                    "test_category": "hunter_ai",
+                    "subcategory": test_case.get("subcategory", ""),
+                    "user_type": "authenticated",
+                }
+            )
         
         result = create_test_result(
             test_id=test_case["test_id"],
@@ -162,6 +185,7 @@ class TestHunterAI:
             response_data=response_data,
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
+            llm_validation=llm_validation,
         )
         
         self.reporter.add_result(result)
@@ -190,3 +214,17 @@ class TestHunterAI:
                 indicator in content
                 for indicator in ["signal", "buy", "sell", "hold", "trading"]
             ), f"Signal query should contain trading signals: {content[:200]}"
+    
+    def _get_expected_behavior(self, test_case: dict) -> str:
+        """Get expected behavior description for LLM validation."""
+        subcategory = test_case.get("subcategory", "")
+        
+        behaviors = {
+            "hunter_price": "Response should provide current price data with USD value, formatted clearly. Should mention the token name and current market price.",
+            "hunter_prediction": "Response should provide price prediction or forecast with reasoning. Should include timeframe and confidence level if available.",
+            "hunter_sentiment": "Response should provide sentiment analysis with classification (bullish/bearish/neutral), score, and source breakdown.",
+            "hunter_signals": "Response should provide trading signals with entry/exit points, stop loss, and confidence levels.",
+            "hunter_news": "Response should provide relevant crypto news with sources and recency indicators.",
+        }
+        
+        return behaviors.get(subcategory, "Response should be relevant and informative about crypto markets.")

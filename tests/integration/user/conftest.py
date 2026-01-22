@@ -72,6 +72,14 @@ class TestResult:
     status: str = "PENDING"
     error_message: str = ""
     conversation_id: str = ""
+    # LLM Validation fields
+    llm_verdict: str = ""  # PASS/FAIL/WARNING/SKIP
+    llm_confidence: float = 0.0
+    llm_reasoning: str = ""
+    llm_accuracy_score: Optional[float] = None
+    llm_relevance_score: Optional[float] = None
+    llm_safety_score: Optional[float] = None
+    llm_coherence_score: Optional[float] = None
     
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for CSV writing."""
@@ -358,7 +366,10 @@ class CSVReporter:
         "step_number", "total_steps", "input", "output", "expected_agent",
         "actual_agents", "sources", "handler", "response_time_ms",
         "has_execute_data", "execute_action_type", "user_type", "language",
-        "status", "error_message", "conversation_id"
+        "status", "error_message", "conversation_id",
+        # LLM Validation fields
+        "llm_verdict", "llm_confidence", "llm_reasoning",
+        "llm_accuracy_score", "llm_relevance_score", "llm_safety_score", "llm_coherence_score"
     ]
     
     def __init__(self, category: str, output_dir: Path = OUTPUT_DIR):
@@ -754,6 +765,7 @@ def create_test_result(
     response_data: dict[str, Any],
     response_time_ms: int,
     conversation_id: str = "",
+    llm_validation: Optional[Any] = None,
 ) -> TestResult:
     """
     Create a TestResult from test case and response data.
@@ -764,6 +776,7 @@ def create_test_result(
         response_data: Parsed response data
         response_time_ms: Response time in milliseconds
         conversation_id: Conversation ID
+        llm_validation: Optional LLM validation result
         
     Returns:
         TestResult instance
@@ -783,6 +796,26 @@ def create_test_result(
         status = "PARTIAL"
     else:
         status = "FAIL"
+    
+    # Extract LLM validation fields
+    llm_verdict = ""
+    llm_confidence = 0.0
+    llm_reasoning = ""
+    llm_accuracy_score = None
+    llm_relevance_score = None
+    llm_safety_score = None
+    llm_coherence_score = None
+    
+    if llm_validation:
+        llm_verdict = llm_validation.verdict.value if hasattr(llm_validation.verdict, 'value') else str(llm_validation.verdict)
+        llm_confidence = llm_validation.confidence
+        llm_reasoning = llm_validation.reasoning[:500] if llm_validation.reasoning else ""
+        
+        if llm_validation.scoring:
+            llm_accuracy_score = llm_validation.scoring.accuracy_score
+            llm_relevance_score = llm_validation.scoring.relevance_score
+            llm_safety_score = llm_validation.scoring.safety_score
+            llm_coherence_score = llm_validation.scoring.coherence_score
     
     return TestResult(
         test_id=test_id,
@@ -805,4 +838,50 @@ def create_test_result(
         status=status,
         error_message=parsed.get("error_message", ""),
         conversation_id=conversation_id,
+        llm_verdict=llm_verdict,
+        llm_confidence=llm_confidence,
+        llm_reasoning=llm_reasoning,
+        llm_accuracy_score=llm_accuracy_score,
+        llm_relevance_score=llm_relevance_score,
+        llm_safety_score=llm_safety_score,
+        llm_coherence_score=llm_coherence_score,
     )
+
+
+async def validate_with_llm(
+    llm_validator: Any,
+    test_name: str,
+    user_input: str,
+    agent_output: str,
+    expected_behavior: str,
+    additional_context: Optional[dict[str, Any]] = None,
+) -> Optional[Any]:
+    """
+    Validate response using LLM if enabled.
+    
+    Args:
+        llm_validator: LLM validator fixture
+        test_name: Name of the test
+        user_input: User input
+        agent_output: Agent output
+        expected_behavior: Expected behavior description
+        additional_context: Optional additional context
+        
+    Returns:
+        ValidationResult or None if validation is disabled
+    """
+    if not llm_validator or not llm_validator.enabled:
+        return None
+    
+    try:
+        return await llm_validator.validate_single_response(
+            test_name=test_name,
+            user_input=user_input,
+            agent_output=agent_output,
+            expected_behavior=expected_behavior,
+            additional_context=additional_context,
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"LLM validation failed: {e}")
+        return None

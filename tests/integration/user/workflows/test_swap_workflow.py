@@ -2,6 +2,7 @@
 Swap Workflow Tests for Authenticated Users.
 
 Tests same-chain swaps, cross-chain swaps, and swap quotes.
+Uses LLM (Vertex AI) validation for semantic output verification.
 """
 
 import pytest
@@ -14,6 +15,7 @@ from ..conftest import (
     send_message,
     parse_response,
     create_test_result,
+    validate_with_llm,
 )
 
 
@@ -121,24 +123,45 @@ SWAP_TESTS = [
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+@pytest.mark.llm_validation
 class TestSwapWorkflow:
-    """Tests for Swap workflow agent."""
+    """Tests for Swap workflow agent with LLM validation."""
     
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter):
+    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
+        self.llm_validator = llm_validator
     
     @pytest.mark.parametrize("test_case", SWAP_TESTS, ids=lambda t: t["test_id"])
     async def test_swap(self, test_case: dict):
-        """Test swap workflow routing and response."""
+        """Test swap workflow routing and response with LLM validation."""
         response_data, response_time_ms = await send_message(
             self.client,
             self.conversation_id,
             test_case["input"],
         )
+        
+        # LLM Validation
+        llm_validation = None
+        if not response_data.get("error"):
+            parsed = parse_response(response_data)
+            expected_behavior = self._get_expected_behavior(test_case)
+            
+            llm_validation = await validate_with_llm(
+                llm_validator=self.llm_validator,
+                test_name=test_case["test_id"],
+                user_input=test_case["input"],
+                agent_output=parsed.get("content", ""),
+                expected_behavior=expected_behavior,
+                additional_context={
+                    "test_category": "swap_workflow",
+                    "subcategory": test_case.get("subcategory", ""),
+                    "user_type": "authenticated",
+                }
+            )
         
         result = create_test_result(
             test_id=test_case["test_id"],
@@ -146,6 +169,7 @@ class TestSwapWorkflow:
             response_data=response_data,
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
+            llm_validation=llm_validation,
         )
         
         self.reporter.add_result(result)
@@ -162,6 +186,19 @@ class TestSwapWorkflow:
             indicator in content or indicator in agents.lower()
             for indicator in ["swap", "exchange", "convert", "quote", "rate", "→", "to"]
         ), f"Swap query should return swap-related response: {content[:200]}"
+    
+    def _get_expected_behavior(self, test_case: dict) -> str:
+        """Get expected behavior description for LLM validation."""
+        subcategory = test_case.get("subcategory", "")
+        
+        behaviors = {
+            "swap_basic": "Response should present swap details including tokens, amounts, and estimated output. Should ask for confirmation or provide quote.",
+            "swap_quote": "Response should provide quote/rate for the swap with expected output amount and any fees.",
+            "swap_cross_chain": "Response should handle cross-chain/bridge operation with source and destination chains clearly stated.",
+            "swap_edge": "Response should handle incomplete swap request by asking for missing information or providing guidance.",
+        }
+        
+        return behaviors.get(subcategory, "Response should be relevant to swap/exchange operations.")
     
     async def test_swap_with_confirmation(self, authenticated_client, csv_reporter):
         """Test complete swap flow with confirmation."""
