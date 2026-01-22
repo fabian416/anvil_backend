@@ -612,6 +612,7 @@ async def send_message(
     content: str,
     language: str = "en",
     timeout: float = 60.0,
+    use_legacy_endpoint: bool = False,
 ) -> tuple[dict[str, Any], int]:
     """
     Send a message to a conversation and return response data.
@@ -622,17 +623,32 @@ async def send_message(
         content: Message content
         language: Language code
         timeout: Request timeout in seconds
+        use_legacy_endpoint: If True, use legacy /api/v1/user/chat/... endpoint
         
     Returns:
         Tuple of (response_data, response_time_ms)
     """
     start_time = time.time()
     
+    # Try new endpoint first, fall back to legacy if needed
+    if use_legacy_endpoint:
+        url = f"/api/v1/user/chat/conversations/{conversation_id}/messages"
+    else:
+        url = f"/api/v1/conversations/{conversation_id}/messages"
+    
     response = await client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
+        url,
         json={"content": content, "language": language},
         timeout=timeout,
     )
+    
+    # If new endpoint fails with 404, try legacy
+    if response.status_code == 404 and not use_legacy_endpoint:
+        response = await client.post(
+            f"/api/v1/user/chat/conversations/{conversation_id}/messages",
+            json={"content": content, "language": language},
+            timeout=timeout,
+        )
     
     elapsed_ms = int((time.time() - start_time) * 1000)
     
@@ -646,6 +662,49 @@ async def send_message(
     data = response.json()
     data["error"] = False
     return data, elapsed_ms
+
+
+async def create_conversation(
+    client: AsyncClient,
+    title: str = "",
+    language: str = "en",
+    use_legacy_endpoint: bool = False,
+) -> str:
+    """
+    Create a new conversation.
+    
+    Args:
+        client: Authenticated HTTP client
+        title: Conversation title
+        language: Language code
+        use_legacy_endpoint: If True, use legacy /api/v1/user/chat/... endpoint
+        
+    Returns:
+        Conversation ID
+    """
+    if not title:
+        title = f"Test Session {datetime.now(UTC).isoformat()}"
+    
+    if use_legacy_endpoint:
+        url = "/api/v1/user/chat/conversations"
+        payload = {"title": title, "language": language}
+    else:
+        url = "/api/v1/conversations"
+        payload = {"title": title}
+    
+    response = await client.post(url, json=payload)
+    
+    # Fall back to legacy if new endpoint fails
+    if response.status_code == 404 and not use_legacy_endpoint:
+        response = await client.post(
+            "/api/v1/user/chat/conversations",
+            json={"title": title, "language": language},
+        )
+    
+    assert response.status_code in (200, 201), f"Failed to create conversation: {response.text}"
+    
+    data = response.json()
+    return data.get("id") or data.get("conversation_id")
 
 
 def parse_response(data: dict[str, Any]) -> dict[str, Any]:
