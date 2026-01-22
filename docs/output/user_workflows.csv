@@ -1,59 +1,106 @@
 test_id,timestamp,input,language,category,expected_workflow,output,agents_used,sources,handler,workflow_type,response_time_ms,has_execute_data,execute_data_type,user_type,status,analysis
-1,2026-01-22T06:40:43.888198,swap 1 ETH to USDC,en,swap,swap_workflow,"❌ Unable to get swap quote: Same-chain swaps require 1inch client (not configured)
+1,2026-01-22T07:13:45.488204,swap 1 ETH to USDC,en,swap,swap_workflow,"📊 **Swap Quote**
 
-Please try again or adjust your swap parameters.",swap_workflow,,authenticated_supervisor,authenticated_supervisor,2072,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
-2,2026-01-22T06:40:46.850282,exchange 100 USDC for ETH,en,swap,swap_workflow,"❌ Unable to get swap quote: Same-chain swaps require 1inch client (not configured)
+**1 ETH** → **3002.634163 USDC**
 
-Please try again or adjust your swap parameters.",swap_workflow,,authenticated_supervisor,authenticated_supervisor,1960,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
-3,2026-01-22T06:40:50.080125,convert 0.5 ETH to DAI,en,swap,swap_workflow,"❌ Unable to get swap quote: Same-chain swaps require 1inch client (not configured)
+• Price Impact: 0.00%
+• Network: BASE
+• Aggregator: LIFI
 
-Please try again or adjust your swap parameters.",swap_workflow,,authenticated_supervisor,authenticated_supervisor,2229,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
-4,2026-01-22T06:40:53.142565,quiero cambiar 50 USDC por ETH,es,swap,swap_workflow,"❌ Unable to get swap quote: Same-chain swaps require 1inch client (not configured)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Please try again or adjust your swap parameters.",swap_workflow,,authenticated_supervisor,authenticated_supervisor,2061,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
-5,2026-01-22T06:40:56.312611,deposit 1000 USDC,en,lending,lending_workflow,"📊 **Deposit Quote**
+**Ready to swap?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 1 ETH"" ",swap_workflow,,authenticated_supervisor,authenticated_supervisor,3273,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
+2,2026-01-22T07:13:49.053016,exchange 100 USDC for ETH,en,swap,swap_workflow,"📊 **Swap Quote**
+
+**100 ETH** → **300104.752355 USDC**
+
+• Price Impact: 0.00%
+• Network: BASE
+• Aggregator: LIFI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 1 ETH"" ",swap_workflow,,authenticated_supervisor,authenticated_supervisor,2563,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
+3,2026-01-22T07:13:52.718046,convert 0.5 ETH to DAI,en,swap,swap_workflow,"📊 **Swap Quote**
+
+**0.5 ETH** → **1501.512409 DAI**
+
+• Price Impact: 0.00%
+• Network: BASE
+• Aggregator: LIFI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 1 ETH"" ",swap_workflow,,authenticated_supervisor,authenticated_supervisor,2663,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
+4,2026-01-22T07:13:56.256890,quiero cambiar 50 USDC por ETH,es,swap,swap_workflow,"📊 **Swap Quote**
+
+**50 ETH** → **150066.787141 USDC**
+
+• Price Impact: 0.00%
+• Network: BASE
+• Aggregator: LIFI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 1 ETH"" ",swap_workflow,,authenticated_supervisor,authenticated_supervisor,2537,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
+5,2026-01-22T07:14:00.305300,deposit 1000 USDC,en,lending,lending_workflow,"📊 **Deposit Quote**
 
 **Yearn OG USDC**
 
 💰 **Deposit Amount:** 1000 USDC
 📈 **Current APY:** 0.04%
-💵 **Monthly Earnings:** ~0.04 USDC
-📆 **Yearly Earnings:** ~0.42 USDC
+💵 **Monthly Earnings:** ~0.03 USDC
+📆 **Yearly Earnings:** ~0.41 USDC
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **Ready to deposit?**
 Reply ""yes"" to confirm or ""cancel"" to abort.
-You can also modify: ""change to 500 USDC"" ",lending_workflow,,authenticated_supervisor,authenticated_supervisor,2168,Yes,deposit,authenticated,PASS,PASS: lending_workflow executed with execute_data
-6,2026-01-22T06:40:59.782348,lend 0.5 ETH,en,lending,lending_workflow,"❌ **No Vault Available**
+You can also modify: ""change to 500 USDC"" ",lending_workflow,,authenticated_supervisor,authenticated_supervisor,3047,Yes,deposit,authenticated,PASS,PASS: lending_workflow executed with execute_data
+6,2026-01-22T07:14:03.323933,lend 0.5 ETH,en,lending,lending_workflow,"📊 **Deposit Quote**
 
-Unfortunately, there are no active vaults for **ETH** on Base network.
+**9Summits WETH Core 1.1**
 
-**Available assets:** USDC, USDT, DAI
+💰 **Deposit Amount:** 0.5 ETH
+📈 **Current APY:** 0.04%
+💵 **Monthly Earnings:** ~0.00 ETH
+📆 **Yearly Earnings:** ~0.00 ETH
 
-Would you like to deposit one of these instead?",lending_workflow,,authenticated_supervisor,authenticated_supervisor,2468,No,,authenticated,PARTIAL,PARTIAL: lending_workflow routed but no execute_data
-7,2026-01-22T06:41:02.897483,earn yield on 500 DAI,en,lending,lending_workflow,"❌ **No Vault Available**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to deposit?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 500 ETH"" ",lending_workflow,,authenticated_supervisor,authenticated_supervisor,2018,Yes,deposit,authenticated,PASS,PASS: lending_workflow executed with execute_data
+7,2026-01-22T07:14:06.321458,earn yield on 500 DAI,en,lending,lending_workflow,"❌ **No Vault Available**
 
 Unfortunately, there are no active vaults for **DAI** on Base network.
 
 **Available assets:** USDC, USDT, DAI
 
-Would you like to deposit one of these instead?",lending_workflow,,authenticated_supervisor,authenticated_supervisor,2113,No,,authenticated,PARTIAL,PARTIAL: lending_workflow routed but no execute_data
-8,2026-01-22T06:41:06.279184,depositar 1000 USDC en morpho,es,lending,lending_workflow,"📊 **Deposit Quote**
+Would you like to deposit one of these instead?",lending_workflow,,authenticated_supervisor,authenticated_supervisor,1996,No,,authenticated,PARTIAL,PARTIAL: lending_workflow routed but no execute_data
+8,2026-01-22T07:14:10.072765,depositar 1000 USDC en morpho,es,lending,lending_workflow,"📊 **Deposit Quote**
 
 **Yearn OG USDC**
 
 💰 **Deposit Amount:** 1000 USDC
 📈 **Current APY:** 0.04%
-💵 **Monthly Earnings:** ~0.04 USDC
-📆 **Yearly Earnings:** ~0.42 USDC
+💵 **Monthly Earnings:** ~0.03 USDC
+📆 **Yearly Earnings:** ~0.41 USDC
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **Ready to deposit?**
 Reply ""yes"" to confirm or ""cancel"" to abort.
-You can also modify: ""change to 500 USDC"" ",lending_workflow,,authenticated_supervisor,authenticated_supervisor,2380,Yes,deposit,authenticated,PASS,PASS: lending_workflow executed with execute_data
-9,2026-01-22T06:41:10.624539,send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e,en,transfer,transfer_workflow,"🔍 **Review Your Transfer**
+You can also modify: ""change to 500 USDC"" ",lending_workflow,,authenticated_supervisor,authenticated_supervisor,2750,Yes,deposit,authenticated,PASS,PASS: lending_workflow executed with execute_data
+9,2026-01-22T07:14:15.229391,send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e,en,transfer,transfer_workflow,"🔍 **Review Your Transfer**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -69,8 +116,8 @@ You can also modify: ""change to 500 USDC"" ",lending_workflow,,authenticated_su
 • Double-check the destination address
 • Make sure you trust the recipient
 
-**Ready to send?**",transfer_workflow,,authenticated_supervisor,authenticated_supervisor,3344,Yes,transfer,authenticated,PASS,PASS: transfer_workflow executed with execute_data
-10,2026-01-22T06:41:15.664583,transfer 0.5 ETH to my friend,en,transfer,transfer_workflow,"📤 **Sending 0.5 Ξ ETH**
+**Ready to send?**",transfer_workflow,,authenticated_supervisor,authenticated_supervisor,4156,Yes,transfer,authenticated,PASS,PASS: transfer_workflow executed with execute_data
+10,2026-01-22T07:14:20.597475,transfer 0.5 ETH to my friend,en,transfer,transfer_workflow,"📤 **Sending 0.5 Ξ ETH**
 
 Where should I send this?
 
@@ -81,8 +128,8 @@ Where should I send this?
 • Sending to wrong address = permanent loss
 • Copy-paste recommended (avoid typing)
 
-💬 Paste the recipient's wallet address",transfer_workflow,,authenticated_supervisor,authenticated_supervisor,4038,No,,authenticated,PARTIAL,PARTIAL: transfer_workflow routed but no execute_data
-11,2026-01-22T06:41:22.307641,send ETH,en,transfer,transfer_workflow,"Ξ **Send ETH**
+💬 Paste the recipient's wallet address",transfer_workflow,,authenticated_supervisor,authenticated_supervisor,4366,No,,authenticated,PARTIAL,PARTIAL: transfer_workflow routed but no execute_data
+11,2026-01-22T07:14:24.651626,send ETH,en,transfer,transfer_workflow,"Ξ **Send ETH**
 
 How much **ETH** would you like to send?
 
@@ -91,8 +138,8 @@ How much **ETH** would you like to send?
 • `0.5` (half a ETH)
 • `1000` (one thousand ETH)
 
-💬 Enter the amount to continue",transfer_workflow,,authenticated_supervisor,authenticated_supervisor,5641,No,,authenticated,PARTIAL,PARTIAL: transfer_workflow routed but no execute_data
-12,2026-01-22T06:41:27.406725,enviar 50 USDC a 0x123456789abcdef0123456789abcdef012345678,es,transfer,transfer_workflow,"🔍 **Review Your Transfer**
+💬 Enter the amount to continue",transfer_workflow,,authenticated_supervisor,authenticated_supervisor,3052,No,,authenticated,PARTIAL,PARTIAL: transfer_workflow routed but no execute_data
+12,2026-01-22T07:14:28.108490,enviar 50 USDC a 0x123456789abcdef0123456789abcdef012345678,es,transfer,transfer_workflow,"🔍 **Review Your Transfer**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -109,8 +156,8 @@ How much **ETH** would you like to send?
 • Make sure you trust the recipient
 
 **Ready to send?**
-",transfer_workflow,,authenticated_supervisor,authenticated_supervisor,4097,Yes,transfer,authenticated,PASS,PASS: transfer_workflow executed with execute_data
-13,2026-01-22T06:41:30.620987,buy $100 of ETH,en,buy,buy_workflow,"💳 **Review Your Purchase**
+",transfer_workflow,,authenticated_supervisor,authenticated_supervisor,2455,Yes,transfer,authenticated,PASS,PASS: transfer_workflow executed with execute_data
+13,2026-01-22T07:14:30.994883,buy $100 of ETH,en,buy,buy_workflow,"💳 **Review Your Purchase**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -126,8 +173,8 @@ How much **ETH** would you like to send?
 
 **Ready to purchase?**
 Reply ""yes"" to open payment or ""cancel"" to abort.
-You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor,authenticated_supervisor,2212,Yes,buy,authenticated,PASS,PASS: buy_workflow executed with execute_data
-14,2026-01-22T06:41:33.897758,purchase 50 dollars of USDC,en,buy,buy_workflow,"💳 **Review Your Purchase**
+You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor,authenticated_supervisor,1885,Yes,buy,authenticated,PASS,PASS: buy_workflow executed with execute_data
+14,2026-01-22T07:14:33.982669,purchase 50 dollars of USDC,en,buy,buy_workflow,"💳 **Review Your Purchase**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -143,8 +190,8 @@ You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor
 
 **Ready to purchase?**
 Reply ""yes"" to open payment or ""cancel"" to abort.
-You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor,authenticated_supervisor,2275,Yes,buy,authenticated,PASS,PASS: buy_workflow executed with execute_data
-15,2026-01-22T06:41:37.095561,buy crypto,en,buy,buy_workflow,"💳 **Buy Crypto**
+You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor,authenticated_supervisor,1986,Yes,buy,authenticated,PASS,PASS: buy_workflow executed with execute_data
+15,2026-01-22T07:14:36.884271,buy crypto,en,buy,buy_workflow,"💳 **Buy Crypto**
 
 Purchase cryptocurrency with card, Apple Pay, or Google Pay.
 
@@ -160,8 +207,8 @@ Purchase cryptocurrency with card, Apple Pay, or Google Pay.
 • Google Pay
 • Bank Transfer
 
-💬 Tell me what you'd like to buy (e.g., ""buy $100 of ETH"")",buy_workflow,,authenticated_supervisor,authenticated_supervisor,2196,No,,authenticated,PARTIAL,PARTIAL: buy_workflow routed but no execute_data
-16,2026-01-22T06:41:39.917362,comprar $200 de BTC,es,buy,buy_workflow,"💳 **Review Your Purchase**
+💬 Tell me what you'd like to buy (e.g., ""buy $100 of ETH"")",buy_workflow,,authenticated_supervisor,authenticated_supervisor,1900,No,,authenticated,PARTIAL,PARTIAL: buy_workflow routed but no execute_data
+16,2026-01-22T07:14:40.000032,comprar $200 de BTC,es,buy,buy_workflow,"💳 **Review Your Purchase**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -177,38 +224,38 @@ Purchase cryptocurrency with card, Apple Pay, or Google Pay.
 
 **Ready to purchase?**
 Reply ""yes"" to open payment or ""cancel"" to abort.
-You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor,authenticated_supervisor,1820,Yes,buy,authenticated,PASS,PASS: buy_workflow executed with execute_data
-17,2026-01-22T06:41:44.558485,compare USDC rates,en,money_market,money_market_workflow,"📊 **USDC Rate Comparison** 💵
+You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor,authenticated_supervisor,2114,Yes,buy,authenticated,PASS,PASS: buy_workflow executed with execute_data
+17,2026-01-22T07:14:45.092170,compare USDC rates,en,money_market,money_market_workflow,"📊 **USDC Rate Comparison** 💵
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **Supply APY Rankings:**
-1. 🏆 **Morpho (Steakhouse Prime USDC)**: 3.89% APY
+1. 🏆 **Morpho (Steakhouse Prime USDC)**: 3.90% APY
 2. **Aave V3**: 3.49% APY
 3. **Compound V3**: 3.13% APY
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🏆 **Best Option:** Morpho (Steakhouse Prime USDC) at **3.89% APY**
+🏆 **Best Option:** Morpho (Steakhouse Prime USDC) at **3.90% APY**
 
 **What would you like to do?**
-• Reply ""aave"", ""compound"", or ""morpho"" to",money_market_workflow,,authenticated_supervisor,authenticated_supervisor,3639,No,,authenticated,PARTIAL,PARTIAL: money_market_workflow routed but no execute_data
-18,2026-01-22T06:41:48.483620,best lending rates for ETH,en,money_market,money_market_workflow,"📊 **ETH Rate Comparison** Ξ
+• Reply ""aave"", ""compound"", or ""morpho"" to",money_market_workflow,,authenticated_supervisor,authenticated_supervisor,4090,No,,authenticated,PARTIAL,PARTIAL: money_market_workflow routed but no execute_data
+18,2026-01-22T07:14:51.149196,best lending rates for ETH,en,money_market,money_market_workflow,"📊 **ETH Rate Comparison** Ξ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **Supply APY Rankings:**
-1. 🏆 **Morpho (Extrafi XLend WETH)**: 2.24% APY
+1. 🏆 **Morpho (Extrafi XLend WETH)**: 3.21% APY
 2. **Aave V3**: 1.47% APY
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🏆 **Best Option:** Morpho (Extrafi XLend WETH) at **2.24% APY**
+🏆 **Best Option:** Morpho (Extrafi XLend WETH) at **3.21% APY**
 
 **What would you like to do?**
 • Reply ""aave"", ""compound"", or ""morpho"" to deposit
-• Enter an amount (e.g., ""de",money_market_workflow,,authenticated_supervisor,authenticated_supervisor,2923,No,,authenticated,PARTIAL,PARTIAL: money_market_workflow routed but no execute_data
-19,2026-01-22T06:41:52.831321,where should I deposit DAI,en,money_market,money_market_workflow,"❌ **No Rates Available**
+• Enter an amount (e.g., ""de",money_market_workflow,,authenticated_supervisor,authenticated_supervisor,5056,No,,authenticated,PARTIAL,PARTIAL: money_market_workflow routed but no execute_data
+19,2026-01-22T07:14:55.116100,where should I deposit DAI,en,money_market,money_market_workflow,"❌ **No Rates Available**
 
 Sorry, I couldn't fetch rates for **DAI** on Base.
 
@@ -216,24 +263,33 @@ Sorry, I couldn't fetch rates for **DAI** on Base.
 • Using a different asset (USDC, DAI, ETH)
 • Checking back later
 
-Would you like to compare a different asset?",money_market_workflow,,authenticated_supervisor,authenticated_supervisor,3346,No,,authenticated,PARTIAL,PARTIAL: money_market_workflow routed but no execute_data
-20,2026-01-22T06:41:57.644640,comparar tasas de USDC,es,money_market,money_market_workflow,"Para comparar las tasas de USDC, necesito saber a qué tipo de tasas te refieres. ¿Estás interesado en:
+Would you like to compare a different asset?",money_market_workflow,,authenticated_supervisor,authenticated_supervisor,2966,No,,authenticated,PARTIAL,PARTIAL: money_market_workflow routed but no execute_data
+20,2026-01-22T07:15:00.569214,comparar tasas de USDC,es,money_market,money_market_workflow,"📊 **USDC Rate Comparison** 💵
 
-*   **Tasas de interés por prestar o apostar USDC?** (Por ejemplo, en plataformas como Anvil)
-*   **Tasas de intercambio al convertir USDC a otras criptomonedas o monedas fiduciarias?**
-*   **Tasas de transferencia al enviar USDC entre billeteras o intercambios?**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Una vez que me proporciones má",hunter_ai,"[{""source_type"": ""api"", ""source_name"": ""CoinGecko"", ""source_id"": ""coin:usd-coin"", ""url"": ""https://www.coingecko.com/en/coins/usd-coin"", ""citation_text"": ""Real-time price data for USD-COIN from CoinGec",authenticated_supervisor,authenticated_supervisor,3812,No,,authenticated,FAIL,"FAIL: Expected money_market_workflow, got agents_used=hunter_ai"
-21,2026-01-22T06:42:01.719394,what is the price of ETH,en,price_query,hunter_ai,"The current price of Ethereum (ETH) is $3,014.74, with a 24-hour change of +1.14%. This data is sourced directly from the CoinGecko API.
-",hunter_ai,"[{""source_type"": ""api"", ""source_name"": ""CoinGecko"", ""source_id"": ""coin:ethereum"", ""url"": ""https://www.coingecko.com/en/coins/ethereum"", ""citation_text"": ""Real-time price data for ETHEREUM from CoinGec",authenticated_supervisor,authenticated_supervisor,3073,No,,authenticated,PASS,PASS: hunter_ai correctly routed
-22,2026-01-22T06:42:22.241217,best yield for USDC,en,yield_info,defi_yield,"Here are the top USDC yield opportunities based on the DeFiLlama data you provided. Please note the extremely high APYs come with very high risk scores.
+**Supply APY Rankings:**
+1. 🏆 **Morpho (Steakhouse Prime USDC)**: 3.90% APY
+2. **Aave V3**: 3.49% APY
+3. **Compound V3**: 3.13% APY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🏆 **Best Option:** Morpho (Steakhouse Prime USDC) at **3.90% APY**
+
+**What would you like to do?**
+• Reply ""aave"", ""compound"", or ""morpho"" to",money_market_workflow,,authenticated_supervisor,authenticated_supervisor,4452,No,,authenticated,PARTIAL,PARTIAL: money_market_workflow routed but no execute_data
+21,2026-01-22T07:15:05.427853,what is the price of ETH,en,price_query,hunter_ai,"The current price of Ethereum (ETH) is $3,009.79, with a 24-hour change of +0.98%. This data is sourced directly from the CoinGecko API.
+",hunter_ai,"[{""source_type"": ""api"", ""source_name"": ""CoinGecko"", ""source_id"": ""coin:ethereum"", ""url"": ""https://www.coingecko.com/en/coins/ethereum"", ""citation_text"": ""Real-time price data for ETHEREUM from CoinGec",authenticated_supervisor,authenticated_supervisor,3857,No,,authenticated,PASS,PASS: hunter_ai correctly routed
+22,2026-01-22T07:15:29.320694,best yield for USDC,en,yield_info,defi_yield,"Here are the top yield opportunities for USDC based on the DeFiLlama data you provided. Note that extremely high APYs often come with very high risk.
 
 | Protocol | Pool | Chain | APY (%) | TVL | Risk Score (0-100) | Impermanent Loss Risk |
 |----------|------|-------|---------|-----|-------------------|----------------------|
-| uniswap-v4 | WETH-USDT | Ethereum | 524188.84% | $118.20K | 95 | Yes","defi_yield,risk_analyzer","[{""source_type"": ""llm"", ""source_name"": ""gemini-2.0-flash"", ""source_id"": null, ""url"": null, ""citation_text"": ""Generated by gemini-2.0-flash"", ""fetched_at"": ""2026-01-22T06:42:12.636809+00:00"", ""data_age",authenticated_supervisor,authenticated_supervisor,19515,No,,authenticated,PASS,PASS: defi_yield correctly routed
-23,2026-01-22T06:42:29.399866,my portfolio,en,portfolio,portfolio,"To view your portfolio and holdings, please sign in or create an account. Portfolio features require authentication to access your wallet data.
-",portfolio,"[{""source_type"": ""database"", ""source_name"": ""Anvil Database"", ""source_id"": null, ""url"": null, ""citation_text"": ""Your portfolio data from Anvil"", ""fetched_at"": ""2026-01-22T06:42:29.391704+00:00"", ""data",authenticated_supervisor,authenticated_supervisor,6157,No,,authenticated,PASS,PASS: portfolio correctly routed
-24,2026-01-22T06:42:32.176730,my wallets,en,wallet,wallet,"**Wallet Access Requires Authentication**
+| uniswap-v4 | WETH-USDT | Ethereum | 524188.84% | $118.20K | 95 | Yes |
+","defi_yield,risk_analyzer","[{""source_type"": ""llm"", ""source_name"": ""gemini-2.0-flash"", ""source_id"": null, ""url"": null, ""citation_text"": ""Generated by gemini-2.0-flash"", ""fetched_at"": ""2026-01-22T07:15:17.788376+00:00"", ""data_age",authenticated_supervisor,authenticated_supervisor,22891,No,,authenticated,PASS,PASS: defi_yield correctly routed
+23,2026-01-22T07:15:34.063699,my portfolio,en,portfolio,portfolio,"To view your portfolio and holdings, please sign in or create an account. Portfolio features require authentication to access your wallet data.
+",portfolio,"[{""source_type"": ""database"", ""source_name"": ""Anvil Database"", ""source_id"": null, ""url"": null, ""citation_text"": ""Your portfolio data from Anvil"", ""fetched_at"": ""2026-01-22T07:15:34.055218+00:00"", ""data",authenticated_supervisor,authenticated_supervisor,3741,No,,authenticated,PASS,PASS: portfolio correctly routed
+24,2026-01-22T07:15:36.999685,my wallets,en,wallet,wallet,"**Wallet Access Requires Authentication**
 
 To view your wallet information, balances, and connected addresses, you need to sign in to your Anvil account.
 
@@ -243,8 +299,8 @@ To view your wallet information, balances, and connected addresses, you need to 
 3. Once connected, I can show you:
    - All your connected wallets
    - Balances across chains
-   - Transaction hist",wallet,"[{""source_type"": ""llm"", ""source_name"": ""gemini-2.0-flash"", ""source_id"": null, ""url"": null, ""citation_text"": ""Generated by gemini-2.0-flash"", ""fetched_at"": ""2026-01-22T06:42:32.167917+00:00"", ""data_age",authenticated_supervisor,authenticated_supervisor,1775,No,,authenticated,PASS,PASS: wallet correctly routed
-25,2026-01-22T06:42:35.228893,transaction history,en,transactions,transaction_history,"**Transaction History Requires Authentication**
+   - Transaction hist",wallet,"[{""source_type"": ""llm"", ""source_name"": ""gemini-2.0-flash"", ""source_id"": null, ""url"": null, ""citation_text"": ""Generated by gemini-2.0-flash"", ""fetched_at"": ""2026-01-22T07:15:36.991106+00:00"", ""data_age",authenticated_supervisor,authenticated_supervisor,1934,No,,authenticated,PASS,PASS: wallet correctly routed
+25,2026-01-22T07:15:39.900474,transaction history,en,transactions,transaction_history,"**Transaction History Requires Authentication**
 
 To view your transaction history, you need to sign in to your Anvil account.
 
@@ -254,11 +310,21 @@ To view your transaction history, you need to sign in to your Anvil account.
 - Filter by type (Swap, Transfer, Approve, etc.)
 - See transaction status (Success, Pending, Failed)
 - View 30-day volume analytics
-- Track gas costs and fe",transaction_history,"[{""source_type"": ""llm"", ""source_name"": ""gemini-2.0-flash"", ""source_id"": null, ""url"": null, ""citation_text"": ""Generated by gemini-2.0-flash"", ""fetched_at"": ""2026-01-22T06:42:35.220869+00:00"", ""data_age",authenticated_supervisor,authenticated_supervisor,2050,No,,authenticated,PASS,PASS: transaction_history correctly routed
-26,2026-01-22T06:42:38.157212,我想交换 1 ETH 到 USDC,zh,swap_multilang,swap_workflow,"❌ Unable to get swap quote: Same-chain swaps require 1inch client (not configured)
+- Track gas costs and fe",transaction_history,"[{""source_type"": ""llm"", ""source_name"": ""gemini-2.0-flash"", ""source_id"": null, ""url"": null, ""citation_text"": ""Generated by gemini-2.0-flash"", ""fetched_at"": ""2026-01-22T07:15:39.892274+00:00"", ""data_age",authenticated_supervisor,authenticated_supervisor,1899,No,,authenticated,PASS,PASS: transaction_history correctly routed
+26,2026-01-22T07:15:43.942193,我想交换 1 ETH 到 USDC,zh,swap_multilang,swap_workflow,"📊 **Swap Quote**
 
-Please try again or adjust your swap parameters.",swap_workflow,,authenticated_supervisor,authenticated_supervisor,1927,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
-27,2026-01-22T06:42:41.097038,depositar 500 USDC,pt,lending_multilang,lending_workflow,"📊 **Deposit Quote**
+**1 ETH** → **3002.395197 USDC**
+
+• Price Impact: 0.00%
+• Network: BASE
+• Aggregator: LIFI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 1 ETH"" ",swap_workflow,,authenticated_supervisor,authenticated_supervisor,3040,No,,authenticated,PARTIAL,PARTIAL: swap_workflow routed but no execute_data
+27,2026-01-22T07:15:47.080123,depositar 500 USDC,pt,lending_multilang,lending_workflow,"📊 **Deposit Quote**
 
 **Yearn OG USDC**
 
@@ -271,8 +337,8 @@ Please try again or adjust your swap parameters.",swap_workflow,,authenticated_s
 
 **Ready to deposit?**
 Reply ""yes"" to confirm or ""cancel"" to abort.
-You can also modify: ""change to 500 USDC"" ",lending_workflow,,authenticated_supervisor,authenticated_supervisor,1938,Yes,deposit,authenticated,PASS,PASS: lending_workflow executed with execute_data
-28,2026-01-22T06:42:44.916478,comprar $100 de ETH,pt,buy_multilang,buy_workflow,"💳 **Review Your Purchase**
+You can also modify: ""change to 500 USDC"" ",lending_workflow,,authenticated_supervisor,authenticated_supervisor,2136,Yes,deposit,authenticated,PASS,PASS: lending_workflow executed with execute_data
+28,2026-01-22T07:15:49.931282,comprar $100 de ETH,pt,buy_multilang,buy_workflow,"💳 **Review Your Purchase**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -288,4 +354,4 @@ You can also modify: ""change to 500 USDC"" ",lending_workflow,,authenticated_su
 
 **Ready to purchase?**
 Reply ""yes"" to open payment or ""cancel"" to abort.
-You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor,authenticated_supervisor,2818,Yes,buy,authenticated,PASS,PASS: buy_workflow executed with execute_data
+You can also modify: ""change to $200"" ",buy_workflow,,authenticated_supervisor,authenticated_supervisor,1849,Yes,buy,authenticated,PASS,PASS: buy_workflow executed with execute_data

@@ -309,10 +309,16 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             return None
         
         try:
-            vaults = await self._morpho.get_vaults(asset=asset, chain=chain)
+            # Map ETH to WETH for vault lookup (Morpho vaults use WETH, not ETH)
+            lookup_asset = asset.upper()
+            if lookup_asset == "ETH":
+                lookup_asset = "WETH"
+                logger.info(f"[LendingWorkflow] Mapped ETH → WETH for vault lookup")
+            
+            vaults = await self._morpho.get_vaults(asset=lookup_asset, chain=chain)
             
             if not vaults:
-                logger.info(f"[LendingWorkflow] No Morpho vaults for {asset} on {chain}")
+                logger.info(f"[LendingWorkflow] No Morpho vaults for {lookup_asset} on {chain}")
                 return None
             
             # Filter whitelisted vaults and exclude problematic ones

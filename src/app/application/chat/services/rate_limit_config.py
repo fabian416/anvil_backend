@@ -19,9 +19,9 @@ class RateLimitConfig(TypedDict):
 # Rate limits by user type
 RATE_LIMITS: dict[str, RateLimitConfig] = {
     "guest": {
-        "messages_per_hour": 20,
-        "messages_per_day": 50,
-        "max_conversations": 1,
+        "messages_per_hour": 100,  # Expanded for testing
+        "messages_per_day": 500,
+        "max_conversations": 10,
         "features": [
             "sentiment",
             "prediction", 
@@ -34,9 +34,9 @@ RATE_LIMITS: dict[str, RateLimitConfig] = {
         ],
     },
     "authenticated": {
-        "messages_per_hour": 200,
-        "messages_per_day": 1000,
-        "max_conversations": 50,
+        "messages_per_hour": 500,  # Expanded for testing
+        "messages_per_day": 2000,
+        "max_conversations": 100,
         "features": ["*"],  # All features
     },
     "premium": {

@@ -43,32 +43,33 @@ logger = logging.getLogger(__name__)
 
 
 # Common token addresses by chain
+# Use 0xEeee...eE for native ETH (LiFi standard)
+NATIVE_ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+
 TOKEN_ADDRESSES = {
     "ethereum": {
-        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        "ETH": NATIVE_ETH_ADDRESS,
         "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
         "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        "DAI": "0x6B175474E89094C44Da98b954EesdeAC495271d0F",
         "WBTC": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-    },
-    "base": {
-        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-        "WETH": "0x4200000000000000000000000000000000000006",
-        "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-        "USDbC": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
-    },
-    "arbitrum": {
-        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-        "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-        "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-        "USDT": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+        "DAI": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
     },
     "polygon": {
-        "MATIC": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        "MATIC": NATIVE_ETH_ADDRESS,
         "WMATIC": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
         "USDC": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
         "USDT": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+    },
+    "arbitrum": {
+        "ETH": NATIVE_ETH_ADDRESS,
+        "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+        "USDC": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+    },
+    "base": {
+        "ETH": NATIVE_ETH_ADDRESS,
+        "WETH": "0x4200000000000000000000000000000000000006",
+        "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     },
 }
 
@@ -459,13 +460,16 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                 if not self._lifi:
                     return {"error": "Cross-chain swaps require LiFi client (not configured)"}
                 
+                # Use a valid placeholder address if no wallet connected
+                # LiFi requires a valid ETH address format
+                sender_address = wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
                 quote = await self._lifi.get_quote(
                     from_chain=chain,
                     to_chain=to_chain,
                     from_token=from_token,
                     to_token=to_token,
                     from_amount=amount_wei,
-                    from_address=wallet_address or "0x0000000000000000000000000000000000000000",
+                    from_address=sender_address,
                 )
                 
                 return {
@@ -476,27 +480,49 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                     "raw_quote": quote,
                 }
             else:
-                # Same-chain: Use 1inch
-                if not self._oneinch:
-                    return {"error": "Same-chain swaps require 1inch client (not configured)"}
-                
-                from_addr = self._resolve_token_address(from_token, chain)
-                to_addr = self._resolve_token_address(to_token, chain)
-                
-                quote = await self._oneinch.get_swap_quote(
-                    from_token=from_addr,
-                    to_token=to_addr,
-                    amount=amount_wei,
-                    slippage=1.0,
-                )
-                
-                return {
-                    "output_amount": self._from_wei(quote.to_amount, to_token),
-                    "price_impact": getattr(quote, 'price_impact', 0),
-                    "gas_estimate": int(getattr(quote, 'estimated_gas', 200000)),
-                    "aggregator": "1inch",
-                    "raw_quote": quote,
-                }
+                # Same-chain: Try 1inch first, fallback to LiFi
+                if self._oneinch:
+                    # Primary: Use 1inch
+                    from_addr = self._resolve_token_address(from_token, chain)
+                    to_addr = self._resolve_token_address(to_token, chain)
+                    
+                    quote = await self._oneinch.get_swap_quote(
+                        from_token=from_addr,
+                        to_token=to_addr,
+                        amount=amount_wei,
+                        slippage=1.0,
+                    )
+                    
+                    return {
+                        "output_amount": self._from_wei(quote.to_amount, to_token),
+                        "price_impact": getattr(quote, 'price_impact', 0),
+                        "gas_estimate": int(getattr(quote, 'estimated_gas', 200000)),
+                        "aggregator": "1inch",
+                        "raw_quote": quote,
+                    }
+                elif self._lifi:
+                    # Fallback: Use LiFi for same-chain swaps
+                    logger.info("[SwapWorkflow] Using LiFi fallback for same-chain swap")
+                    # Use a valid placeholder address if no wallet connected
+                    sender_address = wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                    quote = await self._lifi.get_quote(
+                        from_chain=chain,
+                        to_chain=chain,  # Same chain
+                        from_token=from_token,
+                        to_token=to_token,
+                        from_amount=amount_wei,
+                        from_address=sender_address,
+                    )
+                    
+                    return {
+                        "output_amount": self._from_wei(quote.to_amount, to_token),
+                        "price_impact": getattr(quote, 'price_impact', 0),
+                        "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
+                        "aggregator": "lifi",
+                        "raw_quote": quote,
+                    }
+                else:
+                    return {"error": "Swap quote unavailable - no swap aggregator configured"}
                 
         except Exception as e:
             logger.error(f"[SwapWorkflow] Quote fetch failed: {e}")

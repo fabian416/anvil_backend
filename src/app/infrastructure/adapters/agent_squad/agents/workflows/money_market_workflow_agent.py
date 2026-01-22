@@ -360,10 +360,18 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             client = MorphoClient()
             chain_id = CHAIN_IDS.get(chain.lower(), 8453)  # Default to Base
             
-            # Get asset-specific address for Base USDC
+            # Map ETH to WETH for Morpho lookup (Morpho vaults use WETH)
+            lookup_asset = asset.upper()
+            if lookup_asset == "ETH":
+                lookup_asset = "WETH"
+                logger.info(f"[MoneyMarketWorkflow] Mapped ETH → WETH for Morpho lookup")
+            
+            # Get asset-specific address for Base
             asset_address = None
-            if asset.upper() == "USDC" and chain.lower() == "base":
+            if lookup_asset == "USDC" and chain.lower() == "base":
                 asset_address = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+            elif lookup_asset == "WETH" and chain.lower() == "base":
+                asset_address = "0x4200000000000000000000000000000000000006"
             
             # Fetch vaults
             if asset_address:
@@ -379,8 +387,8 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                     whitelisted=True,
                     first=10,
                 )
-                # Filter by asset symbol
-                vaults = [v for v in vaults if asset.upper() in v.asset_symbol.upper()]
+                # Filter by asset symbol (use lookup_asset which maps ETH → WETH)
+                vaults = [v for v in vaults if lookup_asset in v.asset_symbol.upper()]
             
             await client.close()
             

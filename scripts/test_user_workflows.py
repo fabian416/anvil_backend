@@ -21,7 +21,7 @@ import httpx
 
 # Configuration
 BASE_URL = "http://localhost:8080"
-JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJROEFQMloyOUtNYzMzT3pkaF85QnY1SWc2ZFFnLU1IeHNvcUFZeWhUWkRBIiwiZXhwIjoxNzY5MDY3NTI0fQ.I7vixw8I0egoi78RowMoK1c7HTkb_xzeXV2Adr2Gssw"
+JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiI5WEVnNGFYUFMySlRNV1diNXBCbVdYMHIza19TY1RselVwSHUtU2I1WTJnIiwiZXhwIjoxNzY5NjcwNzMwfQ.Z-mZVOLQDbgAlwC8oksWzbUhMBuGxgep2IwF1HwdhtI"
 OUTPUT_FILE = "docs/output/user_workflows.csv"
 
 # Test cases for each workflow
@@ -240,19 +240,7 @@ TEST_CASES = [
 
 async def get_or_create_conversation(client: httpx.AsyncClient) -> str:
     """Get existing conversation or create a new one."""
-    # Try to list conversations first
-    response = await client.get(
-        f"{BASE_URL}/api/v1/conversations",
-        headers={"Authorization": f"Bearer {JWT_TOKEN}"},
-    )
-    
-    if response.status_code == 200:
-        data = response.json()
-        # Response is a list directly
-        conversations = data if isinstance(data, list) else data.get("conversations", [])
-        if conversations:
-            return conversations[0]["id"]
-    
+    # Always create a new conversation to avoid rate limits
     # Create new conversation
     response = await client.post(
         f"{BASE_URL}/api/v1/conversations",

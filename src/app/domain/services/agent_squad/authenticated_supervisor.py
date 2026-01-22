@@ -357,6 +357,8 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
    - The money_market_workflow agent handles COMPLETE rate comparison across Aave, Compound, Morpho
    - Use "money_market_workflow" when user wants to COMPARE rates across protocols
    - Examples: "compare USDC rates", "best lending rates", "where to deposit ETH", "money market"
+   - SPANISH: "comparar tasas", "mejores tasas", "donde depositar" → "money_market_workflow"
+   - PORTUGUESE: "comparar taxas", "melhores taxas", "onde depositar" → "money_market_workflow"
    - DO NOT combine money_market_workflow with other agents - it handles comparison and deposit selection
    
 12. PRICE/MARKET DATA:
@@ -400,6 +402,12 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 "compare USDC rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across Aave, Compound, Morpho","depends_on":[]}}]}}
 "best lending rates for ETH" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare ETH lending rates across protocols","depends_on":[]}}]}}
 "where should I deposit DAI" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare DAI deposit rates and recommend best protocol","depends_on":[]}}]}}
+"comparar tasas de USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across protocols (Spanish)","depends_on":[]}}]}}
+"comparar tasas" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare lending rates across protocols (Spanish)","depends_on":[]}}]}}
+"mejores tasas para USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Find best USDC rates (Spanish)","depends_on":[]}}]}}
+"donde depositar" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Recommend best deposit protocol (Spanish)","depends_on":[]}}]}}
+"comparar taxas de USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across protocols (Portuguese)","depends_on":[]}}]}}
+"melhores taxas" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Find best rates (Portuguese)","depends_on":[]}}]}}
 "write a poem about gas fees" → {{"tasks":[{{"agent_type":"chat","task_description":"Write a creative poem about Ethereum gas fees","depends_on":[]}}]}}
 "btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
 "what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi concepts","depends_on":[]}}]}}
