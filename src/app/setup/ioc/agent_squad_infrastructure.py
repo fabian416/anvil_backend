@@ -75,6 +75,7 @@ from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClie
 from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
 from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
 from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
 from app.setup.config.agent_squad import AgentSquadSettings
 from app.setup.config.settings import AppSettings
 
@@ -849,6 +850,7 @@ class AgentSquadInfrastructureProvider(Provider):
         aave_gateway: AaveGateway,
         compound_gateway: CompoundGateway,
         morpho_gateway: MorphoGateway,
+        defillama_client: DefiLlamaClientProtocol | None,
     ) -> MoneyMarketWorkflowAgent:
         """
         Provide Money Market Workflow Agent for authenticated users.
@@ -863,12 +865,14 @@ class AgentSquadInfrastructureProvider(Provider):
         - Aave V3 for lending markets
         - Compound V3 for lending markets
         - Morpho for vault rates
+        - DeFiLlama for fallback APY data
         """
         return MoneyMarketWorkflowAgent(
             llm_client=llm_client,
             aave_gateway=aave_gateway,
             compound_gateway=compound_gateway,
             morpho_gateway=morpho_gateway,
+            defillama_client=defillama_client,
         )
 
     # ========================================

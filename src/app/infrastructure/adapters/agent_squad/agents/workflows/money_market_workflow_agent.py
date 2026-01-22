@@ -40,8 +40,19 @@ if TYPE_CHECKING:
     from app.domain.ports.aave_gateway import AaveGateway
     from app.domain.ports.compound_gateway import CompoundGateway
     from app.domain.ports.morpho_gateway import MorphoGateway
+    from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
 
 logger = logging.getLogger(__name__)
+
+# DeFiLlama chain name mappings
+DEFILLAMA_CHAIN_MAP = {
+    "ethereum": "Ethereum",
+    "base": "Base",
+    "polygon": "Polygon",
+    "arbitrum": "Arbitrum",
+    "optimism": "Optimism",
+    "avalanche": "Avalanche",
+}
 
 
 # Supported assets for comparison
@@ -79,6 +90,7 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         aave_gateway: "AaveGateway | None" = None,
         compound_gateway: "CompoundGateway | None" = None,
         morpho_gateway: "MorphoGateway | None" = None,
+        defillama_client: "DefiLlamaClient | None" = None,
     ):
         """
         Initialize money market workflow agent.
@@ -88,11 +100,13 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             aave_gateway: Gateway for Aave V3 data
             compound_gateway: Gateway for Compound V3 data
             morpho_gateway: Gateway for Morpho vault data
+            defillama_client: DeFiLlama client for fallback rate data
         """
         super().__init__(llm_client=llm_client)
         self._aave = aave_gateway
         self._compound = compound_gateway
         self._morpho = morpho_gateway
+        self._defillama = defillama_client
     
     @property
     def agent_type(self) -> AgentType:
@@ -198,6 +212,11 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         morpho_rate = await self._fetch_morpho_rate(asset, chain)
         if morpho_rate:
             rates.append(morpho_rate)
+        
+        # Fallback to DeFiLlama if no rates from gateways
+        if not rates and self._defillama:
+            logger.info("[MoneyMarketWorkflow] Using DeFiLlama fallback for rates")
+            rates = await self._fetch_defillama_rates(asset, chain)
         
         if not rates:
             response = self._format_no_rates_available(asset, chain, language)
@@ -411,6 +430,104 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         except Exception as e:
             logger.error(f"[MoneyMarketWorkflow] Error fetching Morpho rate: {e}")
             return None
+    
+    async def _fetch_defillama_rates(
+        self,
+        asset: str,
+        chain: str,
+    ) -> list[dict[str, Any]]:
+        """
+        Fetch rates from DeFiLlama as fallback.
+        
+        Returns rates for Aave, Compound, and Morpho from DeFiLlama yields API.
+        """
+        rates = []
+        
+        if not self._defillama:
+            return rates
+        
+        try:
+            # Get all yields and filter by protocol
+            all_yields = await self._defillama.get_protocol_yields()
+            
+            chain_name = DEFILLAMA_CHAIN_MAP.get(chain.lower(), chain.title())
+            asset_upper = asset.upper()
+            
+            # Protocol mappings
+            protocol_map = {
+                "aave-v3": ("aave", "Aave V3"),
+                "aave-v2": ("aave", "Aave V2"),
+                "compound-v3": ("compound", "Compound V3"),
+                "compound": ("compound", "Compound"),
+                "morpho-blue": ("morpho", "Morpho Blue"),
+                "morpho-aave": ("morpho", "Morpho Aave"),
+            }
+            
+            protocol_rates: dict[str, dict[str, Any]] = {}
+            
+            for pool in all_yields:
+                # Check chain
+                if pool.chain.lower() != chain_name.lower():
+                    continue
+                
+                # Check asset in symbol
+                if not self._symbol_contains_asset(pool.symbol, asset_upper):
+                    continue
+                
+                # Check if it's a supported protocol
+                project_lower = pool.project.lower()
+                protocol_info = protocol_map.get(project_lower)
+                
+                if not protocol_info:
+                    continue
+                
+                protocol_id, protocol_name = protocol_info
+                
+                # Keep best rate per protocol
+                if protocol_id not in protocol_rates or pool.apy > protocol_rates[protocol_id].get("supply_apy", 0):
+                    protocol_rates[protocol_id] = {
+                        "protocol": protocol_id,
+                        "name": protocol_name,
+                        "supply_apy": pool.apy,
+                        "borrow_apy": 0,
+                        "tvl": pool.tvl_usd,
+                        "utilization": 0,
+                        "pool_id": pool.pool,
+                    }
+            
+            rates = list(protocol_rates.values())
+            logger.info(f"[MoneyMarketWorkflow] Found {len(rates)} rates from DeFiLlama for {asset} on {chain}")
+            
+        except Exception as e:
+            logger.error(f"[MoneyMarketWorkflow] Error fetching DeFiLlama rates: {e}")
+        
+        return rates
+    
+    def _symbol_contains_asset(self, symbol: str, asset: str) -> bool:
+        """Check if pool symbol contains the target asset."""
+        symbol_upper = symbol.upper()
+        asset_upper = asset.upper()
+        
+        # Direct match
+        if symbol_upper == asset_upper:
+            return True
+        
+        # Common variants
+        asset_variants = {
+            "USDC": ["USDC", "AUSDC", "CUSDC", "USDC.E"],
+            "ETH": ["ETH", "WETH", "AETH", "STETH"],
+            "DAI": ["DAI", "ADAI", "CDAI", "SDAI"],
+            "USDT": ["USDT", "AUSDT", "CUSDT"],
+            "WBTC": ["WBTC", "AWBTC", "CWBTC"],
+        }
+        
+        variants = asset_variants.get(asset_upper, [asset_upper])
+        
+        for variant in variants:
+            if variant in symbol_upper:
+                return True
+        
+        return False
     
     # ========================================
     # Parameter Extraction
