@@ -109,10 +109,11 @@ class TestUserShortcuts:
     async def test_shortcut_intent_detection(
         self,
         shortcuts_data: list,
-        conversation_id: str,
+        conversation_id: str,  # Keep for compatibility but create fresh ones per shortcut
     ):
         """
         Test that all shortcut examples detect the correct intent.
+        Creates a fresh conversation per shortcut category to avoid context pollution.
         """
         failures = []
         passes = []
@@ -121,12 +122,24 @@ class TestUserShortcuts:
             intent = shortcut["intent"]
             command = shortcut["command"]
             
+            # Create fresh conversation for each shortcut category to avoid context pollution
+            create_resp = await self.client.post(
+                "/api/v1/conversations",
+                json={"title": f"Test {command}", "language": "en"},
+                headers={"Authorization": f"Bearer {self.auth_token}"},
+            )
+            if create_resp.status_code == 201:
+                fresh_conv_id = create_resp.json()["id"]
+            else:
+                # Fallback to provided conversation_id if creation fails
+                fresh_conv_id = conversation_id
+            
             for example in shortcut["examples"]:
                 start_time = datetime.now(timezone.utc)
                 
                 # Try new endpoint first
                 response = await self.client.post(
-                    f"/api/v1/conversations/{conversation_id}/messages",
+                    f"/api/v1/conversations/{fresh_conv_id}/messages",
                     json={"content": example, "language": "en"},
                     headers={"Authorization": f"Bearer {self.auth_token}"},
                 )
@@ -134,7 +147,7 @@ class TestUserShortcuts:
                 if response.status_code == 404:
                     # Fallback to legacy
                     response = await self.client.post(
-                        f"/api/v1/user/chat/conversations/{conversation_id}/messages",
+                        f"/api/v1/user/chat/conversations/{fresh_conv_id}/messages",
                         json={"content": example, "language": "en"},
                         headers={"Authorization": f"Bearer {self.auth_token}"},
                     )
