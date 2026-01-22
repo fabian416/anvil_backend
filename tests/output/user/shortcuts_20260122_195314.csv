@@ -1,0 +1,1304 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+shortcut_lending_Lend,2026-01-22T19:51:04.610224+00:00,shortcuts,lending,NO,1,1,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with the number (1-5) or type the asset name (e.g., ""USDC"")
+",lending,lending,,lending_handler,485,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_lending_Lend,2026-01-22T19:51:05.692813+00:00,shortcuts,lending,NO,1,1,Show best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with t",lending,lending,,lending_handler,203,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent as 'lending' and provides a list of available assets for deposit into lending vaults. The response is contextually appropriate and aligns with the expected behavior. The agent prompts the user to select an asset, which is a logical next step in the lending process.",,,,
+shortcut_lending_Lend,2026-01-22T19:51:06.830108+00:00,shortcuts,lending,NO,1,1,Earn yield on my ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,194,NO,,guest,en,PASS,,,PASS,1.0,"The agent's response aligns perfectly with the expected behavior. The user's input 'Earn yield on my ETH' clearly indicates a lending intent. The agent correctly interprets this and prompts the user to deposit ETH, which is a standard action in a lending scenario. The response is contextually appropriate and demonstrates a clear understanding of the user's intent.",,,,
+shortcut_lending_Lend,2026-01-22T19:51:08.021585+00:00,shortcuts,lending,NO,1,1,Best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,193,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent as 'lending' and prompts the user for the amount they wish to deposit. The response is contextually appropriate, given the user's initial query about 'best lending vaults'. The system correctly asks for the deposit amount and provides examples, indicating a good understanding of the lending process.",,,,
+shortcut_lending_Lend,2026-01-22T19:51:09.275265+00:00,shortcuts,lending,NO,1,1,Lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,195,NO,,guest,en,PASS,,,PASS,0.95,The agent correctly identified the user's intent as 'lending' and responded by prompting the user for the amount they wish to deposit. The response is contextually appropriate and aligns with the expected behavior. The system also provides helpful examples of valid input.,,,,
+shortcut_lending_Lend,2026-01-22T19:51:10.884283+00:00,shortcuts,lending,NO,1,1,Earn yield,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,195,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_money_market_Compare_Rates,2026-01-22T19:51:12.325206+00:00,shortcuts,money_market,NO,1,1,Compare Aave vs Compound,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",money_market,lending,,lending_handler,192,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent's response does not match the expected behavior. The user's input 'Compare Aave vs Compound' clearly indicates a request for comparison between two money market protocols. The agent instead initiates a deposit flow for ETH into a Morpho vault, which is unrelated to the comparison request. The `Additional Context` confirms that the detected intent (LENDING) is incorrect, as the expected intent was `money_market` (comparison).",,,,
+shortcut_money_market_Compare_Rates,2026-01-22T19:51:15.311889+00:00,shortcuts,money_market,NO,1,1,Best money market rates for USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",money_market,lending,,lending_handler,192,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_money_market_Compare_Rates,2026-01-22T19:51:21.680242+00:00,shortcuts,money_market,NO,1,1,Compare lending rates for ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",money_market,lending,,lending_handler,197,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_swap_Swap,2026-01-22T19:51:24.323833+00:00,shortcuts,swap,NO,1,1,Swap 100 USDC for ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Ready to deposit?**
+━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,1069,NO,,guest,en,PARTIAL,,,FAIL,1.0,"The user's input clearly indicates a 'swap' intent (swapping USDC for ETH). The agent's response, however, provides information about depositing ETH into a Morpho Vault, which is related to 'lending' or 'deposit'. This is a clear mismatch between the user's intent and the agent's response. The agent failed to understand the user's request to swap one cryptocurrency for another.",,,,
+shortcut_swap_Swap,2026-01-22T19:51:25.930550+00:00,shortcuts,swap,NO,1,1,Swap USDC from Ethereum to Base,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,199,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent's response is completely inappropriate for the user's request to swap USDC from Ethereum to Base. The agent provides information about depositing ETH into a Morpho Vault, which is related to lending, not swapping. The response fails to recognize the user's intent to perform a swap and instead offers lending options. This indicates a significant semantic error and a misunderstanding of the user's request.",,,,
+shortcut_swap_Swap,2026-01-22T19:51:28.049858+00:00,shortcuts,swap,NO,1,1,Best swap rate for ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,195,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent's response does not match the expected behavior. The user's input clearly indicates a swap intent (ETH to USDC), but the agent provides information about depositing ETH into a Morpho Vault, which is related to lending, not swapping. The response is contextually inappropriate as it doesn't address the user's request for the best swap rate. The agent fails to understand the user's intent, leading to a completely irrelevant response.",,,,
+shortcut_swap_Swap,2026-01-22T19:51:29.688053+00:00,shortcuts,swap,NO,1,1,Swap BTC to ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,196,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent's response is completely inappropriate for the user's input. The user clearly stated 'Swap BTC to ETH', indicating a desire to exchange one cryptocurrency for another. The agent, however, provides information about depositing ETH into a Morpho Vault for lending, which is unrelated to swapping. The 'Unclear response' message further highlights the agent's failure to understand the user's intent. The detected intent of 'LENDING' is incorrect, and the response is contextually inappropriat",,,,
+shortcut_swap_Swap,2026-01-22T19:51:36.936011+00:00,shortcuts,swap,NO,1,1,Swap BTC to SOL,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,201,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_swap_Swap,2026-01-22T19:51:37.687305+00:00,shortcuts,swap,NO,1,1,Swap BTC to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,197,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_swap_Swap,2026-01-22T19:51:38.431318+00:00,shortcuts,swap,NO,1,1,Swap ETH to BTC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,195,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_swap_Swap,2026-01-22T19:51:39.879959+00:00,shortcuts,swap,NO,1,1,Swap ETH to SOL,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,193,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent incorrectly interpreted the user's intent to 'swap' ETH to SOL as a lending operation. The response provides information about depositing ETH into a Morpho Vault, which is completely unrelated to the requested swap. The agent's response is not contextually appropriate and demonstrates a significant misunderstanding of the user's intent.",,,,
+shortcut_swap_Swap,2026-01-22T19:51:41.738130+00:00,shortcuts,swap,NO,1,1,Swap ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,195,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_swap_Swap,2026-01-22T19:51:43.181854+00:00,shortcuts,swap,NO,1,1,Swap SOL to BTC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,193,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent incorrectly interpreted the user's intent to 'swap' SOL to BTC as a lending operation. The response provides information about depositing ETH into a Morpho Vault, which is completely unrelated to the user's request. The agent's response is not contextually appropriate and demonstrates a significant misunderstanding of the user's intent.",,,,
+shortcut_swap_Swap,2026-01-22T19:51:44.675180+00:00,shortcuts,swap,NO,1,1,Swap SOL to ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,194,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent's response is completely inappropriate for the user's request to 'Swap SOL to ETH'. The agent is providing information about depositing ETH into a Morpho Vault, which is related to lending, not swapping. The detected intent is 'LENDING' while the expected intent is 'SWAP', indicating a significant mismatch. The agent fails to understand the user's intent and provides a response that is contextually irrelevant.",,,,
+shortcut_swap_Swap,2026-01-22T19:51:46.048267+00:00,shortcuts,swap,NO,1,1,Swap SOL to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,193,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_swap_Swap,2026-01-22T19:51:47.504058+00:00,shortcuts,swap,NO,1,1,Swap USDC to BTC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,196,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent incorrectly interpreted the user's intent to 'swap' USDC to BTC as a lending operation. The response provides information about depositing ETH into a Morpho Vault, which is completely unrelated to the user's request. The agent failed to recognize the 'swap' intent and provided an inappropriate response, indicating a significant semantic error.",,,,
+shortcut_swap_Swap,2026-01-22T19:51:48.999181+00:00,shortcuts,swap,NO,1,1,Swap USDC to ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,193,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent incorrectly interpreted the user's intent to 'swap' USDC to ETH as a lending operation. The agent provided a Morpho Vault quote for depositing ETH, which is completely unrelated to the user's request to swap tokens. The response is not contextually appropriate and demonstrates a significant misunderstanding of the user's intent.",,,,
+shortcut_swap_Swap,2026-01-22T19:51:50.556437+00:00,shortcuts,swap,NO,1,1,Swap USDC to SOL,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,195,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent's response is completely inappropriate for the user's request to 'Swap USDC to SOL'. The agent provides information about depositing ETH into a Morpho Vault, which is related to lending, not swapping. The detected intent is 'LENDING' while the expected intent is 'SWAP', indicating a significant semantic error. The agent fails to understand the user's intent and provides irrelevant information.",,,,
+shortcut_portfolio_Portfolio,2026-01-22T19:51:52.226168+00:00,shortcuts,portfolio,NO,1,1,Show my portfolio,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,194,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the intent as 'portfolio'. However, instead of directly showing the portfolio, it prompts the user to sign up or log in. While this is a valid response in a real-world scenario where authentication is required, it doesn't fully satisfy the user's request to 'show my portfolio' directly. The response is contextually appropriate given the likely need for authentication, but it could be improved by first checking if the user is logged in and then showing the portfolio",,,,
+shortcut_portfolio_Portfolio,2026-01-22T19:51:54.471180+00:00,shortcuts,portfolio,NO,1,1,What tokens do I have?,Service temporarily unavailable. Please try again or sign up for full access.,portfolio,general_conversation,,general_handler,215,NO,,guest,en,PARTIAL,,,FAIL,1.0,"The agent's response indicates a system error or restricted access, failing to address the user's intent to access their portfolio. The expected intent was 'portfolio', but the agent provided a generic error message. This demonstrates a complete failure to understand and respond appropriately to the user's request.",,,,
+shortcut_portfolio_Portfolio,2026-01-22T19:51:56.976572+00:00,shortcuts,portfolio,NO,1,1,List my holdings,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,191,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the intent as 'portfolio' based on the user's request to 'List my holdings'. However, instead of directly providing the portfolio information, it prompts the user to sign up or log in. While this is a valid security measure, it doesn't fully satisfy the user's immediate request. A better approach might be to acknowledge the request and then state the need for authentication before displaying the information. The response is contextually appropriate given the need f",,,,
+shortcut_portfolio_Portfolio,2026-01-22T19:51:58.161487+00:00,shortcuts,portfolio,NO,1,1,What tokens do I own?,Service temporarily unavailable. Please try again or sign up for full access.,portfolio,general_conversation,,general_handler,194,NO,,guest,en,PARTIAL,,,FAIL,1.0,"The agent's response indicates a service failure, and it fails to address the user's intent to view their portfolio. The expected intent was 'portfolio', but the agent provided a generic error message. This is a clear failure to meet the expected behavior.",,,,
+shortcut_portfolio_Portfolio,2026-01-22T19:52:00.199716+00:00,shortcuts,portfolio,NO,1,1,Show my holdings,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,196,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the intent as 'portfolio'. However, instead of directly displaying the portfolio, it prompts the user to sign up or log in. While this is a valid response in a real-world scenario where authentication is required, it deviates from the expected behavior of simply providing a relevant response to the 'portfolio' intent. The response is contextually appropriate given the likely need for authentication, but it doesn't fully satisfy the test's expectation of a direct po",,,,
+shortcut_portfolio_Portfolio,2026-01-22T19:52:01.180431+00:00,shortcuts,portfolio,NO,1,1,List my tokens,Service temporarily unavailable. Please try again or sign up for full access.,portfolio,general_conversation,,general_handler,199,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_balance_Balance,2026-01-22T19:52:03.105213+00:00,shortcuts,balance,NO,1,1,What's my balance?,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,194,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent as 'balance' (as indicated by the 'BALANCE' detected intent in the context). However, instead of providing the balance, it prompts the user to connect their wallet and sign up. While this is a valid response in a scenario where the user hasn't connected their wallet, it's not ideal. A better response would be to first check if the user is logged in and has a connected wallet. If not, then prompt for connection/signup. The response is contextually ",,,,
+shortcut_balance_Balance,2026-01-22T19:52:04.966024+00:00,shortcuts,balance,NO,1,1,Check my balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,197,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent as 'balance'. However, instead of directly providing the balance, it prompts the user to sign up. While this might be a valid business strategy, it doesn't fully satisfy the user's immediate request. A better response would be to provide the balance if the user is already logged in, or to explain that wallet connection is required *before* showing the signup prompt. The response is contextually appropriate given the 'Wallet Access Required' messag",,,,
+shortcut_balance_Balance,2026-01-22T19:52:06.815899+00:00,shortcuts,balance,NO,1,1,My balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,192,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent as wanting to check their balance. However, instead of directly providing the balance or guiding the user through a wallet connection process, it prompts the user to sign up. While suggesting signup isn't inherently wrong, it should ideally be offered *after* attempting to fulfill the user's primary intent (showing the balance or initiating wallet connection). The response is contextually somewhat appropriate, but could be improved by prioritizing",,,,
+shortcut_balance_Balance,2026-01-22T19:52:07.981669+00:00,shortcuts,balance,NO,1,1,Show my balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,194,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_balance_Balance,2026-01-22T19:52:09.784962+00:00,shortcuts,balance,NO,1,1,How much do I have?,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,198,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent to check their balance. However, instead of directly providing the balance, it prompts the user to connect their wallet and sign up. While this is a valid response in the context of a system requiring wallet connection for balance retrieval, it's not the most direct or user-friendly approach. A better response might be to first acknowledge the intent and then explain the need for wallet connection before providing the balance or offering signup.",,,,
+shortcut_balance_Balance,2026-01-22T19:52:11.418711+00:00,shortcuts,balance,NO,1,1,Show my USDC balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,191,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent as wanting to view their balance. While it didn't directly display the balance, it responded appropriately by indicating that wallet access is required and providing a signup link. This aligns with the expected behavior of detecting the 'balance' intent and providing a relevant response, especially in a scenario where the user might not be logged in or have a wallet connected.",,,,
+shortcut_activity_Activity,2026-01-22T19:52:13.153639+00:00,shortcuts,activity,NO,1,1,Show my transactions,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,193,NO,,guest,en,PASS,,,WARNING,0.75,"The agent correctly identifies the intent as related to 'activity' (specifically, transactions). However, the response requires the user to log in or sign up, which might not be necessary if the user is already logged in. The response should ideally check the user's authentication status before prompting for login/signup. If the user *is* logged in, the response is incorrect. If the user *is not* logged in, the response is appropriate, but the system should ideally handle authentication more sea",,,,
+shortcut_activity_Activity,2026-01-22T19:52:15.077199+00:00,shortcuts,activity,NO,1,1,Recent activity,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,191,NO,,guest,en,PASS,,,FAIL,0.95,"The agent's response requires the user to sign up or log in to view their transaction history. While this is a common pattern, it fails to directly address the user's intent of viewing recent activity. The user likely expects to see some form of activity, even if limited, without immediately being forced to authenticate. The response indicates that the system detected the 'ACTIVITY' intent, but the response itself is not appropriate given the context. A better response would be to show a limited",,,,
+shortcut_activity_Activity,2026-01-22T19:52:16.585171+00:00,shortcuts,activity,NO,1,1,What did I do today?,Service temporarily unavailable. Please try again or sign up for full access.,activity,general_conversation,,general_handler,196,NO,,guest,en,PARTIAL,,,FAIL,1.0,"The agent's response indicates a system error ('Service temporarily unavailable') and fails to address the user's intent to inquire about their activities. The expected intent was 'activity', but the agent provided a generic error message, demonstrating a complete failure to understand and respond appropriately to the user's query. The response is neither contextually appropriate nor semantically correct in the given scenario.",,,,
+shortcut_activity_Activity,2026-01-22T19:52:18.725887+00:00,shortcuts,activity,NO,1,1,My activity,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,190,NO,,guest,en,PASS,,,FAIL,0.95,"The agent's response requires the user to sign up or log in to view their transaction history. While 'activity' can relate to transaction history, the user input 'My activity' is too vague to definitively assume that's the intent. However, given the `expected_intent` is 'activity', the agent should have provided some information related to activity, even if it was a general overview or a prompt asking for more specific details about what kind of activity the user is interested in. Instead, it im",,,,
+shortcut_activity_Activity,2026-01-22T19:52:20.911481+00:00,shortcuts,activity,NO,1,1,Transaction history,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,193,NO,,guest,en,PASS,,,WARNING,0.75,"The agent correctly identifies the intent as related to 'activity' (transaction history). However, the response requires the user to log in or sign up, which might not be the optimal first step. While security is important, a better approach might be to offer a limited view or a sample transaction history before prompting for login. The response is contextually appropriate in that it addresses the request for transaction history, but the immediate login requirement could be a point of friction f",,,,
+shortcut_activity_Activity,2026-01-22T19:52:22.229907+00:00,shortcuts,activity,NO,1,1,My trades,"🔄 **Let's Start Your Swap!**
+
+Great choice! Swapping crypto is easy with Privy + 0x.
+
+**Step 1 of 3:** Which crypto do you want to swap FROM?
+
+1. Ξ **ETH**
+2. 💵 **USDC**
+3. 💵 **USDT**
+4. ₿ **BTC**
+5. ◎ **SOL**
+
+💡 *Just type the token symbol, like ""ETH""*",activity,moonpay_swap,,moonpay_swap_flow_handler,194,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The user input ""My trades"" clearly indicates an intent to view their trading activity. The agent's response, which initiates a crypto swap, completely misses the mark. The detected intent of ""MOONPAY_SWAP"" is incorrect, and the response is not contextually appropriate. The agent fails to understand the user's intent.",,,,
+shortcut_receive_Receive,2026-01-22T19:52:23.370243+00:00,shortcuts,receive,NO,1,1,I want to receive crypto,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,192,NO,,guest,en,PASS,,,PASS,0.95,The agent correctly identifies the user's intent to receive crypto and provides a relevant response. The response explains the need for a wallet to receive crypto and offers a signup option. The response is contextually appropriate and demonstrates an understanding of the user's intent.,,,,
+shortcut_receive_Receive,2026-01-22T19:52:24.641168+00:00,shortcuts,receive,NO,1,1,Receive crypto,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,192,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to 'receive' crypto. The response, while requiring the user to connect/create a wallet, is contextually appropriate as receiving crypto necessitates a wallet address. The response provides clear instructions and benefits of signing up, aligning with the expected behavior of guiding the user towards completing the 'receive' action.",,,,
+shortcut_receive_Receive,2026-01-22T19:52:26.180572+00:00,shortcuts,receive,NO,1,1,My address,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,192,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to receive cryptocurrency, even though the user only provided ""My address"". The response appropriately prompts the user to connect or create a wallet to obtain their receive address. The response is contextually appropriate as it guides the user towards the next logical step in receiving crypto.",,,,
+shortcut_receive_Receive,2026-01-22T19:52:26.815089+00:00,shortcuts,receive,NO,1,1,My wallet address,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,192,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_receive_Receive,2026-01-22T19:52:28.383990+00:00,shortcuts,receive,NO,1,1,Deposit address,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,193,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to receive cryptocurrency. While it prompts the user to sign up or connect a wallet, this is a reasonable and contextually appropriate response given that a wallet is required to receive cryptocurrency. The response provides clear instructions and benefits of signing up, aligning with the expected behavior of guiding the user towards completing the 'receive' action.",,,,
+shortcut_receive_Receive,2026-01-22T19:52:29.593859+00:00,shortcuts,receive,NO,1,1,Receive address,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,191,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to receive cryptocurrency. While the response requires the user to connect or create a wallet, this is a necessary step to obtain a receive address. The response is contextually appropriate and provides clear instructions on how to proceed. The signup suggestion is a reasonable next step.",,,,
+shortcut_receive_Receive,2026-01-22T19:52:32.067132+00:00,shortcuts,receive,NO,1,1,Give me my QR code,Service temporarily unavailable. Please try again or sign up for full access.,receive,general_conversation,,general_handler,193,NO,,guest,en,PARTIAL,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_buy_Buy,2026-01-22T19:52:33.159677+00:00,shortcuts,buy,NO,1,1,I want to buy crypto,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy,buy,,buy_handler,195,NO,,guest,en,PASS,,,PASS,1.0,"The agent's response aligns perfectly with the expected behavior. The user expressed a desire to buy crypto, and the agent initiated the 'buy crypto' flow by asking which cryptocurrency the user wants to purchase. The response is contextually appropriate and demonstrates a clear understanding of the user's intent. There are no semantic errors or inconsistencies.",,,,
+shortcut_buy_Buy,2026-01-22T19:52:34.278253+00:00,shortcuts,buy,NO,1,1,Buy Bitcoin with card,"💰 **Buying ₿ BTC**
+
+**Step 2 of 3:** How much USD would you like to spend?
+
+💡 *Enter amount in USD:*
+• `50` ($50)
+• `100` ($100)
+• `500` ($500)
+
+📊 *Minimum: $20 • Maximum: $10,000*",buy,buy_continue,,buy_handler,191,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_buy_Buy,2026-01-22T19:52:35.799018+00:00,shortcuts,buy,NO,1,1,How to buy ETH,"💰 **Buying Ξ ETH**
+
+**Step 2 of 3:** How much USD would you like to spend?
+
+💡 *Enter amount in USD:*
+• `50` ($50)
+• `100` ($100)
+• `500` ($500)
+
+📊 *Minimum: $20 • Maximum: $10,000*",buy,buy,,buy_handler,616,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to buy ETH. The response is contextually appropriate, providing the next step in the buying process (specifying the USD amount). The response also includes helpful information like suggested amounts and minimum/maximum limits. The detected intent matches the expected intent.",,,,
+shortcut_buy_Buy,2026-01-22T19:52:37.006455+00:00,shortcuts,buy,NO,1,1,Buy crypto,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy,buy_continue,,buy_handler,194,NO,,guest,en,PASS,,,PASS,0.95,"The agent's response aligns with the expected behavior. The user input 'Buy crypto' is correctly interpreted as a 'buy' intent, and the agent initiates the crypto buying process by asking which crypto the user wants to buy. The response is contextually appropriate and shows a good understanding of the user's intent.",,,,
+shortcut_buy_Buy,2026-01-22T19:52:38.802585+00:00,shortcuts,buy,NO,1,1,Purchase Bitcoin,"💰 **Buying ₿ BTC**
+
+**Step 2 of 3:** How much USD would you like to spend?
+
+💡 *Enter amount in USD:*
+• `50` ($50)
+• `100` ($100)
+• `500` ($500)
+
+📊 *Minimum: $20 • Maximum: $10,000*",buy,buy_continue,,buy_handler,193,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to buy Bitcoin. The response is contextually appropriate, providing the next step in the buying process (specifying the amount in USD). The response also includes helpful information such as suggested amounts and minimum/maximum limits. The detected intent BUY_CONTINUE aligns with the expected behavior after the initial 'buy' intent is established.",,,,
+shortcut_buy_Buy,2026-01-22T19:52:39.770492+00:00,shortcuts,buy,NO,1,1,Buy with fiat,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy,buy_continue,,buy_handler,197,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_send_Send,2026-01-22T19:52:41.116918+00:00,shortcuts,send,NO,1,1,Send crypto to a friend,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",send,buy_continue,,buy_handler,197,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent's response completely misses the user's intent to send crypto. Instead, it initiates a 'buy crypto' flow. This is a significant semantic error. The response is not contextually appropriate as it doesn't address the user's request to send crypto to a friend.",,,,
+shortcut_send_Send,2026-01-22T19:52:42.298525+00:00,shortcuts,send,NO,1,1,Transfer ETH to another wallet,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",send,buy_continue,,buy_handler,197,NO,,guest,en,PARTIAL,,,FAIL,0.95,"The agent's response completely fails to address the user's intent to 'send' ETH. Instead, it initiates a 'buy crypto' flow. This is a significant semantic error. The response is not contextually appropriate and demonstrates a misunderstanding of the user's request.",,,,
+shortcut_send_Send,2026-01-22T19:52:43.119203+00:00,shortcuts,send,NO,1,1,I want to send USDC,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,199,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_send_Send,2026-01-22T19:52:44.679599+00:00,shortcuts,send,NO,1,1,Send tokens,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,198,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to 'send' tokens. While it didn't directly execute the send action, it responded appropriately by prompting the user to connect their wallet, which is a necessary prerequisite for sending tokens. The response is contextually relevant and provides helpful information to the user.",,,,
+shortcut_send_Send,2026-01-22T19:52:45.990917+00:00,shortcuts,send,NO,1,1,Transfer crypto,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,193,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to 'send' crypto. While the response indicates a wallet is required and prompts the user to sign up, this is a contextually appropriate response given the user's request to 'transfer crypto'. The system understands the intent and provides a relevant next step (wallet connection/signup). The detected intent 'SEND' aligns with the expected intent 'send'.",,,,
+shortcut_send_Send,2026-01-22T19:52:47.485994+00:00,shortcuts,send,NO,1,1,Send to wallet,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,198,NO,,guest,en,PASS,,,PASS,0.95,The agent correctly identified the user's intent to 'send' and provided a relevant response indicating that a wallet connection is required for sending tokens. The response is contextually appropriate as it guides the user on how to proceed (signing up). The detected intent matches the expected intent.,,,,
+shortcut_fallback_lending_Lend,2026-01-22T19:52:49.560110+00:00,shortcuts,lending_fallback,NO,1,1,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with the number (1-5) or type the asset name (e.g., ""USDC"")
+",lending,lending,,lending_handler,191,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_lending_Lend,2026-01-22T19:52:49.749318+00:00,shortcuts,lending_fallback,NO,1,1,Show best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with t",lending,lending,,lending_handler,189,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_lending_Lend,2026-01-22T19:52:49.939202+00:00,shortcuts,lending_fallback,NO,1,1,Earn yield on my ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,189,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_lending_Lend,2026-01-22T19:52:50.129814+00:00,shortcuts,lending_fallback,NO,1,1,Best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,190,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_lending_Lend,2026-01-22T19:52:50.318478+00:00,shortcuts,lending_fallback,NO,1,1,Lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,188,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_lending_Lend,2026-01-22T19:52:50.508591+00:00,shortcuts,lending_fallback,NO,1,1,Earn yield,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,190,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_money_market_Compare_Rates,2026-01-22T19:52:50.697097+00:00,shortcuts,money_market_fallback,NO,1,1,Compare Aave vs Compound,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",money_market,lending,,lending_handler,188,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_money_market_Compare_Rates,2026-01-22T19:52:50.885684+00:00,shortcuts,money_market_fallback,NO,1,1,Best money market rates for USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",money_market,lending,,lending_handler,188,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_money_market_Compare_Rates,2026-01-22T19:52:51.074513+00:00,shortcuts,money_market_fallback,NO,1,1,Compare lending rates for ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",money_market,lending,,lending_handler,188,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:51.451271+00:00,shortcuts,swap_fallback,NO,1,1,Swap 100 USDC for ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.40%
+💰 **Monthly Earnings**: ~0.45 ETH/month
+💵 **Yearly Earnings**: ~5.40 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Ready to deposit?**
+━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,376,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:51.643849+00:00,shortcuts,swap_fallback,NO,1,1,Swap USDC from Ethereum to Base,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,192,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:51.835549+00:00,shortcuts,swap_fallback,NO,1,1,Best swap rate for ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,191,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:52.026304+00:00,shortcuts,swap_fallback,NO,1,1,Swap BTC to ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,190,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:52.217948+00:00,shortcuts,swap_fallback,NO,1,1,Swap BTC to SOL,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,191,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:52.409823+00:00,shortcuts,swap_fallback,NO,1,1,Swap BTC to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,191,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:52.601190+00:00,shortcuts,swap_fallback,NO,1,1,Swap ETH to BTC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,191,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:52.792046+00:00,shortcuts,swap_fallback,NO,1,1,Swap ETH to SOL,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,190,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:52.982249+00:00,shortcuts,swap_fallback,NO,1,1,Swap ETH to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,190,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:53.173699+00:00,shortcuts,swap_fallback,NO,1,1,Swap SOL to BTC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,191,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:53.364787+00:00,shortcuts,swap_fallback,NO,1,1,Swap SOL to ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,190,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:53.554654+00:00,shortcuts,swap_fallback,NO,1,1,Swap SOL to USDC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,189,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:53.748268+00:00,shortcuts,swap_fallback,NO,1,1,Swap USDC to BTC,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,193,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:53.941581+00:00,shortcuts,swap_fallback,NO,1,1,Swap USDC to ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,193,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_swap_Swap,2026-01-22T19:52:54.132485+00:00,shortcuts,swap_fallback,NO,1,1,Swap USDC to SOL,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Morpho Vault Quote
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Unclear response. Please confirm or cancel.
+
+
+**Best Vault (Real-Time APY)**
+
+📊 **Deposit Amount**: 100.0 ETH
+📈 **Current APY**: 5.00%
+💰 **Monthly Earnings**: ~0.42 ETH/month
+💵 **Yearly Earnings**: ~5.00 ETH/year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Note
+Real-time APY from Morpho protocol. Rates vary based on market conditions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",swap,lending,,lending_handler,190,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_portfolio_Portfolio,2026-01-22T19:52:54.323073+00:00,shortcuts,portfolio_fallback,NO,1,1,Show my portfolio,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,190,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_portfolio_Portfolio,2026-01-22T19:52:54.511698+00:00,shortcuts,portfolio_fallback,NO,1,1,What tokens do I have?,Service temporarily unavailable. Please try again or sign up for full access.,portfolio,general_conversation,,general_handler,188,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_portfolio_Portfolio,2026-01-22T19:52:54.700292+00:00,shortcuts,portfolio_fallback,NO,1,1,List my holdings,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,188,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_portfolio_Portfolio,2026-01-22T19:52:54.897376+00:00,shortcuts,portfolio_fallback,NO,1,1,What tokens do I own?,Service temporarily unavailable. Please try again or sign up for full access.,portfolio,general_conversation,,general_handler,197,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_portfolio_Portfolio,2026-01-22T19:52:55.084912+00:00,shortcuts,portfolio_fallback,NO,1,1,Show my holdings,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,187,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_portfolio_Portfolio,2026-01-22T19:52:55.273974+00:00,shortcuts,portfolio_fallback,NO,1,1,List my tokens,Service temporarily unavailable. Please try again or sign up for full access.,portfolio,general_conversation,,general_handler,188,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,
+shortcut_fallback_balance_Balance,2026-01-22T19:52:55.460644+00:00,shortcuts,balance_fallback,NO,1,1,What's my balance?,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,186,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_balance_Balance,2026-01-22T19:52:55.649811+00:00,shortcuts,balance_fallback,NO,1,1,Check my balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,189,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_balance_Balance,2026-01-22T19:52:55.836729+00:00,shortcuts,balance_fallback,NO,1,1,My balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,186,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_balance_Balance,2026-01-22T19:52:56.025955+00:00,shortcuts,balance_fallback,NO,1,1,Show my balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,189,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_balance_Balance,2026-01-22T19:52:56.212713+00:00,shortcuts,balance_fallback,NO,1,1,How much do I have?,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,186,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_balance_Balance,2026-01-22T19:52:56.400288+00:00,shortcuts,balance_fallback,NO,1,1,Show my USDC balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,187,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_activity_Activity,2026-01-22T19:52:56.589100+00:00,shortcuts,activity_fallback,NO,1,1,Show my transactions,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,188,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_activity_Activity,2026-01-22T19:52:56.777164+00:00,shortcuts,activity_fallback,NO,1,1,Recent activity,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,187,NO,,authenticated,en,PASS,,,,0.0,,,,,
+shortcut_fallback_activity_Activity,2026-01-22T19:52:56.966600+00:00,shortcuts,activity_fallback,NO,1,1,What did I do today?,Service temporarily unavailable. Please try again or sign up for full access.,activity,general_conversation,,general_handler,189,NO,,authenticated,en,PARTIAL,,,,0.0,,,,,

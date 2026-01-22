@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_price_003,2026-01-22T16:58:01.243152+00:00,agent,hunter_price,NO,1,1,how much is ethereum,"📈 **Price Prediction for ETH**
+
+**Current Price:** $2,950.35
+**7-Day Forecast:** $3,038.86
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_prediction_handler,473,NO,,guest,en,FAIL,,17e6e7fb-f4a9-4218-9bd3-9860d61cd7cc,PASS,0.95,"The agent's response accurately provides the current price of Ethereum in USD, along with a price prediction. The formatting is clear and easy to understand. The response directly addresses the user's query about the price of Ethereum and provides additional relevant information such as a 7-day forecast and the model used for prediction. The response demonstrates a good understanding of the user's intent.",,,,

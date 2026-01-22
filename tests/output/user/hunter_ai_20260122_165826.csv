@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_prediction_003,2026-01-22T16:58:27.741739+00:00,agent,hunter_prediction,NO,1,1,ethereum forecast,"📈 **Price Prediction for ETH**
+
+**Current Price:** $2,950.35
+**7-Day Forecast:** $3,038.86
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_prediction_handler,486,NO,,guest,en,FAIL,,bfea5138-707b-4275-ace0-3e8b40ddc7f2,PASS,0.95,"The agent's response aligns well with the expected behavior. It provides a price prediction for Ethereum (ETH), includes a timeframe (7-day forecast), and offers a confidence level (75%). The response also includes the current price, expected change, direction, model used, and horizon, providing a comprehensive forecast. The user's intent to get an Ethereum forecast is clearly understood.",,,,

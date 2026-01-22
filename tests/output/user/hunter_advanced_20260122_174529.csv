@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_correlation_001,2026-01-22T17:45:29.754822+00:00,agent,hunter_correlation,NO,1,1,"How correlated are BTC, ETH, and SOL price movements?","📈 **Price Prediction for BTC**
+
+**Current Price:** $89,089.22
+**7-Day Forecast:** $91,761.89
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_prediction_handler,194,NO,,guest,en,FAIL,,3d503163-6a14-481f-a08b-9f32e30751aa,,0.0,,,,,

@@ -1,0 +1,20 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+research_002,2026-01-22T17:41:29.512849+00:00,agent,research,NO,1,1,what is Uniswap,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **Curve** (DEX)
+  TVL: $4.1B | Risk: LOW | Chain: Ethereum
+• **Lido** (Staking)
+  TVL: $25.0B | Risk: LOW | Chain: Ethereum
+
+Register for full access to:
+  ✓ Search 500+ protocols
+  ✓ Custom filters
+  ✓ Rea",research,,,graphrag_handler,200,NO,,guest,en,FAIL,,276c2ae3-e58d-4d52-8846-d128bcced911,FAIL,0.9,"The agent's response fails to provide educational/informative content about Uniswap as requested. Instead, it provides a list of DeFi protocols, including Uniswap, but without any explanation of what Uniswap *is*. The response acts more like a search result than an informative answer. While the response does identify Uniswap as a DEX, it doesn't explain what a DEX is or provide any further details about Uniswap's functionality, purpose, or unique features. The response also includes promotional ",,,,

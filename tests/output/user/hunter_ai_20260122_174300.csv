@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_sentiment_002,2026-01-22T17:43:06.176983+00:00,agent,hunter_sentiment,NO,1,1,what do people think about BTC,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.5/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_sentiment_handler,200,NO,,guest,en,FAIL,,eed60a36-166c-4ff1-8df5-daaccce8e3f1,PASS,0.95,"The agent's response aligns well with the expected behavior. It provides a sentiment analysis for BTC, classifies the overall sentiment as bullish with a score, and breaks down the sentiment by source (Twitter, Reddit, Discord, News). The response is contextually appropriate, given the user's query about public opinion on BTC. The response also includes a confidence score, which is a good practice. The inclusion of a call to action (sign up for real-time alerts) is acceptable and doesn't detract",,,,

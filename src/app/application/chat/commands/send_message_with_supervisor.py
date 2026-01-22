@@ -221,9 +221,11 @@ class SendMessageWithSupervisor:
                 else:
                     sources.append({"raw": str(source)})
             
-            # Extract execute_data from workflow agent responses
-            # Workflow agents (like swap_workflow) store execute_data in their response metadata
+            # Extract execute_data and workflow_state from workflow agent responses
+            # Workflow agents (like swap_workflow) store these in their response metadata
             execute_data = None
+            workflow_state = None
+            workflow_name = None
             from app.domain.ports.agent_squad.agent_gateway import AgentResponse
             for task in workflow_plan.tasks:
                 if hasattr(task, 'result') and task.result:
@@ -237,10 +239,32 @@ class SendMessageWithSupervisor:
                                 f"📋 Found execute_data from {task.agent_type.value}",
                                 extra={"execute_data": execute_data}
                             )
-                            break  # Use first execute_data found
+                        
+                        # Check for workflow_state in metadata (for multi-step continuations)
+                        task_workflow_state = result.metadata.get('workflow_state')
+                        if task_workflow_state:
+                            workflow_state = task_workflow_state
+                            workflow_name = result.metadata.get('workflow_name')
+                            logger.info(
+                                f"📋 Found workflow_state from {task.agent_type.value}",
+                                extra={"workflow_state": workflow_state}
+                            )
             
             # Calculate total time
             total_time_ms = int((time.time() - start_time) * 1000)
+            
+            # Build result metadata including workflow state for multi-step continuation
+            result_metadata = {
+                "conversation_id": str(conversation_id),
+                "language": language,
+                "has_user_context": bool(user_context),
+            }
+            
+            # Include workflow state if present (for multi-step workflows)
+            if workflow_state:
+                result_metadata["workflow_state"] = workflow_state
+            if workflow_name:
+                result_metadata["workflow_name"] = workflow_name
             
             # Build result
             return SupervisorMessageResult(
@@ -251,11 +275,7 @@ class SendMessageWithSupervisor:
                 workflow_type="authenticated_supervisor",
                 task_count=len(workflow_plan.tasks),
                 total_time_ms=total_time_ms,
-                metadata={
-                    "conversation_id": str(conversation_id),
-                    "language": language,
-                    "has_user_context": bool(user_context),
-                },
+                metadata=result_metadata,
                 execute_data=execute_data,
             )
             

@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_news_001,2026-01-22T17:43:15.066631+00:00,agent,hunter_news,NO,1,1,crypto market news,"📊 **Sentiment Analysis for ETH**
+
+**Overall:** Bullish (65.5/100)
+**Confidence:** 46%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_sentiment_handler,200,NO,,guest,en,FAIL,,238e4f9f-5805-40a0-a4ab-57faeea8e93d,PASS,0.9,"The agent's response aligns with the expected behavior of providing crypto news. The response includes sentiment analysis, source information, and a call to action, demonstrating an understanding of the user's intent to receive relevant and timely crypto market information. The response is contextually appropriate given the user's input and the provided additional context.",,,,

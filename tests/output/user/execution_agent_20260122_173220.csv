@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+exec_swap_ready_001_step1,2026-01-22T17:32:21.185198+00:00,execution,swap_execute,YES,1,2,swap 0.1 ETH to USDC,,swap_workflow,,,,446,NO,,authenticated,en,FAIL,,901fd178-6610-4d81-98ee-4700a21841a5,,0.0,,,,,

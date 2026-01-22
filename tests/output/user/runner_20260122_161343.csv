@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_003,2026-01-22T16:13:45.261827+00:00,agent,hunter_sentiment,NO,1,1,ethereum sentiment,"📊 **Sentiment Analysis for ETH**
+
+**Overall:** Bullish (64.8/100)
+**Confidence:** 46%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 47/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_sentiment_handler,1563,NO,,guest,en,FAIL,,9a406341-a11c-4edb-87db-dc9019643c94,,0.0,,,,,

@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_sentiment_003,2026-01-22T17:43:08.383471+00:00,agent,hunter_sentiment,NO,1,1,bitcoin social sentiment,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.5/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_sentiment_handler,206,NO,,guest,en,FAIL,,c933a9e7-713c-48bc-be8c-d6d2442af822,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,

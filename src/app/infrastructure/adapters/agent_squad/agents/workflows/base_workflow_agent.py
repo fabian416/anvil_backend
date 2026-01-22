@@ -393,7 +393,16 @@ Return JSON with extracted parameters. Use null for missing values.
 """
         
         try:
-            response = await self._llm.generate(prompt, max_tokens=200)
+            # Build messages in correct format for AgentLLMGateway
+            messages = [
+                {"role": "user", "content": prompt}
+            ]
+            response = await self._llm.generate(
+                model="gemini-2.0-flash-001",  # Default to fast Gemini model
+                messages=messages,
+                max_tokens=200,
+                temperature=0.1,  # Low temperature for parameter extraction
+            )
             # Parse JSON from response
             import json
             import re

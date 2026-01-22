@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+wallet_005,2026-01-22T17:33:40.555039+00:00,agent,wallet,NO,1,1,my USDC balance,,wallet,,,,186,NO,,authenticated,en,FAIL,,bcdb9ecd-c970-4312-b571-c5082b90b39c,,0.0,,,,,

@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+chain_arbitrum_001,2026-01-22T17:16:28.805960+00:00,workflow,chain_arbitrum,NO,1,1,deposit USDC on Aave Arbitrum,,lending_workflow,,,,451,NO,,authenticated,en,FAIL,,80c982f1-0d59-4d40-83d3-4d3c2bfe9b3b,,0.0,,,,,

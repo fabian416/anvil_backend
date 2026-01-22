@@ -1,0 +1,216 @@
+{
+  "run_timestamp": "2026-01-22T19:53:14.231918+00:00",
+  "category": "shortcuts",
+  "total_tests": 100,
+  "passed": 52,
+  "partial": 48,
+  "failed": 0,
+  "pass_rate": "52.0%",
+  "by_category": {
+    "lending": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "money_market": {
+      "total": 3,
+      "pass": 0,
+      "partial": 3,
+      "fail": 0
+    },
+    "swap": {
+      "total": 15,
+      "pass": 0,
+      "partial": 15,
+      "fail": 0
+    },
+    "portfolio": {
+      "total": 6,
+      "pass": 3,
+      "partial": 3,
+      "fail": 0
+    },
+    "balance": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "activity": {
+      "total": 6,
+      "pass": 4,
+      "partial": 2,
+      "fail": 0
+    },
+    "receive": {
+      "total": 7,
+      "pass": 6,
+      "partial": 1,
+      "fail": 0
+    },
+    "buy": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "send": {
+      "total": 6,
+      "pass": 4,
+      "partial": 2,
+      "fail": 0
+    },
+    "lending_fallback": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "money_market_fallback": {
+      "total": 3,
+      "pass": 0,
+      "partial": 3,
+      "fail": 0
+    },
+    "swap_fallback": {
+      "total": 15,
+      "pass": 0,
+      "partial": 15,
+      "fail": 0
+    },
+    "portfolio_fallback": {
+      "total": 6,
+      "pass": 3,
+      "partial": 3,
+      "fail": 0
+    },
+    "balance_fallback": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "activity_fallback": {
+      "total": 3,
+      "pass": 2,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "lending": {
+      "total": 48,
+      "pass": 12,
+      "partial": 36,
+      "fail": 0
+    },
+    "portfolio": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "general_conversation": {
+      "total": 9,
+      "pass": 0,
+      "partial": 9,
+      "fail": 0
+    },
+    "balance": {
+      "total": 12,
+      "pass": 12,
+      "partial": 0,
+      "fail": 0
+    },
+    "activity": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "moonpay_swap": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    },
+    "receive": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "buy": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "buy_continue": {
+      "total": 6,
+      "pass": 4,
+      "partial": 2,
+      "fail": 0
+    },
+    "send": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 210,
+  "slowest_tests": [
+    {
+      "test_id": "shortcut_swap_Swap",
+      "response_time_ms": 1069,
+      "status": "PARTIAL"
+    },
+    {
+      "test_id": "shortcut_buy_Buy",
+      "response_time_ms": 616,
+      "status": "PASS"
+    },
+    {
+      "test_id": "shortcut_lending_Lend",
+      "response_time_ms": 485,
+      "status": "PASS"
+    },
+    {
+      "test_id": "shortcut_fallback_swap_Swap",
+      "response_time_ms": 376,
+      "status": "PARTIAL"
+    },
+    {
+      "test_id": "shortcut_portfolio_Portfolio",
+      "response_time_ms": 215,
+      "status": "PARTIAL"
+    },
+    {
+      "test_id": "shortcut_lending_Lend",
+      "response_time_ms": 203,
+      "status": "PASS"
+    },
+    {
+      "test_id": "shortcut_swap_Swap",
+      "response_time_ms": 201,
+      "status": "PARTIAL"
+    },
+    {
+      "test_id": "shortcut_swap_Swap",
+      "response_time_ms": 199,
+      "status": "PARTIAL"
+    },
+    {
+      "test_id": "shortcut_portfolio_Portfolio",
+      "response_time_ms": 199,
+      "status": "PARTIAL"
+    },
+    {
+      "test_id": "shortcut_send_Send",
+      "response_time_ms": 199,
+      "status": "PASS"
+    }
+  ]
+}

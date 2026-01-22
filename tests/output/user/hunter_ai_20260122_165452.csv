@@ -1,0 +1,19 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_signals_002,2026-01-22T16:54:56.295486+00:00,agent,hunter_signals,NO,1,1,ETH buy or sell signal,"💹 **Trading Signal for ETH**
+
+**Signal:** 🟡 BUY
+**Strength:** 69/100
+**Confidence:** 60%
+**Timeframe:** 4h
+
+**Entry Price:** $1,964.57
+**Stop Loss:** $1,861.63
+**Take Profit:** $2,170.45
+
+**Factor Scores:**
+- Sentiment: 65/100
+- Prediction: 56/100
+- Risk: 90/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_signals_handler,2180,NO,,guest,en,FAIL,,713dc853-a316-4df4-a032-a73c292f9920,PASS,0.95,"The agent's response aligns well with the expected behavior. It provides a trading signal (BUY) for ETH, along with entry/exit points (Entry Price, Stop Loss, Take Profit), a confidence level (60%), and a strength indicator (69/100). The response is contextually appropriate, given the user's query about ETH buy or sell signals. The inclusion of factor scores (Sentiment, Prediction, Risk) adds further detail and supports the signal. The response demonstrates a clear understanding of the user's in",,,,

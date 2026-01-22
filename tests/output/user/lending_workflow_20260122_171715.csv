@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+lend_protocol_003,2026-01-22T17:17:16.329435+00:00,workflow,lending_protocol,NO,1,1,supply USDC to compound,,lending_workflow,,,,454,NO,,authenticated,en,FAIL,,03421ca3-4617-45cd-978a-8267af6733ee,,0.0,,,,,

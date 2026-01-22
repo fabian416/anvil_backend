@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+squad_parallel_001,2026-01-22T17:03:32.494984+00:00,agent_squad,parallel_coordination,NO,1,1,"Analyze Bitcoin from technical, fundamental, and sentiment perspectives","📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.6/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",,,,hunter_sentiment_handler,891,NO,,guest,en,FAIL,,258a48af-7fd6-4c44-b398-0cdb6892adee,,0.0,,,,,

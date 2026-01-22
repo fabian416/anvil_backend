@@ -1,0 +1,18 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_protocol_001,2026-01-22T16:06:15.769919+00:00,agent,hunter_protocol,NO,1,1,Compare the tokenomics of Aave and Compound,"📊 **Money Market Comparison - USDC**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Comparing Aave & Compound rates on ETHEREUM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| Protocol | Supply APY | Borrow APY | |
+|----------|-----------|------------|--------|
+| **Aave V3** 🏆 | 4.50% | 5.20% | 🟡 |
+| Compound V3 | 3.70% | 4.52% | 🟢 |
+
+*🟢 Real-time | 🟡 Estimated*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**🎯 Best Supply Rate:** Aave V3 (4.50% APY)
+**🎯 Best Borrow Rate:** Compound V3 (4",hunter_ai,,,money_market_handler,1221,NO,,guest,en,FAIL,,15c38add-f718-4ba9-a883-5584e98b0882,,0.0,,,,,

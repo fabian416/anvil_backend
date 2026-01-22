@@ -1,0 +1,19 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_signals_001,2026-01-22T17:12:01.934662+00:00,agent,hunter_signals,NO,1,1,BTC trading signals,"💹 **Trading Signal for BTC**
+
+**Signal:** 🟡 BUY
+**Strength:** 70/100
+**Confidence:** 62%
+**Timeframe:** 4h
+
+**Entry Price:** $1,964.57
+**Stop Loss:** $1,861.98
+**Take Profit:** $2,169.73
+
+**Factor Scores:**
+- Sentiment: 64/100
+- Prediction: 56/100
+- Risk: 91/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_signals_handler,2044,NO,,guest,en,FAIL,,0045f4ed-9110-4f9d-9dc2-e12ddfcc373a,PASS,0.95,"The agent's response aligns well with the expected behavior. It provides a trading signal for BTC, including entry/exit points (Entry Price, Take Profit), stop loss, confidence level, and timeframe. The inclusion of factor scores (Sentiment, Prediction, Risk) adds further detail and context to the signal. The response is contextually appropriate given the user's input and the provided additional context. The signup link is a reasonable addition for a trading signal service.",,,,

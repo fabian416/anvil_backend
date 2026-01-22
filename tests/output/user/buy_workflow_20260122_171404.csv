@@ -1,0 +1,16 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+buy_generic_001,2026-01-22T17:14:06.068618+00:00,workflow,buy_generic,NO,1,1,buy crypto,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy_workflow,,,buy_handler,518,NO,,guest,en,FAIL,,c5340d58-939c-4ca6-b98d-89377ac56880,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,

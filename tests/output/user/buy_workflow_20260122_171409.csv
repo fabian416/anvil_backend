@@ -1,0 +1,16 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+buy_generic_002,2026-01-22T17:14:11.192814+00:00,workflow,buy_generic,NO,1,1,purchase cryptocurrency,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy_workflow,,,buy_handler,498,NO,,guest,en,FAIL,,661ae0cd-6585-4515-8b9a-8ee3ed9bd549,PASS,0.95,"The agent's response aligns with the expected behavior of initiating a fiat-to-crypto purchase flow. It correctly identifies the user's intent to 'purchase cryptocurrency' and presents a list of available cryptocurrencies for purchase, prompting the user to select one. The response is contextually appropriate given the 'buy_workflow' and 'buy_generic' categories, and the user being authenticated. There are no apparent semantic errors or inconsistencies.",,,,

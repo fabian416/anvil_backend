@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+yield_004,2026-01-22T17:31:52.919528+00:00,agent,yield,NO,1,1,best ETH staking yield,,defi_yield,,,,190,NO,,authenticated,en,FAIL,,de42e49b-7966-4b8a-96ff-07943901fc91,,0.0,,,,,

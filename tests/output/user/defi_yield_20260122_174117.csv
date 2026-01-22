@@ -1,0 +1,20 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+research_001,2026-01-22T17:41:18.965298+00:00,agent,research,NO,1,1,tell me about Aave protocol,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **Curve** (DEX)
+  TVL: $4.1B | Risk: LOW | Chain: Ethereum
+• **Lido** (Staking)
+  TVL: $25.0B | Risk: LOW | Chain: Ethereum
+
+Register for full access to:
+  ✓ Search 500+ protocols
+  ✓ Custom filters
+  ✓ Rea",research,,,graphrag_handler,204,NO,,guest,en,FAIL,,4d083e78-bd86-48ed-94f5-1c9347efc363,WARNING,0.75,"The agent provides a list of DeFi protocols, including Aave, but it doesn't actually provide any information *about* Aave protocol as requested. It only lists Aave along with other protocols and some basic metrics. While the response is contextually appropriate and understands the user's intent to learn about DeFi protocols, it fails to deliver the specific information requested about Aave. The response is more of a search result than an informative explanation.",,,,

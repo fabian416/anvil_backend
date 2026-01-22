@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_sentiment_003,2026-01-22T17:39:16.223173+00:00,agent,hunter_sentiment,NO,1,1,bitcoin social sentiment,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.5/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_sentiment_handler,206,NO,,guest,en,FAIL,,52a00b28-7f78-4fc4-a4c0-3f1692633e5f,PASS,0.95,"The agent's response aligns well with the expected behavior. It provides a sentiment analysis for Bitcoin based on social sentiment, classifies the overall sentiment as bullish, provides a score, and breaks down the sentiment by source (Twitter, Reddit, Discord, News). The response is contextually appropriate given the user input and the additional context provided. There are no apparent semantic errors or inconsistencies. The agent demonstrates a clear understanding of the user's intent to obta",,,,

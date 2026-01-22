@@ -1,0 +1,20 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+research_003,2026-01-22T17:41:33.045065+00:00,agent,research,NO,1,1,explain DeFi lending,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **Curve** (DEX)
+  TVL: $4.1B | Risk: LOW | Chain: Ethereum
+• **Lido** (Staking)
+  TVL: $25.0B | Risk: LOW | Chain: Ethereum
+
+Register for full access to:
+  ✓ Search 500+ protocols
+  ✓ Custom filters
+  ✓ Rea",research,,,graphrag_handler,200,NO,,guest,en,FAIL,,d41fb49c-9b57-4ff6-89a8-951d745b15a1,FAIL,0.9,"The agent's response fails to provide an explanation of DeFi lending as requested. Instead, it provides a list of DeFi protocols, some of which are lending protocols, but it doesn't actually explain what DeFi lending *is*. The response is contextually appropriate in that it identifies relevant protocols, but it misses the core intent of the user's question, which was to understand the concept of DeFi lending, not just see a list of protocols.",,,,

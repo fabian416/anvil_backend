@@ -1,0 +1,26 @@
+{
+  "run_timestamp": "2026-01-22T17:17:15.747690+00:00",
+  "category": "lending_workflow",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 0,
+  "failed": 1,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "lending_protocol": {
+      "total": 1,
+      "pass": 0,
+      "partial": 0,
+      "fail": 1
+    }
+  },
+  "by_agent": {},
+  "avg_response_time_ms": 454,
+  "slowest_tests": [
+    {
+      "test_id": "lend_protocol_003",
+      "response_time_ms": 454,
+      "status": "FAIL"
+    }
+  ]
+}

@@ -689,10 +689,14 @@ def create_conversations_router() -> APIRouter:
                     for msg in context.messages[-5:]:  # Last 5 messages
                         # ChatMessage objects have role and content attributes
                         role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
-                        conversation_history.append({
+                        msg_dict = {
                             "role": role,
                             "content": msg.content if hasattr(msg, 'content') else str(msg),
-                        })
+                        }
+                        # Include metadata for workflow continuation detection
+                        if hasattr(msg, 'metadata') and msg.metadata:
+                            msg_dict["metadata"] = msg.metadata
+                        conversation_history.append(msg_dict)
                 
                 # Build user context for supervisor
                 user_context = {
@@ -732,6 +736,22 @@ def create_conversations_router() -> APIRouter:
                 
                 # Create assistant message
                 assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
+                
+                # Build message metadata including workflow state for multi-step continuation
+                message_metadata = {
+                    "agents_used": supervisor_result.agents_used,
+                    "workflow_type": supervisor_result.workflow_type,
+                    "task_count": supervisor_result.task_count,
+                    "total_time_ms": supervisor_result.total_time_ms,
+                }
+                
+                # Include workflow state from supervisor result (for multi-step workflows)
+                if supervisor_result.metadata:
+                    if supervisor_result.metadata.get("workflow_state"):
+                        message_metadata["workflow_state"] = supervisor_result.metadata["workflow_state"]
+                    if supervisor_result.metadata.get("workflow_name"):
+                        message_metadata["workflow_name"] = supervisor_result.metadata["workflow_name"]
+                
                 assistant_message = ChatMessage.create_assistant_message(
                     conversation_id=conversation_id,
                     content=supervisor_result.content,
@@ -739,12 +759,7 @@ def create_conversations_router() -> APIRouter:
                     handler="authenticated_supervisor",
                     is_restricted_action=False,
                     language=request_body.language,
-                    metadata={
-                        "agents_used": supervisor_result.agents_used,
-                        "workflow_type": supervisor_result.workflow_type,
-                        "task_count": supervisor_result.task_count,
-                        "total_time_ms": supervisor_result.total_time_ms,
-                    },
+                    metadata=message_metadata,
                     created_at=assistant_timestamp,
                 )
                 await message_repository.save(assistant_message)
@@ -1058,6 +1073,7 @@ def create_conversations_router() -> APIRouter:
                     "BALANCE": ChatIntent.BALANCE,
                     "ACTIVITY": ChatIntent.ACTIVITY,
                     "RECEIVE": ChatIntent.RECEIVE,
+                    "SEND": ChatIntent.SEND,
                 }
                 mapped_intent = intent_map.get(intent_result.intent.value, ChatIntent.GENERAL_CONVERSATION)
                 

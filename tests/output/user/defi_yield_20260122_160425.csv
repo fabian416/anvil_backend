@@ -1,0 +1,22 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+risk_005,2026-01-22T16:04:28.032989+00:00,agent,risk,NO,1,1,how safe is this vault,"🛡️ **Risk Assessment: Aave (Demo)**
+
+📊 **Risk Score:** 2.5/10
+⚡ **Risk Level:** LOW
+🔒 **Security Audits:** 12
+💰 **Total Value Locked:** $12.5B
+
+**Key Risk Factors:**
+  • Smart Contract Risk: ✅ Low
+  • Liquidity Risk: ✅ Low
+  • Oracle Risk: ✅ Low
+
+Register for full risk analysis including:
+  ✓ Real-time monitoring
+  ✓ Historical data
+  ✓ ML predictions
+  ✓ Alerts
+
+
+
+👉 **Sign up for real-time alerts** → /signup",risk_analyzer,,,graphrag_handler,490,NO,,guest,en,FAIL,,b0a2f029-b4c4-4f0c-a7e9-a8d16a704b97,PASS,0.95,"The agent's response directly addresses the user's query about the safety of the vault by providing a risk assessment. It includes a risk score, risk level, security audit information, and TVL, all of which are relevant to assessing the vault's safety. The response also identifies key risk factors and offers further analysis upon signup, which is contextually appropriate. The response demonstrates a clear understanding of the user's intent to gauge the safety and risk associated with the vault.",,,,

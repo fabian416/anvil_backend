@@ -1,0 +1,18 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_price_002,2026-01-22T14:58:27.177686+00:00,agent,hunter_price,NO,1,1,BTC price,"Bitcoin (BTC) Price Analysis:
+
+*   **Current Price:** $89,135.00
+*   **24h Change:** -0.67%
+*   **Market Cap:** $1782.84B
+*   **24h Volume:** $52.38B
+*   **7-Day High:** $96,711.70
+*   **7-Day Low:** $87,653.05
+
+Sentiment Analysis:
+
+*   **Sentiment Score:** 55/100 (Neutral to Slightly Bullish)
+*   **Classification:** Neutral
+
+Key Drivers of Sentiment:
+
+*   **Positive:** Bitcoin has shown resilience, staying above $87,000 despite recent volatility. The 24-hour volume indicates continued interest ",hunter_ai,hunter_ai,"[{""source_type"": ""api"", ""source_name"": ""CoinGecko"", ""source_id"": ""coin:bitcoin"", ""url"": ""https://www.coingecko.com/en/coins/bitcoin"", ""citation_text"": ""Real-time price data for BITCOIN from CoinGecko""",authenticated_supervisor,6875,NO,,authenticated,en,PASS,,e3fb3d51-0a07-4754-b5df-7f2ad306c459,PASS,0.95,"The agent's response accurately provides the current price of Bitcoin in USD, along with relevant market data and analysis. The information is clearly formatted and easy to understand. The response demonstrates a good understanding of the user's intent to retrieve the current price of Bitcoin.",,,,

@@ -1,0 +1,16 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+buy_basic_001,2026-01-22T17:13:41.274792+00:00,workflow,buy_basic,NO,1,1,buy $100 of ETH,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy_workflow,,,buy_handler,504,NO,,guest,en,FAIL,,a7d8e880-ca4f-4a4e-9efc-c0ec94603b90,PASS,0.95,"The agent's response correctly interprets the user's intent to buy ETH with fiat. It initiates the buy crypto workflow and presents the user with a list of available cryptocurrencies, including ETH, and prompts them to select one. This aligns with the expected behavior of handling fiat-to-crypto purchases.",,,,

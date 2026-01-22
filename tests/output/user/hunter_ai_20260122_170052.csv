@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_news_002,2026-01-22T17:00:54.898282+00:00,agent,hunter_news,NO,1,1,latest bitcoin news,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.6/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_sentiment_handler,461,NO,,guest,en,FAIL,,f924aea4-f15c-45ae-b6b4-610085fd6854,WARNING,0.75,"The response provides sentiment analysis for Bitcoin based on different sources, which aligns with the user's request for 'latest bitcoin news'. However, it lacks specific news articles or headlines. While sentiment analysis is related to news, it doesn't directly provide the news itself. The response is contextually appropriate given the user's authenticated status and the test category. The inclusion of a signup link is acceptable but not directly related to the news request. The main issue is",,,,

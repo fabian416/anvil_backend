@@ -209,6 +209,136 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             wallet_address=wallet_address,
         )
     
+    def _is_workflow_continuation(
+        self,
+        message: str,
+        conversation_context: "ConversationContext",
+    ) -> tuple[bool, str | None]:
+        """
+        Check if this message is a continuation of an existing workflow.
+        
+        Returns:
+            Tuple of (is_continuation, workflow_name or None)
+        """
+        message_lower = message.lower().strip()
+        logger.info(f"🔍 Checking workflow continuation for: '{message_lower}'")
+        
+        # Confirmation phrases in multiple languages
+        confirmation_phrases = {
+            # English
+            "yes", "y", "confirm", "confirmed", "proceed", "ok", "okay", "sure", "go ahead",
+            "do it", "execute", "approve",
+            # Spanish
+            "sí", "si", "confirmar", "confirmado", "proceder", "vale", "adelante",
+            "hazlo", "ejecutar", "aprobar",
+            # Portuguese  
+            "sim", "confirmar", "confirmado", "prosseguir", "ok", "fazer",
+            "executar", "aprovar",
+            # Chinese
+            "是", "确认", "好", "可以", "执行",
+        }
+        
+        # Check if message is a simple confirmation
+        is_confirmation = message_lower in confirmation_phrases or any(
+            message_lower.startswith(phrase + " ") or message_lower.endswith(" " + phrase)
+            for phrase in confirmation_phrases
+        )
+        
+        if not is_confirmation:
+            logger.info(f"🔍 Not a confirmation phrase, skipping workflow continuation")
+            return False, None
+        
+        logger.info(f"🔍 Detected confirmation phrase, checking history...")
+        logger.info(f"🔍 History length: {len(conversation_context.conversation_history) if conversation_context.conversation_history else 0}")
+        
+        # Check conversation history for pending workflow
+        if conversation_context.conversation_history:
+            for msg in reversed(conversation_context.conversation_history[-5:]):
+                if isinstance(msg, dict):
+                    metadata = msg.get("metadata", {})
+                    
+                    # Check for workflow state
+                    workflow_state = metadata.get("workflow_state")
+                    if workflow_state and workflow_state.get("step") == "confirm":
+                        workflow_name = metadata.get("workflow_name")
+                        logger.info(f"🔄 Found pending workflow continuation: {workflow_name}")
+                        return True, workflow_name
+                    
+                    # Check for pending action (execute data in previous message)
+                    content = msg.get("content", "")
+                    if content and any(phrase in content.lower() for phrase in [
+                        "ready to swap", "ready to deposit", "ready to buy",
+                        "listo para", "pronto para", "准备好了",
+                        "reply \"yes\"", "reply 'yes'", "responde \"sí\"",
+                    ]):
+                        # Infer workflow from content
+                        if "swap" in content.lower():
+                            return True, "swap_workflow"
+                        elif "deposit" in content.lower() or "lending" in content.lower():
+                            return True, "lending_workflow"
+                        elif "buy" in content.lower() or "purchase" in content.lower():
+                            return True, "buy_workflow"
+                        elif "transfer" in content.lower() or "send" in content.lower():
+                            return True, "transfer_workflow"
+        
+        return False, None
+    
+    async def create_workflow_plan(
+        self,
+        conversation_id: "ConversationId",
+        message: "MessageContent",
+        conversation_context: "ConversationContext",
+        available_agents: list["AgentType"],
+    ) -> "WorkflowPlan":
+        """
+        Create workflow plan with continuation support.
+        
+        Overrides parent to check for workflow continuations first.
+        If user is confirming a pending workflow, routes to same agent.
+        """
+        # Check for workflow continuation
+        is_continuation, workflow_name = self._is_workflow_continuation(
+            message.value, 
+            conversation_context
+        )
+        
+        if is_continuation and workflow_name:
+            # Route to the workflow agent that's awaiting confirmation
+            from app.domain.enums.agent_type import AgentType
+            
+            workflow_to_agent = {
+                "swap_workflow": AgentType.SWAP_WORKFLOW,
+                "lending_workflow": AgentType.LENDING_WORKFLOW,
+                "buy_workflow": AgentType.BUY_WORKFLOW,
+                "transfer_workflow": AgentType.TRANSFER_WORKFLOW,
+                "money_market_workflow": AgentType.MONEY_MARKET_WORKFLOW,
+            }
+            
+            agent_type = workflow_to_agent.get(workflow_name, AgentType.SWAP_WORKFLOW)
+            
+            logger.info(f"🔄 Continuing workflow {workflow_name} with agent {agent_type.value}")
+            
+            # Create a simple workflow plan that continues the existing workflow
+            task = AgentTask(
+                agent_type=agent_type,
+                task_description=f"Continue {workflow_name} - user confirmed",
+                depends_on=[],
+            )
+            
+            return WorkflowPlan(
+                tasks=[task],
+                execution_order=[0],
+                estimated_time_seconds=5,
+            )
+        
+        # Otherwise, use normal workflow planning
+        return await super().create_workflow_plan(
+            conversation_id=conversation_id,
+            message=message,
+            conversation_context=conversation_context,
+            available_agents=available_agents,
+        )
+    
     def _build_planning_prompt(
         self,
         message: MessageContent,

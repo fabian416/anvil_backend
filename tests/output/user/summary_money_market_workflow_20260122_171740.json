@@ -1,0 +1,26 @@
+{
+  "run_timestamp": "2026-01-22T17:17:40.538092+00:00",
+  "category": "money_market_workflow",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 0,
+  "failed": 1,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "money_market_compare": {
+      "total": 1,
+      "pass": 0,
+      "partial": 0,
+      "fail": 1
+    }
+  },
+  "by_agent": {},
+  "avg_response_time_ms": 464,
+  "slowest_tests": [
+    {
+      "test_id": "mm_compare_001",
+      "response_time_ms": 464,
+      "status": "FAIL"
+    }
+  ]
+}

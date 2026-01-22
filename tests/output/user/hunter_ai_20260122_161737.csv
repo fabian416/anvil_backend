@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_price_002,2026-01-22T16:17:39.065920+00:00,agent,hunter_price,NO,1,1,BTC price,"📈 **Price Prediction for BTC**
+
+**Current Price:** $88,773.45
+**7-Day Forecast:** $91,436.65
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_prediction_handler,467,NO,,guest,en,FAIL,,d2b5df15-9b0a-4f0e-bbd4-cc9cf8c93bfb,PASS,0.95,"The agent's response aligns well with the expected behavior. It provides the current price of BTC in USD, formats the information clearly, and mentions the token name. The inclusion of a 7-day forecast, expected change, direction, and confidence level enhances the response's utility. The response demonstrates a good understanding of the user's intent to retrieve BTC price information.",,,,

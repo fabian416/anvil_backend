@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+cross_swap_001,2026-01-22T17:16:18.259481+00:00,workflow,cross_chain_swap,NO,1,1,swap ETH on Ethereum to USDC on Base,,swap_workflow,,,,441,NO,,authenticated,en,FAIL,,a5bd29af-c6b3-41e7-bb82-70e7bf9f1f5f,,0.0,,,,,

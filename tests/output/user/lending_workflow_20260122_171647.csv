@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+lend_basic_001,2026-01-22T17:16:48.319114+00:00,workflow,lending_basic,NO,1,1,deposit 1000 USDC,,lending_workflow,,,,459,NO,,authenticated,en,FAIL,,8bfd254f-cff1-412f-b989-f9eef013a82e,,0.0,,,,,
