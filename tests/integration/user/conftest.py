@@ -39,6 +39,12 @@ TEST_USER_EMAIL = os.environ.get("TEST_USER_EMAIL", "ops@anvilcrypto.com")
 TEST_USER_PASSWORD = os.environ.get("TEST_USER_PASSWORD", "")
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "output" / "user"
 
+# Database DSN for direct connection (rate limit clearing)
+DB_DSN = os.environ.get(
+    "TEST_DB_DSN",
+    "postgresql+psycopg://postgres:changethis@localhost:5432/anvil_db"
+)
+
 # Ensure output directory exists
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -526,23 +532,74 @@ def auth_token(token_manager: TokenManager) -> TokenInfo:
     return asyncio.get_event_loop().run_until_complete(token_manager.get_token())
 
 
+@pytest.fixture(scope="module")
+def clear_rate_limits():
+    """
+    Clear rate limits before running module tests.
+    
+    This ensures tests don't fail due to rate limits from previous runs.
+    """
+    async def _clear():
+        try:
+            engine = create_async_engine(DB_DSN, pool_pre_ping=True)
+            async with engine.begin() as conn:
+                # Clear all rate limits for fresh test run
+                await conn.execute(text("TRUNCATE TABLE chat_rate_limits"))
+            await engine.dispose()
+        except Exception as e:
+            # Don't fail if table doesn't exist
+            print(f"Warning: Could not clear rate limits: {e}")
+    
+    loop = asyncio.new_event_loop()
+    try:
+        loop.run_until_complete(_clear())
+    finally:
+        loop.close()
+
+
+@pytest.fixture(scope="module")
+def app_instance(clear_rate_limits):
+    """
+    Create FastAPI app instance once per module.
+    
+    This prevents connection pool exhaustion by reusing
+    the same app (and DB connections) across tests in a module.
+    
+    The Dishka container is properly closed after module tests complete.
+    Depends on clear_rate_limits to reset counters before tests.
+    """
+    from app.run import make_app
+    app = make_app()
+    yield app
+    
+    # Cleanup: Close the Dishka container to release DB connections
+    if hasattr(app.state, "dishka_container"):
+        container = app.state.dishka_container
+        # Run async cleanup synchronously
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(container.close())
+        finally:
+            loop.close()
+
+
 @pytest_asyncio.fixture
-async def client():
+async def client(app_instance):
     """
     Create async HTTP test client.
     
     Uses ASGI transport for in-process testing when available,
     otherwise connects to BASE_URL.
+    
+    Note: app_instance is module-scoped to prevent DB connection exhaustion.
     """
     try:
-        from app.run import make_app
-        app = make_app()
         async with AsyncClient(
-            transport=ASGITransport(app=app),
+            transport=ASGITransport(app=app_instance),
             base_url="http://test"
         ) as ac:
             yield ac
-    except ImportError:
+    except Exception:
         # Fallback to external HTTP client
         async with AsyncClient(base_url=BASE_URL) as ac:
             yield ac
