@@ -373,6 +373,29 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 14. EDUCATIONAL:
    - DeFi explanations → "knowledge"
    - Protocol comparisons → "knowledge"
+
+15. ADVANCED MARKET ANALYSIS (CRITICAL - route to appropriate agents):
+   - Historical patterns, bull/bear market cycles → "hunter_ai" (market analysis)
+   - "Bitcoin price patterns during bull markets" → "hunter_ai"
+   - "are we in a bull market or bear market" → "hunter_ai"
+   - Market regime detection, cycle analysis → "hunter_ai"
+   - Correlation analysis between tokens → "hunter_ai"
+   - Liquidity depth, order book analysis → "hunter_ai"
+   - Whale activity, large transactions → "hunter_ai"
+   - DEX volume analysis → "hunter_ai"
+   - Token unlocks, vesting schedules → "hunter_ai"
+   - Market cap, FDV analysis → "hunter_ai"
+   
+16. CROSS-CHAIN ANALYSIS:
+   - Cross-chain arbitrage → "hunter_ai" + "risk_analyzer"
+   - Bridge opportunities → "hunter_ai"
+   - Multi-chain portfolio analysis → "portfolio" + "hunter_ai"
+   
+17. PORTFOLIO ANALYSIS (authenticated - use REAL data):
+   - Portfolio rebalancing suggestions → "portfolio" + "hunter_ai"
+   - Risk-adjusted recommendations → "portfolio" + "risk_analyzer"
+   - "Should I rebalance my portfolio" → "portfolio" + "hunter_ai"
+   - Allocation optimization → "portfolio" + "defi_yield"
 </rules>
 
 <examples>
@@ -411,6 +434,22 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 "write a poem about gas fees" → {{"tasks":[{{"agent_type":"chat","task_description":"Write a creative poem about Ethereum gas fees","depends_on":[]}}]}}
 "btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
 "what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi concepts","depends_on":[]}}]}}
+"Show me Bitcoin's price patterns during the last 3 bull markets" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Analyze Bitcoin historical price patterns and bull market cycles","depends_on":[]}}]}}
+"are we in a bull market or bear market" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Analyze current market regime and cycle phase","depends_on":[]}}]}}
+"BTC trading signals" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC trading signals and indicators","depends_on":[]}}]}}
+"will ETH go up" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Analyze ETH price prediction and market direction","depends_on":[]}}]}}
+"bitcoin social sentiment" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Analyze Bitcoin social media sentiment","depends_on":[]}}]}}
+"crypto news" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get latest crypto news and market updates","depends_on":[]}}]}}
+"when is the best time to execute Ethereum transactions to save on gas" → {{"tasks":[{{"agent_type":"gas_optimizer","task_description":"Analyze optimal gas timing for Ethereum transactions","depends_on":[]}}]}}
+"how correlated are BTC, ETH, and SOL" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Analyze correlation between BTC, ETH, and SOL price movements","depends_on":[]}}]}}
+"find arbitrage opportunities between Ethereum and Polygon" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Find cross-chain arbitrage opportunities ETH-Polygon","depends_on":[]}},{{"agent_type":"risk_analyzer","task_description":"Assess risk of arbitrage opportunities","depends_on":["hunter_ai"]}}]}}
+"I have 70% ETH and 30% BTC. Should I rebalance?" → {{"tasks":[{{"agent_type":"portfolio","task_description":"Analyze current portfolio allocation","depends_on":[]}},{{"agent_type":"hunter_ai","task_description":"Provide market-based rebalancing recommendation","depends_on":["portfolio"]}}]}}
+"suggest low-risk DeFi yield opportunities" → {{"tasks":[{{"agent_type":"defi_yield","task_description":"Find low-risk yield opportunities","depends_on":[]}},{{"agent_type":"risk_analyzer","task_description":"Filter by risk level","depends_on":["defi_yield"]}}]}}
+"whale activity for BTC" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Analyze whale activity and large BTC transactions","depends_on":[]}}]}}
+"DEX volume for Uniswap" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Analyze Uniswap DEX trading volume","depends_on":[]}}]}}
+"token unlocks this week" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get upcoming token unlock schedules","depends_on":[]}}]}}
+"DeFi protocols by market cap" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"List DeFi protocols ranked by market capitalization","depends_on":[]}}]}}
+"ETH staking yield" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get current ETH staking yields across validators","depends_on":[]}}]}}
 </examples>
 
 Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"...","depends_on":[]}}]}}"""
