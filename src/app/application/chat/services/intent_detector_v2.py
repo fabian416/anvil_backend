@@ -92,8 +92,10 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
     },
     "prediction": {
         "en": [
-            "predict", "prediction", "forecast", "will go", "next week",
-            "tomorrow", "price target", "where will", "future price",
+            "predict", "prediction", "forecast", "will go", "go up", "go down",
+            "next week", "tomorrow", "price target", "where will", "future price",
+            "will rise", "will fall", "will increase", "will decrease",
+            "going up", "going down", "bullish", "bearish",
         ],
         "es": [
             "predecir", "predicción", "pronóstico", "mañana", "próxima semana",
@@ -241,8 +243,9 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
     },
     "trading_signals": {
         "en": [
-            "trading signal", "buy signal", "sell signal",
-            "should i buy", "should i sell", "entry point",
+            "trading signal", "trading signals", "buy signal", "sell signal",
+            "should i buy", "should i sell", "entry point", "signals",
+            "buy signals", "sell signals", "trade signals",
         ],
         "es": [
             "señal de trading", "señal de compra", "señal de venta",
