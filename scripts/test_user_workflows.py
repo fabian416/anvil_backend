@@ -21,7 +21,7 @@ import httpx
 
 # Configuration
 BASE_URL = "http://localhost:8080"
-JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJQYVJLMEhZdWZrdmp1OHlsMWlZTkU5Q2NJcWp2dnRiaF9WTG4xVWQtRl9FIiwiZXhwIjoxNzY5MDYzNTQ4fQ.MBmBbB7Uwt_Rg47q8DSwJUxlrvLpaHeeLljaL2Y2Iv0"
+JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJROEFQMloyOUtNYzMzT3pkaF85QnY1SWc2ZFFnLU1IeHNvcUFZeWhUWkRBIiwiZXhwIjoxNzY5MDY3NTI0fQ.I7vixw8I0egoi78RowMoK1c7HTkb_xzeXV2Adr2Gssw"
 OUTPUT_FILE = "docs/output/user_workflows.csv"
 
 # Test cases for each workflow

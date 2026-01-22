@@ -42,6 +42,11 @@ if TYPE_CHECKING:
     from app.domain.ports.morpho_gateway import MorphoGateway
     from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
 
+# Import clients directly for real API access
+from app.infrastructure.adapters.external.morpho_client import MorphoClient, CHAIN_IDS
+from app.infrastructure.adapters.external.compound_client import CompoundClient
+from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient as DefiLlamaClientDirect
+
 logger = logging.getLogger(__name__)
 
 # DeFiLlama chain name mappings
@@ -187,36 +192,50 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Fetch and compare rates from protocols."""
+        """Fetch and compare rates from protocols using REAL APIs."""
         
         language = user_context.language
         asset = state.data.get("asset", "USDC")
         chain = state.data.get("chain", "base")
         comparison_type = state.data.get("comparison_type", "supply")
         
-        logger.info(f"[MoneyMarketWorkflow] Comparing {asset} rates on {chain}")
+        logger.info(f"[MoneyMarketWorkflow] Comparing {asset} rates on {chain} using REAL APIs")
         
         rates = []
         
-        # Fetch Aave rates
-        aave_rate = await self._fetch_aave_rate(asset, chain)
-        if aave_rate:
-            rates.append(aave_rate)
-        
-        # Fetch Compound rates
-        compound_rate = await self._fetch_compound_rate(asset, chain)
-        if compound_rate:
-            rates.append(compound_rate)
-        
-        # Fetch Morpho vault rates
-        morpho_rate = await self._fetch_morpho_rate(asset, chain)
+        # 1. Fetch Morpho rates directly (REAL API - works great)
+        morpho_rate = await self._fetch_morpho_rate_direct(asset, chain)
         if morpho_rate:
             rates.append(morpho_rate)
+            logger.info(f"[MoneyMarketWorkflow] Morpho rate: {morpho_rate.get('supply_apy', 0):.2f}%")
         
-        # Fallback to DeFiLlama if no rates from gateways
-        if not rates and self._defillama:
-            logger.info("[MoneyMarketWorkflow] Using DeFiLlama fallback for rates")
-            rates = await self._fetch_defillama_rates(asset, chain)
+        # 2. Fetch Compound rates directly (REAL RPC - works great)
+        compound_rate = await self._fetch_compound_rate_direct(asset, chain)
+        if compound_rate:
+            rates.append(compound_rate)
+            logger.info(f"[MoneyMarketWorkflow] Compound rate: {compound_rate.get('supply_apy', 0):.2f}%")
+        
+        # 3. Fetch Aave rates from DeFiLlama (aggregated, reliable)
+        aave_rate = await self._fetch_aave_rate_defillama(asset, chain)
+        if aave_rate:
+            rates.append(aave_rate)
+            logger.info(f"[MoneyMarketWorkflow] Aave rate: {aave_rate.get('supply_apy', 0):.2f}%")
+        
+        # Fallback: Try gateway-based methods if no rates yet
+        if not rates:
+            logger.info("[MoneyMarketWorkflow] Using gateway fallbacks...")
+            
+            aave_rate = await self._fetch_aave_rate(asset, chain)
+            if aave_rate:
+                rates.append(aave_rate)
+            
+            compound_rate = await self._fetch_compound_rate(asset, chain)
+            if compound_rate:
+                rates.append(compound_rate)
+            
+            morpho_rate = await self._fetch_morpho_rate(asset, chain)
+            if morpho_rate:
+                rates.append(morpho_rate)
         
         if not rates:
             response = self._format_no_rates_available(asset, chain, language)
@@ -327,7 +346,152 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         return self._format_execution_info(state.data, language), state
     
     # ========================================
-    # Data Fetching
+    # DIRECT API Data Fetching (REAL APIs)
+    # ========================================
+    
+    async def _fetch_morpho_rate_direct(
+        self,
+        asset: str,
+        chain: str,
+    ) -> dict[str, Any] | None:
+        """Fetch Morpho vault rate using DIRECT GraphQL API."""
+        
+        try:
+            client = MorphoClient()
+            chain_id = CHAIN_IDS.get(chain.lower(), 8453)  # Default to Base
+            
+            # Get asset-specific address for Base USDC
+            asset_address = None
+            if asset.upper() == "USDC" and chain.lower() == "base":
+                asset_address = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+            
+            # Fetch vaults
+            if asset_address:
+                vaults = await client.get_vaults(
+                    chain_id=chain_id,
+                    asset_address=asset_address,
+                    whitelisted=True,
+                    first=5,
+                )
+            else:
+                vaults = await client.get_vaults(
+                    chain_id=chain_id,
+                    whitelisted=True,
+                    first=10,
+                )
+                # Filter by asset symbol
+                vaults = [v for v in vaults if asset.upper() in v.asset_symbol.upper()]
+            
+            await client.close()
+            
+            if not vaults:
+                logger.debug(f"[MoneyMarketWorkflow] No Morpho vaults for {asset} on {chain}")
+                return None
+            
+            # Get best vault by APY
+            best_vault = max(vaults, key=lambda v: float(v.net_apy or "0"))
+            apy = float(best_vault.net_apy or "0") * 100  # Convert to percentage
+            
+            # Convert total_assets from wei to human readable
+            decimals = best_vault.asset_decimals or 6
+            tvl = float(best_vault.total_assets) / (10 ** decimals) if best_vault.total_assets else 0
+            
+            logger.info(f"[MoneyMarketWorkflow] Morpho {best_vault.name}: {apy:.2f}% APY")
+            
+            return {
+                "protocol": "morpho",
+                "name": f"Morpho ({best_vault.name})",
+                "vault_address": best_vault.id,
+                "supply_apy": apy,
+                "borrow_apy": 0,
+                "tvl": tvl,
+                "utilization": 0,
+            }
+            
+        except Exception as e:
+            logger.error(f"[MoneyMarketWorkflow] Morpho direct API error: {e}")
+            return None
+    
+    async def _fetch_compound_rate_direct(
+        self,
+        asset: str,
+        chain: str,
+    ) -> dict[str, Any] | None:
+        """Fetch Compound V3 rate using DIRECT RPC calls."""
+        
+        try:
+            client = CompoundClient()
+            market = await client.get_market(asset=asset.upper(), chain=chain.lower())
+            await client.close()
+            
+            if not market:
+                logger.debug(f"[MoneyMarketWorkflow] No Compound market for {asset} on {chain}")
+                return None
+            
+            logger.info(f"[MoneyMarketWorkflow] Compound {asset}: {market.supply_apy:.2f}% APY")
+            
+            return {
+                "protocol": "compound",
+                "name": "Compound V3",
+                "supply_apy": market.supply_apy,
+                "borrow_apy": market.borrow_apy,
+                "tvl": market.total_supply,
+                "utilization": market.utilization * 100,
+            }
+            
+        except Exception as e:
+            logger.error(f"[MoneyMarketWorkflow] Compound direct API error: {e}")
+            return None
+    
+    async def _fetch_aave_rate_defillama(
+        self,
+        asset: str,
+        chain: str,
+    ) -> dict[str, Any] | None:
+        """Fetch Aave V3 rate from DeFiLlama (aggregated data)."""
+        
+        try:
+            client = DefiLlamaClientDirect()
+            yields = await client.get_protocol_yields(protocol="aave-v3")
+            await client.close()
+            
+            if not yields:
+                return None
+            
+            # Filter by chain and asset
+            chain_name = DEFILLAMA_CHAIN_MAP.get(chain.lower(), chain.title())
+            asset_upper = asset.upper()
+            
+            matching = [
+                y for y in yields
+                if y.chain.lower() == chain_name.lower()
+                and self._symbol_contains_asset(y.symbol, asset_upper)
+            ]
+            
+            if not matching:
+                logger.debug(f"[MoneyMarketWorkflow] No Aave yields for {asset} on {chain}")
+                return None
+            
+            # Get best yield
+            best = max(matching, key=lambda y: y.apy)
+            
+            logger.info(f"[MoneyMarketWorkflow] Aave {asset}: {best.apy:.2f}% APY")
+            
+            return {
+                "protocol": "aave",
+                "name": "Aave V3",
+                "supply_apy": best.apy,
+                "borrow_apy": 0,  # DeFiLlama doesn't provide borrow rates
+                "tvl": best.tvl_usd,
+                "utilization": 0,
+            }
+            
+        except Exception as e:
+            logger.error(f"[MoneyMarketWorkflow] Aave DeFiLlama error: {e}")
+            return None
+    
+    # ========================================
+    # Gateway-based Data Fetching (Fallback)
     # ========================================
     
     async def _fetch_aave_rate(
