@@ -422,7 +422,7 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         params: dict[str, Any] = {}
         
         # Try LLM extraction first
-        if self._llm_client:
+        if self._llm:
             try:
                 llm_params = await self._llm_extract_params(
                     text,

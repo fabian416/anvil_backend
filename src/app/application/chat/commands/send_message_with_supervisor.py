@@ -260,6 +260,10 @@ class SendMessageWithSupervisor:
             )
             
         except Exception as e:
+            import traceback
+            print(f"[SUPERVISOR WORKFLOW ERROR] {e}")
+            traceback.print_exc()
+            
             logger.error(
                 f"Supervisor workflow failed: {e}",
                 extra={

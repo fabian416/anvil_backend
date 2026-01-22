@@ -1,7 +1,9 @@
 """
 Hyperliquid API Client.
 
-Provides access to Hyperliquid perpetual futures exchange:
+Provides access to Hyperliquid exchange:
+- Perpetual futures trading
+- Spot trading (swaps)
 - Order book data
 - Funding rates
 - Liquidation data
@@ -75,12 +77,38 @@ class Order:
     timestamp: int
 
 
+@dataclass
+class SpotMeta:
+    """Spot market metadata."""
+    name: str  # e.g., "ETH/USDC"
+    base_token: str  # e.g., "ETH"
+    quote_token: str  # e.g., "USDC"
+    index: int  # Spot market index
+    min_size: float
+    price_decimals: int
+    size_decimals: int
+
+
+@dataclass
+class SpotQuote:
+    """Spot swap quote from Hyperliquid."""
+    from_token: str
+    to_token: str
+    from_amount: float
+    to_amount: float
+    price: float  # Effective price (to_amount / from_amount)
+    mid_price: float  # Mid market price
+    spread_bps: float  # Spread in basis points
+    timestamp: int
+
+
 class HyperliquidClient:
     """
-    Hyperliquid API client for perpetual futures trading.
+    Hyperliquid API client for perpetual futures and spot trading.
     
     Features:
     - Market data (order book, funding rates, liquidations)
+    - Spot trading (swaps) with real-time quotes
     - Position management
     - Order placement and management
     - Account information
@@ -435,3 +463,230 @@ class HyperliquidClient:
         response.raise_for_status()
         
         return True
+    
+    # ========================================
+    # SPOT TRADING METHODS
+    # ========================================
+    
+    async def get_spot_meta(self) -> list[SpotMeta]:
+        """
+        Get metadata for all spot markets.
+        
+        Returns:
+            List of SpotMeta with market information
+            
+        Example:
+            >>> markets = await client.get_spot_meta()
+            >>> for m in markets:
+            ...     print(f"{m.name}: {m.base_token}/{m.quote_token}")
+        """
+        response = await self._client.post(
+            "/info",
+            json={"type": "spotMeta"}
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        markets = []
+        tokens = data.get("tokens", [])
+        universe = data.get("universe", [])
+        
+        for i, market in enumerate(universe):
+            # Get token names from indices
+            base_idx = market.get("tokens", [0, 0])[0]
+            quote_idx = market.get("tokens", [0, 0])[1]
+            
+            base_token = tokens[base_idx].get("name", f"TOKEN{base_idx}") if base_idx < len(tokens) else f"TOKEN{base_idx}"
+            quote_token = tokens[quote_idx].get("name", f"TOKEN{quote_idx}") if quote_idx < len(tokens) else f"TOKEN{quote_idx}"
+            
+            markets.append(SpotMeta(
+                name=market.get("name", f"{base_token}/{quote_token}"),
+                base_token=base_token,
+                quote_token=quote_token,
+                index=i,
+                min_size=float(market.get("minSz", 0.001)),
+                price_decimals=int(market.get("priceSzDecimals", 2)),
+                size_decimals=int(market.get("szDecimals", 4)),
+            ))
+        
+        return markets
+    
+    async def get_spot_order_book(self, symbol: str, depth: int = 20) -> OrderBook:
+        """
+        Get order book for a spot market.
+        
+        Args:
+            symbol: Spot pair (e.g., "ETH/USDC" or "@1" for index 1)
+            depth: Order book depth (default: 20)
+            
+        Returns:
+            OrderBook with bids and asks
+            
+        Example:
+            >>> order_book = await client.get_spot_order_book("ETH/USDC")
+            >>> print(f"Best bid: ${order_book.bids[0][0]}")
+            >>> print(f"Best ask: ${order_book.asks[0][0]}")
+        """
+        # Convert symbol name to spot format if needed
+        coin = symbol if symbol.startswith("@") else symbol
+        
+        response = await self._client.post(
+            "/info",
+            json={
+                "type": "l2Book",
+                "coin": coin,
+            }
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        # Parse order book
+        levels = data.get("levels", [])
+        bids = [(float(level["px"]), float(level["sz"])) for level in levels[0]] if levels else []
+        asks = [(float(level["px"]), float(level["sz"])) for level in levels[1]] if len(levels) > 1 else []
+        
+        return OrderBook(
+            symbol=symbol,
+            bids=bids[:depth],
+            asks=asks[:depth],
+            timestamp=int(time.time() * 1000),
+        )
+    
+    async def get_spot_price(self, base_token: str, quote_token: str = "USDC") -> float:
+        """
+        Get current spot price for a token pair.
+        
+        Args:
+            base_token: Base token (e.g., "ETH", "BTC")
+            quote_token: Quote token (default: "USDC")
+            
+        Returns:
+            Current mid-market price
+            
+        Example:
+            >>> price = await client.get_spot_price("ETH", "USDC")
+            >>> print(f"ETH/USDC: ${price:.2f}")
+        """
+        symbol = f"{base_token}/{quote_token}"
+        order_book = await self.get_spot_order_book(symbol)
+        
+        if order_book.bids and order_book.asks:
+            best_bid = order_book.bids[0][0]
+            best_ask = order_book.asks[0][0]
+            return (best_bid + best_ask) / 2
+        elif order_book.bids:
+            return order_book.bids[0][0]
+        elif order_book.asks:
+            return order_book.asks[0][0]
+        
+        raise ValueError(f"No price data for {symbol}")
+    
+    async def get_spot_quote(
+        self,
+        from_token: str,
+        to_token: str,
+        amount: float,
+    ) -> SpotQuote:
+        """
+        Get a spot swap quote for exchanging tokens.
+        
+        Args:
+            from_token: Token to sell (e.g., "ETH")
+            to_token: Token to buy (e.g., "USDC")
+            amount: Amount of from_token to sell
+            
+        Returns:
+            SpotQuote with expected output and pricing
+            
+        Example:
+            >>> quote = await client.get_spot_quote("ETH", "USDC", 1.0)
+            >>> print(f"1 ETH = {quote.to_amount:.2f} USDC")
+            >>> print(f"Effective rate: ${quote.price:.2f}")
+        """
+        # Determine if we're selling base or quote
+        # Try both orderings: from/to and to/from
+        symbol = f"{from_token}/{to_token}"
+        reverse_symbol = f"{to_token}/{from_token}"
+        
+        try:
+            order_book = await self.get_spot_order_book(symbol)
+            is_sell = True  # Selling from_token (base) for to_token (quote)
+        except Exception:
+            try:
+                order_book = await self.get_spot_order_book(reverse_symbol)
+                is_sell = False  # Buying from_token with to_token
+            except Exception:
+                raise ValueError(f"No spot market found for {from_token}/{to_token}")
+        
+        if is_sell:
+            # Selling base token - use bids (others buying from us)
+            if not order_book.bids:
+                raise ValueError(f"No bid liquidity for {symbol}")
+            
+            # Calculate output by walking through order book
+            remaining = amount
+            total_output = 0.0
+            
+            for price, size in order_book.bids:
+                if remaining <= 0:
+                    break
+                fill_size = min(remaining, size)
+                total_output += fill_size * price
+                remaining -= fill_size
+            
+            if remaining > 0:
+                # Not enough liquidity - estimate rest at worst price
+                total_output += remaining * order_book.bids[-1][0] if order_book.bids else 0
+            
+            effective_price = total_output / amount if amount > 0 else 0
+            mid_price = (order_book.bids[0][0] + order_book.asks[0][0]) / 2 if order_book.asks else order_book.bids[0][0]
+            spread_bps = ((order_book.asks[0][0] - order_book.bids[0][0]) / mid_price * 10000) if order_book.asks else 0
+            
+            return SpotQuote(
+                from_token=from_token,
+                to_token=to_token,
+                from_amount=amount,
+                to_amount=total_output,
+                price=effective_price,
+                mid_price=mid_price,
+                spread_bps=spread_bps,
+                timestamp=int(time.time() * 1000),
+            )
+        else:
+            # Buying base token - use asks (others selling to us)
+            if not order_book.asks:
+                raise ValueError(f"No ask liquidity for {reverse_symbol}")
+            
+            # We have 'amount' of from_token (which is the quote in reverse_symbol)
+            # We want to buy to_token (which is the base in reverse_symbol)
+            remaining_quote = amount
+            total_base = 0.0
+            
+            for price, size in order_book.asks:
+                if remaining_quote <= 0:
+                    break
+                # cost = size * price (quote needed to buy 'size' base)
+                cost = size * price
+                if cost <= remaining_quote:
+                    total_base += size
+                    remaining_quote -= cost
+                else:
+                    # Partial fill
+                    fill_size = remaining_quote / price
+                    total_base += fill_size
+                    remaining_quote = 0
+            
+            effective_price = amount / total_base if total_base > 0 else 0  # Price in from_token per to_token
+            mid_price = (order_book.bids[0][0] + order_book.asks[0][0]) / 2 if order_book.bids else order_book.asks[0][0]
+            spread_bps = ((order_book.asks[0][0] - order_book.bids[0][0]) / mid_price * 10000) if order_book.bids else 0
+            
+            return SpotQuote(
+                from_token=from_token,
+                to_token=to_token,
+                from_amount=amount,
+                to_amount=total_base,
+                price=effective_price,
+                mid_price=mid_price,
+                spread_bps=spread_bps,
+                timestamp=int(time.time() * 1000),
+            )

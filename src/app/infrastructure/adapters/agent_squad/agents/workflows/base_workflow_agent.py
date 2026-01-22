@@ -25,6 +25,7 @@ from app.domain.value_objects.message_content import MessageContent
 
 if TYPE_CHECKING:
     from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+    from app.domain.value_objects.conversation_id import ConversationId
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 logger = logging.getLogger(__name__)
@@ -213,6 +214,7 @@ class BaseWorkflowAgent(AgentGateway, ABC):
     
     async def execute(
         self,
+        conversation_id: "ConversationId",
         message: MessageContent,
         conversation_context: "ConversationContext",
     ) -> AgentResponse:
@@ -224,6 +226,11 @@ class BaseWorkflowAgent(AgentGateway, ABC):
         2. Extracts user context (wallet, language)
         3. Delegates to process_step()
         4. Returns AgentResponse with state and execute_data
+        
+        Args:
+            conversation_id: Conversation identifier
+            message: User message
+            conversation_context: Conversation history and metadata
         """
         # Load state from conversation context or initialize
         state = self._load_state(conversation_context) or WorkflowState()
@@ -263,14 +270,9 @@ class BaseWorkflowAgent(AgentGateway, ABC):
             return AgentResponse(
                 content=response_content,
                 agent_type=self.agent_type,
+                tools_used=[self.workflow_name],
                 metadata=metadata,
-                sources=[
-                    {
-                        "name": self.workflow_name,
-                        "type": "workflow_agent",
-                        "step": new_state.step,
-                    }
-                ],
+                sources=[],  # Will be populated from sources list
             )
             
         except Exception as e:
@@ -282,11 +284,13 @@ class BaseWorkflowAgent(AgentGateway, ABC):
             return AgentResponse(
                 content=f"❌ Error in {self.workflow_name}: {str(e)}",
                 agent_type=self.agent_type,
+                tools_used=[self.workflow_name],
                 metadata={
                     "workflow_name": self.workflow_name,
                     "workflow_state": state.to_dict(),
                     "error": str(e),
                 },
+                sources=[],
             )
     
     def _load_state(self, conversation_context: "ConversationContext") -> WorkflowState | None:
