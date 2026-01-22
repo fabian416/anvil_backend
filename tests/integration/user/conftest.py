@@ -509,29 +509,21 @@ class CSVReporter:
 # Pytest Fixtures
 # ============================================================
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create event loop for async tests."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest_asyncio.fixture(scope="session")
-async def token_manager() -> TokenManager:
+@pytest.fixture(scope="module")
+def token_manager() -> TokenManager:
     """Provide token manager instance."""
     return TokenManager()
 
 
-@pytest_asyncio.fixture(scope="session")
-async def auth_token(token_manager: TokenManager) -> TokenInfo:
+@pytest.fixture(scope="module")
+def auth_token(token_manager: TokenManager) -> TokenInfo:
     """
     Get a valid authentication token.
     
     This fixture provides a JWT token for authenticated API calls.
     Token is cached for the test session.
     """
-    return await token_manager.get_token()
+    return asyncio.get_event_loop().run_until_complete(token_manager.get_token())
 
 
 @pytest_asyncio.fixture

@@ -31,8 +31,7 @@ async def client():
 
 
 @pytest_asyncio.fixture
-@pytest.mark.llm_validation
-async def test_user_and_conversation(client: AsyncClient, llm_validator):
+async def test_user_and_conversation(client: AsyncClient):
     """
     Create a test user and conversation.
     
@@ -77,47 +76,10 @@ async def test_user_and_conversation(client: AsyncClient, llm_validator):
     assert conversation_id is not None, "Failed to create conversation"
     return conversation_id, base_path
 
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_user_and_conversation",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.llm_validation
 async def test_delete_endpoint_archives_conversation(
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_delete_endpoint_archives_conversation",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
     client: AsyncClient, test_user_and_conversation
 ):
     """
@@ -132,8 +94,8 @@ async def test_delete_endpoint_archives_conversation(
     
     # Archive conversation via DELETE
     response = await client.delete(
-    f"{base_path}/{conversation_id}",
-    headers={"Authorization": "Bearer test-token"},
+        f"{base_path}/{conversation_id}",
+        headers={"Authorization": "Bearer test-token"},
     )
     
     assert response.status_code == 200
@@ -148,26 +110,7 @@ async def test_delete_endpoint_archives_conversation(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.llm_validation
 async def test_archived_conversation_not_in_default_list(
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_archived_conversation_not_in_default_list",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
     client: AsyncClient, test_user_and_conversation
 ):
     """
@@ -181,14 +124,14 @@ async def test_archived_conversation_not_in_default_list(
     
     # Archive conversation
     await client.delete(
-    f"{base_path}/{conversation_id}",
-    headers={"Authorization": "Bearer test-token"},
+        f"{base_path}/{conversation_id}",
+        headers={"Authorization": "Bearer test-token"},
     )
     
     # List conversations (default should filter by status='active')
     response = await client.get(
-    base_path,
-    headers={"Authorization": "Bearer test-token"},
+        base_path,
+        headers={"Authorization": "Bearer test-token"},
     )
     
     assert response.status_code == 200
@@ -201,26 +144,7 @@ async def test_archived_conversation_not_in_default_list(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.llm_validation
 async def test_archived_conversation_retrievable_by_id(
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_archived_conversation_retrievable_by_id",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
     client: AsyncClient, test_user_and_conversation
 ):
     """
@@ -234,14 +158,14 @@ async def test_archived_conversation_retrievable_by_id(
     
     # Archive conversation
     await client.delete(
-    f"{base_path}/{conversation_id}",
-    headers={"Authorization": "Bearer test-token"},
+        f"{base_path}/{conversation_id}",
+        headers={"Authorization": "Bearer test-token"},
     )
     
     # Try to retrieve archived conversation by ID
     response = await client.get(
-    f"{base_path}/{conversation_id}",
-    headers={"Authorization": "Bearer test-token"},
+        f"{base_path}/{conversation_id}",
+        headers={"Authorization": "Bearer test-token"},
     )
     
     # Should still be retrievable (not 404)
@@ -253,26 +177,7 @@ async def test_archived_conversation_retrievable_by_id(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.llm_validation
 async def test_archived_conversation_in_filtered_list(
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_archived_conversation_in_filtered_list",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
     client: AsyncClient, test_user_and_conversation
 ):
     """
@@ -285,14 +190,14 @@ async def test_archived_conversation_in_filtered_list(
     
     # Archive conversation
     await client.delete(
-    f"{base_path}/{conversation_id}",
-    headers={"Authorization": "Bearer test-token"},
+        f"{base_path}/{conversation_id}",
+        headers={"Authorization": "Bearer test-token"},
     )
     
     # List conversations with status='archived' filter
     response = await client.get(
-    f"{base_path}?status=archived",
-    headers={"Authorization": "Bearer test-token"},
+        f"{base_path}?status=archived",
+        headers={"Authorization": "Bearer test-token"},
     )
     
     assert response.status_code == 200
@@ -304,33 +209,12 @@ async def test_archived_conversation_in_filtered_list(
     
     # Verify all returned conversations are archived
     for conv in conversations:
-    assert conv["status"] == "archived"
+        assert conv["status"] == "archived"
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.llm_validation
-async def test_delete_nonexistent_conversation_returns_404(
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_delete_nonexistent_conversation_returns_404",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    client: AsyncClient
-):
+async def test_delete_nonexistent_conversation_returns_404(client: AsyncClient):
     """
     Test that deleting a nonexistent conversation returns 404.
     
@@ -341,16 +225,16 @@ async def test_delete_nonexistent_conversation_returns_404(
     
     # Try both possible endpoints
     endpoints = [
-    f"/api/v1/user/chat/conversations/{fake_id}",
-    f"/api/v1/chat/conversations/{fake_id}",
+        f"/api/v1/user/chat/conversations/{fake_id}",
+        f"/api/v1/chat/conversations/{fake_id}",
     ]
     
     response = None
     for endpoint in endpoints:
-    resp = await client.delete(
-        endpoint,
-        headers={"Authorization": "Bearer test-token"},
-    )
+        resp = await client.delete(
+            endpoint,
+            headers={"Authorization": "Bearer test-token"},
+        )
         if resp.status_code != 404:  # If not 404, might be the right endpoint
             response = resp
             break
@@ -368,26 +252,7 @@ async def test_delete_nonexistent_conversation_returns_404(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.llm_validation
 async def test_delete_conversation_requires_authentication(
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_delete_conversation_requires_authentication",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
     client: AsyncClient, test_user_and_conversation
 ):
     """
@@ -400,7 +265,7 @@ async def test_delete_conversation_requires_authentication(
     
     # Try to delete without authentication
     response = await client.delete(
-    f"{base_path}/{conversation_id}",
+        f"{base_path}/{conversation_id}",
     )
     
     # Should either require auth or use guest user
