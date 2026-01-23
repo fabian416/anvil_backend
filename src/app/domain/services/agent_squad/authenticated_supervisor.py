@@ -252,6 +252,8 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         logger.info(f"🔍 History length: {len(conversation_context.conversation_history) if conversation_context.conversation_history else 0}")
         
         # Check conversation history for pending workflow
+        # Note: conversation_history is in chronological order (oldest first)
+        # We iterate in reverse to check newest messages first
         if conversation_context.conversation_history:
             for msg in reversed(conversation_context.conversation_history[-5:]):
                 if isinstance(msg, dict):
