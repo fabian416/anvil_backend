@@ -559,7 +559,13 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 "purchase 50 dollars of USDC" → {{"tasks":[{{"agent_type":"buy_workflow","task_description":"Execute buy: $50 of USDC","depends_on":[]}}]}}
 "buy crypto" → {{"tasks":[{{"agent_type":"buy_workflow","task_description":"Execute buy: need crypto and amount","depends_on":[]}}]}}
 "compare USDC rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across Aave, Compound, Morpho","depends_on":[]}}]}}
+"compare rates for USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across protocols","depends_on":[]}}]}}
+"USDC rate comparison" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC lending rates","depends_on":[]}}]}}
+"Morpho vs Aave rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare Morpho vs Aave lending rates","depends_on":[]}}]}}
+"Morpho vs Aave for USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare Morpho vs Aave rates for USDC","depends_on":[]}}]}}
 "best lending rates for ETH" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare ETH lending rates across protocols","depends_on":[]}}]}}
+"compare lending protocols" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare lending protocols and rates","depends_on":[]}}]}}
+"compare lending rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare lending rates across protocols","depends_on":[]}}]}}
 "where should I deposit DAI" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare DAI deposit rates and recommend best protocol","depends_on":[]}}]}}
 "comparar tasas de USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across protocols (Spanish)","depends_on":[]}}]}}
 "comparar tasas" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare lending rates across protocols (Spanish)","depends_on":[]}}]}}
