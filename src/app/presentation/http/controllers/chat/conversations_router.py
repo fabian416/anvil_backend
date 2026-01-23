@@ -11,7 +11,7 @@ from uuid import UUID
 
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.application.chat.services.conversation_service import ConversationService
 from app.application.chat.services.user_service import UserService
@@ -90,6 +90,8 @@ class ConversationWithMessagesResponse(BaseModel):
 
 class ExecuteActionData(BaseModel):
     """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
+    
+    model_config = {"extra": "ignore"}  # Ignore unknown fields from workflows
 
     action_type: str = Field(..., description="Type of action: swap, deposit, withdraw, transfer, approve, bridge")
     provider: str | None = Field(default=None, description="Execution provider: privy_0x for Privy + 0x swaps")
@@ -97,6 +99,14 @@ class ExecuteActionData(BaseModel):
     from_token: str | None = Field(default=None, description="Source token symbol or address")
     to_token: str | None = Field(default=None, description="Destination token symbol (for swap)")
     amount: str | None = Field(default=None, description="Amount to execute (human readable)")
+    
+    @field_validator("amount", mode="before")
+    @classmethod
+    def coerce_amount_to_str(cls, v):
+        """Coerce amount to string (workflows may return int/float)."""
+        if v is not None:
+            return str(v)
+        return v
     protocol: str | None = Field(default=None, description="Protocol name (for deposit/withdraw)")
     vault_address: str | None = Field(default=None, description="Vault address (for Morpho deposits)")
     asset_address: str | None = Field(default=None, description="Underlying asset address (for Morpho deposits)")

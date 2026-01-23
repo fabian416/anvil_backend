@@ -261,6 +261,12 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                     workflow_state = metadata.get("workflow_state")
                     if workflow_state and workflow_state.get("step") == "confirm":
                         workflow_name = metadata.get("workflow_name")
+                        # Normalize workflow name to snake_case for agent mapping
+                        # e.g., "LendingWorkflow" -> "lending_workflow"
+                        if workflow_name:
+                            import re
+                            # Convert PascalCase to snake_case
+                            workflow_name = re.sub(r'(?<!^)(?=[A-Z])', '_', workflow_name).lower()
                         logger.info(f"🔄 Found pending workflow continuation: {workflow_name}")
                         return True, workflow_name
                     

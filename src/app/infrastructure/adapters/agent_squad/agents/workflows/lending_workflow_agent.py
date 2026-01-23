@@ -170,18 +170,23 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         
         asset = params.get("asset")
         amount = params.get("amount")
+        protocol = params.get("protocol")  # User's protocol preference (aave, morpho, etc.)
         
         # If we have both asset and amount, proceed to fetch data
         if asset and amount:
             state.data["asset"] = asset.upper()
             state.data["amount"] = amount
             state.data["chain"] = params.get("chain", "base")
+            if protocol:
+                state.data["protocol"] = protocol  # Store protocol preference
             state.step = WorkflowStep.FETCH_DATA.value
             return await self._handle_fetch_data(message, state, user_context)
         
         # If we have asset but no amount, ask for amount
         if asset and not amount:
             state.data["asset"] = asset.upper()
+            if protocol:
+                state.data["protocol"] = protocol  # Store protocol preference
             state.step = WorkflowStep.PARSE_REQUEST.value
             return self._ask_for_amount(asset.upper(), language), state
         
@@ -200,16 +205,25 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         asset = state.data.get("asset", "USDC")
         amount = state.data.get("amount", "0")
         chain = state.data.get("chain", "base")
+        protocol_preference = state.data.get("protocol")  # User's protocol preference
         wallet_address = user_context.wallet_address
         
-        logger.info(f"[LendingWorkflow] Fetching vaults for {asset} on {chain}")
+        logger.info(f"[LendingWorkflow] Fetching vaults for {asset} on {chain}, preference={protocol_preference}")
         
-        # Try Morpho first
-        vault_data = await self._fetch_morpho_vault(asset, chain)
+        vault_data = None
         
-        # Fallback to Aave if no Morpho vault
-        if not vault_data and self._aave:
+        # Respect user's protocol preference if specified
+        if protocol_preference == "aave" and self._aave:
+            # User explicitly wants Aave
             vault_data = await self._fetch_aave_market(asset, chain)
+        elif protocol_preference == "morpho":
+            # User explicitly wants Morpho
+            vault_data = await self._fetch_morpho_vault(asset, chain)
+        else:
+            # No preference - try Morpho first, then Aave
+            vault_data = await self._fetch_morpho_vault(asset, chain)
+            if not vault_data and self._aave:
+                vault_data = await self._fetch_aave_market(asset, chain)
         
         if not vault_data:
             # No vault available
@@ -407,12 +421,13 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         # Try LLM extraction first
         if self._llm:
             try:
-                llm_params = await self._llm_extract_params(
+                llm_params = await self._extract_params_with_llm(
                     text,
                     param_schema={
                         "asset": "Token symbol to deposit (USDC, ETH, DAI, etc.)",
                         "amount": "Amount to deposit (numeric value)",
-                        "chain": "Blockchain network (base, ethereum, etc.)",
+                        "chain": "Blockchain network (base, ethereum, polygon, arbitrum, etc.)",
+                        "protocol": "DeFi protocol preference (aave, morpho, or null if not specified)",
                     },
                 )
                 if llm_params:
@@ -433,9 +448,29 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                     params["asset"] = info["symbol"]
                     break
         
-        # Default chain
+        # Regex fallback for protocol preference
+        if not params.get("protocol"):
+            text_lower = text.lower()
+            if "aave" in text_lower:
+                params["protocol"] = "aave"
+            elif "morpho" in text_lower:
+                params["protocol"] = "morpho"
+            elif "compound" in text_lower:
+                params["protocol"] = "compound"
+        
+        # Regex fallback for chain
         if not params.get("chain"):
-            params["chain"] = "base"
+            text_lower = text.lower()
+            if "ethereum" in text_lower or "mainnet" in text_lower:
+                params["chain"] = "ethereum"
+            elif "polygon" in text_lower or "matic" in text_lower:
+                params["chain"] = "polygon"
+            elif "arbitrum" in text_lower:
+                params["chain"] = "arbitrum"
+            elif "optimism" in text_lower:
+                params["chain"] = "optimism"
+            else:
+                params["chain"] = "base"  # Default to Base
         
         return params
     
@@ -578,14 +613,16 @@ Quanto **{asset}** você gostaria de depositar?
         self,
         vault_data: dict[str, Any],
         asset: str,
-        amount: str,
+        amount: str | int | float,
         language: str,
     ) -> str:
         """Format vault quote for display."""
         
         try:
-            amount_float = float(amount.replace(",", ""))
-        except ValueError:
+            # Handle amount as string, int, or float
+            amount_str = str(amount).replace(",", "")
+            amount_float = float(amount_str)
+        except (ValueError, TypeError):
             amount_float = 0
         
         apy = vault_data.get("apy", 0)
