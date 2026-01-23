@@ -209,9 +209,9 @@ If the user asks about something not in their data, explain what data is availab
 
 No transactions yet - let's change that! Here's what you can do:
 
-• **Swap tokens** - \"swap 0.5 ETH to USDC\" to start trading
+• **Buy crypto** - \"buy 100 USD of ETH\" to start building your portfolio
 • **Earn yield** - \"deposit 100 USDC\" to grow your assets
-• **Buy crypto** - \"buy 50 USD of ETH\" to add to your wallet
+• **Swap tokens** - \"swap ETH to USDC\" once you have crypto
 
 Your transactions will appear here automatically once you start using Anvil! 🚀"""
         

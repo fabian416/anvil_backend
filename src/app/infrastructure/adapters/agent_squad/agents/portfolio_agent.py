@@ -293,11 +293,11 @@ Analyze and respond using the portfolio data provided above."""
             lines.append("\n**Portfolio Status:** Your portfolio is ready to grow! 🌱")
             lines.append("")
             lines.append("**Get started with Anvil:**")
-            lines.append("• **Swap tokens** - Try \"swap 0.1 ETH to USDC\" for your first trade")
+            lines.append("• **Buy crypto** - Type \"buy 100 USD of ETH\" to start building your portfolio")
             lines.append("• **Earn yield** - Say \"best yield for USDC\" to find earning opportunities")
-            lines.append("• **Buy crypto** - Type \"buy 50 USD of ETH\" to add to your portfolio")
+            lines.append("• **Swap tokens** - Try \"swap ETH to USDC\" once you have crypto")
             lines.append("")
-            lines.append("Once you make your first transaction, I'll track your portfolio automatically! 📊")
+            lines.append("Once you make your first purchase, I'll track your portfolio automatically! 📊")
             return "\n".join(lines)
         
         # Handle PortfolioSummary dataclass or dict
@@ -348,7 +348,7 @@ Analyze and respond using the portfolio data provided above."""
 **IF PORTFOLIO IS EMPTY ("ready to grow"):**
 Keep it SHORT! Just say:
 - "Your portfolio is empty - no holdings yet"
-- Suggest ONE action: "Try 'swap 0.1 ETH to USDC' to get started"
+- Suggest ONE action: "Try 'buy 100 USD of ETH' to get started"
 - That's it! No long analysis of empty data.
 
 **IF PORTFOLIO HAS HOLDINGS:**
