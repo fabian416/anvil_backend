@@ -1,0 +1,318 @@
+{
+  "run_timestamp": "2026-01-23T15:01:04.362149+00:00",
+  "category": "all_agents_comprehensive",
+  "total_tests": 76,
+  "passed": 74,
+  "partial": 2,
+  "failed": 0,
+  "pass_rate": "97.4%",
+  "by_category": {
+    "chat": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "knowledge": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "hunter_ai": {
+      "total": 10,
+      "pass": 9,
+      "partial": 1,
+      "fail": 0
+    },
+    "risk_analyzer": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "defi_yield": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "gas_optimizer": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "portfolio": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "wallet": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "transaction_history": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "swap": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "lending": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "buy": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "transfer": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "money_market": {
+      "total": 5,
+      "pass": 5,
+      "partial": 0,
+      "fail": 0
+    },
+    "arbitrage": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "rebalancing": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "yield_risk": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "correlation": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "historical": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "market_regime": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "rankings": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "portfolio_risk": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "yield_gas": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "market_overview": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    },
+    "spanish": {
+      "total": 5,
+      "pass": 5,
+      "partial": 0,
+      "fail": 0
+    },
+    "portuguese": {
+      "total": 5,
+      "pass": 4,
+      "partial": 1,
+      "fail": 0
+    },
+    "chinese": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "chat": {
+      "total": 11,
+      "pass": 11,
+      "partial": 0,
+      "fail": 0
+    },
+    "knowledge": {
+      "total": 5,
+      "pass": 5,
+      "partial": 0,
+      "fail": 0
+    },
+    "hunter_ai": {
+      "total": 22,
+      "pass": 22,
+      "partial": 0,
+      "fail": 0
+    },
+    "defi_yield": {
+      "total": 8,
+      "pass": 7,
+      "partial": 1,
+      "fail": 0
+    },
+    "risk_analyzer": {
+      "total": 9,
+      "pass": 9,
+      "partial": 0,
+      "fail": 0
+    },
+    "gas_optimizer": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "portfolio": {
+      "total": 6,
+      "pass": 6,
+      "partial": 0,
+      "fail": 0
+    },
+    "wallet": {
+      "total": 5,
+      "pass": 4,
+      "partial": 1,
+      "fail": 0
+    },
+    "transaction_history": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "moonpay_swap_flow_handler": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "lending_workflow": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "buy_workflow": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "transfer_workflow": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "money_market_workflow": {
+      "total": 7,
+      "pass": 7,
+      "partial": 0,
+      "fail": 0
+    },
+    "swap_workflow": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 9920,
+  "slowest_tests": [
+    {
+      "test_id": "complex_009",
+      "response_time_ms": 73891,
+      "status": "PASS"
+    },
+    {
+      "test_id": "complex_008",
+      "response_time_ms": 48971,
+      "status": "PASS"
+    },
+    {
+      "test_id": "yield_003",
+      "response_time_ms": 42655,
+      "status": "PASS"
+    },
+    {
+      "test_id": "risk_001",
+      "response_time_ms": 34847,
+      "status": "PASS"
+    },
+    {
+      "test_id": "complex_001",
+      "response_time_ms": 30052,
+      "status": "PASS"
+    },
+    {
+      "test_id": "complex_003",
+      "response_time_ms": 27558,
+      "status": "PASS"
+    },
+    {
+      "test_id": "knowledge_002",
+      "response_time_ms": 24894,
+      "status": "PASS"
+    },
+    {
+      "test_id": "yield_001",
+      "response_time_ms": 23630,
+      "status": "PASS"
+    },
+    {
+      "test_id": "knowledge_003",
+      "response_time_ms": 22157,
+      "status": "PASS"
+    },
+    {
+      "test_id": "complex_010",
+      "response_time_ms": 19825,
+      "status": "PASS"
+    }
+  ]
+}

@@ -477,7 +477,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                     "price_impact": getattr(quote, 'price_impact', 0),
                     "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
                     "aggregator": "lifi",
-                    "raw_quote": quote,
+                    # Note: raw_quote removed to ensure JSON serialization
                 }
             else:
                 # Same-chain: Try 1inch first, fallback to LiFi
@@ -498,7 +498,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                         "price_impact": getattr(quote, 'price_impact', 0),
                         "gas_estimate": int(getattr(quote, 'estimated_gas', 200000)),
                         "aggregator": "1inch",
-                        "raw_quote": quote,
+                        # Note: raw_quote removed to ensure JSON serialization
                     }
                 elif self._lifi:
                     # Fallback: Use LiFi for same-chain swaps
@@ -519,7 +519,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                         "price_impact": getattr(quote, 'price_impact', 0),
                         "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
                         "aggregator": "lifi",
-                        "raw_quote": quote,
+                        # Note: raw_quote removed to ensure JSON serialization
                     }
                 else:
                     return {"error": "Swap quote unavailable - no swap aggregator configured"}
