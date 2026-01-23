@@ -290,8 +290,14 @@ Analyze and respond using the portfolio data provided above."""
                 lines.append(f"**Connected Wallet:** `{display_addr}`")
         
         if not portfolio:
-            lines.append("\n**Portfolio Data:** No portfolio snapshot available yet.")
-            lines.append("Connect a wallet and make transactions to build your portfolio history.")
+            lines.append("\n**Portfolio Status:** Your portfolio is ready to grow! 🌱")
+            lines.append("")
+            lines.append("**Get started with Anvil:**")
+            lines.append("• **Swap tokens** - Try \"swap 0.1 ETH to USDC\" for your first trade")
+            lines.append("• **Earn yield** - Say \"best yield for USDC\" to find earning opportunities")
+            lines.append("• **Buy crypto** - Type \"buy 50 USD of ETH\" to add to your portfolio")
+            lines.append("")
+            lines.append("Once you make your first transaction, I'll track your portfolio automatically! 📊")
             return "\n".join(lines)
         
         # Handle PortfolioSummary dataclass or dict

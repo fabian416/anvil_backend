@@ -205,7 +205,15 @@ If the user asks about something not in their data, explain what data is availab
         tx_data = user_context.get("transactions", {})
         
         if not tx_data:
-            return "No transaction history available. Make your first transaction to see it here!"
+            return """**Your Activity Feed is Ready! 📋**
+
+No transactions yet - let's change that! Here's what you can do:
+
+• **Swap tokens** - \"swap 0.5 ETH to USDC\" to start trading
+• **Earn yield** - \"deposit 100 USDC\" to grow your assets
+• **Buy crypto** - \"buy 50 USD of ETH\" to add to your wallet
+
+Your transactions will appear here automatically once you start using Anvil! 🚀"""
         
         # Handle TransactionSummary dataclass or dict
         if hasattr(tx_data, "total_count"):
