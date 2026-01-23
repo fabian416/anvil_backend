@@ -237,14 +237,17 @@ Once your wallet is ready, you'll be able to:
                 display_addr = address
             
             primary_marker = " (PRIMARY)" if is_primary else ""
-            provider = wallet.get("provider", "Unknown")
-            chain = wallet.get("chain_type", "Ethereum")
+            provider = wallet.get("provider")
+            chain = wallet.get("chain_type")
             
             lines.append(f"**Wallet {i}{primary_marker}:**")
             lines.append(f"  - Address: `{display_addr}`")
             lines.append(f"  - Full Address: `{address}`")
-            lines.append(f"  - Provider: {provider}")
-            lines.append(f"  - Default Chain: {chain}")
+            # Only show provider and chain if they have valid values
+            if provider and provider.lower() not in ("unknown", "none", ""):
+                lines.append(f"  - Provider: {provider}")
+            if chain and chain.lower() not in ("unknown", "none", ""):
+                lines.append(f"  - Chain: {chain}")
             lines.append("")
         
         return "\n".join(lines)
