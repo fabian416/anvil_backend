@@ -209,7 +209,19 @@ If the user asks about something not in their data, explain what data is availab
         primary_wallet = user_context.get("primary_wallet")
         
         if not wallets:
-            return "No wallets connected. Please connect a wallet to view your balances."
+            return """**Your Wallet is Being Set Up! 🔐**
+
+Your Anvil wallet is being configured. This usually takes just a moment.
+
+**What you can do:**
+• **Refresh the page** if this persists
+• **Check your account settings** to verify wallet status
+• **Contact support** if you need help
+
+Once your wallet is ready, you'll be able to:
+• View your balances across all chains
+• Swap, buy, and trade tokens
+• Track your portfolio automatically"""
         
         lines.append(f"**Connected Wallets: {len(wallets)}**\n")
         
