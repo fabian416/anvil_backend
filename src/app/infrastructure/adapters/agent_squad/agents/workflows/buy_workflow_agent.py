@@ -46,7 +46,11 @@ SUPPORTED_CRYPTOS = {
     "usdc": {"symbol": "USDC", "name": "USD Coin", "emoji": "💵"},
     "usdt": {"symbol": "USDT", "name": "Tether", "emoji": "💵"},
     "btc": {"symbol": "BTC", "name": "Bitcoin", "emoji": "₿"},
+    "bitcoin": {"symbol": "BTC", "name": "Bitcoin", "emoji": "₿"},  # Alias for BTC
+    "sol": {"symbol": "SOL", "name": "Solana", "emoji": "◎"},
+    "solana": {"symbol": "SOL", "name": "Solana", "emoji": "◎"},  # Alias for SOL
     "matic": {"symbol": "MATIC", "name": "Polygon", "emoji": "🟣"},
+    "polygon": {"symbol": "MATIC", "name": "Polygon", "emoji": "🟣"},  # Alias for MATIC
 }
 
 # Supported fiat currencies
@@ -823,17 +827,25 @@ Sua cripto chegará na sua carteira logo após o pagamento!""",
         fiat: str,
         wallet_address: str | None,
     ) -> dict[str, Any]:
-        """Build execute_data for buy action."""
+        """Build execute_data for buy action.
+        
+        Uses standard ExecuteActionData fields for API consistency:
+        - to_token: The crypto being purchased
+        - amount: The fiat amount to spend
+        - from_token: The fiat currency (USD, EUR, etc.)
+        """
         
         return {
             "action_type": "buy",
             "provider": "privy",
-            "crypto_currency": crypto,
-            "fiat_amount": amount,
-            "fiat_currency": fiat,
-            "wallet_address": wallet_address,
-            "on_ramp_provider": "moonpay",  # or "coinbase"
             "chain": "base",
+            # Standard fields for ExecuteActionData compatibility
+            "to_token": crypto.upper(),      # Crypto being purchased
+            "amount": str(amount),            # Fiat amount
+            "from_token": fiat.upper(),       # Fiat currency (USD, EUR)
+            # Buy-specific metadata
+            "recipient": wallet_address,      # Destination wallet
+            "quote_id": f"buy-{crypto.lower()}-{amount}",
         }
     
     # ========================================
