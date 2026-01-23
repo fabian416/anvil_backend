@@ -757,6 +757,7 @@ class AgentSquadInfrastructureProvider(Provider):
         llm_client: LLMClientGateway,
         oneinch_client: OneInchClientProtocol | None,
         lifi_client: LiFiClientProtocol | None,
+        coingecko_client: CoinGeckoClient | None,
     ) -> SwapWorkflowAgent:
         """
         Provide Swap Workflow Agent for authenticated users.
@@ -770,11 +771,13 @@ class AgentSquadInfrastructureProvider(Provider):
         Integrations:
         - 1inch: Same-chain swaps
         - LiFi: Cross-chain swaps
+        - CoinGecko: Market prices for enrichment
         """
         return SwapWorkflowAgent(
             llm_client=llm_client,
             oneinch_client=oneinch_client,
             lifi_client=lifi_client,
+            coingecko_client=coingecko_client,
         )
 
     @provide

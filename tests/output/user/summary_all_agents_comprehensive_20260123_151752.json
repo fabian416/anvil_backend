@@ -1,0 +1,120 @@
+{
+  "run_timestamp": "2026-01-23T15:17:52.374935+00:00",
+  "category": "all_agents_comprehensive",
+  "total_tests": 11,
+  "passed": 10,
+  "partial": 1,
+  "failed": 0,
+  "pass_rate": "90.9%",
+  "by_category": {
+    "swap": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "lending": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "buy": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "transfer": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "swap_partial": {
+      "total": 3,
+      "pass": 2,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "swap_workflow": {
+      "total": 5,
+      "pass": 4,
+      "partial": 1,
+      "fail": 0
+    },
+    "lending_workflow": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "buy_workflow": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "transfer_workflow": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 3393,
+  "slowest_tests": [
+    {
+      "test_id": "flow_swap_002_step2",
+      "response_time_ms": 7042,
+      "status": "PASS"
+    },
+    {
+      "test_id": "flow_swap_001_step1",
+      "response_time_ms": 6585,
+      "status": "PASS"
+    },
+    {
+      "test_id": "flow_swap_002_step1",
+      "response_time_ms": 6287,
+      "status": "PASS"
+    },
+    {
+      "test_id": "flow_transfer_001_step1",
+      "response_time_ms": 4703,
+      "status": "PASS"
+    },
+    {
+      "test_id": "flow_lending_001_step1",
+      "response_time_ms": 4049,
+      "status": "PASS"
+    },
+    {
+      "test_id": "flow_buy_001_step1",
+      "response_time_ms": 3642,
+      "status": "PASS"
+    },
+    {
+      "test_id": "flow_swap_002_step3",
+      "response_time_ms": 1559,
+      "status": "PARTIAL"
+    },
+    {
+      "test_id": "flow_lending_001_step2",
+      "response_time_ms": 997,
+      "status": "PASS"
+    },
+    {
+      "test_id": "flow_buy_001_step2",
+      "response_time_ms": 836,
+      "status": "PASS"
+    },
+    {
+      "test_id": "flow_swap_001_step2",
+      "response_time_ms": 823,
+      "status": "PASS"
+    }
+  ]
+}

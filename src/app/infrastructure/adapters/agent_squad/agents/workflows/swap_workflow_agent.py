@@ -37,6 +37,7 @@ from .base_workflow_agent import (
 if TYPE_CHECKING:
     from app.infrastructure.adapters.external.oneinch_client import OneInchClient
     from app.infrastructure.adapters.external.lifi_client import LiFiClient
+    from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 logger = logging.getLogger(__name__)
@@ -110,6 +111,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         llm_client: "LLMClientGateway | None" = None,
         oneinch_client: "OneInchClient | None" = None,
         lifi_client: "LiFiClient | None" = None,
+        coingecko_client: "CoinGeckoClient | None" = None,
     ):
         """
         Initialize swap workflow agent.
@@ -118,10 +120,12 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             llm_client: LLM client for parameter extraction
             oneinch_client: 1inch API client for same-chain swaps
             lifi_client: LiFi API client for cross-chain swaps
+            coingecko_client: CoinGecko client for market data enrichment
         """
         super().__init__(llm_client=llm_client)
         self._oneinch = oneinch_client
         self._lifi = lifi_client
+        self._coingecko = coingecko_client
     
     @property
     def agent_type(self) -> AgentType:
@@ -208,7 +212,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """
-        Step 2: Fetch swap quote from 1inch/LiFi.
+        Step 2: Fetch swap quote from 1inch/LiFi with enhanced market data.
         """
         from_token = state.data.get("from_token", "ETH")
         to_token = state.data.get("to_token", "USDC")
@@ -245,12 +249,102 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         state.data["aggregator"] = quote_result.get("aggregator", "unknown")
         state.data["gas_estimate"] = quote_result.get("gas_estimate", 200000)
         
+        # Fetch enhanced market data (prices, gas info)
+        market_data = await self._fetch_market_enrichment(from_token, to_token, chain)
+        state.data["market_data"] = market_data
+        
         # Move to confirm step
         state.step = WorkflowStep.CONFIRM.value
         
-        # Format quote response
+        # Format quote response with enhanced market data
         response = self._format_quote_response(state.data, user_context.language)
         return response, state
+    
+    async def _fetch_market_enrichment(
+        self,
+        from_token: str,
+        to_token: str,
+        chain: str,
+    ) -> dict:
+        """
+        Fetch market enrichment data (prices, gas info, market context).
+        """
+        market_data = {
+            "from_token_price": None,
+            "from_token_24h_change": None,
+            "to_token_price": None,
+            "gas_price_gwei": None,
+            "gas_usd_estimate": None,
+            "gas_timing": None,
+        }
+        
+        try:
+            # Fetch token prices from CoinGecko
+            if self._coingecko:
+                # Map token symbols to CoinGecko IDs
+                token_to_coingecko = {
+                    "ETH": "ethereum",
+                    "WETH": "ethereum",
+                    "BTC": "bitcoin",
+                    "WBTC": "wrapped-bitcoin",
+                    "USDC": "usd-coin",
+                    "USDT": "tether",
+                    "DAI": "dai",
+                    "MATIC": "matic-network",
+                    "SOL": "solana",
+                }
+                
+                from_id = token_to_coingecko.get(from_token.upper())
+                to_id = token_to_coingecko.get(to_token.upper())
+                
+                if from_id:
+                    try:
+                        price_data = await self._coingecko.get_price(from_id)
+                        market_data["from_token_price"] = price_data.usd
+                        market_data["from_token_24h_change"] = price_data.usd_24h_change
+                    except Exception as e:
+                        logger.debug(f"[SwapWorkflow] Failed to fetch {from_token} price: {e}")
+                
+                if to_id and to_id not in ["usd-coin", "tether", "dai"]:  # Skip stablecoin prices
+                    try:
+                        price_data = await self._coingecko.get_price(to_id)
+                        market_data["to_token_price"] = price_data.usd
+                    except Exception as e:
+                        logger.debug(f"[SwapWorkflow] Failed to fetch {to_token} price: {e}")
+            
+            # Estimate gas costs
+            gas_estimate = 200000  # Default estimate
+            gas_price_gwei = 0.01 if chain == "base" else 30  # Base L2 vs mainnet
+            
+            # Calculate USD gas cost
+            eth_price = market_data.get("from_token_price") or 3000  # Fallback ETH price
+            if from_token.upper() not in ["ETH", "WETH"]:
+                # If not swapping ETH, fetch ETH price for gas calculation
+                if self._coingecko:
+                    try:
+                        eth_data = await self._coingecko.get_price("ethereum")
+                        eth_price = eth_data.usd
+                    except Exception:
+                        pass
+            
+            gas_cost_eth = (gas_estimate * gas_price_gwei) / 1e9
+            gas_cost_usd = gas_cost_eth * eth_price
+            
+            market_data["gas_price_gwei"] = gas_price_gwei
+            market_data["gas_usd_estimate"] = round(gas_cost_usd, 4)
+            
+            # Gas timing recommendation based on network
+            if chain == "base":
+                market_data["gas_timing"] = "Base L2 has consistently low fees (~$0.01)"
+            elif chain == "ethereum":
+                market_data["gas_timing"] = "Consider executing during low-traffic hours (weekends, early morning UTC)"
+            else:
+                market_data["gas_timing"] = "L2 networks typically have lower and stable fees"
+                
+        except Exception as e:
+            logger.warning(f"[SwapWorkflow] Market enrichment failed: {e}")
+        
+        return market_data
     
     async def _handle_confirm(
         self,
@@ -587,7 +681,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         return msgs.get(language, msgs["en"])
     
     def _format_quote_response(self, data: dict, language: str) -> str:
-        """Format swap quote response."""
+        """Format swap quote response with enhanced market data."""
         from_token = data.get("from_token", "?")
         to_token = data.get("to_token", "?")
         amount = data.get("amount", "0")
@@ -596,14 +690,49 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         aggregator = data.get("aggregator", "DEX")
         chain = data.get("chain", "base")
         
+        # Market enrichment data
+        market = data.get("market_data", {})
+        from_price = market.get("from_token_price")
+        from_24h = market.get("from_token_24h_change")
+        gas_usd = market.get("gas_usd_estimate")
+        gas_timing = market.get("gas_timing")
+        
+        # Calculate USD value
+        try:
+            amount_float = float(amount)
+            usd_value = amount_float * from_price if from_price else None
+        except (ValueError, TypeError):
+            usd_value = None
+        
+        # Build market context section
+        market_context = ""
+        if from_price:
+            change_str = ""
+            if from_24h:
+                emoji = "📈" if from_24h >= 0 else "📉"
+                change_str = f" ({emoji} {from_24h:+.1f}% 24h)"
+            market_context += f"💰 **{from_token} Price:** ${from_price:,.2f}{change_str}\n"
+        
+        if usd_value:
+            market_context += f"💵 **Value:** ~${usd_value:,.2f} USD\n"
+        
+        # Gas info section
+        gas_info = ""
+        if gas_usd is not None:
+            gas_info = f"⛽ **Est. Gas:** ~${gas_usd:.4f}"
+            if gas_timing:
+                gas_info += f"\n💡 {gas_timing}"
+        
         msgs = {
             "en": f"""📊 **Swap Quote**
 
 **{amount} {from_token}** → **{output} {to_token}**
 
+{market_context}
 • Price Impact: {impact:.2f}%
 • Network: {chain.upper()}
 • Aggregator: {aggregator.upper()}
+{gas_info}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -615,9 +744,11 @@ You can also modify: "change to 1 ETH" """,
 
 **{amount} {from_token}** → **{output} {to_token}**
 
+{market_context}
 • Impacto en precio: {impact:.2f}%
 • Red: {chain.upper()}
 • Agregador: {aggregator.upper()}
+{gas_info}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -628,9 +759,11 @@ Responde "sí" para confirmar o "cancelar" para abortar.""",
 
 **{amount} {from_token}** → **{output} {to_token}**
 
+{market_context}
 • Impacto no preço: {impact:.2f}%
 • Rede: {chain.upper()}
 • Agregador: {aggregator.upper()}
+{gas_info}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
