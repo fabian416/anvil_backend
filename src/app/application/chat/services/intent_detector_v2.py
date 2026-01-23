@@ -179,13 +179,17 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
         "en": [
             "portfolio", "my positions", "my holdings", "my investments",
             "show portfolio", "portfolio performance",
+            "my tokens", "what tokens", "list my tokens", "tokens i have",
+            "tokens i own", "what do i own", "what do i have",
         ],
         "es": [
             "portafolio", "mis posiciones", "mis inversiones",
             "mi portafolio", "ver portafolio",
+            "mis tokens", "qué tokens tengo", "listar mis tokens",
         ],
         "pt": [
             "portfólio", "minhas posições", "meus investimentos",
+            "meus tokens", "quais tokens", "listar meus tokens",
             "meu portfólio", "ver portfólio",
         ],
     },
@@ -1063,7 +1067,8 @@ class IntentDetectorV2:
         # Receive address patterns (check before balance - more specific)
         receive_patterns = [
             "receive", "receive address", "my address", "deposit address", "wallet address",
-            "show address", "dirección de recepción", "mi dirección",
+            "show address", "qr code", "qr", "código qr", "código qr",
+            "dirección de recepción", "mi dirección",
             "endereço de recebimento", "meu endereço",
         ]
         for pattern in receive_patterns:
@@ -1078,8 +1083,11 @@ class IntentDetectorV2:
         activity_patterns = [
             "activity", "transaction history", "my transactions",
             "recent activity", "show activity", "wallet activity",
-            "mi actividad", "historial de transacciones",
-            "minha atividade", "histórico de transações",
+            "my trades", "what did i do", "what i did",  # Casual activity queries
+            "mi actividad", "historial de transacciones", "mis operaciones",
+            "qué hice", "lo que hice",
+            "minha atividade", "histórico de transações", "minhas operações",
+            "o que fiz", "o que eu fiz",
         ]
         for pattern in activity_patterns:
             if pattern in message:
@@ -1150,6 +1158,26 @@ class IntentDetectorV2:
                     intent=ChatIntentV2.LENDING,
                     confidence=0.88,
                     handler=self._handler_map[ChatIntentV2.LENDING],
+                )
+
+        # Money Market: Rate comparison queries (MUST be checked BEFORE lending_keywords)
+        # "Compare lending rates" should go to MONEY_MARKET, not LENDING
+        import re
+        money_market_rate_patterns = [
+            r"\bcompare\s+(?:lending\s+)?rates?\b",
+            r"\b(?:lending|borrow)\s+rates?\s+for\b",
+            r"\b(best|top)\s+(?:lending|borrow)\s+rates?\b",
+            r"\bcomparar\s+tasas\b",
+            r"\bmejores\s+tasas\b",
+            r"\bcomparar\s+taxas\b",
+            r"\bmelhores\s+taxas\b",
+        ]
+        for pattern in money_market_rate_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                return IntentResult(
+                    intent=ChatIntentV2.MONEY_MARKET,
+                    confidence=0.92,  # Higher than lending_keywords (0.90)
+                    handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
                 )
 
         # Lending: Check for lending/deposit keywords
