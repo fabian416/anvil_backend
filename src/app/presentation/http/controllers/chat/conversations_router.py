@@ -695,11 +695,12 @@ def create_conversations_router() -> APIRouter:
                 
                 # Build conversation history from context
                 # Note: context.messages is returned NEWEST-FIRST from the repository
-                # We need the most recent 5 messages for workflow continuation detection
+                # We need the most recent messages for workflow continuation detection
                 conversation_history = []
                 if context.messages:
-                    # Take first 5 (newest) messages and reverse to get chronological order
-                    recent_messages = context.messages[:5]
+                    # Take first 10 (newest) messages and reverse to get chronological order
+                    # This matches MAX_CONTEXT_MESSAGES in conversation_memory.py
+                    recent_messages = context.messages[:10]
                     for msg in reversed(recent_messages):  # Oldest-first for history
                         # ChatMessage objects have role and content attributes
                         role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)

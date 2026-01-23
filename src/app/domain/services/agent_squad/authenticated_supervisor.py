@@ -255,7 +255,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         # Note: conversation_history is in chronological order (oldest first)
         # We iterate in reverse to check newest messages first
         if conversation_context.conversation_history:
-            for msg in reversed(conversation_context.conversation_history[-5:]):
+            for msg in reversed(conversation_context.conversation_history[-10:]):
                 if isinstance(msg, dict):
                     metadata = msg.get("metadata", {})
                     
