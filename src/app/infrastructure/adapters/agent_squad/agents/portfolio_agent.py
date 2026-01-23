@@ -99,9 +99,7 @@ class PortfolioAgent:
         price_data_context = ""
         if self._coingecko_client:
             try:
-                import logging
                 import re
-                logger = logging.getLogger(__name__)
                 logger.info("🔍 Fetching real-time prices from CoinGecko for PortfolioAgent")
                 
                 # Extract token symbols from message (common tokens)
@@ -150,8 +148,6 @@ class PortfolioAgent:
                         logger.warning("⚠️ No price data returned from CoinGecko")
                         
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.warning(f"⚠️ Failed to fetch CoinGecko prices: {e}, continuing with LLM-only response")
                 price_data_context = ""
         
@@ -264,6 +260,19 @@ Analyze and respond using the portfolio data provided above."""
         # Check for direct portfolio data
         if "portfolio" in conversation_context.user_metadata:
             return conversation_context.user_metadata
+        
+        # Check for flat structure (user_id, wallet_address, is_authenticated at top level)
+        # This is how the supervisor passes user context
+        if conversation_context.user_metadata.get("is_authenticated"):
+            return {
+                "user_id": conversation_context.user_metadata.get("user_id"),
+                "wallet_address": conversation_context.user_metadata.get("wallet_address"),
+                "portfolio_summary": conversation_context.user_metadata.get("portfolio_summary"),
+                "primary_wallet": {
+                    "address": conversation_context.user_metadata.get("wallet_address"),
+                    "chain_type": conversation_context.user_metadata.get("wallet_chain"),
+                } if conversation_context.user_metadata.get("wallet_address") else None,
+            }
         
         return None
     

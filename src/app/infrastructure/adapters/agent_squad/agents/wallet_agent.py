@@ -181,6 +181,24 @@ If the user asks about something not in their data, explain what data is availab
         if "wallets" in conversation_context.user_metadata:
             return conversation_context.user_metadata
         
+        # Check for flat structure (user_id, wallet_address, is_authenticated at top level)
+        # This is how the supervisor passes user context
+        if conversation_context.user_metadata.get("is_authenticated"):
+            wallet_address = conversation_context.user_metadata.get("wallet_address")
+            return {
+                "user_id": conversation_context.user_metadata.get("user_id"),
+                "wallet_address": wallet_address,
+                "wallets": [{
+                    "address": wallet_address,
+                    "chain_type": conversation_context.user_metadata.get("wallet_chain"),
+                    "is_primary": True,
+                }] if wallet_address else [],
+                "primary_wallet": {
+                    "address": wallet_address,
+                    "chain_type": conversation_context.user_metadata.get("wallet_chain"),
+                } if wallet_address else None,
+            }
+        
         return None
     
     def _build_wallet_context(self, user_context: dict[str, Any]) -> str:
