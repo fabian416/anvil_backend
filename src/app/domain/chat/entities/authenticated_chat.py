@@ -28,11 +28,21 @@ class AuthChatUser(Entity[UUID]):
     language: str = "en"
     chat_preferences: Optional[dict] = None
     last_seen_at: datetime = None
+    # Timestamps for compatibility with repository mapping
+    created_at: datetime = None
+    updated_at: datetime = None
+    first_seen_at: datetime = None
 
     def __post_init__(self):
-        super().__post_init__()
+        now = datetime.now(UTC)
         if self.last_seen_at is None:
-            self.last_seen_at = datetime.now(UTC)
+            self.last_seen_at = now
+        if self.created_at is None:
+            self.created_at = now
+        if self.updated_at is None:
+            self.updated_at = now
+        if self.first_seen_at is None:
+            self.first_seen_at = now
 
     def update_subscription_tier(self, tier: str) -> None:
         """Update subscription tier with validation."""

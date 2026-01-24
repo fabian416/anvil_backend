@@ -371,10 +371,7 @@ class PrivyLogin:
                     total_messages=0,
                     language="en",
                     chat_preferences={},
-                    first_seen_at=datetime.now(UTC),
                     last_seen_at=datetime.now(UTC),
-                    created_at=datetime.now(UTC),
-                    updated_at=datetime.now(UTC),
                 )
                 chat_user = await self._chat_user_repository.create(chat_user)
             
