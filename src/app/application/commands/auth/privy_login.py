@@ -181,9 +181,11 @@ class PrivyLogin:
             if request.wallet_address and user.id_.value > 0:
                 await self._sync_wallet_to_db(user, request.wallet_address)
 
-            # Create user context entry for context-aware agents (new users only)
-            if is_new_user and self._user_context_service and self._chat_user_repository:
-                await self._create_user_context(user, request)
+            # Ensure user context entry exists for context-aware agents
+            # For new users: create with defaults
+            # For existing users: verify context exists (may have been created by Celery)
+            if self._user_context_service and self._chat_user_repository:
+                await self._ensure_user_context(user, request)
 
             # Now create session and get tokens (user exists in DB)
             auth_session, access_token = await self._auth_session_service.create_session(user.id_)
@@ -339,13 +341,18 @@ class PrivyLogin:
         # No commit here - transaction is managed by the caller
         return user
 
-    async def _create_user_context(self, user: User, request: PrivyLoginRequest) -> None:
+    async def _ensure_user_context(self, user: User, request: PrivyLoginRequest) -> None:
         """
-        Create user context entry for context-aware agents.
+        Ensure user context entry exists for context-aware agents.
         
-        This is called for new users to initialize their context in
-        the user_context_aware table. The context is used by the
-        authenticated supervisor to provide personalized responses.
+        This is called on every login (both new and existing users) to
+        ensure the context entry exists in the user_context_aware table.
+        
+        For new users: Creates context with default values
+        For existing users: Verifies context exists, creates if missing
+        
+        The context is used by the authenticated supervisor to provide
+        personalized responses based on user classification.
         """
         try:
             # Get or create chat user (UUID-based)
@@ -355,7 +362,6 @@ class PrivyLogin:
                 # Create chat user entry
                 from app.domain.chat.entities import ChatUser
                 from uuid import uuid4
-                from datetime import datetime, UTC
                 
                 chat_user = ChatUser(
                     id_=uuid4(),
@@ -382,7 +388,7 @@ class PrivyLogin:
                 )
                 return
             
-            # Create user context
+            # Create user context with defaults
             await self._user_context_service.create_for_new_user(
                 chat_user_id=chat_user.id_,
                 legacy_user_id=user.id_.value,
@@ -392,7 +398,7 @@ class PrivyLogin:
             )
             
             log.info(
-                "Created user context for new user %s (chat_user_id=%s)",
+                "Created user context for user %s (chat_user_id=%s)",
                 user.id_.value,
                 chat_user.id_,
             )
@@ -400,7 +406,7 @@ class PrivyLogin:
         except Exception as e:
             # Log but don't fail login if context creation fails
             log.warning(
-                "Failed to create user context for user %s: %s",
+                "Failed to ensure user context for user %s: %s",
                 user.id_.value,
                 e,
             )
