@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
     from app.domain.ports.agent_squad.agent_executor_gateway import AgentExecutorPort
     from app.application.chat.services.user_data_service import UserDataService, UserDataContext
+    from app.domain.chat.entities.user_context_aware import UserContextAware
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,8 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         self._user_data_service = user_data_service
         self._user_context: dict[str, Any] = {}
         self._user_data_context: "UserDataContext | None" = None
+        # Context-aware agent responses
+        self._context_aware: "UserContextAware | None" = None
     
     def set_user_context(
         self,
@@ -114,6 +117,31 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             "preferences": preferences or {},
             "is_authenticated": True,
         }
+    
+    def set_context_aware(self, context: "UserContextAware | None") -> None:
+        """
+        Set pre-computed user context for context-aware agent responses.
+        
+        This context comes from the user_context_aware table and includes:
+        - Portfolio state (empty, starter, active, whale)
+        - Activity level (new, active, inactive, etc.)
+        - User type (new_user, casual, trader, yield_farmer, power_user)
+        - Execution history (swap_count, buy_count, lending_count, etc.)
+        
+        The context is used to:
+        1. Enhance the system prompt with user-specific instructions
+        2. Pre-validate workflows (e.g., prevent swap for empty portfolios)
+        3. Personalize response tone and recommendations
+        
+        Args:
+            context: The UserContextAware entity or None
+        """
+        self._context_aware = context
+        if context:
+            logger.debug(
+                f"Set context-aware: portfolio={context.portfolio_state}, "
+                f"activity={context.activity_level}, type={context.user_type}"
+            )
     
     async def load_user_data(self, user_id: str) -> None:
         """
@@ -208,6 +236,72 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         return await self._user_data_service.get_wallet_balances(
             wallet_address=wallet_address,
         )
+    
+    def can_execute_workflow(self, workflow_type: str) -> tuple[bool, str | None]:
+        """
+        Check if the user can execute a specific workflow type based on context.
+        
+        This provides pre-validation to prevent users from attempting workflows
+        that will fail due to insufficient balance or missing prerequisites.
+        
+        Args:
+            workflow_type: The workflow type (swap, buy, lending, etc.)
+            
+        Returns:
+            Tuple of (can_execute, reason_if_blocked)
+        """
+        if not self._context_aware:
+            # No context available, allow all
+            return True, None
+        
+        portfolio_state = self._context_aware.get_portfolio_state_enum()
+        
+        # Check portfolio state requirements
+        if workflow_type in ("swap", "swap_workflow", "transfer", "transfer_workflow"):
+            if not portfolio_state.can_swap:
+                return False, (
+                    "Your portfolio is empty. You need to buy some crypto first "
+                    "before you can swap or transfer. Try: \"buy $50 of ETH\""
+                )
+        
+        # Warn about gas costs for small portfolios
+        if workflow_type in ("swap", "swap_workflow", "lending", "lending_workflow"):
+            if portfolio_state.warn_gas_costs:
+                # Don't block, but the prompt enhancement will warn
+                pass
+        
+        return True, None
+    
+    def get_onboarding_suggestion(self) -> str | None:
+        """
+        Get an onboarding suggestion based on user context.
+        
+        Returns:
+            Suggestion string or None if user doesn't need onboarding
+        """
+        if not self._context_aware:
+            return None
+        
+        portfolio_state = self._context_aware.get_portfolio_state_enum()
+        activity_level = self._context_aware.get_activity_level_enum()
+        
+        if portfolio_state.needs_onboarding:
+            return (
+                "Welcome to Anvil! 🎉 Start your DeFi journey:\n"
+                "• **Buy crypto** - Type \"buy $50 of ETH\" to get started\n"
+                "• **Explore rates** - Ask \"best yield for USDC\" to see earning opportunities\n"
+                "• **Get market data** - Try \"what's the price of ETH?\""
+            )
+        
+        if activity_level.needs_reengagement:
+            return (
+                "Welcome back! 👋 Here's what you can do:\n"
+                "• **Check portfolio** - \"my portfolio\" to see your holdings\n"
+                "• **Swap tokens** - \"swap ETH to USDC\" to trade\n"
+                "• **Earn yield** - \"deposit USDC\" to start earning"
+            )
+        
+        return None
     
     def _is_workflow_continuation(
         self,
@@ -379,9 +473,38 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         
         # Build user context section for authenticated users
         user_context_section = ""
-        if self._user_context or self._user_data_context:
+        if self._user_context or self._user_data_context or self._context_aware:
             user_context_section = "\n<user_profile>\n"
             user_context_section += "User Status: AUTHENTICATED (can execute REAL transactions)\n"
+            
+            # Add context-aware classification if available
+            if self._context_aware:
+                user_context_section += f"Portfolio State: {self._context_aware.portfolio_state}\n"
+                user_context_section += f"Activity Level: {self._context_aware.activity_level}\n"
+                user_context_section += f"User Type: {self._context_aware.user_type}\n"
+                
+                # Add execution history summary
+                total_executions = (
+                    self._context_aware.swap_count +
+                    self._context_aware.buy_count +
+                    self._context_aware.lending_count +
+                    self._context_aware.money_market_count
+                )
+                if total_executions > 0:
+                    user_context_section += f"Total Executions: {total_executions} ("
+                    exec_parts = []
+                    if self._context_aware.swap_count:
+                        exec_parts.append(f"{self._context_aware.swap_count} swaps")
+                    if self._context_aware.buy_count:
+                        exec_parts.append(f"{self._context_aware.buy_count} buys")
+                    if self._context_aware.lending_count:
+                        exec_parts.append(f"{self._context_aware.lending_count} deposits")
+                    user_context_section += ", ".join(exec_parts) + ")\n"
+                
+                # Add context-aware prompt enhancements
+                prompt_enhancements = self._context_aware.get_combined_prompt_enhancement()
+                if prompt_enhancements:
+                    user_context_section += f"\n⚠️ CONTEXT-AWARE INSTRUCTIONS:\n{prompt_enhancements}\n"
             
             # Use loaded user data context if available
             if self._user_data_context:
