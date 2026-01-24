@@ -176,7 +176,7 @@ INFO  [alembic.runtime.migration] Running upgrade 766e5759282c -> ac22693e3b44, 
 
 **Command:**
 ```bash
-psql "postgresql://postgres:changethis@localhost:5432/anvil_db" -c "\d messages"
+psql "postgresql://anvil:changethis@localhost:5432/anvil_db" -c "\d messages"
 ```
 
 **Result:**

@@ -63,8 +63,15 @@ pytest.ini
 .pre-commit-config.yaml
 Makefile
 docker-compose.yaml
-config/local/
-config/dev/
+config/local/*
+config/dev/*
+!config/local/config.toml
+!config/local/.env
+!config/local/Dockerfile
+!config/local/docker-compose.yaml
+!config/local/init-db.sql
+!config/local/export.toml
+
 
 # Temporary
 tmp/

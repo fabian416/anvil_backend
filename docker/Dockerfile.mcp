@@ -1,0 +1,51 @@
+# Generic MCP Server
+# Single Dockerfile for all 11 MCP servers (parametrized via ARG)
+# Multi-stage build for optimization
+
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+RUN pip install uv
+COPY pyproject.toml .
+COPY README.md .
+COPY src/ src/
+RUN uv venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN uv pip install --no-cache-dir .
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y curl libpq5 && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY src/ ./src/
+COPY config/ ./config/
+
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Build arguments for environment configuration
+ARG APP_ENV=local
+
+ENV APP_ENV=${APP_ENV}
+ENV PYTHONPATH=/app/src
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# ARG for which MCP server to run
+ARG MCP_SERVER=oneinch_mcp
+ENV MCP_SERVER=$MCP_SERVER
+
+EXPOSE 8081
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8081/ || exit 1
+
+# Start MCP Server (dynamic based on ARG)
+CMD python -m app.infrastructure.mcp.servers.${MCP_SERVER}

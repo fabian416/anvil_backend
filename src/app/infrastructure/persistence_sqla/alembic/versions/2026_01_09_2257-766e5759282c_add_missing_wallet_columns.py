@@ -21,41 +21,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Add missing wallet columns for multi-sig, policy, and sync tracking."""
-    # Add policy_ids column for wallet policies
-    op.add_column(
-        "wallets",
-        sa.Column("policy_ids", sa.ARRAY(sa.Text()), nullable=True),
-    )
-
-    # Add owner tracking columns
-    op.add_column(
-        "wallets",
-        sa.Column("owner_type", sa.String(length=50), nullable=True),
-    )
-    op.add_column(
-        "wallets",
-        sa.Column("owner_id", sa.Integer(), nullable=True),
-    )
-
-    # Add additional_signers for multi-sig wallets
-    op.add_column(
-        "wallets",
-        sa.Column("additional_signers", sa.ARRAY(sa.Text()), nullable=True),
-    )
-
-    # Add timestamp tracking columns
-    op.add_column(
-        "wallets",
-        sa.Column("exported_at", sa.TIMESTAMP(timezone=True), nullable=True),
-    )
-    op.add_column(
-        "wallets",
-        sa.Column("imported_at", sa.TIMESTAMP(timezone=True), nullable=True),
-    )
-    op.add_column(
-        "wallets",
-        sa.Column("last_privy_sync_at", sa.TIMESTAMP(timezone=True), nullable=True),
-    )
+    # Note: These columns are already created in earlier migrations.
+    # This migration is a no-op to maintain migration history.
+    pass
 
 
 def downgrade() -> None:

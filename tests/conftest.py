@@ -210,7 +210,7 @@ def test_db_engine():
 
     # Create PostgreSQL test database engine
     engine = create_engine(
-        "postgresql+psycopg://postgres:changethis@localhost:5432/anvil_test",
+        "postgresql+psycopg://anvil:changethis@localhost:5432/anvil_test",
         pool_pre_ping=True,
         echo=False
     )
@@ -265,7 +265,7 @@ async def cleanup_database(request, test_db_engine):
 
     # Create async engine for proper async cleanup
     async_engine = create_async_engine(
-        "postgresql+asyncpg://postgres:changethis@localhost:5432/anvil_test",
+        "postgresql+asyncpg://anvil:changethis@localhost:5432/anvil_test",
         pool_pre_ping=True,
         echo=False
     )
@@ -311,7 +311,7 @@ async def async_db_session(test_db_engine):
 
     # Create async engine using asyncpg driver
     async_engine = create_async_engine(
-        "postgresql+asyncpg://postgres:changethis@localhost:5432/anvil_test",
+        "postgresql+asyncpg://anvil:changethis@localhost:5432/anvil_test",
         pool_pre_ping=True,
         echo=False
     )

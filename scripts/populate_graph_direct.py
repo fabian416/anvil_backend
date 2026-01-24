@@ -103,7 +103,7 @@ async def main():
     conn = await asyncpg.connect(
         host="localhost",
         port=5432,
-        user="postgres",
+        user="anvil",
         password="changethis",
         database="anvil_db",
     )

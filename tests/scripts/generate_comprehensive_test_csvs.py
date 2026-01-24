@@ -43,7 +43,7 @@ async def create_test_app():
 
     # Create PostgreSQL test database engine and create all tables
     engine = create_engine(
-        "postgresql+psycopg://postgres:changethis@localhost:5432/anvil_test",
+        "postgresql+psycopg://postgres:anvil@localhost:5432/anvil_test",
         pool_pre_ping=True,
         echo=False
     )
@@ -557,7 +557,7 @@ async def main():
     from sqlalchemy import create_engine
 
     engine = create_engine(
-        "postgresql+psycopg://postgres:changethis@localhost:5432/anvil_test",
+        "postgresql+psycopg://postgres:anvil@localhost:5432/anvil_test",
         pool_pre_ping=True,
         echo=False
     )
