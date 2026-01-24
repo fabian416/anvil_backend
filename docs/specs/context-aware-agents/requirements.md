@@ -997,7 +997,7 @@ GROUP BY user_id;
 |------------|----------|--------|
 | Wire up context in conversations_router | High | ✅ Done (Phase 5) |
 | Create missing contexts in Celery | High | ✅ Done |
-| Add wallet balance aggregation | Medium | Pending |
+| Add wallet balance aggregation | Medium | ✅ Done |
 | Add response template system | Medium | Pending |
 | Analytics dashboard | Low | Pending |
 
