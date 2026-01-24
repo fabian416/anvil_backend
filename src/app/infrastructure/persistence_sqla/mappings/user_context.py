@@ -182,6 +182,25 @@ def map_user_context_aware_table() -> None:
         has_connected_wallet = mapped_column(Boolean, nullable=False, default=False)
         primary_wallet_address = mapped_column(String(255), nullable=True)
         wallet_provider = mapped_column(String(50), nullable=True)
+        
+        # Wallet balance aggregation (for accurate portfolio_state)
+        wallet_total_usd = mapped_column(
+            Numeric(20, 2),
+            nullable=False,
+            default=0.00,
+            comment="Total USD value across all user wallets",
+        )
+        wallet_chain_breakdown = mapped_column(
+            JSONB,
+            nullable=False,
+            default={},
+            comment="Balance breakdown by chain {chain: usd_value}",
+        )
+        wallet_last_sync_at = mapped_column(
+            DateTime(timezone=True),
+            nullable=True,
+            comment="Last time wallet balances were synced",
+        )
 
         # ═══════════════════════════════════════════════════════════════
         # PROCESSING METADATA

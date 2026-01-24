@@ -71,6 +71,8 @@ class WalletStats:
     primary_chain: str | None = None
     total_balance_usd: Decimal = field(default=Decimal("0.00"))
     token_count: int = 0
+    chain_breakdown: dict[str, float] = field(default_factory=dict)
+    last_sync_at: datetime | None = None
 
 
 class UserContextService:
@@ -104,6 +106,8 @@ class UserContextService:
         chat_message_repository: Any | None = None,
         chat_conversation_repository: Any | None = None,
         wallet_repository: Any | None = None,
+        # Wallet balance adapter (for accurate portfolio_state)
+        wallet_balance_adapter: Any | None = None,
     ):
         """
         Initialize service with repositories.
@@ -113,11 +117,13 @@ class UserContextService:
             chat_message_repository: Optional - For aggregating chat stats
             chat_conversation_repository: Optional - For aggregating session stats
             wallet_repository: Optional - For aggregating wallet/balance stats
+            wallet_balance_adapter: Optional - WalletBalancePort for balance aggregation
         """
         self._context_repo = context_repository
         self._chat_message_repo = chat_message_repository
         self._chat_conversation_repo = chat_conversation_repository
         self._wallet_repo = wallet_repository
+        self._wallet_balance_adapter = wallet_balance_adapter
     
     # ═══════════════════════════════════════════════════════════════
     # CONTEXT RETRIEVAL
@@ -324,15 +330,23 @@ class UserContextService:
             if chat_stats.last_message_at:
                 context.last_active_at = chat_stats.last_message_at
             
-            # Aggregate wallet stats
+            # Aggregate wallet stats (including balance from WalletBalancePort)
             wallet_stats = await self._aggregate_wallet_stats(chat_user_id)
             context.wallet_count = wallet_stats.wallet_count
             context.has_connected_wallet = wallet_stats.has_wallet
             context.primary_wallet_address = wallet_stats.primary_address
             context.wallet_provider = wallet_stats.provider
             context.primary_chain = wallet_stats.primary_chain
-            context.total_balance_usd = wallet_stats.total_balance_usd
             context.token_count = wallet_stats.token_count
+            
+            # Wallet balance aggregation (from WalletBalancePort)
+            context.wallet_total_usd = wallet_stats.total_balance_usd
+            context.wallet_chain_breakdown = wallet_stats.chain_breakdown
+            context.wallet_last_sync_at = wallet_stats.last_sync_at
+            
+            # Sync total_balance_usd with wallet_total_usd
+            if wallet_stats.total_balance_usd > 0:
+                context.total_balance_usd = wallet_stats.total_balance_usd
             
             # Aggregate execution stats from message metadata
             exec_stats = await self._aggregate_execution_stats(chat_user_id)
@@ -447,25 +461,64 @@ class UserContextService:
         """
         Aggregate wallet statistics for a user.
         
-        Queries wallets table.
+        Uses WalletBalancePort if available for accurate balance data,
+        otherwise falls back to basic wallet repository queries.
         """
         stats = WalletStats()
         
+        # Try wallet balance adapter first (preferred - has balance data)
+        if self._wallet_balance_adapter:
+            try:
+                aggregate = await self._wallet_balance_adapter.get_user_balance_by_chat_user(
+                    chat_user_id
+                )
+                
+                if aggregate:
+                    stats.wallet_count = aggregate.wallet_count
+                    stats.has_wallet = aggregate.wallet_count > 0
+                    stats.primary_address = aggregate.primary_wallet_address
+                    stats.total_balance_usd = aggregate.total_balance_usd
+                    stats.last_sync_at = aggregate.last_sync_at
+                    
+                    # Chain breakdown as dict[str, float]
+                    stats.chain_breakdown = {
+                        chain: float(balance)
+                        for chain, balance in aggregate.chain_breakdown.items()
+                    }
+                    
+                    # Get primary chain (highest balance)
+                    if aggregate.chain_breakdown:
+                        stats.primary_chain = max(
+                            aggregate.chain_breakdown,
+                            key=lambda x: aggregate.chain_breakdown[x]
+                        )
+                    
+                    # Count tokens from chain addresses
+                    stats.token_count = sum(
+                        w.token_count for w in aggregate.wallets
+                    ) if aggregate.wallets else 0
+                    
+                    logger.debug(
+                        f"Aggregated wallet balance for {chat_user_id}: "
+                        f"${float(stats.total_balance_usd):,.2f}"
+                    )
+                    return stats
+                    
+            except Exception as e:
+                logger.warning(f"Wallet balance adapter failed: {e}")
+                # Fall through to basic wallet repo
+        
+        # Fallback: basic wallet repository (no balance data)
         if not self._wallet_repo:
             return stats
         
         try:
-            # Convert UUID to UserId if needed
-            from app.domain.value_objects.user_id import UserId
-            
             # Note: wallet_repo uses UserId, but we have chat_user_id (UUID)
-            # In a real implementation, you'd need to map between them
-            # For now, we'll try to use the UUID directly
+            # Try to use get_by_chat_user_id if available
             
             if hasattr(self._wallet_repo, 'get_by_chat_user_id'):
                 wallets = await self._wallet_repo.get_by_chat_user_id(chat_user_id)
             else:
-                # Fallback: assume chat_user_id can be used
                 wallets = []
             
             stats.wallet_count = len(wallets) if wallets else 0
@@ -483,8 +536,7 @@ class UserContextService:
                 stats.provider = getattr(primary, 'provider', None)
                 stats.primary_chain = getattr(primary, 'chain_type', None)
                 
-                # Sum balances (if available)
-                # Note: Real balance data would come from blockchain
+                # No balance data from basic wallet repo
                 stats.total_balance_usd = Decimal("0.00")
                 stats.token_count = 0
                 

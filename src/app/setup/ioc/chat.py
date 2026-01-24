@@ -29,6 +29,7 @@ from app.domain.ports.chat_repository import (
     ChatMessageRepository,
 )
 from app.domain.chat.ports.user_context_repository import UserContextRepository
+from app.domain.chat.ports.wallet_balance import WalletBalancePort
 from app.infrastructure.adapters.chat_repository_sqla import (
     ChatUserRepositorySqla,
     ChatConversationRepositorySqla,
@@ -37,6 +38,7 @@ from app.infrastructure.adapters.chat_repository_sqla import (
 from app.infrastructure.adapters.user_context_repository_sqla import (
     UserContextRepositorySqla,
 )
+from app.infrastructure.adapters.wallet_balance_db import WalletBalanceDbAdapter
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.caching.guest_cache import GuestCache
 from app.infrastructure.caching.redis_cache import RedisCache
@@ -87,6 +89,20 @@ class ChatProvider(Provider):
         """
         return UserContextRepositorySqla(session)
 
+    @provide(scope=Scope.REQUEST)
+    def provide_wallet_balance_adapter(
+        self,
+        session: MainAsyncSession,
+    ) -> WalletBalancePort:
+        """
+        Provide WalletBalancePort implementation.
+        
+        Used for aggregating wallet balances from local DB tables
+        (wallets, chain_addresses, portfolio_snapshots) to calculate
+        accurate portfolio_state classification.
+        """
+        return WalletBalanceDbAdapter(session)
+
     # ========== User Context Service ==========
 
     @provide(scope=Scope.REQUEST)
@@ -95,6 +111,7 @@ class ChatProvider(Provider):
         context_repo: UserContextRepository,
         message_repo: ChatMessageRepository,
         conversation_repo: ChatConversationRepository,
+        wallet_balance_adapter: WalletBalancePort,
     ) -> UserContextService:
         """
         Provide UserContextService for context-aware agents.
@@ -104,15 +121,15 @@ class ChatProvider(Provider):
         2. Updates context periodically (Celery task)
         3. Provides context for chat sessions
         
-        Note: wallet_repository is optional and not injected here
-        to avoid circular dependencies. The service will work
-        without wallet data if not provided.
+        The wallet_balance_adapter enables accurate portfolio_state
+        classification based on real wallet balances.
         """
         return UserContextService(
             context_repository=context_repo,
             chat_message_repository=message_repo,
             chat_conversation_repository=conversation_repo,
-            wallet_repository=None,  # Can be injected if needed
+            wallet_repository=None,  # Deprecated - use wallet_balance_adapter
+            wallet_balance_adapter=wallet_balance_adapter,
         )
 
     # ========== Authenticated Chat Command Handlers ==========

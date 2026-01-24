@@ -77,6 +77,7 @@ def update_user_context():
     async def runner(container):
         from app.application.chat.services.user_context_service import UserContextService
         from app.domain.chat.ports.user_context_repository import UserContextRepository
+        from app.domain.chat.ports.wallet_balance import WalletBalancePort
         from app.domain.ports.chat_repository import (
             ChatUserRepository,
             ChatMessageRepository,
@@ -84,6 +85,7 @@ def update_user_context():
         )
         from app.infrastructure.persistence_sqla.registry import mapping_registry
         from app.infrastructure.adapters.types import MainAsyncSession
+        from app.infrastructure.adapters.wallet_balance_db import WalletBalanceDbAdapter
         from sqlalchemy import select, and_
         
         start_time = datetime.now(UTC)
@@ -100,12 +102,16 @@ def update_user_context():
             conversation_repo = await container.get(ChatConversationRepository)
             session = await container.get(MainAsyncSession)
             
-            # Create service
+            # Create wallet balance adapter for accurate portfolio_state
+            wallet_balance_adapter = WalletBalanceDbAdapter(session)
+            
+            # Create service with wallet balance adapter
             service = UserContextService(
                 context_repository=context_repo,
                 chat_message_repository=message_repo,
                 chat_conversation_repository=conversation_repo,
-                wallet_repository=None,  # Not needed for basic stats
+                wallet_repository=None,  # Deprecated
+                wallet_balance_adapter=wallet_balance_adapter,  # For accurate balance
             )
             
             # ============================================

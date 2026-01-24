@@ -151,6 +151,11 @@ class UserContextAware:
     primary_wallet_address: str | None = None
     wallet_provider: str | None = None
     
+    # Wallet balance aggregation (for accurate portfolio_state)
+    wallet_total_usd: Decimal = field(default=Decimal("0.00"))
+    wallet_chain_breakdown: dict[str, float] = field(default_factory=dict)
+    wallet_last_sync_at: datetime | None = None
+    
     # ═══════════════════════════════════════════════════════════════
     # PROCESSING METADATA
     # ═══════════════════════════════════════════════════════════════
@@ -220,8 +225,13 @@ class UserContextAware:
         Call this after updating metrics to ensure classifications
         are consistent with the underlying data.
         """
-        # Portfolio state
-        self.portfolio_state = PortfolioState.from_balance(self.total_balance_usd).value
+        # Portfolio state - use wallet_total_usd if available, else total_balance_usd
+        balance_for_classification = self.wallet_total_usd if self.wallet_total_usd > 0 else self.total_balance_usd
+        self.portfolio_state = PortfolioState.from_balance(balance_for_classification).value
+        
+        # Sync total_balance_usd with wallet_total_usd if wallet data is fresher
+        if self.wallet_total_usd > 0:
+            self.total_balance_usd = self.wallet_total_usd
         
         # Activity level
         was_inactive = self.activity_level == ActivityLevel.INACTIVE.value
@@ -296,6 +306,9 @@ class UserContextAware:
             "legacy_user_id": self.legacy_user_id,
             "portfolio_state": self.portfolio_state,
             "total_balance_usd": float(self.total_balance_usd),
+            "wallet_total_usd": float(self.wallet_total_usd),
+            "wallet_chain_breakdown": self.wallet_chain_breakdown,
+            "wallet_count": self.wallet_count,
             "token_count": self.token_count,
             "primary_chain": self.primary_chain,
             "activity_level": self.activity_level,
@@ -304,6 +317,7 @@ class UserContextAware:
             "total_messages": self.total_messages,
             "has_connected_wallet": self.has_connected_wallet,
             "primary_wallet_address": self.primary_wallet_address,
+            "wallet_last_sync_at": self.wallet_last_sync_at.isoformat() if self.wallet_last_sync_at else None,
             "context_updated_at": self.context_updated_at.isoformat() if self.context_updated_at else None,
         }
     
