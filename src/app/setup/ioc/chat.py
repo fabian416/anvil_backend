@@ -150,6 +150,33 @@ class ChatProvider(Provider):
             wallet_balance_adapter=wallet_balance_adapter,
         )
 
+    @provide(scope=Scope.REQUEST)
+    def provide_optional_user_context_service(
+        self,
+        user_context_service: UserContextService,
+    ) -> UserContextService | None:
+        """
+        Provide Optional[UserContextService] for backwards compatibility.
+        
+        Some commands (like PrivyLogin) declare UserContextService as optional
+        to maintain backwards compatibility. This provider bridges the gap
+        between the required service and the optional type hint.
+        """
+        return user_context_service
+
+    @provide(scope=Scope.REQUEST)
+    def provide_optional_chat_user_repository(
+        self,
+        chat_user_repo: ChatUserRepository,
+    ) -> ChatUserRepository | None:
+        """
+        Provide Optional[ChatUserRepository] for backwards compatibility.
+        
+        Some commands (like PrivyLogin) declare ChatUserRepository as optional
+        to maintain backwards compatibility.
+        """
+        return chat_user_repo
+
     @provide(scope=Scope.APP)
     def provide_response_template_service(self) -> ResponseTemplateService:
         """
