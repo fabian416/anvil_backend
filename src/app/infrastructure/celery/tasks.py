@@ -111,6 +111,12 @@ from app.infrastructure.celery.tasks.llm_ranking import (
     recalculate_all_rankings,
     recalculate_agent_rankings,
 )
+# Import user context tasks
+from app.infrastructure.celery.tasks.user_context_tasks import (
+    update_user_context,
+    create_missing_user_contexts,
+    user_context_analytics,
+)
 
 
 @celery_app.task(name="populate_graph_protocols")
@@ -309,5 +315,14 @@ celery_app.conf.beat_schedule = {
     "archive-guest-conversations": {
         "task": "archive_guest_conversations",
         "schedule": crontab(minute=0),  # Every hour at :00
+    },
+    # User context awareness (context-aware agents)
+    "update-user-context": {
+        "task": "update_user_context",
+        "schedule": crontab(minute="*/10"),  # Every 10 minutes
+    },
+    "user-context-analytics": {
+        "task": "user_context_analytics",
+        "schedule": crontab(hour=6, minute=0),  # Daily at 6 AM
     },
 }
