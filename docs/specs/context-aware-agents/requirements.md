@@ -995,7 +995,7 @@ GROUP BY user_id;
 
 | Enhancement | Priority | Status |
 |------------|----------|--------|
-| Wire up context in conversations_router | High | Pending |
+| Wire up context in conversations_router | High | ✅ Done (Phase 5) |
 | Add wallet balance aggregation | Medium | Pending |
 | Add response template system | Medium | Pending |
 | Analytics dashboard | Low | Pending |
