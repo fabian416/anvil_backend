@@ -11,7 +11,10 @@ COPY README.md .
 COPY src/ src/
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN uv pip install --no-cache-dir .
+RUN uv pip install --no-cache-dir . && \
+    find /opt/venv -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
+    find /opt/venv -name "*.pyc" -delete && \
+    find /opt/venv -name "*.pyo" -delete
 
 FROM python:3.12-slim
 

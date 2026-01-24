@@ -19,6 +19,7 @@ env/
 *.egg-info/
 dist/
 build/
+.eggs/
 
 # IDE
 .vscode/
@@ -26,12 +27,15 @@ build/
 *.swp
 *.swo
 .DS_Store
+*.sublime-*
+.editorconfig
 
 # Testing
 coverage.xml
 .coverage
 htmlcov/
 .tox/
+pytest.ini
 
 # Logs
 *.log
@@ -48,6 +52,35 @@ logs/
 .env.*
 
 # Documentation
+docs/
+*.md
+
+# Large directories
+node_modules/
+.npm/
+tmp/
+temp/
+migrations_notes/
+dump/
+examples/
+tests/
+
+# Unnecessary files
+*.m
+errors.m
+*.sh
+Makefile
+PHASE2_COMPLETE_SUMMARY.txt
+IMPLEMENTATION_SUMMARY.md
+MIGRATION_ENUM_FIX_SUMMARY.md
+CLAUDE.md
+*.xml
+*.csv
+.coveragerc
+.pre-commit-config.yaml
+requirements.txt
+uv.lock
+.spec-workflow/
 docs/
 *.md
 !README.md
