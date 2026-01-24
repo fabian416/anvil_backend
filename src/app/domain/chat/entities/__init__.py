@@ -8,6 +8,7 @@ from app.domain.chat.entities.authenticated_chat import (
     AuthChatConversation,
     AuthChatMessage,
 )
+from app.domain.chat.entities.user_context_aware import UserContextAware
 
 # Export legacy names for backward compatibility
 ChatUser = AuthChatUser
@@ -24,5 +25,6 @@ __all__ = [
     "ChatUser",  # Alias for authenticated chat
     "ChatConversation",  # Alias for authenticated chat
     "ChatMessage",  # Alias for authenticated chat
+    "UserContextAware",  # Context-aware agent responses
 ]
 

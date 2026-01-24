@@ -27,10 +27,14 @@ from app.domain.ports.chat_repository import (
     ChatConversationRepository,
     ChatMessageRepository,
 )
+from app.domain.chat.ports.user_context_repository import UserContextRepository
 from app.infrastructure.adapters.chat_repository_sqla import (
     ChatUserRepositorySqla,
     ChatConversationRepositorySqla,
     ChatMessageRepositorySqla,
+)
+from app.infrastructure.adapters.user_context_repository_sqla import (
+    UserContextRepositorySqla,
 )
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.caching.guest_cache import GuestCache
@@ -68,6 +72,19 @@ class ChatProvider(Provider):
     ) -> ChatMessageRepository:
         """Provide ChatMessageRepository implementation."""
         return ChatMessageRepositorySqla(session)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_user_context_repository(
+        self,
+        session: MainAsyncSession,
+    ) -> UserContextRepository:
+        """
+        Provide UserContextRepository implementation.
+        
+        Used for context-aware agent responses - stores pre-computed
+        user classification data (portfolio state, activity level, user type).
+        """
+        return UserContextRepositorySqla(session)
 
     # ========== Authenticated Chat Command Handlers ==========
 
