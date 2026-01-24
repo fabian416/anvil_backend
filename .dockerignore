@@ -8,6 +8,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.so.*
 .Python
 .venv/
 venv/
@@ -20,6 +21,7 @@ env/
 dist/
 build/
 .eggs/
+*.whl
 
 # IDE
 .vscode/
@@ -36,6 +38,9 @@ coverage.xml
 htmlcov/
 .tox/
 pytest.ini
+test_*.py
+tests/
+test/
 
 # Logs
 *.log
@@ -54,6 +59,7 @@ logs/
 # Documentation
 docs/
 *.md
+!README.md
 
 # Large directories
 node_modules/
@@ -63,7 +69,8 @@ temp/
 migrations_notes/
 dump/
 examples/
-tests/
+.venv
+env/
 
 # Unnecessary files
 *.m
@@ -81,13 +88,6 @@ CLAUDE.md
 requirements.txt
 uv.lock
 .spec-workflow/
-docs/
-*.md
-!README.md
-
-# Tests
-tests/
-pytest.ini
 
 # CI/CD
 .github/
@@ -96,17 +96,24 @@ pytest.ini
 .pre-commit-config.yaml
 Makefile
 docker-compose.yaml
-config/local/*
-config/dev/*
-!config/local/config.toml
-!config/local/.env
-!config/local/Dockerfile
-!config/local/docker-compose.yaml
-!config/local/init-db.sql
-!config/local/export.toml
+docker-compose.local.yaml
+config/local/
+config/dev/
 
+# Monitoring/Logs
+monitoring/
+
+# Build artifacts
+repomix-output.xml
+llm_*.txt
 
 # Temporary
 tmp/
 temp/
 *.tmp
+.cache/
+
+# System
+.dockerignore
+Dockerfile*
+.git*
