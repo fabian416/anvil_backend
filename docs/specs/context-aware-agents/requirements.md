@@ -940,7 +940,7 @@ GROUP BY user_id;
 
 ## Appendix B: Implementation Status
 
-**Last Updated:** 2026-01-24
+**Last Updated:** 2026-01-24 (Login handlers updated)
 
 ### ✅ Phase 1: Database & Domain (COMPLETE)
 
@@ -973,12 +973,14 @@ GROUP BY user_id;
 | user_context_analytics task | ✅ Done | `src/app/infrastructure/celery/tasks/user_context_tasks.py` |
 | Beat schedule (10 min) | ✅ Done | `src/app/infrastructure/celery/tasks.py` |
 
-### ✅ Phase 4: Privy Login Integration (COMPLETE)
+### ✅ Phase 4: Login Integration (COMPLETE)
 
 | Component | Status | File |
 |-----------|--------|------|
 | PrivyLogin integration | ✅ Done | `src/app/application/commands/auth/privy_login.py` |
-| _create_user_context method | ✅ Done | `src/app/application/commands/auth/privy_login.py` |
+| _ensure_user_context method | ✅ Done | `src/app/application/commands/auth/privy_login.py` |
+| LogInHandler integration | ✅ Done | `src/app/infrastructure/auth/handlers/log_in.py` |
+| _ensure_user_context method | ✅ Done | `src/app/infrastructure/auth/handlers/log_in.py` |
 
 ### ✅ Phase 5: Supervisor Integration (COMPLETE)
 
