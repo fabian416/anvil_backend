@@ -998,7 +998,7 @@ GROUP BY user_id;
 | Wire up context in conversations_router | High | ✅ Done (Phase 5) |
 | Create missing contexts in Celery | High | ✅ Done |
 | Add wallet balance aggregation | Medium | ✅ Done |
-| Add response template system | Medium | Pending |
+| Add response template system | Medium | ✅ Done |
 | Analytics dashboard | Low | Pending |
 
 ---
@@ -1118,58 +1118,176 @@ class WalletBalancePort(Protocol):
 
 #### 2.2 Implementation Steps
 
-| Step | Task | File | Effort |
+| Step | Task | File | Status |
 |------|------|------|--------|
-| 2.1 | Define `ResponseTemplate` entity | `src/app/domain/chat/entities/response_template.py` | S |
-| 2.2 | Create template YAML/JSON files | `src/app/infrastructure/templates/` | M |
-| 2.3 | Implement `ResponseTemplateService` | `src/app/application/chat/services/response_template_service.py` | M |
-| 2.4 | Update agents to use templates | `src/app/infrastructure/adapters/agent_squad/agents/*.py` | M |
-| 2.5 | Add multi-language support | Template files + service | M |
+| 2.1 | Define `ResponseTemplate` entity | `src/app/domain/chat/entities/response_template.py` | ✅ Done |
+| 2.2 | Create template JSON files | `src/app/infrastructure/templates/responses/*.json` | ✅ Done |
+| 2.3 | Implement `ResponseTemplateService` | `src/app/application/chat/services/response_template_service.py` | ✅ Done |
+| 2.4 | Integrate with AuthenticatedSupervisor | `src/app/domain/services/agent_squad/authenticated_supervisor.py` | ✅ Done |
+| 2.5 | Multi-language support (en, es, pt, zh) | All template files | ✅ Done |
+| 2.6 | Register in IoC | `src/app/setup/ioc/chat.py`, `agent_squad_domain.py` | ✅ Done |
 
-#### 2.3 Template Structure
+#### 2.3 Template Files (Implemented)
 
-```yaml
-# src/app/infrastructure/templates/portfolio_responses.yaml
-portfolio:
-  empty:
-    en:
-      message: |
-        **Welcome to Anvil! 🚀**
-        
-        Your portfolio is ready to grow.
-        
-        **Start here:**
-        → "buy 100 USD of ETH" - Purchase your first crypto
-        → "what is ETH" - Learn about Ethereum first
-      suggested_actions: ["buy", "learn"]
-      block_swap: true
-    
-    es:
-      message: |
-        **¡Bienvenido a Anvil! 🚀**
-        
-        Tu portafolio está listo para crecer.
-        
-        **Empieza aquí:**
-        → "comprar 100 USD de ETH" - Compra tu primera crypto
-      suggested_actions: ["buy", "learn"]
-      block_swap: true
-  
-  starter:
-    en:
-      message: |
-        **Your Portfolio: ${total_usd}**
-        
-        You're off to a great start! Here's what you can do:
-        → Swap tokens to diversify
-        → Earn yield on stablecoins (5-10% APY)
-      suggested_actions: ["swap", "earn", "buy_more"]
+The following JSON template files have been created:
+
+| File | Contents |
+|------|----------|
+| `portfolio_states.json` | Templates for EMPTY, STARTER, ACTIVE, WHALE portfolio states |
+| `activity_levels.json` | Templates for NEW, VERY_ACTIVE, ACTIVE, WEEKLY_ACTIVE, MONTHLY_ACTIVE, INACTIVE, REACTIVATED |
+| `user_types.json` | Templates for NEW_USER, CASUAL, TRADER, YIELD_FARMER, POWER_USER |
+| `workflows.json` | Templates for swap, buy, lending, transfer workflows + error templates |
+
+**Location**: `src/app/infrastructure/templates/responses/`
+
+**Example portfolio_states.json structure:**
+
+```json
+{
+  "version": "1.0",
+  "empty": {
+    "description": "User has no crypto holdings ($0)",
+    "messages": {
+      "portfolio_query": {
+        "en": "**Welcome to Anvil!** Your portfolio is ready to grow...",
+        "es": "**¡Bienvenido a Anvil!** Tu portafolio está listo...",
+        "pt": "**Bem-vindo ao Anvil!** Seu portfólio está pronto...",
+        "zh": "**欢迎来到 Anvil！** 您的投资组合已准备好..."
+      },
+      "swap_blocked": {
+        "en": "**You need crypto to swap!** Get started: → buy 100 USD of ETH",
+        "es": "**¡Necesitas crypto para intercambiar!**...",
+        "pt": "**Você precisa de crypto para trocar!**...",
+        "zh": "**您需要加密货币才能交换！**..."
+      }
+    },
+    "suggested_actions": ["buy", "learn"],
+    "blocked_workflows": ["swap", "lending", "transfer", "cashout"]
+  }
+}
 ```
 
-#### 2.4 Service Interface
+#### 2.4 Service Interface (Implemented)
 
 ```python
 # src/app/application/chat/services/response_template_service.py
+class ResponseTemplateService:
+    """Service for loading and serving response templates."""
+    
+    def __init__(self, templates_dir: Path | str | None = None):
+        """Load templates on initialization."""
+        self._templates_dir = Path(templates_dir) if templates_dir else TEMPLATES_DIR
+        self._load_templates()
+    
+    # Template retrieval by classification type
+    def get_portfolio_response(
+        self, portfolio_state: str, message_key: str, language: str = "en", **variables
+    ) -> TemplateResult: ...
+    
+    def get_activity_response(
+        self, activity_level: str, message_key: str, language: str = "en", **variables
+    ) -> TemplateResult: ...
+    
+    def get_user_type_response(
+        self, user_type: str, message_key: str, language: str = "en", **variables
+    ) -> TemplateResult: ...
+    
+    def get_workflow_response(
+        self, workflow: str, message_key: str, language: str = "en", **variables
+    ) -> TemplateResult: ...
+    
+    # Workflow blocking
+    def check_workflow_blocked(
+        self, portfolio_state: str, workflow: str, language: str = "en", **variables
+    ) -> tuple[bool, str | None]: ...
+    
+    def should_show_gas_warning(
+        self, portfolio_state: str, amount_usd: float
+    ) -> bool: ...
+    
+    # Context-aware selection
+    def get_contextual_response(
+        self, context: TemplateContext, message_key: str, priority: str = "portfolio"
+    ) -> TemplateResult: ...
+    
+    def should_use_template(
+        self, context: TemplateContext, query_type: str
+    ) -> bool: ...
+    
+    # User type customization
+    def get_response_style(self, user_type: str) -> str: ...
+    def should_include_explanations(self, user_type: str) -> bool: ...
+```
+
+#### 2.5 Supervisor Integration (Implemented)
+
+```python
+# src/app/domain/services/agent_squad/authenticated_supervisor.py
+class AuthenticatedSupervisorCoordinator:
+    def __init__(
+        self,
+        llm_client: "LLMClientGateway",
+        agent_executor: "AgentExecutorPort",
+        user_data_service: "UserDataService | None" = None,
+        response_template_service: "ResponseTemplateService | None" = None,  # NEW
+        max_agents: int = 6,
+        timeout_seconds: int = 180,
+    ): ...
+    
+    # NEW: Template-based response methods
+    def get_template_response(
+        self, message_key: str, language: str = "en", **variables
+    ) -> str | None: ...
+    
+    def check_workflow_blocked_with_template(
+        self, workflow_type: str, language: str = "en"
+    ) -> tuple[bool, str | None]: ...
+    
+    def get_response_style(self) -> str: ...
+    def should_include_explanations(self) -> bool: ...
+```
+
+#### 2.6 Domain Entity (Implemented)
+
+```python
+# src/app/domain/chat/entities/response_template.py
+@dataclass(frozen=True)
+class TemplateMessage:
+    """Localized message with variable placeholders."""
+    en: str
+    es: str = ""
+    pt: str = ""
+    zh: str = ""
+    
+    def get(self, language: str = "en") -> str: ...
+    def render(self, language: str = "en", **variables: Any) -> str: ...
+
+@dataclass
+class ResponseTemplate:
+    """Complete response template with metadata."""
+    state_type: str  # "portfolio", "activity", "user_type", "workflow"
+    state_value: str  # e.g., "empty", "trader", "swap"
+    message_key: str  # e.g., "portfolio_query"
+    message: TemplateMessage
+    suggested_actions: list[str] = field(default_factory=list)
+    blocked_workflows: list[str] = field(default_factory=list)
+    response_style: str = "default"
+
+@dataclass
+class TemplateResult:
+    """Result of template lookup and rendering."""
+    message: str
+    template_key: str
+    language: str
+    suggested_actions: list[str] = field(default_factory=list)
+    is_blocked: bool = False
+    blocked_reason: str | None = None
+```
+
+### OLD SERVICE INTERFACE (deprecated, keeping for reference)
+
+```python
+# src/app/application/chat/services/response_template_service.py (OLD)
 class ResponseTemplateService:
     def __init__(self, templates_path: str):
         self._templates = self._load_templates(templates_path)

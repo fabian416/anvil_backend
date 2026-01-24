@@ -1,0 +1,104 @@
+{
+  "version": "1.0",
+  "description": "Response templates based on portfolio state classification",
+  
+  "empty": {
+    "description": "User has no crypto holdings ($0)",
+    "messages": {
+      "portfolio_query": {
+        "en": "**Welcome to Anvil!** Your portfolio is ready to grow.\n\n**Get started:**\n→ \"buy 100 USD of ETH\" - Purchase your first crypto\n→ \"what is ETH\" - Learn about Ethereum\n\nOnce you have crypto, you can swap, earn yield, and more!",
+        "es": "**¡Bienvenido a Anvil!** Tu portafolio está listo para crecer.\n\n**Empieza aquí:**\n→ \"comprar 100 USD de ETH\" - Compra tu primera crypto\n→ \"qué es ETH\" - Aprende sobre Ethereum",
+        "pt": "**Bem-vindo ao Anvil!** Seu portfólio está pronto para crescer.\n\n**Comece aqui:**\n→ \"comprar 100 USD de ETH\" - Compre sua primeira crypto\n→ \"o que é ETH\" - Aprenda sobre Ethereum",
+        "zh": "**欢迎来到 Anvil！** 您的投资组合已准备好增长。\n\n**开始使用：**\n→ \"购买 100 美元的 ETH\" - 购买您的第一个加密货币\n→ \"什么是 ETH\" - 了解以太坊"
+      },
+      "balance_query": {
+        "en": "Your balance is **$0**. Ready to start your crypto journey?\n\n→ \"buy ETH\" - Get started with Ethereum",
+        "es": "Tu saldo es **$0**. ¿Listo para comenzar tu viaje crypto?\n\n→ \"comprar ETH\" - Empieza con Ethereum",
+        "pt": "Seu saldo é **$0**. Pronto para começar sua jornada crypto?\n\n→ \"comprar ETH\" - Comece com Ethereum",
+        "zh": "您的余额是 **$0**。准备开始您的加密之旅了吗？\n\n→ \"购买 ETH\" - 从以太坊开始"
+      },
+      "swap_blocked": {
+        "en": "**You need crypto to swap!**\n\nGet started:\n→ \"buy 100 USD of ETH\" - Then you can swap to other tokens",
+        "es": "**¡Necesitas crypto para intercambiar!**\n\nEmpieza:\n→ \"comprar 100 USD de ETH\" - Luego podrás intercambiar",
+        "pt": "**Você precisa de crypto para trocar!**\n\nComece:\n→ \"comprar 100 USD de ETH\" - Depois você pode trocar",
+        "zh": "**您需要加密货币才能交换！**\n\n开始：\n→ \"购买 100 美元的 ETH\" - 然后您可以交换其他代币"
+      },
+      "lending_blocked": {
+        "en": "**You need crypto to earn yield!**\n\nGet started:\n→ \"buy 100 USD of USDC\" - Then earn 5-10% APY on stablecoins",
+        "es": "**¡Necesitas crypto para ganar rendimiento!**\n\nEmpieza:\n→ \"comprar 100 USD de USDC\" - Luego gana 5-10% APY",
+        "pt": "**Você precisa de crypto para ganhar rendimento!**\n\nComece:\n→ \"comprar 100 USD de USDC\" - Depois ganhe 5-10% APY",
+        "zh": "**您需要加密货币才能赚取收益！**\n\n开始：\n→ \"购买 100 美元的 USDC\" - 然后赚取 5-10% APY"
+      },
+      "transfer_blocked": {
+        "en": "**You need crypto to transfer!**\n\nGet started:\n→ \"buy ETH\" - Then you can send to any wallet",
+        "es": "**¡Necesitas crypto para transferir!**\n\nEmpieza:\n→ \"comprar ETH\" - Luego podrás enviar a cualquier wallet",
+        "pt": "**Você precisa de crypto para transferir!**\n\nComece:\n→ \"comprar ETH\" - Depois você pode enviar para qualquer carteira",
+        "zh": "**您需要加密货币才能转账！**\n\n开始：\n→ \"购买 ETH\" - 然后您可以发送到任何钱包"
+      }
+    },
+    "suggested_actions": ["buy", "learn"],
+    "blocked_workflows": ["swap", "lending", "transfer", "cashout"]
+  },
+  
+  "starter": {
+    "description": "User has small holdings ($0.01 - $99.99)",
+    "messages": {
+      "portfolio_query": {
+        "en": "**Your Portfolio: ${total_usd}**\n\nYou're building your crypto foundation! Here's what you can do:\n→ Buy more to grow your portfolio\n→ Learn about DeFi opportunities\n\n*Tip: Gas fees can be significant at smaller amounts*",
+        "es": "**Tu Portafolio: ${total_usd}**\n\n¡Estás construyendo tu base crypto! Opciones:\n→ Compra más para hacer crecer tu portafolio\n→ Aprende sobre oportunidades DeFi",
+        "pt": "**Seu Portfólio: ${total_usd}**\n\nVocê está construindo sua base crypto! Opções:\n→ Compre mais para crescer seu portfólio\n→ Aprenda sobre oportunidades DeFi",
+        "zh": "**您的投资组合：${total_usd}**\n\n您正在建立您的加密基础！选项：\n→ 购买更多以增长您的投资组合\n→ 了解 DeFi 机会"
+      },
+      "swap_warning": {
+        "en": "**Heads up!** With ${total_usd} in your wallet, gas fees might take a larger percentage of your trade. Consider:\n→ Waiting for lower gas times\n→ Making larger trades less frequently\n\nWant to proceed anyway?",
+        "es": "**¡Atención!** Con ${total_usd} en tu wallet, las comisiones de gas pueden ser un porcentaje mayor. Considera:\n→ Esperar momentos de gas bajo\n→ Hacer intercambios más grandes menos frecuentes",
+        "pt": "**Atenção!** Com ${total_usd} em sua carteira, as taxas de gas podem ser uma porcentagem maior. Considere:\n→ Esperar momentos de gas baixo\n→ Fazer trocas maiores com menos frequência",
+        "zh": "**注意！** 您的钱包中有 ${total_usd}，Gas 费用可能占您交易的较大比例。考虑：\n→ 等待 Gas 较低的时候\n→ 减少交易频率，增加单次交易金额"
+      }
+    },
+    "suggested_actions": ["buy", "learn", "swap"],
+    "gas_warning_threshold": 100,
+    "blocked_workflows": []
+  },
+  
+  "active": {
+    "description": "User has moderate holdings ($100 - $9,999.99)",
+    "messages": {
+      "portfolio_query": {
+        "en": "**Your Portfolio: ${total_usd}**\n\n{token_breakdown}\n\n**Opportunities:**\n→ \"show me yields\" - Earn on your holdings\n→ \"swap suggestions\" - Optimize your allocation",
+        "es": "**Tu Portafolio: ${total_usd}**\n\n{token_breakdown}\n\n**Oportunidades:**\n→ \"muéstrame rendimientos\" - Gana con tus holdings\n→ \"sugerencias de swap\" - Optimiza tu asignación",
+        "pt": "**Seu Portfólio: ${total_usd}**\n\n{token_breakdown}\n\n**Oportunidades:**\n→ \"mostrar rendimentos\" - Ganhe com seus holdings\n→ \"sugestões de swap\" - Otimize sua alocação",
+        "zh": "**您的投资组合：${total_usd}**\n\n{token_breakdown}\n\n**机会：**\n→ \"显示收益\" - 赚取您的持有收益\n→ \"交换建议\" - 优化您的配置"
+      },
+      "yield_suggestion": {
+        "en": "With ${total_usd}, you could earn:\n→ **${estimated_yield}/year** on stablecoins (8-12% APY)\n→ **${estimated_eth_yield}/year** staking ETH (3-5% APY)\n\nWant me to find the best rates?",
+        "es": "Con ${total_usd}, podrías ganar:\n→ **${estimated_yield}/año** en stablecoins (8-12% APY)\n→ **${estimated_eth_yield}/año** staking ETH (3-5% APY)\n\n¿Quieres que busque las mejores tasas?",
+        "pt": "Com ${total_usd}, você poderia ganhar:\n→ **${estimated_yield}/ano** em stablecoins (8-12% APY)\n→ **${estimated_eth_yield}/ano** staking ETH (3-5% APY)\n\nQuer que eu encontre as melhores taxas?",
+        "zh": "使用 ${total_usd}，您可以赚取：\n→ **${estimated_yield}/年** 稳定币（8-12% APY）\n→ **${estimated_eth_yield}/年** ETH 质押（3-5% APY）\n\n要我找到最佳利率吗？"
+      }
+    },
+    "suggested_actions": ["swap", "lend", "analyze", "diversify"],
+    "blocked_workflows": []
+  },
+  
+  "whale": {
+    "description": "User has significant holdings ($10,000+)",
+    "messages": {
+      "portfolio_query": {
+        "en": "**Your Portfolio: ${total_usd}**\n\n{token_breakdown}\n\n**Advanced Options:**\n→ Yield optimization across protocols\n→ Risk analysis and rebalancing\n→ Tax-efficient strategies",
+        "es": "**Tu Portafolio: ${total_usd}**\n\n{token_breakdown}\n\n**Opciones Avanzadas:**\n→ Optimización de rendimiento entre protocolos\n→ Análisis de riesgo y rebalanceo\n→ Estrategias eficientes fiscalmente",
+        "pt": "**Seu Portfólio: ${total_usd}**\n\n{token_breakdown}\n\n**Opções Avançadas:**\n→ Otimização de rendimento entre protocolos\n→ Análise de risco e rebalanceamento\n→ Estratégias eficientes em impostos",
+        "zh": "**您的投资组合：${total_usd}**\n\n{token_breakdown}\n\n**高级选项：**\n→ 跨协议收益优化\n→ 风险分析和再平衡\n→ 税务高效策略"
+      },
+      "large_trade_confirmation": {
+        "en": "**Large Trade Alert**\n\nYou're about to {action} ${amount}. This represents {percentage}% of your portfolio.\n\n**Considerations:**\n→ Slippage: ~{slippage}%\n→ Gas: ~${gas_usd}\n→ Price impact: {price_impact}\n\nProceed?",
+        "es": "**Alerta de Operación Grande**\n\nEstás a punto de {action} ${amount}. Esto representa {percentage}% de tu portafolio.\n\n**Consideraciones:**\n→ Deslizamiento: ~{slippage}%\n→ Gas: ~${gas_usd}\n→ Impacto en precio: {price_impact}",
+        "pt": "**Alerta de Grande Operação**\n\nVocê está prestes a {action} ${amount}. Isso representa {percentage}% do seu portfólio.\n\n**Considerações:**\n→ Slippage: ~{slippage}%\n→ Gas: ~${gas_usd}\n→ Impacto no preço: {price_impact}",
+        "zh": "**大额交易提醒**\n\n您即将 {action} ${amount}。这代表您投资组合的 {percentage}%。\n\n**注意事项：**\n→ 滑点：~{slippage}%\n→ Gas：~${gas_usd}\n→ 价格影响：{price_impact}"
+      }
+    },
+    "suggested_actions": ["analyze", "optimize", "diversify", "tax_plan"],
+    "blocked_workflows": [],
+    "large_trade_threshold_pct": 10
+  }
+}

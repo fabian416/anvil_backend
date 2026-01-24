@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from app.domain.ports.agent_squad.agent_executor_gateway import AgentExecutorPort
     from app.application.chat.services.user_data_service import UserDataService, UserDataContext
     from app.domain.chat.entities.user_context_aware import UserContextAware
+    from app.application.chat.services.response_template_service import ResponseTemplateService
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         llm_client: "LLMClientGateway",
         agent_executor: "AgentExecutorPort",
         user_data_service: "UserDataService | None" = None,
+        response_template_service: "ResponseTemplateService | None" = None,
         max_agents: int = 6,  # Higher limit for authenticated users
         timeout_seconds: int = 180,  # Longer timeout for complex workflows
     ):
@@ -76,6 +78,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             llm_client: LLM client for workflow planning
             agent_executor: Agent executor for running agents
             user_data_service: Optional service for fetching user wallet/portfolio/tx data
+            response_template_service: Optional service for pre-defined response templates
             max_agents: Maximum agents per workflow (default 6, higher than guest)
             timeout_seconds: Workflow timeout (default 180s, longer than guest)
         """
@@ -86,6 +89,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             timeout_seconds=timeout_seconds,
         )
         self._user_data_service = user_data_service
+        self._response_template_service = response_template_service
         self._user_context: dict[str, Any] = {}
         self._user_data_context: "UserDataContext | None" = None
         # Context-aware agent responses
@@ -302,6 +306,131 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             )
         
         return None
+    
+    def set_response_template_service(
+        self,
+        service: "ResponseTemplateService | None",
+    ) -> None:
+        """
+        Set the response template service for template-based responses.
+        
+        Args:
+            service: ResponseTemplateService instance or None
+        """
+        self._response_template_service = service
+    
+    def get_template_response(
+        self,
+        message_key: str,
+        language: str = "en",
+        **variables: Any,
+    ) -> str | None:
+        """
+        Get a template-based response if available.
+        
+        This checks if a pre-defined template exists for the user's
+        current context and returns it instead of calling LLM.
+        
+        Args:
+            message_key: Template message key (e.g., "portfolio_query")
+            language: Target language code
+            **variables: Variables for template rendering
+            
+        Returns:
+            Rendered template message or None if no template found
+        """
+        if not self._response_template_service or not self._context_aware:
+            return None
+        
+        # Try portfolio state template first
+        result = self._response_template_service.get_portfolio_response(
+            portfolio_state=self._context_aware.portfolio_state,
+            message_key=message_key,
+            language=language,
+            total_usd=f"{float(self._context_aware.total_balance_usd):,.2f}",
+            **variables,
+        )
+        
+        if result.message:
+            return result.message
+        
+        # Try activity level template
+        result = self._response_template_service.get_activity_response(
+            activity_level=self._context_aware.activity_level,
+            message_key=message_key,
+            language=language,
+            **variables,
+        )
+        
+        if result.message:
+            return result.message
+        
+        return None
+    
+    def check_workflow_blocked_with_template(
+        self,
+        workflow_type: str,
+        language: str = "en",
+    ) -> tuple[bool, str | None]:
+        """
+        Check if workflow is blocked and return template response.
+        
+        Combines can_execute_workflow check with template messaging
+        for consistent, localized blocked workflow responses.
+        
+        Args:
+            workflow_type: Workflow type (swap, lending, transfer, etc.)
+            language: Target language code
+            
+        Returns:
+            Tuple of (is_blocked, blocked_message or None)
+        """
+        # First check basic workflow blocking
+        can_execute, reason = self.can_execute_workflow(workflow_type)
+        
+        if can_execute:
+            return False, None
+        
+        # If blocked, try to get template response
+        if self._response_template_service and self._context_aware:
+            is_blocked, template_msg = self._response_template_service.check_workflow_blocked(
+                portfolio_state=self._context_aware.portfolio_state,
+                workflow=workflow_type,
+                language=language,
+            )
+            if is_blocked and template_msg:
+                return True, template_msg
+        
+        # Fallback to basic reason
+        return True, reason
+    
+    def get_response_style(self) -> str:
+        """
+        Get the recommended response style for this user.
+        
+        Returns:
+            Response style: "educational", "concise", "expert", etc.
+        """
+        if not self._response_template_service or not self._context_aware:
+            return "default"
+        
+        return self._response_template_service.get_response_style(
+            self._context_aware.user_type
+        )
+    
+    def should_include_explanations(self) -> bool:
+        """
+        Check if explanations should be included in responses.
+        
+        Returns:
+            True if explanations should be included
+        """
+        if not self._response_template_service or not self._context_aware:
+            return True
+        
+        return self._response_template_service.should_include_explanations(
+            self._context_aware.user_type
+        )
     
     def _is_workflow_continuation(
         self,

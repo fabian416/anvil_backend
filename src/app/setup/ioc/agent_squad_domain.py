@@ -146,13 +146,20 @@ class AgentSquadDomainProvider(Provider):
         - Real data access via UserDataService
         - Access to wallet, portfolio, transaction history agents
         - No demo mode disclaimers
+        - Response templates for consistent messaging
         """
         from app.infrastructure.adapters.agent_squad.agent_executor_adapter import (
             AgentExecutorAdapter,
         )
+        from app.application.chat.services.response_template_service import (
+            ResponseTemplateService,
+        )
         
         # Create real agent executor using orchestrator
         agent_executor = AgentExecutorAdapter(orchestrator=agent_orchestrator)
+        
+        # Create response template service for context-aware responses
+        response_template_service = ResponseTemplateService()
         
         # UserDataService will be injected separately when needed
         # (repositories are request-scoped, so we can't inject them here)
@@ -162,6 +169,7 @@ class AgentSquadDomainProvider(Provider):
             llm_client=llm_client,
             agent_executor=agent_executor,
             user_data_service=None,  # Set at request time
+            response_template_service=response_template_service,
             max_agents=6,  # Higher limit for authenticated users
             timeout_seconds=180,  # Longer timeout for complex workflows
         )

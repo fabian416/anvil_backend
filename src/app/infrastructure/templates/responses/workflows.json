@@ -1,0 +1,97 @@
+{
+  "version": "1.0",
+  "description": "Response templates for specific workflow scenarios",
+  
+  "swap": {
+    "initiation": {
+      "en": "**Swap {from_token} → {to_token}**\n\nAmount: {amount} {from_token}\nYou'll receive: ~{output_amount} {to_token}\nRate: 1 {from_token} = {rate} {to_token}\n\nConfirm?",
+      "es": "**Cambiar {from_token} → {to_token}**\n\nCantidad: {amount} {from_token}\nRecibirás: ~{output_amount} {to_token}\nTasa: 1 {from_token} = {rate} {to_token}\n\n¿Confirmar?",
+      "pt": "**Trocar {from_token} → {to_token}**\n\nQuantidade: {amount} {from_token}\nVocê receberá: ~{output_amount} {to_token}\nTaxa: 1 {from_token} = {rate} {to_token}\n\nConfirmar?",
+      "zh": "**交换 {from_token} → {to_token}**\n\n数量：{amount} {from_token}\n您将收到：~{output_amount} {to_token}\n汇率：1 {from_token} = {rate} {to_token}\n\n确认？"
+    },
+    "success": {
+      "en": "**Swap Complete!** ✅\n\nSwapped: {amount} {from_token}\nReceived: {output_amount} {to_token}\nTx: {tx_hash}\n\nView in explorer?",
+      "es": "**¡Intercambio Completo!** ✅\n\nIntercambiado: {amount} {from_token}\nRecibido: {output_amount} {to_token}\nTx: {tx_hash}",
+      "pt": "**Troca Completa!** ✅\n\nTrocado: {amount} {from_token}\nRecebido: {output_amount} {to_token}\nTx: {tx_hash}",
+      "zh": "**交换完成！** ✅\n\n已交换：{amount} {from_token}\n已收到：{output_amount} {to_token}\nTx：{tx_hash}"
+    },
+    "insufficient_balance": {
+      "en": "**Insufficient Balance**\n\nYou have: {balance} {token}\nNeeded: {needed} {token}\n\nWant to buy {token} first?",
+      "es": "**Saldo Insuficiente**\n\nTienes: {balance} {token}\nNecesitas: {needed} {token}\n\n¿Quieres comprar {token} primero?",
+      "pt": "**Saldo Insuficiente**\n\nVocê tem: {balance} {token}\nPrecisa: {needed} {token}\n\nQuer comprar {token} primeiro?",
+      "zh": "**余额不足**\n\n您有：{balance} {token}\n需要：{needed} {token}\n\n想先购买 {token} 吗？"
+    }
+  },
+  
+  "buy": {
+    "initiation": {
+      "en": "**Buy {token}**\n\nAmount: ${amount} USD\nYou'll receive: ~{output_amount} {token}\nPrice: ${price}/token\nFees: ~${fees}\n\nProceed with MoonPay?",
+      "es": "**Comprar {token}**\n\nCantidad: ${amount} USD\nRecibirás: ~{output_amount} {token}\nPrecio: ${price}/token\nComisiones: ~${fees}\n\n¿Proceder con MoonPay?",
+      "pt": "**Comprar {token}**\n\nQuantidade: ${amount} USD\nVocê receberá: ~{output_amount} {token}\nPreço: ${price}/token\nTaxas: ~${fees}\n\nProsseguir com MoonPay?",
+      "zh": "**购买 {token}**\n\n金额：${amount} USD\n您将收到：~{output_amount} {token}\n价格：${price}/代币\n费用：~${fees}\n\n使用 MoonPay 继续？"
+    },
+    "success": {
+      "en": "**Purchase Complete!** ✅\n\nBought: {amount} {token}\nCost: ${cost}\n\n{token} will arrive in your wallet shortly.",
+      "es": "**¡Compra Completa!** ✅\n\nComprado: {amount} {token}\nCosto: ${cost}\n\n{token} llegará a tu wallet pronto.",
+      "pt": "**Compra Completa!** ✅\n\nComprado: {amount} {token}\nCusto: ${cost}\n\n{token} chegará em sua carteira em breve.",
+      "zh": "**购买完成！** ✅\n\n已购买：{amount} {token}\n成本：${cost}\n\n{token} 将很快到达您的钱包。"
+    }
+  },
+  
+  "lending": {
+    "initiation": {
+      "en": "**Deposit {token} to earn yield**\n\nAmount: {amount} {token} (~${usd_value})\nProtocol: {protocol}\nAPY: {apy}%\nEstimated yearly: ${estimated_yield}\n\nDeposit now?",
+      "es": "**Depositar {token} para ganar rendimiento**\n\nCantidad: {amount} {token} (~${usd_value})\nProtocolo: {protocol}\nAPY: {apy}%\nEstimado anual: ${estimated_yield}\n\n¿Depositar ahora?",
+      "pt": "**Depositar {token} para ganhar rendimento**\n\nQuantidade: {amount} {token} (~${usd_value})\nProtocolo: {protocol}\nAPY: {apy}%\nEstimado anual: ${estimated_yield}\n\nDepositar agora?",
+      "zh": "**存入 {token} 赚取收益**\n\n数量：{amount} {token}（~${usd_value}）\n协议：{protocol}\nAPY：{apy}%\n预计年收益：${estimated_yield}\n\n现在存款？"
+    },
+    "success": {
+      "en": "**Deposit Complete!** ✅\n\nDeposited: {amount} {token}\nProtocol: {protocol}\nEarning: {apy}% APY\n\nYou're now earning ~${daily_yield}/day!",
+      "es": "**¡Depósito Completo!** ✅\n\nDepositado: {amount} {token}\nProtocolo: {protocol}\nGanando: {apy}% APY\n\n¡Estás ganando ~${daily_yield}/día!",
+      "pt": "**Depósito Completo!** ✅\n\nDepositado: {amount} {token}\nProtocolo: {protocol}\nGanhando: {apy}% APY\n\nVocê está ganhando ~${daily_yield}/dia!",
+      "zh": "**存款完成！** ✅\n\n已存入：{amount} {token}\n协议：{protocol}\n收益：{apy}% APY\n\n您现在每天赚取 ~${daily_yield}！"
+    },
+    "comparison": {
+      "en": "**Yield Options for {token}:**\n\n{comparison_table}\n\n*Recommendation: {recommendation}*\n\nWhich would you like?",
+      "es": "**Opciones de Rendimiento para {token}:**\n\n{comparison_table}\n\n*Recomendación: {recommendation}*\n\n¿Cuál prefieres?",
+      "pt": "**Opções de Rendimento para {token}:**\n\n{comparison_table}\n\n*Recomendação: {recommendation}*\n\nQual você prefere?",
+      "zh": "**{token} 收益选项：**\n\n{comparison_table}\n\n*建议：{recommendation}*\n\n您想选择哪个？"
+    }
+  },
+  
+  "transfer": {
+    "initiation": {
+      "en": "**Transfer {token}**\n\nTo: {to_address}\nAmount: {amount} {token} (~${usd_value})\nNetwork: {network}\nGas: ~${gas}\n\nSend now?",
+      "es": "**Transferir {token}**\n\nA: {to_address}\nCantidad: {amount} {token} (~${usd_value})\nRed: {network}\nGas: ~${gas}\n\n¿Enviar ahora?",
+      "pt": "**Transferir {token}**\n\nPara: {to_address}\nQuantidade: {amount} {token} (~${usd_value})\nRede: {network}\nGas: ~${gas}\n\nEnviar agora?",
+      "zh": "**转账 {token}**\n\n到：{to_address}\n数量：{amount} {token}（~${usd_value}）\n网络：{network}\nGas：~${gas}\n\n现在发送？"
+    },
+    "success": {
+      "en": "**Transfer Complete!** ✅\n\nSent: {amount} {token}\nTo: {to_address}\nTx: {tx_hash}\n\nFunds should arrive within a few minutes.",
+      "es": "**¡Transferencia Completa!** ✅\n\nEnviado: {amount} {token}\nA: {to_address}\nTx: {tx_hash}",
+      "pt": "**Transferência Completa!** ✅\n\nEnviado: {amount} {token}\nPara: {to_address}\nTx: {tx_hash}",
+      "zh": "**转账完成！** ✅\n\n已发送：{amount} {token}\n到：{to_address}\nTx：{tx_hash}"
+    }
+  },
+  
+  "errors": {
+    "transaction_failed": {
+      "en": "**Transaction Failed**\n\nReason: {reason}\n\nWould you like to:\n→ Try again\n→ Use different settings\n→ Get help",
+      "es": "**Transacción Fallida**\n\nRazón: {reason}\n\n¿Quieres:\n→ Intentar de nuevo\n→ Usar diferentes configuraciones\n→ Obtener ayuda",
+      "pt": "**Transação Falhou**\n\nMotivo: {reason}\n\nGostaria de:\n→ Tentar novamente\n→ Usar configurações diferentes\n→ Obter ajuda",
+      "zh": "**交易失败**\n\n原因：{reason}\n\n您想：\n→ 重试\n→ 使用不同的设置\n→ 获取帮助"
+    },
+    "insufficient_gas": {
+      "en": "**Insufficient Gas**\n\nYou need ~${gas_needed} in {gas_token} for this transaction.\nYou have: ${gas_balance}\n\nWant to buy {gas_token}?",
+      "es": "**Gas Insuficiente**\n\nNecesitas ~${gas_needed} en {gas_token} para esta transacción.\nTienes: ${gas_balance}\n\n¿Quieres comprar {gas_token}?",
+      "pt": "**Gas Insuficiente**\n\nVocê precisa de ~${gas_needed} em {gas_token} para esta transação.\nVocê tem: ${gas_balance}\n\nQuer comprar {gas_token}?",
+      "zh": "**Gas 不足**\n\n您需要 ~${gas_needed} {gas_token} 来完成此交易。\n您有：${gas_balance}\n\n想购买 {gas_token} 吗？"
+    },
+    "slippage_too_high": {
+      "en": "**High Slippage Warning**\n\nExpected slippage: {slippage}%\nThis is higher than usual.\n\nProceed anyway or try:\n→ Smaller amount\n→ Different DEX\n→ Wait for better liquidity",
+      "es": "**Advertencia de Alto Deslizamiento**\n\nDeslizamiento esperado: {slippage}%\nEsto es más alto de lo usual.\n\n¿Proceder o intentar:\n→ Cantidad menor\n→ Diferente DEX\n→ Esperar mejor liquidez",
+      "pt": "**Aviso de Alto Slippage**\n\nSlippage esperado: {slippage}%\nIsso é maior que o normal.\n\nProsseguir ou tentar:\n→ Quantidade menor\n→ DEX diferente\n→ Esperar melhor liquidez",
+      "zh": "**高滑点警告**\n\n预期滑点：{slippage}%\n这比平常高。\n\n继续还是尝试：\n→ 较小金额\n→ 不同的 DEX\n→ 等待更好的流动性"
+    }
+  }
+}

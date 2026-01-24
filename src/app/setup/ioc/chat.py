@@ -23,6 +23,7 @@ from app.application.chat.commands.create_chat_message import (
 )
 from app.application.chat.handlers.unified_chat_handler import UnifiedChatHandler
 from app.application.chat.services.user_context_service import UserContextService
+from app.application.chat.services.response_template_service import ResponseTemplateService
 from app.domain.ports.chat_repository import (
     ChatUserRepository,
     ChatConversationRepository,
@@ -131,6 +132,24 @@ class ChatProvider(Provider):
             wallet_repository=None,  # Deprecated - use wallet_balance_adapter
             wallet_balance_adapter=wallet_balance_adapter,
         )
+
+    @provide(scope=Scope.APP)
+    def provide_response_template_service(self) -> ResponseTemplateService:
+        """
+        Provide ResponseTemplateService for context-aware agents.
+        
+        This service loads and serves pre-defined response templates
+        based on user classification (portfolio state, activity level, 
+        user type). Templates are loaded once at app startup and cached
+        in memory.
+        
+        Benefits:
+        - Reduces LLM calls for common scenarios
+        - Ensures consistent, localized messaging
+        - Supports multi-language (en, es, pt, zh)
+        - Provides workflow blocking logic
+        """
+        return ResponseTemplateService()
 
     # ========== Authenticated Chat Command Handlers ==========
 
