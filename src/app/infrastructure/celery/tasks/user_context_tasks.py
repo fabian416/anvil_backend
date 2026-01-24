@@ -26,7 +26,8 @@ from app.setup.config.settings import load_settings
 logger = logging.getLogger(__name__)
 
 # Task configuration
-MAX_USERS_PER_RUN = 100
+MAX_USERS_PER_RUN = 100  # Max users to UPDATE per run
+MAX_CREATE_PER_RUN = 30  # Max users to CREATE context for per run
 UPDATE_COOLDOWN_HOURS = 1
 
 
@@ -54,33 +55,50 @@ def update_user_context():
     """
     Update user context for users eligible for processing.
     
-    This task:
-    1. Fetches users where next_update_eligible_at <= NOW()
-    2. Aggregates chat stats, wallet data, execution history
-    3. Recalculates classifications (portfolio_state, activity_level, user_type)
-    4. Sets next_update_eligible_at to NOW() + 1 hour
+    This task performs TWO operations:
+    
+    1. CREATE MISSING CONTEXTS (max 30 users)
+       - Find authenticated users without user_context_aware entry
+       - Create with default values
+       - Ensures all users eventually get context
+    
+    2. UPDATE EXISTING CONTEXTS (max 100 users)
+       - Fetch users where next_update_eligible_at <= NOW()
+       - Aggregate chat stats, wallet data, execution history
+       - Recalculate classifications (portfolio_state, activity_level, user_type)
+       - Set next_update_eligible_at to NOW() + 1 hour
     
     Configuration:
     - Runs every 10 minutes (beat schedule)
-    - Processes max 100 users per run
+    - Creates max 30 contexts per run (for users missing them)
+    - Updates max 100 contexts per run
     - Skips users updated within last hour
     """
     async def runner(container):
         from app.application.chat.services.user_context_service import UserContextService
         from app.domain.chat.ports.user_context_repository import UserContextRepository
         from app.domain.ports.chat_repository import (
+            ChatUserRepository,
             ChatMessageRepository,
             ChatConversationRepository,
         )
+        from app.infrastructure.persistence_sqla.registry import mapping_registry
+        from app.infrastructure.adapters.types import MainAsyncSession
+        from sqlalchemy import select, and_
         
         start_time = datetime.now(UTC)
-        logger.info(f"🔄 Starting user context update task at {start_time.isoformat()}")
+        logger.info(f"🔄 Starting user context task at {start_time.isoformat()}")
+        
+        created_count = 0
+        updated_count = 0
+        error_count = 0
         
         try:
             # Get repositories from container
             context_repo = await container.get(UserContextRepository)
             message_repo = await container.get(ChatMessageRepository)
             conversation_repo = await container.get(ChatConversationRepository)
+            session = await container.get(MainAsyncSession)
             
             # Create service
             service = UserContextService(
@@ -90,6 +108,63 @@ def update_user_context():
                 wallet_repository=None,  # Not needed for basic stats
             )
             
+            # ============================================
+            # STEP 1: CREATE MISSING CONTEXTS (max 30)
+            # ============================================
+            logger.info("📝 Step 1: Creating missing user contexts...")
+            
+            chat_users_table = mapping_registry.metadata.tables.get("chat_users")
+            context_table = mapping_registry.metadata.tables.get("user_context_aware")
+            
+            if chat_users_table is not None and context_table is not None:
+                # Query authenticated users without context
+                stmt = (
+                    select(
+                        chat_users_table.c.id,
+                        chat_users_table.c.user_id,  # legacy user_id
+                    )
+                    .select_from(chat_users_table)
+                    .outerjoin(
+                        context_table,
+                        chat_users_table.c.id == context_table.c.chat_user_id,
+                    )
+                    .where(
+                        and_(
+                            chat_users_table.c.user_type == "authenticated",
+                            context_table.c.id.is_(None),
+                        )
+                    )
+                    .limit(MAX_CREATE_PER_RUN)
+                )
+                
+                result = await session.execute(stmt)
+                missing_users = result.fetchall()
+                
+                if missing_users:
+                    logger.info(f"  Found {len(missing_users)} users without context")
+                    
+                    for row in missing_users:
+                        chat_user_id, legacy_user_id = row[0], row[1]
+                        try:
+                            await service.create_for_new_user(
+                                chat_user_id=chat_user_id,
+                                legacy_user_id=legacy_user_id,
+                            )
+                            created_count += 1
+                            logger.debug(f"  Created context for {chat_user_id}")
+                        except Exception as e:
+                            error_count += 1
+                            logger.error(f"  Failed to create for {chat_user_id}: {e}")
+                else:
+                    logger.info("  ✓ All users have context entries")
+            else:
+                logger.warning("  Tables not found, skipping creation step")
+            
+            # ============================================
+            # STEP 2: UPDATE EXISTING CONTEXTS (max 100)
+            # ============================================
+            logger.info("🔄 Step 2: Updating existing user contexts...")
+            
             # Get eligible users
             users = await service.get_users_for_update(
                 limit=MAX_USERS_PER_RUN,
@@ -97,50 +172,44 @@ def update_user_context():
             )
             
             if not users:
-                logger.info("✅ No users eligible for context update")
-                return
-            
-            logger.info(f"📊 Processing {len(users)} users for context update")
-            
-            # Process each user
-            updated_count = 0
-            error_count = 0
-            
-            for user in users:
-                try:
-                    result = await service.update_user_context(
-                        chat_user_id=user.chat_user_id,
-                        cooldown_hours=UPDATE_COOLDOWN_HOURS,
-                    )
-                    
-                    if result:
-                        updated_count += 1
-                        logger.debug(
-                            f"Updated context for user {user.chat_user_id}: "
-                            f"portfolio={result.portfolio_state}, "
-                            f"activity={result.activity_level}, "
-                            f"type={result.user_type}"
+                logger.info("  ✓ No users eligible for update")
+            else:
+                logger.info(f"  Processing {len(users)} users for update")
+                
+                for user in users:
+                    try:
+                        result = await service.update_user_context(
+                            chat_user_id=user.chat_user_id,
+                            cooldown_hours=UPDATE_COOLDOWN_HOURS,
                         )
-                    else:
-                        error_count += 1
                         
-                except Exception as e:
-                    error_count += 1
-                    logger.error(
-                        f"Failed to update context for user {user.chat_user_id}: {e}"
-                    )
+                        if result:
+                            updated_count += 1
+                            logger.debug(
+                                f"  Updated {user.chat_user_id}: "
+                                f"portfolio={result.portfolio_state}, "
+                                f"activity={result.activity_level}, "
+                                f"type={result.user_type}"
+                            )
+                        else:
+                            error_count += 1
+                            
+                    except Exception as e:
+                        error_count += 1
+                        logger.error(f"  Failed to update {user.chat_user_id}: {e}")
             
-            # Log summary
+            # ============================================
+            # SUMMARY
+            # ============================================
             duration = (datetime.now(UTC) - start_time).total_seconds()
             logger.info(
-                f"✅ User context update complete: "
-                f"{updated_count}/{len(users)} updated, "
-                f"{error_count} errors, "
-                f"{duration:.2f}s duration"
+                f"✅ User context task complete: "
+                f"created={created_count}, updated={updated_count}, "
+                f"errors={error_count}, duration={duration:.2f}s"
             )
             
         except Exception as e:
-            logger.error(f"❌ User context update task failed: {e}")
+            logger.error(f"❌ User context task failed: {e}")
             raise
     
     asyncio.run(_run_task(runner))

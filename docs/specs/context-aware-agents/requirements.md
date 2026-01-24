@@ -996,6 +996,356 @@ GROUP BY user_id;
 | Enhancement | Priority | Status |
 |------------|----------|--------|
 | Wire up context in conversations_router | High | ✅ Done (Phase 5) |
+| Create missing contexts in Celery | High | ✅ Done |
 | Add wallet balance aggregation | Medium | Pending |
 | Add response template system | Medium | Pending |
 | Analytics dashboard | Low | Pending |
+
+---
+
+## Appendix C: Future Enhancements Implementation Plan
+
+### Enhancement 1: Wallet Balance Aggregation (Medium Priority)
+
+**Goal**: Query real wallet balances to update `portfolio_state` with actual USD values instead of defaults.
+
+#### 1.1 Technical Design
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  WALLET BALANCE AGGREGATION                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Data Sources:                                                   │
+│  ┌────────────────┐     ┌────────────────┐                       │
+│  │ wallets table  │     │ External APIs  │                       │
+│  │ (DB)           │     │ (DeBank/Zerion)│                       │
+│  └───────┬────────┘     └───────┬────────┘                       │
+│          │                      │                                │
+│          ▼                      ▼                                │
+│  ┌─────────────────────────────────────────┐                     │
+│  │         WalletBalanceService            │                     │
+│  │  - get_total_balance(user_id) -> USD    │                     │
+│  │  - get_chain_breakdown(user_id)         │                     │
+│  │  - get_token_holdings(user_id)          │                     │
+│  └───────────────────┬─────────────────────┘                     │
+│                      │                                           │
+│                      ▼                                           │
+│  ┌─────────────────────────────────────────┐                     │
+│  │         UserContextService              │                     │
+│  │  - _aggregate_wallet_stats()            │                     │
+│  │  - portfolio_state = from_balance(usd)  │                     │
+│  └─────────────────────────────────────────┘                     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 1.2 Implementation Steps
+
+| Step | Task | File | Effort |
+|------|------|------|--------|
+| 1.1 | Create `WalletBalancePort` interface | `src/app/domain/chat/ports/wallet_balance.py` | S |
+| 1.2 | Implement DB-based adapter | `src/app/infrastructure/adapters/wallet_balance_db.py` | M |
+| 1.3 | (Optional) Implement DeBank/Zerion adapter | `src/app/infrastructure/adapters/wallet_balance_external.py` | L |
+| 1.4 | Update `UserContextService._aggregate_wallet_stats()` | `src/app/application/chat/services/user_context_service.py` | S |
+| 1.5 | Add `wallet_total_usd` column to `user_context_aware` | Migration | S |
+| 1.6 | Update Celery task to call wallet aggregation | `src/app/infrastructure/celery/tasks/user_context_tasks.py` | S |
+
+#### 1.3 Database Schema Changes
+
+```sql
+-- Add to user_context_aware table
+ALTER TABLE user_context_aware 
+ADD COLUMN wallet_total_usd NUMERIC(20,2) DEFAULT 0,
+ADD COLUMN wallet_chain_breakdown JSONB DEFAULT '{}',
+ADD COLUMN wallet_last_sync_at TIMESTAMP WITH TIME ZONE;
+```
+
+#### 1.4 Port Interface
+
+```python
+# src/app/domain/chat/ports/wallet_balance.py
+from typing import Protocol
+from uuid import UUID
+from decimal import Decimal
+
+class WalletBalancePort(Protocol):
+    async def get_total_balance_usd(self, wallet_address: str) -> Decimal:
+        """Get total USD value across all chains."""
+        ...
+    
+    async def get_chain_breakdown(self, wallet_address: str) -> dict[str, Decimal]:
+        """Get balance breakdown by chain."""
+        ...
+```
+
+---
+
+### Enhancement 2: Response Template System (Medium Priority)
+
+**Goal**: Pre-defined response templates for different user states to ensure consistent, optimized messaging.
+
+#### 2.1 Technical Design
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   RESPONSE TEMPLATE SYSTEM                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Templates by Context:                                           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐               │
+│  │   EMPTY     │  │   STARTER   │  │   WHALE     │               │
+│  │  Templates  │  │  Templates  │  │  Templates  │               │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘               │
+│         │                │                │                      │
+│         ▼                ▼                ▼                      │
+│  ┌─────────────────────────────────────────────┐                 │
+│  │         ResponseTemplateService             │                 │
+│  │  - get_template(state, action, lang)        │                 │
+│  │  - render_template(template, context)       │                 │
+│  │  - get_suggested_actions(state)             │                 │
+│  └─────────────────────────────────────────────┘                 │
+│                      │                                           │
+│                      ▼                                           │
+│  ┌─────────────────────────────────────────────┐                 │
+│  │         Agent Response Generation           │                 │
+│  │  - Uses templates instead of LLM for        │                 │
+│  │    common scenarios (empty portfolio, etc.) │                 │
+│  └─────────────────────────────────────────────┘                 │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 2.2 Implementation Steps
+
+| Step | Task | File | Effort |
+|------|------|------|--------|
+| 2.1 | Define `ResponseTemplate` entity | `src/app/domain/chat/entities/response_template.py` | S |
+| 2.2 | Create template YAML/JSON files | `src/app/infrastructure/templates/` | M |
+| 2.3 | Implement `ResponseTemplateService` | `src/app/application/chat/services/response_template_service.py` | M |
+| 2.4 | Update agents to use templates | `src/app/infrastructure/adapters/agent_squad/agents/*.py` | M |
+| 2.5 | Add multi-language support | Template files + service | M |
+
+#### 2.3 Template Structure
+
+```yaml
+# src/app/infrastructure/templates/portfolio_responses.yaml
+portfolio:
+  empty:
+    en:
+      message: |
+        **Welcome to Anvil! 🚀**
+        
+        Your portfolio is ready to grow.
+        
+        **Start here:**
+        → "buy 100 USD of ETH" - Purchase your first crypto
+        → "what is ETH" - Learn about Ethereum first
+      suggested_actions: ["buy", "learn"]
+      block_swap: true
+    
+    es:
+      message: |
+        **¡Bienvenido a Anvil! 🚀**
+        
+        Tu portafolio está listo para crecer.
+        
+        **Empieza aquí:**
+        → "comprar 100 USD de ETH" - Compra tu primera crypto
+      suggested_actions: ["buy", "learn"]
+      block_swap: true
+  
+  starter:
+    en:
+      message: |
+        **Your Portfolio: ${total_usd}**
+        
+        You're off to a great start! Here's what you can do:
+        → Swap tokens to diversify
+        → Earn yield on stablecoins (5-10% APY)
+      suggested_actions: ["swap", "earn", "buy_more"]
+```
+
+#### 2.4 Service Interface
+
+```python
+# src/app/application/chat/services/response_template_service.py
+class ResponseTemplateService:
+    def __init__(self, templates_path: str):
+        self._templates = self._load_templates(templates_path)
+    
+    def get_response(
+        self,
+        portfolio_state: PortfolioState,
+        action: str,  # "portfolio", "swap", "lending", etc.
+        language: str = "en",
+        context: dict | None = None,  # For variable substitution
+    ) -> TemplateResponse:
+        """Get pre-defined response for user state + action."""
+        ...
+    
+    def should_use_template(
+        self,
+        portfolio_state: PortfolioState,
+        action: str,
+    ) -> bool:
+        """Check if template exists for this combination."""
+        ...
+```
+
+---
+
+### Enhancement 3: Analytics Dashboard (Low Priority)
+
+**Goal**: Visualize user distribution across classifications for business insights.
+
+#### 3.1 Technical Design
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ANALYTICS DASHBOARD                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Data Flow:                                                      │
+│  ┌────────────────┐     ┌────────────────┐                       │
+│  │ user_context_  │────▶│  Analytics     │                       │
+│  │ aware table    │     │  Aggregation   │                       │
+│  └────────────────┘     │  (Celery)      │                       │
+│                         └───────┬────────┘                       │
+│                                 │                                │
+│                                 ▼                                │
+│                         ┌────────────────┐                       │
+│                         │ analytics_     │                       │
+│                         │ snapshots      │                       │
+│                         │ table          │                       │
+│                         └───────┬────────┘                       │
+│                                 │                                │
+│                                 ▼                                │
+│  ┌─────────────────────────────────────────────┐                 │
+│  │           REST API Endpoints                │                 │
+│  │  GET /api/v1/admin/analytics/users          │                 │
+│  │  GET /api/v1/admin/analytics/trends         │                 │
+│  │  GET /api/v1/admin/analytics/cohorts        │                 │
+│  └─────────────────────────────────────────────┘                 │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 3.2 Implementation Steps
+
+| Step | Task | File | Effort |
+|------|------|------|--------|
+| 3.1 | Create `analytics_snapshots` table | Migration | S |
+| 3.2 | Update `user_context_analytics` Celery task to persist | `src/app/infrastructure/celery/tasks/user_context_tasks.py` | S |
+| 3.3 | Create `AnalyticsQueryGateway` port | `src/app/domain/chat/ports/analytics_gateway.py` | S |
+| 3.4 | Implement SQLAlchemy adapter | `src/app/infrastructure/adapters/analytics_gateway_sqla.py` | M |
+| 3.5 | Create admin API endpoints | `src/app/presentation/http/controllers/admin/analytics.py` | M |
+| 3.6 | (Optional) Build frontend dashboard | Frontend repo | L |
+
+#### 3.3 Database Schema
+
+```sql
+-- Analytics snapshots table
+CREATE TABLE analytics_snapshots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    snapshot_date DATE NOT NULL,
+    snapshot_type VARCHAR(50) NOT NULL,  -- 'daily', 'weekly', 'monthly'
+    
+    -- User counts by portfolio state
+    portfolio_empty_count INTEGER DEFAULT 0,
+    portfolio_starter_count INTEGER DEFAULT 0,
+    portfolio_active_count INTEGER DEFAULT 0,
+    portfolio_whale_count INTEGER DEFAULT 0,
+    
+    -- User counts by activity level
+    activity_new_count INTEGER DEFAULT 0,
+    activity_very_active_count INTEGER DEFAULT 0,
+    activity_active_count INTEGER DEFAULT 0,
+    activity_weekly_active_count INTEGER DEFAULT 0,
+    activity_monthly_active_count INTEGER DEFAULT 0,
+    activity_inactive_count INTEGER DEFAULT 0,
+    activity_reactivated_count INTEGER DEFAULT 0,
+    
+    -- User counts by type
+    type_new_user_count INTEGER DEFAULT 0,
+    type_casual_count INTEGER DEFAULT 0,
+    type_trader_count INTEGER DEFAULT 0,
+    type_yield_farmer_count INTEGER DEFAULT 0,
+    type_power_user_count INTEGER DEFAULT 0,
+    
+    -- Totals
+    total_users INTEGER DEFAULT 0,
+    total_executions INTEGER DEFAULT 0,
+    total_messages INTEGER DEFAULT 0,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    
+    UNIQUE(snapshot_date, snapshot_type)
+);
+
+CREATE INDEX idx_analytics_date ON analytics_snapshots(snapshot_date);
+```
+
+#### 3.4 API Endpoints
+
+```python
+# src/app/presentation/http/controllers/admin/analytics.py
+@router.get("/analytics/users")
+async def get_user_analytics(
+    authorization: Annotated[str, Security(bearer_scheme)],
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> UserAnalyticsResponse:
+    """Get user distribution analytics."""
+    ...
+
+@router.get("/analytics/trends")
+async def get_trend_analytics(
+    authorization: Annotated[str, Security(bearer_scheme)],
+    period: str = "30d",  # 7d, 30d, 90d
+) -> TrendAnalyticsResponse:
+    """Get user classification trends over time."""
+    ...
+
+@router.get("/analytics/cohorts")
+async def get_cohort_analytics(
+    authorization: Annotated[str, Security(bearer_scheme)],
+) -> CohortAnalyticsResponse:
+    """Get cohort analysis (retention, conversion)."""
+    ...
+```
+
+---
+
+### Implementation Priority Matrix
+
+```
+                    IMPACT
+                    High    Medium    Low
+              ┌─────────┬─────────┬─────────┐
+         High │ ✅ Core │ Wallet  │         │
+              │ (Done)  │ Balance │         │
+EFFORT        ├─────────┼─────────┼─────────┤
+       Medium │Response │         │Analytics│
+              │Templates│         │Dashboard│
+              ├─────────┼─────────┼─────────┤
+         Low  │         │         │         │
+              └─────────┴─────────┴─────────┘
+```
+
+### Recommended Implementation Order
+
+1. **Wallet Balance Aggregation** (Next)
+   - Direct impact on classification accuracy
+   - Enables accurate portfolio_state values
+   - Required for meaningful EMPTY/STARTER/ACTIVE/WHALE distinctions
+
+2. **Response Template System**
+   - Improves consistency and reduces LLM costs
+   - Enables multi-language support
+   - Better UX for common scenarios
+
+3. **Analytics Dashboard**
+   - Nice-to-have for business insights
+   - Can be deferred until user base grows
+   - Low urgency but valuable long-term
