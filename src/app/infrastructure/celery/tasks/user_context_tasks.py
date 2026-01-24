@@ -330,26 +330,47 @@ def create_missing_user_contexts():
 @celery_app.task(name="user_context_analytics")
 def user_context_analytics():
     """
-    Generate analytics report for user context distribution.
+    Generate analytics report and persist snapshot to database.
     
-    Logs summary statistics of user classification distribution.
-    Useful for monitoring user segmentation.
+    This task:
+    1. Aggregates user distribution stats from user_context_aware
+    2. Persists a daily snapshot to analytics_snapshots table
+    3. Logs summary statistics for monitoring
+    
+    Runs daily at 6 AM (configured in beat schedule).
     """
     async def runner(container):
+        from datetime import date
+        from decimal import Decimal
+        from uuid import uuid4
         from app.application.chat.services.user_context_service import UserContextService
         from app.domain.chat.ports.user_context_repository import UserContextRepository
+        from app.domain.chat.ports.analytics_repository import AnalyticsRepository
+        from app.domain.chat.entities.analytics_snapshot import (
+            AnalyticsSnapshot,
+            PortfolioDistribution,
+            ActivityDistribution,
+            UserTypeDistribution,
+            ExecutionMetrics,
+        )
         from app.domain.ports.chat_repository import (
             ChatMessageRepository,
             ChatConversationRepository,
         )
+        from app.infrastructure.adapters.types import MainAsyncSession
+        from app.infrastructure.adapters.analytics_repository_sqla import AnalyticsRepositorySqla
         
-        logger.info("📊 Generating user context analytics")
+        logger.info("📊 Generating user context analytics and snapshot")
         
         try:
             # Get repositories
             context_repo = await container.get(UserContextRepository)
             message_repo = await container.get(ChatMessageRepository)
             conversation_repo = await container.get(ChatConversationRepository)
+            session = await container.get(MainAsyncSession)
+            
+            # Create analytics repository
+            analytics_repo = AnalyticsRepositorySqla(session)
             
             # Create service
             service = UserContextService(
@@ -361,31 +382,84 @@ def user_context_analytics():
             # Get distribution stats
             stats = await service.get_distribution_stats()
             
-            # Log portfolio state distribution
+            # Extract portfolio state stats
             portfolio_stats = stats.get("portfolio_state", {})
             total_users = sum(portfolio_stats.values())
             
+            # Extract activity level stats
+            activity_stats = stats.get("activity_level", {})
+            
+            # Extract user type stats
+            type_stats = stats.get("user_type", {})
+            
+            # Get execution stats from context repo
+            # (Aggregate from user_context_aware table)
+            exec_stats = await context_repo.get_execution_stats() if hasattr(context_repo, 'get_execution_stats') else {}
+            
+            # Get total balance from context repo
+            total_balance = await context_repo.get_total_balance() if hasattr(context_repo, 'get_total_balance') else Decimal("0")
+            
+            # Build snapshot entity
+            snapshot = AnalyticsSnapshot(
+                id=uuid4(),
+                snapshot_date=date.today(),
+                snapshot_type="daily",
+                portfolio=PortfolioDistribution(
+                    empty=portfolio_stats.get("empty", 0),
+                    starter=portfolio_stats.get("starter", 0),
+                    active=portfolio_stats.get("active", 0),
+                    whale=portfolio_stats.get("whale", 0),
+                ),
+                activity=ActivityDistribution(
+                    new=activity_stats.get("new", 0),
+                    very_active=activity_stats.get("very_active", 0),
+                    active=activity_stats.get("active", 0),
+                    weekly_active=activity_stats.get("weekly_active", 0),
+                    monthly_active=activity_stats.get("monthly_active", 0),
+                    inactive=activity_stats.get("inactive", 0),
+                    reactivated=activity_stats.get("reactivated", 0),
+                ),
+                user_types=UserTypeDistribution(
+                    new_user=type_stats.get("new_user", 0),
+                    casual=type_stats.get("casual", 0),
+                    trader=type_stats.get("trader", 0),
+                    yield_farmer=type_stats.get("yield_farmer", 0),
+                    power_user=type_stats.get("power_user", 0),
+                ),
+                executions=ExecutionMetrics(
+                    total=exec_stats.get("total", 0),
+                    swap=exec_stats.get("swap", 0),
+                    buy=exec_stats.get("buy", 0),
+                    lending=exec_stats.get("lending", 0),
+                    transfer=exec_stats.get("transfer", 0),
+                    cashout=exec_stats.get("cashout", 0),
+                ),
+                total_users=total_users,
+                total_balance_usd=total_balance if isinstance(total_balance, Decimal) else Decimal(str(total_balance)),
+            )
+            
+            # Save snapshot to database
+            await analytics_repo.save(snapshot)
+            logger.info(f"💾 Saved analytics snapshot for {snapshot.snapshot_date}")
+            
+            # Log distribution for monitoring
             logger.info(f"📈 User Context Analytics (Total: {total_users})")
             logger.info("Portfolio State Distribution:")
             for state, count in portfolio_stats.items():
                 pct = (count / total_users * 100) if total_users > 0 else 0
                 logger.info(f"  - {state}: {count} ({pct:.1f}%)")
             
-            # Log activity level distribution
-            activity_stats = stats.get("activity_level", {})
             logger.info("Activity Level Distribution:")
             for level, count in activity_stats.items():
                 pct = (count / total_users * 100) if total_users > 0 else 0
                 logger.info(f"  - {level}: {count} ({pct:.1f}%)")
             
-            # Log user type distribution
-            type_stats = stats.get("user_type", {})
             logger.info("User Type Distribution:")
             for user_type, count in type_stats.items():
                 pct = (count / total_users * 100) if total_users > 0 else 0
                 logger.info(f"  - {user_type}: {count} ({pct:.1f}%)")
             
-            logger.info("✅ Analytics complete")
+            logger.info("✅ Analytics snapshot saved and logged")
             
         except Exception as e:
             logger.error(f"❌ Analytics generation failed: {e}")

@@ -387,3 +387,62 @@ class UserContextRepositorySqla:
             "created_at": entity.created_at,
             "updated_at": entity.updated_at,
         }
+    
+    # ═══════════════════════════════════════════════════════════════
+    # ANALYTICS AGGREGATIONS
+    # ═══════════════════════════════════════════════════════════════
+    
+    async def get_execution_stats(self) -> dict[str, int]:
+        """
+        Get aggregated execution statistics across all users.
+        
+        Returns:
+            Dictionary with execution counts by type
+        """
+        table = self._get_table()
+        
+        stmt = select(
+            func.sum(table.c.total_executions).label("total"),
+            func.sum(table.c.swap_count).label("swap"),
+            func.sum(table.c.buy_count).label("buy"),
+            func.sum(table.c.lending_count).label("lending"),
+            func.sum(table.c.transfer_count).label("transfer"),
+            func.sum(table.c.cashout_count).label("cashout"),
+        )
+        
+        result = await self._session.execute(stmt)
+        row = result.fetchone()
+        
+        if not row:
+            return {
+                "total": 0,
+                "swap": 0,
+                "buy": 0,
+                "lending": 0,
+                "transfer": 0,
+                "cashout": 0,
+            }
+        
+        return {
+            "total": int(row.total or 0),
+            "swap": int(row.swap or 0),
+            "buy": int(row.buy or 0),
+            "lending": int(row.lending or 0),
+            "transfer": int(row.transfer or 0),
+            "cashout": int(row.cashout or 0),
+        }
+    
+    async def get_total_balance(self) -> Decimal:
+        """
+        Get sum of all user wallet balances.
+        
+        Returns:
+            Total USD balance across all users
+        """
+        table = self._get_table()
+        
+        stmt = select(func.sum(table.c.wallet_total_usd))
+        result = await self._session.execute(stmt)
+        total = result.scalar()
+        
+        return Decimal(str(total or 0))

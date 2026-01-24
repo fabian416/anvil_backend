@@ -31,6 +31,7 @@ from app.domain.ports.chat_repository import (
 )
 from app.domain.chat.ports.user_context_repository import UserContextRepository
 from app.domain.chat.ports.wallet_balance import WalletBalancePort
+from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.infrastructure.adapters.chat_repository_sqla import (
     ChatUserRepositorySqla,
     ChatConversationRepositorySqla,
@@ -40,6 +41,9 @@ from app.infrastructure.adapters.user_context_repository_sqla import (
     UserContextRepositorySqla,
 )
 from app.infrastructure.adapters.wallet_balance_db import WalletBalanceDbAdapter
+from app.infrastructure.adapters.analytics_repository_sqla import (
+    AnalyticsRepositorySqla,
+)
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.caching.guest_cache import GuestCache
 from app.infrastructure.caching.redis_cache import RedisCache
@@ -103,6 +107,19 @@ class ChatProvider(Provider):
         accurate portfolio_state classification.
         """
         return WalletBalanceDbAdapter(session)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_analytics_repository(
+        self,
+        session: MainAsyncSession,
+    ) -> AnalyticsRepository:
+        """
+        Provide AnalyticsRepository implementation.
+        
+        Used for persisting and querying user context analytics snapshots.
+        Supports daily/weekly/monthly snapshots, trends, and cohort analysis.
+        """
+        return AnalyticsRepositorySqla(session)
 
     # ========== User Context Service ==========
 

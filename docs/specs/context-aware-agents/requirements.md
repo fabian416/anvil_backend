@@ -999,7 +999,7 @@ GROUP BY user_id;
 | Create missing contexts in Celery | High | ✅ Done |
 | Add wallet balance aggregation | Medium | ✅ Done |
 | Add response template system | Medium | ✅ Done |
-| Analytics dashboard | Low | Pending |
+| Analytics dashboard | Low | ✅ Done |
 
 ---
 
@@ -1351,14 +1351,94 @@ class ResponseTemplateService:
 
 #### 3.2 Implementation Steps
 
-| Step | Task | File | Effort |
+| Step | Task | File | Status |
 |------|------|------|--------|
-| 3.1 | Create `analytics_snapshots` table | Migration | S |
-| 3.2 | Update `user_context_analytics` Celery task to persist | `src/app/infrastructure/celery/tasks/user_context_tasks.py` | S |
-| 3.3 | Create `AnalyticsQueryGateway` port | `src/app/domain/chat/ports/analytics_gateway.py` | S |
-| 3.4 | Implement SQLAlchemy adapter | `src/app/infrastructure/adapters/analytics_gateway_sqla.py` | M |
-| 3.5 | Create admin API endpoints | `src/app/presentation/http/controllers/admin/analytics.py` | M |
-| 3.6 | (Optional) Build frontend dashboard | Frontend repo | L |
+| 3.1 | Create `analytics_snapshots` table | `alembic/versions/2026_01_24_1815-1372dec32558_add_analytics_snapshots_table.py` | ✅ Done |
+| 3.2 | Create domain entities | `src/app/domain/chat/entities/analytics_snapshot.py` | ✅ Done |
+| 3.3 | Create `AnalyticsRepository` port | `src/app/domain/chat/ports/analytics_repository.py` | ✅ Done |
+| 3.4 | Implement SQLAlchemy adapter | `src/app/infrastructure/adapters/analytics_repository_sqla.py` | ✅ Done |
+| 3.5 | Update Celery task to persist snapshots | `src/app/infrastructure/celery/tasks/user_context_tasks.py` | ✅ Done |
+| 3.6 | Create admin API endpoints | `src/app/presentation/http/controllers/admin/analytics_router.py` | ✅ Done |
+| 3.7 | Register in IoC | `src/app/setup/ioc/chat.py` | ✅ Done |
+| 3.8 | (Optional) Build frontend dashboard | Frontend repo | Pending |
+
+#### 3.3 API Endpoints (Implemented)
+
+All endpoints require admin authentication via Bearer token.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/analytics/users/distribution` | GET | Get current user distribution by portfolio, activity, type |
+| `/api/v1/admin/analytics/users/summary` | GET | Get analytics summary with percentages |
+| `/api/v1/admin/analytics/snapshots/latest` | GET | Get most recent snapshot |
+| `/api/v1/admin/analytics/snapshots/history` | GET | Get historical snapshots (default: 30 days) |
+| `/api/v1/admin/analytics/snapshots/date/{date}` | GET | Get snapshot for specific date |
+| `/api/v1/admin/analytics/trends/week-over-week` | GET | Get WoW trends for key metrics |
+| `/api/v1/admin/analytics/trends/month-over-month` | GET | Get MoM trends for key metrics |
+| `/api/v1/admin/analytics/trends/custom` | GET | Get custom date range trends |
+| `/api/v1/admin/analytics/totals` | GET | Get total users and balance |
+
+#### 3.4 Example Responses
+
+**GET /api/v1/admin/analytics/users/summary**
+```json
+{
+  "total_users": 1250,
+  "total_balance_usd": 2500000.00,
+  "engaged_users": 450,
+  "execution_users": 200,
+  "total_executions": 5000,
+  "portfolio_distribution": {
+    "empty": 45.2,
+    "starter": 30.1,
+    "active": 18.5,
+    "whale": 6.2
+  },
+  "activity_distribution": {
+    "new": 12.0,
+    "very_active": 8.5,
+    "active": 15.0,
+    "weekly_active": 10.5,
+    "monthly_active": 14.0,
+    "inactive": 35.0,
+    "reactivated": 5.0
+  },
+  "user_type_distribution": {
+    "new_user": 35.0,
+    "casual": 40.0,
+    "trader": 12.0,
+    "yield_farmer": 8.0,
+    "power_user": 5.0
+  },
+  "as_of_date": "2026-01-24"
+}
+```
+
+**GET /api/v1/admin/analytics/trends/week-over-week**
+```json
+{
+  "trends": [
+    {
+      "metric_name": "total_users",
+      "current_value": 1250,
+      "previous_value": 1180,
+      "change_absolute": 70,
+      "change_percent": 5.9,
+      "trend": "up"
+    },
+    {
+      "metric_name": "total_balance_usd",
+      "current_value": 2500000.00,
+      "previous_value": 2350000.00,
+      "change_absolute": 150000.00,
+      "change_percent": 6.4,
+      "trend": "up"
+    }
+  ],
+  "current_date": "2026-01-24",
+  "comparison_date": "2026-01-17"
+}
+```
 
 #### 3.3 Database Schema
 
