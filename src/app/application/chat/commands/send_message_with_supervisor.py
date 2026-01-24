@@ -146,6 +146,11 @@ class SendMessageWithSupervisor:
                 preferences=user_context.get("preferences"),
             )
             
+            # Set context-aware data if provided
+            # This enables personalized responses based on user classification
+            if user_context.get("context_aware"):
+                self._supervisor.set_context_aware(user_context["context_aware"])
+            
             # Load full user data from repositories if available
             if user_context.get("user_id") and hasattr(self._supervisor, 'load_user_data'):
                 try:

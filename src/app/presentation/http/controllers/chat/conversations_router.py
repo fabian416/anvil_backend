@@ -18,6 +18,7 @@ from app.application.chat.services.user_service import UserService
 from app.application.chat.services.rate_limit_service import RateLimitService
 from app.application.chat.services.conversation_memory import ConversationMemory
 from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, RESTRICTED_INTENTS
+from app.application.chat.services.user_context_service import UserContextService
 from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
 from app.application.chat.commands.send_message_with_supervisor import SendMessageWithSupervisor
 from app.application.chat.handlers.moonpay_swap_flow_handler import MoonPaySwapFlowHandler
@@ -608,7 +609,8 @@ def create_conversations_router() -> APIRouter:
         message_repository: FromDishka[ChatMessageRepositorySqla],
         llm_gateway: FromDishka[LLMGateway],
         moonpay_swap_handler: FromDishka[MoonPaySwapHandler],
-        supervisor_command: FromDishka[SendMessageWithSupervisor] = None,  # NEW: Supervisor for authenticated users
+        supervisor_command: FromDishka[SendMessageWithSupervisor] = None,  # Supervisor for authenticated users
+        user_context_service: FromDishka[UserContextService] = None,  # Context-aware agents
     ) -> ChatResponse:
         """Send a message to a conversation."""
         from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
@@ -719,6 +721,19 @@ def create_conversations_router() -> APIRouter:
                     "wallet_address": wallet_address,
                     "is_authenticated": True,
                 }
+                
+                # Load context-aware data for personalized responses
+                if user_context_service and not user.is_guest:
+                    try:
+                        context_aware = await user_context_service.get_context(user.id)
+                        if context_aware:
+                            user_context["context_aware"] = context_aware
+                            logger.debug(
+                                f"Loaded context-aware data: portfolio={context_aware.portfolio_state}, "
+                                f"activity={context_aware.activity_level}, type={context_aware.user_type}"
+                            )
+                    except Exception as ctx_err:
+                        logger.warning(f"Failed to load context-aware data: {ctx_err}")
                 
                 # Check for fast-path greeting
                 if supervisor_command.is_simple_greeting(request_body.content):
