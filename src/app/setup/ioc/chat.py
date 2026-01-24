@@ -22,6 +22,7 @@ from app.application.chat.commands.create_chat_message import (
     CreateChatMessageCommand,
 )
 from app.application.chat.handlers.unified_chat_handler import UnifiedChatHandler
+from app.application.chat.services.user_context_service import UserContextService
 from app.domain.ports.chat_repository import (
     ChatUserRepository,
     ChatConversationRepository,
@@ -85,6 +86,34 @@ class ChatProvider(Provider):
         user classification data (portfolio state, activity level, user type).
         """
         return UserContextRepositorySqla(session)
+
+    # ========== User Context Service ==========
+
+    @provide(scope=Scope.REQUEST)
+    def provide_user_context_service(
+        self,
+        context_repo: UserContextRepository,
+        message_repo: ChatMessageRepository,
+        conversation_repo: ChatConversationRepository,
+    ) -> UserContextService:
+        """
+        Provide UserContextService for context-aware agents.
+        
+        This service:
+        1. Creates context for new users (privy-login)
+        2. Updates context periodically (Celery task)
+        3. Provides context for chat sessions
+        
+        Note: wallet_repository is optional and not injected here
+        to avoid circular dependencies. The service will work
+        without wallet data if not provided.
+        """
+        return UserContextService(
+            context_repository=context_repo,
+            chat_message_repository=message_repo,
+            chat_conversation_repository=conversation_repo,
+            wallet_repository=None,  # Can be injected if needed
+        )
 
     # ========== Authenticated Chat Command Handlers ==========
 

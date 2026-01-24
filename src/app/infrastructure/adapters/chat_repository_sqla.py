@@ -599,3 +599,158 @@ class ChatMessageRepositorySqla(ChatMessageRepository):
             metadata=row["metadata"] if "metadata" in row else row.get("extra_metadata", {}),
             created_at=row["created_at"],
         )
+
+    # ═══════════════════════════════════════════════════════════════
+    # AGGREGATION METHODS FOR USER CONTEXT SERVICE
+    # ═══════════════════════════════════════════════════════════════
+
+    async def get_user_stats(self, chat_user_id: UUID) -> dict:
+        """
+        Get aggregated message statistics for a user.
+        
+        Used by UserContextService for context-aware agents.
+        
+        Args:
+            chat_user_id: The chat user's UUID
+            
+        Returns:
+            Dictionary with:
+            - total: Total message count
+            - last_7d: Messages in last 7 days
+            - last_30d: Messages in last 30 days
+            - last_at: Last message timestamp
+        """
+        try:
+            from datetime import timedelta
+            
+            messages_table = mapping_registry.metadata.tables["chat_messages"]
+            conversations_table = mapping_registry.metadata.tables["chat_conversations"]
+            
+            now = datetime.now(UTC)
+            seven_days_ago = now - timedelta(days=7)
+            thirty_days_ago = now - timedelta(days=30)
+            
+            # Join messages with conversations to filter by user
+            stmt = select(
+                func.count(messages_table.c.id).label("total"),
+                func.count(messages_table.c.id).filter(
+                    messages_table.c.created_at >= seven_days_ago
+                ).label("last_7d"),
+                func.count(messages_table.c.id).filter(
+                    messages_table.c.created_at >= thirty_days_ago
+                ).label("last_30d"),
+                func.max(messages_table.c.created_at).label("last_at"),
+            ).select_from(
+                messages_table.join(
+                    conversations_table,
+                    messages_table.c.conversation_id == conversations_table.c.id,
+                )
+            ).where(
+                and_(
+                    conversations_table.c.chat_user_id == chat_user_id,
+                    messages_table.c.role == "user",  # Only count user messages
+                )
+            )
+            
+            result = await self._session.execute(stmt)
+            row = result.mappings().first()
+            
+            if not row:
+                return {"total": 0, "last_7d": 0, "last_30d": 0, "last_at": None}
+            
+            return {
+                "total": row["total"] or 0,
+                "last_7d": row["last_7d"] or 0,
+                "last_30d": row["last_30d"] or 0,
+                "last_at": row["last_at"],
+            }
+            
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to get user stats: {e}")
+            return {"total": 0, "last_7d": 0, "last_30d": 0, "last_at": None}
+
+    async def get_execution_stats(self, chat_user_id: UUID) -> dict:
+        """
+        Get execution statistics from message metadata.
+        
+        Counts workflow completions by checking message metadata
+        for workflow_completed flags.
+        
+        Args:
+            chat_user_id: The chat user's UUID
+            
+        Returns:
+            Dictionary with execution counts by type
+        """
+        try:
+            messages_table = mapping_registry.metadata.tables["chat_messages"]
+            conversations_table = mapping_registry.metadata.tables["chat_conversations"]
+            
+            # Query messages with execute_data in metadata
+            # This indicates a completed workflow
+            stmt = select(
+                messages_table.c.handler,
+                messages_table.c.metadata,
+            ).select_from(
+                messages_table.join(
+                    conversations_table,
+                    messages_table.c.conversation_id == conversations_table.c.id,
+                )
+            ).where(
+                and_(
+                    conversations_table.c.chat_user_id == chat_user_id,
+                    messages_table.c.role == "assistant",
+                    # Check for execute_data in metadata (JSONB)
+                    messages_table.c.metadata.op('?')('execute_data'),
+                )
+            )
+            
+            result = await self._session.execute(stmt)
+            rows = result.mappings().all()
+            
+            # Count by handler/workflow type
+            stats = {
+                "swap": 0,
+                "buy": 0,
+                "cashout": 0,
+                "lending": 0,
+                "money_market": 0,
+                "transfer": 0,
+                "total": 0,
+                "failed": 0,
+            }
+            
+            for row in rows:
+                handler = row.get("handler", "") or ""
+                metadata = row.get("metadata", {}) or {}
+                
+                # Determine type from handler name
+                handler_lower = handler.lower()
+                if "swap" in handler_lower:
+                    stats["swap"] += 1
+                elif "buy" in handler_lower:
+                    stats["buy"] += 1
+                elif "cashout" in handler_lower or "withdraw" in handler_lower:
+                    stats["cashout"] += 1
+                elif "lending" in handler_lower or "deposit" in handler_lower:
+                    stats["lending"] += 1
+                elif "money_market" in handler_lower:
+                    stats["money_market"] += 1
+                elif "transfer" in handler_lower or "send" in handler_lower:
+                    stats["transfer"] += 1
+                
+                stats["total"] += 1
+                
+                # Check for failed status in metadata
+                if metadata.get("status") == "failed":
+                    stats["failed"] += 1
+            
+            return stats
+            
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to get execution stats: {e}")
+            return {
+                "swap": 0, "buy": 0, "cashout": 0,
+                "lending": 0, "money_market": 0, "transfer": 0,
+                "total": 0, "failed": 0,
+            }
