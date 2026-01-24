@@ -1,6 +1,6 @@
 """Add user_context_aware table for context-aware agents.
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: 3f7f6f89818e
 Revises: b85c12f320c7
 Create Date: 2026-01-23 00:01:00.000000
 
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'a1b2c3d4e5f6'
-down_revision = 'b85c12f320c7'
+revision = '3f7f6f89818e'
+down_revision = '1bc72b16a56e'
 branch_labels = None
 depends_on = None
 
@@ -153,11 +153,12 @@ def upgrade() -> None:
     )
     
     # Index for finding users eligible for update
+    # Note: Cannot use partial index with CURRENT_TIMESTAMP (not immutable)
+    # Query will use this index with WHERE clause at query time
     op.create_index(
         'idx_user_context_next_update',
         'user_context_aware',
         ['next_update_eligible_at'],
-        postgresql_where=sa.text('next_update_eligible_at <= CURRENT_TIMESTAMP'),
     )
     
     # Index for filtering by portfolio state
