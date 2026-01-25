@@ -1,0 +1,33 @@
+{
+  "run_timestamp": "2026-01-25T00:36:01.909668+00:00",
+  "category": "context_routing",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 1,
+  "failed": 0,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "active_portfolio": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "swap_workflow": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 2362,
+  "slowest_tests": [
+    {
+      "test_id": "route_active_001",
+      "response_time_ms": 2362,
+      "status": "PARTIAL"
+    }
+  ]
+}

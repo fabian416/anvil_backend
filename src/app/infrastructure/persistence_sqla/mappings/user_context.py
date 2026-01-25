@@ -40,10 +40,11 @@ def map_user_context_aware_table() -> None:
                 unique=True,
             ),
             # Index for finding users eligible for update
+            # Note: Removed partial index predicate (CURRENT_TIMESTAMP not IMMUTABLE)
+            # The query should filter by timestamp at query time
             Index(
                 "idx_user_context_next_update",
                 "next_update_eligible_at",
-                postgresql_where=sa.text("next_update_eligible_at <= CURRENT_TIMESTAMP"),
             ),
             # Index for filtering by portfolio state
             Index("idx_user_context_portfolio_state", "portfolio_state"),

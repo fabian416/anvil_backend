@@ -1,0 +1,33 @@
+{
+  "run_timestamp": "2026-01-25T00:31:28.044126+00:00",
+  "category": "context_templates",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 1,
+  "failed": 0,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "templates": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "chat": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 1537,
+  "slowest_tests": [
+    {
+      "test_id": "template_lang_pt_001",
+      "response_time_ms": 1537,
+      "status": "PARTIAL"
+    }
+  ]
+}

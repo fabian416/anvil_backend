@@ -1,0 +1,8 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score,portfolio_state,activity_level,user_type,total_balance_usd,template_used,template_key,workflow_blocked,block_reason,context_enhanced_prompt,response_style
+route_trader_001,2026-01-25T00:30:32.487427+00:00,routing,user_type,NO,1,1,best swap rates,"I can help you analyze market sentiment and provide price predictions, but I don't have direct access to Anvil's live swap rates. To find the best swap rates, you'll need to check Anvil's platform directly.
+
+However, I can give you the current prices of some major cryptocurrencies that are likely traded on Anvil, which might help you assess potential swap opportunities:
+
+*   **Bitcoin (BTC):** $89,055.00 (24h Change: -0.42%)
+*   **Ethereum (ETH):** $2,949.05 (24h Change: -0.02%)
+*   **USD Coin (",,hunter_ai,"[{""source_type"": ""api"", ""source_name"": ""CoinGecko"", ""source_id"": ""coin:bitcoin"", ""url"": ""https://www.coingecko.com/en/coins/bitcoin"", ""citation_text"": ""Real-time price data for BITCOIN from CoinGecko""",authenticated_supervisor,4145,NO,,trader,en,PARTIAL,,a1014ff7-2504-4151-8989-248ce6244f4c,,0.0,,,,,,,,trader,,,,NO,,NO,

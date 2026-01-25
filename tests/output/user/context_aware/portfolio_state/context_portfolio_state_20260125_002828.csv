@@ -1,0 +1,15 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score,portfolio_state,activity_level,user_type,total_balance_usd,template_used,template_key,workflow_blocked,block_reason,context_enhanced_prompt,response_style
+empty_lending_001,2026-01-25T00:28:33.792247+00:00,portfolio_state,empty_blocked,NO,1,1,deposit 100 USDC,"📊 **Deposit Quote**
+
+**Yearn OG USDC**
+
+💰 **Deposit Amount:** 100 USDC
+📈 **Current APY:** 0.04%
+💵 **Monthly Earnings:** ~0.00 USDC
+📆 **Yearly Earnings:** ~0.04 USDC
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to deposit?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 500 USDC"" ",,lending_workflow,,authenticated_supervisor,5188,YES,deposit,new_user,en,PARTIAL,,bbdad15c-7efb-410b-9985-4eff35356708,,0.0,,,,,,empty,new,new_user,0,,,NO,,NO,

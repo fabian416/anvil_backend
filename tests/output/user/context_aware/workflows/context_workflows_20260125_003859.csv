@@ -1,0 +1,18 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score,portfolio_state,activity_level,user_type,total_balance_usd,template_used,template_key,workflow_blocked,block_reason,context_enhanced_prompt,response_style
+block_empty_buy_001,2026-01-25T00:39:02.393566+00:00,workflows,empty_allowed,NO,1,1,buy $100 of ETH,"💳 **Review Your Purchase**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 **Buying:** ETH Ξ
+💵 **Amount:** $100 USD
+🌐 **Network:** Base
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Payment Options:**
+• Credit/Debit Card
+• Apple Pay / Google Pay
+
+**Ready to purchase?**
+Reply ""yes"" to open payment or ""cancel"" to abort.
+You can also modify: ""change to $200"" ",,buy_workflow,,authenticated_supervisor,2498,YES,buy,authenticated,en,PARTIAL,,0e7ed2eb-fe9b-4688-a5a2-0099634ac95c,,0.0,,,,,,empty,,authenticated,,,,NO,,NO,

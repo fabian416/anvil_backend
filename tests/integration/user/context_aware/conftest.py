@@ -2,23 +2,25 @@
 Context-Aware Integration Test Configuration and Fixtures.
 
 Provides:
-- User context fixtures for all portfolio states
-- User context fixtures for all activity levels
-- User context fixtures for all user types
-- Response template service fixture
-- Analytics repository fixtures
+- HTTP client fixtures for API testing
+- User context fixtures (mock data for test assertions)
 - CSV reporters for each context category
+- Helper functions for context-aware tests
+
+NOTE: These tests use HTTP requests to the live API server.
+They do NOT create a separate test database.
 """
 
-import asyncio
 import pytest
 import pytest_asyncio
 from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta, UTC, date
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Optional
 from uuid import uuid4
+
+import httpx
 
 # Import parent conftest utilities
 from ..conftest import (
@@ -31,7 +33,6 @@ from ..conftest import (
     parse_response,
     create_test_result,
     BASE_URL,
-    DB_DSN,
 )
 
 # ============================================================
@@ -104,365 +105,112 @@ class ContextAwareCSVReporter(CSVReporter):
 
 
 # ============================================================
-# User Context Fixtures
+# Mock User Context Data Classes (for test assertions)
+# ============================================================
+
+@dataclass
+class MockUserContext:
+    """Mock user context for testing."""
+    
+    id: str = field(default_factory=lambda: str(uuid4()))
+    chat_user_id: str = field(default_factory=lambda: str(uuid4()))
+    portfolio_state: str = "empty"
+    activity_level: str = "new"
+    user_type: str = "new_user"
+    total_balance_usd: Decimal = Decimal("0")
+    wallet_total_usd: Decimal = Decimal("0")
+    token_count: int = 0
+    has_connected_wallet: bool = False
+    swap_count: int = 0
+    buy_count: int = 0
+    lending_count: int = 0
+    money_market_count: int = 0
+    transfer_count: int = 0
+    total_executions: int = 0
+    chat_sessions_30d: int = 0
+    messages_sent_30d: int = 0
+    first_active_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    last_active_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+
+# ============================================================
+# User Context Fixtures (Mock Data for Assertions)
 # ============================================================
 
 @pytest.fixture
-def empty_user_context():
+def empty_user_context() -> MockUserContext:
     """User with EMPTY portfolio ($0)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="empty",
-            activity_level="new",
-            user_type="new_user",
-            total_balance_usd=Decimal("0"),
-            wallet_total_usd=Decimal("0"),
-            token_count=0,
-            has_connected_wallet=False,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
+    return MockUserContext(
+        portfolio_state="empty",
+        activity_level="new",
+        user_type="new_user",
+        total_balance_usd=Decimal("0"),
+        has_connected_wallet=False,
+    )
 
 
 @pytest.fixture
-def starter_user_context():
+def starter_user_context() -> MockUserContext:
     """User with STARTER portfolio ($50)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="starter",
-            activity_level="active",
-            user_type="casual",
-            total_balance_usd=Decimal("50.00"),
-            wallet_total_usd=Decimal("50.00"),
-            token_count=2,
-            has_connected_wallet=True,
-            swap_count=1,
-            buy_count=1,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
+    return MockUserContext(
+        portfolio_state="starter",
+        activity_level="active",
+        user_type="casual",
+        total_balance_usd=Decimal("50.00"),
+        has_connected_wallet=True,
+        swap_count=1,
+        buy_count=1,
+    )
 
 
 @pytest.fixture
-def active_user_context():
+def active_user_context() -> MockUserContext:
     """User with ACTIVE portfolio ($5000)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="active",
-            activity_level="very_active",
-            user_type="trader",
-            total_balance_usd=Decimal("5000.00"),
-            wallet_total_usd=Decimal("5000.00"),
-            token_count=10,
-            has_connected_wallet=True,
-            swap_count=50,
-            buy_count=10,
-            lending_count=5,
-            chat_sessions_30d=20,
-            messages_sent_30d=100,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
+    return MockUserContext(
+        portfolio_state="active",
+        activity_level="very_active",
+        user_type="trader",
+        total_balance_usd=Decimal("5000.00"),
+        has_connected_wallet=True,
+        swap_count=50,
+        buy_count=10,
+        lending_count=5,
+        chat_sessions_30d=20,
+        messages_sent_30d=100,
+    )
 
 
 @pytest.fixture
-def whale_user_context():
+def whale_user_context() -> MockUserContext:
     """User with WHALE portfolio ($50000+)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="whale",
-            activity_level="very_active",
-            user_type="power_user",
-            total_balance_usd=Decimal("50000.00"),
-            wallet_total_usd=Decimal("50000.00"),
-            token_count=25,
-            has_connected_wallet=True,
-            swap_count=200,
-            buy_count=50,
-            lending_count=30,
-            money_market_count=20,
-            chat_sessions_30d=50,
-            messages_sent_30d=500,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
-
-
-# ============================================================
-# Activity Level Fixtures
-# ============================================================
-
-@pytest.fixture
-def new_user_context():
-    """NEW user (< 7 days registered)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="empty",
-            activity_level="new",
-            user_type="new_user",
-            total_balance_usd=Decimal("0"),
-            first_active_at=datetime.now(UTC) - timedelta(days=2),
-            chat_sessions_30d=3,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
+    return MockUserContext(
+        portfolio_state="whale",
+        activity_level="very_active",
+        user_type="power_user",
+        total_balance_usd=Decimal("50000.00"),
+        has_connected_wallet=True,
+        swap_count=200,
+        buy_count=50,
+        lending_count=30,
+        money_market_count=20,
+        chat_sessions_30d=50,
+        messages_sent_30d=500,
+    )
 
 
 @pytest.fixture
-def very_active_user_context():
-    """VERY_ACTIVE user (5+ sessions/week)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="active",
-            activity_level="very_active",
-            user_type="trader",
-            total_balance_usd=Decimal("5000.00"),
-            first_active_at=datetime.now(UTC) - timedelta(days=60),
-            last_active_at=datetime.now(UTC),
-            chat_sessions_30d=25,
-            messages_sent_30d=200,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
-
-
-@pytest.fixture
-def inactive_user_context():
+def inactive_user_context() -> MockUserContext:
     """INACTIVE user (no sessions in 30d)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="active",
-            activity_level="inactive",
-            user_type="casual",
-            total_balance_usd=Decimal("1000.00"),
-            first_active_at=datetime.now(UTC) - timedelta(days=90),
-            last_active_at=datetime.now(UTC) - timedelta(days=45),
-            chat_sessions_30d=0,
-            messages_sent_30d=0,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
-
-
-@pytest.fixture
-def reactivated_user_context():
-    """REACTIVATED user (returned after inactivity)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="active",
-            activity_level="reactivated",
-            user_type="casual",
-            total_balance_usd=Decimal("2000.00"),
-            first_active_at=datetime.now(UTC) - timedelta(days=120),
-            last_active_at=datetime.now(UTC),
-            chat_sessions_30d=2,
-            messages_sent_30d=5,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
-
-
-# ============================================================
-# User Type Fixtures
-# ============================================================
-
-@pytest.fixture
-def casual_user_context():
-    """CASUAL user (some interactions, few executions)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="starter",
-            activity_level="weekly_active",
-            user_type="casual",
-            total_balance_usd=Decimal("200.00"),
-            swap_count=3,
-            buy_count=2,
-            total_executions=5,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
-
-
-@pytest.fixture
-def trader_user_context():
-    """TRADER user (many swaps)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="active",
-            activity_level="very_active",
-            user_type="trader",
-            total_balance_usd=Decimal("10000.00"),
-            swap_count=100,
-            buy_count=20,
-            lending_count=5,
-            total_executions=125,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
-
-
-@pytest.fixture
-def yield_farmer_user_context():
-    """YIELD_FARMER user (many lending/money market)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="active",
-            activity_level="active",
-            user_type="yield_farmer",
-            total_balance_usd=Decimal("15000.00"),
-            swap_count=10,
-            buy_count=5,
-            lending_count=50,
-            money_market_count=30,
-            total_executions=95,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
-
-
-@pytest.fixture
-def power_user_context():
-    """POWER_USER (high activity across all)."""
-    try:
-        from app.domain.chat.entities.user_context_aware import UserContextAware
-        return UserContextAware(
-            id=uuid4(),
-            chat_user_id=uuid4(),
-            portfolio_state="whale",
-            activity_level="very_active",
-            user_type="power_user",
-            total_balance_usd=Decimal("100000.00"),
-            swap_count=200,
-            buy_count=50,
-            lending_count=80,
-            money_market_count=40,
-            transfer_count=30,
-            total_executions=400,
-        )
-    except ImportError:
-        pytest.skip("UserContextAware entity not available")
-
-
-# ============================================================
-# Service Fixtures
-# ============================================================
-
-@pytest.fixture
-def response_template_service():
-    """Provide ResponseTemplateService instance."""
-    try:
-        from app.application.chat.services.response_template_service import ResponseTemplateService
-        return ResponseTemplateService()
-    except ImportError:
-        pytest.skip("ResponseTemplateService not available")
-
-
-@pytest_asyncio.fixture
-async def analytics_repository(db_session):
-    """Provide AnalyticsRepository instance."""
-    try:
-        from app.infrastructure.adapters.analytics_repository_sqla import AnalyticsRepositorySqla
-        return AnalyticsRepositorySqla(db_session)
-    except ImportError:
-        pytest.skip("AnalyticsRepositorySqla not available")
-
-
-# ============================================================
-# Analytics Sample Data Fixtures
-# ============================================================
-
-@pytest_asyncio.fixture
-async def sample_analytics_snapshots(analytics_repository):
-    """Create sample analytics snapshots for testing."""
-    try:
-        from app.domain.chat.entities.analytics_snapshot import (
-            AnalyticsSnapshot,
-            PortfolioDistribution,
-            ActivityDistribution,
-            UserTypeDistribution,
-            ExecutionMetrics,
-        )
-        
-        snapshots = []
-        for i in range(7):
-            snapshot_date = date.today() - timedelta(days=i)
-            snapshot = AnalyticsSnapshot(
-                id=uuid4(),
-                snapshot_date=snapshot_date,
-                snapshot_type="daily",
-                portfolio=PortfolioDistribution(
-                    empty=100 + i * 5,
-                    starter=50 + i * 2,
-                    active=30 + i,
-                    whale=10,
-                ),
-                activity=ActivityDistribution(
-                    new=20 + i,
-                    very_active=30,
-                    active=60,
-                    weekly_active=40,
-                    monthly_active=20,
-                    inactive=30 - i,
-                    reactivated=5,
-                ),
-                user_types=UserTypeDistribution(
-                    new_user=30,
-                    casual=80,
-                    trader=40,
-                    yield_farmer=20,
-                    power_user=10,
-                ),
-                executions=ExecutionMetrics(
-                    total=500 + i * 50,
-                    swap=200 + i * 20,
-                    buy=150 + i * 15,
-                    lending=100 + i * 10,
-                    transfer=30 + i * 3,
-                    cashout=10 + i,
-                    money_market=10 + i * 2,
-                ),
-                total_users=190 + i * 8,
-                total_balance_usd=Decimal("500000.00") + Decimal(str(i * 10000)),
-            )
-            await analytics_repository.save(snapshot)
-            snapshots.append(snapshot)
-        
-        return snapshots
-    except ImportError:
-        pytest.skip("Analytics entities not available")
+    return MockUserContext(
+        portfolio_state="active",
+        activity_level="inactive",
+        user_type="casual",
+        total_balance_usd=Decimal("1000.00"),
+        first_active_at=datetime.now(UTC) - timedelta(days=90),
+        last_active_at=datetime.now(UTC) - timedelta(days=45),
+        chat_sessions_30d=0,
+        messages_sent_30d=0,
+    )
 
 
 # ============================================================
@@ -544,7 +292,7 @@ def create_context_test_result(
     test_case: dict[str, Any],
     response_data: dict[str, Any],
     response_time_ms: int,
-    user_context: Any = None,
+    user_context: MockUserContext = None,
     template_info: dict[str, Any] = None,
     workflow_info: dict[str, Any] = None,
     conversation_id: str = "",
@@ -557,7 +305,7 @@ def create_context_test_result(
         test_case: Test case definition
         response_data: Parsed response data
         response_time_ms: Response time in milliseconds
-        user_context: UserContextAware instance
+        user_context: MockUserContext instance
         template_info: Template usage info
         workflow_info: Workflow blocking info
         conversation_id: Conversation ID
@@ -581,10 +329,10 @@ def create_context_test_result(
     
     # Add context fields
     if user_context:
-        result.portfolio_state = getattr(user_context, "portfolio_state", "")
-        result.activity_level = getattr(user_context, "activity_level", "")
-        result.user_type = getattr(user_context, "user_type", "")
-        result.total_balance_usd = str(getattr(user_context, "total_balance_usd", ""))
+        result.portfolio_state = user_context.portfolio_state
+        result.activity_level = user_context.activity_level
+        result.user_type = user_context.user_type
+        result.total_balance_usd = str(user_context.total_balance_usd)
     
     # Add template fields
     if template_info:

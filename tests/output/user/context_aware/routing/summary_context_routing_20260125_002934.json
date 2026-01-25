@@ -1,0 +1,69 @@
+{
+  "run_timestamp": "2026-01-25T00:29:34.534100+00:00",
+  "category": "context_routing",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 1,
+  "failed": 0,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "whale_portfolio": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "defi_yield": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    },
+    "risk_analyzer": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    },
+    "hunter_ai": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    },
+    "portfolio": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    },
+    "gas_optimizer": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    },
+    "knowledge": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    },
+    "chat": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 51771,
+  "slowest_tests": [
+    {
+      "test_id": "route_whale_001",
+      "response_time_ms": 51771,
+      "status": "PARTIAL"
+    }
+  ]
+}
