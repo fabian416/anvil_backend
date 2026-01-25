@@ -3,18 +3,25 @@ Swap Workflow Agent - Multi-Step Token Swap Operations.
 
 Handles the complete swap workflow for authenticated users:
 1. Parse request: Extract tokens and amount from user message
-2. Fetch quote: Get best quote from 1inch (same-chain) or LiFi (cross-chain)
+2. Fetch quote: Get best quote from appropriate provider:
+   - Hyperliquid Spot: For meme tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
+   - 1inch: For major tokens same-chain swaps (ETH, BTC, USDC, etc.)
+   - LiFi: For cross-chain swaps
 3. Confirm: Show quote and wait for user confirmation
 4. Execute: Generate execute_data for frontend execution
 
 Integration:
-- Same-chain swaps: Uses 1inch API
+- Meme token swaps: Uses Hyperliquid Spot API (zero gas fees, high performance)
+- Same-chain major tokens: Uses 1inch API
 - Cross-chain swaps: Uses LiFi API
 - Execution: Frontend uses Privy SDK with execute_data
 
+⚠️ IMPORTANT: Hyperliquid Spot only supports meme tokens paired with USDC.
+Major tokens (ETH, BTC, SOL) require 1inch or LiFi.
+
 Example Conversation:
-    User: "swap 0.5 ETH to USDC"
-    Agent: "📊 Swap Quote: 0.5 ETH → 1,245 USDC (price impact: 0.02%). Confirm?"
+    User: "swap 100 USDC to PURR"
+    Agent: "📊 Swap Quote: 100 USDC → 50,000 PURR via Hyperliquid. Confirm?"
     User: "yes"
     Agent: "✅ Ready to execute!" + execute_data for frontend modal
 """
@@ -38,9 +45,39 @@ if TYPE_CHECKING:
     from app.infrastructure.adapters.external.oneinch_client import OneInchClient
     from app.infrastructure.adapters.external.lifi_client import LiFiClient
     from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+    from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# HYPERLIQUID SPOT TOKENS
+# =============================================================================
+# Hyperliquid Spot ONLY supports meme tokens paired with USDC.
+# Major tokens like ETH, BTC, SOL are NOT available on Hyperliquid Spot.
+# For major tokens, use 1inch (same-chain) or LiFi (cross-chain).
+# =============================================================================
+
+HYPERLIQUID_SPOT_TOKENS = {
+    "USDC",  # Quote currency (required for all Hyperliquid spot swaps)
+    # Popular meme tokens on Hyperliquid Spot
+    "PURR", "HFUN", "TRUMP", "PEPE", "MOG", "POINTS", "JEFF",
+    "GMEOW", "LICK", "MANLET", "SIX", "WAGMI", "CAPPY",
+    "XULIAN", "RUG", "CZ", "BAGS", "ANSEM", "TATE", "FUN",
+    "BIGBEN", "KOBE", "VEGAS", "PUMP", "SCHIZO", "CATNIP",
+    "HAPPY", "SELL", "HBOOST", "GPT", "PANDA", "HODL", "RAGE",
+    "ASI", "LEAP", "VAPOR", "X", "PILL", "CAT", "HPEPE",
+    "MBAPPE", "MAGA", "OMNIX", "COKE", "MEOW", "ANT", "NEIRO",
+}
+
+# Major tokens that are NOT supported on Hyperliquid Spot
+# These require 1inch (same-chain) or LiFi (cross-chain)
+MAJOR_TOKENS_REQUIRE_DEX = {
+    "ETH", "BTC", "SOL", "WBTC", "WETH", "LINK", "UNI", "AAVE",
+    "CRV", "MKR", "DAI", "USDT", "MATIC", "ARB", "OP", "AVAX",
+    "DOT", "ATOM", "APT", "SUI", "SEI", "TIA", "INJ", "FTM",
+}
 
 
 # Common token addresses by chain
@@ -94,13 +131,17 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
     
     Steps:
     1. parse_request: Extract from_token, to_token, amount, chain
-    2. fetch_data: Get quotes from 1inch/LiFi
+    2. fetch_data: Get quotes from appropriate provider:
+       - Hyperliquid Spot for meme tokens (PURR, TRUMP, etc.)
+       - 1inch for major tokens same-chain
+       - LiFi for cross-chain
     3. confirm: Show quote, wait for user confirmation
     4. execute: Generate execute_data for frontend
     
     Features:
-    - Natural language parameter extraction
-    - Same-chain swaps via 1inch
+    - Intelligent provider routing based on token type
+    - Meme token swaps via Hyperliquid Spot (zero gas fees)
+    - Same-chain major token swaps via 1inch
     - Cross-chain swaps via LiFi
     - User modification support ("change to 1 ETH instead")
     - Multi-language support
@@ -112,20 +153,23 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         oneinch_client: "OneInchClient | None" = None,
         lifi_client: "LiFiClient | None" = None,
         coingecko_client: "CoinGeckoClient | None" = None,
+        hyperliquid_client: "HyperliquidClient | None" = None,
     ):
         """
         Initialize swap workflow agent.
         
         Args:
             llm_client: LLM client for parameter extraction
-            oneinch_client: 1inch API client for same-chain swaps
+            oneinch_client: 1inch API client for same-chain major token swaps
             lifi_client: LiFi API client for cross-chain swaps
             coingecko_client: CoinGecko client for market data enrichment
+            hyperliquid_client: Hyperliquid client for meme token spot swaps
         """
         super().__init__(llm_client=llm_client)
         self._oneinch = oneinch_client
         self._lifi = lifi_client
         self._coingecko = coingecko_client
+        self._hyperliquid = hyperliquid_client
     
     @property
     def agent_type(self) -> AgentType:
@@ -532,6 +576,32 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         
         return params
     
+    def _is_hyperliquid_swap(self, from_token: str, to_token: str) -> bool:
+        """
+        Check if this swap should use Hyperliquid Spot.
+        
+        Hyperliquid Spot only supports meme tokens paired with USDC.
+        One of the tokens MUST be USDC, and the other must be a supported meme token.
+        """
+        from_upper = from_token.upper()
+        to_upper = to_token.upper()
+        
+        # Same token swap is a no-op, not a Hyperliquid swap
+        if from_upper == to_upper:
+            return False
+        
+        # Check if one is USDC and the other is a Hyperliquid meme token (not USDC itself)
+        if from_upper == "USDC" and to_upper in HYPERLIQUID_SPOT_TOKENS and to_upper != "USDC":
+            return True
+        if to_upper == "USDC" and from_upper in HYPERLIQUID_SPOT_TOKENS and from_upper != "USDC":
+            return True
+        
+        # Both are meme tokens (rare but possible) - requires USDC as intermediary
+        # This case would need two swaps, so we don't route it to Hyperliquid directly
+        # Example: PURR → TRUMP would need PURR → USDC → TRUMP
+        
+        return False
+
     async def _fetch_quote(
         self,
         from_token: str,
@@ -542,15 +612,60 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         wallet_address: str | None,
     ) -> dict[str, Any]:
         """
-        Fetch swap quote from 1inch or LiFi.
+        Fetch swap quote from the appropriate provider.
+        
+        Provider Selection:
+        1. Hyperliquid Spot: For meme tokens (PURR, TRUMP, etc.) paired with USDC
+        2. 1inch: For major tokens same-chain swaps
+        3. LiFi: For cross-chain swaps
         """
         is_cross_chain = to_chain and to_chain.lower() != chain.lower()
         
         try:
+            # ============================================================
+            # HYPERLIQUID SPOT: Meme tokens paired with USDC
+            # ============================================================
+            if self._is_hyperliquid_swap(from_token, to_token) and not is_cross_chain:
+                if self._hyperliquid:
+                    logger.info(
+                        f"[SwapWorkflow] Using Hyperliquid Spot for meme token swap: "
+                        f"{amount} {from_token} → {to_token}"
+                    )
+                    try:
+                        # Hyperliquid uses human-readable amounts, not wei
+                        amount_float = float(amount)
+                        
+                        quote = await self._hyperliquid.get_spot_quote(
+                            from_token=from_token.upper(),
+                            to_token=to_token.upper(),
+                            amount=amount_float,
+                        )
+                        
+                        return {
+                            "output_amount": f"{quote.to_amount:.6f}".rstrip('0').rstrip('.'),
+                            "price_impact": quote.spread_bps / 100,  # Convert bps to %
+                            "gas_estimate": 0,  # Hyperliquid = zero gas fees
+                            "aggregator": "hyperliquid",
+                            "mid_price": quote.mid_price,
+                            "effective_price": quote.price,
+                        }
+                    except Exception as hl_err:
+                        logger.warning(
+                            f"[SwapWorkflow] Hyperliquid quote failed for {from_token}/{to_token}: {hl_err}"
+                        )
+                        # Fall through to 1inch/LiFi if Hyperliquid fails
+                else:
+                    logger.warning(
+                        f"[SwapWorkflow] Hyperliquid client not configured, "
+                        f"cannot swap meme tokens: {from_token}/{to_token}"
+                    )
+            
             amount_wei = self._to_wei(amount, from_token)
             
+            # ============================================================
+            # CROSS-CHAIN: Use LiFi
+            # ============================================================
             if is_cross_chain:
-                # Cross-chain: Use LiFi
                 if not self._lifi:
                     return {"error": "Cross-chain swaps require LiFi client (not configured)"}
                 
@@ -571,52 +686,50 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                     "price_impact": getattr(quote, 'price_impact', 0),
                     "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
                     "aggregator": "lifi",
-                    # Note: raw_quote removed to ensure JSON serialization
+                }
+            
+            # ============================================================
+            # SAME-CHAIN MAJOR TOKENS: Try 1inch, fallback to LiFi
+            # ============================================================
+            if self._oneinch:
+                # Primary: Use 1inch
+                from_addr = self._resolve_token_address(from_token, chain)
+                to_addr = self._resolve_token_address(to_token, chain)
+                
+                quote = await self._oneinch.get_swap_quote(
+                    from_token=from_addr,
+                    to_token=to_addr,
+                    amount=amount_wei,
+                    slippage=1.0,
+                )
+                
+                return {
+                    "output_amount": self._from_wei(quote.to_amount, to_token),
+                    "price_impact": getattr(quote, 'price_impact', 0),
+                    "gas_estimate": int(getattr(quote, 'estimated_gas', 200000)),
+                    "aggregator": "1inch",
+                }
+            elif self._lifi:
+                # Fallback: Use LiFi for same-chain swaps
+                logger.info("[SwapWorkflow] Using LiFi fallback for same-chain swap")
+                sender_address = wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                quote = await self._lifi.get_quote(
+                    from_chain=chain,
+                    to_chain=chain,  # Same chain
+                    from_token=from_token,
+                    to_token=to_token,
+                    from_amount=amount_wei,
+                    from_address=sender_address,
+                )
+                
+                return {
+                    "output_amount": self._from_wei(quote.to_amount, to_token),
+                    "price_impact": getattr(quote, 'price_impact', 0),
+                    "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
+                    "aggregator": "lifi",
                 }
             else:
-                # Same-chain: Try 1inch first, fallback to LiFi
-                if self._oneinch:
-                    # Primary: Use 1inch
-                    from_addr = self._resolve_token_address(from_token, chain)
-                    to_addr = self._resolve_token_address(to_token, chain)
-                    
-                    quote = await self._oneinch.get_swap_quote(
-                        from_token=from_addr,
-                        to_token=to_addr,
-                        amount=amount_wei,
-                        slippage=1.0,
-                    )
-                    
-                    return {
-                        "output_amount": self._from_wei(quote.to_amount, to_token),
-                        "price_impact": getattr(quote, 'price_impact', 0),
-                        "gas_estimate": int(getattr(quote, 'estimated_gas', 200000)),
-                        "aggregator": "1inch",
-                        # Note: raw_quote removed to ensure JSON serialization
-                    }
-                elif self._lifi:
-                    # Fallback: Use LiFi for same-chain swaps
-                    logger.info("[SwapWorkflow] Using LiFi fallback for same-chain swap")
-                    # Use a valid placeholder address if no wallet connected
-                    sender_address = wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
-                    quote = await self._lifi.get_quote(
-                        from_chain=chain,
-                        to_chain=chain,  # Same chain
-                        from_token=from_token,
-                        to_token=to_token,
-                        from_amount=amount_wei,
-                        from_address=sender_address,
-                    )
-                    
-                    return {
-                        "output_amount": self._from_wei(quote.to_amount, to_token),
-                        "price_impact": getattr(quote, 'price_impact', 0),
-                        "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
-                        "aggregator": "lifi",
-                        # Note: raw_quote removed to ensure JSON serialization
-                    }
-                else:
-                    return {"error": "Swap quote unavailable - no swap aggregator configured"}
+                return {"error": "Swap quote unavailable - no swap aggregator configured"}
                 
         except Exception as e:
             logger.error(f"[SwapWorkflow] Quote fetch failed: {e}")

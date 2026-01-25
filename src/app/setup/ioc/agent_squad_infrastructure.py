@@ -758,26 +758,48 @@ class AgentSquadInfrastructureProvider(Provider):
         oneinch_client: OneInchClientProtocol | None,
         lifi_client: LiFiClientProtocol | None,
         coingecko_client: CoinGeckoClient | None,
+        settings: AgentSquadSettings,
     ) -> SwapWorkflowAgent:
         """
         Provide Swap Workflow Agent for authenticated users.
         
         This agent handles multi-step swap operations:
         1. Parse swap request (tokens, amount)
-        2. Fetch quotes from 1inch/LiFi
-        3. Confirm with user
-        4. Generate execute_data for frontend
+        2. Route to appropriate provider based on token type
+        3. Fetch quotes
+        4. Confirm with user
+        5. Generate execute_data for frontend
+        
+        Provider Routing:
+        - Hyperliquid Spot: Meme tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
+        - 1inch: Major tokens same-chain swaps (ETH, BTC, USDC, etc.)
+        - LiFi: Cross-chain swaps
         
         Integrations:
-        - 1inch: Same-chain swaps
+        - Hyperliquid: Meme token swaps (zero gas fees)
+        - 1inch: Same-chain major token swaps
         - LiFi: Cross-chain swaps
         - CoinGecko: Market prices for enrichment
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Create Hyperliquid client for meme token swaps
+        hyperliquid_client = None
+        if settings.external_apis.enable_hyperliquid:
+            try:
+                from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+                hyperliquid_client = HyperliquidClient(testnet=False)
+                logger.info("✅ Hyperliquid enabled for SwapWorkflowAgent (meme token swaps)")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to create Hyperliquid client for SwapWorkflowAgent: {e}")
+        
         return SwapWorkflowAgent(
             llm_client=llm_client,
             oneinch_client=oneinch_client,
             lifi_client=lifi_client,
             coingecko_client=coingecko_client,
+            hyperliquid_client=hyperliquid_client,
         )
 
     @provide
