@@ -30,12 +30,14 @@ from app.infrastructure.persistence_sqla.mappings.email_verification import map_
 from app.infrastructure.persistence_sqla.mappings.notification import map_notifications_table
 from app.infrastructure.persistence_sqla.mappings.password_reset import map_password_resets_table
 from app.infrastructure.persistence_sqla.mappings.payment import map_payments_table
-from app.infrastructure.persistence_sqla.mappings.session import map_sessions_table
+# REMOVED: Legacy session mapping (use auth_session instead)
+# from app.infrastructure.persistence_sqla.mappings.session import map_sessions_table
 from app.infrastructure.persistence_sqla.mappings.subscription import map_subscriptions_table
 from app.infrastructure.persistence_sqla.mappings.subscription_user import map_subscription_users_table
 from app.infrastructure.persistence_sqla.mappings.user import map_users_table
-from app.infrastructure.persistence_sqla.mappings.conversation import map_conversation_table
-from app.infrastructure.persistence_sqla.mappings.message import map_message_table
+# REMOVED: Legacy conversation/message mappings (use chat_unified instead)
+# from app.infrastructure.persistence_sqla.mappings.conversation import map_conversation_table
+# from app.infrastructure.persistence_sqla.mappings.message import map_message_table
 from app.infrastructure.persistence_sqla.mappings.agent_session import map_agent_session_table
 from app.infrastructure.persistence_sqla.mappings.conversation_analytics import (
     map_conversation_analytics_table,
@@ -47,6 +49,7 @@ from app.infrastructure.persistence_sqla.mappings.ai_telemetry import map_ai_tel
 from app.infrastructure.persistence_sqla.mappings.system_config import map_system_config_tables
 from app.infrastructure.persistence_sqla.mappings.portfolio_snapshot import map_portfolio_snapshot_tables
 from app.infrastructure.persistence_sqla.mappings.policy import map_policy_tables
+# Guest Chat - Still in active use by /guest/ router
 from app.infrastructure.persistence_sqla.mappings.guest import map_guest_tables
 from app.infrastructure.persistence_sqla.mappings.chat_unified import map_unified_chat_tables
 from app.infrastructure.persistence_sqla.mappings.moonpay import map_moonpay_customer_tokens_table
@@ -62,12 +65,12 @@ def map_tables() -> None:
     map_notifications_table()
     map_password_resets_table()
     map_payments_table()
-    map_sessions_table()
+    # REMOVED: map_sessions_table() - Legacy session (use auth_sessions)
     map_subscriptions_table()
     map_subscription_users_table()
-    # DeFi Chat mappings
-    map_conversation_table()
-    map_message_table()
+    # REMOVED: Legacy DeFi Chat mappings (use unified chat)
+    # map_conversation_table()
+    # map_message_table()
     map_agent_session_table()
     map_conversation_analytics_table()
     # Wallet & Transactions
@@ -83,7 +86,7 @@ def map_tables() -> None:
     map_system_config_tables()
     # Portfolio Snapshots
     map_portfolio_snapshot_tables()
-    # Guest Chat
+    # Guest Chat - Still in active use by /guest/ router
     map_guest_tables()
     # Unified Chat (guest + authenticated) - Primary chat system
     map_unified_chat_tables()

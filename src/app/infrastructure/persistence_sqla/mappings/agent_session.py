@@ -24,8 +24,8 @@ def map_agent_session_table() -> None:
         # Primary key
         id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
         
-        # Relationships
-        conversation_id = mapped_column(UUID(as_uuid=True), ForeignKey("conversations.id"), nullable=False, index=True)
+        # Relationships - Updated to use unified chat_conversations table
+        conversation_id = mapped_column(UUID(as_uuid=True), ForeignKey("chat_conversations.id"), nullable=False, index=True)
         
         # Agent details
         agent_type = mapped_column(Enum(AgentType, values_callable=lambda x: [e.value for e in x], name="agenttype", create_type=False), nullable=False)
