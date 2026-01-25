@@ -16,13 +16,14 @@
 **Key Findings:**
 - ✅ **Comprehensive hexagonal architecture** with proper domain isolation across 87 tables
 - ✅ **Enterprise LLM Orchestration** with 15 tables managing multi-provider AI operations
-- ✅ **Dual chat systems** (legacy + unified) with clear deprecation path (2026-06-01)
+- ✅ **Triple chat architecture** (unified + authenticated + guest) all fully operational
+- ✅ **Legacy system fully removed** on 2026-01-25 (1,200+ lines of deprecated code eliminated)
 - ✅ **Advanced distillation system** (6 tables) for LLM cost optimization
 - ✅ **Project-based knowledge bases** (12 tables) for RAG and context management
 - ✅ **Comprehensive AI telemetry** tracking 18 specialized agents across 13 tables
 - ✅ **Multi-chain wallet support** with Privy integration
 - ✅ **Retry/resilience infrastructure** (3 tables) for fault tolerance
-- ⚠️ **Legacy tables pending removal** (conversations, messages, sessions) - scheduled 2026-06-01
+- ✅ **Bridge adapters** maintain backward compatibility for existing commands
 - ⚠️ **3 tables pending migration** (87 mapped, 84 in DB)
 
 **Database Technology:** PostgreSQL 16 with UUID, JSONB, pgvector (embeddings), and enum support
@@ -154,7 +155,9 @@ CREATE TABLE auth_sessions (
 
 ## 📋 Domain 2: Chat System - Unified (4 Tables)
 
-**Purpose:** Modern chat system supporting both guest and authenticated users.
+**Purpose:** Primary UUID-based chat system supporting both guest and authenticated users.
+
+**Status:** ✅ ACTIVE - Primary chat system (replaced legacy INTEGER-based system on 2026-01-25)
 
 ### 2.1 chat_users
 
@@ -237,7 +240,9 @@ CREATE TABLE chat_messages (
 
 ## 📋 Domain 3: Chat System - Guest (4 Tables)
 
-**Purpose:** Specialized guest chat tracking system.
+**Purpose:** Specialized IP-based guest chat tracking system.
+
+**Status:** ✅ ACTIVE - Standalone guest system for anonymous users (not deprecated)
 
 ### 3.1 guest_users
 **Mission:** Track guest users by IP address with fingerprinting.
@@ -1647,16 +1652,20 @@ CREATE TABLE agent_sessions (
 
 ```mermaid
 graph LR
-    A[User Message] --> B[Intent Detection]
-    B --> C{Route Intent}
-    C -->|Swap| D[Hunter AI]
-    C -->|Portfolio| E[Portfolio Agent]
-    C -->|Help| F[Chat Agent]
-    D --> G[Agent Execution Record]
-    G --> H[Agent Tasks]
-    H --> I[LLM Requests]
-    I --> J[Response]
-    J --> K[Chat Message]
+    A[User Message] --> B[Unified Chat System]
+    B --> C[Intent Detection]
+    C --> D{Route Intent}
+    D -->|Swap| E[Hunter AI]
+    D -->|Portfolio| F[Portfolio Agent]
+    D -->|Help| G[Chat Agent]
+    E --> H[Agent Execution Record]
+    H --> I[Agent Tasks]
+    I --> J[LLM Requests]
+    J --> K[Response]
+    K --> L[chat_messages]
+
+    Note1[Bridge Adapters] -.->|Backward Compat| B
+    Note2[Legacy System] -.->|REMOVED 2026-01-25| Note1
 ```
 
 ### Pattern 2: Transaction Lifecycle
@@ -1693,23 +1702,38 @@ graph LR
 
 ---
 
-## ⚠️ Legacy Tables Pending Removal
+## ✅ Legacy System Removal Completed
 
-**Deprecation Date:** 2026-06-01
+**Completion Date:** 2026-01-25 (4 months ahead of original 2026-06-01 deadline)
 
-The following tables are part of the legacy chat system and will be removed:
+**Successfully Removed Components:**
 
-1. **conversations** (INTEGER-based) → Replaced by `chat_conversations` (UUID-based)
-2. **messages** (INTEGER-based) → Replaced by `chat_messages` (UUID-based)
-3. **sessions** (old session model) → Replaced by `auth_sessions`
+### Files Deleted (2026-01-25):
+1. ✅ **Legacy Router** (`chat/router.py`) - 1,070 lines deleted
+   - Old endpoints: `/api/v1/user/chat/*` - Fully removed
+2. ✅ **Legacy Mappings** - All deleted:
+   - `conversation.py` - INTEGER-based conversations table
+   - `message.py` - INTEGER-based messages table
+   - `session.py` - Old session model
+3. ✅ **Legacy Adapters** - 457 lines deleted:
+   - `conversation_repository_sqla.py` (339 lines)
+   - `message_repository_sqla.py` (118 lines)
 
-**Migration Status:**
-- ✅ All data migrated to new tables
-- ✅ New API endpoints live (`/api/v1/conversations/*`)
-- ⚠️ Legacy endpoints still active (`/api/v1/user/chat/*`) for backwards compatibility
-- 🗓️ Shutdown scheduled: 2026-06-01
+### Replacement Components (Active):
+1. ✅ **Unified Chat System** - UUID-based modern architecture
+   - Tables: `chat_conversations`, `chat_messages`, `chat_users`, `chat_rate_limits`
+   - Endpoints: `/api/v1/conversations/*`
+2. ✅ **Bridge Adapters** - Backward compatibility layer
+   - `conversation_repository_bridge.py` (191 lines)
+   - `message_repository_bridge.py` (129 lines)
+   - Maintains compatibility for existing commands without legacy tables
+3. ✅ **Auth Sessions** - Modern session management
+   - Table: `auth_sessions`
+   - Replaced legacy `sessions` table
 
-**Migration Guide:** See `/docs/DEPRECATION_PLAN.md`
+**Code Reduction:** ~1,200 lines of deprecated code eliminated
+
+**Migration Guide:** Historical reference in `/docs/DEPRECATION_PLAN.md`
 
 ---
 
