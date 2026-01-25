@@ -45,8 +45,11 @@ from app.domain.ports.audit_log_repository import AuditLogRepository
 from app.domain.ports.auth_gateway import AuthGateway
 from app.domain.ports.moonpay_token_repository import MoonPayTokenRepository
 from app.domain.chat.ports.analytics_repository import AnalyticsRepository
+# Legacy repositories are bridged to unified chat system
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.chat.ports.message_repository import MessageRepository
+from app.infrastructure.adapters.conversation_repository_bridge import ConversationRepositoryBridge
+from app.infrastructure.adapters.message_repository_bridge import MessageRepositoryBridge
 from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
 from app.domain.projects.ports.project_repository import ProjectRepository
 from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
@@ -56,6 +59,10 @@ from app.infrastructure.adapters.ai.agent_gateway_impl import AgentGatewayImpl
 from app.infrastructure.adapters.ai.agent_squad_gateway import AgentSquadGateway
 from app.infrastructure.adapters.ai.llm_gateway_impl import LLMGatewayImpl
 from app.infrastructure.adapters.ai.squad_storage import AnvilSquadStorage
+from app.infrastructure.adapters.chat_unified_repository_sqla import (
+    ChatMessageRepositorySqla,
+    ChatConversationRepositorySqla,
+)
 from app.infrastructure.adapters.chat.audit_log_repository_adapter import (
     AuditLogRepositoryAdapter,
 )
@@ -63,9 +70,8 @@ from app.infrastructure.adapters.chat.analytics_repository_adapter import (
     AnalyticsRepositoryAdapter,
 )
 from app.infrastructure.adapters.city_reader_sqla import SqlaCityReader
-from app.infrastructure.adapters.conversation_repository_sqla import (
-    SqlaConversationRepository,
-)
+# REMOVED: Legacy conversation repository (use ChatConversationRepositorySqla)
+# from app.infrastructure.adapters.conversation_repository_sqla import SqlaConversationRepository
 from app.infrastructure.adapters.country_reader_sqla import SqlaCountryReader
 from app.infrastructure.adapters.email_verification_repository_sqla import (
     SqlaEmailVerificationRepository,
@@ -73,9 +79,8 @@ from app.infrastructure.adapters.email_verification_repository_sqla import (
 from app.infrastructure.adapters.main_transaction_manager_sqla import (
     SqlaMainTransactionManager,
 )
-from app.infrastructure.adapters.message_repository_sqla import (
-    SqlaMessageRepository,
-)
+# REMOVED: Legacy message repository (use ChatMessageRepositorySqla)
+# from app.infrastructure.adapters.message_repository_sqla import SqlaMessageRepository
 from app.infrastructure.adapters.notification_repository_sqla import (
     SqlaNotificationRepository,
 )
@@ -344,16 +349,9 @@ class InfrastructureProvider(Provider):
     )
 
     # AI Infrastructure
-    conversation_repo = provide(
-        source=SqlaConversationRepository,
-        provides=ConversationRepository,
-        scope=Scope.REQUEST,
-    )
-    message_repo = provide(
-        source=SqlaMessageRepository,
-        provides=MessageRepository,
-        scope=Scope.REQUEST,
-    )
+    # REMOVED: Legacy conversation/message repositories (use ChatConversationRepositorySqla)
+    # conversation_repo = provide(source=SqlaConversationRepository, provides=ConversationRepository)
+    # message_repo = provide(source=SqlaMessageRepository, provides=MessageRepository)
     analytics_repo = provide(
         source=AnalyticsRepositoryAdapter,
         provides=AnalyticsRepository,
@@ -391,10 +389,31 @@ class InfrastructureProvider(Provider):
         provides=LLMGateway,
         scope=Scope.REQUEST,
     )
-    squad_storage = provide(
-        source=AnvilSquadStorage,
-        scope=Scope.REQUEST,
-    )
+    
+    @provide(scope=Scope.REQUEST)
+    def get_squad_storage(
+        self,
+        message_repo: ChatMessageRepositorySqla,
+    ) -> AnvilSquadStorage:
+        """Provide AnvilSquadStorage with unified chat message repository."""
+        return AnvilSquadStorage(message_repo=message_repo)
+    
+    @provide(scope=Scope.REQUEST)
+    def get_message_repository(
+        self,
+        chat_message_repo: ChatMessageRepositorySqla,
+    ) -> MessageRepository:
+        """Bridge legacy MessageRepository to unified chat system."""
+        return MessageRepositoryBridge(chat_message_repo)
+    
+    @provide(scope=Scope.REQUEST)
+    def get_conversation_repository(
+        self,
+        chat_conversation_repo: ChatConversationRepositorySqla,
+        chat_message_repo: ChatMessageRepositorySqla,
+    ) -> ConversationRepository:
+        """Bridge legacy ConversationRepository to unified chat system."""
+        return ConversationRepositoryBridge(chat_conversation_repo, chat_message_repo)
 
     @provide(scope=Scope.APP)
     def get_llm_provider_factory(self) -> LLMProviderFactory:

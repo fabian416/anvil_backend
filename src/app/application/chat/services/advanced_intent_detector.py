@@ -15,7 +15,8 @@ from app.domain.value_objects.chat import (
     ConversationMatch,
 )
 from app.domain.chat.entities.message import Message
-from app.domain.chat.ports.conversation_repository import ConversationRepository
+# REMOVED: ConversationRepository not used in this service
+# from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 logger = logging.getLogger(__name__)
 
@@ -145,14 +146,9 @@ class AdvancedIntentDetector:
         "check analytics",
     ]
 
-    def __init__(self, conversation_repository: ConversationRepository):
-        """
-        Initialize intent detector.
-
-        Args:
-            conversation_repository: Repository for conversation history
-        """
-        self._conversation_repository = conversation_repository
+    def __init__(self):
+        """Initialize intent detector."""
+        pass
 
     async def detect_intent_while_typing(
         self,

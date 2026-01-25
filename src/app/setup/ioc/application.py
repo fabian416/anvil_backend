@@ -1,19 +1,12 @@
 from dishka import Provider, Scope, provide, provide_all
 
-# Chat interactors
-from app.application.chat.commands.create_conversation import CreateConversation
-from app.application.chat.commands.delete_conversation import DeleteConversation
-from app.application.chat.commands.update_conversation_title import UpdateConversationTitle
+# Legacy chat commands - bridged to unified chat system via ConversationRepositoryBridge
 from app.application.chat.commands.send_message import SendMessage
-from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
-from app.application.chat.queries.get_conversation import GetConversation
-from app.application.chat.queries.list_conversations import ListConversations
-from app.application.chat.queries.get_messages import GetMessages
-
-# Domain ports for SendMessage
 from app.domain.chat.ports.conversation_repository import ConversationRepository
-from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.domain.ports.ai.agent_gateway import AgentGateway
+
+from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
+from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 
 from app.application.commands.user.activate_user import ActivateUserInteractor
 from app.application.commands.user.change_password import ChangePasswordInteractor
@@ -83,14 +76,8 @@ from app.setup.config.privy import PrivySettings
 class ApplicationProvider(Provider):
     scope = Scope.REQUEST
 
-    # Chat interactors
-    chat_command_interactors = provide_all(
-        CreateConversation,
-        DeleteConversation,
-        UpdateConversationTitle,
-        scope=Scope.REQUEST,
-    )
-    
+    # SendMessage command - still used by UnifiedChatOrchestrator
+    # Now bridges to unified chat via ConversationRepositoryBridge
     @provide(scope=Scope.REQUEST)
     def provide_send_message(
         self,
@@ -98,32 +85,20 @@ class ApplicationProvider(Provider):
         agent_gateway: AgentGateway,
         transaction_manager: TransactionManager,
     ) -> SendMessage:
-        """
-        Provide SendMessage with only required dependencies.
-        Optional dependencies will use their defaults.
-        """
+        """Provide SendMessage with bridged repository."""
         return SendMessage(
             repository=repository,
             agent_gateway=agent_gateway,
             transaction_manager=transaction_manager,
         )
-    
-    chat_query_interactors = provide_all(
-        GetConversation,
-        ListConversations,
-        GetMessages,
-        scope=Scope.REQUEST,
-    )
 
     @provide(scope=Scope.REQUEST)
     def provide_admin_chat_analytics_service(
         self,
-        conversation_repository: ConversationRepository,
         analytics_repository: AnalyticsRepository,
     ) -> AdminChatAnalyticsService:
         """Provide admin chat analytics service for admin dashboard endpoints."""
         return AdminChatAnalyticsService(
-            conversation_repository=conversation_repository,
             analytics_repository=analytics_repository,
         )
 

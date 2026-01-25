@@ -521,7 +521,6 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_user_chat_analytics_service(
         self,
-        conversation_repository: ConversationRepository,
         analytics_repository: AnalyticsRepository,
     ) -> UserChatAnalyticsService:
         """
@@ -530,14 +529,12 @@ class ChatPhase2Provider(Provider):
         Generates personalized analytics for individual users.
         """
         return UserChatAnalyticsService(
-            conversation_repository=conversation_repository,
             analytics_repository=analytics_repository,
         )
 
     @provide
     def provide_admin_chat_analytics_service(
         self,
-        conversation_repository: ConversationRepository,
         analytics_repository: AnalyticsRepository,
     ) -> AdminChatAnalyticsService:
         """
@@ -546,7 +543,6 @@ class ChatPhase2Provider(Provider):
         Aggregates analytics across all users for admin dashboards.
         """
         return AdminChatAnalyticsService(
-            conversation_repository=conversation_repository,
             analytics_repository=analytics_repository,
         )
 
@@ -557,16 +553,13 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_advanced_intent_detector(
         self,
-        conversation_repository: ConversationRepository,
     ) -> AdvancedIntentDetector:
         """
         Provide advanced intent detection service.
 
         Analyzes user input to detect intent and provide real-time suggestions.
         """
-        return AdvancedIntentDetector(
-            conversation_repository=conversation_repository,
-        )
+        return AdvancedIntentDetector()
 
     # ========================================
     # Unified Chat Routing (Phase 8)

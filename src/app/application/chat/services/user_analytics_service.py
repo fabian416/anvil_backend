@@ -22,7 +22,8 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from collections import Counter
 
-from app.domain.chat.ports.conversation_repository import ConversationRepository
+# REMOVED: ConversationRepository not used in this service
+# from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.presentation.http.schemas.user_chat_analytics import (
     UserAnalyticsDashboardResponse,
@@ -56,17 +57,14 @@ class UserChatAnalyticsService:
 
     def __init__(
         self,
-        conversation_repository: ConversationRepository,
         analytics_repository: AnalyticsRepository,
     ):
         """
         Initialize user analytics service.
 
         Args:
-            conversation_repository: Repository for conversation data
             analytics_repository: Repository for analytics data
         """
-        self._repository = conversation_repository
         self._analytics_repository = analytics_repository
 
     async def get_user_dashboard(
