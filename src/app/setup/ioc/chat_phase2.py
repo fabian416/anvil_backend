@@ -148,7 +148,9 @@ from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.application.chat.handlers.lending_handler import LendingHandler
 from app.application.chat.handlers.portfolio_handler import PortfolioHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
+from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
 from app.application.chat.handlers.activity_handler import ActivityHandler
+from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
 from app.application.chat.handlers.receive_handler import ReceiveHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
@@ -682,6 +684,53 @@ class ChatPhase2Provider(Provider):
             lifi_client=None,
             hyperliquid_client=None,
         )
+
+    @provide
+    def provide_hyperliquid_client(self) -> HyperliquidClient | None:
+        """
+        Provide HyperliquidClient for spot swap quotes.
+        
+        Returns:
+            HyperliquidClient configured for mainnet, or None if disabled.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            client = HyperliquidClient(testnet=False)
+            logger.info("✅ HyperliquidClient enabled for SwapHandlerV2")
+            return client
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to create HyperliquidClient: {e}")
+            return None
+
+    @provide
+    def provide_swap_handler_v2(
+        self,
+        hyperliquid_client: HyperliquidClient | None,
+    ) -> SwapHandlerV2:
+        """
+        Provide SwapHandlerV2 with Hyperliquid spot (ONLY provider).
+        
+        Features:
+        - Real-time Hyperliquid spot quotes
+        - Zero gas fees
+        - High-speed execution (20,000+ TPS)
+        - 0.02% trading fee
+        
+        Supported tokens (16):
+        ETH, USDC, USDT, DAI, WBTC, WETH, BTC, SOL,
+        MATIC, ARB, OP, LINK, UNI, AAVE, CRV, MKR
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if hyperliquid_client:
+            logger.info("🔵 SwapHandlerV2 initialized with Hyperliquid spot (ONLY provider)")
+        else:
+            logger.error("❌ SwapHandlerV2: Hyperliquid client not available - swaps will fail")
+        
+        return SwapHandlerV2(hyperliquid_client=hyperliquid_client)
 
     @provide
     def provide_activity_handler(

@@ -609,6 +609,7 @@ def create_conversations_router() -> APIRouter:
         message_repository: FromDishka[ChatMessageRepositorySqla],
         llm_gateway: FromDishka[LLMGateway],
         moonpay_swap_handler: FromDishka[MoonPaySwapHandler],
+        swap_handler_v2: FromDishka[SwapHandlerV2],  # Hyperliquid spot swap handler
         supervisor_command: FromDishka[SendMessageWithSupervisor] = None,  # Supervisor for authenticated users
         user_context_service: FromDishka[UserContextService] = None,  # Context-aware agents
     ) -> ChatResponse:
@@ -1122,10 +1123,11 @@ def create_conversations_router() -> APIRouter:
                 pending_action = handler_result.get("pending_action")
                 registration_required = None
         
-        elif intent_result.intent.value.startswith("SWAP"):
-            # Swap flow (including continuation)
+        elif intent_result.intent.value.startswith("SWAP") or intent_result.intent.value.startswith("MOONPAY_SWAP"):
+            # Swap flow (including continuation) - Uses Hyperliquid spot quotes
             try:
-                swap_handler = SwapHandlerV2()
+                # Use injected swap_handler_v2 with Hyperliquid integration
+                swap_handler = swap_handler_v2
                 
                 # Check for continuation metadata
                 continuation_step = None

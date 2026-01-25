@@ -2,22 +2,45 @@
 Swap Handler v2.
 
 Multi-turn conversational swap handler with full flow support.
+
+Uses Hyperliquid for real-time spot swap quotes.
 """
 
 import logging
 import re
+import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from app.application.chat.services.conversation_memory import ConversationContext
+
+if TYPE_CHECKING:
+    from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
 
 logger = logging.getLogger(__name__)
 
 
-# Supported tokens
+# Supported tokens on Hyperliquid Spot (MEME TOKENS + USDC only)
+# ⚠️ IMPORTANT: Hyperliquid Spot does NOT support major tokens like ETH, BTC, SOL
+# Major tokens are only available on Hyperliquid Perps (perpetual futures)
 SUPPORTED_TOKENS = [
-    "ETH", "USDC", "USDT", "DAI", "WBTC", "WETH", "BTC", "SOL",
-    "MATIC", "ARB", "OP", "LINK", "UNI", "AAVE", "CRV", "MKR",
+    # Quote currency (required for all swaps)
+    "USDC",
+    # Popular meme tokens on Hyperliquid Spot
+    "PURR", "HFUN", "TRUMP", "PEPE", "MOG", "POINTS", "JEFF",
+    "GMEOW", "LICK", "MANLET", "SIX", "WAGMI", "CAPPY",
+    "XULIAN", "RUG", "CZ", "BAGS", "ANSEM", "TATE", "FUN",
+    "BIGBEN", "KOBE", "VEGAS", "PUMP", "SCHIZO", "CATNIP",
+    "HAPPY", "SELL", "HBOOST", "GPT", "PANDA", "HODL", "RAGE",
+    "ASI", "LEAP", "VAPOR", "X", "PILL", "CAT", "HPEPE",
+    "MBAPPE", "MAGA", "OMNIX", "COKE", "MEOW", "ANT", "NEIRO",
+]
+
+# Major tokens NOT supported on Hyperliquid Spot (for error messaging)
+MAJOR_TOKENS_NOT_SUPPORTED = [
+    "ETH", "BTC", "SOL", "WBTC", "WETH", "LINK", "UNI", "AAVE",
+    "CRV", "MKR", "DAI", "USDT", "MATIC", "ARB", "OP", "AVAX",
+    "DOT", "ATOM", "APT", "SUI", "SEI", "TIA", "INJ", "FTM",
 ]
 
 
@@ -73,17 +96,60 @@ class HandlerResult:
 
 class SwapHandlerV2:
     """
-    Multi-turn conversational swap handler.
+    Multi-turn conversational swap handler powered by Hyperliquid Spot.
+    
+    ⚠️ IMPORTANT: Hyperliquid Spot ONLY supports meme tokens paired with USDC.
+    Major tokens (ETH, BTC, SOL, etc.) are NOT available on Hyperliquid Spot.
+    Hyperliquid is primarily a perpetual futures exchange.
     
     Supports:
-    - Single message complete swaps: "swap 100 USDC to ETH"
-    - Multi-turn flows: "quiero swap" → "de USDC" → "a ETH" → "100"
-    - Context-aware continuation
+    - Single message complete swaps: "swap 100 USDC to PURR"
+    - Multi-turn flows: conversational swap building
+    - Real-time Hyperliquid spot quotes (ONLY provider)
+    
+    Hyperliquid Spot Coverage (Meme Tokens Only):
+    ✅ USDC (quote currency - required for all swaps)
+    ✅ PURR, HFUN, TRUMP, PEPE, MOG, POINTS, JEFF, GMEOW
+    ✅ Other meme tokens available on Hyperliquid Spot
+    
+    ❌ NOT SUPPORTED (Major Tokens):
+    ETH, BTC, SOL, WBTC, LINK, UNI, AAVE, etc.
+    These are only available on Hyperliquid Perps (perpetual futures).
     """
     
-    def __init__(self):
-        # Popular tokens for quick selection
-        self._popular_tokens = ["USDC", "ETH", "BTC", "USDT", "DAI", "WBTC"]
+    # Tokens actually supported by Hyperliquid Spot (meme tokens + USDC)
+    # All pairs are XXX/USDC - USDC is the only quote currency
+    HYPERLIQUID_SPOT_TOKENS = {
+        "USDC",  # Quote currency (required for all swaps)
+        # Popular meme tokens on Hyperliquid Spot
+        "PURR", "HFUN", "TRUMP", "PEPE", "MOG", "POINTS", "JEFF",
+        "GMEOW", "LICK", "MANLET", "SIX", "WAGMI", "CAPPY",
+        "XULIAN", "RUG", "CZ", "BAGS", "ANSEM", "TATE", "FUN",
+        "BIGBEN", "KOBE", "VEGAS", "PUMP", "SCHIZO", "CATNIP",
+        "HAPPY", "SELL", "HBOOST", "GPT", "PANDA", "HODL", "RAGE",
+        "ASI", "LEAP", "VAPOR", "X", "PILL", "CAT", "HPEPE",
+        "MBAPPE", "MAGA", "OMNIX", "COKE", "MEOW", "ANT", "NEIRO",
+    }
+    
+    # Major tokens that users commonly request but are NOT on Hyperliquid Spot
+    MAJOR_TOKENS_NOT_SUPPORTED = {
+        "ETH", "BTC", "SOL", "WBTC", "WETH", "LINK", "UNI", "AAVE",
+        "CRV", "MKR", "DAI", "USDT", "MATIC", "ARB", "OP", "AVAX",
+        "DOT", "ATOM", "APT", "SUI", "SEI", "TIA", "INJ", "FTM",
+    }
+    
+    def __init__(self, hyperliquid_client: "HyperliquidClient | None" = None):
+        """
+        Initialize swap handler.
+        
+        Args:
+            hyperliquid_client: Hyperliquid client for real-time spot quotes.
+                               Required for swap functionality.
+        """
+        self._hyperliquid = hyperliquid_client
+        
+        # Popular tokens for quick selection (Hyperliquid Spot supported)
+        self._popular_tokens = ["USDC", "PURR", "TRUMP", "PEPE", "HFUN", "MOG"]
         
         self._messages = {
             "ask_from_token": {
@@ -135,19 +201,9 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
             },
         }
         
-        # Demo exchange rates
-        self._demo_rates = {
-            ("USDC", "ETH"): 0.0003,
-            ("ETH", "USDC"): 3333.33,
-            ("USDC", "WBTC"): 0.000015,
-            ("WBTC", "USDC"): 66666.67,
-            ("ETH", "WBTC"): 0.05,
-            ("WBTC", "ETH"): 20.0,
-            ("USDC", "USDT"): 1.0,
-            ("USDT", "USDC"): 1.0,
-            ("DAI", "USDC"): 1.0,
-            ("USDC", "DAI"): 1.0,
-        }
+        # Cache for Hyperliquid quotes (short TTL)
+        self._quote_cache: dict[str, tuple[float, Any]] = {}  # key -> (timestamp, quote)
+        self._cache_ttl = 30  # 30 seconds
     
     async def handle(
         self,
@@ -286,20 +342,176 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
         swap_info: SwapInfo,
         language: str,
     ) -> HandlerResult:
-        """Generate a demo swap quote."""
-        # Get rate
-        rate = self._get_rate(swap_info.from_token, swap_info.to_token)
+        """
+        Generate swap quote using Hyperliquid spot (ONLY provider).
         
-        # Calculate output
+        Hyperliquid provides:
+        - Real-time order book-based quotes
+        - Zero gas fees
+        - High-speed execution (20,000+ TPS)
+        - 0.02% trading fee
+        """
+        start_time = time.time()
+        
+        # Check if Hyperliquid client is available
+        if not self._hyperliquid:
+            error_messages = {
+                "en": "⚠️ **Swap Unavailable**\n\nHyperliquid service is not configured. Please contact support.",
+                "es": "⚠️ **Swap No Disponible**\n\nEl servicio de Hyperliquid no está configurado. Por favor contacta soporte.",
+                "pt": "⚠️ **Swap Indisponível**\n\nO serviço Hyperliquid não está configurado. Por favor, entre em contato com o suporte.",
+            }
+            return HandlerResult(
+                content=error_messages.get(language, error_messages["en"]),
+                pending_action=None,
+                requires_registration=False,
+                metadata={"error": "hyperliquid_not_configured"},
+            )
+        
+        # Check if tokens are supported - with special messaging for major tokens
+        unsupported_token = None
+        is_major_token = False
+        
+        if swap_info.from_token not in self.HYPERLIQUID_SPOT_TOKENS:
+            unsupported_token = swap_info.from_token
+            is_major_token = swap_info.from_token in self.MAJOR_TOKENS_NOT_SUPPORTED
+        elif swap_info.to_token not in self.HYPERLIQUID_SPOT_TOKENS:
+            unsupported_token = swap_info.to_token
+            is_major_token = swap_info.to_token in self.MAJOR_TOKENS_NOT_SUPPORTED
+        
+        if unsupported_token:
+            if is_major_token:
+                # Special message for major tokens (ETH, BTC, etc.)
+                error_messages = {
+                    "en": f"""⚠️ **{unsupported_token} Not Available for Spot Swap**
+
+**{unsupported_token}** is a major token that is **NOT available on Hyperliquid Spot**.
+
+Hyperliquid Spot only supports **meme tokens** paired with USDC:
+• PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+
+**For {unsupported_token} trading:**
+• Hyperliquid offers **perpetual futures** (perps) for {unsupported_token}
+• For spot swaps of major tokens, use DEX aggregators like 1inch, Uniswap, or 0x
+
+**Available on Anvil for {unsupported_token}:**
+• 📈 Check price and market data
+• 📊 Portfolio tracking
+• 🔮 Price predictions via Hunter AI""",
+                    "es": f"""⚠️ **{unsupported_token} No Disponible para Swap Spot**
+
+**{unsupported_token}** es un token principal que **NO está disponible en Hyperliquid Spot**.
+
+Hyperliquid Spot solo soporta **meme tokens** pareados con USDC:
+• PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+
+**Para trading de {unsupported_token}:**
+• Hyperliquid ofrece **futuros perpetuos** (perps) para {unsupported_token}
+• Para swaps spot de tokens principales, usa agregadores DEX como 1inch, Uniswap o 0x
+
+**Disponible en Anvil para {unsupported_token}:**
+• 📈 Consultar precio y datos de mercado
+• 📊 Seguimiento de portafolio
+• 🔮 Predicciones de precio via Hunter AI""",
+                    "pt": f"""⚠️ **{unsupported_token} Não Disponível para Swap Spot**
+
+**{unsupported_token}** é um token principal que **NÃO está disponível no Hyperliquid Spot**.
+
+Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
+• PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+
+**Para trading de {unsupported_token}:**
+• Hyperliquid oferece **futuros perpétuos** (perps) para {unsupported_token}
+• Para swaps spot de tokens principais, use agregadores DEX como 1inch, Uniswap ou 0x
+
+**Disponível no Anvil para {unsupported_token}:**
+• 📈 Verificar preço e dados de mercado
+• 📊 Rastreamento de portfólio
+• 🔮 Previsões de preço via Hunter AI""",
+                }
+            else:
+                # Generic message for unknown tokens
+                popular_tokens = ", ".join(sorted(list(self.HYPERLIQUID_SPOT_TOKENS)[:10]))
+                error_messages = {
+                    "en": f"""⚠️ **Token Not Supported**
+
+**{unsupported_token}** is not available on Hyperliquid Spot.
+
+**Supported tokens (meme tokens + USDC):**
+{popular_tokens}... and more meme tokens.
+
+💡 All swaps on Hyperliquid Spot are paired with USDC.""",
+                    "es": f"""⚠️ **Token No Soportado**
+
+**{unsupported_token}** no está disponible en Hyperliquid Spot.
+
+**Tokens soportados (meme tokens + USDC):**
+{popular_tokens}... y más meme tokens.
+
+💡 Todos los swaps en Hyperliquid Spot están pareados con USDC.""",
+                    "pt": f"""⚠️ **Token Não Suportado**
+
+**{unsupported_token}** não está disponível no Hyperliquid Spot.
+
+**Tokens suportados (meme tokens + USDC):**
+{popular_tokens}... e mais meme tokens.
+
+💡 Todas as trocas no Hyperliquid Spot são pareadas com USDC.""",
+                }
+            
+            return HandlerResult(
+                content=error_messages.get(language, error_messages["en"]),
+                pending_action=None,
+                requires_registration=False,
+                metadata={
+                    "error": "token_not_supported",
+                    "token": unsupported_token,
+                    "is_major_token": is_major_token,
+                    "suggestion": "use_perps_or_dex" if is_major_token else "check_supported_tokens",
+                },
+            )
+        
+        # Parse amount
         try:
             amount = float(swap_info.amount)
         except (ValueError, TypeError):
             amount = 100.0
         
-        output_amount = amount * rate
+        # Get Hyperliquid spot quote
+        quote_result = await self._get_hyperliquid_quote(
+            swap_info.from_token,
+            swap_info.to_token,
+            amount,
+        )
         
-        # Extract chain information from swap_info or default to ethereum
-        chain = swap_info.from_chain or "ethereum"  # Default to ethereum
+        if not quote_result:
+            # Hyperliquid quote failed
+            error_messages = {
+                "en": f"⚠️ **Quote Failed**\n\nUnable to get quote for **{swap_info.from_token}/{swap_info.to_token}** from Hyperliquid.\n\nThis pair may have insufficient liquidity. Please try again or use a different pair.",
+                "es": f"⚠️ **Cotización Fallida**\n\nNo se pudo obtener cotización para **{swap_info.from_token}/{swap_info.to_token}** de Hyperliquid.\n\nEste par puede tener liquidez insuficiente. Por favor intenta de nuevo o usa otro par.",
+                "pt": f"⚠️ **Cotação Falhou**\n\nNão foi possível obter cotação para **{swap_info.from_token}/{swap_info.to_token}** do Hyperliquid.\n\nEste par pode ter liquidez insuficiente. Por favor tente novamente ou use outro par.",
+            }
+            return HandlerResult(
+                content=error_messages.get(language, error_messages["en"]),
+                pending_action=None,
+                requires_registration=False,
+                metadata={"error": "quote_failed", "from_token": swap_info.from_token, "to_token": swap_info.to_token},
+            )
+        
+        # Real Hyperliquid quote
+        rate = quote_result["rate"]
+        output_amount = quote_result["output_amount"]
+        spread_bps = quote_result["spread_bps"]
+        price_impact = spread_bps / 100  # Convert bps to percentage
+        
+        latency_ms = int((time.time() - start_time) * 1000)
+        logger.info(
+            f"✅ Hyperliquid spot quote: {amount} {swap_info.from_token} → "
+            f"{output_amount:.6f} {swap_info.to_token} @ {rate:.6f} "
+            f"(spread: {spread_bps:.2f} bps, latency: {latency_ms}ms)"
+        )
+        
+        # Extract chain information from swap_info or default to hyperliquid
+        chain = swap_info.from_chain or "hyperliquid"
         to_chain = swap_info.to_chain
         
         # Format quote
@@ -309,26 +521,32 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
             to_token=swap_info.to_token,
             output_amount=f"{output_amount:.6f}",
             rate=f"{rate:.6f}",
-            price_impact="0.05",
-            network=chain.title(),  # Capitalize chain name
+            price_impact=f"{price_impact:.2f}",
+            network="Hyperliquid",
         )
         
+        # Add Hyperliquid branding
+        content = f"🔵 **HYPERLIQUID SPOT**\n\n{content}"
+        
         # Build execute data for when swap is complete and ready
-        # NOW USING: Privy + 0x Protocol for frontend execution
         execute_data = {
             "action_type": "swap",
-            "provider": "privy_0x",  # Tell frontend to use Privy + 0x
+            "provider": "hyperliquid",
             "chain": chain,
             "from_token": swap_info.from_token,
             "to_token": swap_info.to_token,
             "amount": swap_info.amount,
             "slippage": 1.0,
             "to_chain": to_chain,
+            "quote_amount": f"{output_amount:.6f}",
+            "exchange_rate": f"{rate:.6f}",
+            "spread_bps": spread_bps,
+            "fee_percent": 0.02,  # Hyperliquid 0.02% fee
         }
         
         # Mark swap as complete in metadata so it can be detected for confirmation
         swap_metadata = swap_info.to_dict()
-        swap_metadata["is_complete"] = True  # Mark as complete so confirmation can be detected
+        swap_metadata["is_complete"] = True
         
         return HandlerResult(
             content=content,
@@ -342,12 +560,15 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
                     "from_amount": swap_info.amount,
                     "to_amount": f"{output_amount:.6f}",
                     "rate": rate,
-                    "price_impact": 0.05,
-                    "network": chain,
-                    "is_demo": True,
+                    "price_impact": price_impact,
+                    "network": "hyperliquid",
+                    "provider": "hyperliquid",
+                    "spread_bps": spread_bps,
+                    "fee_percent": 0.02,
+                    "latency_ms": latency_ms,
                 },
             },
-            execute_data=execute_data,  # Include execute data when swap is ready
+            execute_data=execute_data,
         )
     
     def _extract_swap_info(
@@ -555,19 +776,59 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
         
         return swap_info
     
-    def _get_rate(self, from_token: str, to_token: str) -> float:
-        """Get exchange rate for token pair."""
-        key = (from_token, to_token)
-        if key in self._demo_rates:
-            return self._demo_rates[key]
+    async def _get_hyperliquid_quote(
+        self,
+        from_token: str,
+        to_token: str,
+        amount: float,
+    ) -> dict[str, Any] | None:
+        """
+        Get real-time swap quote from Hyperliquid spot.
         
-        # Fallback calculation
-        reverse_key = (to_token, from_token)
-        if reverse_key in self._demo_rates:
-            return 1.0 / self._demo_rates[reverse_key]
+        Args:
+            from_token: Source token symbol
+            to_token: Destination token symbol
+            amount: Amount to swap
+            
+        Returns:
+            Quote dict with rate, output_amount, spread_bps, or None if unavailable
+        """
+        if not self._hyperliquid:
+            return None
         
-        # Default to 1:1 for unknown pairs
-        return 1.0
+        # Check cache
+        cache_key = f"{from_token}:{to_token}:{amount}"
+        now = time.time()
+        if cache_key in self._quote_cache:
+            cached_time, cached_quote = self._quote_cache[cache_key]
+            if now - cached_time < self._cache_ttl:
+                logger.debug(f"Using cached quote for {from_token}/{to_token}")
+                return cached_quote
+        
+        try:
+            quote = await self._hyperliquid.get_spot_quote(
+                from_token=from_token,
+                to_token=to_token,
+                amount=amount,
+            )
+            
+            result = {
+                "rate": quote.price,
+                "output_amount": quote.to_amount,
+                "spread_bps": quote.spread_bps,
+                "mid_price": quote.mid_price,
+                "from_token": from_token,
+                "to_token": to_token,
+            }
+            
+            # Cache the result
+            self._quote_cache[cache_key] = (now, result)
+            
+            return result
+            
+        except Exception as e:
+            logger.warning(f"Hyperliquid quote failed for {from_token}/{to_token}: {e}")
+            return None
     
     def _get_message(self, key: str, language: str) -> str:
         """Get localized message."""
