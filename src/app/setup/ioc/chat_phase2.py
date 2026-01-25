@@ -553,13 +553,17 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_advanced_intent_detector(
         self,
+        message_repository: ChatMessageRepositorySqla,
     ) -> AdvancedIntentDetector:
         """
         Provide advanced intent detection service.
 
         Analyzes user input to detect intent and provide real-time suggestions.
+        Uses unified chat message repository for similar conversation search.
         """
-        return AdvancedIntentDetector()
+        return AdvancedIntentDetector(
+            message_repository=message_repository,
+        )
 
     # ========================================
     # Unified Chat Routing (Phase 8)

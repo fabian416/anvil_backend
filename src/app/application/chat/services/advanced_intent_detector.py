@@ -1,11 +1,14 @@
 """
 Advanced intent detection service with real-time suggestions.
+
+Uses unified chat system for conversation history queries.
 """
 
 import re
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Protocol
 from uuid import UUID
+from datetime import datetime, timedelta, UTC
 
 from app.domain.value_objects.chat import (
     IntentPrediction,
@@ -15,10 +18,26 @@ from app.domain.value_objects.chat import (
     ConversationMatch,
 )
 from app.domain.chat.entities.message import Message
-# REMOVED: ConversationRepository not used in this service
-# from app.domain.chat.ports.conversation_repository import ConversationRepository
+from app.domain.chat.entities.chat_message import ChatMessage
 
 logger = logging.getLogger(__name__)
+
+
+class ChatMessageRepositoryProtocol(Protocol):
+    """Protocol for chat message repository (unified chat system)."""
+    
+    async def list_for_conversation(
+        self,
+        conversation_id: UUID,
+        limit: int = 50,
+    ) -> list[ChatMessage]: ...
+    
+    async def search_user_messages(
+        self,
+        user_id: UUID,
+        query: str,
+        limit: int = 10,
+    ) -> list[ChatMessage]: ...
 
 
 class AdvancedIntentDetector:
@@ -146,9 +165,18 @@ class AdvancedIntentDetector:
         "check analytics",
     ]
 
-    def __init__(self):
-        """Initialize intent detector."""
-        pass
+    def __init__(
+        self,
+        message_repository: Optional[ChatMessageRepositoryProtocol] = None,
+    ):
+        """
+        Initialize intent detector.
+        
+        Args:
+            message_repository: Optional unified chat message repository for
+                               finding similar conversations
+        """
+        self._message_repository = message_repository
 
     async def detect_intent_while_typing(
         self,
@@ -333,7 +361,7 @@ class AdvancedIntentDetector:
         similarity_threshold: float = 0.7,
     ) -> List[ConversationMatch]:
         """
-        Find similar past conversations.
+        Find similar past conversations using unified chat system.
 
         Args:
             current_message: Current user message
@@ -344,12 +372,125 @@ class AdvancedIntentDetector:
         Returns:
             List of conversation matches
         """
-        # TODO: Implement semantic similarity search using embeddings
-        # For now, return empty list - this needs vector database integration
-        logger.info(
-            f"Finding similar conversations for user {user_id} (not yet implemented)"
-        )
-        return []
+        if not self._message_repository:
+            logger.debug("Message repository not available for similarity search")
+            return []
+        
+        # Extract key terms from current message for keyword-based matching
+        keywords = self._extract_search_keywords(current_message)
+        if not keywords:
+            return []
+        
+        matches = []
+        
+        try:
+            # Search user's past messages for similar content
+            # Note: For better results, implement semantic search with embeddings
+            for keyword in keywords[:3]:  # Limit to top 3 keywords
+                if hasattr(self._message_repository, 'search_user_messages'):
+                    results = await self._message_repository.search_user_messages(
+                        user_id=user_id,
+                        query=keyword,
+                        limit=limit,
+                    )
+                    
+                    for msg in results:
+                        # Calculate simple keyword similarity score
+                        similarity = self._calculate_keyword_similarity(
+                            current_message, msg.content
+                        )
+                        
+                        if similarity >= similarity_threshold:
+                            matches.append(
+                                ConversationMatch.create(
+                                    conversation_id=msg.conversation_id,
+                                    similarity_score=similarity,
+                                    matching_query=keyword,
+                                    preview_text=msg.content[:200],
+                                    message_count=1,  # Would need additional query
+                                    created_at=msg.created_at,
+                                )
+                            )
+        except Exception as e:
+            logger.warning(f"Error searching similar conversations: {e}")
+            return []
+        
+        # Deduplicate by conversation_id and sort by similarity
+        seen_convs = set()
+        unique_matches = []
+        for match in sorted(matches, key=lambda m: m.similarity_score, reverse=True):
+            if match.conversation_id not in seen_convs:
+                seen_convs.add(match.conversation_id)
+                unique_matches.append(match)
+                if len(unique_matches) >= limit:
+                    break
+        
+        return unique_matches
+    
+    def _extract_search_keywords(self, message: str) -> List[str]:
+        """
+        Extract meaningful keywords from message for search.
+        
+        Args:
+            message: User message
+            
+        Returns:
+            List of keywords
+        """
+        # Remove common words and extract meaningful terms
+        stopwords = {
+            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
+            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+            'would', 'could', 'should', 'may', 'might', 'must', 'shall',
+            'can', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by',
+            'from', 'as', 'into', 'through', 'during', 'before', 'after',
+            'above', 'below', 'between', 'under', 'again', 'further',
+            'then', 'once', 'here', 'there', 'when', 'where', 'why',
+            'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some',
+            'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
+            'than', 'too', 'very', 'just', 'i', 'me', 'my', 'myself',
+            'we', 'our', 'you', 'your', 'he', 'she', 'it', 'they', 'what',
+        }
+        
+        # Tokenize and filter
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', message.lower())
+        keywords = [w for w in words if w not in stopwords]
+        
+        # Add extracted entities (protocols, tokens) as high-priority keywords
+        entities = self._extract_entities(message)
+        if 'protocols' in entities:
+            keywords = entities['protocols'] + keywords
+        if 'tokens' in entities:
+            keywords = entities['tokens'] + keywords
+        
+        return keywords[:10]  # Limit keywords
+    
+    def _calculate_keyword_similarity(
+        self,
+        message1: str,
+        message2: str,
+    ) -> float:
+        """
+        Calculate simple keyword-based similarity between messages.
+        
+        Args:
+            message1: First message
+            message2: Second message
+            
+        Returns:
+            Similarity score between 0 and 1
+        """
+        keywords1 = set(self._extract_search_keywords(message1))
+        keywords2 = set(self._extract_search_keywords(message2))
+        
+        if not keywords1 or not keywords2:
+            return 0.0
+        
+        # Jaccard similarity
+        intersection = len(keywords1 & keywords2)
+        union = len(keywords1 | keywords2)
+        
+        return intersection / union if union > 0 else 0.0
 
     def _extract_entities(self, message: str) -> Dict[str, Any]:
         """
