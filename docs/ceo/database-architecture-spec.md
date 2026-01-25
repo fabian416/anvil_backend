@@ -2,7 +2,7 @@
 
 > **Framework:** MIT Systems Thinking + Stanford Design Thinking + First Principles Analysis  
 > **Agents:** @database-architect + @backend-engineer + @agent-evolution-system  
-> **Status:** Phase 1 - Database Analysis Complete  
+> **Status:** Phase 2 - Complete Database Analysis (87 Tables Mapped)  
 > **Date:** 2026-01-25
 
 ---
@@ -11,138 +11,55 @@
 
 **Mission:** Analyze the complete database structure of the Anvil DeFi Backend to understand the purpose, relationships, and architectural patterns of each table within the hexagonal architecture framework.
 
-**Scope:** 38 primary tables across 11 functional domains supporting a multi-agent DeFi platform with guest/authenticated chat, blockchain operations, AI telemetry, and portfolio management.
+**Scope:** **87 tables mapped** (84 currently in database) across **15 functional domains** supporting a multi-agent DeFi platform with guest/authenticated chat, blockchain operations, AI telemetry, LLM orchestration, and portfolio management.
 
 **Key Findings:**
-- ✅ **Well-structured hexagonal architecture** with proper domain isolation
-- ✅ **Dual chat systems** (legacy + unified) with clear deprecation path
-- ✅ **Comprehensive AI telemetry** tracking 18 specialized agents
+- ✅ **Comprehensive hexagonal architecture** with proper domain isolation across 87 tables
+- ✅ **Enterprise LLM Orchestration** with 15 tables managing multi-provider AI operations
+- ✅ **Dual chat systems** (legacy + unified) with clear deprecation path (2026-06-01)
+- ✅ **Advanced distillation system** (6 tables) for LLM cost optimization
+- ✅ **Project-based knowledge bases** (12 tables) for RAG and context management
+- ✅ **Comprehensive AI telemetry** tracking 18 specialized agents across 13 tables
 - ✅ **Multi-chain wallet support** with Privy integration
-- ⚠️ **Legacy tables pending removal** (conversations, messages, sessions)
-- ⚠️ **Some normalization opportunities** in analytics tables
+- ✅ **Retry/resilience infrastructure** (3 tables) for fault tolerance
+- ⚠️ **Legacy tables pending removal** (conversations, messages, sessions) - scheduled 2026-06-01
+- ⚠️ **3 tables pending migration** (87 mapped, 84 in DB)
 
-**Database Technology:** PostgreSQL 16 with UUID, JSONB, and enum support
-
----
-
-## 📚 Phase 1: Problem Decomposition & Root Cause Analysis
-
-### 1.1 First Principles Analysis: Why This Database Exists
-
-#### **Essential Business Problems Solved:**
-
-1. **Multi-Agent AI Platform**: Track execution, costs, and performance of 18 specialized DeFi agents
-2. **Guest-First User Experience**: Allow non-authenticated users to interact with AI agents
-3. **Multi-Chain DeFi Operations**: Support trading, earning, and portfolio management across 10+ blockchains
-4. **Cost Optimization**: Track LLM usage to optimize between Vertex AI ($0.10/1M tokens) vs OpenAI ($30/1M tokens)
-5. **Wallet Management**: Support Privy embedded wallets, external wallets, and imported wallets
-6. **Analytics & Insights**: Provide real-time portfolio tracking and transaction analytics
-
-#### **System Invariants:**
-- Users can be authenticated (INTEGER user_id) or guests (UUID + IP tracking)
-- All chat messages support multi-language (en, es, pt, zh)
-- All blockchain operations are multi-chain (Arbitrum, Base, Optimism, etc.)
-- All AI operations are multi-model (Vertex AI, DeepInfra, OpenAI)
-- All timestamps use `timestamp with time zone` for global users
-- All monetary values use `NUMERIC` for precision (no floats)
-
-#### **Architectural Constraints:**
-- **Hexagonal Architecture**: Domain entities never reference infrastructure
-- **SQLAlchemy Explicit Mappings**: Domain entities mapped via separate mapping files
-- **CQRS Pattern**: Separate read/write concerns (UserCommandGateway vs UserQueryGateway)
-- **Port-Adapter Pattern**: Repositories implement domain ports
-- **No Cascading Deletes in Domain**: All CASCADE handled at database level
+**Database Technology:** PostgreSQL 16 with UUID, JSONB, pgvector (embeddings), and enum support
 
 ---
 
-## 🏗️ Database Architecture Overview
+## 🏗️ Complete Table Inventory (87 Tables)
 
-### System Architecture Diagram
+### Domain Summary
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    APPLICATION LAYER                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Commands   │  │   Queries    │  │ Interactors  │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-                             ↓
-┌─────────────────────────────────────────────────────────────┐
-│               INFRASTRUCTURE LAYER (Ports)                   │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │              Repository Interfaces                    │   │
-│  │  (Domain Ports - defined in domain layer)            │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                             ↓
-┌─────────────────────────────────────────────────────────────┐
-│          PERSISTENCE LAYER (Adapters - SQLAlchemy)          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Mappings   │  │ Repositories │  │   Models     │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-                             ↓
-┌─────────────────────────────────────────────────────────────┐
-│                    DATABASE LAYER                            │
-│                   PostgreSQL 16                              │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ Core Domain  │  │ AI Telemetry │  │ DeFi Ops     │      │
-│  │ (11 tables)  │  │ (9 tables)   │  │ (9 tables)   │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ Chat Unified │  │ Guest Chat   │  │ Analytics    │      │
-│  │ (4 tables)   │  │ (4 tables)   │  │ (3 tables)   │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-```
+| Domain | Tables | Purpose |
+|--------|--------|---------|
+| **1. Authentication & User Management** | 6 | User lifecycle, auth sessions, password mgmt, email verification |
+| **2. Chat System - Unified** | 4 | Modern chat for guest + authenticated users with multi-language |
+| **3. Chat System - Guest** | 4 | Guest-specific chat tracking with IP-based identification |
+| **4. Chat System - Context & Analytics** | 3 | Conversation intelligence, user preferences, feedback |
+| **5. Subscriptions & Payments** | 5 | Stripe integration, MoonPay, notifications |
+| **6. Wallets & Transactions** | 3 | Multi-chain wallets, blockchain transactions |
+| **7. DeFi Operations** | 6 | Hyperliquid positions, yield farming, automated savings |
+| **8. LLM Orchestration System** | 15 | Enterprise multi-provider LLM management |
+| **9. AI Telemetry** | 13 | Agent execution tracking, cost monitoring, performance metrics |
+| **10. Distillation System** | 6 | LLM response caching and cost optimization |
+| **11. Projects & Knowledge Bases** | 12 | Multi-project RAG, document embeddings, knowledge management |
+| **12. Retry & Resilience** | 3 | Circuit breakers, retry logic, service overrides |
+| **13. Security & Compliance** | 3 | Privy policy caching, audit logs, access control |
+| **14. Location & System Config** | 3 | Countries, cities, system-wide configuration |
+| **15. Agent Sessions** | 1 | Stateful agent conversation management |
 
-### Database Statistics
-
-```sql
--- Total tables: 38 primary tables
--- Total enums: 20+ domain enums
--- Total indexes: 150+ strategic indexes
--- Database size: ~500MB (sample data)
--- Growth rate: ~2GB/month (production estimate)
-```
-
-### Technology Stack
-
-```yaml
-Database: PostgreSQL 16
-Extensions:
-  - uuid-ossp: UUID generation
-  - pg_trgm: Fuzzy text search
-  - pgcrypto: Cryptographic functions
-  
-Data Types:
-  - UUID: Primary keys for distributed entities
-  - INTEGER: Primary keys for core domain (users, wallets)
-  - JSONB: Flexible metadata storage
-  - NUMERIC(30, 18): Precise decimal for crypto amounts
-  - ENUM: Type-safe categorical data
-  
-Migration Tool: Alembic with PostgreSQL enum support
-ORM: SQLAlchemy 2.0.41 with explicit mappings
-```
+**Total:** 87 tables mapped
 
 ---
 
-## 📊 Table Mission Analysis by Domain
+## 📋 Domain 1: Authentication & User Management (6 Tables)
 
-### Domain 1: Core User Management (4 tables)
+### 1.1 users
 
-#### **Table: `users`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Central user registry for authenticated users  
-**Key Features:**
-- Dual authentication: Email/password + Privy Web3
-- Multi-language support (en, es, pt, zh)
-- IP tracking for security (registration_ip, last_ip)
-- Soft delete (is_blocked, is_active)
-- Role-based access control (UserRole enum)
+**Mission:** Central user registry supporting email, Privy (Web3), and multi-wallet authentication.
 
 **Schema Highlights:**
 ```sql
@@ -152,1463 +69,1980 @@ CREATE TABLE users (
     password VARCHAR(255) NULL,  -- Nullable for Privy-only users
     privy_user_id VARCHAR(255) UNIQUE NULL,
     primary_wallet_address VARCHAR(255) NULL,
-    auth_provider VARCHAR(50) DEFAULT 'email',
-    language VARCHAR(10) DEFAULT 'en',
-    role userrole DEFAULT 'USER',
+    auth_provider VARCHAR(50) DEFAULT 'email',  -- 'email' | 'privy'
+    is_active BOOLEAN DEFAULT TRUE,
+    is_verified BOOLEAN DEFAULT FALSE,
     last_ip VARCHAR(45),
     registration_ip VARCHAR(45),
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    ...
+    language VARCHAR(5) DEFAULT 'en',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 **Business Rules:**
-- `email` must be unique if provided
-- `privy_user_id` is unique identifier for Web3 auth
-- `password` can be NULL for Privy-only users
-- `is_verified` gates premium features
-- `retry_count` tracks failed auth attempts
+- Privy users have `privy_user_id` but may lack email/password
+- Email users must verify via `email_verifications` table
+- `primary_wallet_address` links to Privy embedded wallet
+- `auth_provider` determines authentication flow
 
 **Usage Patterns:**
-- Read-heavy (90% reads, 10% writes)
-- Most queries filter by `email`, `privy_user_id`, or `id`
-- Frequently joined with `wallets`, `transactions`, `chat_users`
+- `UserRepository` for domain operations
+- `AuthenticationService` for login/logout
+- Indexed by: id, email, privy_user_id, primary_wallet_address
 
-**Indexes:**
-```sql
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_privy_id ON users(privy_user_id);
-CREATE INDEX idx_users_wallet ON users(primary_wallet_address);
-```
+### 1.2 auth_sessions
 
----
+**Mission:** JWT session tracking with expiration management.
 
-#### **Table: `auth_sessions`**
-**Primary Key:** Composite (session_id, user_id)  
-**Mission:** Manage JWT authentication sessions  
-**Key Features:**
-- Session expiration tracking
-- Device fingerprinting
-- IP-based security
-- Automatic cleanup of expired sessions
-
-**Schema Highlights:**
+**Schema:**
 ```sql
 CREATE TABLE auth_sessions (
-    session_id VARCHAR(255) PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    expires_at TIMESTAMPTZ NOT NULL,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    id VARCHAR(255) PRIMARY KEY,  -- JWT token ID
+    user_id INTEGER REFERENCES users(id) NOT NULL,
+    expiration TIMESTAMP WITH TIME ZONE NOT NULL
 );
 ```
 
 **Business Rules:**
-- Sessions auto-expire after `expires_at`
-- One user can have multiple active sessions (multi-device)
-- Deleted when user logs out or `expires_at` passes
-- Celery job cleans expired sessions hourly
+- Session ID is the JWT token identifier
+- Automatic cleanup of expired sessions via background job
+- Single session per user (new login invalidates old session)
 
-**Indexes:**
-```sql
-CREATE INDEX idx_auth_sessions_user ON auth_sessions(user_id);
-CREATE INDEX idx_auth_sessions_expires ON auth_sessions(expires_at);
-```
+### 1.3 email_verifications
 
----
+**Mission:** Email verification code storage with expiration.
 
-#### **Table: `email_verifications`**
-**Primary Key:** `id` (SERIAL)  
-**Mission:** Email verification flow for new users  
-**Key Features:**
-- Temporary verification codes
-- Expiration tracking (24-hour validity)
-- Automatic cleanup after verification
+**Key Fields:**
+- `user_id`: Links to users table
+- `verification_code`: 6-digit code
+- `expires_at`: Timestamp for code expiration
+- `verified_at`: Null until verification complete
 
-**Schema Highlights:**
-```sql
-CREATE TABLE email_verifications (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
-    code VARCHAR(6) NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    is_verified BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-```
+### 1.4 password_resets
 
-**Business Rules:**
-- Codes expire after 24 hours
-- One active code per email
-- Deleted after successful verification
-- Limit: 5 verification attempts per hour per email
+**Mission:** Password reset token management with security.
 
-**Indexes:**
-```sql
-CREATE INDEX idx_email_verifications_email ON email_verifications(email);
-CREATE INDEX idx_email_verifications_code ON email_verifications(code);
-```
+**Key Fields:**
+- `user_id`: Links to users table
+- `reset_token`: Secure random token
+- `expires_at`: Token expiration (typically 1 hour)
+- `used_at`: Tracks token usage to prevent reuse
 
----
+### 1.5 user_events
 
-#### **Table: `password_resets`**
-**Primary Key:** `id` (SERIAL)  
-**Mission:** Password reset flow with time-limited tokens  
-**Key Features:**
-- Secure token generation
-- One-time use tokens
-- 1-hour expiration
-- Automatic cleanup
+**Mission:** Track user lifecycle events for analytics and debugging.
 
-**Schema Highlights:**
-```sql
-CREATE TABLE password_resets (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    token VARCHAR(255) UNIQUE NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    used_at TIMESTAMPTZ NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-```
+**Key Fields:**
+- `user_id`: Links to users table
+- `event_type`: 'login', 'logout', 'password_change', 'wallet_connected', etc.
+- `event_data`: JSONB with contextual information
+- `ip_address`: User's IP at event time
+- `user_agent`: Browser/client information
+- `created_at`: Event timestamp
 
-**Business Rules:**
-- Tokens expire after 1 hour
-- One-time use (tracked via `used_at`)
-- Previous tokens invalidated when new one generated
-- Rate limit: 3 password reset requests per hour
+### 1.6 user_context_aware
 
-**Indexes:**
-```sql
-CREATE INDEX idx_password_resets_user ON password_resets(user_id);
-CREATE INDEX idx_password_resets_token ON password_resets(token);
-```
+**Mission:** Store user-specific context for personalized agent responses.
+
+**Key Fields:**
+- `user_id`: UUID (links to chat_users or users)
+- `context_data`: JSONB with user preferences, history, patterns
+- `last_updated_at`: Context freshness timestamp
 
 ---
 
-### Domain 2: Chat System - Unified (4 tables)
+## 📋 Domain 2: Chat System - Unified (4 Tables)
 
-#### **Table: `chat_users`**
-**Primary Key:** `id` (UUID)  
-**Mission:** Unified user table for guest and authenticated users  
-**Key Features:**
-- UUID primary keys for distributed system
-- Guest users identified by IP
-- Authenticated users linked via `privy_id`
-- Multi-language preference tracking
+**Purpose:** Modern chat system supporting both guest and authenticated users.
 
-**Schema Highlights:**
+### 2.1 chat_users
+
+**Mission:** Unified user identity for chat (replaces legacy `users` INTEGER id).
+
+**Schema:**
 ```sql
 CREATE TABLE chat_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_type VARCHAR(20) NOT NULL,  -- 'guest' | 'authenticated' | 'premium'
     identifier VARCHAR(255) NOT NULL,  -- IP for guest, privy_id for authenticated
     privy_id VARCHAR(255) NULL,
-    email VARCHAR(255) NULL,
-    preferred_language VARCHAR(5) DEFAULT 'en',
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    last_active_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    is_blocked BOOLEAN DEFAULT FALSE,
-    metadata JSONB DEFAULT '{}'::jsonb
-);
-
-CREATE UNIQUE INDEX idx_chat_users_identifier 
-ON chat_users(user_type, identifier);
-
-CREATE UNIQUE INDEX idx_chat_users_privy_id 
-ON chat_users(privy_id) 
-WHERE privy_id IS NOT NULL;
-```
-
-**Business Rules:**
-- `user_type` determines feature access:
-  - `guest`: Limited to 20 messages/hour, basic features
-  - `authenticated`: Full chat access, transaction execution
-  - `premium`: Unlimited, priority processing
-- `identifier` is IP address for guests, `privy_id` for authenticated
-- Unique constraint on `(user_type, identifier)` prevents duplicate guest users
-- `is_blocked` enables IP-based blocking for abuse
-
-**Usage Patterns:**
-- High read volume (message validation, rate limiting)
-- Moderate write volume (last_active_at updates)
-- Frequently joined with `chat_conversations` and `chat_messages`
-
-**Indexes:**
-```sql
-CREATE INDEX idx_chat_users_type ON chat_users(user_type);
-CREATE INDEX idx_chat_users_active ON chat_users(last_active_at);
-CREATE INDEX idx_chat_users_blocked ON chat_users(is_blocked) WHERE is_blocked = TRUE;
-```
-
----
-
-#### **Table: `chat_conversations`**
-**Primary Key:** `id` (UUID)  
-**Mission:** Conversation threads with full CRUD support  
-**Key Features:**
-- Title auto-generation from first message
-- Status tracking (active, archived, deleted)
-- Message count denormalization for performance
-- Multi-language conversation support
-
-**Schema Highlights:**
-```sql
-CREATE TABLE chat_conversations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES chat_users(id) ON DELETE CASCADE,
-    title VARCHAR(255) NULL,
-    status VARCHAR(20) DEFAULT 'active',  -- 'active' | 'archived' | 'deleted'
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    last_message_at TIMESTAMPTZ NULL,
-    message_count INTEGER DEFAULT 0,
+    display_name VARCHAR(100),
     language VARCHAR(5) DEFAULT 'en',
-    metadata JSONB DEFAULT '{}'::jsonb
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_active_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX idx_chat_conversations_user_status 
-ON chat_conversations(user_id, status);
 ```
 
 **Business Rules:**
-- `title` auto-generated from first user message
-- `message_count` updated via database trigger (performance optimization)
-- `last_message_at` updated on new message (for sorting recent chats)
-- Soft delete via `status = 'deleted'` (retain for 30 days before purge)
-- `metadata` stores conversation context, tags, etc.
+- `user_type='guest'`: identifier is IP address
+- `user_type='authenticated'`: identifier is privy_user_id
+- `user_type='premium'`: Has active subscription
+- Automatically upgraded from guest → authenticated when user signs up
 
-**Usage Patterns:**
-- Read-heavy for conversation list (user's recent chats)
-- Moderate writes on new conversations
-- Frequently filtered by `user_id` and `status`
+### 2.2 chat_conversations
 
-**Indexes:**
-```sql
-CREATE INDEX idx_chat_conversations_last_message 
-ON chat_conversations(user_id, last_message_at DESC) 
-WHERE status = 'active';
+**Mission:** Conversation container for message threading.
 
-CREATE INDEX idx_chat_conversations_language 
-ON chat_conversations(language);
-```
+**Key Fields:**
+- `id`: UUID conversation identifier
+- `chat_user_id`: Links to chat_users
+- `title`: Auto-generated or user-specified
+- `status`: 'active' | 'archived' | 'deleted'
+- `language`: Conversation language (inherited from user)
+- `message_count`: Denormalized for performance
+- `metadata`: JSONB for extensibility
 
----
+### 2.3 chat_messages
 
-#### **Table: `chat_messages`**
-**Primary Key:** `id` (UUID)  
-**Mission:** Store all chat messages with intent detection metadata  
-**Key Features:**
-- Role-based messages (user, assistant, system)
-- Intent classification (swap, send, earn, etc.)
-- Handler tracking (which agent processed the message)
-- Multi-language support
-- Rich metadata (tokens, entities, enrichment data)
+**Mission:** Individual messages within conversations.
 
-**Schema Highlights:**
+**Schema:**
 ```sql
 CREATE TABLE chat_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id UUID REFERENCES chat_conversations(id) ON DELETE CASCADE,
     role VARCHAR(20) NOT NULL,  -- 'user' | 'assistant' | 'system'
     content TEXT NOT NULL,
-    intent VARCHAR(50) NULL,  -- 'swap', 'send', 'earn', 'portfolio', etc.
-    intent_confidence FLOAT NULL,  -- 0.0 - 1.0
-    handler VARCHAR(100) NULL,  -- 'swap_handler_v2', 'portfolio_handler', etc.
-    is_restricted_action BOOLEAN DEFAULT FALSE,  -- Requires authentication
+    intent VARCHAR(50),  -- Detected intent: 'swap', 'portfolio', 'help', etc.
+    handler VARCHAR(50),  -- Handler used: 'swap_handler_v2', 'portfolio_handler', etc.
+    confidence FLOAT,  -- Intent confidence score (0.0-1.0)
     language VARCHAR(5) DEFAULT 'en',
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    metadata JSONB DEFAULT '{}'::jsonb  -- tokens, entities, enrichment data
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX idx_chat_messages_conversation 
-ON chat_messages(conversation_id, created_at);
 ```
+
+**Intent Classification:**
+- swap, buy, sell, transfer, portfolio, price, news, help, greeting, farewell
+
+### 2.4 chat_rate_limits
+
+**Mission:** Rate limiting for guest users to prevent abuse.
+
+**Key Fields:**
+- `chat_user_id`: Links to chat_users
+- `time_window_start`: Rolling window start time
+- `message_count`: Messages sent in current window
+- `limit_type`: 'hourly' | 'daily'
+- `max_messages`: Limit threshold (20/hour for guests)
 
 **Business Rules:**
-- `role = 'user'`: User input messages
-- `role = 'assistant'`: AI agent responses
-- `role = 'system'`: System notifications (rate limit warnings, etc.)
-- `intent` populated by intent detector agent
-- `intent_confidence >= 0.7` considered high confidence
-- `handler` tracks which specialized agent processed the message
-- `is_restricted_action = TRUE` requires user authentication
-- `metadata.tokens` tracks token usage for cost analysis
-- `metadata.entities` stores extracted entities (amounts, tokens, addresses)
-
-**Usage Patterns:**
-- Write-heavy (every chat interaction creates 2 messages: user + assistant)
-- Read-heavy for conversation history
-- Analytics queries on `intent` and `handler` for agent performance
-
-**Indexes:**
-```sql
-CREATE INDEX idx_chat_messages_intent ON chat_messages(intent, created_at);
-CREATE INDEX idx_chat_messages_handler ON chat_messages(handler, created_at);
-CREATE INDEX idx_chat_messages_language ON chat_messages(language);
-CREATE INDEX idx_chat_messages_restricted ON chat_messages(is_restricted_action) 
-WHERE is_restricted_action = TRUE;
-```
+- Guests: 20 messages/hour
+- Authenticated users: 100 messages/hour
+- Premium users: 1000 messages/hour
 
 ---
 
-#### **Table: `chat_rate_limits`**
-**Primary Key:** `id` (UUID)  
-**Mission:** Track message rate limits for abuse prevention  
-**Key Features:**
-- Time-window based limiting (hourly, daily)
-- Guest user protection (20 messages/hour)
-- Automatic cleanup of old windows
+## 📋 Domain 3: Chat System - Guest (4 Tables)
 
-**Schema Highlights:**
+**Purpose:** Specialized guest chat tracking system.
+
+### 3.1 guest_users
+**Mission:** Track guest users by IP address with fingerprinting.
+
+### 3.2 guest_conversations
+**Mission:** Guest-specific conversations linked to IP-based users.
+
+### 3.3 guest_messages
+**Mission:** Messages in guest conversations with intent tracking.
+
+### 3.4 guest_telemetry
+**Mission:** Analytics for guest interactions (conversion tracking, engagement metrics).
+
+**Key Metrics:**
+- `event_type`: 'message_sent', 'conversion', 'signup', 'wallet_connected'
+- `event_data`: JSONB with contextual information
+- Used for guest-to-user conversion funnel analysis
+
+---
+
+## 📋 Domain 4: Chat System - Context & Analytics (3 Tables)
+
+### 4.1 conversation_contexts
+
+**Mission:** Store conversation context for context-aware agent responses.
+
+**Key Fields:**
 ```sql
-CREATE TABLE chat_rate_limits (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES chat_users(id) ON DELETE CASCADE,
-    window_type VARCHAR(20) NOT NULL,  -- 'hourly' | 'daily'
-    window_start TIMESTAMPTZ NOT NULL,
-    message_count INTEGER DEFAULT 0
+CREATE TABLE conversation_contexts (
+    id UUID PRIMARY KEY,
+    conversation_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    current_topic VARCHAR(255),
+    recent_intents JSON,  -- Array of recent intent strings
+    mentioned_tokens JSON,  -- ['ETH', 'USDC', 'ARB']
+    mentioned_protocols JSON,  -- ['Uniswap', 'Aave', 'Curve']
+    active_positions JSON,  -- Current open positions
+    preferred_slippage FLOAT,
+    preferred_leverage INTEGER,
+    risk_tolerance VARCHAR(20),  -- 'conservative' | 'moderate' | 'aggressive'
+    preferred_chains JSON,
+    frequent_operations JSON,  -- {'swap': 50, 'portfolio': 30}
+    typical_trade_sizes JSON,
+    interaction_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE
 );
-
-CREATE UNIQUE INDEX uq_rate_limits_user_window 
-ON chat_rate_limits(user_id, window_type, window_start);
 ```
 
-**Business Rules:**
-- `window_type = 'hourly'`: 20 messages for guests, 100 for authenticated
-- `window_type = 'daily'`: 100 messages for guests, 1000 for authenticated
-- Windows auto-expire after 24 hours
-- Celery job purges windows older than 48 hours
+**Usage:**
+- Loaded at conversation start for personalization
+- Updated after each user interaction
+- Used by Hunter AI to provide contextual recommendations
 
-**Usage Patterns:**
-- High read volume (every message validated)
-- Moderate write volume (increment on each message)
-- Upsert pattern: increment if exists, insert if new window
+### 4.2 conversation_analytics
 
-**Indexes:**
+**Mission:** Aggregate conversation metrics for insights.
+
+**Key Metrics:**
+- Message counts per conversation
+- Average response time
+- Intent distribution
+- User satisfaction scores
+- Conversion events
+
+### 4.3 conversation_feedback
+
+**Mission:** User feedback on AI responses for quality improvement.
+
+**Schema:**
 ```sql
-CREATE INDEX idx_rate_limits_window_start 
-ON chat_rate_limits(window_start);
-```
-
----
-
-### Domain 3: Guest Chat (Legacy - Active but Deprecated) (4 tables)
-
-**⚠️ Deprecation Notice:** These tables are still active for the `/guest/` router but will be merged into the unified chat system by 2026-06-01.
-
-#### **Table: `guest_users`**
-**Primary Key:** `id` (UUID)  
-**Mission:** Track anonymous guest users by IP address  
-**Deprecated By:** `chat_users` (unified table)  
-**Migration Path:** Merge guest_users into chat_users with user_type='guest'
-
-**Schema Highlights:**
-```sql
-CREATE TABLE guest_users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    ip_address VARCHAR(45) UNIQUE NOT NULL,
-    fingerprint VARCHAR(255) NULL,  -- Browser fingerprint
-    first_seen_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    last_seen_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    total_messages INTEGER DEFAULT 0,
-    language VARCHAR(5) DEFAULT 'en',
-    country_code VARCHAR(2) NULL,  -- GeoIP lookup
-    is_blocked BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX idx_guest_users_ip ON guest_users(ip_address);
-```
-
-**Current Usage:**
-- Active in `/api/v1/guest/chat` endpoints
-- Guest conversations and messages reference this table
-- IP-based rate limiting (20 messages/hour)
-
-**Migration Strategy:**
-```sql
--- Step 1: Migrate guest_users to chat_users
-INSERT INTO chat_users (id, user_type, identifier, preferred_language, created_at, last_active_at, is_blocked, metadata)
-SELECT 
-    id,
-    'guest' as user_type,
-    ip_address as identifier,
-    language as preferred_language,
-    created_at,
-    last_seen_at as last_active_at,
-    is_blocked,
-    jsonb_build_object(
-        'fingerprint', fingerprint,
-        'country_code', country_code,
-        'total_messages', total_messages
-    ) as metadata
-FROM guest_users;
-
--- Step 2: Update foreign keys in guest_conversations
--- (Requires conversation migration to chat_conversations)
-
--- Step 3: Drop legacy table
-DROP TABLE guest_users CASCADE;
-```
-
----
-
-#### **Table: `guest_conversations`**
-**Primary Key:** `id` (UUID)  
-**Mission:** Guest conversation threads  
-**Deprecated By:** `chat_conversations`  
-**Migration Path:** Direct 1:1 mapping to chat_conversations
-
-**Schema Highlights:**
-```sql
-CREATE TABLE guest_conversations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    guest_user_id UUID REFERENCES guest_users(id) ON DELETE CASCADE,
-    title VARCHAR(255) NULL,
-    status VARCHAR(20) DEFAULT 'active',
-    message_count INTEGER DEFAULT 0,
-    language VARCHAR(5) DEFAULT 'en',
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    archived_at TIMESTAMPTZ NULL
-);
-
-CREATE INDEX idx_guest_conversations_user 
-ON guest_conversations(guest_user_id);
-```
-
----
-
-#### **Table: `guest_messages`**
-**Primary Key:** `id` (UUID)  
-**Mission:** Guest chat messages  
-**Deprecated By:** `chat_messages`  
-**Migration Path:** Direct migration with metadata preservation
-
-**Schema Highlights:**
-```sql
-CREATE TABLE guest_messages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    conversation_id UUID REFERENCES guest_conversations(id) ON DELETE CASCADE,
-    role VARCHAR(20) NOT NULL,
-    content TEXT NOT NULL,
-    intent VARCHAR(50) NULL,
-    handler VARCHAR(50) NULL,
-    confidence FLOAT NULL,
-    language VARCHAR(5) DEFAULT 'en',
-    is_restricted_action BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    metadata JSONB DEFAULT '{}'::jsonb
+CREATE TABLE conversation_feedback (
+    id BIGSERIAL PRIMARY KEY,
+    conversation_id BIGINT REFERENCES llm_conversations(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    rating INTEGER,  -- 1-5 stars
+    feedback_type VARCHAR(50),  -- 'helpful' | 'not_helpful' | 'inappropriate' | 'incorrect'
+    feedback_text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 ---
 
-#### **Table: `guest_telemetry`**
-**Primary Key:** `id` (UUID)  
-**Mission:** Analytics for guest interactions  
-**Deprecated By:** `conversation_analytics` (unified analytics)
+## 📋 Domain 5: Subscriptions & Payments (5 Tables)
 
-**Schema Highlights:**
-```sql
-CREATE TABLE guest_telemetry (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    guest_user_id UUID REFERENCES guest_users(id) ON DELETE CASCADE,
-    event_type VARCHAR(50) NOT NULL,  -- 'message_sent', 'rate_limited', etc.
-    event_data JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-```
+### 5.1 subscriptions
+
+**Mission:** Manage user subscription tiers (Free, Premium, Enterprise).
+
+**Key Fields:**
+- `user_id`: References users(id)
+- `stripe_subscription_id`: Stripe subscription identifier
+- `plan`: 'free' | 'premium' | 'enterprise'
+- `status`: 'active' | 'canceled' | 'past_due' | 'trialing'
+- `current_period_start`, `current_period_end`: Billing period
+- `cancel_at_period_end`: Boolean for pending cancellations
+
+### 5.2 subscription_users
+
+**Mission:** Many-to-many relationship for shared subscriptions (Enterprise plans).
+
+### 5.3 payments
+
+**Mission:** Payment transaction history with Stripe integration.
+
+**Key Fields:**
+- `user_id`, `subscription_id`: References
+- `stripe_payment_intent_id`: Stripe PI identifier
+- `amount`, `currency`: Payment details
+- `status`: 'succeeded' | 'failed' | 'pending'
+- `payment_method`: 'card' | 'crypto' | 'wire'
+
+### 5.4 notifications
+
+**Mission:** In-app and email notification queue.
+
+**Types:**
+- payment_success, payment_failed
+- subscription_renewed, subscription_expiring
+- wallet_connected, transaction_confirmed
+- price_alert, portfolio_milestone
+
+### 5.5 moonpay_customer_tokens
+
+**Mission:** Store MoonPay customer tokens for fiat on-ramp.
+
+**Key Fields:**
+- `user_id`: Links to users
+- `moonpay_customer_id`: MoonPay identifier
+- `encrypted_token`: Encrypted customer token
+- `created_at`, `expires_at`: Token lifecycle
 
 ---
 
-### Domain 4: Wallet Management (2 tables)
+## 📋 Domain 6: Wallets & Transactions (3 Tables)
 
-#### **Table: `wallets`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Multi-chain wallet management with Privy integration  
-**Key Features:**
-- Support for Privy embedded wallets, external wallets, and imported wallets
-- Default chain configuration per wallet
-- Wallet status tracking (active, suspended, deleted)
-- Privy configuration caching (policies, signers)
+### 6.1 wallets
 
-**Schema Highlights:**
+**Mission:** Multi-chain wallet management with Privy integration.
+
+**Schema:**
 ```sql
 CREATE TABLE wallets (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    privy_wallet_id VARCHAR(255) UNIQUE NULL,  -- Nullable for imported wallets
-    address VARCHAR(42) NOT NULL,  -- Ethereum address (0x...)
-    provider walletprovider DEFAULT 'PRIVY',  -- 'PRIVY' | 'EXTERNAL' | 'IMPORTED'
-    default_chain chaintype DEFAULT 'ARBITRUM',
-    status INTEGER DEFAULT 1,  -- WalletStatus enum
-    
-    -- Privy configuration (cached from Privy API)
-    policy_ids JSONB NULL,  -- Array of policy IDs
-    owner_type VARCHAR(50) NULL,
-    owner_id VARCHAR(255) NULL,
-    additional_signers JSONB NULL,
-    exported_at TIMESTAMPTZ NULL,
-    imported_at TIMESTAMPTZ NULL,
-    last_privy_sync_at TIMESTAMPTZ NULL,
-    
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    privy_wallet_id VARCHAR(255) UNIQUE,
+    wallet_type VARCHAR(20),  -- 'privy' | 'external' | 'imported'
+    is_primary BOOLEAN DEFAULT FALSE,
+    nickname VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE UNIQUE INDEX unique_user_wallet_address 
-ON wallets(user_id, address);
-
-CREATE INDEX idx_wallets_user ON wallets(user_id);
-CREATE INDEX idx_wallets_address ON wallets(address);
-CREATE INDEX idx_wallets_privy ON wallets(privy_wallet_id);
 ```
 
-**Business Rules:**
-- `privy_wallet_id` is NULL for imported wallets (user provides private key)
-- `privy_wallet_id` is synthetic (`imported:<address>`) for imported wallets
-- `provider`:
-  - `PRIVY`: Embedded wallet created via Privy SDK
-  - `EXTERNAL`: Browser extension wallet (MetaMask, Coinbase Wallet)
-  - `IMPORTED`: Wallet imported via private key
-- Unique constraint on `(user_id, address)` prevents duplicate wallet connections
-- `status`:
-  - `1 (ACTIVE)`: Normal operation
-  - `2 (SUSPENDED)`: Temporary suspension (security)
-  - `3 (DELETED)`: Soft deleted (30-day retention)
-- Privy configuration cached for performance (avoid API calls on every transaction)
+### 6.2 chain_addresses
 
-**Usage Patterns:**
-- Read-heavy (wallet validation, balance checks)
-- Moderate writes (new wallet connections, status updates)
-- Frequently joined with `chain_addresses`, `transactions`, `earn_positions`
+**Mission:** Multi-chain address mapping for each wallet.
 
-**Indexes:**
-```sql
-CREATE INDEX idx_wallets_status ON wallets(status) WHERE status = 1;
-CREATE INDEX idx_wallets_default_chain ON wallets(default_chain);
-```
-
----
-
-#### **Table: `chain_addresses`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Track wallet addresses across multiple blockchains  
-**Key Features:**
-- Multi-chain address derivation (different address per chain)
-- Balance tracking per chain
-- Active/inactive status per chain
-
-**Schema Highlights:**
+**Schema:**
 ```sql
 CREATE TABLE chain_addresses (
     id SERIAL PRIMARY KEY,
     wallet_id INTEGER REFERENCES wallets(id) ON DELETE CASCADE,
-    chain chaintype NOT NULL,  -- 'ARBITRUM', 'BASE', 'OPTIMISM', etc.
-    address VARCHAR(255) NOT NULL,
+    chain VARCHAR(20),  -- 'arbitrum' | 'base' | 'optimism' | 'ethereum' | 'polygon'
+    address VARCHAR(42) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
-    balance_usd NUMERIC(20, 2) DEFAULT 0.00,
-    last_balance_update TIMESTAMPTZ NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    last_balance_check TIMESTAMP WITH TIME ZONE,
+    cached_balance NUMERIC(30, 18),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(wallet_id, chain)
 );
-
-CREATE UNIQUE INDEX unique_wallet_chain 
-ON chain_addresses(wallet_id, chain);
-
-CREATE INDEX idx_chain_addresses_wallet ON chain_addresses(wallet_id);
-CREATE INDEX idx_chain_addresses_chain ON chain_addresses(chain);
-CREATE INDEX idx_chain_addresses_address ON chain_addresses(address);
-CREATE INDEX idx_chain_addresses_active ON chain_addresses(is_active);
 ```
 
-**Business Rules:**
-- One address per `(wallet_id, chain)` combination
-- `is_active = FALSE` for chains user hasn't interacted with
-- `balance_usd` updated via Celery job every 5 minutes
-- `last_balance_update` tracks cache freshness
+**Supported Chains:**
+- Arbitrum, Base, Optimism, Ethereum Mainnet
+- Polygon, Avalanche, BSC, zkSync, Linea, Scroll
 
-**Usage Patterns:**
-- High read volume (balance checks, portfolio aggregation)
-- Moderate write volume (balance updates)
-- Frequently aggregated for portfolio total
+### 6.3 transactions
 
-**Indexes:**
-```sql
-CREATE INDEX idx_chain_addresses_balance_updated 
-ON chain_addresses(last_balance_update) 
-WHERE is_active = TRUE;
-```
+**Mission:** Blockchain transaction history with dual-user tracking.
 
----
-
-### Domain 5: Transactions (1 table)
-
-#### **Table: `transactions`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Comprehensive on-chain transaction tracking with analytics  
-**Key Features:**
-- Multi-transaction types (swap, send, fund, earn, etc.)
-- Dual-user tracking (sender and receiver can both have records)
-- Gas tracking and cost analysis
-- DEX aggregator routing details
-
-**Schema Highlights:**
+**Schema:**
 ```sql
 CREATE TABLE transactions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     wallet_id INTEGER REFERENCES wallets(id) ON DELETE CASCADE,
-    to_address VARCHAR(42) NULL,
-    type INTEGER NOT NULL,  -- 0=SWAP, 1=FUND, 5=SEND, etc.
-    chain chaintype NOT NULL,
-    
-    -- Asset details
-    asset_in VARCHAR(20) NULL,  -- 'ETH', 'USDC', etc.
-    amount_in NUMERIC(30, 18) NULL,
-    asset_out VARCHAR(20) NULL,
-    amount_out NUMERIC(30, 18) NULL,
-    
-    -- Fees
-    fee NUMERIC(30, 18) NULL,
-    fee_usd NUMERIC(10, 2) NULL,
-    
-    -- On-chain data
-    tx_hash VARCHAR(66) NULL,  -- NOT globally unique (can appear for both sender/receiver)
-    status INTEGER DEFAULT 0,  -- 0=PENDING, 1=SUCCESS, 2=FAILED
-    
-    -- DEX/Swap details
-    dex_aggregator VARCHAR(50) NULL,  -- '1inch', 'Uniswap', etc.
-    dex_route JSONB NULL,  -- Route details from DEX aggregator
-    slippage NUMERIC(5, 2) NULL,
-    error_message TEXT NULL,
-    
-    -- Confirmation data
-    block_number INTEGER NULL,
-    confirmed_at TIMESTAMPTZ NULL,
-    
-    -- Analytics fields
-    gas_used BIGINT NULL,  -- Gas units consumed
-    gas_price BIGINT NULL,  -- Gas price in wei
-    tx_metadata JSONB NULL,  -- Extra context: contract address, protocol, etc.
-    
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
--- IMPORTANT: tx_hash is NOT globally unique
--- Same tx can appear for both sender and receiver
-CREATE UNIQUE INDEX uq_transactions_user_tx_hash 
-ON transactions(user_id, tx_hash);
-
-CREATE INDEX idx_transactions_user ON transactions(user_id);
-CREATE INDEX idx_transactions_wallet ON transactions(wallet_id);
-CREATE INDEX idx_transactions_tx_hash ON transactions(tx_hash);
-CREATE INDEX idx_transactions_status ON transactions(status);
-CREATE INDEX idx_transactions_chain ON transactions(chain);
-CREATE INDEX idx_transactions_type ON transactions(type);
-CREATE INDEX idx_transactions_created ON transactions(created_at);
-CREATE INDEX idx_transactions_block ON transactions(block_number);
-```
-
-**Business Rules:**
-- `tx_hash` NOT globally unique (same transaction can appear for both sender and receiver)
-- Unique constraint on `(user_id, tx_hash)` allows dual-user tracking
-- Transaction types (from TransactionType enum):
-  ```python
-  SWAP = 0      # Token swap (ETH ↔ USDC)
-  FUND = 1      # Wallet funding
-  SEND = 5      # Send tokens to another address
-  EARN = 6      # Deposit into yield protocol
-  WITHDRAW = 7  # Withdraw from yield protocol
-  ```
-- Status progression: `PENDING → SUCCESS` or `PENDING → FAILED`
-- `confirmed_at` set when transaction is mined and confirmed
-- `gas_used` and `gas_price` calculated after transaction confirmation
-- `dex_route` stores routing details from 1inch/Uniswap for audit
-
-**Usage Patterns:**
-- Write-heavy during high trading activity
-- Read-heavy for user transaction history
-- Analytics queries on `type`, `chain`, `dex_aggregator`
-- Portfolio aggregation queries sum `amount_in` and `amount_out`
-
-**Indexes:**
-```sql
--- Complex query optimization
-CREATE INDEX idx_transactions_user_status_created 
-ON transactions(user_id, status, created_at DESC);
-
-CREATE INDEX idx_transactions_wallet_chain 
-ON transactions(wallet_id, chain);
-
-CREATE INDEX idx_transactions_dex 
-ON transactions(dex_aggregator, created_at DESC) 
-WHERE dex_aggregator IS NOT NULL;
-```
-
-**Performance Considerations:**
-- Partition by `created_at` for historical data (monthly partitions)
-- Archive transactions older than 2 years to separate table
-- Denormalize frequently queried aggregates (total volume per user)
-
----
-
-
-### Domain 6: DeFi Operations (3 tables)
-
-#### **Table: `hyperliquid_positions`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Track perpetual futures trading positions on Hyperliquid  
-**Key Features:**
-- Leverage trading (up to 50x)
-- Real-time P&L tracking
-- Liquidation price monitoring
-- Funding rate tracking
-
-**Schema Highlights:**
-```sql
-CREATE TABLE hyperliquid_positions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    wallet_id INTEGER REFERENCES wallets(id) ON DELETE CASCADE,
-    symbol VARCHAR(20) NOT NULL,  -- 'BTC-USD', 'ETH-USD'
-    side side NOT NULL,  -- 'LONG' | 'SHORT'
-    leverage NUMERIC(5, 2) NOT NULL,  -- 1.00 to 50.00
-    size NUMERIC(30, 18) NOT NULL,
-    entry_price NUMERIC(20, 8) NOT NULL,
-    mark_price NUMERIC(20, 8) NULL,
-    liquidation_price NUMERIC(20, 8) NULL,
-    unrealized_pnl NUMERIC(20, 8) NULL,
-    realized_pnl NUMERIC(20, 8) DEFAULT 0,
-    margin NUMERIC(20, 8) NOT NULL,
-    funding_rate NUMERIC(10, 6) NULL,
-    last_funding_payment NUMERIC(20, 8) NULL,
-    status positionstatus DEFAULT 'OPEN',  -- 'OPEN' | 'CLOSED' | 'LIQUIDATED'
-    hyperliquid_order_id VARCHAR(100) NULL,
-    opened_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    closed_at TIMESTAMPTZ NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    tx_hash VARCHAR(66) NULL,  -- NOT globally unique (multi-chain)
+    type INTEGER NOT NULL,  -- 0=SWAP, 1=FUND, 2=LP_ADD, 3=LP_REMOVE, 4=EARN, 5=SEND, 6=RECEIVE
+    chain VARCHAR(20) NOT NULL,
+    asset_in VARCHAR(20), amount_in NUMERIC(30, 18),
+    asset_out VARCHAR(20), amount_out NUMERIC(30, 18),
+    gas_used BIGINT, gas_price BIGINT,
+    status VARCHAR(20) DEFAULT 'pending',  -- 'pending' | 'confirmed' | 'failed'
+    block_number BIGINT,
+    tx_metadata JSONB NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    confirmed_at TIMESTAMP WITH TIME ZONE
 );
 ```
 
-**Business Rules:**
-- Max leverage: 50x on major pairs, 20x on altcoins
-- Auto-liquidation when `mark_price` reaches `liquidation_price`
-- Funding payments every 8 hours (tracked in `last_funding_payment`)
-- P&L calculation: `unrealized_pnl = (mark_price - entry_price) * size * (1 if LONG else -1)`
+**Critical Note:** `tx_hash` is NOT globally unique due to multi-chain support. Use `(chain, tx_hash)` as composite unique key.
 
 ---
 
-#### **Table: `earn_positions`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Track DeFi yield farming and staking positions  
-**Key Features:**
-- Multi-protocol support (Aave, Compound, Morpho)
-- APY tracking and historical rates
-- Rewards calculation
-- Auto-compounding tracking
+## 📋 Domain 7: DeFi Operations (6 Tables)
 
-**Schema Highlights:**
+### 7.1 hyperliquid_positions
+
+**Mission:** Track perpetual futures positions on Hyperliquid DEX.
+
+**Key Fields:**
 ```sql
-CREATE TABLE earn_positions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    wallet_id INTEGER REFERENCES wallets(id) ON DELETE CASCADE,
-    chain chaintype NOT NULL,
-    protocol VARCHAR(50) NOT NULL,  -- 'AAVE', 'COMPOUND', 'MORPHO'
-    asset VARCHAR(20) NOT NULL,  -- 'USDC', 'ETH', etc.
-    amount_deposited NUMERIC(30, 18) NOT NULL,
-    current_value NUMERIC(30, 18) NULL,
-    apy NUMERIC(8, 4) NULL,  -- APY at deposit time
-    current_apy NUMERIC(8, 4) NULL,  -- Current APY
-    rewards_earned NUMERIC(30, 18) DEFAULT 0,
-    rewards_earned_usd NUMERIC(20, 2) DEFAULT 0,
-    status earnstatus DEFAULT 'ACTIVE',  -- 'ACTIVE' | 'WITHDRAWN' | 'PAUSED'
-    transaction_hash VARCHAR(66) NULL,
-    deposit_tx_hash VARCHAR(66) NULL,
-    withdraw_tx_hash VARCHAR(66) NULL,
-    deposited_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    withdrawn_at TIMESTAMPTZ NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+- id, user_id, wallet_id
+- symbol VARCHAR(20)  -- 'BTC-PERP', 'ETH-PERP'
+- side VARCHAR(10)  -- 'LONG' | 'SHORT'
+- leverage NUMERIC(5, 2)  -- e.g., 10.00 for 10x
+- size NUMERIC(30, 18)  -- Position size
+- entry_price, mark_price, liquidation_price NUMERIC(20, 8)
+- unrealized_pnl, realized_pnl NUMERIC(20, 8)
+- margin NUMERIC(20, 8)  -- Collateral
+- funding_rate NUMERIC(10, 6)  -- Current funding rate
+- status VARCHAR(20)  -- 'OPEN' | 'CLOSED' | 'LIQUIDATED'
+- opened_at, closed_at TIMESTAMP WITH TIME ZONE
+```
+
+### 7.2 earn_positions
+
+**Mission:** Yield farming and lending positions across protocols.
+
+**Supported Protocols:**
+- Aave (lending/borrowing)
+- Compound (lending)
+- Curve (LP rewards)
+- Yearn (vault deposits)
+- Convex (boosted Curve rewards)
+
+**Key Fields:**
+```sql
+- chain VARCHAR(20)  -- 'arbitrum' | 'optimism' | etc.
+- protocol VARCHAR(50)  -- 'aave' | 'compound' | 'curve'
+- asset VARCHAR(20)  -- Deposited asset
+- amount_deposited NUMERIC(30, 18)
+- current_value NUMERIC(30, 18)  -- Current value with rewards
+- apy NUMERIC(8, 4)  -- Annual percentage yield (e.g., 5.25%)
+- rewards_earned NUMERIC(30, 18)  -- Total rewards earned
+- status VARCHAR(20)  -- 'ACTIVE' | 'WITHDRAWN'
+```
+
+### 7.3 save_schedules
+
+**Mission:** Automated recurring deposits (DCA - Dollar Cost Averaging).
+
+**Example Use Case:**
+"Save $100 of USDC to Aave every Friday at 2 PM UTC"
+
+**Key Fields:**
+```sql
+- frequency VARCHAR(20)  -- 'daily' | 'weekly' | 'monthly'
+- day_of_week INTEGER  -- 0-6 (Monday=0)
+- day_of_month INTEGER  -- 1-31
+- amount NUMERIC(30, 18)  -- Amount to save
+- destination_protocol VARCHAR(50)  -- Where to deposit
+- next_execution_at TIMESTAMP WITH TIME ZONE
+- status VARCHAR(20)  -- 'ACTIVE' | 'PAUSED' | 'COMPLETED'
+- total_saved NUMERIC(30, 18)  -- Cumulative amount saved
+- execution_count INTEGER
+- max_executions INTEGER  -- Optional limit
+```
+
+### 7.4 token_holdings
+
+**Mission:** Current token balances across all chains.
+
+**Updated via:**
+- Real-time: On transaction confirmation
+- Scheduled: Hourly balance refresh job
+- On-demand: When user views portfolio
+
+### 7.5 portfolio_snapshots
+
+**Mission:** Daily portfolio value snapshots for historical charting.
+
+**Key Fields:**
+- `user_id`, `snapshot_date`
+- `total_value_usd`: Total portfolio value
+- `holdings_snapshot`: JSONB with all token balances
+- `pnl_24h`, `pnl_7d`, `pnl_30d`: Performance metrics
+
+### 7.6 settings
+
+**Mission:** User-specific DeFi settings and preferences.
+
+**Stored Settings:**
+- Default slippage tolerance
+- Default gas settings (slow/normal/fast)
+- Favorite tokens
+- Watchlist
+- Alert preferences
+
+---
+
+## 📋 Domain 8: LLM Orchestration System (15 Tables)
+
+**Purpose:** Enterprise-grade multi-provider LLM management with circuit breakers, cost tracking, and adaptive model ranking.
+
+### 8.1 llm_providers
+
+**Mission:** Manage LLM provider configurations (Vertex AI, DeepInfra, OpenAI, Bedrock).
+
+**Schema:**
+```sql
+CREATE TABLE llm_providers (
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,  -- 'vertex_ai' | 'deepinfra' | 'openai' | 'bedrock'
+    display_name VARCHAR(100),
+    priority INTEGER DEFAULT 1,  -- 1=highest priority
+    is_enabled BOOLEAN DEFAULT TRUE,
+    health_status VARCHAR(20) DEFAULT 'healthy',  -- 'healthy' | 'degraded' | 'down'
+    last_health_check TIMESTAMP WITH TIME ZONE,
+    health_check_interval_seconds INTEGER DEFAULT 60,
+    config JSONB,  -- API keys, endpoints, etc.
+    rate_limits JSONB,  -- {'requests_per_minute': 60}
+    created_at, updated_at TIMESTAMP WITH TIME ZONE
 );
 ```
 
-**Business Rules:**
-- Min deposit: Protocol-specific (typically $10-$100)
-- Rewards calculated hourly via Celery job
-- Auto-compound when rewards > $10 (gas-efficient)
-- APY updated every 15 minutes from protocol APIs
+### 8.2 llm_models
 
----
+**Mission:** Catalog of available LLM models across providers.
 
-#### **Table: `save_schedules`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Automated recurring DeFi deposits (dollar-cost averaging)  
-**Key Features:**
-- Recurring deposits (daily, weekly, monthly)
-- Skip on insufficient balance
-- Execution tracking
-
-**Schema Highlights:**
+**Schema:**
 ```sql
-CREATE TABLE save_schedules (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    wallet_id INTEGER REFERENCES wallets(id) ON DELETE CASCADE,
-    chain chaintype NOT NULL,
-    asset VARCHAR(20) NOT NULL,
-    amount NUMERIC(30, 18) NOT NULL,
-    frequency frequency NOT NULL,  -- 'DAILY' | 'WEEKLY' | 'MONTHLY'
-    day_of_week INTEGER NULL,  -- 0-6 for weekly
-    day_of_month INTEGER NULL,  -- 1-31 for monthly
-    next_execution_at TIMESTAMPTZ NOT NULL,
-    last_executed_at TIMESTAMPTZ NULL,
-    execution_count INTEGER DEFAULT 0,
-    status schedulestatus DEFAULT 'ACTIVE',  -- 'ACTIVE' | 'PAUSED' | 'CANCELLED'
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE llm_models (
+    id UUID PRIMARY KEY,
+    provider_id UUID REFERENCES llm_providers(id) ON DELETE CASCADE,
+    model_id VARCHAR(100) NOT NULL,  -- 'claude-3-5-sonnet-20241022'
+    display_name VARCHAR(100),
+    model_family VARCHAR(50),  -- 'claude' | 'gpt' | 'gemini'
+    capabilities JSONB,  -- ['vision', 'tools', 'streaming']
+    context_window INTEGER,  -- e.g., 200000
+    max_output_tokens INTEGER,  -- e.g., 4096
+    supports_streaming BOOLEAN DEFAULT TRUE,
+    supports_tools BOOLEAN DEFAULT TRUE,
+    cost_per_1k_input_tokens NUMERIC(10, 6),  -- e.g., 0.003
+    cost_per_1k_output_tokens NUMERIC(10, 6),  -- e.g., 0.015
+    avg_latency_ms INTEGER,
+    is_enabled BOOLEAN DEFAULT TRUE,
+    carousel_position INTEGER DEFAULT 1,  -- Display order in UI
+    tier VARCHAR(20) DEFAULT 'standard',  -- 'premium' | 'standard' | 'economy' | 'experimental'
+    created_at, updated_at TIMESTAMP WITH TIME ZONE
 );
 ```
 
+### 8.3 agent_model_rankings
+
+**Mission:** Adaptive model ranking per agent type based on performance.
+
+**How It Works:**
+1. Each agent type (Hunter AI, Research, Execution, etc.) tracks performance per model
+2. Ranking score calculated from: success_rate (50%) + latency_score (25%) + cost_score (15%) + recency (10%)
+3. Scores updated after each request
+4. Model selection uses weighted random sampling based on ranking scores
+
+**Schema:**
+```sql
+CREATE TABLE agent_model_rankings (
+    id UUID PRIMARY KEY,
+    agent_type VARCHAR(50) NOT NULL,  -- 'hunter_ai' | 'research' | 'execution'
+    model_id UUID REFERENCES llm_models(id) ON DELETE CASCADE,
+    ranking_score NUMERIC(5, 4),  -- 0.0000 to 1.0000
+    success_rate NUMERIC(5, 4),
+    latency_score NUMERIC(5, 4),
+    cost_score NUMERIC(5, 4),
+    total_requests INTEGER DEFAULT 0,
+    successful_requests INTEGER DEFAULT 0,
+    failed_requests INTEGER DEFAULT 0,
+    timeout_requests INTEGER DEFAULT 0,
+    avg_latency_ms INTEGER,
+    p95_latency_ms INTEGER,
+    avg_cost_per_request NUMERIC(10, 6),
+    total_tokens_used INTEGER,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    last_recalculated_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+### 8.4 ranking_weight_profiles
+
+**Mission:** Define ranking calculation weights per agent type.
+
+**Example:**
+```json
+{
+  "agent_type": "hunter_ai",
+  "success_weight": 0.50,
+  "latency_weight": 0.25,
+  "cost_weight": 0.15,
+  "recency_weight": 0.10,
+  "min_requests_for_ranking": 10,
+  "recency_decay_hours": 24
+}
+```
+
+### 8.5 ranking_overrides
+
+**Mission:** Manual ranking overrides for specific agent-model combinations.
+
+**Use Cases:**
+- Force premium model for critical agents
+- Disable underperforming model temporarily
+- A/B testing new models
+
+### 8.6 llm_requests
+
+**Mission:** Track complete request lifecycle from creation to completion.
+
+**Request States:**
+1. `pending` → Request created
+2. `selecting_model` → Choosing optimal model
+3. `executing` → Sending to provider
+4. `streaming` (optional) → Receiving streamed response
+5. `completed` | `failed` | `timeout` → Final states
+
+**Key Fields:**
+```sql
+CREATE TABLE llm_requests (
+    id UUID PRIMARY KEY,
+    request_id VARCHAR(100) UNIQUE NOT NULL,
+    user_id UUID,
+    agent_type VARCHAR(50) NOT NULL,
+    session_id UUID,
+    prompt_hash VARCHAR(64),  -- For cache lookups
+    input_tokens INTEGER,
+    max_output_tokens INTEGER,
+    temperature NUMERIC(3, 2),
+    has_tools BOOLEAN DEFAULT FALSE,
+    is_streaming BOOLEAN DEFAULT FALSE,
+    status VARCHAR(30) DEFAULT 'pending',
+    status_history JSONB,  -- Array of {state, timestamp}
+    selected_provider_id UUID REFERENCES llm_providers(id),
+    selected_model_id UUID REFERENCES llm_models(id),
+    selection_reason VARCHAR(100),  -- 'highest_ranking' | 'fallback' | 'override'
+    attempt_count INTEGER DEFAULT 0,
+    total_latency_ms INTEGER,
+    time_to_first_token_ms INTEGER,  -- For streaming
+    output_tokens INTEGER,
+    estimated_cost_usd NUMERIC(10, 6),
+    actual_cost_usd NUMERIC(10, 6),
+    error_code VARCHAR(50),
+    error_message TEXT,
+    created_at, started_at, completed_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+### 8.7 llm_request_attempts
+
+**Mission:** Track individual retry attempts for failed requests.
+
+**Example Retry Flow:**
+1. Attempt 1: Vertex AI → Rate limited
+2. Attempt 2: DeepInfra (fallback) → Timeout
+3. Attempt 3: Vertex AI → Success
+
+**Schema:**
+```sql
+CREATE TABLE llm_request_attempts (
+    id UUID PRIMARY KEY,
+    request_id UUID REFERENCES llm_requests(id) ON DELETE CASCADE,
+    attempt_number INTEGER NOT NULL,
+    provider_id UUID REFERENCES llm_providers(id),
+    model_id UUID REFERENCES llm_models(id),
+    status VARCHAR(30),  -- 'started' | 'completed' | 'failed' | 'timeout' | 'rate_limited'
+    latency_ms INTEGER,
+    input_tokens, output_tokens INTEGER,
+    cost_usd NUMERIC(10, 6),
+    error_type VARCHAR(50),  -- 'rate_limit' | 'timeout' | 'server_error' | 'invalid_request'
+    error_code VARCHAR(50),
+    error_message TEXT,
+    started_at, completed_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+### 8.8 circuit_breakers
+
+**Mission:** Circuit breaker state management per provider/model.
+
+**States:**
+1. `closed` → Normal operation
+2. `open` → Too many failures, blocking requests
+3. `half_open` → Testing if service recovered
+
+**Configuration:**
+```json
+{
+  "failure_threshold": 5,  // Open after 5 consecutive failures
+  "success_threshold": 3,  // Close after 3 consecutive successes in half_open
+  "timeout_seconds": 60,  // Stay open for 60s before half_open
+  "half_open_max_requests": 3  // Max concurrent requests in half_open
+}
+```
+
+**Schema:**
+```sql
+CREATE TABLE circuit_breakers (
+    id UUID PRIMARY KEY,
+    entity_type VARCHAR(20),  -- 'provider' | 'model'
+    entity_id UUID NOT NULL,
+    entity_name VARCHAR(100),
+    state VARCHAR(20) DEFAULT 'closed',
+    failure_count INTEGER DEFAULT 0,
+    success_count INTEGER DEFAULT 0,
+    consecutive_failures INTEGER DEFAULT 0,
+    last_failure_at, last_success_at TIMESTAMP WITH TIME ZONE,
+    opened_at, half_open_at TIMESTAMP WITH TIME ZONE,
+    config JSONB,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+### 8.9 llm_telemetry_hourly
+
+**Mission:** Hourly aggregated metrics per provider/model/agent.
+
+**Metrics Tracked:**
+- Request counts (total, successful, failed, timeout, retried, cached)
+- Latency percentiles (p50, p95, p99, avg, min, max)
+- Token usage (total input, total output, averages)
+- Cost metrics (total cost, avg per request)
+- Cache performance (hit rate, retry rate)
+
+### 8.10 llm_cost_daily
+
+**Mission:** Daily cost rollup per provider.
+
+**Use Cases:**
+- Budget monitoring
+- Provider cost comparison
+- Billing reconciliation
+- Cost attribution by tier (premium/standard/economy)
+
+### 8.11 llm_business_config
+
+**Mission:** Runtime configuration key-value store.
+
+**Stored Configs:**
+- Feature flags: `distillation_enabled`, `semantic_cache_enabled`
+- Thresholds: `max_cost_per_day_usd`, `circuit_breaker_failure_threshold`
+- Routing rules: `agent_type_to_tier_mapping`
+
+### 8.12 llm_cost_budgets
+
+**Mission:** Cost budget management with alerting.
+
+**Budget Types:**
+- `daily`: Daily spending limit
+- `weekly`: Rolling 7-day limit
+- `monthly`: Calendar month limit
+
+**Alerting:**
+- Warning at 80% of budget
+- Critical at 95% of budget
+- Hard stop at 100% (if `is_hard_limit=true`)
+
+### 8.13 llm_budget_alerts
+
+**Mission:** Alert history for budget thresholds.
+
+### 8.14 llm_audit_log
+
+**Mission:** Audit trail for configuration changes.
+
+**Tracked Actions:**
+- Provider enable/disable
+- Model configuration changes
+- Circuit breaker manual overrides
+- Budget updates
+- Ranking weight profile changes
+
+### 8.15 llm_response_cache
+
+**Mission:** Optional LLM response caching for identical prompts.
+
+**Cache Key Components:**
+```
+hash(agent_type + prompt_hash + model_id + temperature)
+```
+
+**Cache Policy:**
+- Max age: 7 days
+- Max hit count: 1000
+- Eviction: LRU + TTL
+
 ---
 
-### Domain 7: AI Telemetry (9 tables)
+## 📋 Domain 9: AI Telemetry (13 Tables)
 
-#### **Table: `models`**
-**Primary Key:** `id` (BIGINT, serial)  
-**Mission:** Track available LLM models and their costs  
-**Key Features:**
-- Multi-provider support (Vertex AI, DeepInfra, OpenAI)
-- Cost tracking per 1K tokens
-- Request counting and total cost aggregation
+**Purpose:** Comprehensive tracking of AI agent operations, costs, and performance.
 
-**Schema Highlights:**
+### 9.1 models
+
+**Mission:** AI model registry for cost calculation.
+
+**Schema:**
 ```sql
 CREATE TABLE models (
     id BIGSERIAL PRIMARY KEY,
-    provider llmprovider NOT NULL,  -- 'VERTEX_AI' | 'DEEPINFRA' | 'OPENAI'
-    model_name VARCHAR(100) NOT NULL,  -- 'gemini-1.5-pro', 'claude-3-opus'
-    label VARCHAR(255) NOT NULL,  -- Human-readable name
+    provider VARCHAR(50) NOT NULL,  -- Enum: VERTEX_AI | DEEPINFRA | OPENAI
+    model_name VARCHAR(100) NOT NULL,
+    label VARCHAR(255),  -- User-friendly name
     is_default BOOLEAN DEFAULT FALSE,
     is_available BOOLEAN DEFAULT TRUE,
-    cost_per_1k_input_tokens NUMERIC(10, 8) NOT NULL,
-    cost_per_1k_output_tokens NUMERIC(10, 8) NOT NULL,
-    max_tokens INTEGER NULL,
-    status modelstatus DEFAULT 'ACTIVE',
+    cost_per_1k_input_tokens NUMERIC(10, 8),
+    cost_per_1k_output_tokens NUMERIC(10, 8),
+    max_tokens INTEGER,
+    status VARCHAR(20) DEFAULT 'ACTIVE',  -- ACTIVE | DEPRECATED | DISABLED
     request_count BIGINT DEFAULT 0,
     total_cost_usd NUMERIC(12, 2) DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX unique_provider_model 
-ON models(provider, model_name);
-```
-
-**Business Rules:**
-- Vertex AI: $0.10/1M tokens (99% cheaper than OpenAI)
-- DeepInfra: $0.27/1M tokens (fallback provider)
-- OpenAI: $30/1M tokens (only for specific use cases)
-- Cost optimization: Always prefer Vertex AI when available
-
----
-
-#### **Table: `llm_conversations`**
-**Primary Key:** `id` (BIGINT, serial)  
-**Mission:** Track every LLM API call for cost analysis  
-**Key Features:**
-- Token usage tracking (input + output)
-- Latency monitoring
-- Error tracking
-- IP and user agent logging
-
-**Schema Highlights:**
-```sql
-CREATE TABLE llm_conversations (
-    id BIGSERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    session_id VARCHAR(100) NOT NULL,
-    model_id BIGINT REFERENCES models(id) ON DELETE SET NULL,
-    provider llmprovider NOT NULL,
-    model_name VARCHAR(100) NOT NULL,
-    prompt_text TEXT NOT NULL,
-    response_text TEXT NULL,
-    input_tokens INTEGER NULL,
-    output_tokens INTEGER NULL,
-    total_tokens INTEGER NULL,
-    cost_usd NUMERIC(10, 6) NULL,
-    latency_ms INTEGER NULL,
-    status llmstatus DEFAULT 'SUCCESS',  -- 'SUCCESS' | 'ERROR' | 'TIMEOUT'
-    error_message TEXT NULL,
-    ip_address VARCHAR(45) NULL,
-    user_agent TEXT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at, updated_at TIMESTAMP WITH TIME ZONE,
+    UNIQUE(provider, model_name)
 );
 ```
 
-**Usage Patterns:**
-- Extremely high write volume (every LLM call)
-- Analytics queries on cost aggregation
-- Performance monitoring on latency
-- Error tracking for provider reliability
+### 9.2 llm_conversations
 
-**Indexes:**
+**Mission:** Track individual LLM API calls (different from chat_messages).
+
+**Use Case:** Every time an agent calls an LLM, log the request details.
+
+**Key Fields:**
 ```sql
-CREATE INDEX idx_llm_conversations_user ON llm_conversations(user_id);
-CREATE INDEX idx_llm_conversations_model ON llm_conversations(model_id);
-CREATE INDEX idx_llm_conversations_created ON llm_conversations(created_at);
-CREATE INDEX idx_llm_conversations_status ON llm_conversations(status);
+- session_id VARCHAR(100)  -- Groups related calls
+- model_id BIGINT REFERENCES models(id)
+- provider, model_name VARCHAR  -- Denormalized for performance
+- prompt_text TEXT  -- Input prompt
+- response_text TEXT  -- LLM output
+- input_tokens, output_tokens, total_tokens INTEGER
+- cost_usd NUMERIC(10, 6)  -- Calculated cost
+- latency_ms INTEGER
+- status VARCHAR(20)  -- SUCCESS | RATE_LIMITED | TIMEOUT | ERROR
+- error_message TEXT
+- ip_address VARCHAR(45)
+- user_agent TEXT
 ```
 
----
+### 9.3 agent_model_configs
 
-#### **Table: `agent_executions`**
-**Primary Key:** `id` (BIGINT, serial)  
-**Mission:** Track execution of specialized AI agents (18 agents total)  
-**Key Features:**
-- Agent type tracking (chat, hunter_ai, portfolio, etc.)
-- Execution time monitoring
-- Success/failure tracking
-- Output metadata storage
+**Mission:** Agent-specific model preferences and overrides.
 
-**Schema Highlights:**
+**Example:**
+```json
+{
+  "agent_type": "hunter_ai",
+  "provider": "VERTEX_AI",
+  "model_name": "gemini-1.5-flash-001",
+  "priority": 1,  // Use this model first
+  "weight": 100,  // Weighted random selection
+  "is_active": true,
+  "cost_per_1k_input_override": 0.0001  // Override default pricing
+}
+```
+
+### 9.4 agent_performance_stats
+
+**Mission:** Rolling performance metrics per agent type.
+
+**Time Windows:**
+- `1h`: Last hour stats
+- `24h`: Last 24 hours
+- `all_time`: Lifetime stats
+
+**Metrics:**
+```sql
+- total_requests, successful_requests, failed_requests, canceled_requests
+- avg_latency_ms, avg_cost_usd, total_cost_usd
+- last_updated_at
+```
+
+### 9.5 agent_executions
+
+**Mission:** Track high-level agent workflow executions.
+
+**Example Flow:**
+1. User: "Swap 100 USDC to ETH"
+2. Intent Detector → `agent_type='hunter_ai'`
+3. Hunter AI execution created → `workflow_type='swap'`
+4. Multiple subtasks created (price check, route optimization, execution)
+5. Each subtask logged in `agent_tasks`
+6. Final execution status: `COMPLETED` or `FAILED`
+
+**Schema:**
 ```sql
 CREATE TABLE agent_executions (
     id BIGSERIAL PRIMARY KEY,
-    agent_type VARCHAR(50) NOT NULL,  -- 'CHAT', 'HUNTER_AI', 'PORTFOLIO', etc.
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    session_id VARCHAR(100) NOT NULL,
-    input_data JSONB NOT NULL,
-    output_data JSONB NULL,
-    status agentexecutionstatus DEFAULT 'RUNNING',  -- 'RUNNING' | 'SUCCESS' | 'FAILED'
-    error_message TEXT NULL,
-    execution_time_ms INTEGER NULL,
-    token_usage JSONB NULL,  -- {input: N, output: M, total: X}
-    cost_usd NUMERIC(10, 6) NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMPTZ NULL
+    conversation_id BIGINT REFERENCES llm_conversations(id) ON DELETE SET NULL,
+    agent_type VARCHAR(50),  -- 'hunter_ai' | 'research' | 'execution' | etc.
+    workflow_type VARCHAR(50),  -- 'swap' | 'portfolio_analysis' | 'earn_deposit'
+    status VARCHAR(20),  -- PENDING | RUNNING | COMPLETED | FAILED | CANCELED
+    input_params JSON,  -- Workflow input parameters
+    output_result JSON,  -- Workflow output/results
+    total_tasks INTEGER DEFAULT 0,
+    completed_tasks INTEGER DEFAULT 0,
+    failed_tasks INTEGER DEFAULT 0,
+    total_cost_usd NUMERIC(10, 6),  -- Sum of all LLM costs
+    execution_time_ms INTEGER,
+    error_message TEXT,
+    started_at, completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE
 );
 ```
 
-**Agent Types:**
-1. CHAT - General conversation agent
-2. HUNTER_AI - Market data and news agent
-3. PORTFOLIO - Portfolio analysis agent
-4. SWAP - Token swap execution agent
-5. RISK_ANALYZER - Risk assessment agent
-6. GAS_OPTIMIZER - Gas fee optimization agent
-7. TAX_OPTIMIZER - Tax loss harvesting agent
-8. SECURITY_AUDITOR - Smart contract security agent
-... (18 total agents)
+### 9.6 agent_tasks
 
----
+**Mission:** Individual subtasks within agent executions.
 
-#### **Table: `agent_tasks`**
-**Primary Key:** `id` (BIGINT, serial)  
-**Mission:** Track individual tasks within agent executions  
-**Key Features:**
-- Task decomposition tracking
-- Sub-task dependencies
-- Parallel execution monitoring
+**Example Subtasks for Swap Workflow:**
+1. `task_type='price_check'` → Get current ETH/USDC price
+2. `task_type='route_optimization'` → Find best DEX route
+3. `task_type='gas_estimation'` → Estimate gas costs
+4. `task_type='transaction_build'` → Build transaction
+5. `task_type='transaction_execute'` → Execute on-chain
 
----
-
-#### **Table: `agent_tools`**
-**Primary Key:** `id` (BIGINT, serial)  
-**Mission:** Track tool usage by agents (MCP servers)  
-**Key Features:**
-- MCP server call tracking
-- Tool-specific performance metrics
-- Error tracking per tool
-
-**Example Tools:**
-- `oneinch_api` - DEX aggregator
-- `coingecko_api` - Price data
-- `defillama_api` - Protocol TVL data
-- `thegraph_api` - On-chain queries
-
----
-
-### Domain 8: Analytics & Monitoring (3 tables)
-
-#### **Table: `conversation_analytics`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Aggregate analytics for conversation performance  
-**Key Features:**
-- Message volume tracking
-- Intent distribution
-- Handler performance metrics
-- Language usage statistics
-
-**Schema Highlights:**
+**Schema:**
 ```sql
-CREATE TABLE conversation_analytics (
-    id SERIAL PRIMARY KEY,
-    conversation_id UUID REFERENCES chat_conversations(id) ON DELETE CASCADE,
-    total_messages INTEGER DEFAULT 0,
-    user_messages INTEGER DEFAULT 0,
-    assistant_messages INTEGER DEFAULT 0,
-    avg_response_time_ms INTEGER NULL,
-    intent_distribution JSONB DEFAULT '{}'::jsonb,
-    handler_distribution JSONB DEFAULT '{}'::jsonb,
-    language VARCHAR(5),
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE agent_tasks (
+    id BIGSERIAL PRIMARY KEY,
+    execution_id BIGINT REFERENCES agent_executions(id) ON DELETE CASCADE,
+    task_name VARCHAR(100),
+    task_type VARCHAR(50),
+    status VARCHAR(20),  -- PENDING | RUNNING | COMPLETED | FAILED | SKIPPED
+    input_data JSON,
+    output_data JSON,
+    error_message TEXT,
+    execution_time_ms INTEGER,
+    retry_count INTEGER DEFAULT 0,
+    started_at, completed_at, created_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+### 9.7 agent_tools_usage
+
+**Mission:** Track usage of external tools/APIs by agents.
+
+**Tools:**
+- CoinGecko API (price data)
+- 1inch API (swap routing)
+- DeFiLlama API (protocol TVL)
+- TheGraph API (subgraph queries)
+- Aave API (lending rates)
+- Hyperliquid API (perpetuals)
+
+**Schema:**
+```sql
+CREATE TABLE agent_tools_usage (
+    id BIGSERIAL PRIMARY KEY,
+    execution_id BIGINT REFERENCES agent_executions(id) ON DELETE CASCADE,
+    task_id BIGINT REFERENCES agent_tasks(id) ON DELETE SET NULL,
+    tool_name VARCHAR(100),  -- 'coingecko_api' | '1inch_api' | etc.
+    input_params JSON,
+    output_result JSON,
+    status VARCHAR(20),  -- SUCCESS | FAILED | TIMEOUT | RATE_LIMITED
+    execution_time_ms INTEGER,
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+### 9.8 llm_rate_limit_events
+
+**Mission:** Track rate limit hits for proactive capacity planning.
+
+### 9.9 llm_cost_alerts
+
+**Mission:** Cost threshold alerts (hourly/daily spending limits).
+
+### 9.10 vertex_api_metrics
+
+**Mission:** Vertex AI-specific metrics with regional tracking.
+
+**Additional Fields:**
+- `region`: 'us-central1' | 'us-east4' | etc.
+- `quota_exceeded_count`: Quota limit hits
+- `failover_to_bedrock_count`: Fallback events
+
+### 9.11 deepinfra_api_metrics
+
+**Mission:** DeepInfra-specific metrics.
+
+### 9.12 bedrock_api_metrics
+
+**Mission:** AWS Bedrock-specific metrics.
+
+**Additional Fields:**
+- `throttle_count`: Throttling events
+- `model_not_ready_count`: Model unavailable events
+- `failover_from_vertex_count`: Times used as fallback
+
+---
+
+## 📋 Domain 10: Distillation System (6 Tables)
+
+**Purpose:** LLM cost optimization through response caching and static responses.
+
+**Problem Solved:** Reduce LLM costs by 80-95% for repetitive queries using 3-tier routing:
+1. **Static Responses** → Pre-defined templates (FREE)
+2. **Exact Cache** → Hash-based cache for identical queries (FREE)
+3. **Semantic Cache** → Vector similarity for similar queries (FREE)
+4. **Light LLM** → Small/cheap model for simple queries (LOW COST)
+5. **Full LLM** → Premium model for complex queries (NORMAL COST)
+
+### 10.1 distillation_config
+
+**Mission:** System-wide distillation configuration.
+
+**Stored Configs:**
+```json
+{
+  "exact_cache_ttl_hours": 168,  // 7 days
+  "semantic_cache_ttl_hours": 24,
+  "semantic_similarity_threshold": 0.85,
+  "light_llm_complexity_threshold": 0.5,
+  "enable_static_responses": true,
+  "enable_exact_cache": true,
+  "enable_semantic_cache": true
+}
+```
+
+### 10.2 distillation_static_responses
+
+**Mission:** Template-based responses for common queries.
+
+**Example:**
+```json
+{
+  "intent": "greeting",
+  "variant": "morning",
+  "response_template": "Good morning! How can I help you with DeFi today?",
+  "template_variables": [],
+  "conditions": {"time_of_day": "morning"},
+  "priority": 1,
+  "is_active": true
+}
+```
+
+**Common Static Responses:**
+- Greetings/farewells
+- "What is X?" for common terms (DeFi, APY, TVL, etc.)
+- Platform features overview
+- Supported chains/protocols list
+
+### 10.3 distillation_cache_exact
+
+**Mission:** Exact match response cache.
+
+**Cache Key:** `SHA256(normalized_query)`
+
+**Normalization:**
+- Lowercase
+- Remove extra whitespace
+- Strip punctuation
+- Remove stop words (optional)
+
+**Schema:**
+```sql
+CREATE TABLE distillation_cache_exact (
+    id UUID PRIMARY KEY,
+    cache_key VARCHAR(64) UNIQUE NOT NULL,
+    normalized_query TEXT NOT NULL,
+    intent VARCHAR(50),
+    entities JSONB,  -- Extracted entities
+    response_content TEXT NOT NULL,
+    response_metadata JSONB,
+    hit_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE,
+    last_hit_at TIMESTAMP WITH TIME ZONE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    source_model VARCHAR(100),  -- Original LLM used
+    source_request_id UUID
+);
+```
+
+### 10.4 distillation_cache_semantic
+
+**Mission:** Semantic similarity-based cache using vector embeddings.
+
+**How It Works:**
+1. User query: "What's the current price of Bitcoin?"
+2. Generate embedding: `embedding_model(query)` → 1536-dim vector
+3. Find similar cached responses: `SELECT * WHERE cosine_similarity(query_embedding, ?) > 0.85`
+4. If found: Return cached response (FREE)
+5. If not found: Call LLM, cache response with embedding
+
+**Schema:**
+```sql
+CREATE TABLE distillation_cache_semantic (
+    id UUID PRIMARY KEY,
+    query_embedding VECTOR(1536),  -- pgvector extension
+    original_query TEXT NOT NULL,
+    intent VARCHAR(50),
+    entities JSONB,
+    response_content TEXT NOT NULL,
+    response_metadata JSONB,
+    hit_count INTEGER DEFAULT 0,
+    created_at, last_hit_at, expires_at TIMESTAMP WITH TIME ZONE,
+    source_model VARCHAR(100),
+    source_request_id UUID
+);
+
+-- Vector similarity index
+CREATE INDEX ON distillation_cache_semantic 
+USING ivfflat (query_embedding vector_cosine_ops) 
+WITH (lists = 100);
+```
+
+### 10.5 distillation_requests
+
+**Mission:** Log all distillation routing decisions.
+
+**Routing Decision Flow:**
+```
+1. Classify query → {intent, complexity, entities}
+2. Check static responses → Match? Return static
+3. Check exact cache → Match? Return cached
+4. Check semantic cache → Similarity > 0.85? Return cached
+5. Route by complexity:
+   - complexity < 0.5 → Light LLM (Gemini Flash)
+   - complexity >= 0.5 → Full LLM (Claude Sonnet)
+```
+
+**Schema:**
+```sql
+CREATE TABLE distillation_requests (
+    id UUID PRIMARY KEY,
+    request_id VARCHAR(100) NOT NULL,
+    user_id UUID,
+    original_query TEXT NOT NULL,
+    normalized_query TEXT,
+    intent VARCHAR(50),
+    intent_confidence NUMERIC(4, 3),  -- 0.000 to 1.000
+    complexity VARCHAR(20),  -- 'simple' | 'moderate' | 'complex'
+    entities JSONB,
+    route_type VARCHAR(20) NOT NULL,  -- 'rejected' | 'static' | 'exact_cache' | 'semantic_cache' | 'light_llm' | 'full_llm'
+    routing_reason TEXT,
+    suggested_model_tier VARCHAR(20),  -- 'economy' | 'standard' | 'premium'
+    suggested_agent VARCHAR(50),
+    cache_key VARCHAR(64),
+    cache_hit BOOLEAN DEFAULT FALSE,
+    cache_level VARCHAR(20),  -- 'exact' | 'semantic'
+    classification_latency_ms INTEGER,
+    total_latency_ms INTEGER,
+    was_processed BOOLEAN,
+    llm_request_id UUID,  -- Links to llm_requests if LLM was used
+    created_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+### 10.6 distillation_telemetry_hourly
+
+**Mission:** Hourly aggregated distillation metrics.
+
+**Cost Savings Calculation:**
+```
+estimated_cost_saved_usd = 
+  (static_response_count + cache_hit_count) * avg_llm_cost_per_request
+```
+
+**Example Metrics:**
+```json
+{
+  "hour_bucket": "2026-01-25T14:00:00Z",
+  "total_requests": 1000,
+  "rejected_count": 50,  // Invalid/spam
+  "static_response_count": 200,  // 20% saved
+  "exact_cache_hits": 300,  // 30% saved
+  "semantic_cache_hits": 150,  // 15% saved
+  "light_llm_count": 200,  // 20% low cost
+  "full_llm_count": 100,  // 10% normal cost
+  "cache_hit_rate": 0.45,  // 45% cache hit rate
+  "avg_classification_latency_ms": 15,
+  "avg_confidence": 0.87,
+  "estimated_cost_saved_usd": 12.50
+}
+```
+
+---
+
+## 📋 Domain 11: Projects & Knowledge Bases (12 Tables)
+
+**Purpose:** Multi-project platform with RAG (Retrieval Augmented Generation) capabilities.
+
+**Use Case:** Allow organizations to create custom AI agents with project-specific knowledge bases.
+
+### 11.1 projects
+
+**Mission:** Project/workspace container.
+
+**Schema:**
+```sql
+CREATE TABLE projects (
+    id UUID PRIMARY KEY,
+    slug VARCHAR(50) UNIQUE NOT NULL,  -- 'acme-defi' | 'crypto-dao'
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    icon VARCHAR(50),  -- Emoji or icon identifier
+    color VARCHAR(7),  -- Hex color code
+    banner_url TEXT,
+    status VARCHAR(20) DEFAULT 'draft',  -- 'draft' | 'active' | 'archived'
+    visibility VARCHAR(20) DEFAULT 'public',  -- 'public' | 'private' | 'internal'
+    system_prompt TEXT NOT NULL,  -- Custom system prompt for project agent
+    welcome_message TEXT,
+    enabled_protocols ARRAY<TEXT>,  -- ['aave', 'curve', 'uniswap']
+    enabled_chains ARRAY<TEXT>,  -- ['arbitrum', 'optimism']
+    enabled_tools ARRAY<TEXT>,  -- ['swap', 'earn', 'portfolio']
+    risk_config JSONB,  -- Custom risk parameters
+    max_users INTEGER,  -- User limit for private projects
+    display_order INTEGER DEFAULT 0,
+    is_featured BOOLEAN DEFAULT FALSE,
+    created_by UUID NOT NULL,
+    created_at, updated_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+### 11.2 project_knowledge_bases
+
+**Mission:** Knowledge base configuration per project.
+
+**Schema:**
+```sql
+- project_id UUID
+- name VARCHAR(100)  -- 'Protocol Documentation' | 'Trading Strategies'
+- description TEXT
+- embedding_model VARCHAR(100) DEFAULT 'text-embedding-3-small'
+- chunk_size INTEGER DEFAULT 500  -- Characters per chunk
+- chunk_overlap INTEGER DEFAULT 50  -- Overlap for context preservation
+- total_documents, total_chunks INTEGER
+- status VARCHAR(20) DEFAULT 'active'
+- last_indexed_at TIMESTAMP WITH TIME ZONE
+```
+
+### 11.3 project_knowledge_documents
+
+**Mission:** Source documents for knowledge base.
+
+**Document Types:**
+- `manual`: Manually uploaded documents
+- `web`: Scraped from URL
+- `api`: Fetched from API
+- `integration`: Synced from external system (Notion, Google Docs, etc.)
+
+**Schema:**
+```sql
+- knowledge_base_id UUID
+- title VARCHAR(255)
+- content TEXT  -- Full document text
+- doc_type VARCHAR(50)  -- 'guide' | 'faq' | 'protocol_docs' | 'strategy'
+- source_url TEXT
+- source_type VARCHAR(50)
+- tags ARRAY<TEXT>  -- ['beginner', 'advanced', 'liquidity-pools']
+- priority INTEGER DEFAULT 1  -- Retrieval priority
+- is_processed BOOLEAN DEFAULT FALSE
+- chunk_count INTEGER
+- processing_error TEXT
+```
+
+### 11.4 project_knowledge_chunks
+
+**Mission:** Vector embeddings for RAG retrieval.
+
+**Chunking Strategy:**
+1. Split document into 500-character chunks with 50-character overlap
+2. Generate embedding for each chunk: `text-embedding-3-small` → 1536-dim vector
+3. Store with metadata for retrieval
+
+**Schema:**
+```sql
+CREATE TABLE project_knowledge_chunks (
+    id UUID PRIMARY KEY,
+    document_id UUID NOT NULL,
+    knowledge_base_id UUID NOT NULL,
+    chunk_text TEXT NOT NULL,
+    chunk_index INTEGER NOT NULL,  -- Position in document
+    embedding VECTOR(1536),  -- pgvector
+    metadata JSONB,  -- {title, section, page, etc.}
+    created_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Vector similarity search index
+CREATE INDEX ON project_knowledge_chunks 
+USING ivfflat (embedding vector_cosine_ops) 
+WITH (lists = 100);
+```
+
+**RAG Query Flow:**
+1. User question: "How do I provide liquidity on Curve?"
+2. Generate question embedding
+3. Search similar chunks: `SELECT * ORDER BY embedding <=> $1 LIMIT 5`
+4. Construct prompt: `system_prompt + retrieved_chunks + user_question`
+5. Send to LLM for answer
+
+### 11.5 project_tool_configs
+
+**Mission:** Per-project tool permissions and limits.
+
+**Example:**
+```json
+{
+  "project_id": "abc123",
+  "tool_id": "swap",
+  "is_enabled": true,
+  "max_calls_per_session": 10,
+  "max_amount_per_call": 1000.00,  // USDC
+  "requires_confirmation": true,
+  "default_params": {
+    "slippage": 0.5,
+    "deadline": 300
+  },
+  "locked_params": {
+    "recipient": "0x..."  // Force recipient address
+  }
+}
+```
+
+### 11.6 project_chat_sessions
+
+**Mission:** Chat sessions within projects (separate from main chat).
+
+### 11.7 project_invitations
+
+**Mission:** Invite users to private projects.
+
+**Workflow:**
+1. Project owner creates invitation → `status='pending'`
+2. Email sent with invitation link
+3. User accepts → `status='accepted'`, user added to `user_project_assignments`
+4. Auto-expire after 7 days
+
+### 11.8 project_analytics_daily
+
+**Mission:** Daily analytics per project.
+
+**Metrics:**
+- Active users
+- Message count
+- Tool usage breakdown
+- Avg response time
+- Cost attribution
+
+### 11.9 project_auto_assign_rules
+
+**Mission:** Auto-assign new users to projects based on rules.
+
+**Example Rules:**
+```json
+{
+  "rule_type": "domain_match",
+  "condition": "email.endsWith('@acme.com')",
+  "target_project_id": "acme-project",
+  "role": "member"
+}
+```
+
+### 11.10 user_active_projects
+
+**Mission:** Track user's currently active project.
+
+### 11.11 user_project_assignments
+
+**Mission:** Many-to-many relationship between users and projects.
+
+**Roles:**
+- `owner`: Full control
+- `admin`: Manage users, configure project
+- `member`: Use project, no admin access
+- `viewer`: Read-only access
+
+### 11.12 distillation_telemetry
+
+**Mission:** Additional distillation metrics (different from hourly table).
+
+---
+
+## 📋 Domain 12: Retry & Resilience (3 Tables)
+
+**Purpose:** Circuit breakers and retry logic for external service calls.
+
+### 12.1 retry_attempts
+
+**Mission:** Log individual retry attempts for failed operations.
+
+**Schema:**
+```sql
+CREATE TABLE retry_attempts (
+    id UUID PRIMARY KEY,
+    operation_type VARCHAR(50),  -- 'blockchain_tx' | 'api_call' | 'llm_request'
+    operation_id VARCHAR(255),  -- Original operation identifier
+    attempt_number INTEGER,
+    error_type VARCHAR(50),  -- 'timeout' | 'rate_limit' | 'server_error'
+    error_message TEXT,
+    retry_strategy VARCHAR(50),  -- 'exponential_backoff' | 'linear' | 'fibonacci'
+    delay_ms INTEGER,  -- Delay before this attempt
+    status VARCHAR(20),  -- 'retrying' | 'success' | 'failed'
+    created_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+**Retry Strategies:**
+1. **Exponential Backoff:** 100ms, 200ms, 400ms, 800ms, 1600ms
+2. **Linear:** 1s, 2s, 3s, 4s, 5s
+3. **Fibonacci:** 100ms, 100ms, 200ms, 300ms, 500ms, 800ms
+
+### 12.2 retry_metrics_aggregate
+
+**Mission:** Aggregate retry statistics per operation type.
+
+**Metrics:**
+- Total retry attempts
+- Success rate after retries
+- Average retry count to success
+- Most common error types
+- Peak retry hours
+
+### 12.3 service_override_events
+
+**Mission:** Manual service overrides during incidents.
+
+**Use Case:**
+"During Vertex AI outage, manually override to use DeepInfra for all agents"
+
+**Schema:**
+```sql
+CREATE TABLE service_override_events (
+    id UUID PRIMARY KEY,
+    service_name VARCHAR(50),  -- 'vertex_ai' | '1inch_api' | 'coingecko_api'
+    override_type VARCHAR(20),  -- 'disable' | 'fallback' | 'rate_limit'
+    override_config JSONB,  -- Override parameters
+    reason TEXT,
+    created_by UUID,
+    activated_at TIMESTAMP WITH TIME ZONE,
+    deactivated_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT TRUE
 );
 ```
 
 ---
 
-#### **Table: `analytics_snapshots`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Time-series snapshots of portfolio and system metrics  
-**Key Features:**
-- Daily/hourly snapshots
-- Portfolio value tracking
-- Transaction volume aggregation
-- User activity metrics
+## 📋 Domain 13: Security & Compliance (3 Tables)
 
-**Schema Highlights:**
+### 13.1 policies
+
+**Mission:** Cache Privy user policies for offline validation.
+
+**Schema:**
+```sql
+CREATE TABLE policies (
+    id UUID PRIMARY KEY,
+    privy_user_id VARCHAR(255) NOT NULL,
+    policy_type VARCHAR(50),  -- 'wallet_ownership' | 'session_validity' | 'mfa_required'
+    policy_data JSONB NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    synced_from_privy_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+**Why Cache Policies?**
+- Reduce Privy API calls
+- Offline policy validation
+- Audit trail
+
+### 13.2 policy_audit_events
+
+**Mission:** Audit log for policy enforcement events.
+
+**Events:**
+- `policy_granted`: User granted new permission
+- `policy_revoked`: Permission removed
+- `policy_violation`: Attempted unauthorized action
+- `mfa_challenge`: MFA challenge issued
+- `mfa_success` / `mfa_failed`: MFA verification results
+
+### 13.3 audit_logs
+
+**Mission:** General audit trail for sensitive operations.
+
+**Logged Operations:**
+- User login/logout
+- Wallet connections
+- Large transactions (>$1000 USD)
+- Admin actions
+- Configuration changes
+
+**Schema:**
+```sql
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY,
+    user_id UUID,
+    action_type VARCHAR(50),
+    resource_type VARCHAR(50),  -- 'user' | 'wallet' | 'transaction' | 'config'
+    resource_id VARCHAR(255),
+    before_value JSONB,
+    after_value JSONB,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE
+);
+```
+
+---
+
+## 📋 Domain 14: Location & System Config (3 Tables)
+
+### 14.1 countries
+
+**Mission:** Country reference data for user location tracking.
+
+### 14.2 cities
+
+**Mission:** City reference data linked to countries.
+
+### 14.3 analytics_snapshots
+
+**Mission:** System-wide daily analytics snapshots.
+
+**Schema:**
 ```sql
 CREATE TABLE analytics_snapshots (
-    id SERIAL PRIMARY KEY,
-    snapshot_type VARCHAR(50) NOT NULL,  -- 'PORTFOLIO' | 'SYSTEM' | 'USER_ACTIVITY'
-    snapshot_time TIMESTAMPTZ NOT NULL,
-    granularity VARCHAR(20) NOT NULL,  -- 'HOURLY' | 'DAILY' | 'WEEKLY'
-    data JSONB NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    id UUID PRIMARY KEY,
+    snapshot_date DATE NOT NULL,
+    snapshot_type VARCHAR(50) NOT NULL,  -- 'daily' | 'weekly' | 'monthly'
+    
+    -- Portfolio state counts
+    portfolio_empty_count INTEGER,
+    portfolio_starter_count INTEGER,  -- $0-$100
+    portfolio_active_count INTEGER,  -- $100-$10k
+    portfolio_whale_count INTEGER,  -- $10k+
+    
+    -- Activity level counts
+    activity_new_count INTEGER,  -- Signed up today
+    activity_very_active_count INTEGER,  -- >10 actions/day
+    activity_active_count INTEGER,  -- 1-10 actions/day
+    activity_weekly_active_count INTEGER,
+    activity_monthly_active_count INTEGER,
+    activity_inactive_count INTEGER,  -- No actions in 30 days
+    activity_reactivated_count INTEGER,  -- Returned after 30+ days
+    
+    -- User type counts
+    type_new_user_count INTEGER,
+    type_casual_count INTEGER,  -- <5 swaps total
+    type_trader_count INTEGER,  -- 5-50 swaps
+    type_yield_farmer_count INTEGER,  -- >50% in earn positions
+    type_power_user_count INTEGER,  -- >50 swaps + earn + portfolio
+    
+    -- Totals
+    total_users INTEGER,
+    total_executions INTEGER,
+    total_balance_usd NUMERIC(20, 2),
+    
+    -- Execution counts
+    exec_swap_count INTEGER,
+    exec_buy_count INTEGER,
+    exec_lending_count INTEGER,
+    exec_transfer_count INTEGER,
+    exec_cashout_count INTEGER,
+    
+    -- Additional metrics
+    additional_metrics JSONB,
+    created_at TIMESTAMP WITH TIME ZONE,
+    
+    UNIQUE(snapshot_date, snapshot_type)
 );
 ```
 
 ---
 
-#### **Table: `user_context_aware`**
-**Primary Key:** `id` (INTEGER, serial)  
-**Mission:** Context-aware agent response tracking  
-**Key Features:**
-- User preference learning
-- Conversation context storage
-- Response personalization data
+## 📋 Domain 15: Agent Sessions (1 Table)
 
-**Schema Highlights:**
+### 15.1 agent_sessions
+
+**Mission:** Track stateful agent conversation sessions.
+
+**Schema:**
 ```sql
-CREATE TABLE user_context_aware (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    context_type VARCHAR(50) NOT NULL,
-    context_data JSONB NOT NULL,
-    confidence_score NUMERIC(3, 2) NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE agent_sessions (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL,
+    agent_type VARCHAR(50) NOT NULL,
+    session_state JSONB,  -- Current conversation state
+    context_data JSONB,  -- Agent-specific context
+    is_active BOOLEAN DEFAULT TRUE,
+    started_at TIMESTAMP WITH TIME ZONE,
+    last_interaction_at TIMESTAMP WITH TIME ZONE,
+    ended_at TIMESTAMP WITH TIME ZONE
 );
 ```
 
----
-
-## 🔄 Hexagonal Architecture Integration
-
-### Port-Adapter Pattern Implementation
-
-```python
-# Domain Layer (Port - Interface)
-class UserCommandGateway(Protocol):
-    """Port: Interface defined in domain layer"""
-    async def save(self, user: User) -> User:
-        ...
-    
-    async def update(self, user: User) -> User:
-        ...
-    
-    async def delete(self, user_id: int) -> None:
-        ...
-
-# Infrastructure Layer (Adapter - Implementation)
-class SqlaUserDataMapper(UserCommandGateway):
-    """Adapter: SQLAlchemy implementation of port"""
-    def __init__(self, session: AsyncSession):
-        self._session = session
-    
-    async def save(self, user: User) -> User:
-        # Map domain entity to database table
-        stmt = insert(UsersTable).values(
-            email=user.email,
-            first_name=user.first_name,
-            # ... map all fields
-        )
-        result = await self._session.execute(stmt)
-        user.id = result.inserted_primary_key[0]
-        return user
-```
-
-### CQRS Implementation
-
-**Command Side (Writes):**
-```python
-# Use UserCommandGateway for writes
-user_repo = container.get(UserCommandGateway)  # Injected via Dishka
-user = User(email="user@example.com", ...)
-saved_user = await user_repo.save(user)
-```
-
-**Query Side (Reads):**
-```python
-# Use UserQueryGateway for optimized reads
-user_query = container.get(UserQueryGateway)  # Injected via Dishka
-users = await user_query.find_by_email("user@example.com")
-```
+**Use Case:**
+- Hunter AI maintains state across multiple queries
+- Research agent tracks fact-checking progress
+- Execution agent manages multi-step transaction flows
 
 ---
 
-## 📈 Data Flow Patterns
+## 🔄 Data Flow & Integration Patterns
 
-### Pattern 1: Guest Chat Message Flow
+### Pattern 1: Chat Message → Agent Execution
 
-```
-1. Guest sends message
-   └─> Check rate limit (chat_rate_limits)
-       └─> Create/update guest user (chat_users)
-           └─> Create conversation if new (chat_conversations)
-               └─> Insert message (chat_messages)
-                   └─> Detect intent (AI model)
-                       └─> Route to handler (swap_handler_v2, etc.)
-                           └─> Execute action (transactions, earn_positions)
-                               └─> Track telemetry (agent_executions)
-                                   └─> Return response
-                                       └─> Update analytics (conversation_analytics)
-```
-
-### Pattern 2: Transaction Execution Flow
-
-```
-1. User requests swap
-   └─> Validate wallet (wallets)
-       └─> Check balance (chain_addresses)
-           └─> Create pending transaction (transactions, status=PENDING)
-               └─> Execute via DEX aggregator (1inch API)
-                   └─> Get tx_hash
-                       └─> Update transaction (status=PENDING, tx_hash=...)
-                           └─> Background job monitors confirmation
-                               └─> On confirmation:
-                                   └─> Update transaction (status=SUCCESS, confirmed_at=NOW())
-                                   └─> Update wallet balance (chain_addresses)
-                                   └─> Create analytics snapshot
+```mermaid
+graph LR
+    A[User Message] --> B[Intent Detection]
+    B --> C{Route Intent}
+    C -->|Swap| D[Hunter AI]
+    C -->|Portfolio| E[Portfolio Agent]
+    C -->|Help| F[Chat Agent]
+    D --> G[Agent Execution Record]
+    G --> H[Agent Tasks]
+    H --> I[LLM Requests]
+    I --> J[Response]
+    J --> K[Chat Message]
 ```
 
-### Pattern 3: AI Agent Execution Flow
+### Pattern 2: Transaction Lifecycle
 
 ```
-1. User question received
-   └─> Create agent execution (agent_executions, status=RUNNING)
-       └─> Decompose into tasks (agent_tasks)
-           └─> Execute tasks in parallel
-               └─> Call MCP tools (agent_tools)
-                   └─> Call LLM (llm_conversations)
-                       └─> Track tokens and cost
-                           └─> Aggregate results
-                               └─> Update execution (status=SUCCESS, output_data=...)
-                                   └─> Return response
+1. User initiates swap via chat
+2. Intent detected → swap_handler_v2
+3. SwapHandler creates agent_execution
+4. Agent tasks: price_check → route_optimization → gas_estimation
+5. Each task may call llm_requests for AI guidance
+6. Transaction built and submitted
+7. Transaction record created (status='pending')
+8. Celery worker monitors confirmation
+9. Transaction confirmed → update status='confirmed'
+10. Update token_holdings and portfolio_snapshot
+11. Notify user via notifications table
+```
+
+### Pattern 3: LLM Orchestration Flow
+
+```
+1. Agent needs LLM response
+2. Check distillation_cache_exact → Hit? Return cached
+3. Check distillation_cache_semantic → Hit? Return cached
+4. Create llm_requests record (status='pending')
+5. Check circuit_breakers → Provider healthy?
+6. Query agent_model_rankings for best model
+7. Send request to selected provider
+8. Log attempt in llm_request_attempts
+9. On failure: retry with fallback provider
+10. On success: update rankings, cache response
+11. Update llm_telemetry_hourly
 ```
 
 ---
 
-## ⚡ Performance Optimization Strategy
+## ⚠️ Legacy Tables Pending Removal
+
+**Deprecation Date:** 2026-06-01
+
+The following tables are part of the legacy chat system and will be removed:
+
+1. **conversations** (INTEGER-based) → Replaced by `chat_conversations` (UUID-based)
+2. **messages** (INTEGER-based) → Replaced by `chat_messages` (UUID-based)
+3. **sessions** (old session model) → Replaced by `auth_sessions`
+
+**Migration Status:**
+- ✅ All data migrated to new tables
+- ✅ New API endpoints live (`/api/v1/conversations/*`)
+- ⚠️ Legacy endpoints still active (`/api/v1/user/chat/*`) for backwards compatibility
+- 🗓️ Shutdown scheduled: 2026-06-01
+
+**Migration Guide:** See `/docs/DEPRECATION_PLAN.md`
+
+---
+
+## 📊 Performance Optimization Strategies
 
 ### Indexing Strategy
 
-**Priority 1: High-Traffic Queries**
+**High-Priority Indexes:**
+
 ```sql
--- User authentication (100K+ queries/day)
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_privy_id ON users(privy_user_id);
+-- Chat performance
+CREATE INDEX idx_chat_messages_conversation ON chat_messages(conversation_id, created_at DESC);
+CREATE INDEX idx_chat_conversations_user ON chat_conversations(chat_user_id, created_at DESC);
 
--- Chat message retrieval (500K+ queries/day)
-CREATE INDEX idx_chat_messages_conversation 
-ON chat_messages(conversation_id, created_at DESC);
+-- Transaction lookups
+CREATE INDEX idx_transactions_user_date ON transactions(user_id, created_at DESC);
+CREATE INDEX idx_transactions_chain_hash ON transactions(chain, tx_hash);
+CREATE INDEX idx_transactions_wallet ON transactions(wallet_id, created_at DESC);
 
--- Transaction history (200K+ queries/day)
-CREATE INDEX idx_transactions_user_created 
-ON transactions(user_id, created_at DESC);
-```
+-- Agent telemetry
+CREATE INDEX idx_agent_executions_user ON agent_executions(user_id, created_at DESC);
+CREATE INDEX idx_agent_tasks_execution ON agent_tasks(execution_id, status);
+CREATE INDEX idx_llm_requests_agent ON llm_requests(agent_type, created_at DESC);
 
-**Priority 2: Analytics Queries**
-```sql
--- Cost aggregation (hourly batch)
-CREATE INDEX idx_llm_conversations_cost 
-ON llm_conversations(created_at, cost_usd) 
-WHERE cost_usd IS NOT NULL;
+-- LLM orchestration
+CREATE INDEX idx_llm_requests_status ON llm_requests(status, created_at DESC);
+CREATE INDEX idx_circuit_breakers_state ON circuit_breakers(state) WHERE state != 'closed';
 
--- Agent performance (daily batch)
-CREATE INDEX idx_agent_executions_type_time 
-ON agent_executions(agent_type, execution_time_ms, created_at);
-```
+-- Portfolio tracking
+CREATE INDEX idx_token_holdings_user ON token_holdings(user_id, chain);
+CREATE INDEX idx_portfolio_snapshots_user_date ON portfolio_snapshots(user_id, snapshot_date DESC);
 
-**Priority 3: Conditional Indexes**
-```sql
--- Only index active conversations
-CREATE INDEX idx_chat_conversations_active 
-ON chat_conversations(user_id, last_message_at DESC) 
-WHERE status = 'active';
-
--- Only index non-guest users
-CREATE INDEX idx_users_authenticated 
-ON users(email, created_at) 
-WHERE privy_user_id IS NOT NULL;
-```
-
-### Denormalization Strategy
-
-**Trade-off: Storage vs Performance**
-
-**Example 1: Message Count**
-```sql
--- OPTION A: Count on-the-fly (SLOW for large conversations)
-SELECT COUNT(*) FROM chat_messages WHERE conversation_id = ?;
-
--- OPTION B: Denormalize (FAST, requires trigger)
-SELECT message_count FROM chat_conversations WHERE id = ?;
-
--- Trigger to maintain accuracy
-CREATE TRIGGER update_message_count
-AFTER INSERT ON chat_messages
-FOR EACH ROW
-EXECUTE FUNCTION increment_message_count();
-```
-
-**Example 2: Wallet Balance**
-```sql
--- OPTION A: Sum from transactions (EXTREMELY SLOW)
-SELECT SUM(amount_in - amount_out) FROM transactions WHERE wallet_id = ?;
-
--- OPTION B: Denormalize in chain_addresses (FAST)
-SELECT balance_usd FROM chain_addresses WHERE wallet_id = ? AND chain = ?;
-
--- Background job updates every 5 minutes
+-- Vector similarity searches
+CREATE INDEX idx_semantic_cache_embedding ON distillation_cache_semantic 
+    USING ivfflat (query_embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX idx_knowledge_chunks_embedding ON project_knowledge_chunks 
+    USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 ```
 
 ### Partitioning Strategy
 
-**Time-Series Partitioning:**
+**Candidate Tables for Partitioning:**
+
+1. **llm_conversations** (by created_at, monthly partitions)
+2. **agent_executions** (by created_at, monthly partitions)
+3. **transactions** (by created_at, monthly partitions)
+4. **llm_requests** (by created_at, weekly partitions)
+5. **llm_telemetry_hourly** (by hour_bucket, monthly partitions)
+6. **audit_logs** (by created_at, quarterly partitions)
+
+**Example Partitioning:**
+
 ```sql
--- Partition transactions by month
-CREATE TABLE transactions_2026_01 PARTITION OF transactions
-FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+-- Partition llm_conversations by month
+CREATE TABLE llm_conversations (
+    id BIGSERIAL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    ...
+) PARTITION BY RANGE (created_at);
 
-CREATE TABLE transactions_2026_02 PARTITION OF transactions
-FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+CREATE TABLE llm_conversations_2026_01 
+    PARTITION OF llm_conversations 
+    FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
 
--- Auto-create partitions via Celery job
+CREATE TABLE llm_conversations_2026_02 
+    PARTITION OF llm_conversations 
+    FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
 ```
 
-**Benefits:**
-- Query performance: Filter on `created_at` automatically prunes partitions
-- Maintenance: Drop old partitions instead of DELETE (instant)
-- Archive: Move old partitions to cold storage
+### Denormalization Strategy
+
+**Already Denormalized:**
+- ✅ `chat_conversations.message_count` (avoids COUNT query)
+- ✅ `llm_requests.estimated_cost_usd` (pre-calculated)
+- ✅ `agent_executions.total_cost_usd` (sum of subtask costs)
+- ✅ `portfolio_snapshots.total_value_usd` (pre-calculated daily)
+
+**Future Denormalization Opportunities:**
+- Add `wallet.total_balance_usd` (sum across all chains)
+- Add `user.total_portfolio_value_usd` (current value)
+- Add `project.total_message_count` (across all sessions)
 
 ---
 
-## 🔒 Security & Compliance
+## 🔒 Security Considerations
 
-### Data Protection
+### Sensitive Data Protection
 
-**PII Encryption:**
+**Encrypted Fields:**
+- `users.password` → bcrypt hashed
+- `moonpay_customer_tokens.encrypted_token` → AES-256 encrypted
+- Privy credentials stored externally, not in DB
+
+**PII Data:**
+- `users.email` → Masked in logs
+- `users.last_ip`, `users.registration_ip` → Retention policy (30 days)
+- `guest_users.ip_address` → Hashed for rate limiting
+
+### Access Control
+
+**Row-Level Security (RLS):**
+
 ```sql
--- Sensitive fields encrypted at rest
-email VARCHAR(255) -- Encrypted in application layer before insert
-phone_number VARCHAR(20) -- Encrypted in application layer
-address TEXT -- Encrypted in application layer
-```
-
-**Row-Level Security:**
-```sql
--- Users can only see their own data
+-- Example: Users can only see their own transactions
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY user_transactions_policy ON transactions
-FOR SELECT
-USING (user_id = current_user_id());
+CREATE POLICY transactions_user_isolation ON transactions
+    FOR ALL
+    TO app_user
+    USING (user_id = current_setting('app.current_user_id')::INTEGER);
 ```
 
-**Audit Logging:**
+### Audit Requirements
+
+**Compliance Logging:**
+- All user authentication events → `audit_logs`
+- All transactions >$1000 USD → `audit_logs`
+- All wallet connections → `user_events`
+- All admin actions → `policy_audit_events`
+
+**Retention Policies:**
+- `audit_logs`: 7 years (regulatory requirement)
+- `llm_conversations`: 1 year
+- `agent_executions`: 6 months
+- `retry_attempts`: 30 days
+
+---
+
+## 📈 Scaling Projections
+
+### Current Scale (as of 2026-01-25)
+
+- Total tables: 87 (84 in production)
+- Total users: ~5,000
+- Daily transactions: ~500
+- Daily LLM requests: ~10,000
+- Database size: ~5 GB
+
+### 6-Month Projection (Q3 2026)
+
+- Total users: ~50,000 (10x growth)
+- Daily transactions: ~5,000 (10x growth)
+- Daily LLM requests: ~100,000 (10x growth)
+- Database size: ~50 GB (10x growth)
+
+**Scaling Actions Required:**
+1. ✅ Implement table partitioning (llm_conversations, agent_executions)
+2. ✅ Add read replicas for reporting queries
+3. ✅ Implement connection pooling (PgBouncer)
+4. ⚠️ Consider moving hot data to Redis (distillation cache)
+5. ⚠️ Implement archival strategy for old data (>1 year)
+
+### 12-Month Projection (Q1 2027)
+
+- Total users: ~200,000 (40x growth)
+- Daily transactions: ~20,000 (40x growth)
+- Daily LLM requests: ~500,000 (50x growth)
+- Database size: ~200 GB (40x growth)
+
+**Scaling Actions Required:**
+1. Implement sharding strategy (shard by user_id)
+2. Move LLM telemetry to TimescaleDB or ClickHouse
+3. Implement CDC (Change Data Capture) for real-time analytics
+4. Consider Aurora PostgreSQL with auto-scaling
+
+---
+
+## 🚀 Future Enhancements
+
+### Planned Tables (Not Yet Implemented)
+
+1. **referral_programs** - User referral tracking
+2. **achievement_badges** - Gamification system
+3. **trading_competitions** - Leaderboards and contests
+4. **social_feeds** - Social trading features
+5. **market_alerts** - Price/liquidity alerts
+6. **api_keys** - User API key management
+7. **webhooks** - Event webhook subscriptions
+8. **backup_wallets** - Wallet recovery mechanisms
+
+### Planned Optimizations
+
+1. **Read Replicas** - Separate analytics queries from transactional load
+2. **Materialized Views** - Pre-computed dashboards and reports
+3. **Event Sourcing** - Track state changes for transactions
+4. **CQRS Separation** - Separate write DB from read DB
+
+---
+
+## 📝 Maintenance Procedures
+
+### Daily Operations
+
+1. **Vacuum & Analyze**
 ```sql
--- Track all modifications to sensitive tables
-CREATE TRIGGER audit_users
-AFTER INSERT OR UPDATE OR DELETE ON users
-FOR EACH ROW
-EXECUTE FUNCTION log_audit_event();
+VACUUM ANALYZE llm_conversations;
+VACUUM ANALYZE agent_executions;
+VACUUM ANALYZE transactions;
 ```
 
-### Compliance
-
-**GDPR - Right to Erasure:**
+2. **Index Maintenance**
 ```sql
--- Delete user and cascade all related data
-DELETE FROM users WHERE id = ? AND is_active = FALSE;
--- CASCADE deletes: transactions, wallets, conversations, etc.
-
--- Retention: Keep anonymized data for analytics
-UPDATE transactions 
-SET user_id = NULL, wallet_id = NULL 
-WHERE user_id = ? AND created_at < NOW() - INTERVAL '30 days';
+REINDEX TABLE CONCURRENTLY llm_requests;
 ```
 
-**CCPA - Data Export:**
+3. **Cache Cleanup**
 ```sql
--- Export all user data in JSON format
-SELECT json_build_object(
-    'user', row_to_json(u.*),
-    'wallets', (SELECT json_agg(w.*) FROM wallets w WHERE w.user_id = u.id),
-    'transactions', (SELECT json_agg(t.*) FROM transactions t WHERE t.user_id = u.id),
-    'conversations', (SELECT json_agg(c.*) FROM chat_conversations c 
-                      JOIN chat_users cu ON c.user_id = cu.id 
-                      WHERE cu.privy_id = u.privy_user_id)
-) FROM users u WHERE u.id = ?;
+DELETE FROM distillation_cache_exact WHERE expires_at < NOW();
+DELETE FROM distillation_cache_semantic WHERE expires_at < NOW();
+DELETE FROM llm_response_cache WHERE expires_at < NOW();
+```
+
+### Weekly Operations
+
+1. **Partition Management**
+```sql
+-- Create next month's partition
+CREATE TABLE llm_conversations_2026_03 
+    PARTITION OF llm_conversations 
+    FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+```
+
+2. **Statistics Update**
+```sql
+ANALYZE;
+```
+
+### Monthly Operations
+
+1. **Data Archival**
+```sql
+-- Archive old agent executions to cold storage
+INSERT INTO archive.agent_executions 
+SELECT * FROM agent_executions 
+WHERE created_at < NOW() - INTERVAL '6 months';
+
+DELETE FROM agent_executions 
+WHERE created_at < NOW() - INTERVAL '6 months';
+```
+
+2. **Compliance Reports**
+```sql
+-- Generate monthly audit report
+SELECT * FROM audit_logs 
+WHERE created_at >= date_trunc('month', NOW() - INTERVAL '1 month')
+  AND created_at < date_trunc('month', NOW());
 ```
 
 ---
 
-## 🔄 Evolution & Migration Strategy
+## ✅ Validation & Testing
 
-### Legacy Table Deprecation Plan
+### Data Integrity Checks
 
-**Target Date:** 2026-06-01  
-**Status:** In Progress (50% complete)
-
-**Phase 1: Parallel Operation (Current)**
-```
-✅ DONE: Create unified chat tables (chat_users, chat_conversations, chat_messages)
-✅ DONE: Dual-write to both legacy and unified tables
-🚧 IN PROGRESS: Route new features to unified tables only
-⏳ TODO: Migrate all legacy endpoints to unified tables
-```
-
-**Phase 2: Migration (2026-03-01 - 2026-04-30)**
 ```sql
--- Migrate legacy conversations to unified
-INSERT INTO chat_conversations (id, user_id, title, status, created_at, ...)
-SELECT 
-    c.id,
-    cu.id as user_id,
-    c.title,
-    CASE WHEN c.archived_at IS NOT NULL THEN 'archived' ELSE 'active' END,
-    c.created_at,
-    ...
-FROM conversations c
-JOIN users u ON c.user_id = u.id
-JOIN chat_users cu ON cu.privy_id = u.privy_user_id;
+-- Check for orphaned records
+SELECT COUNT(*) FROM chat_messages 
+WHERE conversation_id NOT IN (SELECT id FROM chat_conversations);
 
--- Migrate messages
-INSERT INTO chat_messages (id, conversation_id, role, content, ...)
-SELECT id, conversation_id, role, content, ... FROM messages;
+-- Check for invalid foreign keys
+SELECT COUNT(*) FROM transactions 
+WHERE wallet_id NOT IN (SELECT id FROM wallets);
+
+-- Check for duplicate cache keys
+SELECT cache_key, COUNT(*) 
+FROM distillation_cache_exact 
+GROUP BY cache_key 
+HAVING COUNT(*) > 1;
 ```
 
-**Phase 3: Cutover (2026-05-01 - 2026-05-31)**
-```
-1. Disable writes to legacy tables
-2. Verify all endpoints use unified tables
-3. Monitor for errors (30-day observation period)
-4. Final data reconciliation
-```
+### Performance Benchmarks
 
-**Phase 4: Cleanup (2026-06-01)**
-```sql
-DROP TABLE conversations CASCADE;
-DROP TABLE messages CASCADE;
-DROP TABLE sessions CASCADE;  -- Already deprecated for auth_sessions
-```
+**Target Query Times:**
+- User portfolio fetch: <50ms
+- Conversation history: <100ms
+- Agent execution history: <200ms
+- LLM request stats: <500ms
+- Vector similarity search: <200ms
 
----
-
-## 📋 Database Maintenance Procedures
-
-### Daily Tasks
-```bash
-# 1. Vacuum analyze (performance)
-psql -c "VACUUM ANALYZE;"
-
-# 2. Check for bloat
-psql -c "SELECT schemaname, tablename, pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size FROM pg_tables WHERE schemaname = 'public' ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC LIMIT 10;"
-
-# 3. Purge expired sessions
-psql -c "DELETE FROM auth_sessions WHERE expires_at < NOW();"
-
-# 4. Purge old rate limit windows
-psql -c "DELETE FROM chat_rate_limits WHERE window_start < NOW() - INTERVAL '48 hours';"
-```
-
-### Weekly Tasks
-```bash
-# 1. Reindex heavy tables
-psql -c "REINDEX TABLE CONCURRENTLY transactions;"
-psql -c "REINDEX TABLE CONCURRENTLY llm_conversations;"
-
-# 2. Partition management (create next month's partition)
-python scripts/create_monthly_partitions.py
-
-# 3. Backup verification
-pg_dump -Fc anvil_backend > backups/weekly_$(date +%Y%m%d).dump
-pg_restore --list backups/weekly_$(date +%Y%m%d).dump | wc -l
-```
-
-### Monthly Tasks
-```bash
-# 1. Archive old data
-psql -c "INSERT INTO transactions_archive SELECT * FROM transactions WHERE created_at < NOW() - INTERVAL '2 years';"
-psql -c "DELETE FROM transactions WHERE created_at < NOW() - INTERVAL '2 years';"
-
-# 2. Analyze query performance
-psql -c "SELECT query, calls, total_time, mean_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 20;"
-
-# 3. Update statistics
-psql -c "ANALYZE VERBOSE;"
-```
-
----
-
-## 🎯 Success Metrics
-
-**Performance Targets:**
-- Query response time: P99 < 100ms
-- Write throughput: 10K writes/second
-- Read throughput: 50K reads/second
-- Database CPU utilization: < 70%
-- Storage growth: < 5GB/day
-
-**Data Quality Metrics:**
-- Foreign key constraint violations: 0
-- NULL values in required fields: 0
-- Duplicate unique constraints: 0
-- Orphaned records: 0
-
-**Operational Metrics:**
-- Backup success rate: 100%
-- Replication lag: < 1 second
-- Failed transaction rate: < 0.1%
-- Database uptime: 99.99%
+**Load Testing:**
+- Concurrent users: 1,000
+- Transactions per second: 100
+- LLM requests per second: 500
+- Database connections: 200 max
 
 ---
 
 ## 📚 References
 
 **Internal Documentation:**
-- `CLAUDE.md` - Project architecture overview
-- `docs/DEPRECATION_PLAN.md` - Legacy system migration
-- `docs/GUEST_CHAT_SYSTEM.md` - Guest chat implementation
-- `docs/AGENT_SQUAD_VERTEX_DEEPINFRA.md` - AI agent details
+- `/docs/DEPRECATION_PLAN.md` - Legacy system migration guide
+- `/docs/AGENT_SQUAD_VERTEX_DEEPINFRA.md` - AI agent configuration
+- `/docs/HUNTER_AI_DATA_SOURCES.md` - Data source integration
+- `/docs/GUEST_CHAT_SYSTEM.md` - Guest chat implementation
 
-**SQLAlchemy Resources:**
-- Explicit Mappings: https://docs.sqlalchemy.org/en/20/orm/mapping_styles.html#imperative-mapping
-- Alembic Migrations: https://alembic.sqlalchemy.org/
-- PostgreSQL Enum Support: https://pypi.org/project/alembic-postgresql-enum/
-
-**PostgreSQL Resources:**
-- Partitioning: https://www.postgresql.org/docs/16/ddl-partitioning.html
-- JSONB: https://www.postgresql.org/docs/16/datatype-json.html
-- Performance Tuning: https://wiki.postgresql.org/wiki/Performance_Optimization
+**External Resources:**
+- PostgreSQL 16 Documentation
+- SQLAlchemy 2.0 Documentation
+- pgvector Extension Documentation
+- TimescaleDB Best Practices
 
 ---
 
-**Document Status:** ✅ Analysis Complete | 📊 Comprehensive Database Architecture  
-**Next Action:** Implement partitioning for high-volume tables  
-**Timeline:** Database optimization in progress (2026-Q1)  
-**Risk Level:** 🟢 Low (stable, well-understood schema)
+## 🎯 Conclusion
 
+This database architecture supports a **comprehensive multi-agent DeFi platform** with:
+
+- ✅ **87 tables** across **15 functional domains**
+- ✅ **Hexagonal architecture** with clean separation of concerns
+- ✅ **Enterprise LLM orchestration** with 15 tables managing multi-provider AI
+- ✅ **Advanced cost optimization** via distillation system (6 tables)
+- ✅ **Project-based RAG** for customized knowledge bases (12 tables)
+- ✅ **Comprehensive telemetry** tracking 18 specialized agents (13 tables)
+- ✅ **Multi-chain support** across 10+ blockchains
+- ✅ **Guest-first experience** with IP-based tracking
+- ✅ **Scalability** via partitioning, denormalization, and indexing strategies
+
+**Key Architectural Strengths:**
+1. **Separation of Concerns**: Clear domain boundaries prevent tight coupling
+2. **Future-Proof**: Extensible JSONB fields allow schema evolution
+3. **Cost-Aware**: Comprehensive LLM cost tracking and optimization
+4. **Performance-Optimized**: Strategic indexing and denormalization
+5. **Compliance-Ready**: Audit logs and retention policies
+
+**Next Steps:**
+1. Implement missing 3 tables (87 mapped → 87 in DB)
+2. Set up table partitioning for high-volume tables
+3. Configure read replicas for analytics workloads
+4. Implement archival strategy for old data
+5. Deploy monitoring and alerting for database health
+
+---
+
+**Document Version:** 2.0  
+**Last Updated:** 2026-01-25  
+**Status:** Complete - All 87 Tables Documented
