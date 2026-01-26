@@ -194,9 +194,9 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             state.step = WorkflowStep.PARSE_REQUEST.value
             return self._ask_for_amount(asset.upper(), language), state
         
-        # No asset detected - show interactive asset selection with APY rates
+        # No asset detected - show interactive asset selection with APY rates and user context
         state.data["awaiting_asset_selection"] = True
-        response = await self._get_asset_selection_prompt(language)
+        response = await self._get_asset_selection_prompt(user_context)
         return response, state
     
     async def _handle_asset_selection(
@@ -634,21 +634,27 @@ Você não tem {asset} suficiente na sua carteira.
     # Response Formatting
     # ========================================
     
-    async def _get_asset_selection_prompt(self, language: str) -> str:
+    async def _get_asset_selection_prompt(self, user_context: UserContext) -> str:
         """
-        Build asset selection prompt with current APY rates.
+        Build asset selection prompt with current APY rates and user context.
         
-        Fetches live APY data from Morpho/Aave to help users make informed decisions.
+        Includes:
+        - Knowledge paragraph explaining DeFi lending benefits
+        - User's current balance (if available)
+        - Live APY rates from Morpho/Aave
+        - Personalized recommendations based on portfolio state
         """
+        language = user_context.language
+        
         # Try to fetch current APY rates for popular assets
         apy_rates = await self._fetch_asset_apy_rates()
         
         # Build asset list with APY rates
         asset_lines = []
         assets = [
-            ("USDC", "💵", "USD Coin (Stablecoins)"),
-            ("USDT", "💵", "Tether (Stablecoins)"),
-            ("DAI", "💰", "Dai (Decentralized Stablecoin)"),
+            ("USDC", "💵", "USD Coin"),
+            ("USDT", "💵", "Tether"),
+            ("DAI", "💰", "Dai"),
             ("ETH", "Ξ", "Ethereum"),
             ("WBTC", "₿", "Wrapped Bitcoin"),
         ]
@@ -662,14 +668,27 @@ Você não tem {asset} suficiente na sua carteira.
         
         asset_list = "\n".join(asset_lines)
         
+        # Build user context section
+        user_balance_section = self._build_user_balance_section(user_context, language)
+        
+        # Build knowledge section
+        knowledge_section = self._get_lending_knowledge(language)
+        
+        # Build recommendation based on user context
+        recommendation = self._get_personalized_recommendation(user_context, apy_rates, language)
+        
         msgs = {
-            "en": f"""🏦 **Earn Yield on Your Crypto**
+            "en": f"""🏦 **DeFi Lending - Earn Passive Income**
 
-Deposit into DeFi vaults (Morpho, Aave) to earn passive income.
+{knowledge_section}
+
+{user_balance_section}
 
 **Select an asset to deposit:**
 
 {asset_list}
+
+{recommendation}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -679,13 +698,17 @@ Deposit into DeFi vaults (Morpho, Aave) to earn passive income.
 
 💡 Powered by **Morpho** and **Aave V3** on Base""",
 
-            "es": f"""🏦 **Gana Rendimiento con tus Cripto**
+            "es": f"""🏦 **Préstamos DeFi - Gana Ingresos Pasivos**
 
-Deposita en vaults DeFi (Morpho, Aave) para ganar ingresos pasivos.
+{knowledge_section}
+
+{user_balance_section}
 
 **Selecciona un activo para depositar:**
 
 {asset_list}
+
+{recommendation}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -695,13 +718,17 @@ Deposita en vaults DeFi (Morpho, Aave) para ganar ingresos pasivos.
 
 💡 Potenciado por **Morpho** y **Aave V3** en Base""",
 
-            "pt": f"""🏦 **Ganhe Rendimento com suas Cripto**
+            "pt": f"""🏦 **Empréstimos DeFi - Ganhe Renda Passiva**
 
-Deposite em vaults DeFi (Morpho, Aave) para ganhar renda passiva.
+{knowledge_section}
+
+{user_balance_section}
 
 **Selecione um ativo para depositar:**
 
 {asset_list}
+
+{recommendation}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -711,13 +738,17 @@ Deposite em vaults DeFi (Morpho, Aave) para ganhar renda passiva.
 
 💡 Powered by **Morpho** e **Aave V3** na Base""",
 
-            "zh": f"""🏦 **赚取加密货币收益**
+            "zh": f"""🏦 **DeFi 借贷 - 赚取被动收入**
 
-存入 DeFi 金库（Morpho, Aave）赚取被动收入。
+{knowledge_section}
+
+{user_balance_section}
 
 **选择要存入的资产：**
 
 {asset_list}
+
+{recommendation}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -728,6 +759,105 @@ Deposite em vaults DeFi (Morpho, Aave) para ganhar renda passiva.
 💡 由 **Morpho** 和 **Aave V3** 在 Base 上提供支持""",
         }
         return msgs.get(language, msgs["en"])
+    
+    def _build_user_balance_section(self, user_context: UserContext, language: str) -> str:
+        """Build user balance context section."""
+        if not user_context.is_authenticated:
+            return ""
+        
+        balance = user_context.total_balance_usd
+        portfolio_state = user_context.portfolio_state
+        
+        if portfolio_state == "empty" or balance < 1:
+            msgs = {
+                "en": "💰 **Your Balance:** $0.00\n\n💡 **Tip:** Buy crypto first with `buy USDC` to start earning yield!",
+                "es": "💰 **Tu Saldo:** $0.00\n\n💡 **Consejo:** ¡Compra cripto primero con `buy USDC` para comenzar a ganar rendimiento!",
+                "pt": "💰 **Seu Saldo:** $0.00\n\n💡 **Dica:** Compre cripto primeiro com `buy USDC` para começar a ganhar rendimento!",
+                "zh": "💰 **您的余额：** $0.00\n\n💡 **提示：** 先用 `buy USDC` 购买加密货币，开始赚取收益！",
+            }
+        elif portfolio_state == "starter" or balance < 100:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n💡 **Tip:** Even small deposits earn yield! Try depositing what you have.",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n💡 **Consejo:** ¡Incluso depósitos pequeños generan rendimiento!",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n💡 **Dica:** Mesmo depósitos pequenos geram rendimento!",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n💡 **提示：** 即使小额存款也能赚取收益！",
+            }
+        else:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n✨ Ready to put your crypto to work!",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n✨ ¡Listo para poner tu cripto a trabajar!",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n✨ Pronto para colocar seu cripto para trabalhar!",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n✨ 准备让您的加密货币为您工作！",
+            }
+        
+        return msgs.get(language, msgs["en"])
+    
+    def _get_lending_knowledge(self, language: str) -> str:
+        """Get knowledge paragraph about DeFi lending."""
+        msgs = {
+            "en": """**What is DeFi Lending?**
+Deposit your crypto into secure, audited vaults and earn yield automatically.
+Your funds are supplied to borrowers through smart contracts, generating
+interest for you 24/7. No lockups - withdraw anytime.""",
+
+            "es": """**¿Qué es el Préstamo DeFi?**
+Deposita tu cripto en vaults seguros y auditados y gana rendimiento automáticamente.
+Tus fondos se prestan a través de contratos inteligentes, generando
+intereses para ti 24/7. Sin bloqueos - retira cuando quieras.""",
+
+            "pt": """**O que é Empréstimo DeFi?**
+Deposite seu cripto em cofres seguros e auditados e ganhe rendimento automaticamente.
+Seus fundos são emprestados através de contratos inteligentes, gerando
+juros para você 24/7. Sem bloqueios - retire quando quiser.""",
+
+            "zh": """**什么是 DeFi 借贷？**
+将您的加密货币存入安全、经过审计的金库，自动赚取收益。
+您的资金通过智能合约借给借款人，为您
+24/7 产生利息。无锁定期 - 随时可以提取。""",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    def _get_personalized_recommendation(
+        self,
+        user_context: UserContext,
+        apy_rates: dict[str, float],
+        language: str,
+    ) -> str:
+        """Get personalized recommendation based on user context."""
+        # Find best APY
+        best_asset = None
+        best_apy = 0.0
+        for asset, apy in apy_rates.items():
+            if apy > best_apy:
+                best_apy = apy
+                best_asset = asset.upper()
+        
+        if not best_asset:
+            return ""
+        
+        balance = user_context.total_balance_usd
+        
+        # Calculate potential monthly earnings
+        monthly_earnings = (balance * (best_apy / 100)) / 12 if balance > 0 else 0
+        
+        if balance > 100 and monthly_earnings > 0.5:
+            msgs = {
+                "en": f"📈 **Recommended:** {best_asset} ({best_apy:.2f}% APY)\n💵 Potential monthly earnings: ~${monthly_earnings:.2f}",
+                "es": f"📈 **Recomendado:** {best_asset} ({best_apy:.2f}% APY)\n💵 Ganancias mensuales potenciales: ~${monthly_earnings:.2f}",
+                "pt": f"📈 **Recomendado:** {best_asset} ({best_apy:.2f}% APY)\n💵 Ganhos mensais potenciais: ~${monthly_earnings:.2f}",
+                "zh": f"📈 **推荐：** {best_asset} ({best_apy:.2f}% APY)\n💵 潜在月收益：~${monthly_earnings:.2f}",
+            }
+            return msgs.get(language, msgs["en"])
+        elif best_apy > 5:
+            msgs = {
+                "en": f"📈 **Top Yield:** {best_asset} at {best_apy:.2f}% APY",
+                "es": f"📈 **Mayor Rendimiento:** {best_asset} al {best_apy:.2f}% APY",
+                "pt": f"📈 **Maior Rendimento:** {best_asset} a {best_apy:.2f}% APY",
+                "zh": f"📈 **最高收益：** {best_asset} {best_apy:.2f}% APY",
+            }
+            return msgs.get(language, msgs["en"])
+        
+        return ""
     
     async def _fetch_asset_apy_rates(self) -> dict[str, float]:
         """
