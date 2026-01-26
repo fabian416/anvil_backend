@@ -662,13 +662,34 @@ Aqui está a cotação do swap que você solicitou:
     ) -> tuple[str, WorkflowState]:
         """
         Step 4: Generate execute_data for frontend execution.
+        
+        IMPORTANT: Checks user balance before allowing execution.
+        If user has insufficient funds, shows helpful message to buy crypto.
         """
         from_token = state.data.get("from_token", "ETH")
         to_token = state.data.get("to_token", "USDC")
         amount = state.data.get("amount", "0")
         chain = state.data.get("chain", "base")
         to_chain = state.data.get("to_chain")
-        aggregator = state.data.get("aggregator", "1inch")
+        aggregator = state.data.get("aggregator", "hyperliquid")
+        
+        # Check user balance before allowing execution
+        if user_context.needs_funding_recommendation:
+            logger.info(
+                f"[SwapWorkflow] Blocking execution - insufficient funds: "
+                f"portfolio_state={user_context.portfolio_state}, "
+                f"balance=${user_context.total_balance_usd:.2f}"
+            )
+            response = self._build_insufficient_balance_message(
+                from_token=from_token,
+                to_token=to_token,
+                amount=amount,
+                user_balance=user_context.total_balance_usd,
+                language=user_context.language,
+            )
+            # Don't complete the workflow - user needs to fund first
+            state.error = "insufficient_balance"
+            return response, state
         
         # Build execute_data for frontend
         execute_data = self._build_execute_data(
@@ -689,6 +710,65 @@ Aqui está a cotação do swap que você solicitou:
         # Format ready-to-execute response
         response = self._format_execute_response(state.data, user_context.language)
         return response, state
+    
+    def _build_insufficient_balance_message(
+        self,
+        from_token: str,
+        to_token: str,
+        amount: str,
+        user_balance: float,
+        language: str,
+    ) -> str:
+        """
+        Build message when user has insufficient balance to execute swap.
+        """
+        messages = {
+            "en": f"""❌ **Unable to execute swap**
+
+**Swap requested:** {amount} {from_token} → {to_token}
+**Your current balance:** ${user_balance:.2f}
+
+You don't have enough {from_token} in your wallet to complete this swap.
+
+---
+
+**💳 Get {from_token} to complete this swap:**
+
+1. **Buy with card/Apple Pay/Google Pay:**
+   Say: **"buy {from_token}"** or **"buy 100 USDC"**
+
+2. **Transfer from another wallet:**
+   Send {from_token} to your Anvil wallet address
+
+---
+
+Once you have {from_token} in your wallet, come back and try:
+**"swap {amount} {from_token} to {to_token}"**
+""",
+            "es": f"""❌ **No se puede ejecutar el swap**
+
+**Swap solicitado:** {amount} {from_token} → {to_token}
+**Tu saldo actual:** ${user_balance:.2f}
+
+No tienes suficiente {from_token} en tu billetera para completar este swap.
+
+**💳 Obtén {from_token}:**
+• Di: **"comprar {from_token}"** o **"comprar 100 USDC"**
+• O transfiere {from_token} desde otra billetera
+""",
+            "pt": f"""❌ **Não é possível executar o swap**
+
+**Swap solicitado:** {amount} {from_token} → {to_token}
+**Seu saldo atual:** ${user_balance:.2f}
+
+Você não tem {from_token} suficiente na sua carteira para completar este swap.
+
+**💳 Obtenha {from_token}:**
+• Diga: **"comprar {from_token}"** ou **"comprar 100 USDC"**
+• Ou transfira {from_token} de outra carteira
+""",
+        }
+        return messages.get(language, messages["en"])
     
     async def _extract_swap_params(self, message: str) -> dict[str, Any]:
         """
