@@ -258,7 +258,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             # No context available, allow all
             return True, None
         
-        portfolio_state = self._context_aware.get_portfolio_state_enum()
+        portfolio_state = self._context_aware.portfolio_state_enum
         
         # Check portfolio state requirements
         if workflow_type in ("swap", "swap_workflow", "transfer", "transfer_workflow"):
@@ -286,8 +286,8 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         if not self._context_aware:
             return None
         
-        portfolio_state = self._context_aware.get_portfolio_state_enum()
-        activity_level = self._context_aware.get_activity_level_enum()
+        portfolio_state = self._context_aware.portfolio_state_enum
+        activity_level = self._context_aware.activity_level_enum
         
         if portfolio_state.needs_onboarding:
             return (
