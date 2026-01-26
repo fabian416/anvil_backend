@@ -268,7 +268,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             response = await self._get_token_selection_prompt(
                 from_token=from_token,
                 amount=amount,
-                language=user_context.language,
+                user_context=user_context,
             )
             return response, state
         
@@ -1161,14 +1161,18 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
         self,
         from_token: str,
         amount: str,
-        language: str,
+        user_context: UserContext,
     ) -> str:
         """
-        Build token selection prompt with numbered list and current prices.
+        Build token selection prompt with numbered list, prices, and user context.
         
-        Fetches real-time prices from CoinGecko for popular tokens to help
-        users make informed decisions.
+        Includes:
+        - Knowledge about Hyperliquid Spot and meme tokens
+        - User's current balance (if available)
+        - Real-time prices from CoinGecko
         """
+        language = user_context.language
+        
         # Try to fetch prices for popular tokens
         prices = await self._fetch_token_prices()
         
@@ -1183,8 +1187,23 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
         
         token_list = "\n".join(token_lines)
         
+        # Build knowledge section
+        knowledge_section = self._get_swap_knowledge(language)
+        
+        # Build user balance section
+        user_balance_section = self._build_swap_user_balance_section(
+            user_context=user_context,
+            from_token=from_token,
+            amount=amount,
+            language=language,
+        )
+        
         msgs = {
             "en": f"""🔄 **Swap {amount} {from_token}**
+
+{knowledge_section}
+
+{user_balance_section}
 
 **Select a meme token to receive:**
 
@@ -1200,6 +1219,10 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
 
             "es": f"""🔄 **Intercambiar {amount} {from_token}**
 
+{knowledge_section}
+
+{user_balance_section}
+
 **Selecciona un meme token para recibir:**
 
 {token_list}
@@ -1214,6 +1237,10 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
 
             "pt": f"""🔄 **Trocar {amount} {from_token}**
 
+{knowledge_section}
+
+{user_balance_section}
+
 **Selecione um meme token para receber:**
 
 {token_list}
@@ -1227,6 +1254,10 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
 💡 Swaps via **Hyperliquid Spot** (0.02% taxa, sem gas)""",
 
             "zh": f"""🔄 **兑换 {amount} {from_token}**
+
+{knowledge_section}
+
+{user_balance_section}
 
 **选择要接收的meme代币：**
 
@@ -1285,6 +1316,75 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
             logger.warning(f"[SwapWorkflow] Failed to fetch token prices: {e}")
         
         return prices
+    
+    def _get_swap_knowledge(self, language: str) -> str:
+        """Get knowledge paragraph about Hyperliquid Spot swaps."""
+        msgs = {
+            "en": """**What is Hyperliquid Spot?**
+Trade meme tokens with zero gas fees and 0.02% trading fee.
+High-speed execution (20,000+ TPS) on Hyperliquid L1.
+Real-time order book pricing - no slippage surprises.""",
+
+            "es": """**¿Qué es Hyperliquid Spot?**
+Opera meme tokens con cero gas y 0.02% comisión.
+Ejecución de alta velocidad (20,000+ TPS) en Hyperliquid L1.
+Precios en tiempo real - sin sorpresas de slippage.""",
+
+            "pt": """**O que é Hyperliquid Spot?**
+Negocie meme tokens com zero gas e 0.02% de taxa.
+Execução de alta velocidade (20,000+ TPS) no Hyperliquid L1.
+Preços em tempo real - sem surpresas de slippage.""",
+
+            "zh": """**什么是 Hyperliquid Spot？**
+零 gas 费交易 meme 代币，仅 0.02% 交易费。
+Hyperliquid L1 上的高速执行（20,000+ TPS）。
+实时订单簿定价 - 无滑点意外。""",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    def _build_swap_user_balance_section(
+        self,
+        user_context: UserContext,
+        from_token: str,
+        amount: str,
+        language: str,
+    ) -> str:
+        """Build user balance context section for swap."""
+        if not user_context.is_authenticated:
+            return ""
+        
+        balance = user_context.total_balance_usd
+        portfolio_state = user_context.portfolio_state
+        
+        try:
+            swap_amount = float(amount)
+        except (ValueError, TypeError):
+            swap_amount = 0
+        
+        # Check if user has enough balance
+        if portfolio_state == "empty" or balance < 1:
+            msgs = {
+                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You'll need to buy {from_token} first:\n• Say `buy {from_token}` to purchase with card",
+                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ Necesitas comprar {from_token} primero:\n• Di `buy {from_token}` para comprar con tarjeta",
+                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você precisa comprar {from_token} primeiro:\n• Diga `buy {from_token}` para comprar com cartão",
+                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您需要先购买 {from_token}：\n• 说 `buy {from_token}` 用卡购买",
+            }
+        elif balance < swap_amount:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Swap amount (${swap_amount:,.2f}) exceeds your balance.\n💡 Consider a smaller amount or buy more {from_token}.",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n⚠️ El monto del swap (${swap_amount:,.2f}) excede tu saldo.\n💡 Considera un monto menor o compra más {from_token}.",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n⚠️ O valor do swap (${swap_amount:,.2f}) excede seu saldo.\n💡 Considere um valor menor ou compre mais {from_token}.",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n⚠️ 兑换金额 (${swap_amount:,.2f}) 超过您的余额。\n💡 考虑较小的金额或购买更多 {from_token}。",
+            }
+        else:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f} ✅",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f} ✅",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f} ✅",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f} ✅",
+            }
+        
+        return msgs.get(language, msgs["en"])
     
     def _get_invalid_selection_response(self, user_input: str, language: str) -> str:
         """Response when user enters invalid token selection."""
