@@ -1123,72 +1123,9 @@ def create_conversations_router() -> APIRouter:
                 pending_action = handler_result.get("pending_action")
                 registration_required = None
         
-        elif intent_result.intent.value.startswith("SWAP") or intent_result.intent.value.startswith("MOONPAY_SWAP"):
-            # Swap flow (including continuation) - Uses Hyperliquid spot quotes
-            try:
-                # Use injected swap_handler_v2 with Hyperliquid integration
-                swap_handler = swap_handler_v2
-                
-                # Check for continuation metadata
-                continuation_step = None
-                continuation_value = None
-                if intent_result.metadata:
-                    continuation_step = intent_result.metadata.get("step")
-                    continuation_value = intent_result.metadata.get("value")
-                
-                # Get previous swap info from context for multi-turn flow
-                previous_swap_info = context.pending_swap_info
-                
-                handler_result = await swap_handler.handle(
-                    message=request_body.content,
-                    context=context,
-                    language=request_body.language,
-                    continuation_step=continuation_step,
-                    continuation_value=continuation_value,
-                    previous_swap_info=previous_swap_info,
-                )
-                agent_content = handler_result.content
-                enrichment = handler_result.enrichment
-                pending_action = handler_result.pending_action
-                
-                # Extract execute data if swap is complete (no pending_action means ready to execute)
-                execute_data = None
-                if handler_result.execute_data and not pending_action:
-                    # Swap is complete and ready for execution
-                    execute_data = ExecuteActionData(**handler_result.execute_data)
-                
-                if user.is_guest and handler_result.requires_registration:
-                    registration_required = {
-                        "required": True,
-                        "reason": "action_required",
-                        "signup_url": "/signup",
-                    }
-            except Exception as e:
-                # Log the error for debugging
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"SwapHandlerV2 error for message '{request_body.content}': {e}", exc_info=True)
-                
-                # Fallback to guest handler service for swap
-                from app.application.chat.services.intent_detector import ChatIntent
-                context_str = conversation_memory.build_context_string(context)
-                handler_result = await handler_service.handle_intent(
-                    intent=ChatIntent.SWAP,
-                    content=request_body.content,
-                    language=request_body.language,
-                    context=context_str,
-                    is_authenticated=not user.is_guest,
-                )
-                agent_content = handler_result.get("content", "")
-                enrichment = handler_result.get("enrichment")
-                if user.is_guest and handler_result.get("requires_registration"):
-                    registration_required = {
-                        "required": True,
-                        "reason": "action_required",
-                        "signup_url": "/signup",
-                    }
-
         elif intent_result.intent.value.startswith("MOONPAY_SWAP"):
+            # MOONPAY_SWAP: Uses Privy + 0x Protocol for major tokens (ETH, BTC, SOL, etc.)
+            # This MUST be checked BEFORE generic SWAP to avoid routing to wrong handler
             # MoonPay Swap flow (including continuation)
             try:
                 moonpay_swap_flow_handler = MoonPaySwapFlowHandler(
@@ -1235,6 +1172,72 @@ def create_conversations_router() -> APIRouter:
                 logger = logging.getLogger(__name__)
                 logger.error(f"MoonPaySwapFlowHandler error for message '{request_body.content}': {e}", exc_info=True)
 
+                # Fallback to guest handler service for swap
+                from app.application.chat.services.intent_detector import ChatIntent
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=ChatIntent.SWAP,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=not user.is_guest,
+                )
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                if user.is_guest and handler_result.get("requires_registration"):
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+
+        elif intent_result.intent.value.startswith("SWAP"):
+            # SWAP: Uses Hyperliquid spot quotes (meme tokens only)
+            # Note: Major tokens (ETH, BTC, etc.) are handled by MOONPAY_SWAP above
+            try:
+                # Use injected swap_handler_v2 with Hyperliquid integration
+                swap_handler = swap_handler_v2
+                
+                # Check for continuation metadata
+                continuation_step = None
+                continuation_value = None
+                if intent_result.metadata:
+                    continuation_step = intent_result.metadata.get("step")
+                    continuation_value = intent_result.metadata.get("value")
+                
+                # Get previous swap info from context for multi-turn flow
+                previous_swap_info = context.pending_swap_info
+                
+                handler_result = await swap_handler.handle(
+                    message=request_body.content,
+                    context=context,
+                    language=request_body.language,
+                    continuation_step=continuation_step,
+                    continuation_value=continuation_value,
+                    previous_swap_info=previous_swap_info,
+                )
+                agent_content = handler_result.content
+                enrichment = handler_result.enrichment
+                pending_action = handler_result.pending_action
+                
+                # Extract execute data if swap is complete (no pending_action means ready to execute)
+                execute_data = None
+                if handler_result.execute_data and not pending_action:
+                    # Swap is complete and ready for execution
+                    execute_data = ExecuteActionData(**handler_result.execute_data)
+                
+                if user.is_guest and handler_result.requires_registration:
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+            except Exception as e:
+                # Log the error for debugging
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"SwapHandlerV2 error for message '{request_body.content}': {e}", exc_info=True)
+                
                 # Fallback to guest handler service for swap
                 from app.application.chat.services.intent_detector import ChatIntent
                 context_str = conversation_memory.build_context_string(context)
