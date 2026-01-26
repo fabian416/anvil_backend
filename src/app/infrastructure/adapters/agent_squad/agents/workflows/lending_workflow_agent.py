@@ -165,6 +165,10 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         language = user_context.language
         text = message.value.lower()
         
+        # Check if we're awaiting asset selection from previous turn
+        if state.data.get("awaiting_asset_selection"):
+            return await self._handle_asset_selection(message, state, user_context)
+        
         # Try to extract parameters from message
         params = await self._extract_lending_params(text)
         
@@ -190,8 +194,64 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             state.step = WorkflowStep.PARSE_REQUEST.value
             return self._ask_for_amount(asset.upper(), language), state
         
-        # No asset detected - ask user to select
-        return self._ask_for_asset(language), state
+        # No asset detected - show interactive asset selection with APY rates
+        state.data["awaiting_asset_selection"] = True
+        response = await self._get_asset_selection_prompt(language)
+        return response, state
+    
+    async def _handle_asset_selection(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """
+        Handle user's asset selection response.
+        
+        User can respond with:
+        - Number (1-5) to select from the list
+        - Asset symbol (USDC, ETH, etc.)
+        - Amount + asset (e.g., "1000 USDC")
+        """
+        text = message.value.strip()
+        
+        # Clear the awaiting flag
+        state.data["awaiting_asset_selection"] = False
+        
+        # First try to extract full params (user might have typed "1000 USDC")
+        params = await self._extract_lending_params(text.lower())
+        
+        if params.get("asset"):
+            # User provided asset (and maybe amount)
+            state.data["asset"] = params["asset"].upper()
+            if params.get("amount"):
+                state.data["amount"] = params["amount"]
+                state.data["chain"] = params.get("chain", "base")
+                state.step = WorkflowStep.FETCH_DATA.value
+                return await self._handle_fetch_data(message, state, user_context)
+            else:
+                # Have asset but no amount - ask for amount
+                return self._ask_for_amount(params["asset"].upper(), user_context.language), state
+        
+        # Check if it's a number selection
+        user_input = text.upper()
+        asset_list = ["USDC", "USDT", "DAI", "ETH", "WBTC"]
+        
+        if user_input.isdigit():
+            index = int(user_input) - 1  # 1-based to 0-based
+            if 0 <= index < len(asset_list):
+                state.data["asset"] = asset_list[index]
+                return self._ask_for_amount(asset_list[index], user_context.language), state
+        
+        # Check if it's a valid asset symbol
+        if user_input in [a.upper() for a in SUPPORTED_ASSETS.keys()] or user_input in asset_list:
+            state.data["asset"] = user_input
+            return self._ask_for_amount(user_input, user_context.language), state
+        
+        # Invalid selection - show menu again
+        state.data["awaiting_asset_selection"] = True
+        response = self._get_invalid_asset_selection_response(text, user_context.language)
+        return response, state
     
     async def _handle_fetch_data(
         self,
@@ -574,8 +634,176 @@ Você não tem {asset} suficiente na sua carteira.
     # Response Formatting
     # ========================================
     
+    async def _get_asset_selection_prompt(self, language: str) -> str:
+        """
+        Build asset selection prompt with current APY rates.
+        
+        Fetches live APY data from Morpho/Aave to help users make informed decisions.
+        """
+        # Try to fetch current APY rates for popular assets
+        apy_rates = await self._fetch_asset_apy_rates()
+        
+        # Build asset list with APY rates
+        asset_lines = []
+        assets = [
+            ("USDC", "💵", "USD Coin (Stablecoins)"),
+            ("USDT", "💵", "Tether (Stablecoins)"),
+            ("DAI", "💰", "Dai (Decentralized Stablecoin)"),
+            ("ETH", "Ξ", "Ethereum"),
+            ("WBTC", "₿", "Wrapped Bitcoin"),
+        ]
+        
+        for i, (symbol, emoji, name) in enumerate(assets, 1):
+            apy_info = ""
+            if apy_rates.get(symbol.lower()):
+                apy = apy_rates[symbol.lower()]
+                apy_info = f" • **{apy:.2f}% APY**"
+            asset_lines.append(f"**{i}.** {emoji} **{symbol}**{apy_info}")
+        
+        asset_list = "\n".join(asset_lines)
+        
+        msgs = {
+            "en": f"""🏦 **Earn Yield on Your Crypto**
+
+Deposit into DeFi vaults (Morpho, Aave) to earn passive income.
+
+**Select an asset to deposit:**
+
+{asset_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Reply with:**
+• A number (1-5) to select an asset
+• Or type the asset name with amount (e.g., `1000 USDC`)
+
+💡 Powered by **Morpho** and **Aave V3** on Base""",
+
+            "es": f"""🏦 **Gana Rendimiento con tus Cripto**
+
+Deposita en vaults DeFi (Morpho, Aave) para ganar ingresos pasivos.
+
+**Selecciona un activo para depositar:**
+
+{asset_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Responde con:**
+• Un número (1-5) para seleccionar
+• O escribe el activo con cantidad (ej: `1000 USDC`)
+
+💡 Potenciado por **Morpho** y **Aave V3** en Base""",
+
+            "pt": f"""🏦 **Ganhe Rendimento com suas Cripto**
+
+Deposite em vaults DeFi (Morpho, Aave) para ganhar renda passiva.
+
+**Selecione um ativo para depositar:**
+
+{asset_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Responda com:**
+• Um número (1-5) para selecionar
+• Ou digite o ativo com quantidade (ex: `1000 USDC`)
+
+💡 Powered by **Morpho** e **Aave V3** na Base""",
+
+            "zh": f"""🏦 **赚取加密货币收益**
+
+存入 DeFi 金库（Morpho, Aave）赚取被动收入。
+
+**选择要存入的资产：**
+
+{asset_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**回复：**
+• 数字 (1-5) 选择资产
+• 或输入资产和金额（如：`1000 USDC`）
+
+💡 由 **Morpho** 和 **Aave V3** 在 Base 上提供支持""",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    async def _fetch_asset_apy_rates(self) -> dict[str, float]:
+        """
+        Fetch current APY rates for supported assets.
+        
+        Tries Morpho first, then Aave as fallback.
+        Returns dict mapping asset symbol (lowercase) to APY percentage.
+        """
+        rates = {}
+        
+        # Try to get rates from Morpho
+        if self._morpho:
+            try:
+                for asset in ["USDC", "USDT", "DAI", "ETH", "WBTC"]:
+                    vault_data = await self._fetch_morpho_vault(asset, "base")
+                    if vault_data and vault_data.get("apy"):
+                        rates[asset.lower()] = vault_data["apy"]
+            except Exception as e:
+                logger.warning(f"[LendingWorkflow] Failed to fetch Morpho APY rates: {e}")
+        
+        # Fill missing rates from Aave
+        if self._aave:
+            try:
+                for asset in ["USDC", "USDT", "DAI", "ETH", "WBTC"]:
+                    if asset.lower() not in rates:
+                        market_data = await self._fetch_aave_market(asset, "base")
+                        if market_data and market_data.get("apy"):
+                            rates[asset.lower()] = market_data["apy"]
+            except Exception as e:
+                logger.warning(f"[LendingWorkflow] Failed to fetch Aave APY rates: {e}")
+        
+        return rates
+    
+    def _get_invalid_asset_selection_response(self, user_input: str, language: str) -> str:
+        """Response when user enters invalid asset selection."""
+        msgs = {
+            "en": f"""❌ **Invalid selection:** "{user_input}"
+
+Please enter:
+• A number from **1-5** to select an asset
+• Or type a valid asset like **USDC**, **ETH**, **DAI**
+• Or include an amount like **1000 USDC**
+
+**Available assets:** USDC, USDT, DAI, ETH, WBTC""",
+
+            "es": f"""❌ **Selección inválida:** "{user_input}"
+
+Por favor ingresa:
+• Un número del **1-5** para seleccionar
+• O escribe un activo válido como **USDC**, **ETH**, **DAI**
+• O incluye una cantidad como **1000 USDC**
+
+**Activos disponibles:** USDC, USDT, DAI, ETH, WBTC""",
+
+            "pt": f"""❌ **Seleção inválida:** "{user_input}"
+
+Por favor insira:
+• Um número de **1-5** para selecionar
+• Ou digite um ativo válido como **USDC**, **ETH**, **DAI**
+• Ou inclua uma quantidade como **1000 USDC**
+
+**Ativos disponíveis:** USDC, USDT, DAI, ETH, WBTC""",
+
+            "zh": f"""❌ **选择无效：** "{user_input}"
+
+请输入：
+• **1-5** 之间的数字选择资产
+• 或输入有效资产如 **USDC**, **ETH**, **DAI**
+• 或包含金额如 **1000 USDC**
+
+**可用资产：** USDC, USDT, DAI, ETH, WBTC""",
+        }
+        return msgs.get(language, msgs["en"])
+    
     def _ask_for_asset(self, language: str) -> str:
-        """Ask user which asset to deposit."""
+        """Ask user which asset to deposit (legacy fallback)."""
         
         msgs = {
             "en": """💰 **Earn Yield on Your Crypto**
