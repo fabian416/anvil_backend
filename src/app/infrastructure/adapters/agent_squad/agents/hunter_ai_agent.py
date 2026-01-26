@@ -348,6 +348,7 @@ On Anvil, you can execute swaps through multiple DEX aggregators including 1inch
         """
         # Map common symbols/names to CoinGecko IDs
         token_map = {
+            # Major tokens
             "btc": "bitcoin",
             "bitcoin": "bitcoin",
             "eth": "ethereum",
@@ -373,6 +374,21 @@ On Anvil, you can execute swaps through multiple DEX aggregators including 1inch
             "usdt": "tether",
             "dai": "dai",
             "wbtc": "wrapped-bitcoin",
+            # Meme tokens (Hyperliquid Spot supported)
+            "pepe": "pepe",
+            "trump": "official-trump",
+            "maga": "maga",
+            "doge": "dogecoin",
+            "dogecoin": "dogecoin",
+            "shib": "shiba-inu",
+            "shiba": "shiba-inu",
+            "bonk": "bonk",
+            "floki": "floki",
+            "wif": "dogwifcoin",
+            "dogwifhat": "dogwifcoin",
+            "mog": "mog-coin",
+            "brett": "brett",
+            "neiro": "neiro-on-eth",
         }
         
         # Check for token mentions
