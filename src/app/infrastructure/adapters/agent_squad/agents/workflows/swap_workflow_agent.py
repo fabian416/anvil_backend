@@ -257,6 +257,9 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
     ) -> tuple[str, WorkflowState]:
         """
         Step 2: Fetch swap quote from 1inch/LiFi with enhanced market data.
+        
+        If user has insufficient funds, shows a helpful recommendation to buy crypto
+        but still provides swap information so they know what to expect.
         """
         from_token = state.data.get("from_token", "ETH")
         to_token = state.data.get("to_token", "USDC")
@@ -271,6 +274,19 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             f"on {chain}" + (f" → {to_chain}" if is_cross_chain else "")
         )
         
+        # Check user balance and prepare recommendation if insufficient
+        funding_recommendation = ""
+        if user_context.needs_funding_recommendation:
+            logger.info(
+                f"[SwapWorkflow] User has insufficient funds: "
+                f"portfolio_state={user_context.portfolio_state}, "
+                f"balance=${user_context.total_balance_usd:.2f}"
+            )
+            funding_recommendation = self._get_funding_recommendation(
+                from_token=from_token,
+                language=user_context.language,
+            )
+        
         # Fetch quote
         quote_result = await self._fetch_quote(
             from_token=from_token,
@@ -284,6 +300,9 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         if quote_result.get("error"):
             state.error = quote_result["error"]
             response = self._get_quote_error_response(quote_result["error"], user_context.language)
+            # Prepend funding recommendation if applicable
+            if funding_recommendation:
+                response = funding_recommendation + "\n" + response
             return response, state
         
         # Store quote in state
@@ -302,7 +321,52 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         
         # Format quote response with enhanced market data
         response = self._format_quote_response(state.data, user_context.language)
+        
+        # Prepend funding recommendation if user has insufficient funds
+        if funding_recommendation:
+            response = funding_recommendation + "\n" + response
+        
         return response, state
+    
+    def _get_funding_recommendation(self, from_token: str, language: str) -> str:
+        """
+        Get a helpful recommendation for users with insufficient funds.
+        
+        This is shown before the swap quote to guide users on how to fund their wallet.
+        """
+        recommendations = {
+            "en": f"""💡 **Heads up:** Your portfolio appears to have limited funds.
+
+To complete this swap, you'll need **{from_token}** in your wallet.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase with card/Apple Pay/Google Pay
+• 📥 Or transfer {from_token} from another wallet
+
+Here's the swap quote you requested:
+""",
+            "es": f"""💡 **Aviso:** Tu portafolio parece tener fondos limitados.
+
+Para completar este swap, necesitarás **{from_token}** en tu billetera.
+
+**Comienza:**
+• 💳 Di **"comprar cripto"** para comprar con tarjeta/Apple Pay/Google Pay
+• 📥 O transfiere {from_token} desde otra billetera
+
+Aquí está la cotización del swap que solicitaste:
+""",
+            "pt": f"""💡 **Atenção:** Seu portfólio parece ter fundos limitados.
+
+Para completar este swap, você precisará de **{from_token}** em sua carteira.
+
+**Comece:**
+• 💳 Diga **"comprar cripto"** para comprar com cartão/Apple Pay/Google Pay
+• 📥 Ou transfira {from_token} de outra carteira
+
+Aqui está a cotação do swap que você solicitou:
+""",
+        }
+        return recommendations.get(language, recommendations["en"])
     
     async def _fetch_market_enrichment(
         self,

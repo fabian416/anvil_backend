@@ -106,7 +106,8 @@ class UserContext:
     """
     User context for workflow execution.
     
-    Contains user-specific data needed for workflow execution.
+    Contains user-specific data needed for workflow execution,
+    including portfolio state for context-aware recommendations.
     """
     
     user_id: int | None = None
@@ -114,6 +115,22 @@ class UserContext:
     language: str = "en"
     is_authenticated: bool = False
     preferences: dict[str, Any] = field(default_factory=dict)
+    
+    # Portfolio/balance context for workflow agents
+    # Agents use this to show helpful recommendations when user has insufficient funds
+    portfolio_state: str = "unknown"  # empty, starter, active, whale
+    total_balance_usd: float = 0.0
+    has_connected_wallet: bool = False
+    
+    @property
+    def has_insufficient_funds(self) -> bool:
+        """Check if user likely has insufficient funds for operations."""
+        return self.portfolio_state in ("empty", "starter") or self.total_balance_usd < 10.0
+    
+    @property
+    def needs_funding_recommendation(self) -> bool:
+        """Check if we should recommend buying crypto."""
+        return self.has_insufficient_funds and self.is_authenticated
 
 
 class BaseWorkflowAgent(AgentGateway, ABC):
@@ -326,7 +343,8 @@ class BaseWorkflowAgent(AgentGateway, ABC):
         """
         Extract user context from conversation context.
         
-        Gets user ID, wallet address, language, and preferences.
+        Gets user ID, wallet address, language, preferences, and portfolio state.
+        Portfolio state is used for context-aware recommendations in workflow agents.
         """
         user_context = UserContext()
         
@@ -338,6 +356,29 @@ class BaseWorkflowAgent(AgentGateway, ABC):
             user_context.language = user_data.get("language", "en")
             user_context.is_authenticated = user_data.get("is_authenticated", False)
             user_context.preferences = user_data.get("preferences", {})
+        
+        # Try user_metadata (injected by supervisor with context_aware data)
+        if hasattr(conversation_context, 'user_metadata') and conversation_context.user_metadata:
+            metadata = conversation_context.user_metadata
+            if not user_context.user_id:
+                user_context.user_id = metadata.get("user_id")
+            if not user_context.wallet_address:
+                user_context.wallet_address = metadata.get("wallet_address")
+            if metadata.get("language"):
+                user_context.language = metadata.get("language", "en")
+            if metadata.get("is_authenticated"):
+                user_context.is_authenticated = metadata.get("is_authenticated", False)
+            
+            # Extract portfolio/balance context for workflow agents
+            # This comes from the context_aware data set by supervisor
+            if metadata.get("portfolio_summary"):
+                portfolio = metadata.get("portfolio_summary", {})
+                user_context.total_balance_usd = float(portfolio.get("total_value_usd", 0) or 0)
+                user_context.has_connected_wallet = bool(user_context.wallet_address)
+            
+            # Portfolio state from context_aware classification
+            if metadata.get("portfolio_state"):
+                user_context.portfolio_state = metadata.get("portfolio_state", "unknown")
         
         # Try metadata as fallback
         if hasattr(conversation_context, 'metadata') and conversation_context.metadata:
