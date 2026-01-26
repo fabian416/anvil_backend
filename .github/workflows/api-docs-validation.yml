@@ -33,6 +33,15 @@ jobs:
         with:
           python-version: '3.12'
       
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install Python dependencies
+        run: |
+          uv pip install --system pyyaml requests
+      
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:

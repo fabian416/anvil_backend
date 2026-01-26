@@ -26,11 +26,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       
-      - name: Install security checker
+      - name: Install uv
         run: |
-          pip install pyyaml requests
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install security tools
+        run: |
+          uv pip install --system pyyaml requests bandit safety
       
       - name: Run XSS validation on changed files
         run: |
@@ -47,7 +52,7 @@ jobs:
       
       - name: Run security linting
         run: |
-          pip install bandit safety
+          mkdir -p security/reports
           bandit -r src/ -f json -o security/reports/bandit-pr.json || true
           safety check --json --output security/reports/safety-pr.json || true
       
