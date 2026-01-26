@@ -5,6 +5,11 @@ on:
     - cron: '0 0 * * 0'  # Weekly on Sunday
   workflow_dispatch:  # Manual trigger
 
+# Prevent concurrent performance tests
+concurrency:
+  group: performance-tests
+  cancel-in-progress: false
+
 jobs:
   benchmark:
     name: Run Benchmarks

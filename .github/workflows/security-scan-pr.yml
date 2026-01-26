@@ -3,7 +3,17 @@ name: PR Security Scan
 on:
   pull_request:
     branches: [master, develop]
+    paths:
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - '.github/workflows/security-scan-pr.yml'
   workflow_dispatch:
+
+# Cancel in-progress scans when new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   security-check:

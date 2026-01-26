@@ -5,6 +5,11 @@ on:
     - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
   workflow_dispatch:
 
+# Prevent concurrent security scans
+concurrency:
+  group: security-scan-weekly
+  cancel-in-progress: false
+
 jobs:
   comprehensive-security-scan:
     runs-on: ubuntu-latest

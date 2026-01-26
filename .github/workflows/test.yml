@@ -3,8 +3,25 @@ name: Test Suite
 on:
   push:
     branches: [ master, develop ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'alembic/**'
+      - '.github/workflows/test.yml'
   pull_request:
     branches: [ master, develop ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'alembic/**'
+      - '.github/workflows/test.yml'
+
+# Cancel in-progress runs when new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
