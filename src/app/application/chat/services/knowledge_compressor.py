@@ -43,11 +43,11 @@ class KnowledgeCompressor:
         if level == CompressionLevel.AGGRESSIVE:
             # Ultra-compact format
             return f"""ANVIL FEATURES:
-• Trading: Swap 100+ tokens via 1inch/Hyperliquid/UniswapX
+• Trading: Swap MEME TOKENS ONLY via Hyperliquid Spot (PURR, TRUMP, PEPE, etc.) - Major tokens NOT supported
 • Hunter AI: Sentiment (82% acc), predictions (73% acc), risk signals, trading signals
 • ULTRA: Arbitrage (92% acc), flash loans (0% fee), MEV protection (free), auto trading
 • Portfolio: Multi-chain tracking, real-time updates
-• Lending: Aave/Compound/Morpho rate comparison
+• Lending: Morpho vaults (supply assets to earn yield - NO borrowing)
 • 18 AI agents, 99% cheaper than OpenAI, multi-language (en/es/pt/zh)"""
 
         if level == CompressionLevel.MEDIUM:
@@ -57,10 +57,13 @@ class KnowledgeCompressor:
 
             return f"""ANVIL CAPABILITIES:
 
-TRADING & SWAPS:
-• Multi-DEX aggregation: 1inch, Hyperliquid, UniswapX
-• 100+ tokens: BTC, ETH, SOL, USDC, USDT, DAI, MATIC, AVAX
-• Best-rate optimization, MEV protection, gas optimization
+TRADING & SWAPS (⚠️ MEME TOKENS ONLY):
+• Provider: Hyperliquid Spot (zero gas fees, 0.02% trading fee)
+• Supported: MEME TOKENS ONLY - PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc. (50+ tokens)
+• All pairs: XXX/USDC format (USDC is quote currency)
+• ⚠️ NOT SUPPORTED: ETH, BTC, SOL, LINK, UNI, AAVE and other major tokens
+• For major tokens: Use external DEX (1inch, Uniswap)
+• Anvil CAN: Track prices, portfolio tracking, market analysis for ALL tokens
 
 HUNTER AI - MARKET INTELLIGENCE:
 • Sentiment analysis: Twitter, Reddit, Discord, News (82% correlation)
@@ -77,13 +80,13 @@ ULTRA - DEFI AUTOMATION:
 
 PORTFOLIO & LENDING:
 • Multi-chain tracking, real-time balances, PnL calculations
-• Aave/Compound/Morpho rate comparison, one-click deposit
+• Morpho vaults for lending (supply assets to earn yield - NO borrowing)
 
 UNIQUE FEATURES:
 • 18 specialized AI agents
 • 99% cost savings ($0.10/1M tokens vs $30/1M OpenAI)
 • Multi-language native support (English, Spanish, Portuguese, Chinese)
-• Real-time data (CoinGecko, RSS feeds, 1inch API)"""
+• Real-time data (CoinGecko, RSS feeds)"""
 
         # Light compression - remove verbose descriptions only
         return KnowledgeCompressor._format_light(overview_data)
@@ -258,45 +261,52 @@ UNIQUE FEATURES:
         swap_data: Dict[str, Any],
         level: CompressionLevel = CompressionLevel.MEDIUM
     ) -> str:
-        """Compress swap knowledge"""
+        """Compress swap knowledge - Hyperliquid Spot only (meme tokens)"""
 
         if level == CompressionLevel.AGGRESSIVE:
-            return """SWAP TOKENS:
-• Aggregators: 1inch, Hyperliquid (0 gas), UniswapX
-• 100+ tokens: BTC, ETH, SOL, USDC, USDT, DAI, MATIC
-• Features: Best rate auto-select, MEV protection, 0.5-1% slippage
-• Process: Query all DEXs → Compare rates → Execute best → Confirm
-• Fee: 0.25% platform fee
-• Commands: "swap 100 USDC to ETH" (en/es/pt/zh)"""
+            return """SWAP TOKENS (HYPERLIQUID SPOT):
+⚠️ IMPORTANT: Anvil uses Hyperliquid Spot which ONLY supports MEME TOKENS
+• Provider: Hyperliquid Spot (0 gas fees, 0.02% trading fee)
+• Supported: MEME TOKENS ONLY - PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc. (50+ meme tokens)
+• Quote currency: USDC (all pairs are XXX/USDC)
+• NOT SUPPORTED: ETH, BTC, SOL, WBTC, LINK, UNI, AAVE and other major tokens
+• For major tokens: Use external DEX aggregators (1inch, Uniswap)
+• Commands: "swap 100 USDC to PURR" (en/es/pt/zh)"""
 
         if level == CompressionLevel.MEDIUM:
-            return """TOKEN SWAP:
+            return """TOKEN SWAP - HYPERLIQUID SPOT:
+
+⚠️ CRITICAL LIMITATION:
+Anvil uses Hyperliquid Spot for swaps. Hyperliquid is primarily a PERPETUAL FUTURES exchange.
+The Spot market ONLY supports MEME TOKENS paired with USDC.
+
+SUPPORTED TOKENS (MEME ONLY):
+• PURR, HFUN, TRUMP, PEPE, MOG, POINTS, JEFF, GMEOW, LICK, MANLET
+• SIX, WAGMI, CAPPY, RUG, CZ, BAGS, ANSEM, TATE, FUN, PUMP, SCHIZO
+• 50+ meme tokens total
+• All pairs are XXX/USDC format
+
+NOT SUPPORTED (MAJOR TOKENS):
+• ETH, BTC, SOL, WBTC, WETH, LINK, UNI, AAVE, CRV, MKR
+• DAI, USDT, MATIC, ARB, OP, AVAX, DOT, ATOM, APT, SUI
+• For major tokens: Use external DEX aggregators (1inch, Uniswap, etc.)
 
 HOW IT WORKS:
-1. User: "swap 100 USDC to ETH"
-2. Query: 1inch, Hyperliquid, UniswapX in parallel
-3. Compare: Rates + gas costs
-4. Display: Best rate, slippage, total cost
-5. Execute: MEV-protected transaction
-
-AGGREGATORS:
-• 1inch: 100+ liquidity sources, Ethereum/Polygon/Arbitrum/Optimism/Base
-• Hyperliquid: 20K+ TPS, NO GAS FEES, sub-second execution
-• UniswapX: Dutch auction, gasless routes available
+1. User: "swap 100 USDC to PURR"
+2. Anvil fetches real-time quote from Hyperliquid Spot order book
+3. Displays: Rate, spread (bps), output amount
+4. User confirms → Transaction executes on Hyperliquid
 
 FEATURES:
-• Best rate guarantee (auto-select across aggregators)
-• Slippage protection: 0.5% stablecoins, 1% volatile (configurable)
-• MEV protection: Flashbots integration
-• Gas optimization: Dynamic pricing, Layer 2 routing
+• ZERO gas fees (Hyperliquid L1)
+• 0.02% trading fee (lower than most DEXs)
+• 20,000+ TPS, sub-second execution
+• Real-time order book pricing
 
-SAFETY:
-• Max 1% slippage default
-• Price impact warnings (>2%)
-• Liquidity checks before execution
-• Wallet balance verification
-
-FEES: 0.25% platform fee + gas (shown upfront)"""
+FOR ETH/BTC TRADING:
+• Anvil can track prices and portfolio
+• Market analysis via Hunter AI
+• For actual swaps: Use 1inch, Uniswap, or Hyperliquid Perps"""
 
         return KnowledgeCompressor._format_light(swap_data)
 

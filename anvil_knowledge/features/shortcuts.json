@@ -27,13 +27,13 @@
         }
       },
       {
-        "command": "swap 100 USDC to ETH",
+        "command": "swap 100 USDC to PURR",
         "category": "Trading",
-        "response": "Execute token swap with best rate",
+        "response": "Execute meme token swap via Hyperliquid Spot (meme tokens only)",
         "languages": {
-          "english": "swap 100 USDC to ETH",
-          "spanish": "cambiar 100 USDC a ETH",
-          "portuguese": "trocar 100 USDC por ETH",
+          "english": "swap 100 USDC to PURR",
+          "spanish": "cambiar 100 USDC a PURR",
+          "portuguese": "trocar 100 USDC por PURR",
           "chinese": "兑换 100 USDC 到 ETH"
         }
       },

@@ -1,7 +1,16 @@
 {
   "feature_name": "Token Swap",
   "category": "trading_execution",
-  "description": "Execute instant token swaps on Hyperliquid Spot exchange with real-time order book quotes and zero gas fees",
+  "description": "Execute instant meme token swaps on Hyperliquid Spot exchange with real-time order book quotes and zero gas fees. IMPORTANT: Only meme tokens (PURR, TRUMP, PEPE, etc.) are supported - major tokens like ETH, BTC, SOL are NOT available.",
+
+  "supported_aggregators": [
+    {
+      "name": "Hyperliquid Spot",
+      "description": "High-performance spot exchange for MEME TOKENS ONLY. Zero gas fees, 0.02% trading fee, 20,000+ TPS.",
+      "chains": ["Hyperliquid L1"],
+      "limitation": "ONLY supports meme tokens paired with USDC. Major tokens (ETH, BTC, SOL, etc.) NOT available."
+    }
+  ],
 
   "important_limitations": {
     "hyperliquid_spot_only": true,
