@@ -81,6 +81,20 @@ UNSUPPORTED_SWAP_TOKENS = {
 }
 
 
+# Popular meme tokens for selection menu (ordered by popularity/volume)
+POPULAR_MEME_TOKENS = [
+    ("PURR", "Hyperliquid's native meme token"),
+    ("TRUMP", "Political meme token"),
+    ("PEPE", "Classic frog meme"),
+    ("HFUN", "Hyperliquid Fun token"),
+    ("MOG", "Mog Coin"),
+    ("JEFF", "Jeff token"),
+    ("WAGMI", "We're All Gonna Make It"),
+    ("GMEOW", "Cat meme token"),
+    ("CAPPY", "Cappy token"),
+    ("MANLET", "Manlet meme"),
+]
+
 # Common token addresses by chain
 # Use 0xEeee...eE for native ETH (LiFi standard)
 NATIVE_ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
@@ -225,22 +239,45 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         
         Extracts: from_token, to_token, amount, chain, to_chain
         
+        Enhanced with token selection:
+        - If only from_token + amount provided, show numbered token list
+        - User can respond with "1" or "PURR" to select destination token
+        
         IMPORTANT: Anvil only supports swaps via Hyperliquid Spot.
         Hyperliquid Spot only supports meme tokens paired with USDC.
         Major tokens (ETH, BTC, etc.) are NOT supported for swaps.
         """
+        # Check if we're awaiting token selection from a previous turn
+        if state.data.get("awaiting_token_selection"):
+            return await self._handle_token_selection(message, state, user_context)
+        
         params = await self._extract_swap_params(message.value)
         
-        # Check for required parameters
-        if not params.get("from_token") or not params.get("to_token"):
-            # Ask for missing info
+        # Check for partial request: has from_token (likely USDC) but missing to_token
+        from_token = params.get("from_token", "").upper()
+        to_token = params.get("to_token", "").upper()
+        amount = params.get("amount")
+        
+        # If we have USDC + amount but no destination token, show selection menu
+        if from_token == "USDC" and amount and not to_token:
+            state.data["from_token"] = from_token
+            state.data["amount"] = amount
+            state.data["chain"] = params.get("chain", "base")
+            state.data["awaiting_token_selection"] = True
+            
+            response = await self._get_token_selection_prompt(
+                from_token=from_token,
+                amount=amount,
+                language=user_context.language,
+            )
+            return response, state
+        
+        # If neither token is provided, show generic help
+        if not from_token or not to_token:
             response = self._get_missing_params_response(params, user_context.language)
             return response, state
         
         # Check if tokens are supported on Hyperliquid Spot
-        from_token = params.get("from_token", "").upper()
-        to_token = params.get("to_token", "").upper()
-        
         unsupported_error = self._check_unsupported_tokens(from_token, to_token, user_context.language)
         if unsupported_error:
             state.error = "unsupported_token"
@@ -250,10 +287,10 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         state.data.update(params)
         
         # If amount is missing, ask for it
-        if not params.get("amount"):
+        if not amount:
             response = self._get_amount_prompt(
-                params["from_token"],
-                params["to_token"],
+                from_token,
+                to_token,
                 user_context.language,
             )
             state.step = WorkflowStep.PARSE_REQUEST.value  # Stay in parse step
@@ -261,6 +298,58 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         
         # All params available - proceed to fetch quote
         state.step = WorkflowStep.FETCH_DATA.value
+        return await self._handle_fetch_quote(message, state, user_context)
+    
+    async def _handle_token_selection(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """
+        Handle user's token selection response.
+        
+        User can respond with:
+        - Number (1-10) to select from the list
+        - Token symbol (PURR, TRUMP, etc.)
+        """
+        user_input = message.value.strip().upper()
+        
+        # Clear the awaiting flag
+        state.data["awaiting_token_selection"] = False
+        
+        selected_token = None
+        
+        # Check if it's a number selection
+        if user_input.isdigit():
+            index = int(user_input) - 1  # 1-based to 0-based
+            if 0 <= index < len(POPULAR_MEME_TOKENS):
+                selected_token = POPULAR_MEME_TOKENS[index][0]
+        
+        # Check if it's a token symbol
+        if not selected_token:
+            # Clean up the input - might be "purr", "PURR", "1. PURR", etc.
+            clean_input = user_input.replace(".", "").strip()
+            if clean_input in HYPERLIQUID_SPOT_TOKENS:
+                selected_token = clean_input
+        
+        if not selected_token:
+            # Invalid selection - show menu again
+            state.data["awaiting_token_selection"] = True
+            
+            response = self._get_invalid_selection_response(
+                user_input=message.value,
+                language=user_context.language,
+            )
+            return response, state
+        
+        # Update state with selected token
+        state.data["to_token"] = selected_token
+        
+        # Now we have all params - proceed to fetch quote
+        state.step = WorkflowStep.FETCH_DATA.value
+        
+        # Create a dummy message to pass to fetch_quote
         return await self._handle_fetch_quote(message, state, user_context)
     
     def _check_unsupported_tokens(
@@ -1068,8 +1157,176 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
     
     # Response formatting methods
     
+    async def _get_token_selection_prompt(
+        self,
+        from_token: str,
+        amount: str,
+        language: str,
+    ) -> str:
+        """
+        Build token selection prompt with numbered list and current prices.
+        
+        Fetches real-time prices from CoinGecko for popular tokens to help
+        users make informed decisions.
+        """
+        # Try to fetch prices for popular tokens
+        prices = await self._fetch_token_prices()
+        
+        # Build token list with prices
+        token_lines = []
+        for i, (symbol, description) in enumerate(POPULAR_MEME_TOKENS, 1):
+            price_info = ""
+            if prices.get(symbol.lower()):
+                price = prices[symbol.lower()]
+                price_info = f" • ${price:,.6f}"
+            token_lines.append(f"**{i}.** {symbol}{price_info}")
+        
+        token_list = "\n".join(token_lines)
+        
+        msgs = {
+            "en": f"""🔄 **Swap {amount} {from_token}**
+
+**Select a meme token to receive:**
+
+{token_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Reply with:**
+• A number (1-10) to select
+• Or type the token name (e.g., PURR)
+
+💡 All swaps via **Hyperliquid Spot** (0.02% fee, zero gas)""",
+
+            "es": f"""🔄 **Intercambiar {amount} {from_token}**
+
+**Selecciona un meme token para recibir:**
+
+{token_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Responde con:**
+• Un número (1-10) para seleccionar
+• O escribe el nombre del token (ej: PURR)
+
+💡 Swaps via **Hyperliquid Spot** (0.02% comisión, sin gas)""",
+
+            "pt": f"""🔄 **Trocar {amount} {from_token}**
+
+**Selecione um meme token para receber:**
+
+{token_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Responda com:**
+• Um número (1-10) para selecionar
+• Ou digite o nome do token (ex: PURR)
+
+💡 Swaps via **Hyperliquid Spot** (0.02% taxa, sem gas)""",
+
+            "zh": f"""🔄 **兑换 {amount} {from_token}**
+
+**选择要接收的meme代币：**
+
+{token_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**回复：**
+• 数字 (1-10) 选择
+• 或输入代币名称 (如: PURR)
+
+💡 所有交易通过 **Hyperliquid Spot** (0.02% 手续费，零gas)""",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    async def _fetch_token_prices(self) -> dict[str, float]:
+        """
+        Fetch current prices for popular meme tokens.
+        
+        Uses CoinGecko API if available, returns empty dict on error.
+        """
+        prices = {}
+        
+        if not self._coingecko:
+            return prices
+        
+        try:
+            # Map our tokens to CoinGecko IDs
+            token_to_coingecko = {
+                "purr": "purr-2",
+                "trump": "official-trump",
+                "pepe": "pepe",
+                "mog": "mog-coin",
+                "hfun": "hfun",
+                "jeff": "jeff-2",
+                "wagmi": "wagmi-2",
+                "gmeow": "gmeow",
+            }
+            
+            # Fetch prices for tokens we have mappings for
+            coin_ids = list(token_to_coingecko.values())
+            
+            price_data = await self._coingecko.get_prices_bulk(coin_ids)
+            
+            if price_data:
+                # Reverse map back to our symbols
+                for symbol, coin_id in token_to_coingecko.items():
+                    if coin_id in price_data:
+                        price_obj = price_data[coin_id]
+                        # Handle both Price object and dict
+                        if hasattr(price_obj, "usd"):
+                            prices[symbol] = price_obj.usd
+                        elif isinstance(price_obj, dict) and "usd" in price_obj:
+                            prices[symbol] = price_obj["usd"]
+        except Exception as e:
+            logger.warning(f"[SwapWorkflow] Failed to fetch token prices: {e}")
+        
+        return prices
+    
+    def _get_invalid_selection_response(self, user_input: str, language: str) -> str:
+        """Response when user enters invalid token selection."""
+        token_names = ", ".join([t[0] for t in POPULAR_MEME_TOKENS])
+        
+        msgs = {
+            "en": f"""❌ **Invalid selection:** "{user_input}"
+
+Please enter:
+• A number from **1-10** to select a token
+• Or type a valid token symbol like **PURR**, **TRUMP**, **PEPE**
+
+**Available tokens:** {token_names}""",
+
+            "es": f"""❌ **Selección inválida:** "{user_input}"
+
+Por favor ingresa:
+• Un número del **1-10** para seleccionar
+• O escribe un símbolo válido como **PURR**, **TRUMP**, **PEPE**
+
+**Tokens disponibles:** {token_names}""",
+
+            "pt": f"""❌ **Seleção inválida:** "{user_input}"
+
+Por favor insira:
+• Um número de **1-10** para selecionar
+• Ou digite um símbolo válido como **PURR**, **TRUMP**, **PEPE**
+
+**Tokens disponíveis:** {token_names}""",
+
+            "zh": f"""❌ **选择无效：** "{user_input}"
+
+请输入：
+• **1-10** 之间的数字选择代币
+• 或输入有效的代币符号如 **PURR**, **TRUMP**, **PEPE**
+
+**可用代币：** {token_names}""",
+        }
+        return msgs.get(language, msgs["en"])
+    
     def _get_missing_params_response(self, params: dict, language: str) -> str:
-        """Response when tokens are missing."""
+        """Response when tokens are missing (generic case)."""
         msgs = {
             "en": "🔄 **Hyperliquid Spot Swaps**\n\nWhat meme token would you like to swap?\n\n**Examples:**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**Supported:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 more meme tokens\n**Note:** All swaps use USDC pairs. Major tokens (ETH, BTC, SOL) are NOT supported.",
             "es": "🔄 **Swaps en Hyperliquid Spot**\n\n¿Qué meme token te gustaría intercambiar?\n\n**Ejemplos:**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**Soportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 más\n**Nota:** Todos los swaps usan pares USDC. Tokens mayores (ETH, BTC, SOL) NO están soportados.",
