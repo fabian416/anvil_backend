@@ -689,6 +689,27 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 - "yield", "APY", "yield farms", "lending rates" → use "defi_yield" (interest/returns on deposits)
 - If the query mentions converting/swapping one token to another → "hunter_ai", NOT defi_yield!
 
+⚠️ MULTI-INTENT QUERIES (CRITICAL - PARALLEL EXECUTION):
+When user asks MULTIPLE questions in ONE message, create MULTIPLE PARALLEL tasks:
+- Each distinct question/request = separate task with depends_on: []
+- Tasks without dependencies execute IN PARALLEL (simultaneously)
+- Look for conjunctions: "and", "also", "plus", "tell me X and Y", "what about X? also Y"
+- Look for multiple question marks or sentence breaks
+
+EXAMPLES OF MULTI-INTENT PARALLEL:
+- "what swaps can I do AND price of PEPE" → TWO parallel tasks:
+  1. knowledge (swap info) - depends_on: []
+  2. hunter_ai (PEPE price) - depends_on: []
+- "my portfolio and best yields" → TWO parallel tasks:
+  1. portfolio - depends_on: []
+  2. defi_yield - depends_on: []
+- "price of BTC, ETH, and SOL" → ONE task (hunter_ai handles multiple tokens)
+- "what is DeFi? also check gas prices" → TWO parallel tasks:
+  1. knowledge (DeFi explanation) - depends_on: []
+  2. gas_optimizer (gas prices) - depends_on: []
+
+DO NOT merge unrelated requests into single task - split them for parallel execution!
+
 1. OFF-TOPIC DETECTION (check FIRST):
    - Cooking, recipes, non-crypto topics → Single "chat" task with "Explain DeFi focus"
    
@@ -860,6 +881,11 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 "token unlocks this week" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get upcoming token unlock schedules","depends_on":[]}}]}}
 "DeFi protocols by market cap" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"List DeFi protocols ranked by market capitalization","depends_on":[]}}]}}
 "ETH staking yield" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get current ETH staking yields across validators","depends_on":[]}}]}}
+"what type of swaps can I do? tell me the price of PEPE and TRUMP" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot meme tokens only","depends_on":[]}},{{"agent_type":"hunter_ai","task_description":"Get current prices for PEPE and TRUMP","depends_on":[]}}]}}
+"my portfolio and price of BTC" → {{"tasks":[{{"agent_type":"portfolio","task_description":"Get user's real portfolio data","depends_on":[]}},{{"agent_type":"hunter_ai","task_description":"Get current BTC price","depends_on":[]}}]}}
+"what is defi? also check gas prices" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi concepts","depends_on":[]}},{{"agent_type":"gas_optimizer","task_description":"Get current gas prices","depends_on":[]}}]}}
+"best yields and my balance" → {{"tasks":[{{"agent_type":"defi_yield","task_description":"Find best yield opportunities","depends_on":[]}},{{"agent_type":"portfolio","task_description":"Get user's wallet balance","depends_on":[]}}]}}
+"price of PEPE, TRUMP, and MOG" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get current prices for PEPE, TRUMP, and MOG","depends_on":[]}}]}}
 </examples>
 
 Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"...","depends_on":[]}}]}}"""
