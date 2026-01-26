@@ -163,11 +163,15 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         """Parse deposit request from user message."""
         
         language = user_context.language
-        text = message.value.lower()
+        text = message.value.lower().strip()
         
         # Check if we're awaiting asset selection from previous turn
         if state.data.get("awaiting_asset_selection"):
             return await self._handle_asset_selection(message, state, user_context)
+        
+        # Check if we're awaiting amount from previous turn (asset already selected)
+        if state.data.get("awaiting_amount"):
+            return await self._handle_amount_input(message, state, user_context)
         
         # Try to extract parameters from message
         params = await self._extract_lending_params(text)
@@ -189,6 +193,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         # If we have asset but no amount, ask for amount with user context
         if asset and not amount:
             state.data["asset"] = asset.upper()
+            state.data["awaiting_amount"] = True  # Set flag for next turn
             if protocol:
                 state.data["protocol"] = protocol  # Store protocol preference
             state.step = WorkflowStep.PARSE_REQUEST.value
@@ -231,6 +236,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                 return await self._handle_fetch_data(message, state, user_context)
             else:
                 # Have asset but no amount - ask for amount with user context
+                state.data["awaiting_amount"] = True
                 return self._ask_for_amount(params["asset"].upper(), user_context), state
         
         # Check if it's a number selection
@@ -241,17 +247,131 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             index = int(user_input) - 1  # 1-based to 0-based
             if 0 <= index < len(asset_list):
                 state.data["asset"] = asset_list[index]
+                state.data["awaiting_amount"] = True
                 return self._ask_for_amount(asset_list[index], user_context), state
         
         # Check if it's a valid asset symbol
         if user_input in [a.upper() for a in SUPPORTED_ASSETS.keys()] or user_input in asset_list:
             state.data["asset"] = user_input
+            state.data["awaiting_amount"] = True
             return self._ask_for_amount(user_input, user_context), state
         
         # Invalid selection - show menu again
         state.data["awaiting_asset_selection"] = True
         response = self._get_invalid_asset_selection_response(text, user_context.language)
         return response, state
+    
+    async def _handle_amount_input(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """
+        Handle user's amount input after asset has been selected.
+        
+        User can respond with:
+        - A number (100, 1000, 0.5)
+        - "all" or "max" to deposit entire balance
+        - Amount + asset confirmation (e.g., "100 USDC")
+        """
+        text = message.value.strip().lower()
+        language = user_context.language
+        asset = state.data.get("asset", "USDC")
+        
+        # Clear the awaiting flag
+        state.data["awaiting_amount"] = False
+        
+        # Check for "all" or "max" keywords
+        if text in ["all", "max", "todo", "tudo", "全部", "maximo", "máximo"]:
+            # Use "all" as a special marker - will be handled by execution
+            state.data["amount"] = "all"
+            state.data["chain"] = state.data.get("chain", "base")
+            state.step = WorkflowStep.FETCH_DATA.value
+            return await self._handle_fetch_data(message, state, user_context)
+        
+        # Try to extract amount from message
+        params = await self._extract_lending_params(text)
+        
+        # If user typed "100 USDC", params will have both
+        if params.get("amount"):
+            amount = params["amount"]
+            # If they also specified asset, make sure it matches or update
+            if params.get("asset"):
+                asset = params["asset"].upper()
+                state.data["asset"] = asset
+            
+            state.data["amount"] = amount
+            state.data["chain"] = state.data.get("chain", "base")
+            state.step = WorkflowStep.FETCH_DATA.value
+            return await self._handle_fetch_data(message, state, user_context)
+        
+        # Try to parse as pure number
+        try:
+            # Remove commas and try to parse
+            clean_text = text.replace(",", "").replace(" ", "")
+            amount = float(clean_text)
+            if amount > 0:
+                state.data["amount"] = str(amount)
+                state.data["chain"] = state.data.get("chain", "base")
+                state.step = WorkflowStep.FETCH_DATA.value
+                return await self._handle_fetch_data(message, state, user_context)
+        except ValueError:
+            pass
+        
+        # Invalid input - ask again
+        state.data["awaiting_amount"] = True
+        response = self._get_invalid_amount_response(text, asset, language)
+        return response, state
+    
+    def _get_invalid_amount_response(self, user_input: str, asset: str, language: str) -> str:
+        """Generate response for invalid amount input."""
+        msgs = {
+            "en": f"""❌ I couldn't understand "{user_input}" as an amount.
+
+Please enter a valid number for your **{asset}** deposit:
+
+💡 *Examples:*
+• `100` - deposit 100 {asset}
+• `1000` - deposit 1,000 {asset}
+• `all` - deposit your entire {asset} balance
+
+💬 Enter the amount to continue""",
+            
+            "es": f"""❌ No pude entender "{user_input}" como cantidad.
+
+Por favor ingresa un número válido para tu depósito de **{asset}**:
+
+💡 *Ejemplos:*
+• `100` - depositar 100 {asset}
+• `1000` - depositar 1,000 {asset}
+• `all` - depositar todo tu saldo de {asset}
+
+💬 Ingresa la cantidad para continuar""",
+            
+            "pt": f"""❌ Não consegui entender "{user_input}" como um valor.
+
+Por favor digite um número válido para seu depósito de **{asset}**:
+
+💡 *Exemplos:*
+• `100` - depositar 100 {asset}
+• `1000` - depositar 1,000 {asset}
+• `all` - depositar todo seu saldo de {asset}
+
+💬 Digite a quantia para continuar""",
+            
+            "zh": f"""❌ 我无法将 "{user_input}" 识别为金额。
+
+请输入有效的 **{asset}** 存款金额：
+
+💡 *示例：*
+• `100` - 存入 100 {asset}
+• `1000` - 存入 1,000 {asset}
+• `all` - 存入全部 {asset} 余额
+
+💬 输入金额以继续""",
+        }
+        return msgs.get(language, msgs["en"])
     
     async def _handle_fetch_data(
         self,

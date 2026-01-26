@@ -1,80 +1,113 @@
-Deposit USDC on Morpho
+lending
 A
-🔵 USDC MORPHO VAULTS ON BASE
+🏦 DeFi Lending - Earn Passive Income
 
-Top 3 vaults by APY (Morpho Protocol):
+What is DeFi Lending?
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Deposit your crypto into secure, audited vaults and earn yield automatically.
 
-TOP 3 VAULTS (by APY)
+Your funds are supplied to borrowers through smart contracts, generating
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+interest for you 24/7. No lockups - withdraw anytime.
 
-1. MEV Frontier USDC Vault ⭐
+💰 Your Balance: $0.00
 
-   • APY: 14.42%
+💡 Tip: Buy crypto first with `buy USDC` to start earning yield!
 
-   • TVL: $441.31B
+Select an asset to deposit:
 
-   • Address: `0x8773447e...6E9084`
+1. 💵 USDC • 0.04% APY
 
-2. Extrafi XLend USDC ⭐
+2. 💵 USDT
 
-   • APY: 6.23%
+3. 💰 DAI
 
-   • TVL: $8.24M
+4. Ξ ETH • 0.04% APY
 
-   • Address: `0x23479229...753B5e`
+5. ₿ WBTC • 0.01% APY
 
-3. Yearn OG USDC ⭐
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   • APY: 5.98%
+Reply with:
 
-   • TVL: $692.68B
+• A number (1-5) to select an asset
 
-   • Address: `0xef417a25...dE5D03`
+• Or type the asset name with amount (e.g., `1000 USDC`)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Powered by Morpho and Aave V3 on Base
 
-🎯 RECOMMENDATION
+Agent Execution Details
+1 agent
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+lending_workflow
+1.20s
+completed
 
-Best Vault: MEV Frontier USDC Vault
-
-APY: 14.42%
-
-Risk Level: Low (Curated)
-
-How to Deposit:
-
-1. Approve USDC spending for the vault
-
-2. Call `vault.deposit(amount, receiver)`
-
-3. Receive vault shares (ERC-4626)
-
-Safety Checks:
-
-✅ Verify vault address before depositing
-
-✅ Start with a small test amount
-
-✅ Ensure you have BASE ETH for gas
-
-Would you like me to help you deposit into MEV Frontier USDC Vault?
-
-
-yes
+1
 A
-It looks like we're ready to move forward with depositing USDC on Morpho.
+💵 Deposit USDC
 
-To confirm, you'd like to deposit USDC into the top-performing vault, which has an APY of approximately 12.5% (please note that APYs are subject to change and may not reflect current rates).
+💰 Your Balance: $0.00
 
-Before proceeding, I have a few questions:
+⚠️ You'll need to get USDC first:
 
-1. Do you have a MetaMask wallet connected to your Morpho account?
+• Say `buy USDC` to purchase with card
 
-2. Have you reviewed and understood the risks associated with lending on Morpho?
+• Or transfer USDC from another wallet
 
-3. Are you comfortable with the terms and conditions of the vault you've selected?
+How much USDC would you like to deposit?
+
+💡 Examples:
+
+• `100` (one hundred USDC)
+
+• `1000` (one thousand USDC)
+
+• `all` (deposit your entire USDC balance)
+
+💬 Enter the amount to continue
+
+Agent Execution Details
+1 agent
+
+lending_workflow
+520ms
+completed
+
+100
+A
+🏦 DeFi Lending - Earn Passive Income
+
+What is DeFi Lending?
+
+Deposit your crypto into secure, audited vaults and earn yield automatically.
+
+Your funds are supplied to borrowers through smart contracts, generating
+
+interest for you 24/7. No lockups - withdraw anytime.
+
+💰 Your Balance: $0.00
+
+💡 Tip: Buy crypto first with `buy USDC` to start earning yield!
+
+Select an asset to deposit:
+
+1. 💵 USDC • 0.04% APY
+
+2. 💵 USDT
+
+3. 💰 DAI
+
+4. Ξ ETH • 0.04% APY
+
+5. ₿ WBTC • 0.01% APY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Reply with:
+
+• A number (1-5) to select an asset
+
+• Or type the asset name with amount (e.g., `1000 USDC`)
+
+💡 Powered by Morpho and Aave V3 on Base
