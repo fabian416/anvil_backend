@@ -69,11 +69,11 @@ class PortfolioState(Enum):
         """Get LLM prompt enhancement for this state."""
         enhancements = {
             PortfolioState.EMPTY: """
-⚠️ USER HAS EMPTY PORTFOLIO - SPECIAL HANDLING:
-- DO NOT suggest swap/transfer/yield (user has no tokens)
-- ALWAYS suggest "buy" as the first action
+⚠️ USER HAS EMPTY PORTFOLIO:
+- Route swap/transfer/lending requests to their respective workflow agents
+- The workflow agents will handle insufficient funds with helpful recommendations
+- Do NOT redirect swap requests to buy_workflow - let swap_workflow handle it
 - Be encouraging and educational
-- Guide toward first purchase
 """,
             PortfolioState.STARTER: """
 ⚠️ USER IS NEW (< $100 portfolio):
