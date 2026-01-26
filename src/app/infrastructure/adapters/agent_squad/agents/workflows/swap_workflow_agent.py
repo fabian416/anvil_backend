@@ -52,11 +52,11 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# HYPERLIQUID SPOT TOKENS
+# HYPERLIQUID SPOT TOKENS - THE ONLY SUPPORTED SWAP PROVIDER
 # =============================================================================
-# Hyperliquid Spot ONLY supports meme tokens paired with USDC.
-# Major tokens like ETH, BTC, SOL are NOT available on Hyperliquid Spot.
-# For major tokens, use 1inch (same-chain) or LiFi (cross-chain).
+# Anvil ONLY supports swaps via Hyperliquid Spot.
+# Hyperliquid Spot supports meme tokens paired with USDC.
+# Major tokens (ETH, BTC, etc.) are NOT supported for swaps.
 # =============================================================================
 
 HYPERLIQUID_SPOT_TOKENS = {
@@ -71,12 +71,13 @@ HYPERLIQUID_SPOT_TOKENS = {
     "MBAPPE", "MAGA", "OMNIX", "COKE", "MEOW", "ANT", "NEIRO",
 }
 
-# Major tokens that are NOT supported on Hyperliquid Spot
-# These require 1inch (same-chain) or LiFi (cross-chain)
-MAJOR_TOKENS_REQUIRE_DEX = {
+# Major tokens that are NOT supported for swaps on Anvil
+# Users should use external DEXs for these tokens
+UNSUPPORTED_SWAP_TOKENS = {
     "ETH", "BTC", "SOL", "WBTC", "WETH", "LINK", "UNI", "AAVE",
     "CRV", "MKR", "DAI", "USDT", "MATIC", "ARB", "OP", "AVAX",
     "DOT", "ATOM", "APT", "SUI", "SEI", "TIA", "INJ", "FTM",
+    "XRP", "ADA", "DOGE", "LTC", "SHIB", "AVAX",
 }
 
 
@@ -213,19 +214,6 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         state.step = WorkflowStep.PARSE_REQUEST.value
         return await self._handle_parse_request(message, state, user_context)
     
-    # Tokens that are NOT available on EVM chains (native non-EVM tokens)
-    # Users should use WBTC instead of BTC, etc.
-    NON_EVM_TOKENS = {
-        "BTC": "WBTC",  # Use Wrapped BTC instead
-        "SOL": None,    # Solana native - not available on EVM
-        "DOT": None,    # Polkadot native
-        "ATOM": None,   # Cosmos native
-        "ADA": None,    # Cardano native
-        "XRP": None,    # Ripple native
-        "DOGE": None,   # Dogecoin native
-        "LTC": None,    # Litecoin native
-    }
-    
     async def _handle_parse_request(
         self,
         message: MessageContent,
@@ -236,6 +224,10 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         Step 1: Parse swap parameters from user message.
         
         Extracts: from_token, to_token, amount, chain, to_chain
+        
+        IMPORTANT: Anvil only supports swaps via Hyperliquid Spot.
+        Hyperliquid Spot only supports meme tokens paired with USDC.
+        Major tokens (ETH, BTC, etc.) are NOT supported for swaps.
         """
         params = await self._extract_swap_params(message.value)
         
@@ -245,14 +237,14 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             response = self._get_missing_params_response(params, user_context.language)
             return response, state
         
-        # Check for non-EVM tokens (like native BTC, SOL, etc.)
+        # Check if tokens are supported on Hyperliquid Spot
         from_token = params.get("from_token", "").upper()
         to_token = params.get("to_token", "").upper()
         
-        non_evm_error = self._check_non_evm_tokens(from_token, to_token, user_context.language)
-        if non_evm_error:
-            state.error = "non_evm_token"
-            return non_evm_error, state
+        unsupported_error = self._check_unsupported_tokens(from_token, to_token, user_context.language)
+        if unsupported_error:
+            state.error = "unsupported_token"
+            return unsupported_error, state
         
         # Update state with extracted params
         state.data.update(params)
@@ -271,131 +263,146 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         state.step = WorkflowStep.FETCH_DATA.value
         return await self._handle_fetch_quote(message, state, user_context)
     
-    def _check_non_evm_tokens(
+    def _check_unsupported_tokens(
         self,
         from_token: str,
         to_token: str,
         language: str,
     ) -> str | None:
         """
-        Check if user is trying to swap non-EVM tokens.
+        Check if tokens are supported on Hyperliquid Spot.
         
-        Returns an error message if tokens are not available on EVM chains,
-        or None if the swap is valid.
+        Anvil ONLY supports swaps via Hyperliquid Spot, which means:
+        - Only meme tokens + USDC are supported
+        - Major tokens (ETH, BTC, etc.) are NOT supported
+        
+        Returns an error message if tokens are not supported, or None if valid.
         """
-        non_evm_from = self.NON_EVM_TOKENS.get(from_token)
-        non_evm_to = self.NON_EVM_TOKENS.get(to_token)
+        from_supported = from_token in HYPERLIQUID_SPOT_TOKENS
+        to_supported = to_token in HYPERLIQUID_SPOT_TOKENS
         
-        if non_evm_from is not None or non_evm_to is not None:
-            # Build helpful message
-            messages = {
-                "en": self._build_non_evm_message_en(from_token, to_token, non_evm_from, non_evm_to),
-                "es": self._build_non_evm_message_es(from_token, to_token, non_evm_from, non_evm_to),
-                "pt": self._build_non_evm_message_pt(from_token, to_token, non_evm_from, non_evm_to),
-            }
-            return messages.get(language, messages["en"])
+        # Both tokens must be in Hyperliquid Spot supported list
+        if not from_supported or not to_supported:
+            # Determine which token(s) are unsupported
+            unsupported = []
+            if not from_supported:
+                unsupported.append(from_token)
+            if not to_supported:
+                unsupported.append(to_token)
+            
+            return self._build_unsupported_message(
+                from_token=from_token,
+                to_token=to_token,
+                unsupported_tokens=unsupported,
+                language=language,
+            )
+        
+        # One token must be USDC (Hyperliquid Spot requirement)
+        if from_token != "USDC" and to_token != "USDC":
+            return self._build_usdc_required_message(from_token, to_token, language)
         
         return None
     
-    def _build_non_evm_message_en(
+    def _build_unsupported_message(
         self,
         from_token: str,
         to_token: str,
-        alt_from: str | None,
-        alt_to: str | None,
+        unsupported_tokens: list[str],
+        language: str,
     ) -> str:
-        """Build non-EVM token error message in English."""
-        if to_token == "BTC":
-            return """❌ **Native BTC is not available on EVM chains**
+        """Build message for unsupported tokens."""
+        messages = {
+            "en": f"""❌ **Swap not supported: {from_token} → {to_token}**
 
-Bitcoin (BTC) runs on its own blockchain and cannot be directly swapped on Ethereum/Base/Arbitrum.
+Anvil uses **Hyperliquid Spot** for swaps, which only supports **meme tokens paired with USDC**.
 
-**What you can do instead:**
+**Tokens like {', '.join(unsupported_tokens)} are not available for swaps.**
 
-1. **Swap to WBTC (Wrapped BTC)** - A 1:1 backed token on EVM chains
-   • Say: **"swap 1 ETH to WBTC"**
-   
-2. **Use Anvil to track BTC** - Ask about BTC price, market data
-   • Say: **"what's the price of BTC?"**
+---
 
-3. **Buy BTC directly** - Use our fiat on-ramp
-   • Say: **"buy BTC"** (purchases via MoonPay)
+**✅ What you CAN do on Anvil:**
 
-**Available swaps on Anvil:**
-• ETH, WBTC, USDC, USDT, DAI, LINK, UNI, and 50+ EVM tokens
-• Meme tokens: PURR, TRUMP, PEPE, MOG via Hyperliquid Spot
-"""
-        
-        if from_token == "BTC":
-            return """❌ **Native BTC cannot be swapped on EVM chains**
+**Meme Token Swaps** (via Hyperliquid Spot):
+• `swap 100 USDC to PURR`
+• `swap 50 USDC to TRUMP`
+• `swap 1000 USDC to PEPE`
 
-To swap BTC-equivalent tokens, use **WBTC (Wrapped BTC)** instead.
+**Supported meme tokens:** PURR, TRUMP, PEPE, MOG, HFUN, JEFF, WAGMI, and 40+ more
 
-Say: **"swap 1 WBTC to ETH"**
-"""
-        
-        # Generic non-EVM token
-        token = from_token if from_token in self.NON_EVM_TOKENS else to_token
-        return f"""❌ **{token} is not available on EVM chains**
+---
 
-{token} runs on its own blockchain and cannot be directly swapped on Ethereum/Base/Arbitrum.
+**💡 For major tokens ({', '.join(unsupported_tokens)}), you can:**
 
-**Available swaps on Anvil:**
-• ETH, WBTC, USDC, USDT, DAI, LINK, UNI, and 50+ EVM tokens
-• Meme tokens via Hyperliquid Spot
-"""
+• **Check prices:** "what's the price of ETH?"
+• **Track portfolio:** "show my portfolio"
+• **Buy crypto:** "buy ETH" (fiat on-ramp via MoonPay)
+• **Use external DEXs:** Uniswap, 1inch, or other DEX aggregators
+""",
+            "es": f"""❌ **Swap no soportado: {from_token} → {to_token}**
+
+Anvil usa **Hyperliquid Spot** para swaps, que solo soporta **meme tokens con USDC**.
+
+**Tokens como {', '.join(unsupported_tokens)} no están disponibles para swaps.**
+
+**✅ Qué PUEDES hacer en Anvil:**
+
+• Swaps de meme tokens: `swap 100 USDC to PURR`
+• Ver precios: "precio de ETH"
+• Comprar cripto: "comprar ETH"
+""",
+            "pt": f"""❌ **Swap não suportado: {from_token} → {to_token}**
+
+Anvil usa **Hyperliquid Spot** para swaps, que só suporta **meme tokens com USDC**.
+
+**Tokens como {', '.join(unsupported_tokens)} não estão disponíveis para swaps.**
+
+**✅ O que você PODE fazer no Anvil:**
+
+• Swaps de meme tokens: `swap 100 USDC to PURR`
+• Ver preços: "preço do ETH"
+• Comprar cripto: "comprar ETH"
+""",
+        }
+        return messages.get(language, messages["en"])
     
-    def _build_non_evm_message_es(
+    def _build_usdc_required_message(
         self,
         from_token: str,
         to_token: str,
-        alt_from: str | None,
-        alt_to: str | None,
+        language: str,
     ) -> str:
-        """Build non-EVM token error message in Spanish."""
-        if to_token == "BTC":
-            return """❌ **BTC nativo no está disponible en cadenas EVM**
+        """Build message when USDC is not in the swap pair."""
+        messages = {
+            "en": f"""❌ **Swap requires USDC: {from_token} → {to_token}**
 
-Bitcoin (BTC) funciona en su propia blockchain y no se puede intercambiar directamente en Ethereum/Base/Arbitrum.
+Hyperliquid Spot only supports swaps **paired with USDC**.
 
-**Qué puedes hacer:**
+**Try instead:**
+• `swap {from_token} to USDC` - Sell {from_token} for USDC
+• `swap USDC to {to_token}` - Buy {to_token} with USDC
 
-1. **Intercambiar por WBTC (Wrapped BTC)** - Token respaldado 1:1
-   • Di: **"swap 1 ETH to WBTC"**
+**Two-step swap:**
+1. First: `swap {from_token} to USDC`
+2. Then: `swap USDC to {to_token}`
+""",
+            "es": f"""❌ **El swap requiere USDC: {from_token} → {to_token}**
 
-2. **Comprar BTC directamente**
-   • Di: **"comprar BTC"**
-"""
-        return f"""❌ **Token no disponible en cadenas EVM**
+Hyperliquid Spot solo soporta swaps **con USDC**.
 
-Este token funciona en su propia blockchain y no se puede intercambiar en Ethereum/Base/Arbitrum.
-"""
-    
-    def _build_non_evm_message_pt(
-        self,
-        from_token: str,
-        to_token: str,
-        alt_from: str | None,
-        alt_to: str | None,
-    ) -> str:
-        """Build non-EVM token error message in Portuguese."""
-        if to_token == "BTC":
-            return """❌ **BTC nativo não está disponível em cadeias EVM**
+**Intenta:**
+• `swap {from_token} to USDC`
+• `swap USDC to {to_token}`
+""",
+            "pt": f"""❌ **Swap requer USDC: {from_token} → {to_token}**
 
-Bitcoin (BTC) funciona em sua própria blockchain e não pode ser trocado diretamente em Ethereum/Base/Arbitrum.
+Hyperliquid Spot só suporta swaps **com USDC**.
 
-**O que você pode fazer:**
-
-1. **Trocar por WBTC (Wrapped BTC)** - Token lastreado 1:1
-   • Diga: **"swap 1 ETH to WBTC"**
-
-2. **Comprar BTC diretamente**
-   • Diga: **"comprar BTC"**
-"""
-        return f"""❌ **Token não disponível em cadeias EVM**
-
-Este token funciona em sua própria blockchain e não pode ser trocado em Ethereum/Base/Arbitrum.
-"""
+**Tente:**
+• `swap {from_token} to USDC`
+• `swap USDC to {to_token}`
+""",
+        }
+        return messages.get(language, messages["en"])
     
     async def _handle_fetch_quote(
         self,
