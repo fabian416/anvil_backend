@@ -1,0 +1,476 @@
+version: '3.8'
+
+name: anvil-production
+
+services:
+  # ===================================================
+  # INFRASTRUCTURE - PostgreSQL & Redis
+  # ===================================================
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: anvil_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: anvil_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  # ===================================================
+  # FASTAPI - API HTTP Server
+  # ===================================================
+  
+  fastapi:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-api:${IMAGE_TAG:-production}
+    container_name: anvil_fastapi
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===================================================
+  # CELERY - Background Job Processing
+  # ===================================================
+  
+  celery-worker:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker:${IMAGE_TAG:-production}
+    container_name: anvil_celery_worker
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-beat:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-beat:${IMAGE_TAG:-production}
+    container_name: anvil_celery_beat
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - celery_beat_schedule:/tmp
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  # ===================================================
+  # SPECIALIZED WORKERS
+  # ===================================================
+  
+  celery-worker-agents:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-agents:${IMAGE_TAG:-production}
+    container_name: anvil_celery_agents
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-worker-transactions:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-transactions:${IMAGE_TAG:-production}
+    container_name: anvil_celery_transactions
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-worker-graph:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-graph:${IMAGE_TAG:-production}
+    container_name: anvil_celery_graph
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-worker-distillation:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-distillation:${IMAGE_TAG:-production}
+    container_name: anvil_celery_distillation
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-worker-projects:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-projects:${IMAGE_TAG:-production}
+    container_name: anvil_celery_projects
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-worker-llm:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-llm:${IMAGE_TAG:-production}
+    container_name: anvil_celery_llm
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-worker-maintenance:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-maintenance:${IMAGE_TAG:-production}
+    container_name: anvil_celery_maintenance
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-worker-risk:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-risk:${IMAGE_TAG:-production}
+    container_name: anvil_celery_risk
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  celery-worker-email:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-email:${IMAGE_TAG:-production}
+    container_name: anvil_celery_email
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  # ===================================================
+  # MCP SERVERS (11 total)
+  # ===================================================
+  
+  mcp-1inch:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-1inch:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_1inch
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-defillama:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-defillama:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_defillama
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-thegraph:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-thegraph:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_thegraph
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8083:8083"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-coingecko:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-coingecko:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_coingecko
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8084:8084"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-aave:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-aave:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_aave
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8085:8085"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-portfolio:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-portfolio:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_portfolio
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8086:8086"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-perplexity:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-perplexity:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_perplexity
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8087:8087"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-morpho:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-morpho:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_morpho
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8088:8088"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-curve:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-curve:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_curve
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8089:8089"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-hyperliquid:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-hyperliquid:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_hyperliquid
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  mcp-layerzero:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-layerzero:${IMAGE_TAG:-production}
+    container_name: anvil_mcp_layerzero
+    environment:
+      - APP_ENV=${APP_ENV}
+    ports:
+      - "8091:8091"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  # ===================================================
+  # TRANSACTION CONFIRMATION WORKER
+  # ===================================================
+  
+  tx-confirmation:
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-tx-confirmation:${IMAGE_TAG:-production}
+    container_name: anvil_tx_confirmation
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  # ===================================================
+  # MONITORING - Flower (Celery Monitoring)
+  # ===================================================
+  
+  flower:
+    image: mher/flower:1.2.0
+    container_name: anvil_flower
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+volumes:
+  pg_data:
+  redis_data:
+  celery_beat_schedule:
+
+networks:
+  anvil-network:
+    driver: bridge
