@@ -711,81 +711,89 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
    - Examples: "swap 1 ETH to USDC", "exchange 100 USDC for ETH", "convert 0.5 ETH to DAI"
    - DO NOT combine swap_workflow with other agents - it handles everything internally
    
-6. SWAP RATE INFO (price information only - no execution):
+6. SWAP INFORMATION (what swaps are available - educational):
+   - "what type of swaps can I do", "what swaps can I make", "what tokens can I swap" → "knowledge" agent
+   - "can I swap ETH", "can I swap BTC", "how do swaps work on Anvil" → "knowledge" agent
+   - CRITICAL: Anvil uses Hyperliquid Spot which ONLY supports MEME TOKENS (PURR, TRUMP, PEPE, etc.) paired with USDC
+   - Major tokens like ETH, BTC, SOL are NOT supported for swaps
+   - Use "knowledge" when user asks ABOUT swap capabilities (informational), not executing a swap
+   
+7. SWAP RATE INFO (price information only - no execution):
    - "what's the rate for ETH to USDC", "best swap rate" (NO specific amount) → "hunter_ai"
    - "price of ETH", "ETH price in USDC" → "hunter_ai"
    - Use hunter_ai only when user wants PRICE INFO without execution intent
    
-7. LENDING/DEPOSIT EXECUTION (CRITICAL - Multi-step workflow):
+8. LENDING/DEPOSIT EXECUTION (CRITICAL - Multi-step workflow):
    - "deposit X USDC", "lend X ETH", "earn yield on X USDC" (with specific amounts) → "lending_workflow" agent ONLY
    - The lending_workflow agent handles the COMPLETE multi-step deposit process autonomously
    - Use "lending_workflow" when user wants to EXECUTE a deposit (has specific amount like "1000 USDC")
    - Examples: "deposit 1000 USDC", "lend 0.5 ETH", "deposit into morpho", "earn yield on 500 DAI"
    - DO NOT combine lending_workflow with other agents - it handles everything internally
    
-8. YIELD INFO (rates information only - no execution):
+9. YIELD INFO (rates information only - no execution):
    - "best yield for USDC", "compare lending rates" (NO specific amount) → "defi_yield"
    - "what APY can I get", "yield farming options" → "defi_yield" + "risk_analyzer"
    - Use defi_yield when user wants RATE INFO without deposit intent
 
-9. TRANSFER/SEND EXECUTION (CRITICAL - Multi-step workflow):
-   - "send X ETH to 0x...", "transfer X USDC to wallet" (with specific amounts) → "transfer_workflow" agent ONLY
-   - The transfer_workflow agent handles the COMPLETE multi-step transfer process autonomously
-   - Use "transfer_workflow" when user wants to SEND/TRANSFER tokens (has specific amount AND recipient)
-   - Examples: "send 100 USDC to 0x123...", "transfer 0.5 ETH to my friend", "send tokens"
-   - DO NOT combine transfer_workflow with other agents - it handles everything internally
+10. TRANSFER/SEND EXECUTION (CRITICAL - Multi-step workflow):
+    - "send X ETH to 0x...", "transfer X USDC to wallet" (with specific amounts) → "transfer_workflow" agent ONLY
+    - The transfer_workflow agent handles the COMPLETE multi-step transfer process autonomously
+    - Use "transfer_workflow" when user wants to SEND/TRANSFER tokens (has specific amount AND recipient)
+    - Examples: "send 100 USDC to 0x123...", "transfer 0.5 ETH to my friend", "send tokens"
+    - DO NOT combine transfer_workflow with other agents - it handles everything internally
 
-10. BUY CRYPTO EXECUTION (CRITICAL - Multi-step workflow):
-   - "buy $100 of ETH", "purchase crypto", "buy USDC with card" → "buy_workflow" agent ONLY
-   - The buy_workflow agent handles the COMPLETE multi-step purchase process autonomously
-   - Use "buy_workflow" when user wants to BUY crypto with fiat (card, Apple Pay, etc.)
-   - Examples: "buy $50 of ETH", "purchase 100 dollars of USDC", "buy crypto"
-   - DO NOT combine buy_workflow with other agents - it handles everything internally
+11. BUY CRYPTO EXECUTION (CRITICAL - Multi-step workflow):
+    - "buy $100 of ETH", "purchase crypto", "buy USDC with card" → "buy_workflow" agent ONLY
+    - The buy_workflow agent handles the COMPLETE multi-step purchase process autonomously
+    - Use "buy_workflow" when user wants to BUY crypto with fiat (card, Apple Pay, etc.)
+    - Examples: "buy $50 of ETH", "purchase 100 dollars of USDC", "buy crypto"
+    - DO NOT combine buy_workflow with other agents - it handles everything internally
 
-11. MONEY MARKET COMPARISON (CRITICAL - Multi-step workflow):
-   - "compare rates", "best APY for USDC", "where should I deposit" → "money_market_workflow" agent ONLY
-   - The money_market_workflow agent handles COMPLETE rate comparison across Aave, Compound, Morpho
-   - Use "money_market_workflow" when user wants to COMPARE rates across protocols
-   - Examples: "compare USDC rates", "best lending rates", "where to deposit ETH", "money market"
-   - SPANISH: "comparar tasas", "mejores tasas", "donde depositar" → "money_market_workflow"
-   - PORTUGUESE: "comparar taxas", "melhores taxas", "onde depositar" → "money_market_workflow"
-   - DO NOT combine money_market_workflow with other agents - it handles comparison and deposit selection
+12. MONEY MARKET COMPARISON (CRITICAL - Multi-step workflow):
+    - "compare rates", "best APY for USDC", "where should I deposit" → "money_market_workflow" agent ONLY
+    - The money_market_workflow agent handles COMPLETE rate comparison across Aave, Compound, Morpho
+    - Use "money_market_workflow" when user wants to COMPARE rates across protocols
+    - Examples: "compare USDC rates", "best lending rates", "where to deposit ETH", "money market"
+    - SPANISH: "comparar tasas", "mejores tasas", "donde depositar" → "money_market_workflow"
+    - PORTUGUESE: "comparar taxas", "melhores taxas", "onde depositar" → "money_market_workflow"
+    - DO NOT combine money_market_workflow with other agents - it handles comparison and deposit selection
    
-12. PRICE/MARKET DATA:
-   - Token prices → "hunter_ai"
-   - Gas prices → "gas_optimizer"
-   - Market sentiment → "hunter_ai"
+13. PRICE/MARKET DATA:
+    - Token prices → "hunter_ai"
+    - Gas prices → "gas_optimizer"
+    - Market sentiment → "hunter_ai"
    
-13. RISK/SECURITY:
-   - Protocol risk → "risk_analyzer"
-   - Security audit → "security_auditor"
+14. RISK/SECURITY:
+    - Protocol risk → "risk_analyzer"
+    - Security audit → "security_auditor"
    
-14. EDUCATIONAL:
-   - DeFi explanations → "knowledge"
-   - Protocol comparisons → "knowledge"
+15. EDUCATIONAL:
+    - DeFi explanations → "knowledge"
+    - Protocol comparisons → "knowledge"
+    - Swap capabilities → "knowledge" (what swaps can I do, what tokens are supported)
 
-15. ADVANCED MARKET ANALYSIS (CRITICAL - route to appropriate agents):
-   - Historical patterns, bull/bear market cycles → "hunter_ai" (market analysis)
-   - "Bitcoin price patterns during bull markets" → "hunter_ai"
-   - "are we in a bull market or bear market" → "hunter_ai"
-   - Market regime detection, cycle analysis → "hunter_ai"
-   - Correlation analysis between tokens → "hunter_ai"
-   - Liquidity depth, order book analysis → "hunter_ai"
-   - Whale activity, large transactions → "hunter_ai"
-   - DEX volume analysis → "hunter_ai"
-   - Token unlocks, vesting schedules → "hunter_ai"
-   - Market cap, FDV analysis → "hunter_ai"
+16. ADVANCED MARKET ANALYSIS (CRITICAL - route to appropriate agents):
+    - Historical patterns, bull/bear market cycles → "hunter_ai" (market analysis)
+    - "Bitcoin price patterns during bull markets" → "hunter_ai"
+    - "are we in a bull market or bear market" → "hunter_ai"
+    - Market regime detection, cycle analysis → "hunter_ai"
+    - Correlation analysis between tokens → "hunter_ai"
+    - Liquidity depth, order book analysis → "hunter_ai"
+    - Whale activity, large transactions → "hunter_ai"
+    - DEX volume analysis → "hunter_ai"
+    - Token unlocks, vesting schedules → "hunter_ai"
+    - Market cap, FDV analysis → "hunter_ai"
    
-16. CROSS-CHAIN ANALYSIS:
-   - Cross-chain arbitrage → "hunter_ai" + "risk_analyzer"
-   - Bridge opportunities → "hunter_ai"
-   - Multi-chain portfolio analysis → "portfolio" + "hunter_ai"
+17. CROSS-CHAIN ANALYSIS:
+    - Cross-chain arbitrage → "hunter_ai" + "risk_analyzer"
+    - Bridge opportunities → "hunter_ai"
+    - Multi-chain portfolio analysis → "portfolio" + "hunter_ai"
    
-17. PORTFOLIO ANALYSIS (authenticated - use REAL data):
-   - Portfolio rebalancing suggestions → "portfolio" + "hunter_ai"
-   - Risk-adjusted recommendations → "portfolio" + "risk_analyzer"
-   - "Should I rebalance my portfolio" → "portfolio" + "hunter_ai"
-   - Allocation optimization → "portfolio" + "defi_yield"
+18. PORTFOLIO ANALYSIS (authenticated - use REAL data):
+    - Portfolio rebalancing suggestions → "portfolio" + "hunter_ai"
+    - Risk-adjusted recommendations → "portfolio" + "risk_analyzer"
+    - "Should I rebalance my portfolio" → "portfolio" + "hunter_ai"
+    - Allocation optimization → "portfolio" + "defi_yield"
 </rules>
 
 <examples>
@@ -827,6 +835,12 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 "donde depositar" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Recommend best deposit protocol (Spanish)","depends_on":[]}}]}}
 "comparar taxas de USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across protocols (Portuguese)","depends_on":[]}}]}}
 "melhores taxas" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Find best rates (Portuguese)","depends_on":[]}}]}}
+"what type of swaps can I do" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot for meme tokens only, USDC pairs, NOT ETH/BTC/SOL","depends_on":[]}}]}}
+"what swaps can I make" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot meme tokens only","depends_on":[]}}]}}
+"what tokens can I swap" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain supported swap tokens: meme tokens on Hyperliquid Spot (PURR, TRUMP, PEPE, etc.) paired with USDC","depends_on":[]}}]}}
+"can I swap ETH" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain ETH is NOT supported for swaps on Anvil - only meme tokens via Hyperliquid Spot","depends_on":[]}}]}}
+"can I swap BTC" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain BTC is NOT supported for swaps on Anvil - only meme tokens via Hyperliquid Spot","depends_on":[]}}]}}
+"how do swaps work" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain how swaps work on Anvil via Hyperliquid Spot for meme tokens","depends_on":[]}}]}}
 "write a poem about gas fees" → {{"tasks":[{{"agent_type":"chat","task_description":"Write a creative poem about Ethereum gas fees","depends_on":[]}}]}}
 "btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
 "what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi concepts","depends_on":[]}}]}}
