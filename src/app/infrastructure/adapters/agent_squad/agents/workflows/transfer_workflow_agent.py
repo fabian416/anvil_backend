@@ -289,14 +289,95 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Handle execute step - transaction is done by frontend."""
+        """Handle execute step - transaction is done by frontend.
         
+        IMPORTANT: Checks user balance before allowing execution.
+        If user has insufficient funds, shows helpful message to buy crypto.
+        """
         language = user_context.language
+        token = state.data.get("token", "ETH").upper()
+        amount = state.data.get("amount", "0")
+        recipient = state.data.get("recipient", "")
+        
+        # Check user balance before allowing execution
+        if user_context.needs_funding_recommendation:
+            logger.info(
+                f"[TransferWorkflow] Blocking execution - insufficient funds: "
+                f"portfolio_state={user_context.portfolio_state}, "
+                f"balance=${user_context.total_balance_usd:.2f}"
+            )
+            response = self._build_insufficient_balance_message(
+                token=token,
+                amount=amount,
+                recipient=recipient,
+                user_balance=user_context.total_balance_usd,
+                language=language,
+            )
+            state.error = "insufficient_balance"
+            return response, state
         
         # The actual transaction is handled by the frontend using execute_data
         state.step = WorkflowStep.COMPLETED.value
         
         return self._format_execution_pending(state.data, language), state
+    
+    def _build_insufficient_balance_message(
+        self,
+        token: str,
+        amount: str,
+        recipient: str,
+        user_balance: float,
+        language: str,
+    ) -> str:
+        """Build message when user has insufficient balance to execute transfer."""
+        short_recipient = f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 16 else recipient
+        messages = {
+            "en": f"""❌ **Unable to execute transfer**
+
+**Transfer requested:** {amount} {token} to {short_recipient}
+**Your current balance:** ${user_balance:.2f}
+
+You don't have enough {token} in your wallet to complete this transfer.
+
+---
+
+**💳 Get {token} to send:**
+
+1. **Buy with card/Apple Pay/Google Pay:**
+   Say: **"buy {token}"** or **"buy 100 {token}"**
+
+2. **Transfer from another wallet:**
+   Send {token} to your Anvil wallet address
+
+---
+
+Once you have {token} in your wallet, come back and try:
+**"send {amount} {token} to {short_recipient}"**
+""",
+            "es": f"""❌ **No se puede ejecutar la transferencia**
+
+**Transferencia solicitada:** {amount} {token} a {short_recipient}
+**Tu saldo actual:** ${user_balance:.2f}
+
+No tienes suficiente {token} en tu billetera.
+
+**💳 Obtén {token}:**
+• Di: **"comprar {token}"**
+• O transfiere {token} desde otra billetera
+""",
+            "pt": f"""❌ **Não é possível executar a transferência**
+
+**Transferência solicitada:** {amount} {token} para {short_recipient}
+**Seu saldo atual:** ${user_balance:.2f}
+
+Você não tem {token} suficiente na sua carteira.
+
+**💳 Obtenha {token}:**
+• Diga: **"comprar {token}"**
+• Ou transfira {token} de outra carteira
+""",
+        }
+        return messages.get(language, messages["en"])
     
     # ========================================
     # Parameter Extraction

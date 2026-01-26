@@ -336,14 +336,91 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Handle deposit execution."""
+        """Handle deposit execution.
         
+        IMPORTANT: Checks user balance before allowing execution.
+        If user has insufficient funds, shows helpful message to buy crypto.
+        """
         language = user_context.language
+        asset = state.data.get("asset", "USDC").upper()
+        amount = state.data.get("amount", "0")
+        
+        # Check user balance before allowing execution
+        if user_context.needs_funding_recommendation:
+            logger.info(
+                f"[MoneyMarketWorkflow] Blocking execution - insufficient funds: "
+                f"portfolio_state={user_context.portfolio_state}, "
+                f"balance=${user_context.total_balance_usd:.2f}"
+            )
+            response = self._build_insufficient_balance_message(
+                asset=asset,
+                amount=amount,
+                user_balance=user_context.total_balance_usd,
+                language=language,
+            )
+            state.error = "insufficient_balance"
+            return response, state
         
         # The actual deposit is handled by lending_workflow or frontend
         state.step = WorkflowStep.COMPLETED.value
         
         return self._format_execution_info(state.data, language), state
+    
+    def _build_insufficient_balance_message(
+        self,
+        asset: str,
+        amount: str,
+        user_balance: float,
+        language: str,
+    ) -> str:
+        """Build message when user has insufficient balance to execute deposit."""
+        messages = {
+            "en": f"""❌ **Unable to execute deposit**
+
+**Deposit requested:** {amount} {asset}
+**Your current balance:** ${user_balance:.2f}
+
+You don't have enough {asset} in your wallet to complete this deposit.
+
+---
+
+**💳 Get {asset} to start earning yield:**
+
+1. **Buy with card/Apple Pay/Google Pay:**
+   Say: **"buy {asset}"** or **"buy 100 {asset}"**
+
+2. **Transfer from another wallet:**
+   Send {asset} to your Anvil wallet address
+
+---
+
+Once you have {asset} in your wallet, come back and try:
+**"deposit {amount} {asset}"**
+""",
+            "es": f"""❌ **No se puede ejecutar el depósito**
+
+**Depósito solicitado:** {amount} {asset}
+**Tu saldo actual:** ${user_balance:.2f}
+
+No tienes suficiente {asset} en tu billetera.
+
+**💳 Obtén {asset}:**
+• Di: **"comprar {asset}"**
+• O transfiere {asset} desde otra billetera
+""",
+            "pt": f"""❌ **Não é possível executar o depósito**
+
+**Depósito solicitado:** {amount} {asset}
+**Seu saldo atual:** ${user_balance:.2f}
+
+Você não tem {asset} suficiente na sua carteira.
+
+**💳 Obtenha {asset}:**
+• Diga: **"comprar {asset}"**
+• Ou transfira {asset} de outra carteira
+""",
+        }
+        return messages.get(language, messages["en"])
     
     # ========================================
     # DIRECT API Data Fetching (REAL APIs)
