@@ -861,6 +861,7 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
         Execute workflow with authenticated user context.
         
         Injects user context into the conversation context before execution.
+        Checks if user can execute workflow based on portfolio state.
         
         Args:
             conversation_id: Conversation identifier
@@ -868,6 +869,32 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
             conversation_context: Conversation context
             original_message: The current user message (CRITICAL: prevents context pollution)
         """
+        # Check if any workflow agent is blocked due to insufficient balance
+        # This prevents users with empty portfolios from attempting swaps/transfers
+        language = conversation_context.user_metadata.get("language", "en") if conversation_context.user_metadata else "en"
+        
+        for task in workflow_plan.tasks:
+            agent_type = task.agent_type.value if hasattr(task.agent_type, 'value') else str(task.agent_type)
+            
+            # Check for workflow agents that require balance
+            if agent_type in ("swap_workflow", "transfer_workflow", "lending_workflow"):
+                is_blocked, blocked_message = self.check_workflow_blocked_with_template(
+                    workflow_type=agent_type,
+                    language=language,
+                )
+                
+                if is_blocked and blocked_message:
+                    logger.info(
+                        f"🚫 Workflow blocked for user: {agent_type}",
+                        extra={
+                            "conversation_id": str(conversation_id),
+                            "agent_type": agent_type,
+                            "portfolio_state": self._context_aware.portfolio_state if self._context_aware else "unknown",
+                        }
+                    )
+                    # Return the blocked message as the response
+                    return blocked_message, [], []
+        
         # Inject user context into conversation context metadata
         if self._user_context and conversation_context.user_metadata:
             conversation_context.user_metadata.update(self._user_context)
