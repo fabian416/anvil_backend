@@ -295,9 +295,10 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         If user has insufficient funds, shows helpful message to buy crypto.
         """
         language = user_context.language
-        token = state.data.get("token", "ETH").upper()
-        amount = state.data.get("amount", "0")
-        recipient = state.data.get("recipient", "")
+        # Use 'or' to handle both missing keys AND None values
+        token = (state.data.get("token") or "ETH").upper()
+        amount = state.data.get("amount") or "0"
+        recipient = state.data.get("recipient") or ""
         
         # Check user balance before allowing execution
         if user_context.needs_funding_recommendation:

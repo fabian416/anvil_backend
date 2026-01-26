@@ -416,10 +416,11 @@ Hyperliquid Spot só suporta swaps **com USDC**.
         If user has insufficient funds, shows a helpful recommendation to buy crypto
         but still provides swap information so they know what to expect.
         """
-        from_token = state.data.get("from_token", "ETH")
-        to_token = state.data.get("to_token", "USDC")
-        amount = state.data.get("amount", "0")
-        chain = state.data.get("chain", "base")
+        # Use 'or' to handle both missing keys AND None values
+        from_token = state.data.get("from_token") or "ETH"
+        to_token = state.data.get("to_token") or "USDC"
+        amount = state.data.get("amount") or "0"
+        chain = state.data.get("chain") or "base"
         to_chain = state.data.get("to_chain")
         
         is_cross_chain = to_chain and to_chain.lower() != chain.lower()
@@ -666,12 +667,13 @@ Aqui está a cotação do swap que você solicitou:
         IMPORTANT: Checks user balance before allowing execution.
         If user has insufficient funds, shows helpful message to buy crypto.
         """
-        from_token = state.data.get("from_token", "ETH")
-        to_token = state.data.get("to_token", "USDC")
-        amount = state.data.get("amount", "0")
-        chain = state.data.get("chain", "base")
+        # Use 'or' to handle both missing keys AND None values
+        from_token = state.data.get("from_token") or "ETH"
+        to_token = state.data.get("to_token") or "USDC"
+        amount = state.data.get("amount") or "0"
+        chain = state.data.get("chain") or "base"
         to_chain = state.data.get("to_chain")
-        aggregator = state.data.get("aggregator", "hyperliquid")
+        aggregator = state.data.get("aggregator") or "hyperliquid"
         
         # Check user balance before allowing execution
         if user_context.needs_funding_recommendation:
@@ -875,13 +877,17 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
         
         return params
     
-    def _is_hyperliquid_swap(self, from_token: str, to_token: str) -> bool:
+    def _is_hyperliquid_swap(self, from_token: str | None, to_token: str | None) -> bool:
         """
         Check if this swap should use Hyperliquid Spot.
         
         Hyperliquid Spot only supports meme tokens paired with USDC.
         One of the tokens MUST be USDC, and the other must be a supported meme token.
         """
+        # Safety check for None values
+        if not from_token or not to_token:
+            return False
+        
         from_upper = from_token.upper()
         to_upper = to_token.upper()
         

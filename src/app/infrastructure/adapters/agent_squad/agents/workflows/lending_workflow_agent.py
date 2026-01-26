@@ -303,8 +303,9 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         If user has insufficient funds, shows helpful message to buy crypto.
         """
         language = user_context.language
-        asset = state.data.get("asset", "USDC").upper()
-        amount = state.data.get("amount", "0")
+        # Use 'or' to handle both missing keys AND None values
+        asset = (state.data.get("asset") or "USDC").upper()
+        amount = state.data.get("amount") or "0"
         
         # Check user balance before allowing execution
         if user_context.needs_funding_recommendation:
