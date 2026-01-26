@@ -1208,6 +1208,23 @@ def create_conversations_router() -> APIRouter:
                 # Get previous swap info from context for multi-turn flow
                 previous_swap_info = context.pending_swap_info
                 
+                # Get user context-aware data for balance checking
+                # Note: user_context is only defined for authenticated users with supervisor_command
+                swap_user_context = None
+                try:
+                    if user_context and user_context.get("context_aware"):
+                        swap_user_context = user_context.get("context_aware")
+                except NameError:
+                    # user_context not defined (guest user without supervisor)
+                    pass
+                
+                # Try to load context if not already available
+                if swap_user_context is None and user_context_service and not user.is_guest:
+                    try:
+                        swap_user_context = await user_context_service.get_context(user.id)
+                    except Exception:
+                        pass  # Silently ignore - balance recommendation is not critical
+                
                 handler_result = await swap_handler.handle(
                     message=request_body.content,
                     context=context,
@@ -1215,6 +1232,7 @@ def create_conversations_router() -> APIRouter:
                     continuation_step=continuation_step,
                     continuation_value=continuation_value,
                     previous_swap_info=previous_swap_info,
+                    user_context=swap_user_context,
                 )
                 agent_content = handler_result.content
                 enrichment = handler_result.enrichment

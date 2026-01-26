@@ -16,6 +16,7 @@ from app.application.chat.services.conversation_memory import ConversationContex
 
 if TYPE_CHECKING:
     from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+    from app.domain.chat.entities.user_context_aware import UserContextAware
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +214,7 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
         continuation_step: str | None = None,
         continuation_value: str | None = None,
         previous_swap_info: dict | None = None,
+        user_context: "UserContextAware | None" = None,
     ) -> HandlerResult:
         """
         Handle swap request with multi-turn support.
@@ -224,10 +226,13 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
             continuation_step: If continuing a flow, which step
             continuation_value: Value for the continuation step
             previous_swap_info: Previous swap info for continuation
+            user_context: User context-aware data (balance, portfolio state, etc.)
             
         Returns:
             HandlerResult with response and pending action
         """
+        # Store user context for balance checking
+        self._user_context = user_context
         # Check if user is confirming execution after seeing quote
         # If previous_swap_info exists and is complete, and user says "1" or "confirm", return the same quote with execute_data
         message_lower = message.lower().strip()
@@ -558,6 +563,53 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
         except (ValueError, TypeError):
             amount = 100.0
         
+        # Check user balance and add recommendation if insufficient
+        insufficient_balance_warning = ""
+        if hasattr(self, '_user_context') and self._user_context:
+            user_balance = float(self._user_context.total_balance_usd) if self._user_context.total_balance_usd else 0
+            portfolio_state = self._user_context.portfolio_state
+            has_wallet = self._user_context.has_connected_wallet
+            
+            # Check if user has no balance or very low balance (empty/starter portfolio)
+            if portfolio_state in ["empty", "starter"] or user_balance < 10:
+                buy_recommendation = {
+                    "en": f"""
+💡 **Quick Tip:** Your portfolio appears to have limited funds.
+
+To complete this swap, you'll need **{swap_info.from_token}** in your wallet.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase with card/Apple Pay/Google Pay
+• 📥 Or transfer {swap_info.from_token} from another wallet
+
+""",
+                    "es": f"""
+💡 **Consejo:** Tu portafolio parece tener fondos limitados.
+
+Para completar este swap, necesitarás **{swap_info.from_token}** en tu wallet.
+
+**Cómo empezar:**
+• 💳 Di **"comprar cripto"** para comprar con tarjeta/Apple Pay/Google Pay
+• 📥 O transfiere {swap_info.from_token} desde otra wallet
+
+""",
+                    "pt": f"""
+💡 **Dica:** Seu portfólio parece ter fundos limitados.
+
+Para completar esta troca, você precisará de **{swap_info.from_token}** na sua carteira.
+
+**Como começar:**
+• 💳 Diga **"comprar cripto"** para comprar com cartão/Apple Pay/Google Pay
+• 📥 Ou transfira {swap_info.from_token} de outra carteira
+
+""",
+                }
+                insufficient_balance_warning = buy_recommendation.get(language, buy_recommendation["en"])
+                logger.info(
+                    f"[SWAP] User has insufficient balance (${user_balance:.2f}, state={portfolio_state}). "
+                    f"Adding buy recommendation."
+                )
+        
         # Get Hyperliquid spot quote
         quote_result = await self._get_hyperliquid_quote(
             swap_info.from_token,
@@ -609,6 +661,10 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
         
         # Add Hyperliquid branding
         content = f"🔵 **HYPERLIQUID SPOT**\n\n{content}"
+        
+        # Add insufficient balance warning if applicable (recommend to buy)
+        if insufficient_balance_warning:
+            content = insufficient_balance_warning + content
         
         # Build execute data for when swap is complete and ready
         execute_data = {
