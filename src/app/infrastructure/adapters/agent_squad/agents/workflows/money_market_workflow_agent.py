@@ -325,7 +325,8 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                     amount=amount,
                 )
             
-            return self._format_deposit_ready(state.data, language), state
+            # Call _handle_execute directly to check balance before showing "Ready"
+            return await self._handle_execute(message, state, user_context)
         
         # Unclear response - show options again
         return self._ask_for_selection(rates, language), state

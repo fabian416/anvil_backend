@@ -240,7 +240,8 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         if self._is_confirmation(text):
             state.confirmed = True
             state.step = WorkflowStep.EXECUTE.value
-            return self._format_ready_to_execute(state.data, language), state
+            # Call _handle_execute directly to check balance before showing "Ready"
+            return await self._handle_execute(message, state, user_context)
         
         # Check for cancellation
         if self._is_cancellation(text):
