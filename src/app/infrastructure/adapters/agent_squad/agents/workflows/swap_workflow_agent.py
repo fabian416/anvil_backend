@@ -791,16 +791,16 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
                 },
                 examples=[
                     {
-                        "input": "swap 0.5 ETH to USDC",
-                        "output": '{"from_token": "ETH", "to_token": "USDC", "amount": "0.5", "chain": "base", "to_chain": null}'
+                        "input": "swap 100 USDC to PURR",
+                        "output": '{"from_token": "USDC", "to_token": "PURR", "amount": "100", "chain": "base", "to_chain": null}'
                     },
                     {
-                        "input": "convert 100 USDC to ETH on arbitrum",
-                        "output": '{"from_token": "USDC", "to_token": "ETH", "amount": "100", "chain": "arbitrum", "to_chain": null}'
+                        "input": "swap 50 USDC to TRUMP",
+                        "output": '{"from_token": "USDC", "to_token": "TRUMP", "amount": "50", "chain": "base", "to_chain": null}'
                     },
                     {
-                        "input": "bridge 1 ETH from ethereum to base",
-                        "output": '{"from_token": "ETH", "to_token": "ETH", "amount": "1", "chain": "ethereum", "to_chain": "base"}'
+                        "input": "swap 1000 PEPE to USDC",
+                        "output": '{"from_token": "PEPE", "to_token": "USDC", "amount": "1000", "chain": "base", "to_chain": null}'
                     },
                 ],
             )
@@ -1071,10 +1071,10 @@ Você não tem {from_token} suficiente na sua carteira para completar este swap.
     def _get_missing_params_response(self, params: dict, language: str) -> str:
         """Response when tokens are missing."""
         msgs = {
-            "en": "What tokens would you like to swap? For example: 'swap 0.5 ETH to USDC'",
-            "es": "¿Qué tokens te gustaría intercambiar? Por ejemplo: 'swap 0.5 ETH to USDC'",
-            "pt": "Quais tokens você gostaria de trocar? Por exemplo: 'swap 0.5 ETH to USDC'",
-            "zh": "您想交换哪些代币？例如：'swap 0.5 ETH to USDC'",
+            "en": "🔄 **Hyperliquid Spot Swaps**\n\nWhat meme token would you like to swap?\n\n**Examples:**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**Supported:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 more meme tokens\n**Note:** All swaps use USDC pairs. Major tokens (ETH, BTC, SOL) are NOT supported.",
+            "es": "🔄 **Swaps en Hyperliquid Spot**\n\n¿Qué meme token te gustaría intercambiar?\n\n**Ejemplos:**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**Soportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 más\n**Nota:** Todos los swaps usan pares USDC. Tokens mayores (ETH, BTC, SOL) NO están soportados.",
+            "pt": "🔄 **Swaps no Hyperliquid Spot**\n\nQual meme token você gostaria de trocar?\n\n**Exemplos:**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**Suportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 mais\n**Nota:** Todas as trocas usam pares USDC. Tokens maiores (ETH, BTC, SOL) NÃO são suportados.",
+            "zh": "🔄 **Hyperliquid Spot 交易**\n\n您想交换哪个meme代币？\n\n**示例：**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**支持：** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50多个meme代币\n**注意：** 所有交易使用USDC交易对。主流代币（ETH, BTC, SOL）不支持。",
         }
         return msgs.get(language, msgs["en"])
     
