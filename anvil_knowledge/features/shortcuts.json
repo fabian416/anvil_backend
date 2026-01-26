@@ -34,7 +34,7 @@
           "english": "swap 100 USDC to PURR",
           "spanish": "cambiar 100 USDC a PURR",
           "portuguese": "trocar 100 USDC por PURR",
-          "chinese": "兑换 100 USDC 到 ETH"
+          "chinese": "兑换 100 USDC 到 PURR"
         }
       },
       {
@@ -75,37 +75,51 @@
 
   "command_categories": {
     "trading_swaps": {
-      "title": "💱 Trading & Token Swaps",
-      "description": "Execute token swaps across multiple DEXs with best-rate optimization",
+      "title": "💱 Trading & Token Swaps (Hyperliquid Spot)",
+      "description": "Execute MEME TOKEN swaps via Hyperliquid Spot. IMPORTANT: Only meme tokens (PURR, TRUMP, PEPE, etc.) paired with USDC are supported. Major tokens (ETH, BTC, SOL) are NOT available for swaps.",
       "intent": "SWAP",
+      "limitation": "Hyperliquid Spot ONLY supports meme tokens paired with USDC. ETH, BTC, SOL, WBTC, LINK, etc. are NOT supported.",
       "commands": [
         {
-          "pattern": "swap [amount] [from_token] to [to_token]",
+          "pattern": "swap [amount] USDC to [meme_token]",
           "examples": [
-            "swap 100 USDC to ETH",
-            "exchange 0.5 BTC for SOL",
-            "convert 1000 USDT to USDC",
-            "trade 50 DAI to MATIC"
+            "swap 100 USDC to PURR",
+            "swap 50 USDC to TRUMP",
+            "swap 1000 USDC to PEPE",
+            "exchange 200 USDC for HFUN"
           ],
+          "supported_tokens": ["PURR", "TRUMP", "PEPE", "HFUN", "MOG", "GMEOW", "LICK", "MANLET", "JEFF", "WAGMI"],
+          "not_supported": ["ETH", "BTC", "SOL", "WBTC", "LINK", "UNI", "AAVE", "CRV", "MKR"],
           "multi_language": {
-            "spanish": ["cambiar 100 USDC a ETH", "intercambiar 0.5 BTC por SOL"],
-            "portuguese": ["trocar 100 USDC para ETH", "converter 0.5 BTC em SOL"],
-            "chinese": ["兑换100 USDC到ETH", "交换0.5 BTC为SOL"]
+            "spanish": ["cambiar 100 USDC a PURR", "intercambiar 50 USDC por TRUMP"],
+            "portuguese": ["trocar 100 USDC para PURR", "converter 50 USDC em TRUMP"],
+            "chinese": ["兑换100 USDC到PURR", "交换50 USDC为TRUMP"]
           },
-          "response_type": "Rate comparison across aggregators (1inch, Hyperliquid, UniswapX) with gas costs and slippage",
-          "execution": "Automatic best-rate selection with MEV protection"
+          "response_type": "Real-time quote from Hyperliquid Spot order book with spread and output amount",
+          "execution": "Zero gas fees, 0.02% trading fee, sub-second execution on Hyperliquid L1"
         },
         {
-          "pattern": "what's the rate for [from_token] to [to_token]?",
+          "pattern": "swap [amount] [meme_token] to USDC",
           "examples": [
-            "what's the rate for ETH to USDC?",
-            "how much USDC for 1 ETH?",
-            "exchange rate BTC to SOL"
+            "swap 1000 PURR to USDC",
+            "sell 500 TRUMP for USDC",
+            "convert my PEPE to USDC"
           ],
-          "response_type": "Current exchange rate across multiple DEXs",
+          "response_type": "Real-time sell quote from Hyperliquid Spot",
+          "execution": "Zero gas fees, instant settlement"
+        },
+        {
+          "pattern": "what's the rate for [token] to [token]?",
+          "examples": [
+            "what's the rate for PURR to USDC?",
+            "how much USDC for 1000 TRUMP?",
+            "PEPE price"
+          ],
+          "response_type": "Current exchange rate from Hyperliquid Spot order book",
           "execution": "Read-only query (no transaction)"
         }
-      ]
+      ],
+      "why_meme_tokens_only": "Hyperliquid is primarily a perpetual futures exchange. Their Spot market only offers meme token trading. For major tokens like ETH/BTC, use Hyperliquid Perps or external DEX aggregators."
     },
 
     "price_queries": {
@@ -439,15 +453,16 @@
       {
         "modifier": "with slippage [percentage]",
         "applies_to": ["swap"],
-        "example": "swap 100 USDC to ETH with 1% slippage",
+        "example": "swap 100 USDC to PURR with 1% slippage",
         "effect": "Set custom slippage tolerance"
       },
       {
         "modifier": "on [chain]",
-        "applies_to": ["swap", "arbitrage", "protocol_search"],
-        "example": "swap 100 USDC to ETH on Arbitrum",
+        "applies_to": ["arbitrage", "protocol_search"],
+        "example": "find arbitrage on Arbitrum",
         "effect": "Specify blockchain network",
-        "supported_chains": ["Ethereum", "Arbitrum", "Polygon", "Optimism", "Base", "Solana"]
+        "supported_chains": ["Ethereum", "Arbitrum", "Polygon", "Optimism", "Base"],
+        "note": "Swaps are only available on Hyperliquid L1 (meme tokens)"
       },
       {
         "modifier": "for [time_period]",
@@ -472,13 +487,14 @@
       {
         "trigger": "I want to swap",
         "steps": [
-          "Anvil: Great! How much do you want to swap?",
+          "Anvil: Great! How much USDC do you want to swap? (Note: Only meme tokens like PURR, TRUMP, PEPE are supported)",
           "User: 100 USDC",
-          "Anvil: Perfect! What token would you like to receive?",
-          "User: ETH",
-          "Anvil: [Shows rate comparison and executes swap]"
+          "Anvil: Perfect! Which meme token would you like? Options: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW...",
+          "User: PURR",
+          "Anvil: [Shows Hyperliquid Spot quote and executes swap]"
         ],
-        "use_case": "Incomplete swap requests trigger interactive flow"
+        "use_case": "Incomplete swap requests trigger interactive flow",
+        "note": "Major tokens (ETH, BTC, SOL) are NOT supported - only meme tokens via Hyperliquid Spot"
       },
       {
         "trigger": "tell me about [protocol]",
@@ -521,7 +537,7 @@
       {
         "tip": "Use natural language variations",
         "description": "Anvil understands many ways to phrase the same command",
-        "example": "'swap 100 USDC to ETH' = 'exchange 100 USDC for ETH' = 'convert 100 USDC to ETH'"
+        "example": "'swap 100 USDC to PURR' = 'exchange 100 USDC for PURR' = 'convert 100 USDC to PURR'"
       },
       {
         "tip": "Combine features in one query",
