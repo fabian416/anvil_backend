@@ -368,15 +368,97 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
             )
         
         # Check if tokens are supported - with special messaging for major tokens
+        unsupported_from = swap_info.from_token not in self.HYPERLIQUID_SPOT_TOKENS
+        unsupported_to = swap_info.to_token not in self.HYPERLIQUID_SPOT_TOKENS
+        from_is_major = swap_info.from_token in self.MAJOR_TOKENS_NOT_SUPPORTED
+        to_is_major = swap_info.to_token in self.MAJOR_TOKENS_NOT_SUPPORTED
+        
+        # Check if BOTH tokens are major tokens (common case like ETH to BTC)
+        if unsupported_from and unsupported_to and from_is_major and to_is_major:
+            error_messages = {
+                "en": f"""⚠️ **{swap_info.from_token} → {swap_info.to_token} Swap Not Available**
+
+**Both {swap_info.from_token} and {swap_info.to_token}** are major tokens that are **NOT available on Hyperliquid Spot**.
+
+Hyperliquid Spot only supports **meme tokens** paired with USDC.
+
+**✅ Swaps you CAN do on Anvil:**
+• Swap USDC to meme tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+• Swap meme tokens back to USDC
+• Example: "swap 100 USDC to PURR" or "swap 500 PEPE to USDC"
+
+**For {swap_info.from_token}/{swap_info.to_token} trading:**
+• Use DEX aggregators like **1inch**, **Uniswap**, or **0x Protocol**
+• Hyperliquid offers **perpetual futures** (perps) for major tokens
+
+**What Anvil CAN do for {swap_info.from_token} & {swap_info.to_token}:**
+• 📈 Check prices and market data
+• 📊 Portfolio tracking
+• 🔮 Price predictions via Hunter AI
+• 📊 Sentiment analysis""",
+                "es": f"""⚠️ **Swap {swap_info.from_token} → {swap_info.to_token} No Disponible**
+
+**Tanto {swap_info.from_token} como {swap_info.to_token}** son tokens principales que **NO están disponibles en Hyperliquid Spot**.
+
+Hyperliquid Spot solo soporta **meme tokens** pareados con USDC.
+
+**✅ Swaps que SÍ puedes hacer en Anvil:**
+• Cambiar USDC a meme tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+• Cambiar meme tokens a USDC
+• Ejemplo: "cambiar 100 USDC a PURR" o "cambiar 500 PEPE a USDC"
+
+**Para trading de {swap_info.from_token}/{swap_info.to_token}:**
+• Usa agregadores DEX como **1inch**, **Uniswap**, o **0x Protocol**
+• Hyperliquid ofrece **futuros perpetuos** (perps) para tokens principales
+
+**Lo que Anvil SÍ puede hacer con {swap_info.from_token} y {swap_info.to_token}:**
+• 📈 Consultar precios y datos de mercado
+• 📊 Seguimiento de portafolio
+• 🔮 Predicciones de precio via Hunter AI
+• 📊 Análisis de sentimiento""",
+                "pt": f"""⚠️ **Swap {swap_info.from_token} → {swap_info.to_token} Não Disponível**
+
+**Tanto {swap_info.from_token} quanto {swap_info.to_token}** são tokens principais que **NÃO estão disponíveis no Hyperliquid Spot**.
+
+Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC.
+
+**✅ Swaps que você PODE fazer no Anvil:**
+• Trocar USDC por meme tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+• Trocar meme tokens de volta para USDC
+• Exemplo: "trocar 100 USDC para PURR" ou "trocar 500 PEPE para USDC"
+
+**Para trading de {swap_info.from_token}/{swap_info.to_token}:**
+• Use agregadores DEX como **1inch**, **Uniswap**, ou **0x Protocol**
+• Hyperliquid oferece **futuros perpétuos** (perps) para tokens principais
+
+**O que o Anvil PODE fazer com {swap_info.from_token} e {swap_info.to_token}:**
+• 📈 Verificar preços e dados de mercado
+• 📊 Rastreamento de portfólio
+• 🔮 Previsões de preço via Hunter AI
+• 📊 Análise de sentimento""",
+            }
+            return HandlerResult(
+                content=error_messages.get(language, error_messages["en"]),
+                pending_action=None,
+                requires_registration=False,
+                metadata={
+                    "error": "major_tokens_not_supported",
+                    "from_token": swap_info.from_token,
+                    "to_token": swap_info.to_token,
+                    "suggestion": "use_external_dex",
+                },
+            )
+        
+        # Check for single unsupported token
         unsupported_token = None
         is_major_token = False
         
-        if swap_info.from_token not in self.HYPERLIQUID_SPOT_TOKENS:
+        if unsupported_from:
             unsupported_token = swap_info.from_token
-            is_major_token = swap_info.from_token in self.MAJOR_TOKENS_NOT_SUPPORTED
-        elif swap_info.to_token not in self.HYPERLIQUID_SPOT_TOKENS:
+            is_major_token = from_is_major
+        elif unsupported_to:
             unsupported_token = swap_info.to_token
-            is_major_token = swap_info.to_token in self.MAJOR_TOKENS_NOT_SUPPORTED
+            is_major_token = to_is_major
         
         if unsupported_token:
             if is_major_token:
@@ -585,6 +667,10 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
         if context and context.summary:
             combined = f"{context.summary.lower()}\n{message_lower}"
         
+        # ALL tokens to look for - includes both supported meme tokens AND major tokens
+        # We extract major tokens too so we can show proper error messages
+        ALL_TOKENS_TO_EXTRACT = set(SUPPORTED_TOKENS) | set(MAJOR_TOKENS_NOT_SUPPORTED)
+        
         # Supported chains
         SUPPORTED_CHAINS = {
             "ethereum": "ethereum",
@@ -632,8 +718,9 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
             excluded_words.add(chain_alias)
         
         # Find all tokens mentioned in the message
+        # Include BOTH supported meme tokens AND major tokens (for error messaging)
         found_tokens = []
-        for token in SUPPORTED_TOKENS:
+        for token in ALL_TOKENS_TO_EXTRACT:
             if token.lower() in combined and token.lower() not in excluded_words:
                 found_tokens.append(token)
         
@@ -649,7 +736,8 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
             match = re.search(pattern, combined, re.IGNORECASE)
             if match:
                 token = match.group(1).upper()
-                if token in SUPPORTED_TOKENS and token.lower() not in excluded_words:
+                # Include major tokens too for proper error messaging
+                if token in ALL_TOKENS_TO_EXTRACT and token.lower() not in excluded_words:
                     swap_info.from_token = token
                     break
         
@@ -664,7 +752,8 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
             if match:
                 token = match.group(1).upper()
                 # Check if it's a token (not a chain that was already extracted)
-                if token in SUPPORTED_TOKENS and token.lower() not in excluded_words and token != swap_info.from_token:
+                # Include major tokens too for proper error messaging
+                if token in ALL_TOKENS_TO_EXTRACT and token.lower() not in excluded_words and token != swap_info.from_token:
                     # Only set if we haven't already set to_chain (cross-chain swaps don't need different to_token)
                     # For cross-chain, to_token will be set to from_token later
                     if not swap_info.to_chain:
@@ -746,24 +835,27 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
                     return swap_info
         
         # Fallback to original logic for text-based responses
+        # Include major tokens for proper error messaging
+        ALL_TOKENS = set(SUPPORTED_TOKENS) | set(MAJOR_TOKENS_NOT_SUPPORTED)
+        
         if step == "from_token":
             # Extract token from value
-            for token in SUPPORTED_TOKENS:
+            for token in ALL_TOKENS:
                 if token in value_upper:
                     swap_info.from_token = token
                     break
             else:
                 # Maybe just the token name
-                if value_upper in SUPPORTED_TOKENS:
+                if value_upper in ALL_TOKENS:
                     swap_info.from_token = value_upper
         
         elif step == "to_token":
-            for token in SUPPORTED_TOKENS:
+            for token in ALL_TOKENS:
                 if token in value_upper:
                     swap_info.to_token = token
                     break
             else:
-                if value_upper in SUPPORTED_TOKENS:
+                if value_upper in ALL_TOKENS:
                     swap_info.to_token = value_upper
         
         elif step == "amount":
