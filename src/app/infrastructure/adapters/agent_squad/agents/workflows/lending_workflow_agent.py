@@ -186,13 +186,13 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             state.step = WorkflowStep.FETCH_DATA.value
             return await self._handle_fetch_data(message, state, user_context)
         
-        # If we have asset but no amount, ask for amount
+        # If we have asset but no amount, ask for amount with user context
         if asset and not amount:
             state.data["asset"] = asset.upper()
             if protocol:
                 state.data["protocol"] = protocol  # Store protocol preference
             state.step = WorkflowStep.PARSE_REQUEST.value
-            return self._ask_for_amount(asset.upper(), language), state
+            return self._ask_for_amount(asset.upper(), user_context), state
         
         # No asset detected - show interactive asset selection with APY rates and user context
         state.data["awaiting_asset_selection"] = True
@@ -230,8 +230,8 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                 state.step = WorkflowStep.FETCH_DATA.value
                 return await self._handle_fetch_data(message, state, user_context)
             else:
-                # Have asset but no amount - ask for amount
-                return self._ask_for_amount(params["asset"].upper(), user_context.language), state
+                # Have asset but no amount - ask for amount with user context
+                return self._ask_for_amount(params["asset"].upper(), user_context), state
         
         # Check if it's a number selection
         user_input = text.upper()
@@ -241,12 +241,12 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             index = int(user_input) - 1  # 1-based to 0-based
             if 0 <= index < len(asset_list):
                 state.data["asset"] = asset_list[index]
-                return self._ask_for_amount(asset_list[index], user_context.language), state
+                return self._ask_for_amount(asset_list[index], user_context), state
         
         # Check if it's a valid asset symbol
         if user_input in [a.upper() for a in SUPPORTED_ASSETS.keys()] or user_input in asset_list:
             state.data["asset"] = user_input
-            return self._ask_for_amount(user_input, user_context.language), state
+            return self._ask_for_amount(user_input, user_context), state
         
         # Invalid selection - show menu again
         state.data["awaiting_asset_selection"] = True
@@ -991,57 +991,106 @@ Deposite em vaults DeFi para ganhar renda passiva. Qual ativo você gostaria de 
         
         return msgs.get(language, msgs["en"])
     
-    def _ask_for_amount(self, asset: str, language: str) -> str:
-        """Ask user for deposit amount."""
+    def _ask_for_amount(self, asset: str, user_context: UserContext) -> str:
+        """Ask user for deposit amount with balance context."""
         
+        language = user_context.language
         asset_info = SUPPORTED_ASSETS.get(asset.lower(), {"emoji": "💰", "name": asset})
         emoji = asset_info["emoji"]
         
+        # Build user balance section
+        balance_section = self._build_amount_balance_section(user_context, asset, language)
+        
         msgs = {
             "en": f"""{emoji} **Deposit {asset}**
+
+{balance_section}
 
 How much **{asset}** would you like to deposit?
 
 💡 *Examples:*
 • `100` (one hundred {asset})
 • `1000` (one thousand {asset})
-• `0.5` (half a {asset})
+• `all` (deposit your entire {asset} balance)
 
 💬 Enter the amount to continue""",
             
             "es": f"""{emoji} **Depositar {asset}**
+
+{balance_section}
 
 ¿Cuánto **{asset}** te gustaría depositar?
 
 💡 *Ejemplos:*
 • `100` (cien {asset})
 • `1000` (mil {asset})
-• `0.5` (medio {asset})
+• `all` (depositar todo tu saldo de {asset})
 
 💬 Ingresa la cantidad para continuar""",
             
             "pt": f"""{emoji} **Depositar {asset}**
+
+{balance_section}
 
 Quanto **{asset}** você gostaria de depositar?
 
 💡 *Exemplos:*
 • `100` (cem {asset})
 • `1000` (mil {asset})
-• `0.5` (meio {asset})
+• `all` (depositar todo seu saldo de {asset})
 
 💬 Digite a quantia para continuar""",
             
             "zh": f"""{emoji} **存入 {asset}**
+
+{balance_section}
 
 您想存入多少 **{asset}**？
 
 💡 *示例：*
 • `100` (一百 {asset})
 • `1000` (一千 {asset})
-• `0.5` (半个 {asset})
+• `all` (存入全部 {asset} 余额)
 
 💬 输入金额以继续""",
         }
+        
+        return msgs.get(language, msgs["en"])
+    
+    def _build_amount_balance_section(
+        self,
+        user_context: UserContext,
+        asset: str,
+        language: str,
+    ) -> str:
+        """Build balance section for amount prompt."""
+        if not user_context.is_authenticated:
+            return ""
+        
+        balance = user_context.total_balance_usd
+        portfolio_state = user_context.portfolio_state
+        
+        if portfolio_state == "empty" or balance < 1:
+            msgs = {
+                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You'll need to get {asset} first:\n• Say `buy {asset}` to purchase with card\n• Or transfer {asset} from another wallet",
+                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ Necesitas obtener {asset} primero:\n• Di `buy {asset}` para comprar con tarjeta\n• O transfiere {asset} desde otra billetera",
+                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você precisa obter {asset} primeiro:\n• Diga `buy {asset}` para comprar com cartão\n• Ou transfira {asset} de outra carteira",
+                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您需要先获取 {asset}：\n• 说 `buy {asset}` 用卡购买\n• 或从其他钱包转入 {asset}",
+            }
+        elif balance < 100:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n💡 Even small deposits earn yield! Start with what you have.",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n💡 ¡Incluso depósitos pequeños generan rendimiento! Comienza con lo que tienes.",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n💡 Mesmo depósitos pequenos geram rendimento! Comece com o que você tem.",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n💡 即使小额存款也能赚取收益！从您拥有的开始。",
+            }
+        else:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f} ✅\n\n✨ Ready to start earning yield!",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f} ✅\n\n✨ ¡Listo para comenzar a ganar rendimiento!",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f} ✅\n\n✨ Pronto para começar a ganhar rendimento!",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f} ✅\n\n✨ 准备开始赚取收益！",
+            }
         
         return msgs.get(language, msgs["en"])
     
