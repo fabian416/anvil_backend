@@ -213,6 +213,19 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         state.step = WorkflowStep.PARSE_REQUEST.value
         return await self._handle_parse_request(message, state, user_context)
     
+    # Tokens that are NOT available on EVM chains (native non-EVM tokens)
+    # Users should use WBTC instead of BTC, etc.
+    NON_EVM_TOKENS = {
+        "BTC": "WBTC",  # Use Wrapped BTC instead
+        "SOL": None,    # Solana native - not available on EVM
+        "DOT": None,    # Polkadot native
+        "ATOM": None,   # Cosmos native
+        "ADA": None,    # Cardano native
+        "XRP": None,    # Ripple native
+        "DOGE": None,   # Dogecoin native
+        "LTC": None,    # Litecoin native
+    }
+    
     async def _handle_parse_request(
         self,
         message: MessageContent,
@@ -232,6 +245,15 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             response = self._get_missing_params_response(params, user_context.language)
             return response, state
         
+        # Check for non-EVM tokens (like native BTC, SOL, etc.)
+        from_token = params.get("from_token", "").upper()
+        to_token = params.get("to_token", "").upper()
+        
+        non_evm_error = self._check_non_evm_tokens(from_token, to_token, user_context.language)
+        if non_evm_error:
+            state.error = "non_evm_token"
+            return non_evm_error, state
+        
         # Update state with extracted params
         state.data.update(params)
         
@@ -248,6 +270,132 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         # All params available - proceed to fetch quote
         state.step = WorkflowStep.FETCH_DATA.value
         return await self._handle_fetch_quote(message, state, user_context)
+    
+    def _check_non_evm_tokens(
+        self,
+        from_token: str,
+        to_token: str,
+        language: str,
+    ) -> str | None:
+        """
+        Check if user is trying to swap non-EVM tokens.
+        
+        Returns an error message if tokens are not available on EVM chains,
+        or None if the swap is valid.
+        """
+        non_evm_from = self.NON_EVM_TOKENS.get(from_token)
+        non_evm_to = self.NON_EVM_TOKENS.get(to_token)
+        
+        if non_evm_from is not None or non_evm_to is not None:
+            # Build helpful message
+            messages = {
+                "en": self._build_non_evm_message_en(from_token, to_token, non_evm_from, non_evm_to),
+                "es": self._build_non_evm_message_es(from_token, to_token, non_evm_from, non_evm_to),
+                "pt": self._build_non_evm_message_pt(from_token, to_token, non_evm_from, non_evm_to),
+            }
+            return messages.get(language, messages["en"])
+        
+        return None
+    
+    def _build_non_evm_message_en(
+        self,
+        from_token: str,
+        to_token: str,
+        alt_from: str | None,
+        alt_to: str | None,
+    ) -> str:
+        """Build non-EVM token error message in English."""
+        if to_token == "BTC":
+            return """❌ **Native BTC is not available on EVM chains**
+
+Bitcoin (BTC) runs on its own blockchain and cannot be directly swapped on Ethereum/Base/Arbitrum.
+
+**What you can do instead:**
+
+1. **Swap to WBTC (Wrapped BTC)** - A 1:1 backed token on EVM chains
+   • Say: **"swap 1 ETH to WBTC"**
+   
+2. **Use Anvil to track BTC** - Ask about BTC price, market data
+   • Say: **"what's the price of BTC?"**
+
+3. **Buy BTC directly** - Use our fiat on-ramp
+   • Say: **"buy BTC"** (purchases via MoonPay)
+
+**Available swaps on Anvil:**
+• ETH, WBTC, USDC, USDT, DAI, LINK, UNI, and 50+ EVM tokens
+• Meme tokens: PURR, TRUMP, PEPE, MOG via Hyperliquid Spot
+"""
+        
+        if from_token == "BTC":
+            return """❌ **Native BTC cannot be swapped on EVM chains**
+
+To swap BTC-equivalent tokens, use **WBTC (Wrapped BTC)** instead.
+
+Say: **"swap 1 WBTC to ETH"**
+"""
+        
+        # Generic non-EVM token
+        token = from_token if from_token in self.NON_EVM_TOKENS else to_token
+        return f"""❌ **{token} is not available on EVM chains**
+
+{token} runs on its own blockchain and cannot be directly swapped on Ethereum/Base/Arbitrum.
+
+**Available swaps on Anvil:**
+• ETH, WBTC, USDC, USDT, DAI, LINK, UNI, and 50+ EVM tokens
+• Meme tokens via Hyperliquid Spot
+"""
+    
+    def _build_non_evm_message_es(
+        self,
+        from_token: str,
+        to_token: str,
+        alt_from: str | None,
+        alt_to: str | None,
+    ) -> str:
+        """Build non-EVM token error message in Spanish."""
+        if to_token == "BTC":
+            return """❌ **BTC nativo no está disponible en cadenas EVM**
+
+Bitcoin (BTC) funciona en su propia blockchain y no se puede intercambiar directamente en Ethereum/Base/Arbitrum.
+
+**Qué puedes hacer:**
+
+1. **Intercambiar por WBTC (Wrapped BTC)** - Token respaldado 1:1
+   • Di: **"swap 1 ETH to WBTC"**
+
+2. **Comprar BTC directamente**
+   • Di: **"comprar BTC"**
+"""
+        return f"""❌ **Token no disponible en cadenas EVM**
+
+Este token funciona en su propia blockchain y no se puede intercambiar en Ethereum/Base/Arbitrum.
+"""
+    
+    def _build_non_evm_message_pt(
+        self,
+        from_token: str,
+        to_token: str,
+        alt_from: str | None,
+        alt_to: str | None,
+    ) -> str:
+        """Build non-EVM token error message in Portuguese."""
+        if to_token == "BTC":
+            return """❌ **BTC nativo não está disponível em cadeias EVM**
+
+Bitcoin (BTC) funciona em sua própria blockchain e não pode ser trocado diretamente em Ethereum/Base/Arbitrum.
+
+**O que você pode fazer:**
+
+1. **Trocar por WBTC (Wrapped BTC)** - Token lastreado 1:1
+   • Diga: **"swap 1 ETH to WBTC"**
+
+2. **Comprar BTC diretamente**
+   • Diga: **"comprar BTC"**
+"""
+        return f"""❌ **Token não disponível em cadeias EVM**
+
+Este token funciona em sua própria blockchain e não pode ser trocado em Ethereum/Base/Arbitrum.
+"""
     
     async def _handle_fetch_quote(
         self,
