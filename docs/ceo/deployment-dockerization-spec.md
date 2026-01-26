@@ -1,9 +1,9 @@
 # Complete Dockerization & CI/CD Deployment Specification
 
-> **Framework:** MIT Systems Thinking + Stanford Design Thinking + First Principles Analysis  
-> **Agents:** @deployment-specialist + @backend-engineer  
-> **Status:** Phase 1 - Analysis Complete | Phase 2 - Solution Design  
-> **Date:** 2026-01-25
+> **Framework:** MIT Systems Thinking + Stanford Design Thinking + First Principles Analysis
+> **Agents:** @deployment-specialist + @backend-engineer
+> **Status:** Phase 1 - Analysis Complete | Phase 2 - Solution Design | GitHub Actions Optimized
+> **Date:** 2026-01-26 (Updated)
 
 ---
 
@@ -11,10 +11,10 @@
 
 **Problem:** The current deployment architecture has significant gaps between development (`make start-dev`) and production (Docker). Only 4 of 11 MCP servers are containerized, GitHub Actions references outdated tooling, and there's no environment parity between local development and production deployments.
 
-**Impact:** 
+**Impact:**
 - 🔴 **Production Risk**: Missing 7 MCP servers in containerized deployment
 - 🟡 **Developer Experience**: Manual process orchestration with `start_dev.sh`
-- 🟡 **CI/CD Reliability**: Outdated workflows using Poetry instead of uv
+- 🟢 **CI/CD Reliability**: ✅ **OPTIMIZED** - Workflows use uv, path filters, concurrency limits (77% usage reduction)
 - 🟢 **Security**: Existing security scans and health checks
 
 **Recommended Solution:** Multi-stage Docker architecture with complete service orchestration, GitHub Actions modernization, and environment-specific configuration management.
@@ -43,11 +43,16 @@
   - Flower monitoring
   - Transaction confirmation worker (profile-based)
 
-- **GitHub Actions CI/CD**:
-  - Lint, test, security scanning pipeline
-  - Docker build and push
-  - Kubernetes deployment (staging/production)
-  - Coverage reporting
+- **GitHub Actions CI/CD** ✅ **RECENTLY OPTIMIZED (2026-01-26)**:
+  - ✅ Using `uv` for dependency management (not Poetry)
+  - ✅ Path filters (workflows only run when relevant files change)
+  - ✅ Concurrency limits (cancel in-progress runs on new commits)
+  - ✅ Optimized frequency (coverage weekly vs daily)
+  - ✅ Lint, test, security scanning pipeline
+  - ✅ 77% reduction in GitHub Actions usage (885 → 200 min/week)
+  - ✅ Deleted 3 duplicate workflows (ci.yml, tests.yml, pre-commit-api-docs.yml)
+  - ❌ No Docker build/push workflows for MCP servers yet
+  - ❌ No Kubernetes deployment automation yet
 
 #### ❌ **Critical Gaps**
 
@@ -73,12 +78,16 @@
 - Different port exposure strategies
 - Different process management approaches
 
-**3. GitHub Actions Issues**
-- References Poetry (deprecated, should use uv)
-- Missing MCP server build steps
-- Hardcoded Docker Hub credentials
-- No multi-architecture builds (amd64/arm64)
-- Missing comprehensive health checks
+**3. GitHub Actions Remaining Gaps** ✅ **PARTIALLY RESOLVED (2026-01-26)**
+- ✅ **FIXED**: Now using `uv` (not Poetry)
+- ✅ **FIXED**: Path filters added (only run on code changes)
+- ✅ **FIXED**: Concurrency limits implemented
+- ✅ **FIXED**: Reduced workflow frequency (77% usage reduction)
+- ❌ **REMAINING**: Missing Docker build/push workflows for MCP servers
+- ❌ **REMAINING**: No multi-architecture builds (amd64/arm64)
+- ❌ **REMAINING**: No automated Kubernetes deployment
+- ❌ **REMAINING**: Hardcoded credentials (need GitHub Secrets migration)
+- ❌ **REMAINING**: No comprehensive E2E deployment health checks
 
 **4. Configuration Management**
 - TOML-based config ✅
@@ -90,7 +99,7 @@
 ### 1.2 Root Cause Identification
 
 #### **Essential Problem**
-The MCP server containerization was implemented incrementally (4 of 11 servers), never completed, and the GitHub Actions workflow hasn't been updated to reflect the transition from Poetry to uv.
+The MCP server containerization was implemented incrementally (4 of 11 servers) and never completed. ~~GitHub Actions workflow hasn't been updated to reflect the transition from Poetry to uv~~ ✅ **RESOLVED (2026-01-26)** - workflows now use uv with path filters and concurrency optimization. **REMAINING**: Docker build/push workflows for MCP servers and automated Kubernetes deployment.
 
 #### **Causal Chain**
 ```
@@ -100,9 +109,12 @@ Development shifted to start_dev.sh (all 11 servers)
     ↓
 Docker Compose never updated to match
     ↓
-GitHub Actions still references old tooling
+GitHub Actions still references old tooling ← ✅ PARTIALLY FIXED (2026-01-26)
+    ↓                                           (uv, path filters, concurrency)
+Production deployment incomplete ← 🚧 IN PROGRESS
     ↓
-Production deployment incomplete
+Missing: Docker build workflows for MCP servers
+Missing: Automated K8s deployment
 ```
 
 #### **System Invariants**
@@ -485,16 +497,23 @@ docker compose up -d
 
 ---
 
-### Phase 2: GitHub Actions Modernization (Week 2)
+### Phase 2: GitHub Actions Modernization ✅ **PARTIALLY COMPLETE (2026-01-26)**
 
-**Task 2.1: Update CI Workflow**
+**Task 2.1: Update CI Workflow** ✅ **PARTIALLY COMPLETE**
 ```yaml
-# .github/workflows/ci.yml
-- Use uv instead of Poetry
-- Add MCP server build steps
-- Multi-architecture builds (amd64, arm64)
-- Parallel test execution
-- Comprehensive health checks
+# Active Workflows (optimized 2026-01-26):
+✅ test.yml - Using uv, path filters, concurrency limits
+✅ api-docs-validation.yml - Concurrency added
+✅ security-scan-pr.yml - Path filters + concurrency
+✅ security-scan-weekly.yml - Concurrency added
+✅ performance.yml - Concurrency added
+✅ coverage-report.yml - Weekly schedule (86% reduction)
+
+# Remaining Work:
+❌ Add Docker build/push workflows for MCP servers
+❌ Multi-architecture builds (amd64, arm64)
+❌ Automated deployment workflows (staging/production)
+❌ E2E health checks post-deployment
 ```
 
 **Task 2.2: Secrets Management**
@@ -746,7 +765,47 @@ git push origin master --force
 
 ---
 
-**Document Status:** ✅ Analysis Complete | 🚧 Implementation Pending  
-**Next Action:** Review with @deployment-specialist and @backend-engineer  
-**Timeline:** 4 weeks to full production deployment  
-**Risk Level:** 🟡 Medium (well-understood problem, clear solution)
+## 🎉 Recent Progress: GitHub Actions Optimization (2026-01-26)
+
+### What Was Completed
+
+**Workflows Optimized:**
+- ✅ Deleted 3 duplicate workflows (ci.yml, tests.yml, pre-commit-api-docs.yml)
+- ✅ Added path filters to test.yml (only run on code changes)
+- ✅ Added concurrency limits to all 6 workflows (cancel in-progress runs)
+- ✅ Changed coverage-report.yml from daily to weekly (86% reduction)
+- ✅ Migrated from Poetry to uv in all workflows
+
+**Impact:**
+- 📉 **77% reduction** in GitHub Actions usage (885 → 200 min/week)
+- 💰 **~2,700 minutes/month** saved
+- ⚡ **Faster feedback** with path-based triggering
+- 🚀 **Automatic cancellation** of outdated runs
+
+**Documentation:**
+- ✅ Created `.github/workflows/OPTIMIZATION_SUMMARY.md` with complete details
+- ✅ Includes testing instructions and rollback procedures
+- ✅ Monthly maintenance recommendations
+
+**Commit:** `9506abb4` - "ci: optimize GitHub Actions workflows - 77% usage reduction"
+
+**Reference:** See [`.github/workflows/OPTIMIZATION_SUMMARY.md`](../../.github/workflows/OPTIMIZATION_SUMMARY.md) for complete optimization details.
+
+### Next Steps
+
+**Phase 2 Remaining Work:**
+1. Create Docker build/push workflows for 11 MCP servers
+2. Implement multi-architecture builds (amd64/arm64)
+3. Add automated deployment workflows (staging/production)
+4. Implement E2E health checks post-deployment
+5. Migrate credentials to GitHub Secrets
+6. Add canary deployment strategy
+
+**Estimated Timeline:** 2-3 weeks to complete Phase 2
+
+---
+
+**Document Status:** ✅ Analysis Complete | ✅ GitHub Actions Optimized | 🚧 Docker Build Automation Pending
+**Next Action:** Create Docker build/push workflows for MCP servers
+**Timeline:** 3 weeks to full production deployment (reduced from 4 weeks)
+**Risk Level:** 🟡 Medium (well-understood problem, clear solution, momentum established)
