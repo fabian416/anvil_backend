@@ -29,6 +29,12 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 
 from app.infrastructure.mcp.base import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
+from app.infrastructure.adapters.external.aave_contract_helper import (
+    generate_supply_transaction,
+    generate_borrow_transaction,
+    generate_repay_transaction,
+    generate_withdraw_transaction,
+)
 
 
 class AaveMCPServer(MCPServer):
@@ -58,36 +64,39 @@ class AaveMCPServer(MCPServer):
     
     def __init__(
         self,
+        aave_gateway: Optional[Any] = None,
         wallet_service: Optional[Any] = None,
         subgraph_url: Optional[str] = None,
         settings: Optional[MCPSettings] = None,
     ):
         """
         Initialize Aave MCP server.
-        
+
         Args:
+            aave_gateway: AaveGateway implementation for blockchain queries
             wallet_service: Internal wallet service for transaction execution
             subgraph_url: Aave subgraph URL for historical data queries
             settings: MCP configuration settings
-            
+
         Raises:
             MCPServerDisabledError: If Aave server is disabled
         """
         self.settings = settings or MCPSettings()
-        
+
         # Check if server is enabled
         if not self.settings.enabled or not self.settings.servers.aave_enabled:
             raise MCPServerDisabledError(
                 "Aave MCP server is disabled. "
                 "Enable with mcp.servers.aave_enabled=true in config."
             )
-        
+
         super().__init__(
             name="aave",
             version="1.0.0",
             description="Aave V3 lending and borrowing protocol",
         )
-        
+
+        self.aave_gateway = aave_gateway
         self.wallet_service = wallet_service
         self.subgraph_url = subgraph_url or "https://api.thegraph.com/subgraphs/name/aave/protocol-v3"
         
@@ -118,7 +127,17 @@ class AaveMCPServer(MCPServer):
         }
         
         self.setup_tools()
-    
+
+    def _chain_id_to_name(self, chain_id: int) -> str:
+        """Convert chain ID to chain name."""
+        return self.chains.get(chain_id, "ethereum")
+
+    def _safe_decimal(self, value: Any, default: str = "0") -> str:
+        """Safely convert Decimal to string, handling None."""
+        if value is None:
+            return default
+        return str(value)
+
     def setup_tools(self):
         """Register all Aave tools."""
         
@@ -423,160 +442,254 @@ class AaveMCPServer(MCPServer):
         chain_id: int,
         assets: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
-        """Get Aave market data for assets."""
-        # TODO: Integrate with Aave V3 contracts and subgraph
-        # For now, return mock data
-        
-        # If no assets specified, return data for major assets
-        if not assets:
-            assets = ["USDC", "ETH", "DAI", "WBTC"]
-        
-        mock_markets = []
-        for asset in assets:
-            # Mock rates (simplified)
-            supply_apy = 2.5 if asset in ["USDC", "DAI"] else 1.8
-            borrow_apy_variable = 4.2 if asset in ["USDC", "DAI"] else 3.1
-            borrow_apy_stable = 5.5 if asset in ["USDC", "DAI"] else 4.0
-            
-            mock_markets.append({
-                "asset": asset,
-                "supply_apy": supply_apy,
-                "borrow_apy_variable": borrow_apy_variable,
-                "borrow_apy_stable": borrow_apy_stable,
-                "total_supplied": "10000000.00",
-                "total_borrowed": "7500000.00",
-                "utilization_rate": 75.0,
-                "available_liquidity": "2500000.00",
-                "ltv": 0.75,  # Loan-to-value ratio
-                "liquidation_threshold": 0.80,
-                "liquidation_bonus": 0.05,
-                "can_be_collateral": True,
-                "can_be_borrowed": True,
-                "is_frozen": False,
-            })
-        
-        return {
-            "chain_id": chain_id,
-            "chain_name": self.chains.get(chain_id, "unknown"),
-            "pool_address": self.pool_addresses.get(chain_id),
-            "markets_count": len(mock_markets),
-            "markets": mock_markets,
-            "timestamp": "2024-12-02T00:00:00Z",
-            "note": "This is mock data. Real implementation will query Aave V3 contracts.",
-        }
+        """Get Aave market data for assets using real blockchain data."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
+                "chain_id": chain_id,
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+
+            # Get markets from AaveAdapter (uses caching)
+            if assets:
+                # Fetch specific assets
+                markets_data = []
+                for asset in assets:
+                    try:
+                        market = await self.aave_gateway.get_market_details(
+                            asset=asset,
+                            chain=chain_name,
+                        )
+                        markets_data.append(market)
+                    except Exception as e:
+                        # Log and continue if specific asset fails
+                        continue
+            else:
+                # Get all markets
+                markets_data = await self.aave_gateway.get_markets(chain=chain_name)
+
+            # Convert domain entities to response format
+            markets = []
+            for market in markets_data:
+                markets.append({
+                    "asset": market.symbol,
+                    "asset_address": market.asset_address,
+                    "name": market.name,
+                    "supply_apy": float(market.supply_apy * 100),  # Convert to percentage
+                    "borrow_apy_variable": float(market.borrow_apy_variable * 100),
+                    "borrow_apy_stable": float(market.borrow_apy_stable * 100),
+                    "total_supplied": self._safe_decimal(market.total_supplied),
+                    "total_supplied_usd": self._safe_decimal(market.total_supplied_usd),
+                    "total_borrowed": self._safe_decimal(market.total_borrowed),
+                    "total_borrowed_usd": self._safe_decimal(market.total_borrowed_usd),
+                    "utilization_rate": float(market.utilization_rate),
+                    "available_liquidity": self._safe_decimal(market.liquidity_available),
+                    "ltv": float(market.ltv),
+                    "liquidation_threshold": float(market.liquidation_threshold),
+                    "liquidation_bonus": float(market.liquidation_bonus),
+                    "can_be_collateral": market.can_use_as_collateral,
+                    "can_be_borrowed": market.can_borrow,
+                    "is_frozen": market.is_frozen,
+                    "is_active": market.is_active,
+                    "price_usd": self._safe_decimal(market.price_usd),
+                    "decimals": market.decimals,
+                })
+
+            return {
+                "success": True,
+                "chain_id": chain_id,
+                "chain_name": chain_name,
+                "pool_address": self.pool_addresses.get(chain_id),
+                "markets_count": len(markets),
+                "markets": markets,
+                "timestamp": markets_data[0].updated_at.isoformat() if markets_data else None,
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "chain_name": self._chain_id_to_name(chain_id),
+            }
     
     async def _get_user_positions(
         self,
         chain_id: int,
         user_address: str,
     ) -> Dict[str, Any]:
-        """Get user's Aave positions."""
-        # TODO: Integrate with Aave V3 contracts
-        # For now, return mock position
-        
-        mock_position = {
-            "user_address": user_address,
-            "chain_id": chain_id,
-            "supplied": [
-                {
-                    "asset": "USDC",
-                    "amount": "10000.00",
-                    "amount_usd": "10000.00",
-                    "apy": 2.5,
-                    "is_collateral": True,
-                    "atoken_address": "0x...",
-                },
-                {
-                    "asset": "ETH",
-                    "amount": "5.0",
-                    "amount_usd": "11000.00",
-                    "apy": 1.8,
-                    "is_collateral": True,
-                    "atoken_address": "0x...",
-                },
-            ],
-            "borrowed": [
-                {
-                    "asset": "USDC",
-                    "amount": "5000.00",
-                    "amount_usd": "5000.00",
-                    "apy": 4.2,
-                    "rate_mode": "variable",
-                    "debt_token_address": "0x...",
-                },
-            ],
-            "total_supplied_usd": "21000.00",
-            "total_borrowed_usd": "5000.00",
-            "total_collateral_usd": "21000.00",
-            "available_borrow_usd": "10750.00",  # Based on LTV
-            "health_factor": "3.36",  # (21000 * 0.80) / 5000
-            "ltv": "23.8",  # 5000 / 21000 * 100
-            "liquidation_threshold": "80.0",
-            "current_liquidation_price_eth": "1250.00",  # Price at which HF = 1.0
-        }
-        
-        return {
-            **mock_position,
-            "timestamp": "2024-12-02T00:00:00Z",
-            "note": "This is mock data. Real implementation will query Aave V3 contracts.",
-        }
+        """Get user's Aave positions using real blockchain data."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
+                "chain_id": chain_id,
+                "user_address": user_address,
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+
+            # Get user position from AaveAdapter (uses caching)
+            try:
+                position = await self.aave_gateway.get_user_position(
+                    address=user_address,
+                    chain=chain_name,
+                )
+            except Exception as e:
+                # User has no position
+                return {
+                    "success": True,
+                    "user_address": user_address.lower(),
+                    "chain_id": chain_id,
+                    "chain_name": chain_name,
+                    "has_position": False,
+                    "supplied": [],
+                    "borrowed": [],
+                    "total_supplied_usd": "0",
+                    "total_borrowed_usd": "0",
+                    "total_collateral_usd": "0",
+                    "available_borrow_usd": "0",
+                    "health_factor": "inf",
+                    "net_worth_usd": "0",
+                }
+
+            # Convert supplies
+            supplied = []
+            for supply in position.supplies:
+                supplied.append({
+                    "asset": supply.symbol,
+                    "asset_address": supply.asset_address,
+                    "amount": self._safe_decimal(supply.balance),
+                    "amount_usd": self._safe_decimal(supply.balance_usd),
+                    "apy": float(supply.apy * 100),  # Convert to percentage
+                    "is_collateral": supply.is_collateral,
+                })
+
+            # Convert borrows
+            borrowed = []
+            for borrow in position.borrows:
+                borrowed.append({
+                    "asset": borrow.symbol,
+                    "asset_address": borrow.asset_address,
+                    "amount": self._safe_decimal(borrow.balance),
+                    "amount_usd": self._safe_decimal(borrow.balance_usd),
+                    "apy": float(borrow.apy * 100),  # Convert to percentage
+                    "rate_mode": borrow.borrow_type,
+                })
+
+            return {
+                "success": True,
+                "user_address": position.user_address,
+                "chain_id": chain_id,
+                "chain_name": position.chain,
+                "has_position": True,
+                "supplied": supplied,
+                "borrowed": borrowed,
+                "total_supplied_usd": self._safe_decimal(position.total_collateral_usd),
+                "total_borrowed_usd": self._safe_decimal(position.total_debt_usd),
+                "total_collateral_usd": self._safe_decimal(position.total_collateral_usd),
+                "available_borrow_usd": self._safe_decimal(position.available_borrow_usd),
+                "health_factor": self._safe_decimal(position.health_factor, "inf"),
+                "current_ltv": float(position.current_ltv * 100),  # Convert to percentage
+                "max_ltv": float(position.max_ltv * 100),
+                "net_worth_usd": self._safe_decimal(position.net_worth_usd),
+                "timestamp": position.updated_at.isoformat(),
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "user_address": user_address,
+                "chain_name": self._chain_id_to_name(chain_id),
+            }
     
     async def _calculate_health_factor(
         self,
         chain_id: int,
         user_address: str,
     ) -> Dict[str, Any]:
-        """Calculate health factor."""
-        # TODO: Integrate with Aave V3 contracts
-        # For now, return mock calculation
-        
-        # Health Factor = (Total Collateral * Liquidation Threshold) / Total Debt
-        # If HF < 1.0, position can be liquidated
-        
-        total_collateral_usd = 21000.00
-        liquidation_threshold = 0.80
-        total_debt_usd = 5000.00
-        
-        health_factor = (total_collateral_usd * liquidation_threshold) / total_debt_usd
-        
-        # Determine risk level
-        if health_factor >= 2.0:
-            risk_level = "low"
-            risk_color = "green"
-        elif health_factor >= 1.5:
-            risk_level = "moderate"
-            risk_color = "yellow"
-        elif health_factor >= 1.2:
-            risk_level = "high"
-            risk_color = "orange"
-        else:
-            risk_level = "critical"
-            risk_color = "red"
-        
-        # Calculate buffer before liquidation
-        price_drop_before_liquidation = ((health_factor - 1.0) / health_factor) * 100
-        
-        return {
-            "chain_id": chain_id,
-            "user_address": user_address,
-            "health_factor": f"{health_factor:.2f}",
-            "risk_level": risk_level,
-            "risk_color": risk_color,
-            "total_collateral_usd": total_collateral_usd,
-            "total_debt_usd": total_debt_usd,
-            "liquidation_threshold": liquidation_threshold,
-            "price_drop_before_liquidation": f"{price_drop_before_liquidation:.2f}%",
-            "is_liquidatable": health_factor < 1.0,
-            "recommendation": (
-                "Healthy position. Consider borrowing more if needed."
-                if health_factor >= 2.0
-                else "Monitor closely. Consider repaying debt or adding collateral."
-                if health_factor >= 1.2
-                else "⚠️ URGENT: Add collateral or repay debt immediately!"
-            ),
-            "timestamp": "2024-12-02T00:00:00Z",
-            "note": "This is mock data. Real implementation will query Aave V3 contracts.",
-        }
+        """Calculate health factor using real blockchain data."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
+                "chain_id": chain_id,
+                "user_address": user_address,
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+
+            # Get health factor from AaveAdapter
+            health_factor_obj = await self.aave_gateway.get_health_factor(
+                address=user_address,
+                chain=chain_name,
+            )
+
+            # Extract risk classification from HealthFactor value object
+            risk_level = health_factor_obj.risk_level.value  # "low", "moderate", "high", "critical"
+
+            # Map risk level to color
+            risk_color_map = {
+                "low": "green",
+                "moderate": "yellow",
+                "high": "orange",
+                "critical": "red",
+            }
+            risk_color = risk_color_map.get(risk_level, "gray")
+
+            # Calculate price drop buffer
+            hf_value = float(health_factor_obj.value)
+            if hf_value > 1.0 and hf_value != float('inf'):
+                price_drop_before_liquidation = ((hf_value - 1.0) / hf_value) * 100
+            elif hf_value == float('inf'):
+                price_drop_before_liquidation = 100.0  # No debt, can't be liquidated
+            else:
+                price_drop_before_liquidation = 0.0  # Already liquidatable
+
+            # Generate recommendation
+            if hf_value >= 2.0:
+                recommendation = "Healthy position. Consider borrowing more if needed."
+            elif hf_value >= 1.5:
+                recommendation = "Good position. Monitor market conditions."
+            elif hf_value >= 1.2:
+                recommendation = "Monitor closely. Consider repaying debt or adding collateral."
+            elif hf_value >= 1.0:
+                recommendation = "⚠️ URGENT: Add collateral or repay debt immediately!"
+            else:
+                recommendation = "🚨 CRITICAL: Position can be liquidated NOW! Take action immediately!"
+
+            return {
+                "success": True,
+                "chain_id": chain_id,
+                "chain_name": chain_name,
+                "user_address": user_address.lower(),
+                "health_factor": self._safe_decimal(health_factor_obj.value, "inf"),
+                "risk_level": risk_level,
+                "risk_color": risk_color,
+                "total_collateral_usd": self._safe_decimal(health_factor_obj.collateral_usd),
+                "total_debt_usd": self._safe_decimal(health_factor_obj.debt_usd),
+                "liquidation_threshold": float(health_factor_obj.liquidation_threshold),
+                "distance_to_liquidation": self._safe_decimal(health_factor_obj.distance_to_liquidation),
+                "price_drop_before_liquidation": f"{price_drop_before_liquidation:.2f}%",
+                "is_liquidatable": hf_value < 1.0,
+                "recommendation": recommendation,
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "user_address": user_address,
+                "chain_name": self._chain_id_to_name(chain_id),
+            }
     
     async def _get_available_to_borrow(
         self,
@@ -585,42 +698,85 @@ class AaveMCPServer(MCPServer):
         asset: str,
         target_health_factor: float = 1.5,
     ) -> Dict[str, Any]:
-        """Calculate available borrowing capacity."""
-        # TODO: Integrate with Aave V3 contracts
-        # For now, return mock calculation
-        
-        # Mock user position
-        total_collateral_usd = 21000.00
-        current_debt_usd = 5000.00
-        liquidation_threshold = 0.80
-        asset_price_usd = 1.0  # Assume USDC for simplicity
-        
-        # Calculate max borrow to maintain target health factor
-        # target_hf = (collateral * liq_threshold) / (current_debt + new_borrow)
-        # Solving for new_borrow:
-        max_borrow_usd = (
-            (total_collateral_usd * liquidation_threshold) / target_health_factor
-        ) - current_debt_usd
-        
-        max_borrow_amount = max_borrow_usd / asset_price_usd
-        
-        return {
-            "chain_id": chain_id,
-            "user_address": user_address,
-            "asset": asset,
-            "max_borrow_amount": f"{max_borrow_amount:.2f}",
-            "max_borrow_usd": f"{max_borrow_usd:.2f}",
-            "target_health_factor": target_health_factor,
-            "current_debt_usd": current_debt_usd,
-            "total_collateral_usd": total_collateral_usd,
-            "asset_price_usd": asset_price_usd,
-            "warning": (
-                "Always maintain health factor above 1.5 for safety. "
-                "Market volatility can cause liquidation."
-            ),
-            "timestamp": "2024-12-02T00:00:00Z",
-            "note": "This is mock data. Real implementation will query Aave V3 contracts.",
-        }
+        """Calculate available borrowing capacity using real blockchain data."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
+                "chain_id": chain_id,
+                "user_address": user_address,
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+
+            # Get available borrow amount from AaveAdapter
+            max_borrow_amount = await self.aave_gateway.get_available_to_borrow(
+                address=user_address,
+                asset=asset,
+                chain=chain_name,
+            )
+
+            # Get market details for asset price
+            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+
+            # Get current position for context
+            try:
+                position = await self.aave_gateway.get_user_position(
+                    address=user_address,
+                    chain=chain_name,
+                )
+                current_debt_usd = position.total_debt_usd
+                total_collateral_usd = position.total_collateral_usd
+                current_hf = position.health_factor
+            except:
+                # No position
+                current_debt_usd = Decimal("0")
+                total_collateral_usd = Decimal("0")
+                current_hf = Decimal("inf")
+
+            # Calculate USD value of max borrow
+            max_borrow_usd = max_borrow_amount * market.price_usd
+
+            # Calculate what HF would be after borrowing max amount
+            new_debt_usd = current_debt_usd + max_borrow_usd
+            if new_debt_usd > 0:
+                # HF = (collateral * liq_threshold) / debt
+                estimated_hf = (total_collateral_usd * market.liquidation_threshold) / new_debt_usd
+            else:
+                estimated_hf = Decimal("inf")
+
+            return {
+                "success": True,
+                "chain_id": chain_id,
+                "chain_name": chain_name,
+                "user_address": user_address.lower(),
+                "asset": asset,
+                "asset_address": market.asset_address,
+                "max_borrow_amount": self._safe_decimal(max_borrow_amount),
+                "max_borrow_usd": self._safe_decimal(max_borrow_usd),
+                "asset_price_usd": self._safe_decimal(market.price_usd),
+                "current_debt_usd": self._safe_decimal(current_debt_usd),
+                "total_collateral_usd": self._safe_decimal(total_collateral_usd),
+                "current_health_factor": self._safe_decimal(current_hf, "inf"),
+                "estimated_health_factor_after": self._safe_decimal(estimated_hf, "inf"),
+                "target_health_factor": target_health_factor,
+                "available_liquidity": self._safe_decimal(market.liquidity_available),
+                "warning": (
+                    "Always maintain health factor above 1.5 for safety. "
+                    "Market volatility can cause liquidation."
+                ),
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "user_address": user_address,
+                "asset": asset,
+                "chain_name": self._chain_id_to_name(chain_id),
+            }
     
     async def _supply_asset(
         self,
@@ -631,34 +787,74 @@ class AaveMCPServer(MCPServer):
         from_address: str,
         use_as_collateral: bool = True,
     ) -> Dict[str, Any]:
-        """Supply asset to Aave."""
-        # TODO: Integrate with wallet service and Aave V3 contracts
-        # For now, return mock transaction
-        
-        return {
-            "success": False,  # Always fail in mock mode for safety
-            "error": "Supply execution is disabled in development mode",
-            "message": (
-                "To execute supply operations, integrate with:\n"
-                "1. Aave V3 Pool contract for supply() call\n"
-                "2. Internal wallet service for transaction signing\n"
-                "3. Token approval flow (approve Pool to spend tokens)"
-            ),
-            "mock_transaction": {
+        """Supply asset to Aave - generates real transaction calldata."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
                 "chain_id": chain_id,
-                "from": from_address,
-                "to": self.pool_addresses.get(chain_id),
-                "function": "supply",
-                "params": {
-                    "asset": asset,
-                    "amount": amount,
-                    "onBehalfOf": from_address,
-                    "referralCode": 0,
-                },
-                "estimated_gas": "200000",
-                "note": "This transaction was NOT executed. It's a mock response.",
-            },
-        }
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+            pool_address = self.pool_addresses.get(chain_id)
+
+            if not pool_address:
+                return {
+                    "success": False,
+                    "error": f"Aave V3 Pool not deployed on chain {chain_id}",
+                    "chain_id": chain_id,
+                }
+
+            # Get market details for asset
+            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+
+            if not market.is_active or market.is_frozen:
+                return {
+                    "success": False,
+                    "error": f"Asset {asset} is not available for supply (frozen or inactive)",
+                    "chain_id": chain_id,
+                }
+
+            # Generate transaction data using helper
+            tx_data = generate_supply_transaction(
+                pool_address=pool_address,
+                asset_address=market.asset_address,
+                amount=amount,
+                asset_decimals=market.decimals,
+                user_address=from_address,
+                use_as_collateral=use_as_collateral,
+            )
+
+            return {
+                "success": True,
+                "action": "supply",
+                "chain_id": chain_id,
+                "chain_name": chain_name,
+                "asset": asset,
+                "asset_address": market.asset_address,
+                "amount": amount,
+                "use_as_collateral": use_as_collateral,
+                "from_address": from_address.lower(),
+                "transaction": tx_data,
+                "requires_approval": True,  # ERC-20 tokens need approval first
+                "approval_spender": pool_address,
+                "expected_apy": float(market.supply_apy * 100),
+                "warning": (
+                    "⚠️ Before signing this transaction, ensure you have:\n"
+                    "1. Approved the Pool contract to spend your tokens\n"
+                    "2. Sufficient balance of the asset\n"
+                    "3. Sufficient gas (ETH/MATIC) for transaction fees"
+                ),
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "asset": asset,
+            }
     
     async def _borrow_asset(
         self,
@@ -669,38 +865,126 @@ class AaveMCPServer(MCPServer):
         from_address: str,
         rate_mode: str = "variable",
     ) -> Dict[str, Any]:
-        """Borrow asset from Aave."""
-        # TODO: Integrate with wallet service and Aave V3 contracts
-        # For now, return mock transaction
-        
-        # Rate mode: 1 = stable, 2 = variable
-        interest_rate_mode = 2 if rate_mode == "variable" else 1
-        
-        return {
-            "success": False,  # Always fail in mock mode for safety
-            "error": "Borrow execution is disabled in development mode",
-            "message": (
-                "To execute borrow operations, integrate with:\n"
-                "1. Aave V3 Pool contract for borrow() call\n"
-                "2. Internal wallet service for transaction signing\n"
-                "3. Health factor check before execution"
-            ),
-            "mock_transaction": {
+        """Borrow asset from Aave - generates real transaction calldata with health factor validation."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
                 "chain_id": chain_id,
-                "from": from_address,
-                "to": self.pool_addresses.get(chain_id),
-                "function": "borrow",
-                "params": {
-                    "asset": asset,
-                    "amount": amount,
-                    "interestRateMode": interest_rate_mode,
-                    "referralCode": 0,
-                    "onBehalfOf": from_address,
-                },
-                "estimated_gas": "250000",
-                "note": "This transaction was NOT executed. It's a mock response.",
-            },
-        }
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+            pool_address = self.pool_addresses.get(chain_id)
+
+            if not pool_address:
+                return {
+                    "success": False,
+                    "error": f"Aave V3 Pool not deployed on chain {chain_id}",
+                    "chain_id": chain_id,
+                }
+
+            # Get market details
+            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+
+            if not market.can_borrow:
+                return {
+                    "success": False,
+                    "error": f"Asset {asset} cannot be borrowed",
+                    "chain_id": chain_id,
+                }
+
+            # CRITICAL: Check health factor BEFORE allowing borrow
+            try:
+                current_hf_obj = await self.aave_gateway.get_health_factor(
+                    address=from_address,
+                    chain=chain_name,
+                )
+
+                # Calculate estimated health factor after borrow
+                position = await self.aave_gateway.get_user_position(
+                    address=from_address,
+                    chain=chain_name,
+                )
+
+                # Estimate new debt
+                borrow_amount_usd = Decimal(amount) * market.price_usd
+                new_debt_usd = position.total_debt_usd + borrow_amount_usd
+
+                # Calculate new health factor
+                if new_debt_usd > 0:
+                    # HF = (collateral * liq_threshold) / debt
+                    estimated_hf = (position.total_collateral_usd * market.liquidation_threshold) / new_debt_usd
+                else:
+                    estimated_hf = Decimal("inf")
+
+                # Safety check: block borrows that would result in HF < 1.2
+                if estimated_hf < Decimal("1.2"):
+                    return {
+                        "success": False,
+                        "error": "UNSAFE BORROW BLOCKED",
+                        "reason": f"This borrow would reduce your health factor to {estimated_hf:.2f}",
+                        "current_health_factor": self._safe_decimal(current_hf_obj.value, "inf"),
+                        "estimated_health_factor_after": self._safe_decimal(estimated_hf),
+                        "minimum_required": "1.20",
+                        "recommendation": (
+                            "To borrow this amount safely:\n"
+                            "1. Supply more collateral, OR\n"
+                            "2. Borrow a smaller amount, OR\n"
+                            "3. Repay existing debt"
+                        ),
+                        "chain_id": chain_id,
+                    }
+
+            except Exception as hf_error:
+                # If no position exists, user can't borrow (no collateral)
+                return {
+                    "success": False,
+                    "error": "Cannot borrow: No collateral supplied",
+                    "details": str(hf_error),
+                    "chain_id": chain_id,
+                }
+
+            # Generate transaction data using helper
+            tx_data = generate_borrow_transaction(
+                pool_address=pool_address,
+                asset_address=market.asset_address,
+                amount=amount,
+                asset_decimals=market.decimals,
+                user_address=from_address,
+                rate_mode=rate_mode,
+            )
+
+            return {
+                "success": True,
+                "action": "borrow",
+                "chain_id": chain_id,
+                "chain_name": chain_name,
+                "asset": asset,
+                "asset_address": market.asset_address,
+                "amount": amount,
+                "rate_mode": rate_mode,
+                "from_address": from_address.lower(),
+                "transaction": tx_data,
+                "current_health_factor": self._safe_decimal(current_hf_obj.value, "inf"),
+                "estimated_health_factor_after": self._safe_decimal(estimated_hf),
+                "expected_borrow_apy": float(market.borrow_apy_variable * 100) if rate_mode == "variable" else float(market.borrow_apy_stable * 100),
+                "warning": (
+                    "⚠️ BORROWING CREATES LIQUIDATION RISK\n"
+                    f"• Your health factor will be: {estimated_hf:.2f}\n"
+                    f"• Liquidation occurs if HF drops below 1.0\n"
+                    "• Monitor your position regularly\n"
+                    "• Consider repaying if HF drops below 1.5"
+                ),
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "asset": asset,
+            }
     
     async def _repay_loan(
         self,
@@ -711,29 +995,92 @@ class AaveMCPServer(MCPServer):
         from_address: str,
         rate_mode: str = "variable",
     ) -> Dict[str, Any]:
-        """Repay borrowed asset."""
-        # TODO: Integrate with wallet service and Aave V3 contracts
-        
-        interest_rate_mode = 2 if rate_mode == "variable" else 1
-        
-        return {
-            "success": False,
-            "error": "Repay execution is disabled in development mode",
-            "mock_transaction": {
+        """Repay borrowed asset - generates real transaction calldata."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
                 "chain_id": chain_id,
-                "from": from_address,
-                "to": self.pool_addresses.get(chain_id),
-                "function": "repay",
-                "params": {
-                    "asset": asset,
-                    "amount": amount,
-                    "interestRateMode": interest_rate_mode,
-                    "onBehalfOf": from_address,
-                },
-                "estimated_gas": "180000",
-                "note": "This transaction was NOT executed.",
-            },
-        }
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+            pool_address = self.pool_addresses.get(chain_id)
+
+            if not pool_address:
+                return {
+                    "success": False,
+                    "error": f"Aave V3 Pool not deployed on chain {chain_id}",
+                    "chain_id": chain_id,
+                }
+
+            # Get market details
+            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+
+            # Get current position to calculate health factor improvement
+            try:
+                position = await self.aave_gateway.get_user_position(
+                    address=from_address,
+                    chain=chain_name,
+                )
+                current_hf = position.health_factor
+
+                # Calculate estimated health factor after repayment
+                if amount.lower() == "max":
+                    # Full repayment - HF becomes infinite (no debt)
+                    estimated_hf = Decimal("inf")
+                else:
+                    repay_amount_usd = Decimal(amount) * market.price_usd
+                    new_debt_usd = max(Decimal("0"), position.total_debt_usd - repay_amount_usd)
+
+                    if new_debt_usd > 0:
+                        estimated_hf = (position.total_collateral_usd * market.liquidation_threshold) / new_debt_usd
+                    else:
+                        estimated_hf = Decimal("inf")
+
+            except Exception:
+                # No position - can't repay
+                return {
+                    "success": False,
+                    "error": "Cannot repay: No outstanding debt found",
+                    "chain_id": chain_id,
+                }
+
+            # Generate transaction data using helper
+            tx_data = generate_repay_transaction(
+                pool_address=pool_address,
+                asset_address=market.asset_address,
+                amount=amount,
+                asset_decimals=market.decimals,
+                user_address=from_address,
+                rate_mode=rate_mode,
+            )
+
+            return {
+                "success": True,
+                "action": "repay",
+                "chain_id": chain_id,
+                "chain_name": chain_name,
+                "asset": asset,
+                "asset_address": market.asset_address,
+                "amount": amount,
+                "rate_mode": rate_mode,
+                "from_address": from_address.lower(),
+                "transaction": tx_data,
+                "requires_approval": True,  # Need to approve Pool to spend tokens
+                "approval_spender": pool_address,
+                "current_health_factor": self._safe_decimal(current_hf, "inf"),
+                "estimated_health_factor_after": self._safe_decimal(estimated_hf, "inf"),
+                "health_factor_improvement": "Improved" if estimated_hf > current_hf else "N/A",
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "asset": asset,
+            }
     
     async def _withdraw_supply(
         self,
@@ -743,84 +1090,247 @@ class AaveMCPServer(MCPServer):
         amount: str,
         from_address: str,
     ) -> Dict[str, Any]:
-        """Withdraw supplied asset."""
-        # TODO: Integrate with wallet service and Aave V3 contracts
-        
-        return {
-            "success": False,
-            "error": "Withdraw execution is disabled in development mode",
-            "mock_transaction": {
+        """Withdraw supplied asset - generates real transaction calldata with safety checks."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
                 "chain_id": chain_id,
-                "from": from_address,
-                "to": self.pool_addresses.get(chain_id),
-                "function": "withdraw",
-                "params": {
-                    "asset": asset,
-                    "amount": amount,
-                    "to": from_address,
-                },
-                "estimated_gas": "150000",
-                "note": "This transaction was NOT executed.",
-            },
-        }
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+            pool_address = self.pool_addresses.get(chain_id)
+
+            if not pool_address:
+                return {
+                    "success": False,
+                    "error": f"Aave V3 Pool not deployed on chain {chain_id}",
+                    "chain_id": chain_id,
+                }
+
+            # Get market details
+            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+
+            # Get current position to check if withdrawal is safe
+            try:
+                position = await self.aave_gateway.get_user_position(
+                    address=from_address,
+                    chain=chain_name,
+                )
+                current_hf = position.health_factor
+
+                # Calculate estimated health factor after withdrawal
+                if amount.lower() == "max":
+                    # Full withdrawal - need to check if any debt exists
+                    if position.total_debt_usd > 0:
+                        return {
+                            "success": False,
+                            "error": "Cannot withdraw all collateral while debt exists",
+                            "current_debt_usd": self._safe_decimal(position.total_debt_usd),
+                            "chain_id": chain_id,
+                        }
+                    estimated_hf = Decimal("inf")
+                else:
+                    # Partial withdrawal
+                    withdraw_amount_usd = Decimal(amount) * market.price_usd
+                    new_collateral_usd = max(Decimal("0"), position.total_collateral_usd - withdraw_amount_usd)
+
+                    if position.total_debt_usd > 0:
+                        # Calculate new health factor
+                        estimated_hf = (new_collateral_usd * market.liquidation_threshold) / position.total_debt_usd
+
+                        # Safety check: block withdrawals that would result in HF < 1.5
+                        if estimated_hf < Decimal("1.5"):
+                            return {
+                                "success": False,
+                                "error": "UNSAFE WITHDRAWAL BLOCKED",
+                                "reason": f"This withdrawal would reduce your health factor to {estimated_hf:.2f}",
+                                "current_health_factor": self._safe_decimal(current_hf, "inf"),
+                                "estimated_health_factor_after": self._safe_decimal(estimated_hf),
+                                "minimum_required": "1.50",
+                                "recommendation": "Repay some debt before withdrawing, or withdraw a smaller amount",
+                                "chain_id": chain_id,
+                            }
+                    else:
+                        # No debt - can withdraw freely
+                        estimated_hf = Decimal("inf")
+
+            except Exception:
+                # No position - can't withdraw
+                return {
+                    "success": False,
+                    "error": "Cannot withdraw: No supply position found",
+                    "chain_id": chain_id,
+                }
+
+            # Generate transaction data using helper
+            tx_data = generate_withdraw_transaction(
+                pool_address=pool_address,
+                asset_address=market.asset_address,
+                amount=amount,
+                asset_decimals=market.decimals,
+                user_address=from_address,
+            )
+
+            return {
+                "success": True,
+                "action": "withdraw",
+                "chain_id": chain_id,
+                "chain_name": chain_name,
+                "asset": asset,
+                "asset_address": market.asset_address,
+                "amount": amount,
+                "from_address": from_address.lower(),
+                "transaction": tx_data,
+                "current_health_factor": self._safe_decimal(current_hf, "inf"),
+                "estimated_health_factor_after": self._safe_decimal(estimated_hf, "inf"),
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "asset": asset,
+            }
     
     async def _get_liquidation_risk(
         self,
         chain_id: int,
         user_address: str,
     ) -> Dict[str, Any]:
-        """Analyze liquidation risk."""
-        # TODO: Integrate with Aave V3 contracts and price oracles
-        # For now, return mock risk analysis
-        
-        # Mock position data
-        supplied_eth = 5.0
-        eth_price = 2200.0
-        borrowed_usdc = 5000.0
-        liquidation_threshold = 0.80
-        
-        # Calculate liquidation price for ETH
-        # At liquidation: (eth_amount * liquidation_price * liq_threshold) = borrowed_usd
-        liquidation_price = borrowed_usdc / (supplied_eth * liquidation_threshold)
-        
-        price_drop_to_liquidation = ((eth_price - liquidation_price) / eth_price) * 100
-        
-        # Determine risk level based on price buffer
-        if price_drop_to_liquidation > 50:
-            risk_level = "low"
-            risk_description = "Very safe. Large price buffer before liquidation."
-        elif price_drop_to_liquidation > 30:
-            risk_level = "moderate"
-            risk_description = "Moderate risk. Monitor market conditions."
-        elif price_drop_to_liquidation > 15:
-            risk_level = "high"
-            risk_description = "High risk. Consider reducing leverage."
-        else:
-            risk_level = "critical"
-            risk_description = "⚠️ CRITICAL: Very close to liquidation!"
-        
-        return {
-            "chain_id": chain_id,
-            "user_address": user_address,
-            "risk_level": risk_level,
-            "risk_description": risk_description,
-            "liquidation_scenarios": [
-                {
-                    "collateral_asset": "ETH",
-                    "current_price": eth_price,
-                    "liquidation_price": f"{liquidation_price:.2f}",
-                    "price_drop_percentage": f"{price_drop_to_liquidation:.2f}%",
-                },
-            ],
-            "recommendations": [
-                "Add more collateral to increase health factor" if risk_level in ["high", "critical"] else "",
-                "Repay part of the debt" if risk_level in ["high", "critical"] else "",
-                "Set up price alerts" if risk_level != "low" else "",
-                "Consider switching to stable rate if concerned about variable rate increases" if risk_level != "low" else "",
-            ],
-            "timestamp": "2024-12-02T00:00:00Z",
-            "note": "This is mock data. Real implementation will use live price feeds.",
-        }
+        """Analyze liquidation risk using real position and market data."""
+        if not self.aave_gateway:
+            return {
+                "success": False,
+                "error": "Aave gateway not initialized",
+                "chain_id": chain_id,
+                "user_address": user_address,
+            }
+
+        try:
+            chain_name = self._chain_id_to_name(chain_id)
+
+            # Get user position
+            try:
+                position = await self.aave_gateway.get_user_position(
+                    address=user_address,
+                    chain=chain_name,
+                )
+            except Exception:
+                # No position - no risk
+                return {
+                    "success": True,
+                    "chain_id": chain_id,
+                    "chain_name": chain_name,
+                    "user_address": user_address.lower(),
+                    "has_position": False,
+                    "risk_level": "none",
+                    "risk_description": "No active position - no liquidation risk",
+                }
+
+            # Get health factor
+            health_factor_obj = await self.aave_gateway.get_health_factor(
+                address=user_address,
+                chain=chain_name,
+            )
+
+            hf_value = float(health_factor_obj.value)
+
+            # Calculate price drop buffer
+            if hf_value > 1.0 and hf_value != float('inf'):
+                price_drop_to_liquidation = ((hf_value - 1.0) / hf_value) * 100
+            elif hf_value == float('inf'):
+                price_drop_to_liquidation = 100.0  # No debt
+            else:
+                price_drop_to_liquidation = 0.0  # Already liquidatable
+
+            # Determine risk level
+            risk_level = health_factor_obj.risk_level.value  # "low", "moderate", "high", "critical"
+
+            if risk_level == "low":
+                risk_description = "Very safe. Large price buffer before liquidation."
+            elif risk_level == "moderate":
+                risk_description = "Moderate risk. Monitor market conditions."
+            elif risk_level == "high":
+                risk_description = "High risk. Consider reducing leverage."
+            else:
+                risk_description = "⚠️ CRITICAL: Very close to liquidation!"
+
+            # Analyze each collateral asset
+            liquidation_scenarios = []
+            for supply in position.supplies:
+                if supply.is_collateral and supply.balance_usd > 0:
+                    # Get market details for liquidation threshold
+                    try:
+                        market = await self.aave_gateway.get_market_details(asset=supply.symbol, chain=chain_name)
+
+                        # Calculate liquidation price for this asset
+                        # At liquidation: (asset_amount * liquidation_price * liq_threshold) / total_debt = 1.0 HF
+                        # liquidation_price = (total_debt / (asset_amount * liq_threshold))
+
+                        if supply.balance > 0 and position.total_debt_usd > 0:
+                            # Simplified: assume this is the only collateral
+                            liquidation_price_usd = float(position.total_debt_usd / (supply.balance * market.liquidation_threshold))
+                            current_price_usd = float(market.price_usd)
+
+                            price_drop_pct = ((current_price_usd - liquidation_price_usd) / current_price_usd) * 100 if current_price_usd > 0 else 0
+
+                            liquidation_scenarios.append({
+                                "collateral_asset": supply.symbol,
+                                "collateral_amount": self._safe_decimal(supply.balance),
+                                "collateral_usd": self._safe_decimal(supply.balance_usd),
+                                "current_price_usd": self._safe_decimal(market.price_usd),
+                                "liquidation_price_usd": f"{liquidation_price_usd:.2f}",
+                                "price_drop_percentage": f"{price_drop_pct:.2f}%",
+                                "liquidation_threshold": float(market.liquidation_threshold),
+                            })
+                    except Exception as e:
+                        # Skip if market not found
+                        continue
+
+            # Generate recommendations
+            recommendations = []
+            if risk_level in ["high", "critical"]:
+                recommendations.extend([
+                    "🚨 Add more collateral to increase health factor",
+                    "💰 Repay part of the debt to reduce risk",
+                    "📊 Monitor your position every few hours",
+                ])
+            if risk_level in ["moderate", "high", "critical"]:
+                recommendations.extend([
+                    "🔔 Set up price alerts for your collateral assets",
+                    "⚙️ Consider switching to stable rate if variable rates are rising",
+                ])
+            if risk_level == "low":
+                recommendations.append("✅ Position is healthy. Continue monitoring periodically.")
+
+            return {
+                "success": True,
+                "chain_id": chain_id,
+                "chain_name": chain_name,
+                "user_address": user_address.lower(),
+                "has_position": True,
+                "risk_level": risk_level,
+                "risk_description": risk_description,
+                "health_factor": self._safe_decimal(health_factor_obj.value, "inf"),
+                "distance_to_liquidation": self._safe_decimal(health_factor_obj.distance_to_liquidation),
+                "price_drop_before_liquidation": f"{price_drop_to_liquidation:.2f}%",
+                "total_collateral_usd": self._safe_decimal(position.total_collateral_usd),
+                "total_debt_usd": self._safe_decimal(position.total_debt_usd),
+                "liquidation_scenarios": liquidation_scenarios,
+                "recommendations": recommendations,
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "chain_id": chain_id,
+                "user_address": user_address,
+                "chain_name": self._chain_id_to_name(chain_id),
+            }
 
 
 # Standalone FastAPI app

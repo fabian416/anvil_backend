@@ -16,8 +16,10 @@ Note: Money Market (Aave/Compound) is handled separately.
 import time
 from typing import Optional
 from dataclasses import dataclass
+from decimal import Decimal
 
 from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.balance_checker import IBalanceChecker
 from app.domain.entities.lending.morpho_vault import MorphoVault
 
 
@@ -57,15 +59,21 @@ class LendingHandler:
     
     # Per CEO spec: Show top 3 vaults
     MAX_VAULTS_TO_SHOW = 3
-    
-    def __init__(self, morpho_gateway: MorphoGateway):
+
+    def __init__(
+        self,
+        morpho_gateway: MorphoGateway,
+        balance_checker: Optional[IBalanceChecker] = None,
+    ):
         """
         Initialize lending handler.
-        
+
         Args:
             morpho_gateway: Gateway to Morpho protocol data
+            balance_checker: Optional balance checker for validation before execute_data generation
         """
         self._morpho = morpho_gateway
+        self._balance_checker = balance_checker
     
     async def execute(
         self,
@@ -76,10 +84,11 @@ class LendingHandler:
         language: str = "en",
         continuation_step: str | None = None,
         previous_lending_info: dict | None = None,
+        wallet_address: str | None = None,
     ) -> LendingHandlerResult:
         """
         Handle lending intent and return vault recommendations.
-        
+
         Args:
             message: User's message (for context)
             chain: Blockchain (ethereum, base)
@@ -88,7 +97,8 @@ class LendingHandler:
             language: Response language (en, es, fr, zh, pt)
             continuation_step: If continuing a flow, which step (select_asset, select_chain, check_later)
             previous_lending_info: Previous lending info for continuation
-        
+            wallet_address: User's wallet address for balance checking (optional)
+
         Returns:
             LendingHandlerResult with formatted content and vault data
         """
@@ -171,14 +181,57 @@ class LendingHandler:
 
         # Generate execute data if vaults found and no pending action
         execute_data = None
+        insufficient_balance_error = None
+
         if not pending_action and vaults:
             # Use best vault (highest APY) for execute data
             best_vault = vaults[0]
-            execute_data = self._generate_execute_data(
-                vault=best_vault,
-                amount="1000",  # Default amount (can be made configurable)
-                chain=chain,
-            )
+            default_amount = "1000"  # Default amount (can be made configurable)
+
+            # Check balance BEFORE generating execute_data (critical for UX)
+            if self._balance_checker and wallet_address:
+                has_balance = await self._check_sufficient_balance(
+                    wallet_address=wallet_address,
+                    token_address=best_vault.asset_address,
+                    required_amount=Decimal(default_amount),
+                    chain=chain,
+                    asset_symbol=best_vault.asset,
+                )
+
+                if not has_balance:
+                    # Get current balance for error message
+                    current_balance = await self._balance_checker.get_balance(
+                        wallet_address=wallet_address,
+                        token_address=best_vault.asset_address,
+                        chain=chain,
+                    )
+                    insufficient_balance_error = self._format_insufficient_balance_error(
+                        asset=best_vault.asset,
+                        current_balance=current_balance,
+                        required_amount=Decimal(default_amount),
+                        language=language,
+                    )
+                    # Don't generate execute_data if insufficient balance
+                    execute_data = None
+                else:
+                    # Balance is sufficient, generate execute_data
+                    execute_data = self._generate_execute_data(
+                        vault=best_vault,
+                        amount=default_amount,
+                        chain=chain,
+                    )
+            else:
+                # No balance checker or wallet address - generate execute_data anyway
+                # (Balance will be checked on frontend before transaction submission)
+                execute_data = self._generate_execute_data(
+                    vault=best_vault,
+                    amount=default_amount,
+                    chain=chain,
+                )
+
+        # Prepend insufficient balance error to content if applicable
+        if insufficient_balance_error:
+            content = insufficient_balance_error + "\n\n" + content
 
         result = LendingHandlerResult(
             content=content,
@@ -191,11 +244,11 @@ class LendingHandler:
             pending_action=pending_action,
             execute_data=execute_data,
         )
-        
+
         # Store lending_info in result for metadata
         if lending_info:
             result.lending_info = lending_info
-        
+
         return result
 
     def _generate_execute_data(
@@ -707,3 +760,126 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
             language=language,
             pending_action=None,
         )
+
+    async def _check_sufficient_balance(
+        self,
+        wallet_address: str,
+        token_address: str,
+        required_amount: Decimal,
+        chain: str,
+        asset_symbol: str,
+    ) -> bool:
+        """
+        Check if wallet has sufficient balance for deposit.
+
+        Args:
+            wallet_address: User's wallet address
+            token_address: Token contract address
+            required_amount: Required amount in token units
+            chain: Blockchain name
+            asset_symbol: Token symbol (for logging)
+
+        Returns:
+            True if sufficient balance exists, False otherwise
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        if not self._balance_checker:
+            # No balance checker configured - optimistically assume balance exists
+            logger.warning(
+                "BalanceChecker not configured - skipping balance validation"
+            )
+            return True
+
+        try:
+            has_balance = await self._balance_checker.check_balance(
+                wallet_address=wallet_address,
+                token_address=token_address,
+                required_amount=required_amount,
+                chain=chain,
+            )
+
+            if has_balance:
+                logger.info(
+                    f"✅ Balance check passed for {wallet_address}: "
+                    f"has sufficient {asset_symbol} on {chain}"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ Insufficient balance for {wallet_address}: "
+                    f"needs {required_amount} {asset_symbol} on {chain}"
+                )
+
+            return has_balance
+
+        except Exception as e:
+            logger.error(
+                f"❌ Balance check failed for {wallet_address}: {type(e).__name__}: {e}"
+            )
+            # Conservative approach: return False if check fails
+            return False
+
+    def _format_insufficient_balance_error(
+        self,
+        asset: str,
+        current_balance: Decimal,
+        required_amount: Decimal,
+        language: str,
+    ) -> str:
+        """
+        Format insufficient balance error message with i18n support.
+
+        Args:
+            asset: Token symbol (USDC, ETH, etc.)
+            current_balance: User's current balance
+            required_amount: Required amount for transaction
+            language: Response language (en, es, pt, zh)
+
+        Returns:
+            Formatted error message
+        """
+        error_templates = {
+            "en": {
+                "header": "Insufficient Balance",
+                "body": (
+                    f"You need **{required_amount} {asset}** to deposit, "
+                    f"but you only have **{current_balance} {asset}**."
+                ),
+                "suggestion": "Please add more funds to your wallet or try a smaller amount.",
+            },
+            "es": {
+                "header": "Saldo Insuficiente",
+                "body": (
+                    f"Necesitas **{required_amount} {asset}** para depositar, "
+                    f"pero solo tienes **{current_balance} {asset}**."
+                ),
+                "suggestion": "Agrega más fondos a tu billetera o intenta con una cantidad menor.",
+            },
+            "pt": {
+                "header": "Saldo Insuficiente",
+                "body": (
+                    f"Você precisa de **{required_amount} {asset}** para depositar, "
+                    f"mas você tem apenas **{current_balance} {asset}**."
+                ),
+                "suggestion": "Adicione mais fundos à sua carteira ou tente um valor menor.",
+            },
+            "zh": {
+                "header": "余额不足",
+                "body": (
+                    f"您需要 **{required_amount} {asset}** 才能存款，"
+                    f"但您只有 **{current_balance} {asset}**。"
+                ),
+                "suggestion": "请向您的钱包添加更多资金或尝试较小的金额。",
+            },
+        }
+
+        template = error_templates.get(language, error_templates["en"])
+
+        return f"""❌ **{template["header"]}**
+
+{template["body"]}
+
+💡 **{template["suggestion"]}**
+"""

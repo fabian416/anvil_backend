@@ -158,8 +158,10 @@ from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandle
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.ports.compound_gateway import CompoundGateway
+from app.domain.ports.balance_checker import IBalanceChecker
 from app.infrastructure.adapters.external.compound_client import CompoundClient
 from app.infrastructure.adapters.external.compound_adapter import CompoundAdapter
+from app.infrastructure.adapters.balance.portfolio_balance_checker import PortfolioBalanceChecker
 from app.infrastructure.adapters.external.oneinch_client import OneInchClient
 from app.infrastructure.adapters.external.lifi_client import LiFiClient
 from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
@@ -634,9 +636,23 @@ class ChatPhase2Provider(Provider):
     # ========================================
 
     @provide
+    def provide_balance_checker(
+        self,
+        portfolio_service: PortfolioService,
+    ) -> IBalanceChecker:
+        """
+        Provide balance checker for validating wallet balances.
+
+        Uses PortfolioService for real-time RPC balance checks.
+        Critical for preventing transactions with insufficient balance.
+        """
+        return PortfolioBalanceChecker(portfolio_service=portfolio_service)
+
+    @provide
     def provide_lending_handler(
         self,
         morpho_gateway: MorphoGateway,
+        balance_checker: IBalanceChecker,
     ) -> LendingHandler:
         """
         Provide lending handler for Morpho vault operations.
@@ -646,8 +662,14 @@ class ChatPhase2Provider(Provider):
         - Base L2 vaults (USDC, ETH, etc.)
         - APY comparison
         - Whitelisted vault recommendations
+
+        Includes balance validation via BalanceChecker to prevent
+        insufficient balance transactions.
         """
-        return LendingHandler(morpho_gateway=morpho_gateway)
+        return LendingHandler(
+            morpho_gateway=morpho_gateway,
+            balance_checker=balance_checker,
+        )
 
     @provide
     def provide_portfolio_handler(
