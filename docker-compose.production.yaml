@@ -457,8 +457,6 @@ services:
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
-    ports:
-      - "5555:5555"
     depends_on:
       redis:
         condition: service_healthy
@@ -466,10 +464,39 @@ services:
     networks:
       - anvil-network
 
+  # ===================================================
+  # REVERSE PROXY - Caddy (HTTPS)
+  # ===================================================
+  
+  caddy:
+    image: caddy:latest
+    container_name: anvil_caddy
+    restart: unless-stopped
+    depends_on:
+      - fastapi
+      - flower
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    networks:
+      - anvil-network
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN:-anvil.zk-access.xyz}
+      - FLOWER_DOMAIN=${FLOWER_DOMAIN}
+      - FLOWER_USER=${FLOWER_USER}
+      - FLOWER_HASH=${FLOWER_HASH}
+
 volumes:
   pg_data:
   redis_data:
   celery_beat_schedule:
+  caddy_data:
+  caddy_config:
 
 networks:
   anvil-network:

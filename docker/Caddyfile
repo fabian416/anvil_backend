@@ -1,0 +1,9 @@
+{
+	{$CADDY_GLOBAL_OPTIONS}
+}
+
+{$CADDY_EXTRA_CONFIG}
+
+{$DOMAIN} {
+	reverse_proxy fastapi:8080
+}

@@ -20,8 +20,7 @@ env:
   IMAGE_VERSION: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
 
 jobs:
-  build-core:
-    name: Build Core Services
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Core Services (3) - smaller, fast to build
+          # Core Services (3)
           - service: fastapi
             dockerfile: docker/Dockerfile.fastapi
             image_name: anvil-backend-api
@@ -43,62 +42,7 @@ jobs:
           - service: celery-worker
             dockerfile: docker/Dockerfile.celery
             image_name: anvil-backend-celery-worker
-            
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ env.REGISTRY_USERNAME }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image_name }}
-          tags: |
-            type=raw,value=${{ env.IMAGE_VERSION }}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,format=short,prefix=sha-
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.service=${{ matrix.service }}
-
-      - name: Build and Push - ${{ matrix.service }}
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: ${{ github.event_name == 'push' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
-          build-args: |
-            APP_ENV=${{ env.IMAGE_VERSION }}
-            ${{ matrix.build_args }}
-
-  build-workers:
-    name: Build Celery Workers
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
+          
           # Specialized Workers (9)
           - service: celery-worker-agents
             dockerfile: docker/Dockerfile.celery-workers.agents
@@ -136,66 +80,6 @@ jobs:
             dockerfile: docker/Dockerfile.celery-workers.email
             image_name: anvil-backend-celery-worker-email
           
-          # Utilities
-          - service: tx-confirmation
-            dockerfile: docker/Dockerfile.tx-confirmation
-            image_name: anvil-backend-tx-confirmation
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ env.REGISTRY_USERNAME }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image_name }}
-          tags: |
-            type=raw,value=${{ env.IMAGE_VERSION }}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,format=short,prefix=sha-
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.service=${{ matrix.service }}
-
-      - name: Build and Push - ${{ matrix.service }}
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: ${{ github.event_name == 'push' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
-          build-args: |
-            APP_ENV=${{ env.IMAGE_VERSION }}
-            ${{ matrix.build_args }}
-
-  build-mcps:
-    name: Build MCP Servers
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
           # MCP Servers (11)
           - service: mcp-1inch
             dockerfile: docker/Dockerfile.mcp
@@ -251,7 +135,12 @@ jobs:
             dockerfile: docker/Dockerfile.mcp
             image_name: anvil-backend-mcp-layerzero
             build_args: MCP_SERVER=layerzero_mcp
-    
+          
+          # Utilities (1)
+          - service: tx-confirmation
+            dockerfile: docker/Dockerfile.tx-confirmation
+            image_name: anvil-backend-tx-confirmation
+            
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -297,8 +186,7 @@ jobs:
             ${{ matrix.build_args }}
 
   build-summary:
-    name: Build Summary Report
-    needs: [build-core, build-workers, build-mcps]
+    needs: build
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -306,9 +194,7 @@ jobs:
         run: |
           echo "✅ Build Summary"
           echo "================"
-          echo "Core Build Status: ${{ needs.build-core.result }}"
-          echo "Workers Build Status: ${{ needs.build-workers.result }}"
-          echo "MCPs Build Status: ${{ needs.build-mcps.result }}"
+          echo "Status: ${{ needs.build.result }}"
           echo "Branch: ${{ github.ref }}"
           echo "Version: ${{ env.IMAGE_VERSION }}"
           echo ""
@@ -320,9 +206,9 @@ jobs:
           echo "  • 11 MCP Servers"
           echo "  • TX Confirmation"
           echo ""
-          echo "Total: 23 Docker images"
+          echo "Total: 24 Docker images"
           echo ""
-          if [ "${{ needs.build-core.result }}" = "success" ] && [ "${{ needs.build-workers.result }}" = "success" ] && [ "${{ needs.build-mcps.result }}" = "success" ]; then
+          if [ "${{ needs.build.result }}" = "success" ]; then
             echo "🎉 All builds completed successfully!"
           else
             echo "⚠️ Some builds failed - check logs above"
