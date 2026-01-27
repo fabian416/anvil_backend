@@ -164,6 +164,7 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
    **ACTION REQUESTS → "guest_auth" agent (REQUIRES LOGIN):**
    - "swap 100 USDC to ETH" → "guest_auth" (specific transaction - needs wallet)
    - "execute the swap" / "do the swap" → "guest_auth" (execution - needs wallet)
+   - "buy crypto" / "purchase bitcoin" / "buy eth" → "guest_auth" (buying crypto - needs account)
    - "my balance" / "check my portfolio" → "guest_auth" (requires wallet)
    - "my wallets" / "show my wallets" → "guest_auth" (requires login)
    - "my transactions" / "transaction history" → "guest_auth" (requires login)
@@ -214,6 +215,10 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 "what swaps are supported?" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain supported swap features","depends_on":[]}}]}}
 "puedo hacer swap?" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain swap capabilities in Spanish","depends_on":[]}}]}}
 "swap 100 USDC to ETH" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle swap transaction request - requires login","depends_on":[]}}]}}
+"buy crypto" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle buy crypto request - requires authentication","depends_on":[]}}]}}
+"purchase bitcoin" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle buy BTC request - requires authentication","depends_on":[]}}]}}
+"buy eth" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle buy ETH request - requires authentication","depends_on":[]}}]}}
+"i want to buy usdc" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle buy USDC request - requires authentication","depends_on":[]}}]}}
 "my balance" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle restricted feature - requires login","depends_on":[]}}]}}
 "my portfolio" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle portfolio request - requires login","depends_on":[]}}]}}
 "show my wallets" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle wallet request - requires login","depends_on":[]}}]}}
