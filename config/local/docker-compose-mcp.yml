@@ -17,6 +17,12 @@ services:
     restart: unless-stopped
     networks:
       - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   mcp_defillama:
     build:
@@ -33,6 +39,12 @@ services:
     restart: unless-stopped
     networks:
       - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   mcp_thegraph:
     build:
@@ -50,6 +62,12 @@ services:
     restart: unless-stopped
     networks:
       - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   mcp_coingecko:
     build:
@@ -67,6 +85,173 @@ services:
     restart: unless-stopped
     networks:
       - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mcp_aave:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_aave
+    command: python -m app.infrastructure.mcp.servers.aave_mcp
+    ports:
+      - "8085:8085"
+    environment:
+      - AAVE_RPC_URL=${AAVE_RPC_URL:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mcp_portfolio:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_portfolio
+    command: python -m app.infrastructure.mcp.servers.portfolio_mcp
+    ports:
+      - "8086:8086"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mcp_perplexity:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_perplexity
+    command: python -m app.infrastructure.mcp.servers.perplexity_mcp
+    ports:
+      - "8087:8087"
+    environment:
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mcp_morpho:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_morpho
+    command: python -m app.infrastructure.mcp.servers.morpho_mcp
+    ports:
+      - "8088:8088"
+    environment:
+      - MORPHO_API_KEY=${MORPHO_API_KEY:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mcp_curve:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_curve
+    command: python -m app.infrastructure.mcp.servers.curve_mcp
+    ports:
+      - "8089:8089"
+    environment:
+      - CURVE_API_URL=${CURVE_API_URL:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mcp_hyperliquid:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_hyperliquid
+    command: python -m app.infrastructure.mcp.servers.hyperliquid_mcp
+    ports:
+      - "8090:8090"
+    environment:
+      - HYPERLIQUID_API_KEY=${HYPERLIQUID_API_KEY:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mcp_layerzero:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: anvil_mcp_layerzero
+    command: python -m app.infrastructure.mcp.servers.layerzero_mcp
+    ports:
+      - "8091:8091"
+    environment:
+      - LAYERZERO_API_KEY=${LAYERZERO_API_KEY:-}
+      - PYTHONPATH=/app/src
+    volumes:
+      - ../../src:/app/src
+    restart: unless-stopped
+    networks:
+      - anvil_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   anvil_network:
