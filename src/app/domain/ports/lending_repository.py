@@ -13,6 +13,10 @@ from app.domain.entities.lending import (
     SupplyPosition,
     BorrowPosition,
     LendingTransaction,
+    UserLendingPreferences,
+    LendingHealthCheck,
+    LeverageLoopExecution,
+    LendingAlert,
 )
 
 
@@ -155,5 +159,222 @@ class ILendingRepository(ABC):
 
         Raises:
             RepositoryError: If update fails
+        """
+        ...
+
+    # =========================================================================
+    # USER PREFERENCES
+    # =========================================================================
+
+    @abstractmethod
+    async def save_user_preferences(
+        self, preferences: UserLendingPreferences
+    ) -> None:
+        """
+        Save or update user lending preferences.
+
+        Args:
+            preferences: UserLendingPreferences entity to persist
+
+        Raises:
+            RepositoryError: If save operation fails
+        """
+        ...
+
+    @abstractmethod
+    async def get_user_preferences(
+        self, user_id: UUID
+    ) -> Optional[UserLendingPreferences]:
+        """
+        Get user lending preferences.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            UserLendingPreferences if found, None otherwise
+
+        Raises:
+            RepositoryError: If query fails
+        """
+        ...
+
+    # =========================================================================
+    # HEALTH CHECKS
+    # =========================================================================
+
+    @abstractmethod
+    async def save_health_check(self, check: LendingHealthCheck) -> None:
+        """
+        Save a health factor check snapshot.
+
+        Args:
+            check: LendingHealthCheck entity to persist
+
+        Raises:
+            RepositoryError: If save operation fails
+        """
+        ...
+
+    @abstractmethod
+    async def get_recent_health_checks(
+        self, user_id: UUID, protocol: Optional[str] = None, limit: int = 10
+    ) -> List[LendingHealthCheck]:
+        """
+        Get recent health checks for a user.
+
+        Args:
+            user_id: User UUID
+            protocol: Optional protocol filter ('aave' or 'morpho')
+            limit: Maximum number of checks to return (default: 10)
+
+        Returns:
+            List of LendingHealthCheck entities, ordered by checked_at DESC
+
+        Raises:
+            RepositoryError: If query fails
+        """
+        ...
+
+    # =========================================================================
+    # LEVERAGE LOOP EXECUTIONS
+    # =========================================================================
+
+    @abstractmethod
+    async def save_loop_execution(self, execution: LeverageLoopExecution) -> None:
+        """
+        Save a leverage loop execution.
+
+        Args:
+            execution: LeverageLoopExecution entity to persist
+
+        Raises:
+            RepositoryError: If save operation fails
+        """
+        ...
+
+    @abstractmethod
+    async def get_loop_execution(
+        self, loop_id: UUID
+    ) -> Optional[LeverageLoopExecution]:
+        """
+        Get a leverage loop execution by ID.
+
+        Args:
+            loop_id: Loop execution UUID
+
+        Returns:
+            LeverageLoopExecution if found, None otherwise
+
+        Raises:
+            RepositoryError: If query fails
+        """
+        ...
+
+    @abstractmethod
+    async def update_loop_execution(self, execution: LeverageLoopExecution) -> None:
+        """
+        Update a leverage loop execution (progress, status, results).
+
+        Args:
+            execution: LeverageLoopExecution entity with updated data
+
+        Raises:
+            RepositoryError: If update fails
+        """
+        ...
+
+    @abstractmethod
+    async def get_user_loop_executions(
+        self,
+        user_id: UUID,
+        status: Optional[str] = None,
+        limit: int = 20,
+    ) -> List[LeverageLoopExecution]:
+        """
+        Get leverage loop executions for a user.
+
+        Args:
+            user_id: User UUID
+            status: Optional status filter
+            limit: Maximum number of executions to return
+
+        Returns:
+            List of LeverageLoopExecution entities, ordered by created_at DESC
+
+        Raises:
+            RepositoryError: If query fails
+        """
+        ...
+
+    # =========================================================================
+    # ALERTS
+    # =========================================================================
+
+    @abstractmethod
+    async def create_alert(self, alert: LendingAlert) -> None:
+        """
+        Create a lending alert.
+
+        Args:
+            alert: LendingAlert entity to persist
+
+        Raises:
+            RepositoryError: If save operation fails
+        """
+        ...
+
+    @abstractmethod
+    async def get_unread_alerts(
+        self, user_id: UUID, severity: Optional[str] = None
+    ) -> List[LendingAlert]:
+        """
+        Get unread alerts for a user.
+
+        Args:
+            user_id: User UUID
+            severity: Optional severity filter ('info', 'warning', 'critical')
+
+        Returns:
+            List of unread LendingAlert entities, ordered by created_at DESC
+
+        Raises:
+            RepositoryError: If query fails
+        """
+        ...
+
+    @abstractmethod
+    async def mark_alert_as_read(self, alert_id: UUID) -> None:
+        """
+        Mark an alert as read.
+
+        Args:
+            alert_id: Alert UUID
+
+        Raises:
+            RepositoryError: If update fails
+        """
+        ...
+
+    @abstractmethod
+    async def get_user_alerts(
+        self,
+        user_id: UUID,
+        include_read: bool = False,
+        limit: int = 50,
+    ) -> List[LendingAlert]:
+        """
+        Get alerts for a user.
+
+        Args:
+            user_id: User UUID
+            include_read: Include read alerts (default: False)
+            limit: Maximum number of alerts to return
+
+        Returns:
+            List of LendingAlert entities, ordered by created_at DESC
+
+        Raises:
+            RepositoryError: If query fails
         """
         ...

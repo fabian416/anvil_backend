@@ -58,6 +58,10 @@ from app.infrastructure.persistence_sqla.mappings.lending_position_mapping impor
 from app.infrastructure.persistence_sqla.mappings.lending_supply_mapping import map_lending_supplies_table
 from app.infrastructure.persistence_sqla.mappings.lending_borrow_mapping import map_lending_borrows_table
 from app.infrastructure.persistence_sqla.mappings.lending_transaction_mapping import map_lending_transactions_table
+from app.infrastructure.persistence_sqla.mappings.user_lending_preferences_mapping import map_user_lending_preferences_table
+from app.infrastructure.persistence_sqla.mappings.lending_health_check_mapping import map_lending_health_checks_table
+from app.infrastructure.persistence_sqla.mappings.leverage_loop_execution_mapping import map_leverage_loop_executions_table
+from app.infrastructure.persistence_sqla.mappings.lending_alert_mapping import map_lending_alerts_table
 
 
 def map_tables() -> None:
@@ -103,3 +107,7 @@ def map_tables() -> None:
     map_lending_supplies_table()
     map_lending_borrows_table()
     map_lending_transactions_table()
+    map_user_lending_preferences_table()
+    map_lending_health_checks_table()
+    map_leverage_loop_executions_table()
+    map_lending_alerts_table()

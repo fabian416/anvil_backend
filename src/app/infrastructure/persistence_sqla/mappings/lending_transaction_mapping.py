@@ -96,7 +96,7 @@ def map_lending_transactions_table() -> None:
         )
         health_factor_before = mapped_column(Numeric(10, 2), nullable=True)
         health_factor_after = mapped_column(Numeric(10, 2), nullable=True)
-        metadata = mapped_column(JSONB, nullable=True)
+        metadata_ = mapped_column("metadata", JSONB, nullable=True)
         created_at = mapped_column(
             DateTime(timezone=True),
             nullable=False,
