@@ -116,23 +116,6 @@ class TestHyperliquidToolHandlers:
         assert len(result["markets"]) == 1
         assert result["markets"][0]["symbol"] == "ETH"
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_get_markets_handler",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide market sentiment analysis for ETH. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
-                ),
-                additional_context={'test_category': 'sentiment_query', 'token': 'ETH'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -159,22 +142,5 @@ class TestHyperliquidToolHandlers:
 
         assert "liquidation_price" in result
         assert "distance" in result
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_calculate_liquidation_price_handler",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
-                ),
-                additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
 
         assert result["side"] == "long"
