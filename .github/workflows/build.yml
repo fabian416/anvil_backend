@@ -171,20 +171,46 @@ jobs:
             org.opencontainers.image.service=${{ matrix.service }}
 
       - name: Build and Push - ${{ matrix.service }}
-        uses: docker/build-push-action@v5
         timeout-minutes: 30
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          push: ${{ github.event_name == 'push' }}
-          no-cache: true
-          provenance: false
-          sbom: false
-          build-args: |
-            APP_ENV=${{ env.IMAGE_VERSION }}
-            ${{ matrix.build_args }}
+        run: |
+          echo "=========================================="
+          echo "Building ${{ matrix.service }}..."
+          echo "=========================================="
+          
+          # Check disk space
+          echo "Disk space before build:"
+          df -h
+          
+          # Check buildx version
+          echo "Docker buildx version:"
+          docker buildx version
+          
+          # Parse tags from metadata
+          TAGS="${{ steps.meta.outputs.tags }}"
+          TAG_ARGS=""
+          for tag in $TAGS; do
+            TAG_ARGS="$TAG_ARGS --tag $tag"
+          done
+          
+          echo "Tags to apply: $TAG_ARGS"
+          
+          # Build the image with explicit output
+          docker buildx build \
+            --file ${{ matrix.dockerfile }} \
+            --build-arg APP_ENV=${{ env.IMAGE_VERSION }} \
+            ${{ matrix.build_args && format('--build-arg {0}', matrix.build_args) || '' }} \
+            $TAG_ARGS \
+            --label org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }} \
+            --label org.opencontainers.image.service=${{ matrix.service }} \
+            --platform linux/amd64 \
+            --progress=plain \
+            --output type=image,push=${{ github.event_name == 'push' }} \
+            .
+          
+          echo "Disk space after build:"
+          df -h
+          
+          echo "✅ ${{ matrix.service }} completed successfully"
 
   build-summary:
     needs: build
