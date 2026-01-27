@@ -7,12 +7,24 @@ on:
       - main
       - staging
       - infra
+    paths:
+      - 'src/**'
+      - 'docker/**'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - '.github/workflows/build.yml'
   pull_request:
     branches:
       - master
       - main
       - staging
       - infra
+  workflow_dispatch:
+    inputs:
+      build_all:
+        description: 'Build all services (yes/no)'
+        required: false
+        default: 'yes'
 
 env:
   REGISTRY: ghcr.io
@@ -28,7 +40,7 @@ jobs:
     
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 5
       matrix:
         include:
           # Core Services (3)
