@@ -20,13 +20,20 @@ COPY src/ src/
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN uv pip install --no-cache-dir . && \
+    find /opt/venv -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
+    find /opt/venv -name "*.pyc" -delete && \
+    find /opt/venv -name "*.pyo" -delete && \
     find /opt/venv -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
     find /opt/venv -type d -name "test" -exec rm -rf {} + 2>/dev/null || true && \
     find /opt/venv -type d -name "docs" -exec rm -rf {} + 2>/dev/null || true && \
     find /opt/venv -type d -name "examples" -exec rm -rf {} + 2>/dev/null || true && \
-    find /opt/venv -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
-    find /opt/venv -name "*.pyc" -delete && \
-    find /opt/venv -name "*.pyo" -delete
+    find /opt/venv -type f -name "*.md" -delete && \
+    find /opt/venv -type f -name "*.rst" -delete && \
+    find /opt/venv -type f -name "*.txt" ! -name "top_level.txt" -delete && \
+    find /opt/venv -type f -name "*.c" -delete && \
+    find /opt/venv -type f -name "*.h" -delete && \
+    find /opt/venv -type f -name "*.pyx" -delete && \
+    find /opt/venv -type f -name "*.pxd" -delete
 
 # =====================================
 # STAGE 2: RUNTIME
