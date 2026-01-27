@@ -54,6 +54,10 @@ from app.infrastructure.persistence_sqla.mappings.guest import map_guest_tables
 from app.infrastructure.persistence_sqla.mappings.chat_unified import map_unified_chat_tables
 from app.infrastructure.persistence_sqla.mappings.moonpay import map_moonpay_customer_tokens_table
 from app.infrastructure.persistence_sqla.mappings.user_context import map_user_context_aware_table
+from app.infrastructure.persistence_sqla.mappings.lending_position_mapping import map_lending_positions_table
+from app.infrastructure.persistence_sqla.mappings.lending_supply_mapping import map_lending_supplies_table
+from app.infrastructure.persistence_sqla.mappings.lending_borrow_mapping import map_lending_borrows_table
+from app.infrastructure.persistence_sqla.mappings.lending_transaction_mapping import map_lending_transactions_table
 
 
 def map_tables() -> None:
@@ -94,3 +98,8 @@ def map_tables() -> None:
     map_moonpay_customer_tokens_table()
     # User Context Aware (context-aware agent responses)
     map_user_context_aware_table()
+    # Lending Tables (Aave & Morpho)
+    map_lending_positions_table()
+    map_lending_supplies_table()
+    map_lending_borrows_table()
+    map_lending_transactions_table()
