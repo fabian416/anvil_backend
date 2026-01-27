@@ -29,7 +29,8 @@ on:
 env:
   REGISTRY: ghcr.io
   REGISTRY_USERNAME: ${{ github.actor }}
-  IMAGE_VERSION: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging' || 'development' }}
+  # Extract branch name: refs/heads/infra -> infra
+  IMAGE_VERSION: ${{ github.ref_name }}
 
 jobs:
   build:
@@ -172,8 +173,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image_name }}
           tags: |
-            type=raw,value=${{ env.IMAGE_VERSION }}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ github.ref_name }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
             type=sha,format=short,prefix=sha-
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
