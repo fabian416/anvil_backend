@@ -50,10 +50,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-options: |
-            image=moby/buildkit:latest
-            network=host
 
       - name: Login to GitHub Container Registry
         if: github.event_name == 'push'
@@ -86,6 +82,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
           build-args: |
             APP_ENV=${{ env.IMAGE_VERSION }}
             ${{ matrix.build_args }}
@@ -149,10 +147,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-options: |
-            image=moby/buildkit:latest
-            network=host
 
       - name: Login to GitHub Container Registry
         if: github.event_name == 'push'
@@ -185,6 +179,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
           build-args: |
             APP_ENV=${{ env.IMAGE_VERSION }}
             ${{ matrix.build_args }}
@@ -262,10 +258,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-options: |
-            image=moby/buildkit:latest
-            network=host
 
       - name: Login to GitHub Container Registry
         if: github.event_name == 'push'
@@ -298,6 +290,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
           build-args: |
             APP_ENV=${{ env.IMAGE_VERSION }}
             ${{ matrix.build_args }}
