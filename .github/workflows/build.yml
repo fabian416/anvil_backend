@@ -28,7 +28,7 @@ jobs:
     
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 3
       matrix:
         include:
           # Core Services (3)
@@ -172,14 +172,14 @@ jobs:
 
       - name: Build and Push - ${{ matrix.service }}
         uses: docker/build-push-action@v5
+        timeout-minutes: 30
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           push: ${{ github.event_name == 'push' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
+          no-cache: true
           provenance: false
           sbom: false
           build-args: |
