@@ -69,5 +69,75 @@
     "borrow results in HF < 1.2",
     "withdraw results in HF < 1.3",
     "contract address not verified"
-  ]
+  ],
+  "knowledge_injection": {
+    "protocol_comparison": "anvil_knowledge/features/lending_protocols.json",
+    "risk_classification": "anvil_knowledge/features/lending_risk.json"
+  },
+  "multi_language_support": {
+    "enabled": true,
+    "supported_languages": ["en", "es", "pt", "zh"],
+    "patterns": {
+      "en": {
+        "supply": ["supply", "deposit", "lend", "provide"],
+        "borrow": ["borrow", "take loan", "get loan"],
+        "repay": ["repay", "pay back", "return"],
+        "withdraw": ["withdraw", "remove", "take out"],
+        "confirm": ["confirm", "yes", "proceed", "execute"]
+      },
+      "es": {
+        "supply": ["suministrar", "depositar", "prestar", "proporcionar"],
+        "borrow": ["pedir prestado", "obtener prestamo", "tomar prestamo"],
+        "repay": ["pagar", "devolver", "reembolsar"],
+        "withdraw": ["retirar", "sacar", "remover"],
+        "confirm": ["confirmar", "si", "proceder", "ejecutar"]
+      },
+      "pt": {
+        "supply": ["fornecer", "depositar", "emprestar", "providenciar"],
+        "borrow": ["pegar emprestado", "obter emprestimo", "tomar emprestimo"],
+        "repay": ["pagar", "devolver", "reembolsar"],
+        "withdraw": ["retirar", "sacar", "remover"],
+        "confirm": ["confirmar", "sim", "prosseguir", "executar"]
+      },
+      "zh": {
+        "supply": ["供应", "存款", "借出", "提供"],
+        "borrow": ["借入", "贷款", "借款"],
+        "repay": ["还款", "偿还", "归还"],
+        "withdraw": ["提款", "取出", "撤回"],
+        "confirm": ["确认", "是", "继续", "执行"]
+      }
+    },
+    "response_templates": {
+      "transaction_preview": {
+        "en": "TRANSACTION PREVIEW",
+        "es": "VISTA PREVIA DE TRANSACCION",
+        "pt": "PREVIA DA TRANSACAO",
+        "zh": "交易预览"
+      },
+      "insufficient_balance": {
+        "en": "INSUFFICIENT BALANCE",
+        "es": "SALDO INSUFICIENTE",
+        "pt": "SALDO INSUFICIENTE",
+        "zh": "余额不足"
+      },
+      "transaction_executed": {
+        "en": "TRANSACTION EXECUTED",
+        "es": "TRANSACCION EJECUTADA",
+        "pt": "TRANSACAO EXECUTADA",
+        "zh": "交易已执行"
+      },
+      "confirm_prompt": {
+        "en": "Reply 'confirm' to proceed to wallet signing, or 'cancel' to abort.",
+        "es": "Responda 'confirmar' para proceder a la firma de billetera, o 'cancelar' para abortar.",
+        "pt": "Responda 'confirmar' para prosseguir com a assinatura da carteira, ou 'cancelar' para abortar.",
+        "zh": "回复'确认'继续钱包签名，或'取消'中止。"
+      },
+      "wallet_signature_required": {
+        "en": "This action requires your wallet signature. No funds will be moved without your explicit approval.",
+        "es": "Esta accion requiere la firma de su billetera. No se moveran fondos sin su aprobacion explicita.",
+        "pt": "Esta acao requer a assinatura da sua carteira. Nenhum fundo sera movido sem sua aprovacao explicita.",
+        "zh": "此操作需要您的钱包签名。未经您的明确批准，不会移动任何资金。"
+      }
+    }
+  }
 }

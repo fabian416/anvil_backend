@@ -80,5 +80,65 @@
     "Leverage requested with risk_tolerance = 'low'",
     "Single position exceeds risk_tolerance limits",
     "Insufficient balance for all execution steps"
-  ]
+  ],
+  "knowledge_injection": {
+    "protocol_comparison": "anvil_knowledge/features/lending_protocols.json",
+    "risk_classification": "anvil_knowledge/features/lending_risk.json"
+  },
+  "multi_language_support": {
+    "enabled": true,
+    "supported_languages": ["en", "es", "pt", "zh"],
+    "patterns": {
+      "en": {
+        "optimize": ["optimize", "maximize", "best yield", "best return"],
+        "leverage": ["leverage", "loop", "multiply", "amplify"],
+        "arbitrage": ["arbitrage", "arb", "price difference", "cross-protocol"],
+        "rebalance": ["rebalance", "adjust", "redistribute"]
+      },
+      "es": {
+        "optimize": ["optimizar", "maximizar", "mejor rendimiento", "mejor retorno"],
+        "leverage": ["apalancamiento", "multiplicar", "amplificar"],
+        "arbitrage": ["arbitraje", "diferencia de precio", "cross-protocolo"],
+        "rebalance": ["rebalancear", "ajustar", "redistribuir"]
+      },
+      "pt": {
+        "optimize": ["otimizar", "maximizar", "melhor rendimento", "melhor retorno"],
+        "leverage": ["alavancagem", "multiplicar", "amplificar"],
+        "arbitrage": ["arbitragem", "diferenca de preco", "cross-protocolo"],
+        "rebalance": ["rebalancear", "ajustar", "redistribuir"]
+      },
+      "zh": {
+        "optimize": ["优化", "最大化", "最佳收益", "最佳回报"],
+        "leverage": ["杠杆", "循环", "放大"],
+        "arbitrage": ["套利", "价差", "跨协议"],
+        "rebalance": ["重新平衡", "调整", "重新分配"]
+      }
+    },
+    "response_templates": {
+      "optimization_analysis": {
+        "en": "YIELD OPTIMIZATION ANALYSIS",
+        "es": "ANALISIS DE OPTIMIZACION DE RENDIMIENTO",
+        "pt": "ANALISE DE OTIMIZACAO DE RENDIMENTO",
+        "zh": "收益优化分析"
+      },
+      "leverage_warning": {
+        "en": "WARNING: Leverage amplifies both gains AND losses. Your position can be liquidated if collateral value drops.",
+        "es": "ADVERTENCIA: El apalancamiento amplifica tanto las ganancias COMO las perdidas. Su posicion puede ser liquidada si el valor del colateral cae.",
+        "pt": "AVISO: A alavancagem amplifica tanto os ganhos QUANTO as perdas. Sua posicao pode ser liquidada se o valor do colateral cair.",
+        "zh": "警告：杠杆会放大收益和损失。如果抵押品价值下跌，您的仓位可能会被清算。"
+      },
+      "multiple_signatures_warning": {
+        "en": "This strategy requires MULTIPLE SEPARATE wallet signatures (one per iteration). Each step needs your approval.",
+        "es": "Esta estrategia requiere MULTIPLES firmas de billetera SEPARADAS (una por iteracion). Cada paso necesita su aprobacion.",
+        "pt": "Esta estrategia requer MULTIPLAS assinaturas de carteira SEPARADAS (uma por iteracao). Cada passo precisa da sua aprovacao.",
+        "zh": "此策略需要多个单独的钱包签名（每次迭代一个）。每个步骤都需要您的批准。"
+      },
+      "execution_plan": {
+        "en": "EXECUTION PLAN",
+        "es": "PLAN DE EJECUCION",
+        "pt": "PLANO DE EXECUCAO",
+        "zh": "执行计划"
+      }
+    }
+  }
 }

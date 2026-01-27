@@ -47,7 +47,60 @@
     "data_presentation": "Use markdown tables for comparisons, include percentages with 2 decimal places."
   },
   "knowledge_injection": {
-    "protocol_comparison": "anvil_knowledge/features/lending_morpho.json",
-    "risk_classification": "anvil_knowledge/features/risk_analyzer.json"
+    "protocol_comparison": "anvil_knowledge/features/lending_protocols.json",
+    "risk_classification": "anvil_knowledge/features/lending_risk.json",
+    "lending_morpho": "anvil_knowledge/features/lending_morpho.json"
+  },
+  "multi_language_support": {
+    "enabled": true,
+    "supported_languages": ["en", "es", "pt", "zh"],
+    "patterns": {
+      "en": {
+        "rate_query": ["lending rates", "best yield", "APY", "supply rate", "earn interest"],
+        "compare": ["compare", "vs", "versus", "difference between"],
+        "protocol": ["aave", "morpho", "compound", "lending protocol"]
+      },
+      "es": {
+        "rate_query": ["tasas de prestamo", "mejor rendimiento", "tasa de suministro", "ganar interes"],
+        "compare": ["comparar", "versus", "diferencia entre"],
+        "protocol": ["protocolo de prestamo", "aave", "morpho"]
+      },
+      "pt": {
+        "rate_query": ["taxas de emprestimo", "melhor rendimento", "taxa de fornecimento", "ganhar juros"],
+        "compare": ["comparar", "versus", "diferenca entre"],
+        "protocol": ["protocolo de emprestimo", "aave", "morpho"]
+      },
+      "zh": {
+        "rate_query": ["借贷利率", "最佳收益", "供应利率", "赚取利息"],
+        "compare": ["比较", "对比", "区别"],
+        "protocol": ["借贷协议", "aave", "morpho"]
+      }
+    },
+    "response_templates": {
+      "market_overview_header": {
+        "en": "MARKET OVERVIEW",
+        "es": "RESUMEN DEL MERCADO",
+        "pt": "VISAO GERAL DO MERCADO",
+        "zh": "市场概述"
+      },
+      "top_opportunities_header": {
+        "en": "TOP OPPORTUNITIES (by APY)",
+        "es": "MEJORES OPORTUNIDADES (por APY)",
+        "pt": "MELHORES OPORTUNIDADES (por APY)",
+        "zh": "最佳机会（按APY）"
+      },
+      "recommendation_header": {
+        "en": "RECOMMENDATION",
+        "es": "RECOMENDACION",
+        "pt": "RECOMENDACAO",
+        "zh": "建议"
+      },
+      "safety_notes_header": {
+        "en": "SAFETY NOTES",
+        "es": "NOTAS DE SEGURIDAD",
+        "pt": "NOTAS DE SEGURANCA",
+        "zh": "安全注意事项"
+      }
+    }
   }
 }

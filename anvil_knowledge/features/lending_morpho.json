@@ -312,8 +312,154 @@
   "important_notes": [
     "**CRITICAL: Anvil supports LENDING (supply assets to earn yield) only, NOT borrowing.**",
     "When discussing lending, always use terms like 'supply assets', 'lend assets', 'deposit assets' - NOT 'borrow' or 'take a loan'.",
-    "In Spanish: Use 'suministro de activos' or 'depositar activos' - NOT 'préstamos' (which means borrowing).",
+    "In Spanish: Use 'suministro de activos' or 'depositar activos' - NOT 'prestamos' (which means borrowing).",
     "Yield is automatically compounded in Morpho vaults.",
     "Users can withdraw assets when needed."
-  ]
+  ],
+
+  "multi_language_terminology": {
+    "description": "Critical: Use correct terminology per language to avoid confusion between lending and borrowing",
+    "terminology_warning": {
+      "critical_note": "LENDING means supplying assets to EARN yield. BORROWING means taking a loan AGAINST collateral. These are OPPOSITE operations.",
+      "common_confusion": "In some languages, 'lending' and 'borrowing' can be confused. Always verify context.",
+      "anvil_support": "Anvil supports BOTH lending (supply to earn) AND borrowing (take loan) via Aave and Morpho"
+    },
+    "terms": {
+      "en": {
+        "supply": "Supply",
+        "supply_description": "Deposit assets to earn yield",
+        "deposit": "Deposit",
+        "lend": "Lend",
+        "earn_yield": "Earn yield",
+        "borrow": "Borrow",
+        "borrow_description": "Take a loan against collateral",
+        "take_loan": "Take a loan",
+        "collateral": "Collateral",
+        "debt": "Debt",
+        "repay": "Repay",
+        "repay_description": "Pay back borrowed amount",
+        "withdraw": "Withdraw",
+        "withdraw_description": "Remove supplied assets",
+        "health_factor": "Health Factor",
+        "liquidation": "Liquidation",
+        "apy": "APY (Annual Percentage Yield)",
+        "ltv": "LTV (Loan-to-Value)",
+        "vault": "Vault",
+        "pool": "Pool"
+      },
+      "es": {
+        "supply": "Suministrar",
+        "supply_description": "Depositar activos para ganar rendimiento",
+        "deposit": "Depositar",
+        "lend": "Prestar (dar prestamo)",
+        "earn_yield": "Ganar rendimiento",
+        "borrow": "Pedir prestado",
+        "borrow_description": "Tomar un prestamo contra colateral",
+        "take_loan": "Tomar un prestamo",
+        "collateral": "Colateral",
+        "debt": "Deuda",
+        "repay": "Pagar",
+        "repay_description": "Devolver la cantidad prestada",
+        "withdraw": "Retirar",
+        "withdraw_description": "Remover activos suministrados",
+        "health_factor": "Factor de Salud",
+        "liquidation": "Liquidacion",
+        "apy": "APY (Rendimiento Porcentual Anual)",
+        "ltv": "LTV (Prestamo sobre Valor)",
+        "vault": "Boveda",
+        "pool": "Pool",
+        "warning": "IMPORTANTE: 'Prestar' significa DAR un prestamo (supply/lend). 'Pedir prestado' significa TOMAR un prestamo (borrow)."
+      },
+      "pt": {
+        "supply": "Fornecer",
+        "supply_description": "Depositar ativos para ganhar rendimento",
+        "deposit": "Depositar",
+        "lend": "Emprestar (dar emprestimo)",
+        "earn_yield": "Ganhar rendimento",
+        "borrow": "Pegar emprestado",
+        "borrow_description": "Tomar um emprestimo contra colateral",
+        "take_loan": "Tomar um emprestimo",
+        "collateral": "Colateral",
+        "debt": "Divida",
+        "repay": "Pagar",
+        "repay_description": "Devolver o valor emprestado",
+        "withdraw": "Retirar",
+        "withdraw_description": "Remover ativos fornecidos",
+        "health_factor": "Fator de Saude",
+        "liquidation": "Liquidacao",
+        "apy": "APY (Rendimento Percentual Anual)",
+        "ltv": "LTV (Emprestimo sobre Valor)",
+        "vault": "Cofre",
+        "pool": "Pool",
+        "warning": "IMPORTANTE: 'Emprestar' significa DAR um emprestimo (supply/lend). 'Pegar emprestado' significa TOMAR um emprestimo (borrow)."
+      },
+      "zh": {
+        "supply": "供应",
+        "supply_description": "存入资产以赚取收益",
+        "deposit": "存款",
+        "lend": "借出",
+        "earn_yield": "赚取收益",
+        "borrow": "借入",
+        "borrow_description": "以抵押品为担保获得贷款",
+        "take_loan": "获得贷款",
+        "collateral": "抵押品",
+        "debt": "债务",
+        "repay": "还款",
+        "repay_description": "偿还借入的金额",
+        "withdraw": "提款",
+        "withdraw_description": "移除供应的资产",
+        "health_factor": "健康因子",
+        "liquidation": "清算",
+        "apy": "年化收益率",
+        "ltv": "贷款价值比",
+        "vault": "金库",
+        "pool": "池",
+        "warning": "重要：'借出'意味着给予贷款（supply/lend）。'借入'意味着获得贷款（borrow）。"
+      }
+    },
+    "action_verbs": {
+      "description": "Common action verbs for lending operations",
+      "en": {
+        "supply_actions": ["supply", "deposit", "lend", "provide", "stake"],
+        "borrow_actions": ["borrow", "take loan", "get loan", "leverage"],
+        "repay_actions": ["repay", "pay back", "return", "settle"],
+        "withdraw_actions": ["withdraw", "remove", "take out", "unstake"]
+      },
+      "es": {
+        "supply_actions": ["suministrar", "depositar", "prestar", "proporcionar"],
+        "borrow_actions": ["pedir prestado", "tomar prestamo", "obtener prestamo", "apalancamiento"],
+        "repay_actions": ["pagar", "devolver", "reembolsar", "liquidar"],
+        "withdraw_actions": ["retirar", "sacar", "remover"]
+      },
+      "pt": {
+        "supply_actions": ["fornecer", "depositar", "emprestar", "providenciar"],
+        "borrow_actions": ["pegar emprestado", "tomar emprestimo", "obter emprestimo", "alavancagem"],
+        "repay_actions": ["pagar", "devolver", "reembolsar", "quitar"],
+        "withdraw_actions": ["retirar", "sacar", "remover"]
+      },
+      "zh": {
+        "supply_actions": ["供应", "存款", "借出", "提供", "质押"],
+        "borrow_actions": ["借入", "贷款", "借款", "杠杆"],
+        "repay_actions": ["还款", "偿还", "归还", "清偿"],
+        "withdraw_actions": ["提款", "取出", "撤回", "解除质押"]
+      }
+    }
+  },
+
+  "agent_terminology_instructions": {
+    "description": "Instructions for agents on proper terminology usage",
+    "rules": [
+      "ALWAYS clarify whether user wants to SUPPLY (earn yield) or BORROW (take loan)",
+      "When user says 'lend', confirm: 'Do you want to SUPPLY assets to earn yield, or BORROW assets against collateral?'",
+      "Use explicit terminology: 'Supply to earn X% APY' vs 'Borrow against your collateral'",
+      "In multi-language contexts, use the language-specific correct terms from multi_language_terminology",
+      "Never assume intent - always confirm for first-time users"
+    ],
+    "disambiguation_prompt": {
+      "en": "I want to make sure I understand correctly. Do you want to:\n1. SUPPLY assets to earn yield (deposit to earn APY)\n2. BORROW assets against collateral (take a loan)\n\nPlease reply 1 or 2.",
+      "es": "Quiero asegurarme de entender correctamente. Quieres:\n1. SUMINISTRAR activos para ganar rendimiento (depositar para ganar APY)\n2. PEDIR PRESTADO activos contra colateral (tomar un prestamo)\n\nPor favor responde 1 o 2.",
+      "pt": "Quero ter certeza de que entendi corretamente. Voce quer:\n1. FORNECER ativos para ganhar rendimento (depositar para ganhar APY)\n2. PEGAR EMPRESTADO ativos contra colateral (tomar um emprestimo)\n\nPor favor responda 1 ou 2.",
+      "zh": "我想确保我理解正确。你想要：\n1. 供应资产以赚取收益（存款赚取APY）\n2. 借入资产作为抵押（获得贷款）\n\n请回复1或2。"
+    }
+  }
 }

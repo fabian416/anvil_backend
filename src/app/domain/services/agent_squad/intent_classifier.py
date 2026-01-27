@@ -119,6 +119,13 @@ class IntentClassifier:
         "cross_chain": AgentType.BRIDGE_CROSSCHAIN,
         "borrow_assets": AgentType.LENDING_BORROWING,
         "leverage_position": AgentType.LENDING_BORROWING,
+
+        # Lending workflow intents
+        "check_lending_health": AgentType.LENDING_WORKFLOW,
+        "supply_assets": AgentType.LENDING_WORKFLOW,
+        "view_lending_positions": AgentType.LENDING_WORKFLOW,
+        "compare_lending_rates": AgentType.DEFI_YIELD,
+        "lending_yield": AgentType.DEFI_YIELD,
         "manage_nfts": AgentType.NFT_ASSET_MANAGER,
         "nft_valuation": AgentType.NFT_ASSET_MANAGER,
         "dao_voting": AgentType.DAO_GOVERNANCE,
@@ -285,10 +292,25 @@ Guidelines:
 - **Shortcuts** (e.g., "swap BTC to ETH", "show my portfolio", "lend USDC") → Use appropriate intent:
   * "swap BTC to ETH" → "swap_tokens"
   * "show my portfolio" → "optimize_portfolio"
-  * "lend USDC" → "find_yield"
+  * "lend USDC" → "supply_assets" (lending workflow)
+  * "supply ETH" → "supply_assets" (lending workflow)
+  * "deposit USDC" → "supply_assets" (lending workflow)
+  * "earn yield" → "supply_assets" (lending workflow)
   * "what's my balance?" → "check_balance" (authenticated wallet agent)
   * "show my wallets" → "wallet_info" (authenticated wallet agent)
   * "my transactions" → "transaction_history" (authenticated)
+- **Lending Operations** → Use lending-specific intents:
+  * "check my lending position" / "check health factor" → "check_lending_health"
+  * "supply ETH" / "deposit USDC" / "earn yield" → "supply_assets"
+  * "borrow USDC" / "take a loan" / "leverage" → "borrow_assets"
+  * "compare lending rates" / "best yield" → "compare_lending_rates"
+  * "show my lending positions" → "view_lending_positions"
+  * Spanish: "depositar ETH" / "suministrar USDC" → "supply_assets"
+  * Spanish: "pedir prestado" / "apalancamiento" → "borrow_assets"
+  * Portuguese: "depositar ETH" / "fornecer USDC" → "supply_assets"
+  * Portuguese: "pegar emprestado" / "alavancagem" → "borrow_assets"
+  * Chinese: "存款" / "供应" → "supply_assets"
+  * Chinese: "借入" / "杠杆" → "borrow_assets"
 - **Multi-step operations** → Use "general_chat" and let SupervisorCoordinator create workflow
 - Use "general_chat" for casual conversation or unclear intent
 - Use specific intent if message clearly matches (confidence >= 0.85)

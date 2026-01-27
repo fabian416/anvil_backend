@@ -61,5 +61,63 @@
     "withdraw_minimum_hf": 1.3,
     "recommended_hf_target": 1.8,
     "safe_hf_threshold": 2.0
+  },
+  "knowledge_injection": {
+    "risk_classification": "anvil_knowledge/features/lending_risk.json",
+    "protocol_comparison": "anvil_knowledge/features/lending_protocols.json"
+  },
+  "multi_language_support": {
+    "enabled": true,
+    "supported_languages": ["en", "es", "pt", "zh"],
+    "patterns": {
+      "en": {
+        "health_check": ["check health", "health factor", "liquidation risk", "position safety", "am I safe"],
+        "risk_query": ["risk", "danger", "liquidation", "safe", "unsafe"]
+      },
+      "es": {
+        "health_check": ["verificar salud", "factor de salud", "riesgo de liquidacion", "seguridad de posicion"],
+        "risk_query": ["riesgo", "peligro", "liquidacion", "seguro", "inseguro"]
+      },
+      "pt": {
+        "health_check": ["verificar saude", "fator de saude", "risco de liquidacao", "seguranca de posicao"],
+        "risk_query": ["risco", "perigo", "liquidacao", "seguro", "inseguro"]
+      },
+      "zh": {
+        "health_check": ["检查健康", "健康因子", "清算风险", "仓位安全"],
+        "risk_query": ["风险", "危险", "清算", "安全", "不安全"]
+      }
+    },
+    "response_templates": {
+      "position_status": {
+        "en": "POSITION STATUS",
+        "es": "ESTADO DE POSICION",
+        "pt": "STATUS DA POSICAO",
+        "zh": "仓位状态"
+      },
+      "health_factor": {
+        "en": "Health Factor",
+        "es": "Factor de Salud",
+        "pt": "Fator de Saude",
+        "zh": "健康因子"
+      },
+      "risk_assessment": {
+        "en": "Risk Assessment",
+        "es": "Evaluacion de Riesgo",
+        "pt": "Avaliacao de Risco",
+        "zh": "风险评估"
+      },
+      "recommended_actions": {
+        "en": "Recommended Actions",
+        "es": "Acciones Recomendadas",
+        "pt": "Acoes Recomendadas",
+        "zh": "建议操作"
+      },
+      "status_labels": {
+        "en": {"safe": "SAFE", "caution": "CAUTION", "danger": "DANGER", "critical": "CRITICAL", "liquidatable": "LIQUIDATABLE"},
+        "es": {"safe": "SEGURO", "caution": "PRECAUCION", "danger": "PELIGRO", "critical": "CRITICO", "liquidatable": "LIQUIDABLE"},
+        "pt": {"safe": "SEGURO", "caution": "CUIDADO", "danger": "PERIGO", "critical": "CRITICO", "liquidatable": "LIQUIDAVEL"},
+        "zh": {"safe": "安全", "caution": "注意", "danger": "危险", "critical": "紧急", "liquidatable": "可清算"}
+      }
+    }
   }
 }
