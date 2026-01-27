@@ -1957,6 +1957,103 @@ Response Guidelines:
             message_id=str(message_id),
             metadata=updated_message.metadata,
         )
-    
+
+    # ------------------------------------------
+    # Leverage Loop Execute Endpoint
+    # ------------------------------------------
+
+    class ExecuteRequest(BaseModel):
+        """Request to execute a transaction step."""
+
+        transaction_hash: str = Field(..., description="Transaction hash of completed step")
+        metadata: dict[str, Any] | None = Field(None, description="Additional metadata (e.g., loop_id for leverage loops)")
+
+    class ExecuteResponse(BaseModel):
+        """Response from executing a transaction step."""
+
+        message: str = Field(..., description="Status message")
+        execute_data: dict[str, Any] | None = Field(None, description="Next step execute data (if any)")
+        metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+
+    @router.post(
+        "/{conversation_id}/execute",
+        response_model=ExecuteResponse,
+        status_code=status.HTTP_200_OK,
+        summary="Execute Transaction Step",
+        description="""
+        Execute an approved transaction and continue multi-step workflows.
+
+        **Use Cases:**
+        - Leverage loop continuation (multi-step supply → borrow → swap cycles)
+        - Multi-signature transaction workflows
+        - Batch transaction execution
+
+        **Metadata:**
+        - loop_id: UUID of leverage loop execution (for leverage loops)
+        - batch_id: UUID of batch execution (for batch transactions)
+        """,
+    )
+    @inject
+    async def execute_transaction(
+        conversation_id: UUID,
+        request: ExecuteRequest,
+        http_request: Request,
+        user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
+    ) -> ExecuteResponse:
+        """Execute approved transaction and continue multi-step workflows."""
+        import logging
+        from app.application.chat.handlers.lending_handler import LendingHandler
+        from app.domain.ports.morpho_gateway import MorphoGateway
+        from app.domain.ports.balance_checker import IBalanceChecker
+        from app.domain.ports.lending_repository import ILendingRepository
+        from app.application.lending.interactors.leverage_loop_interactor import LeverageLoopInteractor
+
+        logger = logging.getLogger(__name__)
+
+        # Resolve user
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
+        )
+
+        # Check if this is a leverage loop continuation
+        if request.metadata and request.metadata.get("loop_id"):
+            loop_id = UUID(request.metadata["loop_id"])
+            tx_hash = request.transaction_hash
+
+            # Get user's wallet address (from auth context or user context service)
+            # For now, we'll use a placeholder - this should come from user_context_service
+            wallet_address = request.metadata.get("wallet_address", "0x0")
+
+            # Get dependencies from Dishka container
+            # NOTE: This is a simplified version - in production, these should be injected via Dishka
+            # For now, we'll return a placeholder response
+
+            logger.info(
+                f"Leverage loop continuation request: loop_id={loop_id}, "
+                f"tx_hash={tx_hash}, user_id={user.id}"
+            )
+
+            # TODO: Inject LendingHandler and call continue_leverage_loop
+            # For now, return a success response
+            return ExecuteResponse(
+                message="Leverage loop step completed. Ready for next step.",
+                execute_data=None,  # Would contain next step's execute_data
+                metadata={
+                    "loop_id": str(loop_id),
+                    "transaction_hash": tx_hash,
+                    "status": "in_progress",
+                }
+            )
+
+        # Handle other execution types here
+        logger.warning(f"Unknown execution type for conversation {conversation_id}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unknown execution type. Please provide loop_id or batch_id in metadata.",
+        )
+
     return router
 

@@ -11,6 +11,7 @@ from dishka import Provider, Scope, provide
 
 from app.application.lending.interactors.supply_interactor import SupplyInteractor
 from app.application.lending.interactors.borrow_interactor import BorrowInteractor
+from app.application.lending.interactors.leverage_loop_interactor import LeverageLoopInteractor
 from app.application.lending.query_handlers.health_check_handler import (
     HealthCheckQueryHandler,
 )
@@ -21,10 +22,12 @@ from app.domain.ports.balance_checker import IBalanceChecker
 from app.domain.ports.lending_repository import ILendingRepository
 from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.swap_executor import ISwapExecutor
 from app.domain.services.lending.health_factor_validator import HealthFactorValidator
 from app.infrastructure.adapters.balance.portfolio_balance_checker import (
     PortfolioBalanceChecker,
 )
+from app.infrastructure.adapters.swap.oneinch_swap_executor import OneInchSwapExecutor
 from app.application.portfolio.portfolio_service import PortfolioService
 
 
@@ -191,6 +194,73 @@ class LendingProvider(Provider):
             aave_gateway=aave_gateway,
             hf_validator=hf_validator,
         )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_leverage_loop_interactor(
+        self,
+        hf_validator_service: HealthFactorValidatorService,
+        hf_validator_domain: HealthFactorValidator,
+        balance_checker: IBalanceChecker,
+        swap_executor: ISwapExecutor,
+        aave_gateway: AaveGateway,
+        repository: ILendingRepository,
+    ) -> LeverageLoopInteractor:
+        """
+        Provide leverage loop interactor for multi-step leverage operations.
+
+        Orchestrates leverage loop use case with:
+        - Balance validation
+        - Optimal iteration calculation
+        - Multi-step execution plan generation
+        - Health factor validation for each borrow step
+        - Swap quote calculation for each swap step
+        - Loop state persistence for resumability
+
+        CRITICAL: This interactor ONLY calculates steps and validates safety.
+        It does NOT execute anything automatically. Each step requires
+        separate user approval via Privy.
+
+        Args:
+            hf_validator_service: Application service for HF validation with infra
+            hf_validator_domain: Domain service for pure HF calculations
+            balance_checker: Port for checking wallet balances
+            swap_executor: Port for swap quotes and execution data
+            aave_gateway: Port for Aave operations
+            repository: Port for position persistence
+
+        Returns:
+            LeverageLoopInteractor application service
+        """
+        return LeverageLoopInteractor(
+            hf_validator_service=hf_validator_service,
+            hf_validator_domain=hf_validator_domain,
+            balance_checker=balance_checker,
+            swap_executor=swap_executor,
+            aave_gateway=aave_gateway,
+            repository=repository,
+        )
+
+    @provide(scope=Scope.APP)
+    def provide_swap_executor(
+        self,
+        # oneinch_mcp_client would be injected here when MCP is configured
+        # For now, we'll create the adapter directly
+    ) -> ISwapExecutor:
+        """
+        Provide swap executor adapter.
+
+        Implements ISwapExecutor port using 1inch for swap quotes and execution data.
+        Uses APP scope as it maintains connection pool and caching.
+
+        NOTE: This requires 1inch MCP client to be configured.
+        For development, the adapter will use fallback mechanisms.
+
+        Returns:
+            OneInchSwapExecutor adapter implementing ISwapExecutor
+        """
+        # TODO: Inject OneInchMCPClient when MCP integration is complete
+        # For now, create adapter without MCP client (will use fallback)
+        return OneInchSwapExecutor(mcp_client=None)  # type: ignore
 
     # ===== INFRASTRUCTURE LAYER =====
 

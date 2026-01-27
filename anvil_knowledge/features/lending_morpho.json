@@ -461,5 +461,177 @@
       "pt": "Quero ter certeza de que entendi corretamente. Voce quer:\n1. FORNECER ativos para ganhar rendimento (depositar para ganhar APY)\n2. PEGAR EMPRESTADO ativos contra colateral (tomar um emprestimo)\n\nPor favor responda 1 ou 2.",
       "zh": "我想确保我理解正确。你想要：\n1. 供应资产以赚取收益（存款赚取APY）\n2. 借入资产作为抵押（获得贷款）\n\n请回复1或2。"
     }
+  },
+
+  "leverage_loop_translations": {
+    "description": "Multi-language translations for leverage loop operations",
+    "messages": {
+      "leverage_loop_plan_title": {
+        "en": "Leverage Loop Execution Plan",
+        "es": "Plan de Ejecución de Bucle de Apalancamiento",
+        "pt": "Plano de Execução de Loop de Alavancagem",
+        "zh": "杠杆循环执行计划"
+      },
+      "target_leverage": {
+        "en": "Target Leverage",
+        "es": "Apalancamiento Objetivo",
+        "pt": "Alavancagem Alvo",
+        "zh": "目标杠杆"
+      },
+      "actual_leverage": {
+        "en": "Actual Leverage",
+        "es": "Apalancamiento Real",
+        "pt": "Alavancagem Real",
+        "zh": "实际杠杆"
+      },
+      "total_steps": {
+        "en": "Total Steps",
+        "es": "Pasos Totales",
+        "pt": "Passos Totais",
+        "zh": "总步骤"
+      },
+      "final_health_factor": {
+        "en": "Final Health Factor",
+        "es": "Factor de Salud Final",
+        "pt": "Fator de Saúde Final",
+        "zh": "最终健康因子"
+      },
+      "estimated_apy": {
+        "en": "Estimated Net APY",
+        "es": "APY Neto Estimado",
+        "pt": "APY Líquido Estimado",
+        "zh": "预估净APY"
+      },
+      "estimated_cost": {
+        "en": "Estimated Cost",
+        "es": "Costo Estimado",
+        "pt": "Custo Estimado",
+        "zh": "预估成本"
+      },
+      "warning_title": {
+        "en": "WARNING",
+        "es": "ADVERTENCIA",
+        "pt": "AVISO",
+        "zh": "警告"
+      },
+      "signatures_required": {
+        "en": "This will require {count} separate wallet signatures",
+        "es": "Esto requerirá {count} firmas de billetera separadas",
+        "pt": "Isso exigirá {count} assinaturas de carteira separadas",
+        "zh": "这将需要{count}个单独的钱包签名"
+      },
+      "risk_warning": {
+        "en": "Leverage trading is high risk - you could be liquidated",
+        "es": "El trading con apalancamiento es de alto riesgo - podrías ser liquidado",
+        "pt": "Trading com alavancagem é de alto risco - você pode ser liquidado",
+        "zh": "杠杆交易是高风险的 - 您可能会被清算"
+      },
+      "continue_prompt": {
+        "en": "Reply 'yes' to start with step 1, or 'cancel' to abort",
+        "es": "Responde 'sí' para comenzar con el paso 1, o 'cancelar' para abortar",
+        "pt": "Responda 'sim' para começar com o passo 1, ou 'cancelar' para abortar",
+        "zh": "回复'是'以开始步骤1，或'取消'以中止"
+      },
+      "loop_completed": {
+        "en": "Loop completed! Achieved {leverage}x leverage with final health factor {hf}",
+        "es": "¡Bucle completado! Se logró apalancamiento de {leverage}x con factor de salud final {hf}",
+        "pt": "Loop concluído! Alavancagem de {leverage}x alcançada com fator de saúde final {hf}",
+        "zh": "循环完成！达到{leverage}x杠杆，最终健康因子{hf}"
+      },
+      "next_step": {
+        "en": "Step {step}/{total}: {action} - Ready to continue?",
+        "es": "Paso {step}/{total}: {action} - ¿Listo para continuar?",
+        "pt": "Passo {step}/{total}: {action} - Pronto para continuar?",
+        "zh": "步骤 {step}/{total}: {action} - 准备继续？"
+      }
+    },
+    "errors": {
+      "leverage_loop_unavailable": {
+        "en": "Leverage loop feature is not available",
+        "es": "La función de bucle de apalancamiento no está disponible",
+        "pt": "Recurso de loop de alavancagem não disponível",
+        "zh": "杠杆循环功能不可用"
+      },
+      "balance_checker_unavailable": {
+        "en": "Balance checker is not available",
+        "es": "El verificador de saldo no está disponible",
+        "pt": "Verificador de saldo não disponível",
+        "zh": "余额检查器不可用"
+      },
+      "insufficient_balance": {
+        "en": "Insufficient {asset} balance",
+        "es": "Saldo de {asset} insuficiente",
+        "pt": "Saldo de {asset} insuficiente",
+        "zh": "{asset} 余额不足"
+      },
+      "unsupported_leverage_asset": {
+        "en": "Asset {asset} is not supported for leverage loops. Supported: ETH, WETH, wstETH",
+        "es": "El activo {asset} no está soportado para bucles de apalancamiento. Soportados: ETH, WETH, wstETH",
+        "pt": "Ativo {asset} não é suportado para loops de alavancagem. Suportados: ETH, WETH, wstETH",
+        "zh": "资产 {asset} 不支持杠杆循环。支持的：ETH, WETH, wstETH"
+      },
+      "leverage_too_high": {
+        "en": "Leverage must be between 2.0x and {max}x",
+        "es": "El apalancamiento debe estar entre 2.0x y {max}x",
+        "pt": "Alavancagem deve estar entre 2.0x e {max}x",
+        "zh": "杠杆必须在 2.0x 和 {max}x 之间"
+      },
+      "leverage_exceeds_preference": {
+        "en": "Target leverage {target}x exceeds your maximum preference of {max}x",
+        "es": "El apalancamiento objetivo {target}x excede tu preferencia máxima de {max}x",
+        "pt": "Alavancagem alvo {target}x excede sua preferência máxima de {max}x",
+        "zh": "目标杠杆 {target}x 超过您的最大偏好 {max}x"
+      },
+      "loop_not_found": {
+        "en": "Leverage loop not found",
+        "es": "Bucle de apalancamiento no encontrado",
+        "pt": "Loop de alavancagem não encontrado",
+        "zh": "未找到杠杆循环"
+      },
+      "loop_hf_unsafe": {
+        "en": "Health factor {hf} is too low to continue safely. Loop stopped for your protection.",
+        "es": "Factor de salud {hf} es demasiado bajo para continuar de manera segura. Bucle detenido para tu protección.",
+        "pt": "Fator de saúde {hf} está muito baixo para continuar com segurança. Loop parado para sua proteção.",
+        "zh": "健康因子 {hf} 太低，无法安全继续。为了您的保护，循环已停止。"
+      },
+      "loop_metadata_missing": {
+        "en": "Loop execution data is missing. Please start a new loop.",
+        "es": "Faltan datos de ejecución del bucle. Por favor inicia un nuevo bucle.",
+        "pt": "Dados de execução do loop estão faltando. Por favor inicie um novo loop.",
+        "zh": "缺少循环执行数据。请开始一个新循环。"
+      },
+      "repository_unavailable": {
+        "en": "Lending repository is not available",
+        "es": "El repositorio de préstamos no está disponible",
+        "pt": "Repositório de empréstimos não disponível",
+        "zh": "借贷仓库不可用"
+      }
+    },
+    "alerts": {
+      "loop_completed_title": {
+        "en": "Leverage Loop Completed",
+        "es": "Bucle de Apalancamiento Completado",
+        "pt": "Loop de Alavancagem Concluído",
+        "zh": "杠杆循环完成"
+      },
+      "loop_completed_message": {
+        "en": "Successfully completed leverage loop with {leverage}x leverage",
+        "es": "Bucle de apalancamiento completado exitosamente con {leverage}x apalancamiento",
+        "pt": "Loop de alavancagem concluído com sucesso com {leverage}x alavancagem",
+        "zh": "成功完成 {leverage}x 杠杆循环"
+      },
+      "loop_failed_title": {
+        "en": "Leverage Loop Failed",
+        "es": "Bucle de Apalancamiento Falló",
+        "pt": "Loop de Alavancagem Falhou",
+        "zh": "杠杆循环失败"
+      },
+      "loop_failed_hf": {
+        "en": "Loop stopped due to unsafe health factor",
+        "es": "Bucle detenido debido a factor de salud inseguro",
+        "pt": "Loop parado devido a fator de saúde inseguro",
+        "zh": "由于不安全的健康因子，循环已停止"
+      }
+    }
   }
 }
