@@ -86,6 +86,9 @@ class CurveMCPServer(MCPServer):
         )
 
         self.curve_gateway = curve_gateway
+        
+        # Register tools
+        self.setup_tools()
 
     def setup_tools(self):
         """Register Curve Finance tools."""
