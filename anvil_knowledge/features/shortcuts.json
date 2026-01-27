@@ -1021,28 +1021,50 @@
             "what's the best yield",
             "morpho vs aave rates",
             "highest APY for {asset}",
-            "compare {protocol1} and {protocol2}"
+            "compare {protocol1} and {protocol2}",
+            "best lending vaults",
+            "top vaults",
+            "best morpho vaults",
+            "show best vaults",
+            "compare vaults",
+            "vault comparison",
+            "vault recommendations",
+            "vaults with best apy",
+            "list morpho vaults",
+            "find best vaults"
           ],
           "es": [
             "mejor rendimiento para {asset}",
             "comparar tasas de préstamo",
             "dónde suministrar {asset}",
             "cuál es el mejor rendimiento",
-            "tasas morpho vs aave"
+            "tasas morpho vs aave",
+            "mejores bóvedas de préstamo",
+            "mejores bóvedas morpho",
+            "comparar bóvedas",
+            "recomendaciones de bóvedas"
           ],
           "pt": [
             "melhor rendimento para {asset}",
             "comparar taxas de empréstimo",
             "onde fornecer {asset}",
             "qual é o melhor rendimento",
-            "taxas morpho vs aave"
+            "taxas morpho vs aave",
+            "melhores cofres de empréstimo",
+            "melhores cofres morpho",
+            "comparar cofres",
+            "recomendações de cofres"
           ],
           "zh": [
             "{asset} 的最佳收益",
             "比较借贷利率",
             "在哪里供应 {asset}",
             "最好的收益是什么",
-            "morpho vs aave 利率"
+            "morpho vs aave 利率",
+            "最佳借贷金库",
+            "最佳morpho金库",
+            "比较金库",
+            "金库推荐"
           ]
         },
         "agent": "DEFI_YIELD",
