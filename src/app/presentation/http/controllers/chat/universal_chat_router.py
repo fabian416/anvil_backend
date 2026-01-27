@@ -495,57 +495,61 @@ async def universal_chat(
 # ============================================================================
 
 
-@router.post(
-    "/guest/chat",
-    response_model=ChatResponse,
-    summary="Guest chat endpoint (backward compatibility)",
-    description=(
-        "Legacy guest chat endpoint for backward compatibility. "
-        "New integrations should use /api/v1/chat instead. "
-        "This endpoint forces guest context regardless of JWT presence."
-    ),
-    deprecated=True,
-)
-@inject
-async def guest_chat_legacy(
-    request_data: ChatRequest,
-    request: Request,
-    ip_address: Annotated[str, Depends(get_client_ip)],
-    handler: FromDishka[UnifiedChatHandler],
-) -> ChatResponse:
-    """Legacy guest chat endpoint for backward compatibility.
-
-    This endpoint maintains backward compatibility with existing guest chat
-    integrations. It always creates a guest context regardless of JWT presence.
-
-    New integrations should use the universal /api/v1/chat endpoint instead.
-
-    Args:
-        request_data: Chat request with content and language
-        request: FastAPI request object
-        ip_address: Client IP address
-        handler: Unified chat handler
-
-    Returns:
-        ChatResponse with guest user context
-
-    Note:
-        This endpoint is deprecated and will be removed in a future version.
-        Please migrate to /api/v1/chat.
-    """
-    logger.warning(
-        "Legacy guest chat endpoint called - recommend migration to /api/v1/chat",
-        extra={"ip_address": ip_address},
-    )
-
-    # Always create guest context (ignore JWT if present)
-    context = GuestContext(ip_address=ip_address)
-
-    # Handle message
-    response_data = await handler.handle_message(
-        content=request_data.content,
-        language=request_data.language,
-        context=context,
-    )
-
-    return ChatResponse(**response_data)
+# REMOVED: This endpoint was overriding the proper guest chat endpoint
+# The proper guest chat endpoint is in guest/router.py which uses SendGuestMessageCommand
+# with proper supervisor routing and registration_required logic.
+#
+# @router.post(
+#     "/guest/chat",
+#     response_model=ChatResponse,
+#     summary="Guest chat endpoint (backward compatibility)",
+#     description=(
+#         "Legacy guest chat endpoint for backward compatibility. "
+#         "New integrations should use /api/v1/chat instead. "
+#         "This endpoint forces guest context regardless of JWT presence."
+#     ),
+#     deprecated=True,
+# )
+# @inject
+# async def guest_chat_legacy(
+#     request_data: ChatRequest,
+#     request: Request,
+#     ip_address: Annotated[str, Depends(get_client_ip)],
+#     handler: FromDishka[UnifiedChatHandler],
+# ) -> ChatResponse:
+#     """Legacy guest chat endpoint for backward compatibility.
+#
+#     This endpoint maintains backward compatibility with existing guest chat
+#     integrations. It always creates a guest context regardless of JWT presence.
+#
+#     New integrations should use the universal /api/v1/chat endpoint instead.
+#
+#     Args:
+#         request_data: Chat request with content and language
+#         request: FastAPI request object
+#         ip_address: Client IP address
+#         handler: Unified chat handler
+#
+#     Returns:
+#         ChatResponse with guest user context
+#
+#     Note:
+#         This endpoint is deprecated and will be removed in a future version.
+#         Please migrate to /api/v1/chat.
+#     """
+#     logger.warning(
+#         "Legacy guest chat endpoint called - recommend migration to /api/v1/chat",
+#         extra={"ip_address": ip_address},
+#     )
+#
+#     # Always create guest context (ignore JWT if present)
+#     context = GuestContext(ip_address=ip_address)
+#
+#     # Handle message
+#     response_data = await handler.handle_message(
+#         content=request_data.content,
+#         language=request_data.language,
+#         context=context,
+#     )
+#
+#     return ChatResponse(**response_data)
