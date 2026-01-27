@@ -3020,12 +3020,33 @@ class SendGuestMessage:
             )
             await self._guest_repo.create_message(agent_message)
             
+            # Check if GUEST_AUTH agent was used (indicates restricted action)
+            registration_required = None
+            used_guest_auth = any(task.agent_type == AgentType.GUEST_AUTH for task in workflow_plan.tasks)
+            if used_guest_auth:
+                # Build registration required response for restricted actions
+                registration_required = {
+                    "required": True,
+                    "reason": "action_required",
+                    "message": {
+                        "en": "Sign up to access this feature. It takes just 30 seconds!",
+                        "es": "Regístrate para acceder a esta función. ¡Solo toma 30 segundos!",
+                        "pt": "Cadastre-se para acessar este recurso. Leva apenas 30 segundos!",
+                        "zh": "注册以访问此功能。只需 30 秒！",
+                    },
+                    "cta": GUEST_CTA_MESSAGES,
+                    "signup_url": "/signup",
+                }
+                # Mark message as restricted action
+                agent_message.is_restricted_action = True
+                await self._guest_repo.update_message(agent_message)
+
             # Update counters
             guest.increment_messages()
             conversation.increment_messages()
             await self._guest_repo.update_guest(guest)
             await self._guest_repo.update_conversation(conversation)
-            
+
             # Log telemetry
             await self._guest_repo.log_telemetry(
                 guest_user_id=guest.id,
@@ -3042,14 +3063,14 @@ class SendGuestMessage:
                 referer=referer,
                 language=language,
             )
-            
+
             # Calculate remaining messages
             hour_ago = datetime.now(UTC) - timedelta(hours=1)
             messages_this_hour = await self._guest_repo.get_message_count_since(
                 guest.id, hour_ago
             )
             messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-            
+
             return GuestMessageResult(
                 conversation_id=conversation.id,
                 message_id=agent_message.id,
@@ -3077,7 +3098,7 @@ class SendGuestMessage:
                 },
                 enrichment=enrichment,
                 sources=None,
-                registration_required=None,
+                registration_required=registration_required,
                 guest_info={
                     "messages_remaining": messages_remaining,
                     "rate_limit": RATE_LIMIT_MESSAGES_PER_HOUR,
