@@ -1,6 +1,11 @@
 name: PR Security Scan
 
 on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
   pull_request:
     branches: [master, develop]
   workflow_dispatch:

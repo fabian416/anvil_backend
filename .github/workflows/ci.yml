@@ -1,6 +1,12 @@
 name: CI/CD Pipeline
 
+# TEMPORARILY DISABLED - Manual trigger only
 on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
   push:
     branches: [ master, develop ]
   pull_request:

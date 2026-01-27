@@ -1,10 +1,19 @@
 name: Test Suite
 
+# TEMPORARILY DISABLED - Manual trigger only to save GitHub Actions minutes
 on:
-  push:
-    branches: [ master, main, develop ]
-  pull_request:
-    branches: [ master, main, develop ]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
+
+# Original triggers (commented out):
+# on:
+#   push:
+#     branches: [ master, main, develop ]
+#   pull_request:
+#     branches: [ master, main, develop ]
 
 jobs:
   test:

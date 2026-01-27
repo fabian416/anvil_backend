@@ -1,6 +1,11 @@
 name: API Documentation Validation
 
 on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
   pull_request:
     paths:
       - 'docs/frontend/**'

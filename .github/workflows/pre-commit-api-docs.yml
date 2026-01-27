@@ -1,6 +1,11 @@
 name: Pre-commit API Docs Check
 
 on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
   pull_request:
   push:
     branches:

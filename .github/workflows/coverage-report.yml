@@ -1,6 +1,11 @@
 name: Coverage Report
 
 on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
   push:
     branches: [ master, main ]
   schedule:
