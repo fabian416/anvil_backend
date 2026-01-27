@@ -241,23 +241,17 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """Handle user confirmation or modification."""
-        
+
         language = user_context.language
         text = message.value.lower().strip()
-        
+
         # Check for confirmation
         if self._is_confirmation(text):
             state.confirmed = True
             state.step = WorkflowStep.EXECUTE.value
             return self._format_ready_to_execute(state.data, language), state
-        
-        # Check for cancellation
-        if self._is_cancellation(text):
-            state.cancelled = True
-            state.step = WorkflowStep.CANCELLED.value
-            return self._format_cancelled(language), state
-        
-        # Check for modification
+
+        # Check for modification BEFORE cancellation (fixes "change" triggering cancellation)
         modification = await self._parse_modification(text)
         if modification:
             if modification.get("amount"):
@@ -266,7 +260,7 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
                 state.data["crypto"] = modification["crypto"].upper()
             if modification.get("fiat"):
                 state.data["fiat"] = modification["fiat"].upper()
-            
+
             # Rebuild execute_data
             state.execute_data = self._build_buy_execute_data(
                 crypto=state.data.get("crypto", "ETH"),
@@ -274,11 +268,17 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
                 fiat=state.data.get("fiat", "USD"),
                 wallet_address=user_context.wallet_address,
             )
-            
+
             # Show updated review
             response = self._format_buy_review(state.data, language)
             return response, state
-        
+
+        # Check for cancellation AFTER modification
+        if self._is_cancellation(text):
+            state.cancelled = True
+            state.step = WorkflowStep.CANCELLED.value
+            return self._format_cancelled(language), state
+
         # Unclear response - ask again
         return self._ask_for_confirmation(language), state
     
@@ -878,10 +878,20 @@ Sua cripto chegará na sua carteira logo após o pagamento!""",
         return any(word in text for word in confirm_words)
     
     def _is_cancellation(self, text: str) -> bool:
-        """Check if text is a cancellation."""
-        cancel_words = [
-            "no", "n", "cancel", "abort", "stop", "nevermind", "forget it",
-            "cancelar", "abortar", "parar",
-            "取消", "不", "停止",
+        """Check if text is a cancellation using word boundary matching."""
+        import re
+
+        # Single-character and exact-match words (use word boundaries)
+        cancel_patterns = [
+            r'\bno\b', r'\bn\b', r'\bcancel\b', r'\babort\b', r'\bstop\b',
+            r'\bnevermind\b', r'\bforget it\b',
+            r'\bcancelar\b', r'\babortar\b', r'\bparar\b',
         ]
-        return any(word in text for word in cancel_words)
+
+        # Check word boundary patterns
+        if any(re.search(pattern, text) for pattern in cancel_patterns):
+            return True
+
+        # For CJK characters (no word boundaries), use exact substring matching
+        cjk_cancel_words = ["取消", "不", "停止"]
+        return any(word in text for word in cjk_cancel_words)
