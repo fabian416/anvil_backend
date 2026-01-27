@@ -1409,6 +1409,29 @@ class IntentDetectorV2:
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.LENDING],
                 )
+
+        # Vault comparison patterns (P0 fix: route "best lending vaults" to LENDING)
+        # These patterns catch vault-specific queries that were falling through to GENERAL_CONVERSATION
+        vault_patterns = [
+            r"\b(best|top|highest)\s+(?:lending\s+)?vaults?\b",
+            r"\b(best|top|highest)\s+(?:morpho\s+)?vaults?\b",
+            r"\bshow\s+(?:me\s+)?(?:best|top)\s+vaults?\b",
+            r"\bcompare\s+(?:morpho\s+)?vaults?\b",
+            r"\bvault\s+(?:comparison|recommendations?)\b",
+            r"\bwhich\s+vaults?\s+(?:have|offer)\b",
+            r"\bvaults?\s+(?:with\s+)?(?:best|highest)\s+(?:apy|yield|returns?)\b",
+            r"\blist\s+(?:morpho\s+)?vaults?\b",
+            r"\bfind\s+(?:best|top)\s+vaults?\b",
+        ]
+        for pattern in vault_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                logger.info(f"Intent detected: LENDING (vault pattern: {pattern})")
+                return IntentResult(
+                    intent=ChatIntentV2.LENDING,
+                    confidence=0.90,
+                    handler=self._handler_map[ChatIntentV2.LENDING],
+                    metadata={"pattern_type": "vault_comparison"}
+                )
         
         # Buy crypto patterns (on-ramp purchase)
         buy_keywords = self._get_all_keywords("buy")

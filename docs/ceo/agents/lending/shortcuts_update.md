@@ -548,7 +548,17 @@ View on [BaseScan](https://basescan.org/tx/...)
     "morpho vs aave rates",
     "where should I lend my {asset}",
     "highest yield for {asset}",
-    "compare {protocol1} and {protocol2}"
+    "compare {protocol1} and {protocol2}",
+    "best lending vaults",
+    "top vaults",
+    "best morpho vaults",
+    "show best vaults",
+    "compare vaults",
+    "vault comparison",
+    "vault recommendations",
+    "vaults with best apy",
+    "list morpho vaults",
+    "find best vaults"
   ],
   "multi_language": {
     "es": [
@@ -613,6 +623,121 @@ View on [BaseScan](https://basescan.org/tx/...)
 **Recommendation**: Morpho Universal USDC on Base offers the best yield (7.26%) with low risk.
 
 Would you like to supply USDC to this vault?
+```
+
+---
+
+## 5.5 Vault Discovery Flow (P0 Enhancement)
+
+**Shortcut**: "Best lending vaults"
+
+### Configuration
+
+```json
+{
+  "intent": "LENDING",
+  "patterns": [
+    "best lending vaults",
+    "top vaults",
+    "best morpho vaults",
+    "show best vaults",
+    "compare vaults",
+    "vault comparison",
+    "vault recommendations",
+    "vaults with best apy",
+    "list morpho vaults",
+    "find best vaults",
+    "highest yield vaults"
+  ],
+  "multi_language": {
+    "es": [
+      "mejores bovedas de prestamo",
+      "mejores bovedas morpho",
+      "comparar bovedas"
+    ],
+    "pt": [
+      "melhores cofres de emprestimo",
+      "melhores cofres morpho",
+      "comparar cofres"
+    ],
+    "zh": [
+      "最佳借贷金库",
+      "最佳Morpho金库",
+      "比较金库"
+    ]
+  },
+  "agent_routing": {
+    "primary_agent": "LendingHandler",
+    "fallback_agent": "MarketScanner",
+    "requires_auth": false
+  },
+  "response_requirements": {
+    "include_vault_list": true,
+    "include_apy": true,
+    "include_tvl": true,
+    "include_recommendation": true,
+    "sort_by": "apy"
+  },
+  "metadata": {
+    "pattern_type": "vault_comparison"
+  }
+}
+```
+
+### Flow Diagram
+
+```
+User: "Best lending vaults"
+    |
+    v
+[Intent Detection] --> LENDING (confidence: 0.90)
+    |
+    v
+[Pattern Type] --> vault_comparison
+    |
+    v
+[LendingHandler] --> fetch_morpho_vaults()
+    |
+    v
+[Format Response] --> Vault list with APY, TVL, recommendations
+    |
+    v
+[Return to User]
+```
+
+### Example Response
+
+**User**: "Best lending vaults"
+
+**Response**:
+```
+USDC MORPHO VAULTS ON BASE
+
+Top 3 vaults by APY (Morpho Protocol):
+
+1. Universal USDC
+   - APY: 7.26%
+   - TVL: $313.40B
+   - Address: 0xB7890CEE...6ab863
+
+2. Edge UltraYield USDC
+   - APY: 6.22%
+   - TVL: $499.91B
+   - Address: 0x5435BC53...259ca0
+
+3. Extrafi XLend USDC
+   - APY: 6.16%
+   - TVL: $8.13M
+   - Address: 0x23479229...753B5e
+
+RECOMMENDATION:
+Best Vault: Universal USDC
+APY: 7.26%
+Risk Level: Low (Curated)
+
+Would you like me to help you deposit into Universal USDC?
+
+Sign up to execute this action -> /signup
 ```
 
 ---

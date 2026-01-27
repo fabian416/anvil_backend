@@ -519,6 +519,77 @@ Health Factor = ($32,000 * 0.825) / $15,000 = 1.76 (CAUTION)
 
 ---
 
+## 6.5 Vault Query Patterns
+
+### Query Routing for Vault-Related Queries
+
+Vault comparison and discovery queries route to `LendingHandler` via the `LENDING` intent with `pattern_type: vault_comparison` metadata.
+
+### Supported Vault Query Patterns
+
+| Pattern Type | Example Queries | Intent | Handler |
+|--------------|-----------------|--------|---------|
+| Best/Top Vaults | "best lending vaults", "top vaults", "highest vaults" | LENDING | LendingHandler |
+| Morpho-Specific | "best morpho vaults", "top morpho vaults" | LENDING | LendingHandler |
+| Show Vaults | "show me best vaults", "show top vaults" | LENDING | LendingHandler |
+| Compare Vaults | "compare vaults", "compare morpho vaults" | LENDING | LendingHandler |
+| Vault Features | "vault comparison", "vault recommendations" | LENDING | LendingHandler |
+| APY-Focused | "vaults with best apy", "highest yield vaults" | LENDING | LendingHandler |
+| Discovery | "list morpho vaults", "find best vaults" | LENDING | LendingHandler |
+
+### Pattern vs Rate Query Distinction
+
+**IMPORTANT**: Vault queries differ from rate queries:
+
+| Query Type | Example | Intent | Behavior |
+|------------|---------|--------|----------|
+| **Vault Query** | "best lending vaults" | LENDING | Returns Morpho vault list with APY, TVL, recommendations |
+| **Rate Query** | "best lending rates" | MONEY_MARKET | Returns Aave/Compound rate comparison table |
+
+### Metadata Support
+
+Vault patterns include `pattern_type: vault_comparison` metadata:
+```json
+{
+  "intent": "LENDING",
+  "confidence": 0.90,
+  "metadata": {
+    "pattern_type": "vault_comparison"
+  }
+}
+```
+
+### Expected Response Format
+
+For vault queries, LendingHandler returns:
+```
+USDC MORPHO VAULTS ON BASE
+
+Top 3 vaults by APY (Morpho Protocol):
+
+1. Universal USDC
+   - APY: 7.26%
+   - TVL: $313.40B
+   - Address: 0xB7890CEE...6ab863
+
+2. Edge UltraYield USDC
+   - APY: 6.22%
+   - TVL: $499.91B
+
+3. Extrafi XLend USDC
+   - APY: 6.16%
+   - TVL: $8.13M
+
+RECOMMENDATION:
+Best Vault: Universal USDC
+APY: 7.26%
+Risk Level: Low (Curated)
+
+Would you like me to help you deposit into Universal USDC?
+```
+
+---
+
 ## 7. Protocol-Specific Knowledge
 
 ### Morpho MetaMorpho Vaults
