@@ -143,37 +143,52 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """Parse buy request from user message."""
-        
+
         language = user_context.language
         text = message.value.lower()
-        
-        # Try to extract parameters from message
+
+        # Check if we already have parameters from previous state (workflow continuation)
+        existing_crypto = state.data.get("crypto")
+        existing_amount = state.data.get("amount")
+        existing_fiat = state.data.get("fiat", "USD")
+
+        logger.info(f"[BuyWorkflow] Parse request - existing_crypto={existing_crypto}, existing_amount={existing_amount}, message={text[:30]}")
+
+        # If we already have both crypto and amount from state, proceed to validate
+        if existing_crypto and existing_amount:
+            logger.info(f"[BuyWorkflow] Using existing parameters from state, proceeding to validate")
+            state.step = WorkflowStep.FETCH_DATA.value
+            return await self._handle_validate(message, state, user_context)
+
+        # Try to extract parameters from current message
         params = await self._extract_buy_params(text)
-        
-        crypto = params.get("crypto")
-        amount = params.get("amount")
-        fiat = params.get("fiat", "USD")
-        
+
+        # Merge with existing state (new params take precedence)
+        crypto = params.get("crypto") or existing_crypto
+        amount = params.get("amount") or existing_amount
+        fiat = params.get("fiat", existing_fiat)
+
         # If we have crypto and amount, proceed to validate
         if crypto and amount:
             state.data["crypto"] = crypto.upper()
             state.data["amount"] = amount
             state.data["fiat"] = fiat.upper()
             state.step = WorkflowStep.FETCH_DATA.value
+            logger.info(f"[BuyWorkflow] Parameters complete: {crypto} {amount} {fiat}, proceeding to validate")
             return await self._handle_validate(message, state, user_context)
-        
+
         # If we have crypto but no amount, ask for amount
         if crypto and not amount:
             state.data["crypto"] = crypto.upper()
             state.data["fiat"] = fiat.upper()
             return self._ask_for_amount(state.data, language), state
-        
+
         # If we have amount but no crypto, ask for crypto
         if amount and not crypto:
             state.data["amount"] = amount
             state.data["fiat"] = fiat.upper()
             return self._ask_for_crypto(state.data, language), state
-        
+
         # No parameters detected - show buy menu
         return self._show_buy_menu(language), state
     

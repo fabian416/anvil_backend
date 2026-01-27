@@ -1080,6 +1080,7 @@ def create_conversations_router() -> APIRouter:
         execute_data = None  # Execute action data for /execute endpoint
         used_agent_gateway = False  # Flag for when AgentGateway (LLM) was used
         handler_result = {}  # Default empty handler result for metadata extraction
+        workflow_metadata = None  # Workflow metadata from BuyWorkflowAgent for state persistence
         
         # Handle based on intent
         if intent_result.is_restricted:
@@ -1350,15 +1351,14 @@ def create_conversations_router() -> APIRouter:
         
         elif intent_result.intent.value.startswith("BUY"):
             # Handle BUY and BUY_CONTINUE intents (on-ramp crypto purchase with multi-turn flow)
-            from app.application.chat.handlers.buy_handler import BuyHandler, BuyInfo
-            
+
             # [BUY_DEBUG] Log entry to BUY handler
             logger.info(f"[BUY_DEBUG] Entering BUY handler section")
             logger.info(f"[BUY_DEBUG] Intent: {intent_result.intent.value}")
             logger.info(f"[BUY_DEBUG] User is_guest: {user.is_guest}")
             logger.info(f"[BUY_DEBUG] User identifier: {user.identifier}")
-            
-            # For guests, use the old informative flow
+
+            # For guests, use the informative handler (legacy flow)
             if user.is_guest:
                 from app.application.chat.services.intent_detector import ChatIntent
                 context_str = conversation_memory.build_context_string(context)
@@ -1380,82 +1380,81 @@ def create_conversations_router() -> APIRouter:
                         "signup_url": "/signup",
                     }
             else:
-                # Authenticated users get the multi-turn conversational flow
-                logger.info(f"[BUY_DEBUG] User is authenticated, using multi-turn flow")
+                # Authenticated users get the BuyWorkflowAgent (AGNO-based workflow)
+                logger.info(f"[BUY_DEBUG] User is authenticated, using BuyWorkflowAgent")
                 try:
-                    # Get dependencies for BuyHandler
-                    from app.domain.ports.wallet.wallet_repository import WalletRepository
-                    from dishka import AsyncContainer
-                    
-                    container: AsyncContainer = http_request.state.dishka_container
-                    wallet_repo = await container.get(WalletRepository)
-                    
-                    buy_handler = BuyHandler(
-                        wallet_repository=wallet_repo,
-                        current_user_service=current_user,
-                    )
-                    
-                    # Check for continuation metadata
-                    continuation_step = None
-                    continuation_value = None
-                    if intent_result.metadata:
-                        continuation_step = intent_result.metadata.get("step")
-                        continuation_value = intent_result.metadata.get("value")
-                    
-                    logger.info(f"[BUY_DEBUG] continuation_step: {continuation_step}")
-                    logger.info(f"[BUY_DEBUG] continuation_value: {continuation_value}")
-                    
-                    # Get previous buy info from context for multi-turn flow
-                    previous_buy_info = None
-                    if context.pending_buy_info:
-                        previous_buy_info = BuyInfo.from_dict(context.pending_buy_info)
-                        logger.info(f"[BUY_DEBUG] previous_buy_info: {previous_buy_info}")
-                    else:
-                        logger.info(f"[BUY_DEBUG] No previous_buy_info in context")
-                    
-                    # Handle based on whether it's a continuation or new buy request
-                    if continuation_step and continuation_value:
-                        # Continuation of multi-turn flow
-                        logger.info(f"[BUY_DEBUG] Calling handle_buy_continuation()")
-                        handler_result = await buy_handler.handle_buy_continuation(
-                            user_id=int(user.identifier),
-                            message=continuation_value,
-                            step=continuation_step,
-                            previous_buy_info=previous_buy_info,
-                            language=request_body.language,
-                        )
-                    else:
-                        # New buy request - start the flow
-                        logger.info(f"[BUY_DEBUG] Calling start_buy_flow()")
-                        handler_result = await buy_handler.start_buy_flow(
-                            user_id=int(user.identifier),
-                            message=request_body.content,
-                            language=request_body.language,
-                        )
-                    
-                    logger.info(f"[BUY_DEBUG] handler_result.content: {handler_result.content[:100] if handler_result.content else 'None'}...")
-                    logger.info(f"[BUY_DEBUG] handler_result.pending_action: {handler_result.pending_action}")
-                    agent_content = handler_result.content
-                    enrichment = {
-                        "wallet_address": handler_result.wallet_address,
-                        "supported_assets": handler_result.supported_assets,
-                        "supported_networks": handler_result.supported_networks,
-                        "requires_privy_modal": handler_result.requires_privy_modal,
-                        "action_type": "fund_wallet" if handler_result.requires_privy_modal else None,
+                    from app.infrastructure.adapters.agent_squad.agents.workflows.buy_workflow_agent import BuyWorkflowAgent
+                    from app.domain.value_objects.message_content import MessageContent
+                    from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+
+                    # Build conversation history from context messages
+                    conversation_history = []
+                    if context.messages:
+                        # Take first 10 (newest) messages and reverse to get chronological order
+                        recent_messages = context.messages[:10]
+                        for msg in reversed(recent_messages):
+                            role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
+                            msg_dict = {
+                                "role": role,
+                                "content": msg.content if hasattr(msg, 'content') else str(msg),
+                            }
+                            # Include metadata for workflow continuation
+                            if hasattr(msg, 'metadata') and msg.metadata:
+                                msg_dict["metadata"] = msg.metadata
+                            conversation_history.append(msg_dict)
+
+                    # Build user context for workflow agent
+                    user_metadata = {
+                        "user_id": int(user.identifier),
+                        "wallet_address": wallet_address,
+                        "language": request_body.language,
+                        "is_authenticated": True,
                     }
-                    pending_action = handler_result.pending_action
-                    
-                    # Extract execute data if buy is complete (no pending_action means ready to execute)
-                    if handler_result.execute_data and not pending_action:
-                        execute_data = ExecuteActionData(**handler_result.execute_data)
-                    
+
+                    # Create conversation context
+                    conversation_context = ConversationContext(
+                        conversation_history=conversation_history,
+                        user_metadata=user_metadata,
+                    )
+
+                    # Execute BuyWorkflowAgent
+                    buy_workflow = BuyWorkflowAgent(llm_client=llm_gateway)
+                    agent_response = await buy_workflow.execute(
+                        conversation_id=conversation_id,
+                        message=MessageContent(request_body.content),
+                        conversation_context=conversation_context,
+                    )
+
+                    logger.info(f"[BUY_DEBUG] BuyWorkflowAgent completed")
+                    logger.info(f"[BUY_DEBUG] Response content: {agent_response.content[:100] if agent_response.content else 'None'}...")
+                    logger.info(f"[BUY_DEBUG] Has execute_data: {agent_response.metadata and 'execute_data' in agent_response.metadata}")
+
+                    agent_content = agent_response.content
+
+                    # Extract execute_data from workflow metadata if available
+                    if agent_response.metadata and agent_response.metadata.get("execute_data"):
+                        execute_data = ExecuteActionData(**agent_response.metadata["execute_data"])
+                        logger.info(f"[BUY_DEBUG] Execute data extracted: action_type={execute_data.action_type}")
+
+                    # Store workflow metadata for message persistence (will be saved at line 1650+)
+                    # This is critical for multi-turn workflow state continuity
+                    workflow_metadata = agent_response.metadata if agent_response.metadata else {}
+                    logger.info(f"[BUY_DEBUG] Workflow metadata stored: has_workflow_state={bool(workflow_metadata.get('workflow_state'))}")
+
+                    # Build enrichment for response
+                    enrichment = {
+                        "workflow_agent": "buy_workflow",
+                        "tools_used": agent_response.tools_used,
+                    }
+
+                    # No pending_action for workflow agents - they handle state internally
+                    pending_action = None
+
                 except Exception as e:
-                    # Log the error and fallback to old handler
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.error(f"BuyHandler error for message '{request_body.content}': {e}", exc_info=True)
-                    
-                    # Fallback to old handler service
+                    # Log the error and fallback to informative handler
+                    logger.error(f"BuyWorkflowAgent error for message '{request_body.content}': {e}", exc_info=True)
+
+                    # Fallback to informative handler
                     from app.application.chat.services.intent_detector import ChatIntent
                     context_str = conversation_memory.build_context_string(context)
                     handler_result = await handler_service.handle_intent(
@@ -1654,10 +1653,24 @@ Response Guidelines:
             }
         
         # Store buy info for multi-turn buy flow persistence
-        if intent_result.intent.value.startswith("BUY") and hasattr(handler_result, "metadata"):
-            buy_info = handler_result.metadata
-            if buy_info:
-                metadata["buy_info"] = buy_info
+        # For authenticated users using BuyWorkflowAgent, store workflow_state
+        # For guests using BuyHandler, store buy_info
+        if intent_result.intent.value.startswith("BUY"):
+            # Check if we have workflow_metadata from BuyWorkflowAgent (authenticated users)
+            if 'workflow_metadata' in locals() and workflow_metadata:
+                # Store workflow state from BuyWorkflowAgent
+                if workflow_metadata.get("workflow_state"):
+                    metadata["workflow_state"] = workflow_metadata["workflow_state"]
+                    logger.info(f"[BUY_DEBUG] Saving workflow_state to message metadata")
+                if workflow_metadata.get("workflow_name"):
+                    metadata["workflow_name"] = workflow_metadata["workflow_name"]
+                if workflow_metadata.get("current_step"):
+                    metadata["current_step"] = workflow_metadata["current_step"]
+            # Fallback for BuyHandler (guests or error fallback)
+            elif hasattr(handler_result, "metadata") and handler_result.metadata:
+                buy_info = handler_result.metadata
+                if buy_info:
+                    metadata["buy_info"] = buy_info
         
         # Determine handler name for routing info
         handler_name = "agent_gateway_llm" if used_agent_gateway else intent_result.handler
