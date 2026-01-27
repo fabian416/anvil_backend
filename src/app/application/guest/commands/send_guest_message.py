@@ -2883,7 +2883,7 @@ class SendGuestMessage:
                 ConversationContext as AgentSquadContext,
             )
             from app.domain.enums.agent_type import AgentType
-            
+
             # Guest-accessible agents (read-only, no execution)
             # NOTE: PORTFOLIO is NOT accessible to guests - requires authentication
             GUEST_ACCESSIBLE_AGENTS = [
@@ -2893,6 +2893,7 @@ class SendGuestMessage:
                 AgentType.RISK_ANALYZER,
                 AgentType.HUNTER_AI,  # Market analysis
                 AgentType.DEFI_YIELD,  # Lending rates (read-only)
+                AgentType.GUEST_AUTH,  # Authentication prompts for restricted features
             ]
             
             # Build Agent Squad conversation context
