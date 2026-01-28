@@ -21,6 +21,7 @@ from app.setup.ioc.chat_phase2 import ChatPhase2Provider
 from app.setup.ioc.morpho import MorphoProvider
 from app.setup.ioc.guest import GuestProvider
 from app.setup.ioc.chat import ChatProvider
+from app.setup.ioc.money_market import MoneyMarketProvider
 
 # TODO: These providers are pending implementation - uncomment when ready
 # from app.setup.ioc.curve import CurveProvider
@@ -51,6 +52,7 @@ def get_providers() -> Iterable[Provider]:
         MorphoProvider(),  # Morpho Protocol lending vaults integration
         GuestProvider(),  # Guest chat for unauthenticated users
         ChatProvider(),  # Unified chat for guest and authenticated users
+        MoneyMarketProvider(),  # Money market rate caching and analytics
         # TODO: Uncomment when implementations are ready
         # CurveProvider(),  # Curve Finance DeFi integration
         # HyperliquidProvider(),  # Hyperliquid perpetual futures integration
