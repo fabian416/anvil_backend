@@ -1380,94 +1380,28 @@ def create_conversations_router() -> APIRouter:
                         "signup_url": "/signup",
                     }
             else:
-                # Authenticated users get the BuyWorkflowAgent (AGNO-based workflow)
-                logger.info(f"[BUY_DEBUG] User is authenticated, using BuyWorkflowAgent")
-                try:
-                    from app.infrastructure.adapters.agent_squad.agents.workflows.buy_workflow_agent import BuyWorkflowAgent
-                    from app.domain.value_objects.message_content import MessageContent
-                    from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
-
-                    # Build conversation history from context messages
-                    conversation_history = []
-                    if context.messages:
-                        # Take first 10 (newest) messages and reverse to get chronological order
-                        recent_messages = context.messages[:10]
-                        for msg in reversed(recent_messages):
-                            role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
-                            msg_dict = {
-                                "role": role,
-                                "content": msg.content if hasattr(msg, 'content') else str(msg),
-                            }
-                            # Include metadata for workflow continuation
-                            if hasattr(msg, 'metadata') and msg.metadata:
-                                msg_dict["metadata"] = msg.metadata
-                            conversation_history.append(msg_dict)
-
-                    # Build user context for workflow agent
-                    user_metadata = {
-                        "user_id": int(user.identifier),
-                        "wallet_address": wallet_address,
-                        "language": request_body.language,
-                        "is_authenticated": True,
-                    }
-
-                    # Create conversation context
-                    conversation_context = ConversationContext(
-                        conversation_history=conversation_history,
-                        user_metadata=user_metadata,
-                    )
-
-                    # Execute BuyWorkflowAgent
-                    buy_workflow = BuyWorkflowAgent(llm_client=llm_gateway)
-                    agent_response = await buy_workflow.execute(
-                        conversation_id=conversation_id,
-                        message=MessageContent(request_body.content),
-                        conversation_context=conversation_context,
-                    )
-
-                    logger.info(f"[BUY_DEBUG] BuyWorkflowAgent completed")
-                    logger.info(f"[BUY_DEBUG] Response content: {agent_response.content[:100] if agent_response.content else 'None'}...")
-                    logger.info(f"[BUY_DEBUG] Has execute_data: {agent_response.metadata and 'execute_data' in agent_response.metadata}")
-
-                    agent_content = agent_response.content
-
-                    # Extract execute_data from workflow metadata if available
-                    if agent_response.metadata and agent_response.metadata.get("execute_data"):
-                        execute_data = ExecuteActionData(**agent_response.metadata["execute_data"])
-                        logger.info(f"[BUY_DEBUG] Execute data extracted: action_type={execute_data.action_type}")
-
-                    # Store workflow metadata for message persistence (will be saved at line 1650+)
-                    # This is critical for multi-turn workflow state continuity
-                    workflow_metadata = agent_response.metadata if agent_response.metadata else {}
-                    logger.info(f"[BUY_DEBUG] Workflow metadata stored: has_workflow_state={bool(workflow_metadata.get('workflow_state'))}")
-
-                    # Build enrichment for response
-                    enrichment = {
-                        "workflow_agent": "buy_workflow",
-                        "tools_used": agent_response.tools_used,
-                    }
-
-                    # No pending_action for workflow agents - they handle state internally
-                    pending_action = None
-
-                except Exception as e:
-                    # Log the error and fallback to informative handler
-                    logger.error(f"BuyWorkflowAgent error for message '{request_body.content}': {e}", exc_info=True)
-
-                    # Fallback to informative handler
-                    from app.application.chat.services.intent_detector import ChatIntent
-                    context_str = conversation_memory.build_context_string(context)
-                    handler_result = await handler_service.handle_intent(
-                        intent=ChatIntent.BUY,
-                        content=request_body.content,
-                        language=request_body.language,
-                        context=context_str,
-                        is_authenticated=True,
-                        user_id=int(user.identifier),
-                    )
-                    agent_content = handler_result.get("content", "")
-                    enrichment = handler_result.get("enrichment")
-                    pending_action = handler_result.get("pending_action")
+                # Authenticated users: This is the LEGACY FALLBACK path
+                # The primary path for authenticated users is the Supervisor (lines 688-853)
+                # If we reach here, it means the supervisor failed or is unavailable
+                # Use the informational handler - DO NOT use workflow agents directly
+                # to avoid conflicting state management with the supervisor
+                logger.warning(
+                    f"[BUY_DEBUG] Authenticated user in legacy BUY path - supervisor may have failed. "
+                    f"Using informational handler as fallback."
+                )
+                from app.application.chat.services.intent_detector import ChatIntent
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=ChatIntent.BUY,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=True,
+                    user_id=int(user.identifier),
+                )
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                pending_action = handler_result.get("pending_action")
         
         else:
             # Use existing handler service for other intents
