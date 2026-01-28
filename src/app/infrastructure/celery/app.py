@@ -26,6 +26,7 @@ def create_celery() -> Celery:
             "app.infrastructure.celery.tasks",
             "app.infrastructure.celery.compat_tasks",
             "app.infrastructure.celery.tasks.transaction_confirmation_tasks",
+            "app.infrastructure.celery.tasks.money_market_tasks",
         ],
     )
     app.conf.task_serializer = "json"
@@ -91,6 +92,12 @@ def create_celery() -> Celery:
         # Email tasks
         "send_email": {"queue": "email"},
         "tasks.email_tasks.*": {"queue": "email"},
+
+        # Money market tasks - cache warming (alta prioridad, latencia crítica)
+        "money_market.warm_cache": {"queue": "money_market"},
+        "money_market.check_alerts": {"queue": "money_market"},
+        "money_market.aggregate_analytics": {"queue": "money_market"},
+        "money_market.cleanup_cache": {"queue": "maintenance"},
     }
     
     # Configuración de colas con prioridades
@@ -122,6 +129,34 @@ def create_celery() -> Celery:
                 "use_testnet": tx_conf.use_testnet,
             },
             "options": {"queue": "transactions"},
+        },
+        # Money Market - Cache Warming (every 60 seconds)
+        # Pre-fetches popular asset/chain combinations to ensure cache never expires
+        "money-market-warm-cache": {
+            "task": "money_market.warm_cache",
+            "schedule": 60.0,  # Every 60 seconds (sync with cache TTL)
+            "options": {"queue": "money_market"},
+        },
+        # Money Market - Rate Alerts (every 5 minutes)
+        # Checks alert conditions and sends notifications
+        "money-market-check-alerts": {
+            "task": "money_market.check_alerts",
+            "schedule": 300.0,  # Every 5 minutes
+            "options": {"queue": "money_market"},
+        },
+        # Money Market - Analytics Aggregation (every hour)
+        # Aggregates comparison logs for analytics dashboard
+        "money-market-aggregate-analytics": {
+            "task": "money_market.aggregate_analytics",
+            "schedule": crontab(minute=0),  # Every hour at :00
+            "options": {"queue": "money_market"},
+        },
+        # Money Market - Cache Cleanup (daily at 3 AM)
+        # Removes expired cache entries and old logs
+        "money-market-cleanup-cache": {
+            "task": "money_market.cleanup_cache",
+            "schedule": crontab(hour=3, minute=0),  # Daily at 3:00 AM UTC
+            "options": {"queue": "maintenance"},
         },
     }
 
