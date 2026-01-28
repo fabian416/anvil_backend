@@ -5,7 +5,7 @@ Stores cached protocol rate data with TTL-based cache invalidation.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
@@ -45,7 +45,7 @@ class MoneyMarketProtocolData:
         total_borrowed_usd: Total borrowed in USD
         utilization_rate: Protocol utilization rate (0-1)
         liquidity_available: Available liquidity in USD
-        data_source: Source of data ('rpc', 'subgraph', 'api', 'estimated')
+        data_source: Source of data ('on_chain', 'api', 'graph', 'estimated')
         valid_until: Cache expiration timestamp
         created_at: Creation timestamp
     """
@@ -119,7 +119,7 @@ class MoneyMarketProtocolData:
             raise ValueError("liquidity_available cannot be negative.")
 
         # Validate data_source
-        valid_sources = ("rpc", "subgraph", "api", "estimated")
+        valid_sources = ("on_chain", "api", "graph", "estimated")
         if self.data_source not in valid_sources:
             raise ValueError(
                 f"Invalid data_source: {self.data_source}. "
@@ -136,7 +136,7 @@ class MoneyMarketProtocolData:
     @property
     def is_valid(self) -> bool:
         """Check if cached data is still valid (not expired)."""
-        return datetime.utcnow() < self.valid_until
+        return datetime.now(timezone.utc) < self.valid_until
 
     @property
     def is_expired(self) -> bool:
@@ -145,8 +145,8 @@ class MoneyMarketProtocolData:
 
     @property
     def is_real_data(self) -> bool:
-        """Check if data comes from real on-chain sources (RPC or Subgraph)."""
-        return self.data_source in ("rpc", "subgraph")
+        """Check if data comes from real on-chain sources."""
+        return self.data_source in ("on_chain", "graph")
 
     @property
     def is_estimated(self) -> bool:
@@ -161,7 +161,7 @@ class MoneyMarketProtocolData:
     @property
     def time_until_expiry(self) -> timedelta:
         """Calculate remaining time until cache expiration."""
-        return self.valid_until - datetime.utcnow()
+        return self.valid_until - datetime.now(timezone.utc)
 
     @property
     def seconds_until_expiry(self) -> int:
