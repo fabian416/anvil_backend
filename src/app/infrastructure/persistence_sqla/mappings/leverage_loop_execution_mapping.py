@@ -57,7 +57,7 @@ def map_leverage_loop_executions_table() -> None:
             Integer, nullable=False, server_default="0"
         )
         steps_completed = mapped_column(
-            ARRAY(Text), nullable=False, server_default="'{}'"
+            ARRAY(Text), nullable=False, server_default=sa.text("'{}'")
         )
         status = mapped_column(
             Enum(

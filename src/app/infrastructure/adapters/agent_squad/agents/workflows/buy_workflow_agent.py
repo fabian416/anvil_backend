@@ -164,15 +164,16 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
         params = await self._extract_buy_params(text)
 
         # Merge with existing state (new params take precedence)
-        crypto = params.get("crypto") or existing_crypto
-        amount = params.get("amount") or existing_amount
-        fiat = params.get("fiat", existing_fiat)
+        # Only use extracted params if they are explicitly found (not None/empty)
+        crypto = params.get("crypto") if params.get("crypto") else existing_crypto
+        amount = params.get("amount") if params.get("amount") else existing_amount
+        fiat = params.get("fiat") if params.get("fiat") else existing_fiat
 
         # If we have crypto and amount, proceed to validate
         if crypto and amount:
             state.data["crypto"] = crypto.upper()
             state.data["amount"] = amount
-            state.data["fiat"] = fiat.upper()
+            state.data["fiat"] = fiat.upper() if fiat else "USD"
             state.step = WorkflowStep.FETCH_DATA.value
             logger.info(f"[BuyWorkflow] Parameters complete: {crypto} {amount} {fiat}, proceeding to validate")
             return await self._handle_validate(message, state, user_context)
@@ -180,17 +181,21 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
         # If we have crypto but no amount, ask for amount
         if crypto and not amount:
             state.data["crypto"] = crypto.upper()
-            state.data["fiat"] = fiat.upper()
+            state.data["fiat"] = fiat.upper() if fiat else "USD"
+            logger.info(f"[BuyWorkflow] Have crypto={crypto}, asking for amount")
             return self._ask_for_amount(state.data, language), state
 
-        # If we have amount but no crypto, ask for crypto
+        # If we have amount but no crypto, ask for crypto FIRST (prioritize coin selection)
         if amount and not crypto:
             state.data["amount"] = amount
-            state.data["fiat"] = fiat.upper()
+            state.data["fiat"] = fiat.upper() if fiat else "USD"
+            logger.info(f"[BuyWorkflow] Have amount={amount}, asking for crypto")
             return self._ask_for_crypto(state.data, language), state
 
-        # No parameters detected - show buy menu
-        return self._show_buy_menu(language), state
+        # No parameters detected - ask for crypto FIRST (better UX than showing menu)
+        logger.info(f"[BuyWorkflow] No parameters detected, asking for crypto first")
+        state.data["fiat"] = fiat.upper() if fiat else "USD"
+        return self._ask_for_crypto_first(language), state
     
     async def _handle_validate(
         self,
@@ -302,38 +307,60 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
     # ========================================
     
     async def _extract_buy_params(self, text: str) -> dict[str, Any]:
-        """Extract buy parameters from text."""
+        """Extract buy parameters from text.
+        
+        Returns only explicitly found parameters. Does NOT default values.
+        This prevents hallucination of parameters that weren't provided.
+        """
         
         params: dict[str, Any] = {}
         
-        # Try LLM extraction first
+        # Try LLM extraction first (but be strict - only return what's actually in the text)
         if self._llm:
             try:
-                llm_params = await self._llm_extract_params(
+                llm_params = await self._extract_params_with_llm(
                     text,
                     param_schema={
-                        "crypto": "Cryptocurrency to buy (ETH, USDC, BTC, etc.)",
-                        "amount": "Fiat amount to spend (numeric value)",
-                        "fiat": "Fiat currency (USD, EUR, GBP, etc.)",
+                        "crypto": "Cryptocurrency to buy (ETH, USDC, BTC, etc.) - return null if not mentioned",
+                        "amount": "Fiat amount to spend (numeric value) - return null if not mentioned",
+                        "fiat": "Fiat currency (USD, EUR, GBP, etc.) - return null if not mentioned",
                     },
                 )
+                # Only use LLM params if they are not None/null
                 if llm_params:
-                    params.update(llm_params)
+                    for key, value in llm_params.items():
+                        if value is not None and value != "" and value != "null":
+                            params[key] = value
             except Exception as e:
                 logger.warning(f"[BuyWorkflow] LLM extraction failed: {e}")
         
         # Regex fallback for amount (with currency symbols)
+        # Only match if there's an explicit amount in the text
         if not params.get("amount"):
             # Match: $100, 100 dollars, 100 USD, €50, etc.
+            # Also match: "100 eth" -> interpret as "$100 of ETH" (fiat amount, not crypto amount)
             amount_match = re.search(
                 r"(?:[\$€£])?(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:dollars?|usd|eur|gbp)?",
                 text,
                 re.I,
             )
             if amount_match:
-                params["amount"] = amount_match.group(1).replace(",", "")
+                # Check if this amount is followed by a crypto symbol (e.g., "100 eth")
+                # If so, it's likely "$100 of ETH" not "100 ETH"
+                amount_value = amount_match.group(1).replace(",", "")
+                # Look ahead to see if crypto follows (but don't consume it)
+                after_amount = text[amount_match.end():].strip()
+                # If crypto follows, this is fiat amount, not crypto amount
+                for key, info in SUPPORTED_CRYPTOS.items():
+                    if re.search(rf'\b{re.escape(key)}\b', after_amount, re.I) or \
+                       re.search(rf'\b{re.escape(info["symbol"].lower())}\b', after_amount, re.I):
+                        params["amount"] = amount_value
+                        break
+                else:
+                    # No crypto follows, treat as fiat amount
+                    params["amount"] = amount_value
         
-        # Detect fiat currency
+        # Detect fiat currency (only if explicitly mentioned)
         if not params.get("fiat"):
             if "$" in text or "dollar" in text or "usd" in text:
                 params["fiat"] = "USD"
@@ -341,16 +368,18 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
                 params["fiat"] = "EUR"
             elif "£" in text or "pound" in text or "gbp" in text:
                 params["fiat"] = "GBP"
-            else:
-                params["fiat"] = "USD"  # Default
+            # Don't default to USD - let it be None if not mentioned
         
-        # Regex fallback for crypto
+        # Regex fallback for crypto (only if explicitly mentioned)
         if not params.get("crypto"):
             for key, info in SUPPORTED_CRYPTOS.items():
-                if key in text or info["symbol"].lower() in text:
+                # Use word boundaries to avoid false matches (e.g., "buy crypto" matching "crypto")
+                if re.search(rf'\b{re.escape(key)}\b', text, re.I) or \
+                   re.search(rf'\b{re.escape(info["symbol"].lower())}\b', text, re.I):
                     params["crypto"] = info["symbol"]
                     break
         
+        logger.info(f"[BuyWorkflow] Extracted params: {params}")
         return params
     
     async def _parse_modification(self, text: str) -> dict[str, Any] | None:
@@ -509,6 +538,69 @@ Quanto você gostaria de gastar?
 • `$500` (五百美元)
 
 💬 输入美元金额""",
+        }
+        
+        return msgs.get(language, msgs["en"])
+    
+    def _ask_for_crypto_first(self, language: str) -> str:
+        """Ask user which crypto to buy first (when no parameters provided)."""
+        
+        msgs = {
+            "en": """💳 **Buy Crypto**
+
+Which cryptocurrency would you like to buy?
+
+**Available:**
+1. Ξ **ETH** (Ethereum)
+2. 💵 **USDC** (USD Coin)
+3. 💵 **USDT** (Tether)
+4. ₿ **BTC** (Bitcoin)
+5. ◎ **SOL** (Solana)
+6. 🟣 **MATIC** (Polygon)
+
+💬 Reply with the crypto name (e.g., "ETH")""",
+            
+            "es": """💳 **Comprar Cripto**
+
+¿Qué criptomoneda te gustaría comprar?
+
+**Disponibles:**
+1. Ξ **ETH** (Ethereum)
+2. 💵 **USDC** (USD Coin)
+3. 💵 **USDT** (Tether)
+4. ₿ **BTC** (Bitcoin)
+5. ◎ **SOL** (Solana)
+6. 🟣 **MATIC** (Polygon)
+
+💬 Responde con el nombre de la cripto (ej: "ETH")""",
+            
+            "pt": """💳 **Comprar Cripto**
+
+Qual criptomoeda você gostaria de comprar?
+
+**Disponíveis:**
+1. Ξ **ETH** (Ethereum)
+2. 💵 **USDC** (USD Coin)
+3. 💵 **USDT** (Tether)
+4. ₿ **BTC** (Bitcoin)
+5. ◎ **SOL** (Solana)
+6. 🟣 **MATIC** (Polygon)
+
+💬 Responda com o nome da cripto (ex: "ETH")""",
+            
+            "zh": """💳 **购买加密货币**
+
+您想购买哪种加密货币？
+
+**可用：**
+1. Ξ **ETH** (以太坊)
+2. 💵 **USDC** (USD Coin)
+3. 💵 **USDT** (Tether)
+4. ₿ **BTC** (比特币)
+5. ◎ **SOL** (Solana)
+6. 🟣 **MATIC** (Polygon)
+
+💬 回复加密货币名称（例如："ETH"）""",
         }
         
         return msgs.get(language, msgs["en"])

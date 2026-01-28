@@ -11,26 +11,27 @@
 
 **Mission:** Analyze the complete database structure of the Anvil DeFi Backend to understand the purpose, relationships, and architectural patterns of each table within the hexagonal architecture framework.
 
-**Scope:** **87 tables mapped** (84 currently in database) across **15 functional domains** supporting a multi-agent DeFi platform with guest/authenticated chat, blockchain operations, AI telemetry, LLM orchestration, and portfolio management.
+**Scope:** **105 tables mapped** (92 currently in database + 10 money market tables) across **17 functional domains** supporting a multi-agent DeFi platform with guest/authenticated chat, blockchain operations, AI telemetry, LLM orchestration, portfolio management, lending/borrowing operations, and money market rate optimization.
 
 **Key Findings:**
-- ✅ **Comprehensive hexagonal architecture** with proper domain isolation across 87 tables
+- ✅ **Comprehensive hexagonal architecture** with proper domain isolation across 105 tables
 - ✅ **Enterprise LLM Orchestration** with 15 tables managing multi-provider AI operations
 - ✅ **Triple chat architecture** (unified + authenticated + guest) all fully operational
 - ✅ **Legacy system fully removed** on 2026-01-25 (1,200+ lines of deprecated code eliminated)
+- ✅ **Lending & borrowing system** (8 tables + 2 views) with health factor monitoring and leverage loops
+- ✅ **Money market optimization** (7 tables + 3 views) with 60s TTL caching and rate comparison *(NEW 2026-01-28)*
 - ✅ **Advanced distillation system** (6 tables) for LLM cost optimization
 - ✅ **Project-based knowledge bases** (12 tables) for RAG and context management
 - ✅ **Comprehensive AI telemetry** tracking 18 specialized agents across 13 tables
 - ✅ **Multi-chain wallet support** with Privy integration
 - ✅ **Retry/resilience infrastructure** (3 tables) for fault tolerance
 - ✅ **Bridge adapters** maintain backward compatibility for existing commands
-- ⚠️ **3 tables pending migration** (87 mapped, 84 in DB)
 
 **Database Technology:** PostgreSQL 16 with UUID, JSONB, pgvector (embeddings), and enum support
 
 ---
 
-## 🏗️ Complete Table Inventory (87 Tables)
+## 🏗️ Complete Table Inventory (95 Tables)
 
 ### Domain Summary
 
@@ -51,8 +52,10 @@
 | **13. Security & Compliance** | 3 | Privy policy caching, audit logs, access control |
 | **14. Location & System Config** | 3 | Countries, cities, system-wide configuration |
 | **15. Agent Sessions** | 1 | Stateful agent conversation management |
+| **16. Lending & DeFi Borrowing** | 10 | Lending positions, health monitoring, leverage loops, alerts (8 tables + 2 views) |
+| **17. Money Market Optimization** | 10 | Rate comparison, protocol optimization, alerts (7 tables + 3 views) |
 
-**Total:** 87 tables mapped
+**Total:** 105 tables mapped (87 tables + 8 lending tables + 7 money market tables + 5 views)
 
 ---
 
@@ -1643,6 +1646,447 @@ CREATE TABLE agent_sessions (
 - Hunter AI maintains state across multiple queries
 - Research agent tracks fact-checking progress
 - Execution agent manages multi-step transaction flows
+
+---
+
+## 📋 Domain 16: Lending & DeFi Borrowing (10 Components)
+
+**Purpose:** Comprehensive lending and borrowing system supporting Aave and Morpho protocols with multi-step leverage loops, health factor monitoring, risk management, and automated alerts.
+
+**Status:** ✅ ACTIVE - Implemented 2026-01-27 (Week 4 of lending implementation)
+
+**Key Features:**
+- Multi-protocol support (Aave, Morpho)
+- Health factor monitoring with 5 risk levels
+- Leverage loop execution tracking (3+ signatures per loop)
+- User-specific risk preferences and safety thresholds
+- Historical health check tracking for analytics
+- Real-time liquidation risk alerts
+- Analytical views for portfolio summaries and protocol comparisons
+
+### 16.1 lending_positions
+
+**Mission:** Track all active and historical lending positions across Aave and Morpho protocols with real-time health factor monitoring.
+
+**Schema Highlights:**
+```sql
+CREATE TABLE lending_positions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+    protocol VARCHAR(20) NOT NULL,  -- 'aave' | 'morpho'
+    chain VARCHAR(20) NOT NULL,  -- 'ethereum' | 'base' | 'arbitrum' | 'polygon'
+    position_type VARCHAR(10) NOT NULL,  -- 'supply' | 'borrow'
+    asset_address VARCHAR(66) NOT NULL,  -- Token contract address
+    asset_symbol VARCHAR(20) NOT NULL,  -- USDC, ETH, WBTC, etc.
+    amount NUMERIC(78, 18) NOT NULL,  -- Token amount (18 decimals precision)
+    amount_usd NUMERIC(20, 2),  -- USD value at position open
+    health_factor NUMERIC(10, 2),  -- Liquidation safety metric (NULL for supply-only)
+    apy NUMERIC(10, 4),  -- Annual percentage yield/rate
+    status VARCHAR(20) DEFAULT 'active',  -- 'active' | 'closed' | 'liquidated'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Composite indexes for fast lookups
+    INDEX idx_lending_positions_user_status (user_id, status),
+    INDEX idx_lending_positions_protocol_chain (protocol, chain),
+    INDEX idx_lending_positions_health_factor (health_factor) WHERE health_factor IS NOT NULL
+);
+```
+
+**Business Rules:**
+- Health factor only applies to borrow positions (NULL for supply-only)
+- Health factor < 1.0 indicates liquidation risk
+- Health factor < 1.2 blocks new borrow operations (safety threshold)
+- Position status transitions: `active` → `closed` (user action) or `liquidated` (protocol action)
+- Amount uses NUMERIC(78,18) to handle large token amounts with 18 decimal precision
+
+**Usage Patterns:**
+- `LendingPositionRepository` for CRUD operations
+- `HealthFactorMonitoringService` checks health factors every 5 minutes
+- Dashboard queries aggregate positions by protocol/chain
+- Liquidation detection triggers alerts when health_factor < 1.2
+
+**Relationships:**
+- Parent of: `lending_supplies`, `lending_borrows` (via position_id FK)
+- Related to: `lending_health_checks` (health factor history)
+- Triggers: `lending_alerts` on status changes or low health factor
+
+### 16.2 lending_supplies
+
+**Mission:** Track individual supply (deposit) transactions to lending protocols with APY tracking.
+
+**Schema Highlights:**
+```sql
+CREATE TABLE lending_supplies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    position_id UUID NOT NULL REFERENCES lending_positions(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+    protocol VARCHAR(20) NOT NULL,
+    chain VARCHAR(20) NOT NULL,
+    asset_address VARCHAR(66) NOT NULL,
+    asset_symbol VARCHAR(20) NOT NULL,
+    amount NUMERIC(78, 18) NOT NULL,  -- Supply amount
+    apy NUMERIC(10, 4),  -- Supply APY at deposit time
+    transaction_hash VARCHAR(66) NOT NULL,  -- Blockchain tx hash
+    block_number BIGINT,  -- Block number for verification
+    gas_used NUMERIC(20, 0),  -- Gas consumed (in wei)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    INDEX idx_lending_supplies_position (position_id, created_at DESC),
+    INDEX idx_lending_supplies_user (user_id, created_at DESC),
+    INDEX idx_lending_supplies_tx_hash (transaction_hash)
+);
+```
+
+**Business Rules:**
+- Each supply creates/updates a `lending_position` with type='supply'
+- APY is recorded at deposit time for historical tracking
+- Transaction hash enables blockchain verification
+- Gas costs tracked for user cost analytics
+
+**Usage Patterns:**
+- Created by `SupplyCommandHandler` after successful deposit
+- Queried for supply history and APY performance tracking
+- Aggregated for protocol yield comparison analytics
+
+### 16.3 lending_borrows
+
+**Mission:** Track individual borrow transactions with health factor at borrow time and interest rate tracking.
+
+**Schema Highlights:**
+```sql
+CREATE TABLE lending_borrows (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    position_id UUID NOT NULL REFERENCES lending_positions(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+    protocol VARCHAR(20) NOT NULL,
+    chain VARCHAR(20) NOT NULL,
+    asset_address VARCHAR(66) NOT NULL,
+    asset_symbol VARCHAR(20) NOT NULL,
+    amount NUMERIC(78, 18) NOT NULL,  -- Borrow amount
+    interest_rate NUMERIC(10, 4),  -- Interest rate at borrow time
+    variable_rate BOOLEAN DEFAULT TRUE,  -- TRUE = variable, FALSE = stable
+    health_factor_at_borrow NUMERIC(10, 2),  -- Health factor when borrow executed
+    transaction_hash VARCHAR(66) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    INDEX idx_lending_borrows_position (position_id, created_at DESC),
+    INDEX idx_lending_borrows_user (user_id, created_at DESC),
+    INDEX idx_lending_borrows_health_factor (health_factor_at_borrow)
+);
+```
+
+**Business Rules:**
+- Borrow operation BLOCKED if health_factor would drop below 1.2
+- Health factor recorded at borrow time for safety auditing
+- Variable vs stable rate affects interest calculation
+- Must have active supply position with sufficient collateral
+
+**Safety Features:**
+- Pre-execution validation: Projected health factor must be ≥ 1.2
+- Post-execution: `lending_health_checks` monitors ongoing health
+- Alerts triggered if health factor drops below user preferences
+
+### 16.4 lending_transactions
+
+**Mission:** Comprehensive audit trail of all lending operations (supply, borrow, repay, withdraw, liquidate) with health factor change tracking.
+
+**Schema Highlights:**
+```sql
+CREATE TABLE lending_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+    protocol VARCHAR(20) NOT NULL,
+    chain VARCHAR(20) NOT NULL,
+    action_type VARCHAR(20) NOT NULL,  -- 'supply' | 'borrow' | 'repay' | 'withdraw' | 'liquidate'
+    asset_address VARCHAR(66) NOT NULL,
+    asset_symbol VARCHAR(20) NOT NULL,
+    amount NUMERIC(78, 18) NOT NULL,
+    transaction_hash VARCHAR(66),
+    status VARCHAR(20) DEFAULT 'pending',  -- 'pending' | 'confirmed' | 'failed'
+    health_factor_before NUMERIC(10, 2),  -- Health factor before operation
+    health_factor_after NUMERIC(10, 2),  -- Health factor after operation
+    metadata JSONB,  -- Additional context (gas price, slippage, etc.)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    confirmed_at TIMESTAMP WITH TIME ZONE,
+
+    INDEX idx_lending_transactions_user_date (user_id, created_at DESC),
+    INDEX idx_lending_transactions_protocol (protocol, chain, action_type),
+    INDEX idx_lending_transactions_status (status) WHERE status = 'pending',
+    INDEX idx_lending_transactions_tx_hash (transaction_hash)
+);
+```
+
+**Business Rules:**
+- All lending operations logged regardless of success/failure
+- Health factor changes tracked for repay/withdraw/borrow operations
+- Status lifecycle: `pending` → `confirmed` or `failed`
+- Metadata stores additional context (gas estimation, user preferences)
+
+**Usage Patterns:**
+- Transaction monitoring: Celery workers update status on confirmation
+- Audit trail: Complete history of user lending activity
+- Analytics: Health factor change analysis, operation success rates
+- Debugging: Failed transaction analysis via metadata
+
+### 16.5 user_lending_preferences
+
+**Mission:** User-specific risk tolerance settings and notification preferences for lending operations.
+
+**Schema Highlights:**
+```sql
+CREATE TABLE user_lending_preferences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES chat_users(id) ON DELETE CASCADE,
+    risk_tolerance VARCHAR(20) DEFAULT 'moderate',  -- 'conservative' | 'moderate' | 'aggressive'
+    min_health_factor NUMERIC(10, 2) DEFAULT 1.5,  -- Minimum allowed health factor
+    max_leverage NUMERIC(10, 2) DEFAULT 3.0,  -- Maximum leverage for loop strategies
+    preferred_protocol VARCHAR(20),  -- 'aave' | 'morpho' | NULL (no preference)
+    auto_rebalance BOOLEAN DEFAULT FALSE,  -- Enable automatic position rebalancing
+    notification_health_threshold NUMERIC(10, 2) DEFAULT 1.3,  -- Alert threshold
+    notification_email VARCHAR(255),  -- Email for critical alerts
+    notification_enabled BOOLEAN DEFAULT TRUE,  -- Enable/disable all alerts
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    INDEX idx_user_lending_preferences_user (user_id)
+);
+```
+
+**Business Rules:**
+- **Conservative:** min_health_factor = 1.8, max_leverage = 2.0
+- **Moderate:** min_health_factor = 1.5, max_leverage = 3.0 (default)
+- **Aggressive:** min_health_factor = 1.3, max_leverage = 5.0
+- Notification threshold must be ≥ min_health_factor
+- Auto-rebalance triggers when health factor < notification_threshold
+
+**Safety Integration:**
+- `BorrowCommandHandler` checks min_health_factor before execution
+- `LeverageLoopService` validates max_leverage before starting loops
+- `HealthFactorMonitoringService` triggers alerts at notification_threshold
+
+### 16.6 lending_health_checks
+
+**Mission:** Historical time-series tracking of health factors and collateralization ratios for monitoring and analytics.
+
+**Schema Highlights:**
+```sql
+CREATE TABLE lending_health_checks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+    protocol VARCHAR(20) NOT NULL,
+    chain VARCHAR(20) NOT NULL,
+    health_factor NUMERIC(10, 2) NOT NULL,
+    health_factor_level VARCHAR(20) NOT NULL,  -- Risk classification
+    total_collateral_usd NUMERIC(20, 2),  -- Total collateral value
+    total_debt_usd NUMERIC(20, 2),  -- Total borrowed value
+    available_to_borrow_usd NUMERIC(20, 2),  -- Remaining borrowing capacity
+    liquidation_price NUMERIC(20, 2),  -- Price at which liquidation occurs
+    checked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    INDEX idx_lending_health_checks_user_date (user_id, checked_at DESC),
+    INDEX idx_lending_health_checks_protocol (protocol, chain),
+    INDEX idx_lending_health_checks_level (health_factor_level) WHERE health_factor_level IN ('danger', 'critical', 'liquidatable')
+);
+```
+
+**Health Factor Classification:**
+- **safe:** health_factor ≥ 2.0 (green)
+- **caution:** 1.5 ≤ health_factor < 2.0 (yellow)
+- **danger:** 1.2 ≤ health_factor < 1.5 (orange)
+- **critical:** 1.0 ≤ health_factor < 1.2 (red)
+- **liquidatable:** health_factor < 1.0 (critical red)
+
+**Usage Patterns:**
+- Celery scheduled task checks every 5 minutes
+- Time-series data enables health factor trend analysis
+- Liquidation price calculation for proactive alerts
+- Historical data for user lending behavior analytics
+
+### 16.7 leverage_loop_executions
+
+**Mission:** Track multi-step leverage loop workflows requiring 3+ separate user signatures with detailed step tracking.
+
+**Schema Highlights:**
+```sql
+CREATE TABLE leverage_loop_executions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+    protocol VARCHAR(20) NOT NULL,
+    chain VARCHAR(20) NOT NULL,
+    asset_address VARCHAR(66) NOT NULL,
+    asset_symbol VARCHAR(20) NOT NULL,
+    initial_amount NUMERIC(78, 18) NOT NULL,  -- Starting deposit
+    target_leverage NUMERIC(10, 2) NOT NULL,  -- Desired leverage (e.g., 3.0x)
+    actual_leverage NUMERIC(10, 2),  -- Achieved leverage after completion
+    total_steps INTEGER NOT NULL,  -- Number of supply/borrow iterations
+    current_step INTEGER DEFAULT 0,  -- Current step in execution
+    steps_completed TEXT[],  -- Array of completed step descriptions
+    status VARCHAR(20) DEFAULT 'pending',  -- 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled'
+    final_health_factor NUMERIC(10, 2),  -- Health factor after loop completes
+    final_collateral_usd NUMERIC(20, 2),  -- Total collateral after loop
+    final_debt_usd NUMERIC(20, 2),  -- Total debt after loop
+    total_gas_used NUMERIC(20, 0),  -- Cumulative gas cost
+    total_cost_usd NUMERIC(10, 2),  -- Total USD cost including gas
+    error_message TEXT,  -- Error details if failed
+    metadata JSONB,  -- Additional context per step
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE,
+
+    INDEX idx_leverage_loop_user_date (user_id, created_at DESC),
+    INDEX idx_leverage_loop_status (status) WHERE status IN ('pending', 'in_progress')
+);
+```
+
+**Leverage Loop Workflow:**
+1. **Step 1:** User supplies initial collateral → 1 signature
+2. **Step 2:** Borrow against collateral → 1 signature
+3. **Step 3:** Supply borrowed assets as collateral → 1 signature
+4. **Step N:** Repeat borrow/supply iterations until target leverage reached
+5. Each step requires separate wallet signature (3+ signatures total)
+
+**Business Rules:**
+- Target leverage cannot exceed `user_lending_preferences.max_leverage`
+- Each step validates health_factor ≥ user's min_health_factor
+- Execution can be cancelled by user at any step
+- Failed step halts execution and triggers alert
+- Metadata tracks gas estimation vs actual per step
+
+**Safety Features:**
+- Multi-signature requirement prevents accidental large leverage
+- Step-by-step health factor validation
+- User can review position after each step before proceeding
+
+### 16.8 lending_alerts
+
+**Mission:** Real-time notification system for liquidation risks, position changes, and critical lending events.
+
+**Schema Highlights:**
+```sql
+CREATE TABLE lending_alerts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+    position_id UUID REFERENCES lending_positions(id) ON DELETE CASCADE,  -- Nullable for system alerts
+    alert_type VARCHAR(50) NOT NULL,
+    severity VARCHAR(20) NOT NULL,  -- 'info' | 'warning' | 'critical'
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    health_factor NUMERIC(10, 2),  -- Current health factor if applicable
+    threshold_value NUMERIC(20, 2),  -- Threshold that triggered alert
+    current_value NUMERIC(20, 2),  -- Current value exceeding threshold
+    is_read BOOLEAN DEFAULT FALSE,
+    sent_at TIMESTAMP WITH TIME ZONE,  -- When notification was sent (email/push)
+    metadata JSONB,  -- Additional context
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    INDEX idx_lending_alerts_user_unread (user_id, is_read) WHERE is_read = FALSE,
+    INDEX idx_lending_alerts_severity (severity, created_at DESC) WHERE severity = 'critical',
+    INDEX idx_lending_alerts_position (position_id, created_at DESC)
+);
+```
+
+**Alert Types:**
+- **health_factor_low** (warning/critical): Health factor below notification threshold
+- **liquidation_risk** (critical): Health factor < 1.2, immediate action required
+- **position_closed** (info): Supply/borrow position closed by user
+- **loop_completed** (info): Leverage loop successfully completed
+- **loop_failed** (warning): Leverage loop step failed
+- **rate_change** (info): Significant APY/interest rate change (>10%)
+
+**Alert Severity Levels:**
+- **info:** Informational updates (position changes, loop completion)
+- **warning:** Attention needed (health_factor < 1.5, loop failures)
+- **critical:** Immediate action required (health_factor < 1.2, liquidation risk)
+
+**Notification Channels:**
+- In-app: All alerts stored and shown in dashboard
+- Email: Critical alerts sent to `user_lending_preferences.notification_email`
+- Push: (Future) Mobile push notifications for critical alerts
+
+**Usage Patterns:**
+- Created by `HealthFactorMonitoringService` when threshold breached
+- Created by `LeverageLoopService` on step completion/failure
+- Created by `LendingTransactionHandler` on position status changes
+- Dashboard queries unread alerts via `is_read = FALSE` index
+
+### 16.9 user_lending_summary (VIEW)
+
+**Mission:** Aggregated analytical view for user lending dashboard with portfolio overview.
+
+**View Definition:**
+```sql
+CREATE VIEW user_lending_summary AS
+SELECT
+    lp.user_id,
+    COUNT(DISTINCT lp.id) AS total_positions,
+    COUNT(DISTINCT lp.id) FILTER (WHERE lp.position_type = 'supply') AS supply_positions,
+    COUNT(DISTINCT lp.id) FILTER (WHERE lp.position_type = 'borrow') AS borrow_positions,
+    ARRAY_AGG(DISTINCT lp.protocol) AS protocols_used,
+    SUM(lp.amount_usd) FILTER (WHERE lp.position_type = 'supply') AS total_supplied_usd,
+    SUM(lp.amount_usd) FILTER (WHERE lp.position_type = 'borrow') AS total_borrowed_usd,
+    MIN(lp.health_factor) FILTER (WHERE lp.health_factor IS NOT NULL) AS min_health_factor,
+    AVG(lp.apy) FILTER (WHERE lp.position_type = 'supply') AS avg_supply_apy,
+    AVG(lp.apy) FILTER (WHERE lp.position_type = 'borrow') AS avg_borrow_apy,
+    COUNT(DISTINCT la.id) FILTER (WHERE la.severity = 'critical' AND la.is_read = FALSE) AS unread_critical_alerts,
+    MAX(lp.updated_at) AS last_activity_at
+FROM lending_positions lp
+LEFT JOIN lending_alerts la ON la.user_id = lp.user_id
+WHERE lp.status = 'active'
+GROUP BY lp.user_id;
+```
+
+**Usage:**
+- Powers user lending dashboard with key metrics
+- Single query for portfolio overview
+- Real-time calculation (no caching needed)
+- Alerts integrated for notification badge count
+
+**Dashboard Metrics:**
+- Total positions and breakdown by type
+- TVL (Total Value Locked) across protocols
+- Average yields (supply APY, borrow interest)
+- Health status (minimum health factor)
+- Unread critical alerts count
+
+### 16.10 protocol_comparison (VIEW)
+
+**Mission:** Real-time protocol analytics for rate comparison and market intelligence.
+
+**View Definition:**
+```sql
+CREATE VIEW protocol_comparison AS
+SELECT
+    lp.protocol,
+    lp.chain,
+    lp.asset_symbol,
+    lp.position_type,
+    COUNT(DISTINCT lp.user_id) AS unique_users,
+    COUNT(lp.id) AS total_positions,
+    SUM(lp.amount_usd) AS total_tvl_usd,
+    AVG(lp.apy) AS avg_apy,
+    MIN(lp.apy) AS min_apy,
+    MAX(lp.apy) AS max_apy,
+    AVG(lp.health_factor) FILTER (WHERE lp.health_factor IS NOT NULL) AS avg_health_factor,
+    COUNT(lp.id) FILTER (WHERE lp.status = 'active') AS active_positions,
+    COUNT(lp.id) FILTER (WHERE lp.status = 'liquidated') AS liquidated_positions,
+    MAX(lp.updated_at) AS last_updated
+FROM lending_positions lp
+WHERE lp.status IN ('active', 'liquidated')
+GROUP BY lp.protocol, lp.chain, lp.asset_symbol, lp.position_type;
+```
+
+**Usage:**
+- Market Scanner Agent queries for best rates
+- Protocol comparison in chat responses
+- Risk analysis (liquidation rates per protocol)
+- TVL tracking for protocol health
+
+**Analytics Enabled:**
+- **Best Supply APY:** `ORDER BY avg_apy DESC WHERE position_type = 'supply'`
+- **Lowest Borrow Rate:** `ORDER BY avg_apy ASC WHERE position_type = 'borrow'`
+- **Protocol Risk:** `liquidated_positions / total_positions ratio`
+- **User Adoption:** `unique_users per protocol/chain`
 
 ---
 
