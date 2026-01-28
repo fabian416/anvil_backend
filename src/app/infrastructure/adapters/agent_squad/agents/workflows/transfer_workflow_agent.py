@@ -115,8 +115,26 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         
         step = state.step
         language = user_context.language
+        text_lower = message.value.lower().strip()
         
         logger.info(f"[TransferWorkflow] Processing step={step}, message={message.value[:50]}...")
+        
+        # Check if user wants to start a NEW transfer flow (restart detection)
+        # This resets state when user says "send", "transfer", etc.
+        # while already in an ongoing flow (FETCH_DATA, CONFIRM, or EXECUTE step)
+        if step not in (WorkflowStep.PARSE_REQUEST.value, WorkflowStep.CANCELLED.value, WorkflowStep.COMPLETED.value):
+            restart_keywords = [
+                "send", "transfer", "enviar", "transferir",
+                "i want to send", "i want to transfer",
+                "quiero enviar", "quiero transferir",
+            ]
+            is_restart_request = any(text_lower.startswith(kw) or f" {kw}" in f" {text_lower}" for kw in restart_keywords)
+            
+            if is_restart_request:
+                logger.info(f"[TransferWorkflow] Restart detected - user starting new transfer flow, resetting state")
+                state = WorkflowState()
+                state.step = WorkflowStep.PARSE_REQUEST.value
+                return await self._handle_parse_request(message, state, user_context)
         
         # Step 1: Parse request
         if step == WorkflowStep.PARSE_REQUEST.value:

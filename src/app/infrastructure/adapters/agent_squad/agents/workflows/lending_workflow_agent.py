@@ -126,8 +126,26 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         
         step = state.step
         language = user_context.language
+        text_lower = message.value.lower().strip()
         
         logger.info(f"[LendingWorkflow] Processing step={step}, message={message.value[:50]}...")
+        
+        # Check if user wants to start a NEW lending flow (restart detection)
+        # This resets state when user says "lend", "deposit", "supply", etc.
+        # while already in an ongoing flow (FETCH_DATA, CONFIRM, or EXECUTE step)
+        if step not in (WorkflowStep.PARSE_REQUEST.value, WorkflowStep.CANCELLED.value, WorkflowStep.COMPLETED.value):
+            restart_keywords = [
+                "lend", "deposit", "supply", "depositar", "prestar", "suministrar",
+                "i want to lend", "i want to deposit", "i want to supply",
+                "quiero depositar", "quiero prestar",
+            ]
+            is_restart_request = any(text_lower.startswith(kw) or f" {kw}" in f" {text_lower}" for kw in restart_keywords)
+            
+            if is_restart_request:
+                logger.info(f"[LendingWorkflow] Restart detected - user starting new lending flow, resetting state")
+                state = WorkflowState()
+                state.step = WorkflowStep.PARSE_REQUEST.value
+                return await self._handle_parse_request(message, state, user_context)
         
         # Step 1: Parse request
         if step == WorkflowStep.PARSE_REQUEST.value:

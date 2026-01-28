@@ -113,8 +113,29 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
         
         step = state.step
         language = user_context.language
+        text_lower = message.value.lower().strip()
         
         logger.info(f"[BuyWorkflow] Processing step={step}, message={message.value[:50]}...")
+        
+        # Check if user wants to start a NEW buy flow (restart detection)
+        # This resets state when user says "buy crypto", "buy", "purchase", etc.
+        # while already in an ongoing flow (FETCH_DATA, CONFIRM, or EXECUTE step)
+        if step not in (WorkflowStep.PARSE_REQUEST.value, WorkflowStep.CANCELLED.value, WorkflowStep.COMPLETED.value):
+            restart_keywords = [
+                "buy crypto", "buy usdc", "purchase crypto", "purchase usdc",
+                "comprar cripto", "comprar usdc",
+                "i want to buy", "quiero comprar",
+            ]
+            # Also detect simple "buy" at start of message (but not "buy $100" which is amount input)
+            is_simple_buy = text_lower in ("buy", "buy crypto", "comprar", "comprar cripto", "purchase")
+            is_restart_request = any(kw in text_lower for kw in restart_keywords) or is_simple_buy
+            
+            if is_restart_request:
+                logger.info(f"[BuyWorkflow] Restart detected - user starting new buy flow, resetting state")
+                # Reset state completely for a fresh start
+                state = WorkflowState()
+                state.step = WorkflowStep.PARSE_REQUEST.value
+                return await self._handle_parse_request(message, state, user_context)
         
         # Step 1: Parse request
         if step == WorkflowStep.PARSE_REQUEST.value:

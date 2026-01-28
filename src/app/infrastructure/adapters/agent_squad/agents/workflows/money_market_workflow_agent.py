@@ -131,8 +131,25 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         
         step = state.step
         language = user_context.language
+        text_lower = message.value.lower().strip()
         
         logger.info(f"[MoneyMarketWorkflow] Processing step={step}, message={message.value[:50]}...")
+        
+        # Check if user wants to start a NEW money market flow (restart detection)
+        # This resets state when user says "compare rates", "money market", etc.
+        # while already in an ongoing flow (FETCH_DATA, CONFIRM, or EXECUTE step)
+        if step not in (WorkflowStep.PARSE_REQUEST.value, WorkflowStep.CANCELLED.value, WorkflowStep.COMPLETED.value):
+            restart_keywords = [
+                "compare rates", "money market", "best rates", "yield comparison",
+                "comparar tasas", "mercado de dinero", "mejores tasas",
+            ]
+            is_restart_request = any(text_lower.startswith(kw) or f" {kw}" in f" {text_lower}" for kw in restart_keywords)
+            
+            if is_restart_request:
+                logger.info(f"[MoneyMarketWorkflow] Restart detected - user starting new flow, resetting state")
+                state = WorkflowState()
+                state.step = WorkflowStep.PARSE_REQUEST.value
+                return await self._handle_parse_request(message, state, user_context)
         
         # Step 1: Parse request
         if step == WorkflowStep.PARSE_REQUEST.value:
