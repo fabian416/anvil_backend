@@ -943,12 +943,12 @@ class IntentDetectorV2:
             r"\b(arbitraje|préstamo flash|préstamo instantáneo)\b",
             # Arbitrage/MEV/Flash loans (Portuguese)
             r"\b(arbitragem|empréstimo flash)\b",
-            # Other actions (English)
-            r"\b(lend|borrow|stake|deposit|withdraw|supply)\b",
-            # Other actions (Spanish)
-            r"\b(prestar|pedir prestado|staking|depositar|retirar)\b",
-            # Other actions (Portuguese)
-            r"\b(emprestar|tomar emprestado|depositar|retirar)\b",
+            # Other DeFi actions (English) - includes swap/exchange to break out of other flows
+            r"\b(swap|exchange|trade|convert|lend|borrow|stake|deposit|withdraw|supply|buy crypto|purchase crypto|send crypto|transfer crypto)\b",
+            # Other DeFi actions (Spanish)
+            r"\b(cambiar|intercambiar|canjear|prestar|pedir prestado|staking|depositar|retirar|comprar cripto|enviar cripto)\b",
+            # Other DeFi actions (Portuguese)
+            r"\b(trocar|converter|emprestar|tomar emprestado|depositar|retirar|comprar cripto|enviar cripto)\b",
             # Question words with context (less strict - anywhere in message)
             r"\b(what is the|how is the|why is|when will|where can)\b",
             r"\b(qué es el|cómo es el|por qué|cuándo|dónde)\b",
