@@ -29,14 +29,11 @@ from app.application.maintenance.tasks import (
 
 async def _run_task(coro_factory):
     """Helper to run async tasks with DI container."""
+    from app.setup.ioc.provider_registry import get_providers
+    
     settings = load_settings()
     container = create_async_ioc_container(
-        providers=(
-            ApplicationProvider(),
-            infrastructure_provider(),
-            PresentationProvider(),
-            SettingsProvider(),
-        ),
+        providers=get_providers(),
         settings=settings,
     )
     try:

@@ -166,7 +166,7 @@ class PortfolioMultiStepHandler:
 
 {msg['signup_text']}
 
-👉 **Sign up now** → /signup
+👉 **Sign up now**
 """
 
         # Build enrichment data

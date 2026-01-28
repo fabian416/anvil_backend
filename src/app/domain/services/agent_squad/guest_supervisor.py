@@ -156,16 +156,24 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 3. INFORMATIONAL vs ACTION QUERIES (CRITICAL FOR GUESTS):
    **INFORMATIONAL QUERIES → Can answer directly:**
    - "can i swap?" / "can i trade?" / "can i lend?" → "knowledge" (asking about capabilities)
-   - "how do i swap?" / "how to swap?" → "knowledge" (asking for instructions)
-   - "what swaps are supported?" → "knowledge" (asking about features)
-   - "what is a swap?" / "explain swapping" → "knowledge" (asking for education)
-   - "puedo hacer swap?" / "posso trocar?" → "knowledge" (multilingual capability questions)
-   
+   - "how do i swap?" / "how to swap?" / "how to lend?" → "knowledge" (asking for instructions)
+   - "what swaps are supported?" / "what lending protocols?" → "knowledge" (asking about features)
+   - "what is a swap?" / "explain swapping" / "what is lending?" → "knowledge" (asking for education)
+   - "compare USDC rates" / "what are money market rates?" → "hunter_ai" or "knowledge" (rate information)
+   - "aave vs compound rates" / "best lending rates" → "hunter_ai" (rate comparison data)
+   - "what is money market?" / "how does lending work?" → "knowledge" (education)
+   - "puedo hacer swap?" / "posso emprestar?" / "posso trocar?" → "knowledge" (multilingual capability questions)
+
    **ACTION REQUESTS → "guest_auth" agent (REQUIRES LOGIN):**
    - "swap 100 USDC to ETH" → "guest_auth" (specific transaction - needs wallet)
    - "execute the swap" / "do the swap" → "guest_auth" (execution - needs wallet)
+   - "lend 100 USDC" / "deposit 100 USDC to Aave" → "guest_auth" (lending transaction - needs wallet)
+   - "deposit to money market" / "supply USDC to Compound" → "guest_auth" (deposit action - needs wallet)
+   - "withdraw from Aave" / "withdraw my deposit" → "guest_auth" (withdrawal - needs wallet)
+   - "execute the deposit" / "do the lending" → "guest_auth" (execution - needs wallet)
    - "buy crypto" / "purchase bitcoin" / "buy eth" → "guest_auth" (buying crypto - needs account)
    - "my balance" / "check my portfolio" → "guest_auth" (requires wallet)
+   - "my deposits" / "my lending positions" → "guest_auth" (requires wallet)
    - "my wallets" / "show my wallets" → "guest_auth" (requires login)
    - "my transactions" / "transaction history" → "guest_auth" (requires login)
    - "send 0.5 ETH to 0x..." → "guest_auth" (specific transaction - needs wallet)
@@ -177,9 +185,15 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
      * "convert ETH to USDC" → hunter_ai
      * "exchange rate ETH USDC" → hunter_ai
      * This is about token-to-token exchange pricing, NOT yield farming
+   - **LENDING/MONEY MARKET RATES** (information only, no execution) → "hunter_ai"
+     * "compare USDC lending rates" → hunter_ai
+     * "aave vs compound rates" → hunter_ai
+     * "best USDC APY" → hunter_ai
+     * Rate comparison data for informational purposes
    - DeFi concepts, education, capability questions → "knowledge"
    - **Protocol comparisons and explanations** → "knowledge" (e.g., "Aave vs Compound", "what is Uniswap")
    - **DeFi protocol questions** → "knowledge" (Aave, Compound, Uniswap, Curve, MakerDAO, Lido, etc.)
+   - **Lending/money market education** → "knowledge" (what is lending, how does it work, risks, etc.)
    - Yield/APY/lending rates (interest earned on deposits) → "defi_yield"
      * "best yield farms" → defi_yield
      * "highest APY" → defi_yield
@@ -223,6 +237,18 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 "my portfolio" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle portfolio request - requires login","depends_on":[]}}]}}
 "show my wallets" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle wallet request - requires login","depends_on":[]}}]}}
 "my transactions" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle transaction history request - requires login","depends_on":[]}}]}}
+"can i lend usdc?" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain lending capabilities","depends_on":[]}}]}}
+"how to lend tokens?" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain how to lend tokens","depends_on":[]}}]}}
+"what is money market?" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain money market and lending protocols","depends_on":[]}}]}}
+"compare usdc lending rates" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Compare USDC lending rates across protocols","depends_on":[]}}]}}
+"aave vs compound rates" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Compare Aave vs Compound lending rates","depends_on":[]}}]}}
+"best usdc apy" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Find best USDC lending APY","depends_on":[]}}]}}
+"lend 100 usdc" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle lending transaction - requires login","depends_on":[]}}]}}
+"deposit 100 usdc to aave" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle deposit transaction - requires login","depends_on":[]}}]}}
+"deposit to money market" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle money market deposit - requires login","depends_on":[]}}]}}
+"withdraw from compound" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle withdrawal transaction - requires login","depends_on":[]}}]}}
+"my deposits" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle deposits query - requires login","depends_on":[]}}]}}
+"my lending positions" → {{"tasks":[{{"agent_type":"guest_auth","task_description":"Handle lending positions query - requires login","depends_on":[]}}]}}
 "make a cake" → {{"tasks":[{{"agent_type":"chat","task_description":"Decline off-topic politely, I specialize in DeFi","depends_on":[]}}]}}
 "best GPU for gaming" → {{"tasks":[{{"agent_type":"chat","task_description":"Decline off-topic politely, I only help with DeFi","depends_on":[]}}]}}
 "explain the French Revolution" → {{"tasks":[{{"agent_type":"chat","task_description":"Decline off-topic politely, I specialize in crypto","depends_on":[]}}]}}

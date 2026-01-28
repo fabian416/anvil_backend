@@ -383,7 +383,7 @@ class MoonPaySwapMultiStepHandler:
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
                 "**Next Step: Create Your Account**\n\n"
                 "To complete this swap securely with MoonPay, you'll need to sign up:\n\n"
-                "👉 **[Sign Up Now](/signup)** - Takes just 2 minutes!\n\n"
+                "👉 **Sign Up Now** - Takes just 2 minutes!\n\n"
                 "✨ Your swap quote is saved and ready to go once you're registered.\n\n"
                 "🔒 *Secure • Fast • Easy*"
             ),
@@ -393,7 +393,7 @@ class MoonPaySwapMultiStepHandler:
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
                 "**Siguiente Paso: Crea Tu Cuenta**\n\n"
                 "Para completar este swap de forma segura con MoonPay, necesitas registrarte:\n\n"
-                "👉 **[Regístrate Ahora](/signup)** - ¡Solo toma 2 minutos!\n\n"
+                "👉 **Regístrate Ahora** - ¡Solo toma 2 minutos!\n\n"
                 "✨ Tu cotización está guardada y lista una vez que te registres.\n\n"
                 "🔒 *Seguro • Rápido • Fácil*"
             ),

@@ -10,7 +10,6 @@ from decimal import Decimal
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, delete, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.money_market.protocol_data import (
     MoneyMarketProtocolData,
@@ -18,6 +17,7 @@ from app.domain.entities.money_market.protocol_data import (
 from app.domain.ports.money_market.money_market_cache_gateway import (
     MoneyMarketCacheGateway,
 )
+from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class MoneyMarketCacheAdapterSqla(MoneyMarketCacheGateway):
     """SQLAlchemy implementation of MoneyMarketCacheGateway."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: MainAsyncSession):
         self._session = session
         # Get table reference from registry
         self._table = mapping_registry.metadata.tables["money_market_rates"]

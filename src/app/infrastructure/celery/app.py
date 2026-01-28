@@ -1,6 +1,7 @@
 import os
 
 from celery import Celery
+from celery.schedules import crontab
 
 from app.setup.config.settings import load_settings
 
@@ -98,6 +99,11 @@ def create_celery() -> Celery:
         "money_market.check_alerts": {"queue": "money_market"},
         "money_market.aggregate_analytics": {"queue": "money_market"},
         "money_market.cleanup_cache": {"queue": "maintenance"},
+        
+        # Lending tasks - health monitoring and position refresh
+        "monitor_lending_health_factors": {"queue": "risk"},
+        "refresh_lending_positions": {"queue": "maintenance"},
+        "check_user_lending_health": {"queue": "risk"},
     }
     
     # Configuración de colas con prioridades
@@ -158,11 +164,33 @@ def create_celery() -> Celery:
             "schedule": crontab(hour=3, minute=0),  # Daily at 3:00 AM UTC
             "options": {"queue": "maintenance"},
         },
+        # Lending - Health Factor Monitoring (every 15 minutes)
+        # Monitors all active lending positions and checks health factors
+        "monitor-lending-health-factors": {
+            "task": "monitor_lending_health_factors",
+            "schedule": crontab(minute="*/15"),  # Every 15 minutes
+            "options": {"queue": "risk"},
+        },
+        # Lending - Position Refresh (every hour at :30)
+        # Refreshes lending positions from protocols to keep database in sync
+        "refresh-lending-positions": {
+            "task": "refresh_lending_positions",
+            "schedule": crontab(minute=30),  # Every hour at :30
+            "options": {"queue": "maintenance"},
+        },
     }
 
     # Disable the task if transaction confirmation is disabled
     if not tx_conf.enabled:
-        app.conf.beat_schedule = {}
+        # Keep money market and lending tasks even if transaction confirmation is disabled
+        app.conf.beat_schedule = {
+            "money-market-warm-cache": app.conf.beat_schedule.get("money-market-warm-cache"),
+            "money-market-check-alerts": app.conf.beat_schedule.get("money-market-check-alerts"),
+            "money-market-aggregate-analytics": app.conf.beat_schedule.get("money-market-aggregate-analytics"),
+            "money-market-cleanup-cache": app.conf.beat_schedule.get("money-market-cleanup-cache"),
+            "monitor-lending-health-factors": app.conf.beat_schedule.get("monitor-lending-health-factors"),
+            "refresh-lending-positions": app.conf.beat_schedule.get("refresh-lending-positions"),
+        }
 
     return app
 

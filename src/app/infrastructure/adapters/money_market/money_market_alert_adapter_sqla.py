@@ -9,12 +9,12 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import and_, delete, desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.money_market.alert import MoneyMarketAlert
 from app.domain.ports.money_market.money_market_alert_gateway import (
     MoneyMarketAlertGateway,
 )
+from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class MoneyMarketAlertAdapterSqla(MoneyMarketAlertGateway):
     """SQLAlchemy implementation of MoneyMarketAlertGateway."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: MainAsyncSession):
         self._session = session
         self._table = mapping_registry.metadata.tables[
             "money_market_alert_history"

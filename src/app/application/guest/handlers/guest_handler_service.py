@@ -2319,7 +2319,7 @@ class GuestHandlerService:
                     "price_impact": f"**Price Impact:** {best_protocol['price_impact']:.2f}%",
                     "gas_estimate": f"**Estimated Gas:** ${best_protocol['gas_usd']:.2f}",
                     "slippage": f"**Slippage:** {best_protocol['slippage']:.1f}%",
-                    "note": f"👉 **To execute swap {from_token.upper()} to {to_token.upper()}, you need to register** → /signup",
+                    "note": f"👉 **To execute swap {from_token.upper()} to {to_token.upper()}, you need to register**",
                 },
                 "es": {
                     "title": "🔄 **Comparación de Mejores Tasas**",
@@ -2330,7 +2330,7 @@ class GuestHandlerService:
                     "price_impact": f"**Impacto de Precio:** {best_protocol['price_impact']:.2f}%",
                     "gas_estimate": f"**Gas Estimado:** ${best_protocol['gas_usd']:.2f}",
                     "slippage": f"**Deslizamiento:** {best_protocol['slippage']:.1f}%",
-                    "note": f"👉 **Para ejecutar swap de {from_token.upper()} a {to_token.upper()}, necesitas registrarte** → /signup",
+                    "note": f"👉 **Para ejecutar swap de {from_token.upper()} a {to_token.upper()}, necesitas registrarte**",
                 },
                 "pt": {
                     "title": "🔄 **Comparação de Melhores Taxas**",
@@ -2341,7 +2341,7 @@ class GuestHandlerService:
                     "price_impact": f"**Impacto de Preço:** {best_protocol['price_impact']:.2f}%",
                     "gas_estimate": f"**Gas Estimado:** ${best_protocol['gas_usd']:.2f}",
                     "slippage": f"**Deslizamento:** {best_protocol['slippage']:.1f}%",
-                    "note": f"👉 **Para executar swap de {from_token.upper()} para {to_token.upper()}, você precisa se cadastrar** → /signup",
+                    "note": f"👉 **Para executar swap de {from_token.upper()} para {to_token.upper()}, você precisa se cadastrar**",
                 },
                 "zh": {
                     "title": "🔄 **最佳交换率比较**",
@@ -2420,7 +2420,7 @@ class GuestHandlerService:
                     "rate": "Rate",
                     "impact": "Price Impact",
                     "gas": "Est. Gas",
-                    "note": f"👉 **To execute swap {amount} {from_token} to {to_token}, you need to register** → /signup",
+                    "note": f"👉 **To execute swap {amount} {from_token} to {to_token}, you need to register**",
                 },
                 "es": {
                     "title": "🔄 **Cotización de Swap**",
@@ -2429,7 +2429,7 @@ class GuestHandlerService:
                     "rate": "Tasa",
                     "impact": "Impacto en Precio",
                     "gas": "Gas Est.",
-                    "note": f"👉 **Para ejecutar swap de {amount} {from_token} a {to_token}, necesitas registrarte** → /signup",
+                    "note": f"👉 **Para ejecutar swap de {amount} {from_token} a {to_token}, necesitas registrarte**",
                 },
                 "pt": {
                     "title": "🔄 **Cotação de Swap**",
@@ -2438,7 +2438,7 @@ class GuestHandlerService:
                     "rate": "Taxa",
                     "impact": "Impacto no Preço",
                     "gas": "Gas Est.",
-                    "note": f"👉 **Para executar swap de {amount} {from_token} para {to_token}, você precisa se cadastrar** → /signup",
+                    "note": f"👉 **Para executar swap de {amount} {from_token} para {to_token}, você precisa se cadastrar**",
                 },
                 "zh": {
                     "title": "🔄 **交换报价**",
@@ -2447,7 +2447,7 @@ class GuestHandlerService:
                     "rate": "汇率",
                     "impact": "价格影响",
                     "gas": "预估Gas",
-                    "note": f"👉 **执行 {amount} {from_token} 到 {to_token} 的交换需要注册** → /signup",
+                    "note": f"👉 **执行 {amount} {from_token} 到 {to_token} 的交换需要注册**",
                 },
             }
             t = translations.get(language, translations["en"])
@@ -2477,24 +2477,24 @@ class GuestHandlerService:
         # Incomplete swap - ask for more info WITH persuasive registration CTA
         if from_token and not to_token:
             prompts = {
-                "en": f"🔄 Got it! You want to swap **{from_token}**. What token would you like to receive?\n\n👉 **To execute the swap, you need to register** → /signup",
-                "es": f"🔄 ¡Entendido! Quieres cambiar **{from_token}**. ¿A qué token quieres cambiar?\n\n👉 **Para ejecutar el swap, necesitas registrarte** → /signup",
-                "pt": f"🔄 Entendi! Você quer trocar **{from_token}**. Para qual token você quer trocar?\n\n👉 **Para executar o swap, você precisa se cadastrar** → /signup",
-                "zh": f"🔄 好的！您想交换 **{from_token}**。您想要接收什么代币？\n\n👉 **执行交换需要注册** → /signup",
+                "en": f"🔄 Got it! You want to swap **{from_token}**. What token would you like to receive?\n\n👉 **To execute the swap, you need to register**",
+                "es": f"🔄 ¡Entendido! Quieres cambiar **{from_token}**. ¿A qué token quieres cambiar?\n\n👉 **Para ejecutar el swap, necesitas registrarte**",
+                "pt": f"🔄 Entendi! Você quer trocar **{from_token}**. Para qual token você quer trocar?\n\n👉 **Para executar o swap, você precisa se cadastrar**",
+                "zh": f"🔄 好的！您想交换 **{from_token}**。您想要接收什么代币？\n\n👉 **执行交换需要注册**",
             }
         elif from_token and to_token and not amount:
             prompts = {
-                "en": f"🔄 Perfect! Swapping **{from_token}** to **{to_token}**. How much {from_token} would you like to swap?\n\n👉 **To execute swap {from_token} to {to_token}, you need to register** → /signup",
-                "es": f"🔄 ¡Perfecto! Cambiando **{from_token}** a **{to_token}**. ¿Cuánto {from_token} quieres cambiar?\n\n👉 **Para ejecutar swap de {from_token} a {to_token}, necesitas registrarte** → /signup",
-                "pt": f"🔄 Perfeito! Trocando **{from_token}** para **{to_token}**. Quanto {from_token} você quer trocar?\n\n👉 **Para executar swap de {from_token} para {to_token}, você precisa se cadastrar** → /signup",
-                "zh": f"🔄 好的！将 **{from_token}** 交换为 **{to_token}**。您想交换多少 {from_token}？\n\n👉 **执行 {from_token} 到 {to_token} 的交换需要注册** → /signup",
+                "en": f"🔄 Perfect! Swapping **{from_token}** to **{to_token}**. How much {from_token} would you like to swap?\n\n👉 **To execute swap {from_token} to {to_token}, you need to register**",
+                "es": f"🔄 ¡Perfecto! Cambiando **{from_token}** a **{to_token}**. ¿Cuánto {from_token} quieres cambiar?\n\n👉 **Para ejecutar swap de {from_token} a {to_token}, necesitas registrarte**",
+                "pt": f"🔄 Perfeito! Trocando **{from_token}** para **{to_token}**. Quanto {from_token} você quer trocar?\n\n👉 **Para executar swap de {from_token} para {to_token}, você precisa se cadastrar**",
+                "zh": f"🔄 好的！将 **{from_token}** 交换为 **{to_token}**。您想交换多少 {from_token}？\n\n👉 **执行 {from_token} 到 {to_token} 的交换需要注册**",
             }
         else:
             prompts = {
-                "en": "🔄 I can help you swap tokens! Please tell me:\n\n• **From:** Which token to swap\n• **To:** Which token to receive\n• **Amount:** How much to swap\n\nExample: *swap 100 USDC to ETH*\n\n👉 **To execute any swap, you need to register** → /signup",
-                "es": "🔄 ¡Puedo ayudarte a cambiar tokens! Por favor dime:\n\n• **De:** Qué token cambiar\n• **A:** Qué token recibir\n• **Cantidad:** Cuánto cambiar\n\nEjemplo: *cambiar 100 USDC a ETH*\n\n👉 **Para ejecutar cualquier swap, necesitas registrarte** → /signup",
-                "pt": "🔄 Posso ajudá-lo a trocar tokens! Por favor me diga:\n\n• **De:** Qual token trocar\n• **Para:** Qual token receber\n• **Quantidade:** Quanto trocar\n\nExemplo: *trocar 100 USDC para ETH*\n\n👉 **Para executar qualquer swap, você precisa se cadastrar** → /signup",
-                "zh": "🔄 我可以帮您交换代币！请告诉我：\n\n• **从：** 要交换的代币\n• **到：** 要接收的代币\n• **数量：** 交换多少\n\n示例：*交换 100 USDC 到 ETH*\n\n👉 **执行任何交换都需要注册** → /signup",
+                "en": "🔄 I can help you swap tokens! Please tell me:\n\n• **From:** Which token to swap\n• **To:** Which token to receive\n• **Amount:** How much to swap\n\nExample: *swap 100 USDC to ETH*\n\n👉 **To execute any swap, you need to register**",
+                "es": "🔄 ¡Puedo ayudarte a cambiar tokens! Por favor dime:\n\n• **De:** Qué token cambiar\n• **A:** Qué token recibir\n• **Cantidad:** Cuánto cambiar\n\nEjemplo: *cambiar 100 USDC a ETH*\n\n👉 **Para ejecutar cualquier swap, necesitas registrarte**",
+                "pt": "🔄 Posso ajudá-lo a trocar tokens! Por favor me diga:\n\n• **De:** Qual token trocar\n• **Para:** Qual token receber\n• **Quantidade:** Quanto trocar\n\nExemplo: *trocar 100 USDC para ETH*\n\n👉 **Para executar qualquer swap, você precisa se cadastrar**",
+                "zh": "🔄 我可以帮您交换代币！请告诉我：\n\n• **从：** 要交换的代币\n• **到：** 要接收的代币\n• **数量：** 交换多少\n\n示例：*交换 100 USDC 到 ETH*\n\n👉 **执行任何交换都需要注册**",
             }
 
         return {
@@ -2899,17 +2899,17 @@ class GuestHandlerService:
         """Get registration call-to-action based on language."""
         if for_action:
             ctas = {
-                "en": "\n\n👉 **Sign up to execute this action** → /signup",
-                "es": "\n\n👉 **Regístrate para ejecutar esta acción** → /signup",
-                "pt": "\n\n👉 **Cadastre-se para executar esta ação** → /signup",
-                "zh": "\n\n👉 **注册以执行此操作** → /signup",
+                "en": "\n\n👉 **Sign up to execute this action**",
+                "es": "\n\n👉 **Regístrate para ejecutar esta acción**",
+                "pt": "\n\n👉 **Cadastre-se para executar esta ação**",
+                "zh": "\n\n👉 **注册以执行此操作**",
             }
         else:
             ctas = {
-                "en": "\n\n👉 **Sign up for real-time alerts** → /signup",
-                "es": "\n\n👉 **Regístrate para alertas en tiempo real** → /signup",
-                "pt": "\n\n👉 **Cadastre-se para alertas em tempo real** → /signup",
-                "zh": "\n\n👉 **注册以获取实时警报** → /signup",
+                "en": "\n\n👉 **Sign up for real-time alerts**",
+                "es": "\n\n👉 **Regístrate para alertas en tiempo real**",
+                "pt": "\n\n👉 **Cadastre-se para alertas em tempo real**",
+                "zh": "\n\n👉 **注册以获取实时警报**",
             }
         return ctas.get(language, ctas["en"])
 
@@ -2943,10 +2943,10 @@ class GuestHandlerService:
                 "zh": "📈 价格预测服务正在加载。请重试。",
             },
             ChatIntent.SWAP: {
-                "en": "🔄 I can help you swap tokens! Please tell me:\n\n• **From:** Which token to swap\n• **To:** Which token to receive\n• **Amount:** How much to swap\n\nExample: *swap 100 USDC to ETH*\n\n👉 **To execute any swap, you need to register** → /signup",
-                "es": "🔄 ¡Puedo ayudarte a cambiar tokens! Por favor dime:\n\n• **De:** Qué token cambiar\n• **A:** Qué token recibir\n• **Cantidad:** Cuánto cambiar\n\nEjemplo: *cambiar 100 USDC a ETH*\n\n👉 **Para ejecutar cualquier swap, necesitas registrarte** → /signup",
-                "pt": "🔄 Posso ajudá-lo a trocar tokens! Por favor me diga:\n\n• **De:** Qual token trocar\n• **Para:** Qual token receber\n• **Quantidade:** Quanto trocar\n\nExemplo: *trocar 100 USDC para ETH*\n\n👉 **Para executar qualquer swap, você precisa se cadastrar** → /signup",
-                "zh": "🔄 我可以帮您交换代币！请告诉我：\n\n• **从：** 要交换的代币\n• **到：** 要接收的代币\n• **数量：** 交换多少\n\n示例：*交换 100 USDC 到 ETH*\n\n👉 **执行任何交换都需要注册** → /signup",
+                "en": "🔄 I can help you swap tokens! Please tell me:\n\n• **From:** Which token to swap\n• **To:** Which token to receive\n• **Amount:** How much to swap\n\nExample: *swap 100 USDC to ETH*\n\n👉 **To execute any swap, you need to register**",
+                "es": "🔄 ¡Puedo ayudarte a cambiar tokens! Por favor dime:\n\n• **De:** Qué token cambiar\n• **A:** Qué token recibir\n• **Cantidad:** Cuánto cambiar\n\nEjemplo: *cambiar 100 USDC a ETH*\n\n👉 **Para ejecutar cualquier swap, necesitas registrarte**",
+                "pt": "🔄 Posso ajudá-lo a trocar tokens! Por favor me diga:\n\n• **De:** Qual token trocar\n• **Para:** Qual token receber\n• **Quantidade:** Quanto trocar\n\nExemplo: *trocar 100 USDC para ETH*\n\n👉 **Para executar qualquer swap, você precisa se cadastrar**",
+                "zh": "🔄 我可以帮您交换代币！请告诉我：\n\n• **从：** 要交换的代币\n• **到：** 要接收的代币\n• **数量：** 交换多少\n\n示例：*交换 100 USDC 到 ETH*\n\n👉 **执行任何交换都需要注册**",
             },
             ChatIntent.LENDING: {
                 "en": "💰 I can show you lending rates! Try asking:\n• 'show Morpho rates'\n• 'deposit USDC to earn yield'\n• 'best lending rates on Ethereum'",
@@ -3521,7 +3521,7 @@ class GuestHandlerService:
             content += f"• {balance['emoji']} **{balance['token']}**: {balance['amount']} (~{balance['value_usd']})\n"
 
         content += f"\n{t['divider']}"
-        content += f"{t['cta_title']}\n\n{t['cta_body']}\n\n👉 **[Sign Up Now](/signup)**\n\n"
+        content += f"{t['cta_title']}\n\n{t['cta_body']}\n\n👉 **Sign Up Now**\n\n"
         content += t["learn_more"]
 
         return {
@@ -3660,7 +3660,7 @@ class GuestHandlerService:
         content += f"{t['divider']}{t['warning']}\n\n"
 
         if not is_authenticated:
-            content += f"{t['cta_title']}\n\n{t['cta_body']}\n\n👉 **[Sign Up Now](/signup)**\n"
+            content += f"{t['cta_title']}\n\n{t['cta_body']}\n\n👉 **Sign Up Now**\n"
 
         return {
             "content": content,

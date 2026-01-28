@@ -10,7 +10,6 @@ from uuid import UUID
 
 from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.money_market.user_preference import (
     MoneyMarketUserPreference,
@@ -18,6 +17,7 @@ from app.domain.entities.money_market.user_preference import (
 from app.domain.ports.money_market.money_market_preference_gateway import (
     MoneyMarketPreferenceGateway,
 )
+from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class MoneyMarketPreferenceAdapterSqla(MoneyMarketPreferenceGateway):
     """SQLAlchemy implementation of MoneyMarketPreferenceGateway."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: MainAsyncSession):
         self._session = session
         self._table = mapping_registry.metadata.tables[
             "money_market_user_preferences"

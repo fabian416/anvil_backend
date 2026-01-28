@@ -2,306 +2,117 @@
 Lending Providers for Dependency Injection.
 
 Provides configured lending services following hexagonal architecture:
-- Domain services (HealthFactorValidator)
-- Application services (Interactors, Query Handlers)
-- Ports → Adapters (BalanceChecker, Repository)
+- Ports → Adapters (Repository, Position Provider)
+- Health check monitoring
+- Alert generation
+- Position tracking
 """
 
 from dishka import Provider, Scope, provide
 
-from app.application.lending.interactors.supply_interactor import SupplyInteractor
-from app.application.lending.interactors.borrow_interactor import BorrowInteractor
-from app.application.lending.interactors.leverage_loop_interactor import LeverageLoopInteractor
-from app.application.lending.query_handlers.health_check_handler import (
-    HealthCheckQueryHandler,
+from app.application.lending.tasks import (
+    LendingRepository,
+    PositionProvider,
 )
-from app.application.lending.services.health_factor_validator_service import (
-    HealthFactorValidatorService,
+from app.infrastructure.adapters.lending.lending_repository_adapter_sqla import (
+    LendingRepositoryAdapterSqla,
 )
-from app.domain.ports.balance_checker import IBalanceChecker
-from app.domain.ports.lending_repository import ILendingRepository
-from app.domain.ports.aave_gateway import AaveGateway
-from app.domain.ports.morpho_gateway import MorphoGateway
-from app.domain.ports.swap_executor import ISwapExecutor
-from app.domain.services.lending.health_factor_validator import HealthFactorValidator
-from app.infrastructure.adapters.balance.portfolio_balance_checker import (
-    PortfolioBalanceChecker,
+from app.infrastructure.adapters.lending.position_provider_adapter import (
+    PositionProviderAdapter,
 )
-from app.infrastructure.adapters.swap.oneinch_swap_executor import OneInchSwapExecutor
-from app.application.portfolio.portfolio_service import PortfolioService
+from app.infrastructure.adapters.types import MainAsyncSession
+from app.infrastructure.mcp.mcp_client import MCPClient
 
 
 class LendingProvider(Provider):
     """
-    Provider for lending use cases and services.
+    Provider for lending operations and monitoring.
 
     Configures dependency injection for:
-    - Domain services (pure business logic)
-    - Application interactors (use case orchestration)
-    - Query handlers (CQRS read operations)
-    - Ports → Adapters (infrastructure abstractions)
+    - Lending repository (health checks, alerts, preferences)
+    - Position provider (Aave/Morpho position fetching via MCP)
+    - MCP client (HTTP client for calling MCP servers)
 
     Scopes:
-    - Domain services: APP scope (singleton)
-    - Application services: REQUEST scope (per-request)
-    - Infrastructure adapters: APP scope (singleton with caching)
+    - Repository adapter: REQUEST scope (per-request with AsyncSession)
+    - Position provider: APP scope (shared MCP client)
+    - MCP client: APP scope (shared HTTP client)
+
+    Architecture:
+    - Follows hexagonal architecture (ports → adapters)
+    - All methods return protocol interfaces, not concrete types
+    - SQLAlchemy adapters injected with AsyncSession from Dishka
+    - MCP client injected for protocol position fetching
     """
 
-    # ===== DOMAIN LAYER =====
+    # ===== INFRASTRUCTURE LAYER (Ports → Adapters) =====
 
     @provide(scope=Scope.APP)
-    def provide_health_factor_validator(self) -> HealthFactorValidator:
+    def provide_mcp_client(self) -> MCPClient:
         """
-        Provide domain service for health factor validation.
+        Provide MCP client for calling MCP servers.
 
-        This is pure business logic with NO infrastructure dependencies.
-        Safe to use APP scope (singleton) as it's stateless.
+        Creates a shared HTTP client for making requests to MCP servers
+        (Aave, Morpho, etc.) running on different ports.
 
         Returns:
-            HealthFactorValidator domain service
-        """
-        return HealthFactorValidator()
+            MCPClient instance configured with default timeout (30s)
 
-    # ===== APPLICATION LAYER =====
+        Scope:
+            APP scope - shared across all requests for efficiency
+        """
+        return MCPClient(timeout=30.0)
 
     @provide(scope=Scope.REQUEST)
-    def provide_health_factor_validator_service(
+    def provide_lending_repository(
         self,
-        domain_validator: HealthFactorValidator,
-        aave_gateway: AaveGateway,
-        # price_provider: IPriceProvider,  # TODO: Add when price provider exists
-    ) -> HealthFactorValidatorService:
+        session: MainAsyncSession,
+    ) -> LendingRepository:
         """
-        Provide application service for health factor validation.
+        Provide lending repository for health checks, alerts, and preferences.
 
-        Orchestrates domain validation with infrastructure calls.
-        Uses REQUEST scope as it may depend on request-scoped resources.
+        Implements LendingRepository protocol using SQLAlchemy
+        for PostgreSQL persistence of lending operations.
 
         Args:
-            domain_validator: Domain service for calculations
-            aave_gateway: Infrastructure adapter for Aave data
+            session: MainAsyncSession from Dishka (injected automatically)
 
         Returns:
-            HealthFactorValidatorService application service
+            LendingRepositoryAdapterSqla implementing LendingRepository protocol
+
+        Features:
+        - Health check snapshots (lending_health_checks table)
+        - Alert management (lending_alerts table)
+        - User preferences (user_lending_preferences table)
+        - Active position tracking (lending_positions table)
         """
-        # TODO: Replace mock price provider with real implementation
-        from app.application.lending.services.health_factor_validator_service import IPriceProvider
-        from decimal import Decimal
-
-        class MockPriceProvider:
-            """Mock price provider until real implementation exists."""
-
-            async def get_price_usd(self, asset: str, chain: str = "ethereum") -> Decimal:
-                """Return mock prices for common assets."""
-                MOCK_PRICES = {
-                    "ETH": Decimal("3700.00"),
-                    "WETH": Decimal("3700.00"),
-                    "USDC": Decimal("1.00"),
-                    "USDT": Decimal("1.00"),
-                    "DAI": Decimal("1.00"),
-                    "WBTC": Decimal("98000.00"),
-                }
-                return MOCK_PRICES.get(asset.upper(), Decimal("1.00"))
-
-        # NOTE: This will be replaced with real IPriceProvider implementation
-        mock_price_provider = MockPriceProvider()
-
-        return HealthFactorValidatorService(
-            domain_validator=domain_validator,
-            aave_provider=aave_gateway,
-            price_provider=mock_price_provider,  # type: ignore
-        )
-
-    @provide(scope=Scope.REQUEST)
-    def provide_supply_interactor(
-        self,
-        balance_checker: IBalanceChecker,
-        aave_gateway: AaveGateway,
-        morpho_gateway: MorphoGateway,
-        repository: ILendingRepository,
-    ) -> SupplyInteractor:
-        """
-        Provide supply interactor for supply operations.
-
-        Orchestrates supply use case with balance validation, protocol
-        selection, and position persistence.
-
-        Args:
-            balance_checker: Port for checking wallet balances
-            aave_gateway: Port for Aave operations
-            morpho_gateway: Port for Morpho operations
-            repository: Port for position persistence
-
-        Returns:
-            SupplyInteractor application service
-        """
-        return SupplyInteractor(
-            balance_checker=balance_checker,
-            aave_gateway=aave_gateway,
-            morpho_gateway=morpho_gateway,
-            repository=repository,
-        )
-
-    @provide(scope=Scope.REQUEST)
-    def provide_borrow_interactor(
-        self,
-        hf_validator: HealthFactorValidatorService,
-        balance_checker: IBalanceChecker,
-        aave_gateway: AaveGateway,
-        repository: ILendingRepository,
-    ) -> BorrowInteractor:
-        """
-        Provide borrow interactor for borrow operations.
-
-        Orchestrates borrow use case with health factor validation,
-        collateral checks, and position persistence.
-
-        Args:
-            hf_validator: Service for health factor validation
-            balance_checker: Port for checking wallet balances
-            aave_gateway: Port for Aave operations
-            repository: Port for position persistence
-
-        Returns:
-            BorrowInteractor application service
-        """
-        return BorrowInteractor(
-            hf_validator=hf_validator,
-            balance_checker=balance_checker,
-            aave_gateway=aave_gateway,
-            repository=repository,
-        )
-
-    @provide(scope=Scope.REQUEST)
-    def provide_health_check_handler(
-        self,
-        aave_gateway: AaveGateway,
-        hf_validator: HealthFactorValidator,
-    ) -> HealthCheckQueryHandler:
-        """
-        Provide query handler for health check queries.
-
-        Handles read-only health factor monitoring queries following CQRS.
-
-        Args:
-            aave_gateway: Port for Aave operations
-            hf_validator: Domain service for health factor calculations
-
-        Returns:
-            HealthCheckQueryHandler query handler
-        """
-        return HealthCheckQueryHandler(
-            aave_gateway=aave_gateway,
-            hf_validator=hf_validator,
-        )
-
-    @provide(scope=Scope.REQUEST)
-    def provide_leverage_loop_interactor(
-        self,
-        hf_validator_service: HealthFactorValidatorService,
-        hf_validator_domain: HealthFactorValidator,
-        balance_checker: IBalanceChecker,
-        swap_executor: ISwapExecutor,
-        aave_gateway: AaveGateway,
-        repository: ILendingRepository,
-    ) -> LeverageLoopInteractor:
-        """
-        Provide leverage loop interactor for multi-step leverage operations.
-
-        Orchestrates leverage loop use case with:
-        - Balance validation
-        - Optimal iteration calculation
-        - Multi-step execution plan generation
-        - Health factor validation for each borrow step
-        - Swap quote calculation for each swap step
-        - Loop state persistence for resumability
-
-        CRITICAL: This interactor ONLY calculates steps and validates safety.
-        It does NOT execute anything automatically. Each step requires
-        separate user approval via Privy.
-
-        Args:
-            hf_validator_service: Application service for HF validation with infra
-            hf_validator_domain: Domain service for pure HF calculations
-            balance_checker: Port for checking wallet balances
-            swap_executor: Port for swap quotes and execution data
-            aave_gateway: Port for Aave operations
-            repository: Port for position persistence
-
-        Returns:
-            LeverageLoopInteractor application service
-        """
-        return LeverageLoopInteractor(
-            hf_validator_service=hf_validator_service,
-            hf_validator_domain=hf_validator_domain,
-            balance_checker=balance_checker,
-            swap_executor=swap_executor,
-            aave_gateway=aave_gateway,
-            repository=repository,
-        )
+        return LendingRepositoryAdapterSqla(session=session)
 
     @provide(scope=Scope.APP)
-    def provide_swap_executor(
+    def provide_position_provider(
         self,
-        # oneinch_mcp_client would be injected here when MCP is configured
-        # For now, we'll create the adapter directly
-    ) -> ISwapExecutor:
+        mcp_client: MCPClient,
+    ) -> PositionProvider:
         """
-        Provide swap executor adapter.
+        Provide position provider for fetching positions from protocols.
 
-        Implements ISwapExecutor port using 1inch for swap quotes and execution data.
-        Uses APP scope as it maintains connection pool and caching.
-
-        NOTE: This requires 1inch MCP client to be configured.
-        For development, the adapter will use fallback mechanisms.
-
-        Returns:
-            OneInchSwapExecutor adapter implementing ISwapExecutor
-        """
-        # TODO: Inject OneInchMCPClient when MCP integration is complete
-        # For now, create adapter without MCP client (will use fallback)
-        return OneInchSwapExecutor(mcp_client=None)  # type: ignore
-
-    # ===== INFRASTRUCTURE LAYER =====
-
-    @provide(scope=Scope.APP)
-    def provide_balance_checker(
-        self,
-        portfolio_service: PortfolioService,
-    ) -> IBalanceChecker:
-        """
-        Provide balance checker adapter.
-
-        Implements IBalanceChecker port using PortfolioService for
-        on-chain balance verification.
+        Implements PositionProvider protocol using MCP clients
+        to fetch positions from Aave (port 8085) and Morpho (port 8088).
 
         Args:
-            portfolio_service: Service for fetching on-chain balances
+            mcp_client: MCPClient from Dishka (injected automatically)
 
         Returns:
-            PortfolioBalanceChecker adapter implementing IBalanceChecker
+            PositionProviderAdapter implementing PositionProvider protocol
+
+        Features:
+        - Aave position fetching (supplies, borrows, health factor)
+        - Morpho position fetching (supplies only, no borrows)
+        - Multi-chain support (Ethereum, Polygon, Arbitrum, etc.)
+        - Automatic protocol detection and routing
         """
-        return PortfolioBalanceChecker(portfolio_service=portfolio_service)
-
-    @provide(scope=Scope.REQUEST)
-    async def provide_lending_repository(
-        self,
-        session,  # AsyncSession injected by Dishka
-    ) -> ILendingRepository:
-        """
-        Provide lending repository adapter.
-
-        Implements ILendingRepository port using SQLAlchemy for PostgreSQL persistence.
-        Uses REQUEST scope to ensure one session per request lifecycle.
-
-        Args:
-            session: AsyncSession from Dishka (injected automatically)
-
-        Returns:
-            SQLAlchemyLendingRepository adapter implementing ILendingRepository
-        """
-        from app.infrastructure.persistence_sqla.repositories.lending_repository import (
-            SQLAlchemyLendingRepository,
+        return PositionProviderAdapter(
+            mcp_client=mcp_client,
+            aave_base_url="http://localhost:8085",
+            morpho_base_url="http://localhost:8088",
         )
-
-        return SQLAlchemyLendingRepository(session=session)

@@ -129,8 +129,8 @@ def map_money_market_alert_history_table() -> None:
             nullable=True,
         )
 
-        # Metadata
-        metadata = mapped_column(
+        # Metadata (using column name to avoid conflict with SQLAlchemy's metadata attribute)
+        metadata_json = mapped_column(
             "metadata",
             JSONB,
             nullable=True,

@@ -203,8 +203,8 @@ def map_money_market_rates_table() -> None:
             comment="Timestamp from blockchain/API",
         )
 
-        # Metadata
-        metadata = mapped_column(
+        # Metadata (using column name to avoid conflict with SQLAlchemy's metadata attribute)
+        metadata_json = mapped_column(
             "metadata",
             JSONB,
             nullable=True,

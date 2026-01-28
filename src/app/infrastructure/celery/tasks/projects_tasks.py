@@ -146,45 +146,56 @@ def aggregate_project_analytics():
     """
     async def runner(container):
         from sqlalchemy import text
+        from sqlalchemy.exc import ProgrammingError
+        from psycopg.errors import UndefinedTable
         from app.infrastructure.adapters.types import MainAsyncSession
 
         session = await container.get(MainAsyncSession)
         
-        # Calculate yesterday's date
-        yesterday = datetime.now(UTC).date() - timedelta(days=1)
-        
-        # Aggregate query
-        query = text("""
-            INSERT INTO project_analytics_daily (
-                date,
-                project_id,
-                active_users,
-                total_messages,
-                avg_session_duration_seconds,
-                created_at
-            )
-            SELECT
-                :date as date,
-                uap.project_id,
-                COUNT(DISTINCT uap.user_id) as active_users,
-                COUNT(m.id) as total_messages,
-                AVG(EXTRACT(EPOCH FROM (m.created_at - c.created_at))) as avg_session_duration_seconds,
-                NOW() as created_at
-            FROM user_active_projects uap
-            LEFT JOIN conversations c ON c.user_id = uap.user_id
-            LEFT JOIN messages m ON m.conversation_id = c.id
-            WHERE DATE(c.created_at) = :date
-            GROUP BY uap.project_id
-            ON CONFLICT (date, project_id) DO UPDATE SET
-                active_users = EXCLUDED.active_users,
-                total_messages = EXCLUDED.total_messages,
-                avg_session_duration_seconds = EXCLUDED.avg_session_duration_seconds
-        """)
-        
-        await session.execute(query, {"date": yesterday})
-        await session.commit()
-        
-        print(f"[Analytics] Aggregated project analytics for {yesterday}")
+        try:
+            # Calculate yesterday's date
+            yesterday = datetime.now(UTC).date() - timedelta(days=1)
+            
+            # Aggregate query
+            query = text("""
+                INSERT INTO project_analytics_daily (
+                    date,
+                    project_id,
+                    active_users,
+                    total_messages,
+                    avg_session_duration_seconds,
+                    created_at
+                )
+                SELECT
+                    :date as date,
+                    uap.project_id,
+                    COUNT(DISTINCT uap.user_id) as active_users,
+                    COUNT(m.id) as total_messages,
+                    AVG(EXTRACT(EPOCH FROM (m.created_at - c.created_at))) as avg_session_duration_seconds,
+                    NOW() as created_at
+                FROM user_active_projects uap
+                LEFT JOIN conversations c ON c.user_id = uap.user_id
+                LEFT JOIN messages m ON m.conversation_id = c.id
+                WHERE DATE(c.created_at) = :date
+                GROUP BY uap.project_id
+                ON CONFLICT (date, project_id) DO UPDATE SET
+                    active_users = EXCLUDED.active_users,
+                    total_messages = EXCLUDED.total_messages,
+                    avg_session_duration_seconds = EXCLUDED.avg_session_duration_seconds
+            """)
+            
+            await session.execute(query, {"date": yesterday})
+            await session.commit()
+            
+            print(f"[Analytics] Aggregated project analytics for {yesterday}")
+        except ProgrammingError as e:
+            if isinstance(e.orig, UndefinedTable) and "project_analytics_daily" in str(e):
+                print(f"[Analytics] Skipping aggregation - table 'project_analytics_daily' does not exist yet. Run migrations to create it.")
+            else:
+                raise
+        except Exception as e:
+            print(f"[Analytics] Error aggregating project analytics: {e}")
+            raise
     
     asyncio.run(_run_task(runner))
 
@@ -206,57 +217,68 @@ def check_knowledge_base_health():
             KnowledgeDocumentRepositorySqla,
         )
         from sqlalchemy import text
+        from sqlalchemy.exc import ProgrammingError
+        from psycopg.errors import UndefinedTable
         from app.infrastructure.adapters.types import MainAsyncSession
 
         session = await container.get(MainAsyncSession)
         
-        # Find documents with errors
-        error_query = text("""
-            SELECT kb.name, kd.title, kd.processing_error
-            FROM project_knowledge_documents kd
-            JOIN project_knowledge_bases kb ON kb.id = kd.knowledge_base_id
-            WHERE kd.processing_error IS NOT NULL
-        """)
-        error_result = await session.execute(error_query)
-        errors = error_result.all()
-        
-        if errors:
-            print(f"[KB Health] Found {len(errors)} documents with processing errors:")
-            for row in errors:
-                print(f"  - KB: {row.name}, Doc: {row.title}, Error: {row.processing_error}")
-        
-        # Find documents with low chunk counts
-        low_chunk_query = text("""
-            SELECT kb.name, kd.title, kd.chunk_count
-            FROM project_knowledge_documents kd
-            JOIN project_knowledge_bases kb ON kb.id = kd.knowledge_base_id
-            WHERE kd.is_processed = true AND kd.chunk_count < 3
-        """)
-        low_chunk_result = await session.execute(low_chunk_query)
-        low_chunks = low_chunk_result.all()
-        
-        if low_chunks:
-            print(f"[KB Health] Found {len(low_chunks)} documents with low chunk counts:")
-            for row in low_chunks:
-                print(f"  - KB: {row.name}, Doc: {row.title}, Chunks: {row.chunk_count}")
-        
-        # Find stale documents
-        stale_threshold = datetime.now(UTC) - timedelta(days=90)
-        stale_query = text("""
-            SELECT kb.name, kd.title, kd.updated_at
-            FROM project_knowledge_documents kd
-            JOIN project_knowledge_bases kb ON kb.id = kd.knowledge_base_id
-            WHERE kd.updated_at < :threshold
-        """)
-        stale_result = await session.execute(stale_query, {"threshold": stale_threshold})
-        stale = stale_result.all()
-        
-        if stale:
-            print(f"[KB Health] Found {len(stale)} stale documents (90+ days old):")
-            for row in stale:
-                print(f"  - KB: {row.name}, Doc: {row.title}, Updated: {row.updated_at}")
-        
-        print(f"[KB Health] Health check complete")
+        try:
+            # Find documents with errors
+            error_query = text("""
+                SELECT kb.name, kd.title, kd.processing_error
+                FROM project_knowledge_documents kd
+                JOIN project_knowledge_bases kb ON kb.id = kd.knowledge_base_id
+                WHERE kd.processing_error IS NOT NULL
+            """)
+            error_result = await session.execute(error_query)
+            errors = error_result.all()
+            
+            if errors:
+                print(f"[KB Health] Found {len(errors)} documents with processing errors:")
+                for row in errors:
+                    print(f"  - KB: {row.name}, Doc: {row.title}, Error: {row.processing_error}")
+            
+            # Find documents with low chunk counts
+            low_chunk_query = text("""
+                SELECT kb.name, kd.title, kd.chunk_count
+                FROM project_knowledge_documents kd
+                JOIN project_knowledge_bases kb ON kb.id = kd.knowledge_base_id
+                WHERE kd.is_processed = true AND kd.chunk_count < 3
+            """)
+            low_chunk_result = await session.execute(low_chunk_query)
+            low_chunks = low_chunk_result.all()
+            
+            if low_chunks:
+                print(f"[KB Health] Found {len(low_chunks)} documents with low chunk counts:")
+                for row in low_chunks:
+                    print(f"  - KB: {row.name}, Doc: {row.title}, Chunks: {row.chunk_count}")
+            
+            # Find stale documents
+            stale_threshold = datetime.now(UTC) - timedelta(days=90)
+            stale_query = text("""
+                SELECT kb.name, kd.title, kd.updated_at
+                FROM project_knowledge_documents kd
+                JOIN project_knowledge_bases kb ON kb.id = kd.knowledge_base_id
+                WHERE kd.updated_at < :threshold
+            """)
+            stale_result = await session.execute(stale_query, {"threshold": stale_threshold})
+            stale = stale_result.all()
+            
+            if stale:
+                print(f"[KB Health] Found {len(stale)} stale documents (90+ days old):")
+                for row in stale:
+                    print(f"  - KB: {row.name}, Doc: {row.title}, Updated: {row.updated_at}")
+            
+            print(f"[KB Health] Health check complete")
+        except ProgrammingError as e:
+            if isinstance(e.orig, UndefinedTable) and "project_knowledge_documents" in str(e):
+                print(f"[KB Health] Skipping health check - table 'project_knowledge_documents' does not exist yet. Run migrations to create it.")
+            else:
+                raise
+        except Exception as e:
+            print(f"[KB Health] Error checking knowledge base health: {e}")
+            raise
     
     asyncio.run(_run_task(runner))
 

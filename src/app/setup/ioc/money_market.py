@@ -10,7 +10,6 @@ Provides configured money market services following hexagonal architecture:
 """
 
 from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.ports.money_market.money_market_alert_gateway import (
     MoneyMarketAlertGateway,
@@ -36,6 +35,7 @@ from app.infrastructure.adapters.money_market.money_market_comparison_adapter_sq
 from app.infrastructure.adapters.money_market.money_market_preference_adapter_sqla import (
     MoneyMarketPreferenceAdapterSqla,
 )
+from app.infrastructure.adapters.types import MainAsyncSession
 
 
 class MoneyMarketProvider(Provider):
@@ -62,7 +62,7 @@ class MoneyMarketProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_cache_gateway(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> MoneyMarketCacheGateway:
         """
         Provide cache gateway for 60s TTL rate caching.
@@ -71,7 +71,7 @@ class MoneyMarketProvider(Provider):
         for PostgreSQL persistence with automatic TTL validation.
 
         Args:
-            session: AsyncSession from Dishka (injected automatically)
+            session: MainAsyncSession from Dishka (injected automatically)
 
         Returns:
             MoneyMarketCacheAdapterSqla implementing MoneyMarketCacheGateway
@@ -86,7 +86,7 @@ class MoneyMarketProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_comparison_gateway(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> MoneyMarketComparisonGateway:
         """
         Provide comparison gateway for analytics logging.
@@ -95,7 +95,7 @@ class MoneyMarketProvider(Provider):
         to log every rate comparison for optimization insights.
 
         Args:
-            session: AsyncSession from Dishka (injected automatically)
+            session: MainAsyncSession from Dishka (injected automatically)
 
         Returns:
             MoneyMarketComparisonAdapterSqla implementing MoneyMarketComparisonGateway
@@ -112,7 +112,7 @@ class MoneyMarketProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_preference_gateway(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> MoneyMarketPreferenceGateway:
         """
         Provide preference gateway for user settings management.
@@ -121,7 +121,7 @@ class MoneyMarketProvider(Provider):
         with UPSERT pattern for conflict resolution.
 
         Args:
-            session: AsyncSession from Dishka (injected automatically)
+            session: MainAsyncSession from Dishka (injected automatically)
 
         Returns:
             MoneyMarketPreferenceAdapterSqla implementing MoneyMarketPreferenceGateway
@@ -138,7 +138,7 @@ class MoneyMarketProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_alert_gateway(
         self,
-        session: AsyncSession,
+        session: MainAsyncSession,
     ) -> MoneyMarketAlertGateway:
         """
         Provide alert gateway for rate change notifications.
@@ -147,7 +147,7 @@ class MoneyMarketProvider(Provider):
         to manage rate change alerts and notification history.
 
         Args:
-            session: AsyncSession from Dishka (injected automatically)
+            session: MainAsyncSession from Dishka (injected automatically)
 
         Returns:
             MoneyMarketAlertAdapterSqla implementing MoneyMarketAlertGateway

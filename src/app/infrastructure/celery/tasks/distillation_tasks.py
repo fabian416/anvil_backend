@@ -38,58 +38,71 @@ def aggregate_distillation_telemetry():
             DistillationTelemetryRepositorySqla,
         )
         from sqlalchemy import text
+        from sqlalchemy.exc import ProgrammingError
+        from psycopg.errors import UndefinedTable
         from app.infrastructure.adapters.types import MainAsyncSession
 
         session = await container.get(MainAsyncSession)
         
-        # Calculate the previous hour window
-        now = datetime.now(UTC)
-        hour_start = now.replace(minute=0, second=0, microsecond=0) - timedelta(hours=1)
-        hour_end = now.replace(minute=0, second=0, microsecond=0)
-        
-        # Aggregate query
-        query = text("""
-            INSERT INTO distillation_telemetry_hourly (
-                hour_bucket,
-                total_requests,
-                cache_hit_count,
-                static_response_count,
-                light_llm_count,
-                full_llm_count,
-                rejected_count,
-                avg_classification_latency_ms,
-                avg_confidence,
-                created_at
-            )
-            SELECT
-                date_trunc('hour', created_at) as hour_bucket,
-                COUNT(*) as total_requests,
-                SUM(CASE WHEN cache_hit = true THEN 1 ELSE 0 END) as cache_hit_count,
-                SUM(CASE WHEN route_type = 'STATIC' THEN 1 ELSE 0 END) as static_response_count,
-                SUM(CASE WHEN route_type = 'LIGHT_LLM' THEN 1 ELSE 0 END) as light_llm_count,
-                SUM(CASE WHEN route_type = 'FULL_LLM' THEN 1 ELSE 0 END) as full_llm_count,
-                SUM(CASE WHEN route_type = 'REJECT' THEN 1 ELSE 0 END) as rejected_count,
-                AVG(classification_latency_ms)::INTEGER as avg_classification_latency_ms,
-                AVG(intent_confidence) as avg_confidence,
-                NOW() as created_at
-            FROM distillation_requests
-            WHERE created_at >= :hour_start AND created_at < :hour_end
-            GROUP BY date_trunc('hour', created_at)
-            ON CONFLICT (hour_bucket) DO UPDATE SET
-                total_requests = EXCLUDED.total_requests,
-                cache_hit_count = EXCLUDED.cache_hit_count,
-                static_response_count = EXCLUDED.static_response_count,
-                light_llm_count = EXCLUDED.light_llm_count,
-                full_llm_count = EXCLUDED.full_llm_count,
-                rejected_count = EXCLUDED.rejected_count,
-                avg_classification_latency_ms = EXCLUDED.avg_classification_latency_ms,
-                avg_confidence = EXCLUDED.avg_confidence
-        """)
-        
-        await session.execute(query, {"hour_start": hour_start, "hour_end": hour_end})
-        await session.commit()
-        
-        print(f"[Telemetry] Aggregated distillation data for hour: {hour_start}")
+        try:
+            # Calculate the previous hour window
+            now = datetime.now(UTC)
+            hour_start = now.replace(minute=0, second=0, microsecond=0) - timedelta(hours=1)
+            hour_end = now.replace(minute=0, second=0, microsecond=0)
+            
+            # Aggregate query
+            query = text("""
+                INSERT INTO distillation_telemetry_hourly (
+                    hour_bucket,
+                    total_requests,
+                    cache_hit_count,
+                    static_response_count,
+                    light_llm_count,
+                    full_llm_count,
+                    rejected_count,
+                    avg_classification_latency_ms,
+                    avg_confidence,
+                    created_at
+                )
+                SELECT
+                    date_trunc('hour', created_at) as hour_bucket,
+                    COUNT(*) as total_requests,
+                    SUM(CASE WHEN cache_hit = true THEN 1 ELSE 0 END) as cache_hit_count,
+                    SUM(CASE WHEN route_type = 'STATIC' THEN 1 ELSE 0 END) as static_response_count,
+                    SUM(CASE WHEN route_type = 'LIGHT_LLM' THEN 1 ELSE 0 END) as light_llm_count,
+                    SUM(CASE WHEN route_type = 'FULL_LLM' THEN 1 ELSE 0 END) as full_llm_count,
+                    SUM(CASE WHEN route_type = 'REJECT' THEN 1 ELSE 0 END) as rejected_count,
+                    AVG(classification_latency_ms)::INTEGER as avg_classification_latency_ms,
+                    AVG(intent_confidence) as avg_confidence,
+                    NOW() as created_at
+                FROM distillation_requests
+                WHERE created_at >= :hour_start AND created_at < :hour_end
+                GROUP BY date_trunc('hour', created_at)
+                ON CONFLICT (hour_bucket) DO UPDATE SET
+                    total_requests = EXCLUDED.total_requests,
+                    cache_hit_count = EXCLUDED.cache_hit_count,
+                    static_response_count = EXCLUDED.static_response_count,
+                    light_llm_count = EXCLUDED.light_llm_count,
+                    full_llm_count = EXCLUDED.full_llm_count,
+                    rejected_count = EXCLUDED.rejected_count,
+                    avg_classification_latency_ms = EXCLUDED.avg_classification_latency_ms,
+                    avg_confidence = EXCLUDED.avg_confidence
+            """)
+            
+            await session.execute(query, {"hour_start": hour_start, "hour_end": hour_end})
+            await session.commit()
+            
+            print(f"[Telemetry] Aggregated distillation data for hour: {hour_start}")
+        except ProgrammingError as e:
+            if isinstance(e.orig, UndefinedTable) and (
+                "distillation_telemetry_hourly" in str(e) or "distillation_requests" in str(e)
+            ):
+                print(f"[Telemetry] Skipping aggregation - required tables do not exist yet. Run migrations to create them.")
+            else:
+                raise
+        except Exception as e:
+            print(f"[Telemetry] Error aggregating distillation telemetry: {e}")
+            raise
     
     asyncio.run(_run_task(runner))
 
@@ -108,30 +121,43 @@ def cleanup_expired_cache():
             DistillationCacheRepositorySqla,
         )
         from sqlalchemy import text
+        from sqlalchemy.exc import ProgrammingError
+        from psycopg.errors import UndefinedTable
         from app.infrastructure.adapters.types import MainAsyncSession
 
         session = await container.get(MainAsyncSession)
         
-        # Delete expired exact cache
-        exact_query = text("""
-            DELETE FROM distillation_cache_exact
-            WHERE expires_at < NOW()
-        """)
-        exact_result = await session.execute(exact_query)
-        exact_deleted = exact_result.rowcount
-        
-        # Delete expired semantic cache
-        semantic_query = text("""
-            DELETE FROM distillation_cache_semantic
-            WHERE expires_at < NOW()
-        """)
-        semantic_result = await session.execute(semantic_query)
-        semantic_deleted = semantic_result.rowcount
-        
-        await session.commit()
-        
-        print(f"[Cache Cleanup] Deleted {exact_deleted} exact cache entries")
-        print(f"[Cache Cleanup] Deleted {semantic_deleted} semantic cache entries")
+        try:
+            # Delete expired exact cache
+            exact_query = text("""
+                DELETE FROM distillation_cache_exact
+                WHERE expires_at < NOW()
+            """)
+            exact_result = await session.execute(exact_query)
+            exact_deleted = exact_result.rowcount
+            
+            # Delete expired semantic cache
+            semantic_query = text("""
+                DELETE FROM distillation_cache_semantic
+                WHERE expires_at < NOW()
+            """)
+            semantic_result = await session.execute(semantic_query)
+            semantic_deleted = semantic_result.rowcount
+            
+            await session.commit()
+            
+            print(f"[Cache Cleanup] Deleted {exact_deleted} exact cache entries")
+            print(f"[Cache Cleanup] Deleted {semantic_deleted} semantic cache entries")
+        except ProgrammingError as e:
+            if isinstance(e.orig, UndefinedTable) and (
+                "distillation_cache_exact" in str(e) or "distillation_cache_semantic" in str(e)
+            ):
+                print(f"[Cache Cleanup] Skipping cleanup - cache tables do not exist yet. Run migrations to create them.")
+            else:
+                raise
+        except Exception as e:
+            print(f"[Cache Cleanup] Error cleaning up expired cache: {e}")
+            raise
     
     asyncio.run(_run_task(runner))
 

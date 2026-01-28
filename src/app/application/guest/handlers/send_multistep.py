@@ -382,7 +382,7 @@ class SendMultiStepHandler:
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n"
                 "**Next Step: Create Your Account**\\n\\n"
                 "To complete this transaction securely, you'll need to sign up:\\n\\n"
-                "👉 **[Sign Up Now](/signup)** - Takes just 2 minutes!\\n\\n"
+                "👉 **Sign Up Now** - Takes just 2 minutes!\\n\\n"
                 "✨ Your transaction details are saved and ready to execute once you're registered.\\n\\n"
                 "🔒 *Secure • Fast • Easy*"
             ),
@@ -392,7 +392,7 @@ class SendMultiStepHandler:
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n"
                 "**Siguiente Paso: Crea Tu Cuenta**\\n\\n"
                 "Para completar esta transacción de forma segura, necesitas registrarte:\\n\\n"
-                "👉 **[Regístrate Ahora](/signup)** - ¡Solo toma 2 minutos!\\n\\n"
+                "👉 **Regístrate Ahora** - ¡Solo toma 2 minutos!\\n\\n"
                 "✨ Los detalles de tu transacción están guardados y listos para ejecutar una vez que te registres.\\n\\n"
                 "🔒 *Seguro • Rápido • Fácil*"
             ),

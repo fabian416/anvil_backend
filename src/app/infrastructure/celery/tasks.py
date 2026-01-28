@@ -117,6 +117,12 @@ from app.infrastructure.celery.tasks.user_context_tasks import (
     create_missing_user_contexts,
     user_context_analytics,
 )
+# Import lending tasks
+from app.application.lending.tasks import (
+    MonitorHealthFactorsTask,
+    CheckUserHealthFactorTask,
+    RefreshPositionsTask,
+)
 
 
 @celery_app.task(name="populate_graph_protocols")
@@ -252,6 +258,102 @@ def archive_guest_conversations():
     asyncio.run(_run_task(runner))
 
 
+@celery_app.task(name="monitor_lending_health_factors")
+def monitor_lending_health_factors():
+    """
+    Monitor all active lending positions and check health factors.
+    
+    Runs every 15 minutes to:
+    - Fetch all active positions from Aave and Morpho
+    - Calculate current health factors
+    - Save health check snapshots
+    - Generate alerts for critical positions (HF < 1.5)
+    """
+    async def runner(container):
+        from app.application.lending.tasks import (
+            LendingRepository,
+            PositionProvider,
+            MonitorHealthFactorsTask,
+        )
+        
+        repository = await container.get(LendingRepository)
+        position_provider = await container.get(PositionProvider)
+        
+        task = MonitorHealthFactorsTask(repository, position_provider)
+        stats = await task.run()
+        
+        print(f"Lending health factor monitoring complete: {stats}")
+    
+    asyncio.run(_run_task(runner))
+
+
+@celery_app.task(name="check_user_lending_health")
+def check_user_lending_health(user_id: str, protocol: str, chain: str = "ethereum"):
+    """
+    Check health factor for a specific user position.
+    
+    Used for:
+    - On-demand health checks
+    - Critical position monitoring
+    - Pre-transaction validation
+    
+    Args:
+        user_id: User UUID as string
+        protocol: Protocol name ("aave" or "morpho")
+        chain: Blockchain network (default: "ethereum")
+    """
+    async def runner(container):
+        from uuid import UUID
+        from app.application.lending.tasks import (
+            LendingRepository,
+            PositionProvider,
+            CheckUserHealthFactorTask,
+        )
+        
+        repository = await container.get(LendingRepository)
+        position_provider = await container.get(PositionProvider)
+        
+        task = CheckUserHealthFactorTask(repository, position_provider)
+        health_check = await task.run(
+            user_id=UUID(user_id),
+            protocol=protocol,
+            chain=chain,
+        )
+        
+        print(
+            f"Health check complete for user {user_id}, protocol {protocol}: "
+            f"HF={health_check.health_factor:.2f}, level={health_check.health_factor_level}"
+        )
+    
+    asyncio.run(_run_task(runner))
+
+
+@celery_app.task(name="refresh_lending_positions")
+def refresh_lending_positions():
+    """
+    Refresh lending positions from protocols.
+    
+    Runs every hour to fetch latest position data from Aave and Morpho
+    and keep database in sync with on-chain state.
+    """
+    async def runner(container):
+        from app.application.lending.tasks import (
+            LendingRepository,
+            PositionProvider,
+            RefreshPositionsTask,
+        )
+        
+        repository = await container.get(LendingRepository)
+        position_provider = await container.get(PositionProvider)
+        
+        task = RefreshPositionsTask(repository, position_provider)
+        stats = await task.run()
+        
+        print(f"Lending position refresh complete: {stats}")
+    
+    asyncio.run(_run_task(runner))
+
+
 celery_app.conf.beat_schedule = {
     # Existing maintenance tasks
     "cleanup-expired-sessions": {
@@ -324,5 +426,15 @@ celery_app.conf.beat_schedule = {
     "user-context-analytics": {
         "task": "user_context_analytics",
         "schedule": crontab(hour=6, minute=0),  # Daily at 6 AM
+    },
+    # Lending health factor monitoring
+    "monitor-lending-health-factors": {
+        "task": "monitor_lending_health_factors",
+        "schedule": crontab(minute="*/15"),  # Every 15 minutes
+    },
+    # Lending position refresh
+    "refresh-lending-positions": {
+        "task": "refresh_lending_positions",
+        "schedule": crontab(minute=30),  # Every hour at :30
     },
 }

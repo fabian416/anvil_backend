@@ -146,6 +146,10 @@ from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 # DeFi Shortcut Handlers
 from app.application.chat.handlers.lending_handler import LendingHandler
+from app.application.lending.interactors.leverage_loop_interactor import (
+    LeverageLoopInteractor,
+)
+from app.domain.ports.lending_repository import ILendingRepository
 from app.application.chat.handlers.portfolio_handler import PortfolioHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
@@ -654,11 +658,13 @@ class ChatPhase2Provider(Provider):
         """
         return PortfolioBalanceChecker(portfolio_service=portfolio_service)
 
-    @provide
+    @provide(scope=Scope.REQUEST)
     def provide_lending_handler(
         self,
         morpho_gateway: MorphoGateway,
         balance_checker: IBalanceChecker,
+        leverage_loop_interactor: LeverageLoopInteractor,
+        lending_repository: ILendingRepository,
     ) -> LendingHandler:
         """
         Provide lending handler for Morpho vault operations.
@@ -669,12 +675,20 @@ class ChatPhase2Provider(Provider):
         - APY comparison
         - Whitelisted vault recommendations
 
-        Includes balance validation via BalanceChecker to prevent
-        insufficient balance transactions.
+        Includes:
+        - Balance validation via BalanceChecker to prevent insufficient balance transactions
+        - Leverage loop operations via LeverageLoopInteractor (provided by LendingProvider)
+        - Position persistence via ILendingRepository (provided by LendingProvider)
+
+        Per CEO spec: Morpho only for lending (top 3 vaults by APY).
+        Leverage loops and position tracking are optional features enabled when
+        LendingProvider is registered in provider_registry.
         """
         return LendingHandler(
             morpho_gateway=morpho_gateway,
             balance_checker=balance_checker,
+            leverage_loop_interactor=leverage_loop_interactor,
+            lending_repository=lending_repository,
         )
 
     @provide

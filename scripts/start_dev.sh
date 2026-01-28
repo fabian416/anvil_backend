@@ -183,11 +183,14 @@ echo -e "${MAGENTA}════════════════════�
 # Activate virtualenv
 source env/bin/activate
 
+# Use venv Python explicitly to ensure correct environment
+VENV_PYTHON="./env/bin/python3.12"
+
 # ============================================
 # 1. Start FastAPI
 # ============================================
 echo -e "${GREEN}📡 Iniciando FastAPI Server...${NC}"
-PYTHONPATH=src python3.12 -m uvicorn app.run:make_app \
+PYTHONPATH=src $VENV_PYTHON -m uvicorn app.run:make_app \
     --factory \
     --host 0.0.0.0 \
     --port 8080 \
@@ -230,7 +233,7 @@ declare -a MCP_SERVERS=(
 for server_config in "${MCP_SERVERS[@]}"; do
     IFS=':' read -r name port module <<< "$server_config"
     
-    PYTHONPATH=src python3.12 -m "app.infrastructure.mcp.servers.${module}" \
+    PYTHONPATH=src $VENV_PYTHON -m "app.infrastructure.mcp.servers.${module}" \
         > "$LOG_DIR/mcp/${module}.log" 2>&1 &
     
     MCP_PID=$!
