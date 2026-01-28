@@ -213,8 +213,19 @@ class SwapHandler:
         except Exception as e:
             logger.warning(f"1inch quote failed: {e}")
             latency_ms = int((time.time() - start_time) * 1000)
+            # User-friendly error message without technical details
+            error_content = f"""⚠️ **Quote Unavailable**
+
+Unable to get a quote for **{from_token} → {to_token}** at this time.
+
+**What you can try:**
+• Check if this token pair is supported
+• Try a different amount
+• Try again in a moment
+
+💡 Trying alternative routes..."""
             return SwapHandlerResult(
-                content=f"⚠️ **Error Getting 1inch Quote**\n\n{str(e)}\n\nTrying alternative routes...",
+                content=error_content,
                 quote=None,
                 from_token=from_token,
                 to_token=to_token,
@@ -293,8 +304,17 @@ class SwapHandler:
         except Exception as e:
             logger.warning(f"LiFi quote failed: {e}")
             latency_ms = int((time.time() - start_time) * 1000)
+            # User-friendly error message without technical details
+            error_content = f"""⚠️ **Quote Unavailable**
+
+Unable to get a quote for **{from_token} → {to_token}** at this time.
+
+**What you can try:**
+• Check if this token pair is supported on {from_chain}
+• Try a different token pair
+• Try again in a moment"""
             return SwapHandlerResult(
-                content=f"⚠️ **Error Getting LiFi Quote**\n\n{str(e)}\n\nPlease try again.",
+                content=error_content,
                 quote=None,
                 from_token=from_token,
                 to_token=to_token,

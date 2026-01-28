@@ -1463,12 +1463,83 @@ Por favor insira:
         return msgs.get(language, msgs["en"])
     
     def _get_quote_error_response(self, error: str, language: str) -> str:
-        """Response when quote fetch fails."""
+        """Response when quote fetch fails - user-friendly message without technical details."""
+        # Determine user-friendly error reason (without exposing URLs or technical details)
+        error_lower = error.lower() if error else ""
+        
+        if "404" in error_lower or "not found" in error_lower:
+            # Token not found or not supported on chain
+            reason = {
+                "en": "This token pair may not be available on this network.",
+                "es": "Este par de tokens puede no estar disponible en esta red.",
+                "pt": "Este par de tokens pode não estar disponível nesta rede.",
+                "zh": "此代币对可能在该网络上不可用。",
+            }
+        elif "insufficient" in error_lower or "balance" in error_lower:
+            reason = {
+                "en": "Insufficient balance for this swap.",
+                "es": "Saldo insuficiente para este intercambio.",
+                "pt": "Saldo insuficiente para esta troca.",
+                "zh": "余额不足以完成此交换。",
+            }
+        elif "slippage" in error_lower:
+            reason = {
+                "en": "Price movement too high. Try a smaller amount or increase slippage.",
+                "es": "Movimiento de precio muy alto. Intenta con menos cantidad.",
+                "pt": "Movimento de preço muito alto. Tente com menor quantidade.",
+                "zh": "价格波动过大。尝试较小金额。",
+            }
+        elif "timeout" in error_lower or "timed out" in error_lower:
+            reason = {
+                "en": "The request timed out. Please try again.",
+                "es": "La solicitud expiró. Por favor intenta de nuevo.",
+                "pt": "A solicitação expirou. Por favor, tente novamente.",
+                "zh": "请求超时。请重试。",
+            }
+        else:
+            # Generic error - don't expose technical details
+            reason = {
+                "en": "Unable to get a quote at this time.",
+                "es": "No se pudo obtener cotización en este momento.",
+                "pt": "Não foi possível obter cotação no momento.",
+                "zh": "目前无法获取报价。",
+            }
+        
         msgs = {
-            "en": f"❌ Unable to get swap quote: {error}\n\nPlease try again or adjust your swap parameters.",
-            "es": f"❌ No se pudo obtener la cotización: {error}\n\nIntenta de nuevo o ajusta los parámetros.",
-            "pt": f"❌ Não foi possível obter a cotação: {error}\n\nTente novamente ou ajuste os parâmetros.",
-            "zh": f"❌ 无法获取报价: {error}\n\n请重试或调整参数。",
+            "en": f"""⚠️ **Swap Quote Unavailable**
+
+{reason.get(language, reason["en"])}
+
+**What you can try:**
+• Check if the token is available on this network
+• Try a different token pair
+• Try again in a moment
+
+💡 Need help? Say "what tokens can I swap?" for supported pairs.""",
+            "es": f"""⚠️ **Cotización no disponible**
+
+{reason.get(language, reason["es"])}
+
+**Puedes intentar:**
+• Verificar si el token está disponible en esta red
+• Probar un par diferente
+• Intentar de nuevo en un momento""",
+            "pt": f"""⚠️ **Cotação indisponível**
+
+{reason.get(language, reason["pt"])}
+
+**Você pode tentar:**
+• Verificar se o token está disponível nesta rede
+• Tentar um par diferente
+• Tentar novamente em um momento""",
+            "zh": f"""⚠️ **报价不可用**
+
+{reason.get(language, reason["zh"])}
+
+**您可以尝试:**
+• 检查代币是否在此网络上可用
+• 尝试不同的代币对
+• 稍后再试""",
         }
         return msgs.get(language, msgs["en"])
     

@@ -295,17 +295,29 @@ class BaseWorkflowAgent(AgentGateway, ABC):
         except Exception as e:
             logger.error(f"[{self.workflow_name}] Error processing step: {e}", exc_info=True)
             
-            # Update state with error
+            # Update state with error (internal use only)
             state.error = str(e)
             
+            # User-friendly error message (don't expose technical details)
+            user_friendly_content = f"""⚠️ **Something went wrong**
+
+We encountered an issue processing your request. Please try again.
+
+**What you can try:**
+• Rephrase your request
+• Try a different amount or token
+• Try again in a moment
+
+💡 If the issue persists, contact support."""
+            
             return AgentResponse(
-                content=f"❌ Error in {self.workflow_name}: {str(e)}",
+                content=user_friendly_content,
                 agent_type=self.agent_type,
                 tools_used=[self.workflow_name],
                 metadata={
                     "workflow_name": self.workflow_name,
                     "workflow_state": state.to_dict(),
-                    "error": str(e),
+                    "error": str(e),  # Keep for internal debugging
                 },
                 sources=[],
             )
