@@ -268,12 +268,37 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         if state.data.get("awaiting_token_selection"):
             return await self._handle_token_selection(message, state, user_context)
         
+        # Check if we already have from_token and to_token from previous turn
+        # and user is just providing the amount
+        existing_from = state.data.get("from_token", "").upper()
+        existing_to = state.data.get("to_token", "").upper()
+        user_input = message.value.strip()
+        
+        # If we have both tokens and user provides just a number, treat it as amount
+        if existing_from and existing_to and not state.data.get("amount"):
+            # Check if user input is just a number (amount)
+            amount_match = None
+            try:
+                # Try to parse as number (handles "1", "100", "1.5", "$50", etc.)
+                clean_input = user_input.replace("$", "").replace(",", "").strip()
+                if clean_input.replace(".", "").isdigit():
+                    amount_match = clean_input
+            except ValueError:
+                pass
+            
+            if amount_match:
+                logger.info(f"[SwapWorkflow] User provided amount '{amount_match}' for {existing_from} → {existing_to}")
+                state.data["amount"] = amount_match
+                # Proceed to fetch quote
+                state.step = WorkflowStep.FETCH_DATA.value
+                return await self._handle_fetch_quote(message, state, user_context)
+        
         params = await self._extract_swap_params(message.value)
         
         # Check for partial request: has from_token (likely USDC) but missing to_token
-        from_token = params.get("from_token", "").upper()
-        to_token = params.get("to_token", "").upper()
-        amount = params.get("amount")
+        from_token = params.get("from_token", "").upper() or existing_from
+        to_token = params.get("to_token", "").upper() or existing_to
+        amount = params.get("amount") or state.data.get("amount")
         
         # If we have USDC + amount but no destination token, show selection menu
         if from_token == "USDC" and amount and not to_token:
