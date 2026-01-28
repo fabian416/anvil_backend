@@ -143,7 +143,7 @@ class GuestAuthAgent:
         from app.application.guest.i18n.translations import get_cta_message
         cta = get_cta_message(language)
         
-        return f"{message}\n\n👉 {cta}: /signup"
+        return f"{message}\n\n👉 {cta}"
     
     async def is_available(self) -> bool:
         """Check if agent is available."""

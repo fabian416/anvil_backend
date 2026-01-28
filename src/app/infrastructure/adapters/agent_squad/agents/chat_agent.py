@@ -336,7 +336,7 @@ Create a single, well-structured response that combines all unique insights with
         # Add CTA
         cta = get_cta_message(language)
         
-        return f"{message}\n\n👉 {cta}: /signup"
+        return f"{message}\n\n👉 {cta}"
     
     def _build_instruction_messages(self, message_value: str) -> list[dict]:
         """Build messages when supervisor provides a specific instruction (e.g., off-topic)."""
