@@ -1,13 +1,9 @@
 import asyncio
-from dishka import Scope
+
 from celery.schedules import crontab
 
 from app.infrastructure.celery.app import celery_app
 from app.setup.ioc.provider_registry import get_providers
-from app.setup.ioc.application import ApplicationProvider
-from app.setup.ioc.infrastructure import infrastructure_provider
-from app.setup.ioc.presentation import PresentationProvider
-from app.setup.ioc.settings import SettingsProvider
 from app.setup.app_factory import create_async_ioc_container
 from app.setup.config.settings import load_settings
 from app.application.maintenance.tasks import (
@@ -17,14 +13,10 @@ from app.application.maintenance.tasks import (
 
 
 async def _run_task(coro_factory):
+    """Helper to run async tasks with DI container using all registered providers."""
     settings = load_settings()
     container = create_async_ioc_container(
-        providers=(
-            ApplicationProvider(),
-            infrastructure_provider(),
-            PresentationProvider(),
-            SettingsProvider(),
-        ),
+        providers=get_providers(),  # Use all providers including GraphProvider
         settings=settings,
     )
     try:

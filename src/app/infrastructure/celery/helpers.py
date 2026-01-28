@@ -5,10 +5,6 @@ Common utility functions for Celery tasks.
 """
 
 from app.setup.ioc.provider_registry import get_providers
-from app.setup.ioc.application import ApplicationProvider
-from app.setup.ioc.infrastructure import infrastructure_provider
-from app.setup.ioc.presentation import PresentationProvider
-from app.setup.ioc.settings import SettingsProvider
 from app.setup.app_factory import create_async_ioc_container
 from app.setup.config.settings import load_settings
 
@@ -16,6 +12,10 @@ from app.setup.config.settings import load_settings
 async def _run_task(coro_factory):
     """
     Helper function to run async tasks with Dishka IOC container.
+
+    Uses all registered providers from get_providers() to ensure
+    all dependencies (including GraphProvider, MoneyMarketProvider, etc.)
+    are available for resolution.
 
     Args:
         coro_factory: Coroutine factory that receives the container
@@ -25,12 +25,7 @@ async def _run_task(coro_factory):
     """
     settings = load_settings()
     container = create_async_ioc_container(
-        providers=(
-            ApplicationProvider(),
-            infrastructure_provider(),
-            PresentationProvider(),
-            SettingsProvider(),
-        ),
+        providers=get_providers(),  # Use all providers
         settings=settings,
     )
     try:
