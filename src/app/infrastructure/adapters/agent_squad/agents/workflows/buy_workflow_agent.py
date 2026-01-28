@@ -40,17 +40,22 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-# Supported cryptocurrencies for purchase
+# Supported cryptocurrencies for purchase (USDC only)
+# Note: Currently only USDC is available for purchase via on-ramp
 SUPPORTED_CRYPTOS = {
-    "eth": {"symbol": "ETH", "name": "Ethereum", "emoji": "Ξ"},
     "usdc": {"symbol": "USDC", "name": "USD Coin", "emoji": "💵"},
+}
+
+# Unsupported cryptos - used for friendly error messages
+UNSUPPORTED_CRYPTOS = {
+    "eth": {"symbol": "ETH", "name": "Ethereum", "emoji": "Ξ"},
     "usdt": {"symbol": "USDT", "name": "Tether", "emoji": "💵"},
     "btc": {"symbol": "BTC", "name": "Bitcoin", "emoji": "₿"},
-    "bitcoin": {"symbol": "BTC", "name": "Bitcoin", "emoji": "₿"},  # Alias for BTC
+    "bitcoin": {"symbol": "BTC", "name": "Bitcoin", "emoji": "₿"},
     "sol": {"symbol": "SOL", "name": "Solana", "emoji": "◎"},
-    "solana": {"symbol": "SOL", "name": "Solana", "emoji": "◎"},  # Alias for SOL
+    "solana": {"symbol": "SOL", "name": "Solana", "emoji": "◎"},
     "matic": {"symbol": "MATIC", "name": "Polygon", "emoji": "🟣"},
-    "polygon": {"symbol": "MATIC", "name": "Polygon", "emoji": "🟣"},  # Alias for MATIC
+    "polygon": {"symbol": "MATIC", "name": "Polygon", "emoji": "🟣"},
 }
 
 # Supported fiat currencies
@@ -169,6 +174,12 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
         amount = params.get("amount") if params.get("amount") else existing_amount
         fiat = params.get("fiat") if params.get("fiat") else existing_fiat
 
+        # Check if user requested an unsupported crypto
+        unsupported_crypto = params.get("unsupported_crypto")
+        if unsupported_crypto:
+            logger.info(f"[BuyWorkflow] User requested unsupported crypto: {unsupported_crypto}")
+            return self._format_usdc_only_message(unsupported_crypto, language), state
+
         # If we have crypto and amount, proceed to validate
         if crypto and amount:
             state.data["crypto"] = crypto.upper()
@@ -185,17 +196,20 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
             logger.info(f"[BuyWorkflow] Have crypto={crypto}, asking for amount")
             return self._ask_for_amount(state.data, language), state
 
-        # If we have amount but no crypto, ask for crypto FIRST (prioritize coin selection)
+        # If we have amount but no crypto, default to USDC (only supported option)
         if amount and not crypto:
             state.data["amount"] = amount
+            state.data["crypto"] = "USDC"
             state.data["fiat"] = fiat.upper() if fiat else "USD"
-            logger.info(f"[BuyWorkflow] Have amount={amount}, asking for crypto")
-            return self._ask_for_crypto(state.data, language), state
+            state.step = WorkflowStep.FETCH_DATA.value
+            logger.info(f"[BuyWorkflow] Have amount={amount}, defaulting to USDC")
+            return await self._handle_validate(message, state, user_context)
 
-        # No parameters detected - ask for crypto FIRST (better UX than showing menu)
-        logger.info(f"[BuyWorkflow] No parameters detected, asking for crypto first")
+        # No parameters detected - ask for amount directly (USDC is the only option)
+        logger.info(f"[BuyWorkflow] No parameters detected, asking for USDC amount")
+        state.data["crypto"] = "USDC"
         state.data["fiat"] = fiat.upper() if fiat else "USD"
-        return self._ask_for_crypto_first(language), state
+        return self._ask_for_usdc_amount(language), state
     
     async def _handle_validate(
         self,
@@ -311,54 +325,26 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
         
         Returns only explicitly found parameters. Does NOT default values.
         This prevents hallucination of parameters that weren't provided.
+        
+        Note: Only USDC is supported for purchase. If user requests other crypto,
+        we return unsupported_crypto field to show a friendly redirect message.
         """
         
         params: dict[str, Any] = {}
-        
-        # Try LLM extraction first (but be strict - only return what's actually in the text)
-        if self._llm:
-            try:
-                llm_params = await self._extract_params_with_llm(
-                    text,
-                    param_schema={
-                        "crypto": "Cryptocurrency to buy (ETH, USDC, BTC, etc.) - return null if not mentioned",
-                        "amount": "Fiat amount to spend (numeric value) - return null if not mentioned",
-                        "fiat": "Fiat currency (USD, EUR, GBP, etc.) - return null if not mentioned",
-                    },
-                )
-                # Only use LLM params if they are not None/null
-                if llm_params:
-                    for key, value in llm_params.items():
-                        if value is not None and value != "" and value != "null":
-                            params[key] = value
-            except Exception as e:
-                logger.warning(f"[BuyWorkflow] LLM extraction failed: {e}")
         
         # Regex fallback for amount (with currency symbols)
         # Only match if there's an explicit amount in the text
         if not params.get("amount"):
             # Match: $100, 100 dollars, 100 USD, €50, etc.
-            # Also match: "100 eth" -> interpret as "$100 of ETH" (fiat amount, not crypto amount)
+            # Also match: "buy 1 btc" -> extract the amount
             amount_match = re.search(
                 r"(?:[\$€£])?(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:dollars?|usd|eur|gbp)?",
                 text,
                 re.I,
             )
             if amount_match:
-                # Check if this amount is followed by a crypto symbol (e.g., "100 eth")
-                # If so, it's likely "$100 of ETH" not "100 ETH"
                 amount_value = amount_match.group(1).replace(",", "")
-                # Look ahead to see if crypto follows (but don't consume it)
-                after_amount = text[amount_match.end():].strip()
-                # If crypto follows, this is fiat amount, not crypto amount
-                for key, info in SUPPORTED_CRYPTOS.items():
-                    if re.search(rf'\b{re.escape(key)}\b', after_amount, re.I) or \
-                       re.search(rf'\b{re.escape(info["symbol"].lower())}\b', after_amount, re.I):
-                        params["amount"] = amount_value
-                        break
-                else:
-                    # No crypto follows, treat as fiat amount
-                    params["amount"] = amount_value
+                params["amount"] = amount_value
         
         # Detect fiat currency (only if explicitly mentioned)
         if not params.get("fiat"):
@@ -368,15 +354,16 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
                 params["fiat"] = "EUR"
             elif "£" in text or "pound" in text or "gbp" in text:
                 params["fiat"] = "GBP"
-            # Don't default to USD - let it be None if not mentioned
         
-        # Regex fallback for crypto (only if explicitly mentioned)
-        if not params.get("crypto"):
-            for key, info in SUPPORTED_CRYPTOS.items():
-                # Use word boundaries to avoid false matches (e.g., "buy crypto" matching "crypto")
+        # Check for USDC (only supported crypto)
+        if re.search(r'\busdc\b', text, re.I):
+            params["crypto"] = "USDC"
+        else:
+            # Check for unsupported cryptos to provide helpful redirect
+            for key, info in UNSUPPORTED_CRYPTOS.items():
                 if re.search(rf'\b{re.escape(key)}\b', text, re.I) or \
                    re.search(rf'\b{re.escape(info["symbol"].lower())}\b', text, re.I):
-                    params["crypto"] = info["symbol"]
+                    params["unsupported_crypto"] = info["symbol"]
                     break
         
         logger.info(f"[BuyWorkflow] Extracted params: {params}")
@@ -408,84 +395,133 @@ class BuyWorkflowAgent(BaseWorkflowAgent):
     # Response Formatting
     # ========================================
     
-    def _show_buy_menu(self, language: str) -> str:
-        """Show buy crypto menu."""
+    def _format_usdc_only_message(self, requested_crypto: str, language: str) -> str:
+        """Format message when user requests unsupported crypto."""
         
         msgs = {
-            "en": """💳 **Buy Crypto**
+            "en": f"""💡 **USDC Only Available**
 
-Purchase cryptocurrency with card, Apple Pay, or Google Pay.
+I see you want to buy **{requested_crypto}**, but currently only **USDC** is available for direct purchase.
 
-**Available Cryptocurrencies:**
-• Ξ **ETH** (Ethereum)
-• 💵 **USDC** (USD Coin)
-• 💵 **USDT** (Tether)
-• ₿ **BTC** (Bitcoin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Supported Payment Methods:**
-• Credit/Debit Card
-• Apple Pay
-• Google Pay
-• Bank Transfer
+**Here's a tip:** You can buy USDC first, then swap it for {requested_crypto} instantly!
 
-💬 Tell me what you'd like to buy (e.g., "buy $100 of ETH")""",
+Would you like to buy USDC instead?
+
+💬 Just tell me how much (e.g., "$100" or "500 dollars")""",
             
-            "es": """💳 **Comprar Cripto**
+            "es": f"""💡 **Solo USDC Disponible**
 
-Compra criptomonedas con tarjeta, Apple Pay o Google Pay.
+Veo que quieres comprar **{requested_crypto}**, pero actualmente solo **USDC** está disponible para compra directa.
 
-**Criptomonedas Disponibles:**
-• Ξ **ETH** (Ethereum)
-• 💵 **USDC** (USD Coin)
-• 💵 **USDT** (Tether)
-• ₿ **BTC** (Bitcoin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Métodos de Pago Soportados:**
-• Tarjeta de Crédito/Débito
-• Apple Pay
-• Google Pay
-• Transferencia Bancaria
+**Un consejo:** ¡Puedes comprar USDC primero y luego cambiarlo por {requested_crypto} al instante!
 
-💬 Dime qué te gustaría comprar (ej: "comprar $100 de ETH")""",
+¿Te gustaría comprar USDC en su lugar?
+
+💬 Solo dime cuánto (ej: "$100" o "500 dólares")""",
             
-            "pt": """💳 **Comprar Cripto**
+            "pt": f"""💡 **Apenas USDC Disponível**
 
-Compre criptomoedas com cartão, Apple Pay ou Google Pay.
+Vejo que você quer comprar **{requested_crypto}**, mas atualmente apenas **USDC** está disponível para compra direta.
 
-**Criptomoedas Disponíveis:**
-• Ξ **ETH** (Ethereum)
-• 💵 **USDC** (USD Coin)
-• 💵 **USDT** (Tether)
-• ₿ **BTC** (Bitcoin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Métodos de Pagamento Suportados:**
-• Cartão de Crédito/Débito
-• Apple Pay
-• Google Pay
-• Transferência Bancária
+**Uma dica:** Você pode comprar USDC primeiro e depois trocar por {requested_crypto} instantaneamente!
 
-💬 Me diga o que você gostaria de comprar (ex: "comprar $100 de ETH")""",
+Gostaria de comprar USDC em vez disso?
+
+💬 Apenas me diga quanto (ex: "$100" ou "500 dólares")""",
             
-            "zh": """💳 **购买加密货币**
+            "zh": f"""💡 **仅支持 USDC**
 
-使用银行卡、Apple Pay 或 Google Pay 购买加密货币。
+我看到您想购买 **{requested_crypto}**，但目前只有 **USDC** 可以直接购买。
 
-**可用加密货币：**
-• Ξ **ETH** (以太坊)
-• 💵 **USDC** (USD Coin)
-• 💵 **USDT** (Tether)
-• ₿ **BTC** (比特币)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**支持的支付方式：**
-• 信用卡/借记卡
-• Apple Pay
-• Google Pay
-• 银行转账
+**小贴士：** 您可以先购买 USDC，然后立即将其兑换成 {requested_crypto}！
 
-💬 告诉我您想购买什么（例如："购买 $100 的 ETH"）""",
+您想改为购买 USDC 吗？
+
+💬 告诉我您想要多少（例如："$100" 或 "500美元"）""",
         }
         
         return msgs.get(language, msgs["en"])
+    
+    def _ask_for_usdc_amount(self, language: str) -> str:
+        """Ask user how much USDC they want to buy."""
+        
+        msgs = {
+            "en": """💵 **Buy USDC**
+
+How much USDC would you like to buy?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** is a stablecoin pegged 1:1 to the US Dollar - perfect for:
+• 🔄 Swapping to other cryptos (ETH, BTC, SOL...)
+• 💰 Earning yield in DeFi
+• 📤 Sending to friends
+
+💬 Enter the amount in USD (e.g., "100" or "$500")
+
+💡 *Minimum: $30*""",
+            
+            "es": """💵 **Comprar USDC**
+
+¿Cuánto USDC te gustaría comprar?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** es una stablecoin con paridad 1:1 al dólar - perfecta para:
+• 🔄 Intercambiar por otras criptos (ETH, BTC, SOL...)
+• 💰 Ganar rendimiento en DeFi
+• 📤 Enviar a amigos
+
+💬 Ingresa la cantidad en USD (ej: "100" o "$500")
+
+💡 *Mínimo: $30*""",
+            
+            "pt": """💵 **Comprar USDC**
+
+Quanto USDC você gostaria de comprar?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** é uma stablecoin com paridade 1:1 ao dólar - perfeita para:
+• 🔄 Trocar por outras criptos (ETH, BTC, SOL...)
+• 💰 Ganhar rendimento em DeFi
+• 📤 Enviar para amigos
+
+💬 Digite o valor em USD (ex: "100" ou "$500")
+
+💡 *Mínimo: $30*""",
+            
+            "zh": """💵 **购买 USDC**
+
+您想购买多少 USDC？
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** 是与美元 1:1 挂钩的稳定币 - 非常适合：
+• 🔄 兑换其他加密货币（ETH、BTC、SOL...）
+• 💰 在 DeFi 中赚取收益
+• 📤 发送给朋友
+
+💬 输入美元金额（例如："100" 或 "$500"）
+
+💡 *最低：$30*""",
+        }
+        
+        return msgs.get(language, msgs["en"])
+    
+    def _show_buy_menu(self, language: str) -> str:
+        """Show buy crypto menu (USDC only)."""
+        
+        # Redirect to ask for USDC amount
+        return self._ask_for_usdc_amount(language)
     
     def _ask_for_amount(self, data: dict[str, Any], language: str) -> str:
         """Ask user for purchase amount."""
@@ -543,168 +579,20 @@ Quanto você gostaria de gastar?
         return msgs.get(language, msgs["en"])
     
     def _ask_for_crypto_first(self, language: str) -> str:
-        """Ask user which crypto to buy first (when no parameters provided)."""
-        
-        msgs = {
-            "en": """💳 **Buy Crypto**
-
-Which cryptocurrency would you like to buy?
-
-**Available:**
-1. Ξ **ETH** (Ethereum)
-2. 💵 **USDC** (USD Coin)
-3. 💵 **USDT** (Tether)
-4. ₿ **BTC** (Bitcoin)
-5. ◎ **SOL** (Solana)
-6. 🟣 **MATIC** (Polygon)
-
-💬 Reply with the crypto name (e.g., "ETH")""",
-            
-            "es": """💳 **Comprar Cripto**
-
-¿Qué criptomoneda te gustaría comprar?
-
-**Disponibles:**
-1. Ξ **ETH** (Ethereum)
-2. 💵 **USDC** (USD Coin)
-3. 💵 **USDT** (Tether)
-4. ₿ **BTC** (Bitcoin)
-5. ◎ **SOL** (Solana)
-6. 🟣 **MATIC** (Polygon)
-
-💬 Responde con el nombre de la cripto (ej: "ETH")""",
-            
-            "pt": """💳 **Comprar Cripto**
-
-Qual criptomoeda você gostaria de comprar?
-
-**Disponíveis:**
-1. Ξ **ETH** (Ethereum)
-2. 💵 **USDC** (USD Coin)
-3. 💵 **USDT** (Tether)
-4. ₿ **BTC** (Bitcoin)
-5. ◎ **SOL** (Solana)
-6. 🟣 **MATIC** (Polygon)
-
-💬 Responda com o nome da cripto (ex: "ETH")""",
-            
-            "zh": """💳 **购买加密货币**
-
-您想购买哪种加密货币？
-
-**可用：**
-1. Ξ **ETH** (以太坊)
-2. 💵 **USDC** (USD Coin)
-3. 💵 **USDT** (Tether)
-4. ₿ **BTC** (比特币)
-5. ◎ **SOL** (Solana)
-6. 🟣 **MATIC** (Polygon)
-
-💬 回复加密货币名称（例如："ETH"）""",
-        }
-        
-        return msgs.get(language, msgs["en"])
+        """Ask user which crypto to buy first (USDC only - redirect to amount)."""
+        # Since only USDC is available, skip crypto selection
+        return self._ask_for_usdc_amount(language)
     
     def _ask_for_crypto(self, data: dict[str, Any], language: str) -> str:
-        """Ask user which crypto to buy."""
-        
-        amount = data.get("amount", "0")
-        fiat = data.get("fiat", "USD")
-        
-        msgs = {
-            "en": f"""💳 **Buying ${amount} {fiat} of Crypto**
-
-Which cryptocurrency would you like to buy?
-
-**Available:**
-1. Ξ **ETH** (Ethereum)
-2. 💵 **USDC** (USD Coin)
-3. 💵 **USDT** (Tether)
-4. ₿ **BTC** (Bitcoin)
-
-💬 Reply with the crypto name (e.g., "ETH")""",
-            
-            "es": f"""💳 **Comprando ${amount} {fiat} de Cripto**
-
-¿Qué criptomoneda te gustaría comprar?
-
-**Disponibles:**
-1. Ξ **ETH** (Ethereum)
-2. 💵 **USDC** (USD Coin)
-3. 💵 **USDT** (Tether)
-4. ₿ **BTC** (Bitcoin)
-
-💬 Responde con el nombre de la cripto (ej: "ETH")""",
-            
-            "pt": f"""💳 **Comprando ${amount} {fiat} de Cripto**
-
-Qual criptomoeda você gostaria de comprar?
-
-**Disponíveis:**
-1. Ξ **ETH** (Ethereum)
-2. 💵 **USDC** (USD Coin)
-3. 💵 **USDT** (Tether)
-4. ₿ **BTC** (Bitcoin)
-
-💬 Responda com o nome da cripto (ex: "ETH")""",
-            
-            "zh": f"""💳 **购买 ${amount} {fiat} 的加密货币**
-
-您想购买哪种加密货币？
-
-**可用：**
-1. Ξ **ETH** (以太坊)
-2. 💵 **USDC** (USD Coin)
-3. 💵 **USDT** (Tether)
-4. ₿ **BTC** (比特币)
-
-💬 回复加密货币名称（例如："ETH"）""",
-        }
-        
-        return msgs.get(language, msgs["en"])
+        """Ask user which crypto to buy (USDC only - auto-select and proceed)."""
+        # Since only USDC is available, auto-select and ask for amount
+        data["crypto"] = "USDC"
+        return self._ask_for_amount(data, language)
     
     def _format_unsupported_crypto(self, crypto: str, language: str) -> str:
-        """Format unsupported crypto error message."""
-        
-        msgs = {
-            "en": f"""❌ **Unsupported Cryptocurrency**
-
-Sorry, **{crypto}** is not available for purchase.
-
-**You can buy:**
-• ETH • USDC • USDT • BTC
-
-Please select one of these cryptocurrencies.""",
-            
-            "es": f"""❌ **Criptomoneda No Soportada**
-
-Lo siento, **{crypto}** no está disponible para compra.
-
-**Puedes comprar:**
-• ETH • USDC • USDT • BTC
-
-Por favor selecciona una de estas criptomonedas.""",
-            
-            "pt": f"""❌ **Criptomoeda Não Suportada**
-
-Desculpe, **{crypto}** não está disponível para compra.
-
-**Você pode comprar:**
-• ETH • USDC • USDT • BTC
-
-Por favor selecione uma dessas criptomoedas.""",
-            
-            "zh": f"""❌ **不支持的加密货币**
-
-抱歉，**{crypto}** 不可购买。
-
-**您可以购买：**
-• ETH • USDC • USDT • BTC
-
-请选择其中一种加密货币。""",
-        }
-        
-        return msgs.get(language, msgs["en"])
+        """Format unsupported crypto error message - redirect to USDC."""
+        # Use the same message as _format_usdc_only_message
+        return self._format_usdc_only_message(crypto, language)
     
     def _format_buy_review(
         self,

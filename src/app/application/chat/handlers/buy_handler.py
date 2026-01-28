@@ -43,25 +43,29 @@ class BuyInfo:
 
     amount: str | None = None  # Amount in fiat (e.g., "100")
     fiat_currency: str = "USD"  # Fiat currency
-    crypto_currency: str | None = None  # Crypto to buy (ETH, USDC, etc.)
+    crypto_currency: str | None = "USDC"  # Crypto to buy (USDC only)
 
-    # Cryptos supported by MoonPay
+    # Only USDC is supported for direct purchase
     SUPPORTED_CRYPTOS: list[str] = field(
-        default_factory=lambda: ["ETH", "USDC", "USDT", "BTC", "MATIC"]
+        default_factory=lambda: ["USDC"]
+    )
+    
+    # Unsupported cryptos (for helpful error messages)
+    UNSUPPORTED_CRYPTOS: list[str] = field(
+        default_factory=lambda: ["ETH", "USDT", "BTC", "MATIC", "SOL"]
     )
 
     @property
     def is_complete(self) -> bool:
         """Check if we have all required info."""
-        return bool(self.amount and self.crypto_currency)
+        # Only need amount since USDC is the only option
+        return bool(self.amount)
 
     @property
     def next_step(self) -> str | None:
         """Get the next step needed."""
         if not self.amount:
             return "amount"
-        if not self.crypto_currency:
-            return "crypto_currency"
         return None
 
     def to_dict(self) -> dict[str, Any]:
@@ -69,7 +73,7 @@ class BuyInfo:
         return {
             "amount": self.amount,
             "fiat_currency": self.fiat_currency,
-            "crypto_currency": self.crypto_currency,
+            "crypto_currency": self.crypto_currency or "USDC",
             "is_complete": self.is_complete,
             "next_step": self.next_step,
         }
@@ -80,7 +84,7 @@ class BuyInfo:
         return cls(
             amount=data.get("amount"),
             fiat_currency=data.get("fiat_currency", "USD"),
-            crypto_currency=data.get("crypto_currency"),
+            crypto_currency="USDC",  # Always USDC
         )
 
 
@@ -267,77 +271,197 @@ Une fois votre wallet connecté, vous pourrez :
 }
 
 
-# Messages for multi-turn buy flow
+# Messages for multi-turn buy flow (USDC only)
 BUY_FLOW_MESSAGES = {
     "en": {
-        "ask_amount": "💵 How much would you like to buy?\n\nEnter an amount in USD (e.g., 50, 100, 500)\n\n💡 *Minimum purchase: $30*",
+        "ask_amount": """💵 **Buy USDC**
+
+How much USDC would you like to buy?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** is a stablecoin pegged 1:1 to the US Dollar - perfect for:
+• 🔄 Swapping to other cryptos (ETH, BTC, SOL...)
+• 💰 Earning yield in DeFi
+• 📤 Sending to friends
+
+💬 Enter an amount in USD (e.g., 50, 100, 500)
+
+💡 *Minimum purchase: $30*""",
         "ask_crypto": "🪙 Which cryptocurrency would you like to buy?\n\n{options}\n\nReply with the number or name.",
-        "confirm_buy": """✅ **Ready to buy {crypto_currency}**
+        "confirm_buy": """✅ **Ready to buy USDC**
 
 💵 **Amount:** ${amount} USD
-🪙 **Crypto:** {crypto_currency}
+🪙 **Crypto:** USDC (USD Coin)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Click **Continue** to complete your purchase with MoonPay.""",
         "invalid_amount": "❌ Please enter a valid amount (minimum $30).\n\nExample: 50, 100, or 500",
-        "invalid_crypto": "❌ Please select a valid cryptocurrency from the list.\n\n{options}",
+        "invalid_crypto": "❌ Currently only **USDC** is available for purchase.\n\nWould you like to buy USDC instead? You can then swap it for other cryptos!",
+        "usdc_only": """💡 **USDC Only Available**
+
+I see you want to buy **{crypto}**, but currently only **USDC** is available for direct purchase.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Here's a tip:** You can buy USDC first, then swap it for {crypto} instantly!
+
+Would you like to buy USDC instead?
+
+💬 Just tell me how much (e.g., "$100" or "500 dollars")""",
     },
     "es": {
-        "ask_amount": "💵 ¿Cuánto deseas comprar?\n\nIngresa un monto en USD (ej: 50, 100, 500)\n\n💡 *Compra mínima: $30*",
+        "ask_amount": """💵 **Comprar USDC**
+
+¿Cuánto USDC te gustaría comprar?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** es una stablecoin con paridad 1:1 al dólar - perfecta para:
+• 🔄 Intercambiar por otras criptos (ETH, BTC, SOL...)
+• 💰 Ganar rendimiento en DeFi
+• 📤 Enviar a amigos
+
+💬 Ingresa un monto en USD (ej: 50, 100, 500)
+
+💡 *Compra mínima: $30*""",
         "ask_crypto": "🪙 ¿Qué criptomoneda deseas comprar?\n\n{options}\n\nResponde con el número o nombre.",
-        "confirm_buy": """✅ **Listo para comprar {crypto_currency}**
+        "confirm_buy": """✅ **Listo para comprar USDC**
 
 💵 **Monto:** ${amount} USD
-🪙 **Crypto:** {crypto_currency}
+🪙 **Crypto:** USDC (USD Coin)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Haz clic en **Continuar** para completar tu compra con MoonPay.""",
         "invalid_amount": "❌ Por favor ingresa un monto válido (mínimo $30).\n\nEjemplo: 50, 100, o 500",
-        "invalid_crypto": "❌ Por favor selecciona una criptomoneda válida de la lista.\n\n{options}",
+        "invalid_crypto": "❌ Actualmente solo **USDC** está disponible para compra.\n\n¿Te gustaría comprar USDC en su lugar? ¡Luego puedes cambiarlo por otras criptos!",
+        "usdc_only": """💡 **Solo USDC Disponible**
+
+Veo que quieres comprar **{crypto}**, pero actualmente solo **USDC** está disponible para compra directa.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Un consejo:** ¡Puedes comprar USDC primero y luego cambiarlo por {crypto} al instante!
+
+¿Te gustaría comprar USDC en su lugar?
+
+💬 Solo dime cuánto (ej: "$100" o "500 dólares")""",
     },
     "pt": {
-        "ask_amount": "💵 Quanto você gostaria de comprar?\n\nDigite um valor em USD (ex: 50, 100, 500)\n\n💡 *Compra mínima: $30*",
+        "ask_amount": """💵 **Comprar USDC**
+
+Quanto USDC você gostaria de comprar?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** é uma stablecoin com paridade 1:1 ao dólar - perfeita para:
+• 🔄 Trocar por outras criptos (ETH, BTC, SOL...)
+• 💰 Ganhar rendimento em DeFi
+• 📤 Enviar para amigos
+
+💬 Digite um valor em USD (ex: 50, 100, 500)
+
+💡 *Compra mínima: $30*""",
         "ask_crypto": "🪙 Qual criptomoeda você gostaria de comprar?\n\n{options}\n\nResponda com o número ou nome.",
-        "confirm_buy": """✅ **Pronto para comprar {crypto_currency}**
+        "confirm_buy": """✅ **Pronto para comprar USDC**
 
 💵 **Valor:** ${amount} USD
-🪙 **Crypto:** {crypto_currency}
+🪙 **Crypto:** USDC (USD Coin)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Clique em **Continuar** para completar sua compra com MoonPay.""",
         "invalid_amount": "❌ Por favor digite um valor válido (mínimo $30).\n\nExemplo: 50, 100, ou 500",
-        "invalid_crypto": "❌ Por favor selecione uma criptomoeda válida da lista.\n\n{options}",
+        "invalid_crypto": "❌ Atualmente apenas **USDC** está disponível para compra.\n\nGostaria de comprar USDC em vez disso? Você pode depois trocar por outras criptos!",
+        "usdc_only": """💡 **Apenas USDC Disponível**
+
+Vejo que você quer comprar **{crypto}**, mas atualmente apenas **USDC** está disponível para compra direta.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Uma dica:** Você pode comprar USDC primeiro e depois trocar por {crypto} instantaneamente!
+
+Gostaria de comprar USDC em vez disso?
+
+💬 Apenas me diga quanto (ex: "$100" ou "500 dólares")""",
     },
     "zh": {
-        "ask_amount": "💵 您想购买多少？\n\n输入美元金额（例如：50、100、500）\n\n💡 *最低购买金额：$30*",
+        "ask_amount": """💵 **购买 USDC**
+
+您想购买多少 USDC？
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** 是与美元 1:1 挂钩的稳定币 - 非常适合：
+• 🔄 兑换其他加密货币（ETH、BTC、SOL...）
+• 💰 在 DeFi 中赚取收益
+• 📤 发送给朋友
+
+💬 输入美元金额（例如：50、100、500）
+
+💡 *最低购买金额：$30*""",
         "ask_crypto": "🪙 您想购买哪种加密货币？\n\n{options}\n\n请回复数字或名称。",
-        "confirm_buy": """✅ **准备购买 {crypto_currency}**
+        "confirm_buy": """✅ **准备购买 USDC**
 
 💵 **金额：** ${amount} USD
-🪙 **加密货币：** {crypto_currency}
+🪙 **加密货币：** USDC (USD Coin)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 点击 **继续** 使用 MoonPay 完成购买。""",
         "invalid_amount": "❌ 请输入有效金额（最低 $30）。\n\n示例：50、100 或 500",
-        "invalid_crypto": "❌ 请从列表中选择有效的加密货币。\n\n{options}",
+        "invalid_crypto": "❌ 目前仅支持购买 **USDC**。\n\n您想购买 USDC 吗？之后可以兑换其他加密货币！",
+        "usdc_only": """💡 **仅支持 USDC**
+
+我看到您想购买 **{crypto}**，但目前只有 **USDC** 可以直接购买。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**小贴士：** 您可以先购买 USDC，然后立即将其兑换成 {crypto}！
+
+您想改为购买 USDC 吗？
+
+💬 告诉我您想要多少（例如："$100" 或 "500美元"）""",
     },
     "fr": {
-        "ask_amount": "💵 Combien souhaitez-vous acheter ?\n\nEntrez un montant en USD (ex: 50, 100, 500)\n\n💡 *Achat minimum : $30*",
+        "ask_amount": """💵 **Acheter USDC**
+
+Combien d'USDC souhaitez-vous acheter ?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**USDC** est une stablecoin indexée 1:1 sur le dollar - parfaite pour :
+• 🔄 Échanger contre d'autres cryptos (ETH, BTC, SOL...)
+• 💰 Gagner des rendements en DeFi
+• 📤 Envoyer à des amis
+
+💬 Entrez un montant en USD (ex: 50, 100, 500)
+
+💡 *Achat minimum : $30*""",
         "ask_crypto": "🪙 Quelle cryptomonnaie souhaitez-vous acheter ?\n\n{options}\n\nRépondez avec le numéro ou le nom.",
-        "confirm_buy": """✅ **Prêt à acheter {crypto_currency}**
+        "confirm_buy": """✅ **Prêt à acheter USDC**
 
 💵 **Montant :** ${amount} USD
-🪙 **Crypto :** {crypto_currency}
+🪙 **Crypto :** USDC (USD Coin)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Cliquez sur **Continuer** pour finaliser votre achat avec MoonPay.""",
         "invalid_amount": "❌ Veuillez entrer un montant valide (minimum $30).\n\nExemple : 50, 100, ou 500",
-        "invalid_crypto": "❌ Veuillez sélectionner une cryptomonnaie valide dans la liste.\n\n{options}",
+        "invalid_crypto": "❌ Actuellement, seul **USDC** est disponible à l'achat.\n\nVoulez-vous acheter de l'USDC à la place ? Vous pourrez ensuite l'échanger contre d'autres cryptos !",
+        "usdc_only": """💡 **USDC Uniquement Disponible**
+
+Je vois que vous voulez acheter **{crypto}**, mais actuellement seul **USDC** est disponible à l'achat direct.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Astuce :** Vous pouvez d'abord acheter de l'USDC, puis l'échanger instantanément contre {crypto} !
+
+Voulez-vous acheter de l'USDC à la place ?
+
+💬 Dites-moi simplement combien (ex : "$100" ou "500 dollars")""",
     },
 }
 
@@ -633,32 +757,50 @@ class BuyHandler:
 
     def _parse_crypto(self, message: str, supported: list[str]) -> str | None:
         """
-        Extract crypto from user message.
+        Extract crypto from user message (USDC only).
 
         Args:
             message: User's message
             supported: List of supported cryptocurrencies
 
         Returns:
-            Crypto symbol if found, None otherwise
+            "USDC" if mentioned, None otherwise
         """
         message_upper = message.upper().strip()
 
-        # Direct match
-        if message_upper in supported:
-            return message_upper
+        # Check for USDC
+        if "USDC" in message_upper:
+            return "USDC"
 
-        # Number selection (1, 2, 3, etc.)
-        if message.strip().isdigit():
-            index = int(message.strip()) - 1
-            if 0 <= index < len(supported):
-                return supported[index]
-
-        # Partial match
-        for crypto in supported:
+        return None
+    
+    def _detect_unsupported_crypto(self, message: str) -> str | None:
+        """
+        Detect if user is trying to buy an unsupported crypto.
+        
+        Args:
+            message: User's message
+            
+        Returns:
+            Crypto symbol if unsupported crypto detected, None otherwise
+        """
+        message_upper = message.upper().strip()
+        
+        unsupported = ["ETH", "BTC", "BITCOIN", "ETHEREUM", "SOL", "SOLANA", "USDT", "MATIC", "POLYGON"]
+        
+        for crypto in unsupported:
             if crypto in message_upper:
+                # Normalize to standard symbol
+                if crypto in ["BITCOIN"]:
+                    return "BTC"
+                elif crypto in ["ETHEREUM"]:
+                    return "ETH"
+                elif crypto in ["SOLANA"]:
+                    return "SOL"
+                elif crypto in ["POLYGON"]:
+                    return "MATIC"
                 return crypto
-
+        
         return None
 
     def _format_crypto_options(self, cryptos: list[str]) -> str:
@@ -672,7 +814,7 @@ class BuyHandler:
         wallet_address: str,
     ) -> BuyHandlerResult:
         """
-        Process the buy flow step by step.
+        Process the buy flow step by step (USDC only).
 
         Args:
             buy_info: Current buy info state
@@ -689,11 +831,13 @@ class BuyHandler:
         logger.info(f"[BUY_DEBUG] buy_info.next_step: {buy_info.next_step}")
         
         msgs = BUY_FLOW_MESSAGES.get(language, BUY_FLOW_MESSAGES["en"])
-        options = self._format_crypto_options(buy_info.SUPPORTED_CRYPTOS)
+        
+        # Ensure crypto_currency is always USDC
+        buy_info.crypto_currency = "USDC"
 
-        # Step 1: Ask for amount
+        # Step 1: Ask for amount (only step needed since USDC is the only option)
         if not buy_info.amount:
-            logger.info(f"[BUY_DEBUG] Step 1: Asking for amount, pending_action=buy_awaiting_amount")
+            logger.info(f"[BUY_DEBUG] Step 1: Asking for USDC amount, pending_action=buy_awaiting_amount")
             return BuyHandlerResult(
                 content=msgs["ask_amount"],
                 wallet_address=wallet_address,
@@ -706,28 +850,13 @@ class BuyHandler:
                 metadata=buy_info.to_dict(),
             )
 
-        # Step 2: Ask for crypto
-        if not buy_info.crypto_currency:
-            logger.info(f"[BUY_DEBUG] Step 2: Asking for crypto, pending_action=buy_awaiting_crypto")
-            return BuyHandlerResult(
-                content=msgs["ask_crypto"].format(options=options),
-                wallet_address=wallet_address,
-                supported_assets=buy_info.SUPPORTED_CRYPTOS,
-                supported_networks=self.SUPPORTED_NETWORKS,
-                requires_privy_modal=False,
-                latency_ms=0,
-                language=language,
-                pending_action="buy_awaiting_crypto",
-                metadata=buy_info.to_dict(),
-            )
-
-        # Step 3: All data collected - Generate execute_data
-        logger.info(f"[BUY_DEBUG] Step 3: All data collected, generating execute_data")
+        # Step 2: All data collected - Generate execute_data
+        logger.info(f"[BUY_DEBUG] Step 2: All data collected, generating execute_data for USDC")
         execute_data = {
             "action_type": "buy",
             "chain": "base",
             "from_token": buy_info.fiat_currency,
-            "to_token": buy_info.crypto_currency,
+            "to_token": "USDC",
             "amount": buy_info.amount,
         }
         logger.info(f"[BUY_DEBUG] execute_data: {execute_data}")
@@ -735,7 +864,7 @@ class BuyHandler:
         return BuyHandlerResult(
             content=msgs["confirm_buy"].format(
                 amount=buy_info.amount,
-                crypto_currency=buy_info.crypto_currency,
+                crypto_currency="USDC",
             ),
             wallet_address=wallet_address,
             supported_assets=buy_info.SUPPORTED_CRYPTOS,
@@ -840,6 +969,9 @@ class BuyHandler:
     ) -> BuyHandlerResult:
         """
         Start a new buy flow, optionally extracting info from initial message.
+        
+        Note: Only USDC is available for purchase. If user requests other crypto,
+        we show a helpful message suggesting they buy USDC and swap.
 
         Args:
             user_id: User's database ID
@@ -867,18 +999,31 @@ class BuyHandler:
                 language=language,
             )
 
+        # Check if user is trying to buy an unsupported crypto
+        unsupported_crypto = self._detect_unsupported_crypto(message)
+        if unsupported_crypto:
+            logger.info(f"[BUY_DEBUG] User requested unsupported crypto: {unsupported_crypto}")
+            msgs = BUY_FLOW_MESSAGES.get(language, BUY_FLOW_MESSAGES["en"])
+            return BuyHandlerResult(
+                content=msgs["usdc_only"].format(crypto=unsupported_crypto),
+                wallet_address=wallet_address,
+                supported_assets=["USDC"],
+                supported_networks=self.SUPPORTED_NETWORKS,
+                requires_privy_modal=False,
+                latency_ms=int((time.time() - start_time) * 1000),
+                language=language,
+                pending_action="buy_awaiting_amount",  # Ready to accept amount for USDC
+                metadata={"crypto_currency": "USDC", "requested_crypto": unsupported_crypto},
+            )
+
         # Try to extract info from initial message
         buy_info = BuyInfo()
+        buy_info.crypto_currency = "USDC"  # Always USDC
 
         # Try to extract amount
         amount = self._parse_amount(message)
         if amount:
             buy_info.amount = amount
-
-        # Try to extract crypto
-        crypto = self._parse_crypto(message, buy_info.SUPPORTED_CRYPTOS)
-        if crypto:
-            buy_info.crypto_currency = crypto
 
         # Process the flow with extracted info
         result = await self.process_buy_flow(buy_info, language, wallet_address)
