@@ -601,12 +601,12 @@ Quanto você gostaria de gastar?
     ) -> str:
         """Format buy review for confirmation."""
         
-        crypto = data.get("crypto", "ETH")
+        crypto = data.get("crypto", "USDC")
         amount = data.get("amount", "0")
         fiat = data.get("fiat", "USD")
         
-        crypto_info = SUPPORTED_CRYPTOS.get(crypto.lower(), {"emoji": "💎"})
-        emoji = crypto_info.get("emoji", "💎")
+        crypto_info = SUPPORTED_CRYPTOS.get(crypto.lower(), {"emoji": "💵"})
+        emoji = crypto_info.get("emoji", "💵")
         
         # Format fiat amount with currency symbol
         currency_symbols = {"USD": "$", "EUR": "€", "GBP": "£", "CAD": "C$", "AUD": "A$"}
@@ -625,11 +625,7 @@ Quanto você gostaria de gastar?
 
 **Payment Options:**
 • Credit/Debit Card
-• Apple Pay / Google Pay
-
-**Ready to purchase?**
-Reply "yes" to open payment or "cancel" to abort.
-You can also modify: "change to $200" """,
+• Apple Pay / Google Pay""",
             
             "es": f"""💳 **Revisa Tu Compra**
 
@@ -643,11 +639,7 @@ You can also modify: "change to $200" """,
 
 **Opciones de Pago:**
 • Tarjeta de Crédito/Débito
-• Apple Pay / Google Pay
-
-**¿Listo para comprar?**
-Responde "sí" para abrir el pago o "cancelar" para abortar.
-También puedes modificar: "cambiar a $200" """,
+• Apple Pay / Google Pay""",
             
             "pt": f"""💳 **Revise Sua Compra**
 
@@ -661,11 +653,7 @@ También puedes modificar: "cambiar a $200" """,
 
 **Opções de Pagamento:**
 • Cartão de Crédito/Débito
-• Apple Pay / Google Pay
-
-**Pronto para comprar?**
-Responda "sim" para abrir o pagamento ou "cancelar" para abortar.
-Você também pode modificar: "alterar para $200" """,
+• Apple Pay / Google Pay""",
             
             "zh": f"""💳 **审核您的购买**
 
@@ -679,11 +667,7 @@ Você também pode modificar: "alterar para $200" """,
 
 **支付方式：**
 • 信用卡/借记卡
-• Apple Pay / Google Pay
-
-**准备购买了吗？**
-回复'是'打开支付或'取消'中止。
-您也可以修改："改为 $200" """,
+• Apple Pay / Google Pay""",
         }
         
         return msgs.get(language, msgs["en"])

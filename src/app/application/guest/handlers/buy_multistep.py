@@ -382,41 +382,45 @@ class BuyMultiStepHandler:
         translations = {
             "en": {
                 "title": "💳 **Your Buy Quote**\n\n",
-                "step": "**Step 3 of 3:** Review and confirm\n\n",
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "you_pay": f"💵 **You Pay:** ${usd:.2f} USD",
                 "you_receive": f"💎 **You Receive:** ~{crypto_amount:.6f} {crypto} {emoji}",
-                "price_label": "📊 **Price per {crypto}:**",
                 "fee_label": "⚡ **Processing Fee (2.99%):**",
                 "total_label": "💰 **Total Charge:**",
-                "confirm_title": "\n**Ready to buy?**",
-                "confirm_options": "\n✅ Reply `confirm` or `yes` to proceed\n📝 Reply `change amount to X` to adjust\n❌ Reply `cancel` to abort",
             },
             "es": {
                 "title": "💳 **Tu Cotización de Compra**\n\n",
-                "step": "**Paso 3 de 3:** Revisar y confirmar\n\n",
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "you_pay": f"💵 **Pagas:** ${usd:.2f} USD",
                 "you_receive": f"💎 **Recibes:** ~{crypto_amount:.6f} {crypto} {emoji}",
-                "price_label": "📊 **Precio por {crypto}:**",
                 "fee_label": "⚡ **Tarifa de Procesamiento (2.99%):**",
                 "total_label": "💰 **Cargo Total:**",
-                "confirm_title": "\n**¿Listo para comprar?**",
-                "confirm_options": "\n✅ Responde `confirmar` o `sí` para proceder\n📝 Responde `cambiar cantidad a X` para ajustar\n❌ Responde `cancelar` para abortar",
+            },
+            "pt": {
+                "title": "💳 **Sua Cotação de Compra**\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "you_pay": f"💵 **Você Paga:** ${usd:.2f} USD",
+                "you_receive": f"💎 **Você Recebe:** ~{crypto_amount:.6f} {crypto} {emoji}",
+                "fee_label": "⚡ **Taxa de Processamento (2.99%):**",
+                "total_label": "💰 **Total:**",
+            },
+            "zh": {
+                "title": "💳 **您的购买报价**\n\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                "you_pay": f"💵 **您支付：** ${usd:.2f} USD",
+                "you_receive": f"💎 **您收到：** ~{crypto_amount:.6f} {crypto} {emoji}",
+                "fee_label": "⚡ **手续费 (2.99%)：**",
+                "total_label": "💰 **总计：**",
             },
         }
         t = translations.get(language, translations["en"])
 
-        # Build content
-        content = f"{t['title']}{t['step']}{t['divider']}"
+        # Build content - no reply instructions (frontend shows card with execute_data)
+        content = f"{t['title']}{t['divider']}"
         content += f"{t['you_pay']}\n"
         content += f"{t['you_receive']}\n\n"
-        content += f"{t['price_label'].replace('{crypto}', crypto)} ${price_per_unit:.2f}\n"
         content += f"{t['fee_label']} ${processing_fee:.2f}\n"
-        content += f"{t['total_label']} ${total_usd:.2f}\n"
-        content += f"\n{t['divider']}"
-        content += f"{t['confirm_title']}\n"
-        content += t["confirm_options"]
+        content += f"{t['total_label']} ${total_usd:.2f}"
 
         return {
             "content": content,
