@@ -432,6 +432,132 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             self._context_aware.user_type
         )
     
+    def _detect_fresh_workflow_start(
+        self,
+        message: str,
+    ) -> tuple[bool, str | None]:
+        """
+        Detect if user is starting a fresh/new workflow.
+        
+        This is used to cancel any pending workflow when user starts a new one.
+        For example, if user has a pending buy confirmation and says "swap ETH to USDC",
+        this detects it's a fresh swap workflow request.
+        
+        Returns:
+            Tuple of (is_fresh_workflow, workflow_type or None)
+            workflow_type: "buy", "swap", "lending", "transfer", "money_market", "cashout"
+        """
+        message_lower = message.lower().strip()
+        
+        # Fresh workflow start keywords (multilingual)
+        # These indicate user wants to START a new workflow, not continue an existing one
+        workflow_keywords = {
+            "buy": [
+                # English
+                "buy crypto", "buy usdc", "buy token", "purchase crypto", "purchase usdc",
+                "i want to buy", "let me buy", "can i buy",
+                # Spanish
+                "comprar cripto", "comprar usdc", "quiero comprar",
+                # Portuguese
+                "comprar cripto", "comprar usdc", "quero comprar",
+            ],
+            "swap": [
+                # English
+                "swap", "exchange", "trade", "convert",
+                "i want to swap", "let me swap", "can i swap",
+                "swap eth", "swap usdc", "swap btc",
+                # Spanish
+                "cambiar", "intercambiar", "quiero cambiar",
+                # Portuguese
+                "trocar", "quero trocar",
+            ],
+            "lending": [
+                # English
+                "lend", "deposit", "supply", "earn yield", "earn interest",
+                "i want to lend", "i want to deposit", "i want to supply",
+                "deposit usdc", "supply usdc", "lend usdc",
+                # Spanish
+                "depositar", "prestar", "quiero depositar",
+                # Portuguese
+                "depositar", "emprestar", "quero depositar",
+            ],
+            "transfer": [
+                # English
+                "send", "transfer", "send crypto", "transfer crypto",
+                "i want to send", "i want to transfer",
+                "send eth", "send usdc", "transfer to",
+                # Spanish
+                "enviar", "transferir", "quiero enviar",
+                # Portuguese
+                "enviar", "transferir", "quero enviar",
+            ],
+            "money_market": [
+                # English
+                "compare rates", "money market", "best rates", "yield comparison",
+                "check rates", "show rates",
+                # Spanish
+                "comparar tasas", "mercado de dinero", "mejores tasas",
+                # Portuguese
+                "comparar taxas", "melhores taxas",
+            ],
+            "cashout": [
+                # English
+                "cashout", "cash out", "withdraw", "sell crypto", "offramp", "off-ramp",
+                "i want to cashout", "i want to sell", "convert to fiat",
+                # Spanish
+                "retirar", "vender cripto", "quiero vender",
+                # Portuguese
+                "sacar", "vender cripto", "quero vender",
+            ],
+        }
+        
+        for workflow_type, keywords in workflow_keywords.items():
+            for keyword in keywords:
+                # Check if message starts with keyword or contains it as a clear command
+                if message_lower.startswith(keyword) or message_lower == keyword:
+                    logger.info(f"🆕 Fresh workflow detected: {workflow_type} (keyword: {keyword})")
+                    return True, workflow_type
+                # Also check "i want to X" patterns
+                if f"want to {keyword}" in message_lower or f"quiero {keyword}" in message_lower:
+                    logger.info(f"🆕 Fresh workflow detected: {workflow_type} (pattern: want to {keyword})")
+                    return True, workflow_type
+        
+        return False, None
+    
+    def _has_pending_workflow(
+        self,
+        conversation_context: "ConversationContext",
+    ) -> tuple[bool, str | None, dict | None]:
+        """
+        Check if there's a pending workflow in conversation history.
+        
+        Returns:
+            Tuple of (has_pending, workflow_name, workflow_state)
+        """
+        if not conversation_context.conversation_history:
+            return False, None, None
+        
+        # Check recent messages for pending workflow state
+        for msg in reversed(conversation_context.conversation_history[-5:]):
+            if isinstance(msg, dict) and msg.get("role") == "assistant":
+                metadata = msg.get("metadata", {})
+                workflow_state = metadata.get("workflow_state")
+                workflow_name = metadata.get("workflow_name")
+                
+                if workflow_state:
+                    step = workflow_state.get("step", "")
+                    # Workflow is pending if it's in confirm, fetch_data, or execute step
+                    if step in ("confirm", "fetch_data", "execute"):
+                        logger.info(f"📋 Found pending workflow: {workflow_name}, step: {step}")
+                        return True, workflow_name, workflow_state
+                    
+                # Also check for execute_data (transaction ready for execution)
+                if metadata.get("execute_data"):
+                    logger.info(f"📋 Found pending execute_data in workflow: {workflow_name}")
+                    return True, workflow_name, workflow_state
+        
+        return False, None, None
+    
     def _is_workflow_continuation(
         self,
         message: str,
@@ -440,11 +566,34 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         """
         Check if this message is a continuation of an existing workflow.
         
+        IMPORTANT: If user is starting a FRESH workflow (e.g., says "swap" while
+        having a pending buy), this returns (False, None) so the old workflow
+        is cancelled and the new one starts fresh.
+        
         Returns:
             Tuple of (is_continuation, workflow_name or None)
         """
         message_lower = message.lower().strip()
         logger.info(f"🔍 Checking workflow continuation for: '{message_lower}'")
+        
+        # FIRST: Check if user is starting a fresh/new workflow
+        # This takes priority - if user says "swap" while in buy flow, cancel buy and start swap
+        is_fresh, fresh_workflow_type = self._detect_fresh_workflow_start(message)
+        has_pending, pending_workflow_name, _ = self._has_pending_workflow(conversation_context)
+        
+        if is_fresh and has_pending:
+            # User is starting a NEW workflow while having a pending one
+            # Normalize pending workflow name for comparison
+            pending_type = (pending_workflow_name or "").lower().replace("workflow", "").replace("_", "").strip()
+            
+            # If fresh workflow is DIFFERENT from pending workflow, cancel the pending one
+            if fresh_workflow_type != pending_type:
+                logger.info(f"🔄 Fresh workflow '{fresh_workflow_type}' cancels pending '{pending_workflow_name}'")
+                return False, None  # Not a continuation - start fresh
+            # If same workflow type (e.g., "buy crypto" while in buy flow), also reset
+            else:
+                logger.info(f"🔄 Restarting same workflow type '{fresh_workflow_type}'")
+                return False, None  # Not a continuation - restart fresh
         
         # Confirmation phrases in multiple languages
         confirmation_phrases = {
