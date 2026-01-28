@@ -33,53 +33,22 @@ def upgrade() -> None:
     """Create money market tables, indexes, and views."""
 
     # =========================================================================
-    # CREATE POSTGRESQL ENUMS (idempotent)
+    # CREATE POSTGRESQL ENUMS (drop existing first for idempotency)
     # =========================================================================
 
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'money_market_protocol_enum') THEN
-                CREATE TYPE money_market_protocol_enum AS ENUM ('aave_v3', 'compound_v3', 'morpho');
-            END IF;
-        END $$;
-    """)
+    # Drop ENUMs if they exist (idempotent - no error if not exists)
+    op.execute("DROP TYPE IF EXISTS money_market_protocol_enum CASCADE;")
+    op.execute("DROP TYPE IF EXISTS money_market_data_source_enum CASCADE;")
+    op.execute("DROP TYPE IF EXISTS money_market_comparison_type_enum CASCADE;")
+    op.execute("DROP TYPE IF EXISTS money_market_alert_condition_enum CASCADE;")
+    op.execute("DROP TYPE IF EXISTS money_market_notification_channel_enum CASCADE;")
 
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'money_market_data_source_enum') THEN
-                CREATE TYPE money_market_data_source_enum AS ENUM ('on_chain', 'api', 'graph', 'estimated');
-            END IF;
-        END $$;
-    """)
-
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'money_market_comparison_type_enum') THEN
-                CREATE TYPE money_market_comparison_type_enum AS ENUM ('supply', 'borrow', 'both');
-            END IF;
-        END $$;
-    """)
-
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'money_market_alert_condition_enum') THEN
-                CREATE TYPE money_market_alert_condition_enum AS ENUM (
-                    'rate_above', 
-                    'rate_below', 
-                    'rate_change_percent', 
-                    'best_rate_available'
-                );
-            END IF;
-        END $$;
-    """)
-
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'money_market_notification_channel_enum') THEN
-                CREATE TYPE money_market_notification_channel_enum AS ENUM ('email', 'push', 'in_app');
-            END IF;
-        END $$;
-    """)
+    # Create ENUMs
+    op.execute("CREATE TYPE money_market_protocol_enum AS ENUM ('aave_v3', 'compound_v3', 'morpho');")
+    op.execute("CREATE TYPE money_market_data_source_enum AS ENUM ('on_chain', 'api', 'graph', 'estimated');")
+    op.execute("CREATE TYPE money_market_comparison_type_enum AS ENUM ('supply', 'borrow', 'both');")
+    op.execute("CREATE TYPE money_market_alert_condition_enum AS ENUM ('rate_above', 'rate_below', 'rate_change_percent', 'best_rate_available');")
+    op.execute("CREATE TYPE money_market_notification_channel_enum AS ENUM ('email', 'push', 'in_app');")
 
     # =========================================================================
     # TABLE 1: money_market_protocols (Protocol Registry)
