@@ -53,7 +53,7 @@ class GuestRegistrationRequired(BaseModel):
     reason: str
     message: dict[str, str]
     cta: dict[str, str]
-    signup_url: str = "/signup"
+    # signup_url removed - URLs not shown in guest chat
 
 
 class GuestInfo(BaseModel):

@@ -144,7 +144,7 @@ def create_guest_router() -> APIRouter:
                 reason=result.registration_required.get("reason", "execute_action"),
                 message=result.registration_required.get("message", {}),
                 cta=result.registration_required.get("cta", {}),
-                signup_url=result.registration_required.get("signup_url", "/signup"),
+                # signup_url removed - URLs not shown in guest chat
             )
 
         guest_info = None
