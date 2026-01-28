@@ -158,6 +158,12 @@ from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandle
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.ports.compound_gateway import CompoundGateway
+from app.domain.ports.money_market.money_market_cache_gateway import (
+    MoneyMarketCacheGateway,
+)
+from app.domain.ports.money_market.money_market_comparison_gateway import (
+    MoneyMarketComparisonGateway,
+)
 from app.domain.ports.balance_checker import IBalanceChecker
 from app.infrastructure.adapters.external.compound_client import CompoundClient
 from app.infrastructure.adapters.external.compound_adapter import CompoundAdapter
@@ -861,25 +867,34 @@ class ChatPhase2Provider(Provider):
         """Provide Compound V3 gateway adapter."""
         return CompoundAdapter(client=compound_client)
 
-    @provide
+    @provide(scope=Scope.REQUEST)
     def provide_money_market_handler(
         self,
         aave_gateway: AaveGateway,
         compound_gateway: CompoundGateway,
+        cache_gateway: Optional[MoneyMarketCacheGateway] = None,
+        comparison_gateway: Optional[MoneyMarketComparisonGateway] = None,
     ) -> MoneyMarketHandler:
         """
         Provide money market handler for rate comparison.
 
         Per CEO spec: Aave + Compound only for money market.
         (Morpho is handled by LendingHandler for vault deposits)
-        
+
         Uses real data from:
         - Aave: AaveGateway for market rates
         - Compound: CompoundGateway for market rates
+        - Cache: MoneyMarketCacheGateway for 60s TTL rate caching (provided by MoneyMarketProvider)
+        - Comparison: MoneyMarketComparisonGateway for analytics logging (provided by MoneyMarketProvider)
+
+        Cache and comparison gateways are provided by MoneyMarketProvider (registered in provider_registry).
+        They are injected if available, otherwise None (handler gracefully degrades without caching).
         """
         return MoneyMarketHandler(
             aave_gateway=aave_gateway,
             compound_gateway=compound_gateway,
+            cache_gateway=cache_gateway,
+            comparison_gateway=comparison_gateway,
         )
 
     @provide
