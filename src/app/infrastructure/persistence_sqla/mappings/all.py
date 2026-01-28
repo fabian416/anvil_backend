@@ -63,7 +63,9 @@ from app.infrastructure.persistence_sqla.mappings.lending_health_check_mapping i
 from app.infrastructure.persistence_sqla.mappings.leverage_loop_execution_mapping import map_leverage_loop_executions_table
 from app.infrastructure.persistence_sqla.mappings.lending_alert_mapping import map_lending_alerts_table
 # Money Market Tables
+from app.infrastructure.persistence_sqla.mappings.money_market_protocol_mapping import map_money_market_protocols_table
 from app.infrastructure.persistence_sqla.mappings.money_market_rate_mapping import map_money_market_rates_table
+from app.infrastructure.persistence_sqla.mappings.money_market_rate_alerts_mapping import map_money_market_rate_alerts_table
 from app.infrastructure.persistence_sqla.mappings.money_market_comparison_mapping import map_money_market_comparisons_table
 from app.infrastructure.persistence_sqla.mappings.money_market_alert_history_mapping import map_money_market_alert_history_table
 from app.infrastructure.persistence_sqla.mappings.money_market_user_preference_mapping import map_money_market_user_preferences_table
@@ -116,8 +118,10 @@ def map_tables() -> None:
     map_lending_health_checks_table()
     map_leverage_loop_executions_table()
     map_lending_alerts_table()
-    # Money Market Tables
+    # Money Market Tables (protocols must be mapped first due to foreign key)
+    map_money_market_protocols_table()
     map_money_market_rates_table()
+    map_money_market_rate_alerts_table()  # Must be before alert_history (FK dependency)
     map_money_market_comparisons_table()
     map_money_market_alert_history_table()
     map_money_market_user_preferences_table()

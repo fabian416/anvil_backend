@@ -129,7 +129,7 @@ def map_money_market_user_preferences_table() -> None:
         notification_channels = mapped_column(
             ARRAY(String(20)),
             nullable=False,
-            server_default="'{in_app}'",
+            server_default=sa.text("ARRAY['in_app']"),
             comment="Array of enabled notification channels",
         )
 

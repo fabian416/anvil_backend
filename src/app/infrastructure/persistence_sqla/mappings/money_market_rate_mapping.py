@@ -41,14 +41,15 @@ def map_money_market_rates_table() -> None:
 
         __tablename__ = "money_market_rates"
         __table_args__ = (
-            # Partial index for active cache entries (hot path optimization)
+            # Index for cache lookups (hot path optimization)
+            # Note: Cannot use NOW() in partial index (not immutable)
+            # Use regular index instead for valid_until filtering
             Index(
                 "idx_money_market_rates_active_cache",
                 "asset_symbol",
                 "chain",
                 "protocol_id",
                 "valid_until",
-                postgresql_where=sa.text("valid_until > NOW()"),
             ),
             # BRIN index for time-series queries (efficient on large datasets)
             Index(
