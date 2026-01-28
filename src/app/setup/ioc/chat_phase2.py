@@ -872,8 +872,8 @@ class ChatPhase2Provider(Provider):
         self,
         aave_gateway: AaveGateway,
         compound_gateway: CompoundGateway,
-        cache_gateway: Optional[MoneyMarketCacheGateway] = None,
-        comparison_gateway: Optional[MoneyMarketComparisonGateway] = None,
+        cache_gateway: MoneyMarketCacheGateway,
+        comparison_gateway: MoneyMarketComparisonGateway,
     ) -> MoneyMarketHandler:
         """
         Provide money market handler for rate comparison.
@@ -888,7 +888,7 @@ class ChatPhase2Provider(Provider):
         - Comparison: MoneyMarketComparisonGateway for analytics logging (provided by MoneyMarketProvider)
 
         Cache and comparison gateways are provided by MoneyMarketProvider (registered in provider_registry).
-        They are injected if available, otherwise None (handler gracefully degrades without caching).
+        Both are required dependencies - MoneyMarketProvider must be registered for this to work.
         """
         return MoneyMarketHandler(
             aave_gateway=aave_gateway,
