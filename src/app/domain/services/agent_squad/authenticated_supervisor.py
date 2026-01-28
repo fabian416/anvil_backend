@@ -618,6 +618,14 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
 
         # NEW: Check for parameter-awaiting workflows (before early return)
         # This handles cases where user provides parameters like "USDC", "1", "2", etc.
+        # CRITICAL: Skip this check if user is starting a FRESH workflow!
+        # If user says "Swap X to Y" while in buy flow, we should NOT continue the buy flow.
+        if is_fresh:
+            # User is starting a fresh workflow - don't check for parameter-awaiting workflows
+            # This ensures "Swap PURR to USDC" is not misinterpreted as a buy parameter
+            logger.info(f"🆕 Fresh workflow '{fresh_workflow_type}' - skipping parameter-awaiting check")
+            return False, None  # Start fresh workflow
+        
         if conversation_context.conversation_history:
             # Look at last assistant message to see if it's awaiting parameters
             for msg in reversed(conversation_context.conversation_history[-5:]):
