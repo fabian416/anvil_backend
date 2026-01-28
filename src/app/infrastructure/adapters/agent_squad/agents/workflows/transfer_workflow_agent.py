@@ -770,10 +770,7 @@ Por favor cole um endereço de carteira válido.""",
 ⚠️ **WARNING:**
 • Once confirmed, this transaction CANNOT be reversed
 • Double-check the destination address
-• Make sure you trust the recipient
-
-**Ready to send?**
-Reply "yes" to confirm or "cancel" to abort.""",
+• Make sure you trust the recipient""",
             
             "es": f"""🔍 **Revisa Tu Transferencia**
 
@@ -789,10 +786,7 @@ Reply "yes" to confirm or "cancel" to abort.""",
 ⚠️ **ADVERTENCIA:**
 • Una vez confirmado, esta transacción NO SE PUEDE REVERTIR
 • Verifica la dirección de destino
-• Asegúrate de confiar en el destinatario
-
-**¿Listo para enviar?**
-Responde "sí" para confirmar o "cancelar" para abortar.""",
+• Asegúrate de confiar en el destinatario""",
             
             "pt": f"""🔍 **Revise Sua Transferência**
 
@@ -808,10 +802,7 @@ Responde "sí" para confirmar o "cancelar" para abortar.""",
 ⚠️ **AVISO:**
 • Uma vez confirmado, esta transação NÃO PODE ser revertida
 • Verifique o endereço de destino
-• Certifique-se de confiar no destinatário
-
-**Pronto para enviar?**
-Responda "sim" para confirmar ou "cancelar" para abortar.""",
+• Certifique-se de confiar no destinatário""",
             
             "zh": f"""🔍 **审核您的转账**
 
@@ -827,22 +818,19 @@ Responda "sim" para confirmar ou "cancelar" para abortar.""",
 ⚠️ **警告：**
 • 一旦确认，此交易无法撤销
 • 仔细核对目标地址
-• 确保您信任收款人
-
-**准备发送了吗？**
-回复'是'确认或'取消'中止。""",
+• 确保您信任收款人""",
         }
         
         return msgs.get(language, msgs["en"])
     
     def _ask_for_confirmation(self, language: str) -> str:
-        """Ask user to confirm."""
+        """Ask user to confirm (not used - frontend handles via execute_data card)."""
         
         msgs = {
-            "en": """Would you like to confirm this transfer? Reply "yes" or "cancel".""",
-            "es": """¿Te gustaría confirmar esta transferencia? Responde "sí" o "cancelar".""",
-            "pt": """Gostaria de confirmar esta transferência? Responda "sim" ou "cancelar".""",
-            "zh": """您想确认此转账吗？回复"是"或"取消"。""",
+            "en": "Review the transfer details above.",
+            "es": "Revisa los detalles de la transferencia.",
+            "pt": "Revise os detalhes da transferência.",
+            "zh": "查看上方的转账详情。",
         }
         
         return msgs.get(language, msgs["en"])

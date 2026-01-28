@@ -391,8 +391,6 @@ To get live quotes, configure the aggregator API keys.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Ready to swap?** Reply "confirm swap" to proceed.
-
 💡 *Slippage: 1% | Quote valid for 30 seconds*
 """
 
@@ -432,8 +430,6 @@ To get live quotes, configure the aggregator API keys.
 • **Aggregator:** LiFi
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**Ready to swap?** Reply "confirm swap" to proceed.
 
 💡 *Cross-chain swaps may take longer than single-chain*
 """

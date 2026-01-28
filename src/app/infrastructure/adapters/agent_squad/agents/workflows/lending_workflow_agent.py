@@ -1247,13 +1247,7 @@ Quanto **{asset}** você gostaria de depositar?
 💰 **Deposit Amount:** {amount} {asset}
 📈 **Current APY:** {apy:.2f}%
 💵 **Monthly Earnings:** ~{monthly_earnings:.2f} {asset}
-📆 **Yearly Earnings:** ~{yearly_earnings:.2f} {asset}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**Ready to deposit?**
-Reply "yes" to confirm or "cancel" to abort.
-You can also modify: "change to 500 {asset}" """,
+📆 **Yearly Earnings:** ~{yearly_earnings:.2f} {asset}""",
             
             "es": f"""📊 **Cotización de Depósito**
 
@@ -1262,13 +1256,7 @@ You can also modify: "change to 500 {asset}" """,
 💰 **Cantidad a Depositar:** {amount} {asset}
 📈 **APY Actual:** {apy:.2f}%
 💵 **Ganancias Mensuales:** ~{monthly_earnings:.2f} {asset}
-📆 **Ganancias Anuales:** ~{yearly_earnings:.2f} {asset}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**¿Listo para depositar?**
-Responde "sí" para confirmar o "cancelar" para abortar.
-También puedes modificar: "cambiar a 500 {asset}" """,
+📆 **Ganancias Anuales:** ~{yearly_earnings:.2f} {asset}""",
             
             "pt": f"""📊 **Cotação de Depósito**
 
@@ -1277,13 +1265,7 @@ También puedes modificar: "cambiar a 500 {asset}" """,
 💰 **Valor do Depósito:** {amount} {asset}
 📈 **APY Atual:** {apy:.2f}%
 💵 **Ganhos Mensais:** ~{monthly_earnings:.2f} {asset}
-📆 **Ganhos Anuais:** ~{yearly_earnings:.2f} {asset}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**Pronto para depositar?**
-Responda "sim" para confirmar ou "cancelar" para abortar.
-Você também pode modificar: "alterar para 500 {asset}" """,
+📆 **Ganhos Anuais:** ~{yearly_earnings:.2f} {asset}""",
             
             "zh": f"""📊 **存款报价**
 
@@ -1292,13 +1274,7 @@ Você também pode modificar: "alterar para 500 {asset}" """,
 💰 **存款金额：** {amount} {asset}
 📈 **当前 APY：** {apy:.2f}%
 💵 **月收益：** ~{monthly_earnings:.2f} {asset}
-📆 **年收益：** ~{yearly_earnings:.2f} {asset}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**准备存款了吗？**
-回复'是'确认或'取消'中止。
-您也可以修改："改为 500 {asset}" """,
+📆 **年收益：** ~{yearly_earnings:.2f} {asset}""",
         }
         
         return msgs.get(language, msgs["en"])
@@ -1348,13 +1324,13 @@ Gostaria de depositar algum destes em seu lugar?""",
         return msgs.get(language, msgs["en"])
     
     def _ask_for_confirmation(self, language: str) -> str:
-        """Ask user to confirm."""
+        """Ask user to confirm (not used - frontend handles via execute_data card)."""
         
         msgs = {
-            "en": """Would you like to confirm this deposit? Reply "yes" or "cancel".""",
-            "es": """¿Te gustaría confirmar este depósito? Responde "sí" o "cancelar".""",
-            "pt": """Gostaria de confirmar este depósito? Responda "sim" ou "cancelar".""",
-            "zh": """您想确认此存款吗？回复"是"或"取消"。""",
+            "en": "Review the deposit details above.",
+            "es": "Revisa los detalles del depósito.",
+            "pt": "Revise os detalhes do depósito.",
+            "zh": "查看上方的存款详情。",
         }
         
         return msgs.get(language, msgs["en"])

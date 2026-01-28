@@ -310,38 +310,45 @@ class MoonPaySwapMultiStepHandler:
             translations = {
                 "en": {
                     "title": "🌙 **Your MoonPay Swap Quote**\n\n",
-                    "step": "**Step 4 of 4:** Review and confirm\n\n",
                     "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                     "you_send": f"📤 **You Send:** {amount} {from_token.upper()} {from_emoji}",
                     "you_receive": f"📥 **You Receive:** ~{quote_amount} {to_token.upper()} {to_emoji}",
                     "rate_label": "💱 **Exchange Rate:**",
                     "fee_label": "⚡ **Network Fee:**",
-                    "confirm_title": "\n**Ready to swap?**",
-                    "confirm_options": "\n✅ Reply `confirm` or `yes` to proceed\n📝 Reply `change amount to X` to adjust\n❌ Reply `cancel` to abort",
                 },
                 "es": {
                     "title": "🌙 **Tu Cotización MoonPay**\n\n",
-                    "step": "**Paso 4 de 4:** Revisar y confirmar\n\n",
                     "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                     "you_send": f"📤 **Envías:** {amount} {from_token.upper()} {from_emoji}",
                     "you_receive": f"📥 **Recibes:** ~{quote_amount} {to_token.upper()} {to_emoji}",
                     "rate_label": "💱 **Tasa de Cambio:**",
                     "fee_label": "⚡ **Tarifa de Red:**",
-                    "confirm_title": "\n**¿Listo para intercambiar?**",
-                    "confirm_options": "\n✅ Responde `confirmar` o `sí` para proceder\n📝 Responde `cambiar cantidad a X` para ajustar\n❌ Responde `cancelar` para abortar",
+                },
+                "pt": {
+                    "title": "🌙 **Sua Cotação MoonPay**\n\n",
+                    "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                    "you_send": f"📤 **Você Envia:** {amount} {from_token.upper()} {from_emoji}",
+                    "you_receive": f"📥 **Você Recebe:** ~{quote_amount} {to_token.upper()} {to_emoji}",
+                    "rate_label": "💱 **Taxa de Câmbio:**",
+                    "fee_label": "⚡ **Taxa de Rede:**",
+                },
+                "zh": {
+                    "title": "🌙 **您的 MoonPay 交换报价**\n\n",
+                    "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
+                    "you_send": f"📤 **您发送：** {amount} {from_token.upper()} {from_emoji}",
+                    "you_receive": f"📥 **您收到：** ~{quote_amount} {to_token.upper()} {to_emoji}",
+                    "rate_label": "💱 **汇率：**",
+                    "fee_label": "⚡ **网络费用：**",
                 },
             }
             t = translations.get(language, translations["en"])
 
-            # Build content with clear pricing display
-            content = f"{t['title']}{t['step']}{t['divider']}"
+            # Build content - no reply instructions (frontend shows card with execute_data)
+            content = f"{t['title']}{t['divider']}"
             content += f"{t['you_send']}\n"
             content += f"{t['you_receive']}\n\n"
             content += f"{t['rate_label']} {exchange_rate}\n"
-            content += f"{t['fee_label']} ${network_fee}\n"
-            content += f"\n{t['divider']}"
-            content += f"{t['confirm_title']}\n"
-            content += t["confirm_options"]
+            content += f"{t['fee_label']} ${network_fee}"
 
             return {
                 "content": content,

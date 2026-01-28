@@ -1507,13 +1507,7 @@ Por favor insira:
 • Price Impact: {impact:.2f}%
 • Network: {chain.upper()}
 • Aggregator: {aggregator.upper()}
-{gas_info}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**Ready to swap?**
-Reply "yes" to confirm or "cancel" to abort.
-You can also modify: "change to 1 ETH" """,
+{gas_info}""",
 
             "es": f"""📊 **Cotización de Swap**
 
@@ -1523,12 +1517,7 @@ You can also modify: "change to 1 ETH" """,
 • Impacto en precio: {impact:.2f}%
 • Red: {chain.upper()}
 • Agregador: {aggregator.upper()}
-{gas_info}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**¿Listo para intercambiar?**
-Responde "sí" para confirmar o "cancelar" para abortar.""",
+{gas_info}""",
 
             "pt": f"""📊 **Cotação de Swap**
 
@@ -1538,23 +1527,18 @@ Responde "sí" para confirmar o "cancelar" para abortar.""",
 • Impacto no preço: {impact:.2f}%
 • Rede: {chain.upper()}
 • Agregador: {aggregator.upper()}
-{gas_info}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**Pronto para trocar?**
-Responda "sim" para confirmar ou "cancelar" para abortar.""",
+{gas_info}""",
         }
         
         return msgs.get(language, msgs["en"])
     
     def _get_confirm_prompt(self, language: str) -> str:
-        """Re-prompt for confirmation."""
+        """Re-prompt for confirmation (not used - frontend handles via execute_data card)."""
         msgs = {
-            "en": "Would you like to proceed with this swap? Reply 'yes' to confirm or 'cancel' to abort.",
-            "es": "¿Te gustaría proceder con este intercambio? Responde 'sí' para confirmar o 'cancelar' para abortar.",
-            "pt": "Gostaria de prosseguir com esta troca? Responda 'sim' para confirmar ou 'cancelar' para abortar.",
-            "zh": "您想继续这次交换吗？回复'是'确认或'取消'中止。",
+            "en": "Review the swap details above.",
+            "es": "Revisa los detalles del intercambio.",
+            "pt": "Revise os detalhes da troca.",
+            "zh": "查看上方的交换详情。",
         }
         return msgs.get(language, msgs["en"])
     

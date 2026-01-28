@@ -1310,8 +1310,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 "cost": "Estimated Cost",
                 "warning": "WARNING",
                 "signatures": "This will require {} separate wallet signatures",
-                "risk": "Leverage trading is high risk - you could be liquidated",
-                "continue": "Reply 'yes' to start with step 1, or 'cancel' to abort"
+                "risk": "Leverage trading is high risk - you could be liquidated"
             },
             "es": {
                 "title": "Plan de Ejecución de Bucle de Apalancamiento",
@@ -1323,8 +1322,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 "cost": "Costo Estimado",
                 "warning": "ADVERTENCIA",
                 "signatures": "Esto requerirá {} firmas de billetera separadas",
-                "risk": "El trading con apalancamiento es de alto riesgo - podrías ser liquidado",
-                "continue": "Responde 'sí' para comenzar con el paso 1, o 'cancelar' para abortar"
+                "risk": "El trading con apalancamiento es de alto riesgo - podrías ser liquidado"
             },
             "pt": {
                 "title": "Plano de Execução de Loop de Alavancagem",
@@ -1336,8 +1334,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 "cost": "Custo Estimado",
                 "warning": "AVISO",
                 "signatures": "Isso exigirá {} assinaturas de carteira separadas",
-                "risk": "Trading com alavancagem é de alto risco - você pode ser liquidado",
-                "continue": "Responda 'sim' para começar com o passo 1, ou 'cancelar' para abortar"
+                "risk": "Trading com alavancagem é de alto risco - você pode ser liquidado"
             },
             "zh": {
                 "title": "杠杆循环执行计划",

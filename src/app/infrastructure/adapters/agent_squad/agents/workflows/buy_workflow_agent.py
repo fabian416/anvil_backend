@@ -673,13 +673,13 @@ Quanto você gostaria de gastar?
         return msgs.get(language, msgs["en"])
     
     def _ask_for_confirmation(self, language: str) -> str:
-        """Ask user to confirm."""
+        """Ask user to confirm (not used - frontend handles via execute_data card)."""
         
         msgs = {
-            "en": """Would you like to confirm this purchase? Reply "yes" or "cancel".""",
-            "es": """¿Te gustaría confirmar esta compra? Responde "sí" o "cancelar".""",
-            "pt": """Gostaria de confirmar esta compra? Responda "sim" ou "cancelar".""",
-            "zh": """您想确认此购买吗？回复"是"或"取消"。""",
+            "en": "Review the purchase details above.",
+            "es": "Revisa los detalles de la compra.",
+            "pt": "Revise os detalhes da compra.",
+            "zh": "查看上方的购买详情。",
         }
         
         return msgs.get(language, msgs["en"])

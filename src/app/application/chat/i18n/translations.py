@@ -217,11 +217,11 @@ TRANSLATIONS = {
             "pt": "Agregador",
         },
         "confirm_swap": {
-            "en": "Ready to swap? Reply \"confirm swap\" to proceed.",
-            "es": "¿Listo para intercambiar? Responde \"confirmar intercambio\" para proceder.",
-            "fr": "Prêt à échanger? Répondez \"confirmer échange\" pour continuer.",
-            "zh": "准备交换？回复 \"确认交换\" 继续。",
-            "pt": "Pronto para trocar? Responda \"confirmar troca\" para prosseguir.",
+            "en": "Review the swap details above.",
+            "es": "Revisa los detalles del intercambio.",
+            "fr": "Vérifiez les détails de l'échange.",
+            "zh": "查看上方的交换详情。",
+            "pt": "Revise os detalhes da troca.",
         },
         "slippage": {
             "en": "Slippage",

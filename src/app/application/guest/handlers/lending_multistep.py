@@ -347,8 +347,6 @@ class LendingMultiStepHandler:
                 "yearly": "Yearly Earnings",
                 "note_title": "📝 Note",
                 "note": "Real-time APY from Morpho protocol. Rates vary based on market conditions.",
-                "confirm_title": "Ready to deposit?",
-                "confirm_actions": 'Reply "confirm" or "yes" to proceed\nReply "cancel" to abort',
                 "signup_required": "⚠️ You'll need to sign up to complete the deposit",
             },
             "es": {
@@ -361,8 +359,6 @@ class LendingMultiStepHandler:
                 "yearly": "Ganancias Anuales",
                 "note_title": "📝 Nota",
                 "note": "APY en tiempo real del protocolo Morpho. Las tasas varían según las condiciones del mercado.",
-                "confirm_title": "¿Listo para depositar?",
-                "confirm_actions": 'Responde "confirmar" o "sí" para proceder\nResponde "cancelar" para abortar',
                 "signup_required": "⚠️ Necesitarás registrarte para completar el depósito",
             },
             "pt": {
@@ -375,8 +371,6 @@ class LendingMultiStepHandler:
                 "yearly": "Ganhos Anuais",
                 "note_title": "📝 Nota",
                 "note": "APY em tempo real do protocolo Morpho. As taxas variam de acordo com as condições do mercado.",
-                "confirm_title": "Pronto para depositar?",
-                "confirm_actions": 'Responda "confirmar" ou "sim" para prosseguir\nResponda "cancelar" para abortar',
                 "signup_required": "⚠️ Você precisará se cadastrar para completar o depósito",
             },
             "zh": {
@@ -389,8 +383,6 @@ class LendingMultiStepHandler:
                 "yearly": "年收益",
                 "note_title": "📝 说明",
                 "note": "显示的是演示定价。实际 APY 根据市场情况而变化。",
-                "confirm_title": "准备存款了吗?",
-                "confirm_actions": '回复"确认"或"是"继续\n回复"取消"中止',
                 "signup_required": "⚠️ 您需要注册才能完成存款",
             },
         }
@@ -478,9 +470,7 @@ class LendingMultiStepHandler:
         # For authenticated users with execute_data: no pending_action, modal will show
         # For guests or if no vault found: ask for confirmation or show error
         if execute_data:
-            # Authenticated flow - modal appears
-            protocol_name = "Morpho" if execute_data.get("protocol") == "morpho" else "Aave V3"
-            content += f"**{msg['confirm_title']}** ({protocol_name})\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n👉 Click **Execute** below to deposit."
+            # Authenticated flow - modal appears (no reply instructions needed)
             return {
                 "content": content,
                 "pending_action": None,  # No pending action - modal shows immediately
