@@ -628,85 +628,45 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             return True, workflow_name  # Route to the detected workflow
         
         if conversation_context.conversation_history:
-            # Look at last assistant message to see if it's awaiting parameters
-            for msg in reversed(conversation_context.conversation_history[-5:]):
+            # FIRST: Check the most recent assistant message's metadata for workflow_name
+            # This is the most reliable indicator of which workflow is active
+            for msg in reversed(conversation_context.conversation_history[-3:]):
                 if msg.get("role") == "assistant":
-                    content = msg.get("content", "").lower()
                     metadata = msg.get("metadata", {})
-
-                    # Buy workflow parameter detection
-                    if any(phrase in content for phrase in [
-                        "which cryptocurrency would you like to buy?",
-                        "which crypto would you like to buy",
-                        "how much would you like to spend?",
-                        "enter the amount in usd",
-                        "reply with the crypto name",
-                        "💳 buying $",  # Amount already provided, asking for crypto
-                    ]):
-                        # Try to get workflow from metadata first
-                        workflow_name = metadata.get("workflow_name")
-                        if workflow_name:
-                            # Normalize PascalCase to snake_case (e.g., "BuyWorkflow" -> "buy_workflow")
-                            import re
-                            workflow_name = re.sub(r'(?<!^)(?=[A-Z])', '_', workflow_name).lower()
-                            logger.info(f"🔄 Parameter-awaiting workflow (from metadata): {workflow_name}")
-                            return True, workflow_name
-
-                        # Infer from content
-                        if "buy" in content or "purchase" in content:
-                            logger.info(f"🔄 Parameter-awaiting workflow (inferred): buy_workflow")
-                            return True, "buy_workflow"
-
-                    # Lending workflow parameter detection
-                    if any(phrase in content for phrase in [
-                        "which token would you like to deposit?",
-                        "how much would you like to deposit?",
-                        "which protocol would you like to use?",
-                    ]):
-                        workflow_name = metadata.get("workflow_name")
-                        if workflow_name:
-                            # Normalize PascalCase to snake_case
-                            import re
-                            workflow_name = re.sub(r'(?<!^)(?=[A-Z])', '_', workflow_name).lower()
-                        else:
-                            workflow_name = "lending_workflow"
-                        logger.info(f"🔄 Parameter-awaiting workflow: {workflow_name}")
-                        return True, workflow_name
-
-                    # Swap workflow parameter detection
-                    if any(phrase in content for phrase in [
-                        "which meme token would you like to swap?",
-                        "how much would you like to swap?",
-                        "what meme token",
-                    ]):
-                        workflow_name = metadata.get("workflow_name")
-                        if workflow_name:
-                            # Normalize PascalCase to snake_case
-                            import re
-                            workflow_name = re.sub(r'(?<!^)(?=[A-Z])', '_', workflow_name).lower()
-                        else:
-                            workflow_name = "swap_workflow"
-                        logger.info(f"🔄 Parameter-awaiting workflow: {workflow_name}")
-                        return True, workflow_name
-
-                    # Transfer workflow parameter detection
-                    if any(phrase in content for phrase in [
-                        "which token would you like to send?",
-                        "how much would you like to send?",
-                        "recipient address?",
-                    ]):
-                        workflow_name = metadata.get("workflow_name")
-                        if workflow_name:
-                            # Normalize PascalCase to snake_case
-                            import re
-                            workflow_name = re.sub(r'(?<!^)(?=[A-Z])', '_', workflow_name).lower()
-                        else:
-                            workflow_name = "transfer_workflow"
-                        logger.info(f"🔄 Parameter-awaiting workflow: {workflow_name}")
-                        return True, workflow_name
-
-                    # If we found an assistant message but no parameter-awaiting patterns, break
-                    # (don't keep searching older messages)
+                    workflow_name = metadata.get("workflow_name")
+                    workflow_state = metadata.get("workflow_state", {})
+                    content = msg.get("content", "").lower()
+                    
+                    if workflow_name:
+                        # Normalize PascalCase to snake_case
+                        import re
+                        normalized_name = re.sub(r'(?<!^)(?=[A-Z])', '_', workflow_name).lower()
+                        
+                        # Check if this workflow is awaiting input (step is parse_request with data)
+                        step = workflow_state.get("step", "")
+                        data = workflow_state.get("data", {})
+                        
+                        # Workflow is awaiting parameters if:
+                        # 1. In parse_request step with some data (awaiting more input)
+                        # 2. In fetch_data step (just fetched data, might need confirmation)
+                        # 3. Content asks for input (amount, selection, etc.)
+                        is_awaiting = (
+                            (step == "parse_request" and data) or
+                            step == "fetch_data" or
+                            any(phrase in content for phrase in [
+                                "enter the amount", "how much", "which", 
+                                "select", "enter", "💬", "examples:",
+                            ])
+                        )
+                        
+                        if is_awaiting:
+                            logger.info(
+                                f"🔄 Parameter-awaiting workflow from metadata: {normalized_name} "
+                                f"(step={step}, has_data={bool(data)})"
+                            )
+                            return True, normalized_name
+                    
+                    # Only check the most recent assistant message
                     break
 
         if not is_confirmation:
