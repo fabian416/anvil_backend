@@ -1017,11 +1017,16 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
     - Examples: "buy $50 of ETH", "purchase 100 dollars of USDC", "buy crypto"
     - DO NOT combine buy_workflow with other agents - it handles everything internally
 
-12. MONEY MARKET COMPARISON (CRITICAL - Multi-step workflow):
+12. MONEY MARKET / LENDING PROTOCOL RATES (CRITICAL - Multi-step workflow):
     - "compare rates", "best APY for USDC", "where should I deposit" → "money_market_workflow" agent ONLY
     - The money_market_workflow agent handles COMPLETE rate comparison across Aave, Compound, Morpho
-    - Use "money_market_workflow" when user wants to COMPARE rates across protocols
+    - Use "money_market_workflow" when user wants to COMPARE rates OR asks about PROTOCOL RATES
+    - PROTOCOL-SPECIFIC QUERIES (IMPORTANT): When user mentions "Aave rates", "Compound rates", "Morpho rates", 
+      "Aave APY", "lending rates on X protocol" → ALWAYS use "money_market_workflow" (NOT hunter_ai!)
+    - NOTE: "Aave" as a PROTOCOL for lending rates → money_market_workflow
+            "AAVE" as a TOKEN for price → hunter_ai (only when asking for token PRICE)
     - Examples: "compare USDC rates", "best lending rates", "where to deposit ETH", "money market"
+    - Examples: "Aave rates for ETH", "what are Compound rates", "Morpho APY", "lending rates on Aave"
     - SPANISH: "comparar tasas", "mejores tasas", "donde depositar" → "money_market_workflow"
     - PORTUGUESE: "comparar taxas", "melhores taxas", "onde depositar" → "money_market_workflow"
     - DO NOT combine money_market_workflow with other agents - it handles comparison and deposit selection
@@ -1094,6 +1099,13 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "Morpho vs Aave rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare Morpho vs Aave lending rates","depends_on":[]}}]}}
 "Morpho vs Aave for USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare Morpho vs Aave rates for USDC","depends_on":[]}}]}}
 "best lending rates for ETH" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare ETH lending rates across protocols","depends_on":[]}}]}}
+"Aave rates for ETH" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Get Aave lending/supply rates for ETH","depends_on":[]}}]}}
+"what are Aave rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Get Aave protocol lending rates","depends_on":[]}}]}}
+"Aave APY" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Get Aave protocol APY rates","depends_on":[]}}]}}
+"Compound rates for USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Get Compound lending rates for USDC","depends_on":[]}}]}}
+"Morpho rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Get Morpho protocol rates","depends_on":[]}}]}}
+"lending rates on Aave" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Get Aave lending/supply rates","depends_on":[]}}]}}
+"supply rates on Compound" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Get Compound supply rates","depends_on":[]}}]}}
 "compare lending protocols" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare lending protocols and rates","depends_on":[]}}]}}
 "compare lending rates" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare lending rates across protocols","depends_on":[]}}]}}
 "where should I deposit DAI" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare DAI deposit rates and recommend best protocol","depends_on":[]}}]}}
