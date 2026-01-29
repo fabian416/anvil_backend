@@ -303,13 +303,29 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             state.data["selected_protocol"] = selected_protocol
             state.step = WorkflowStep.EXECUTE.value
             
-            # Build execute_data for deposit
+            # Get selected rate for display
             selected_rate = next(
                 (r for r in rates if r["protocol"] == selected_protocol),
                 rates[0] if rates else None,
             )
             
-            if selected_rate:
+            # Build response with funding recommendation if needed
+            response = self._format_protocol_selected(selected_protocol, state.data, language)
+            
+            # Add funding recommendation if user has insufficient funds
+            if user_context.needs_funding_recommendation:
+                funding_msg = self._get_funding_recommendation(
+                    state.data.get("asset", "USDC"), 
+                    language
+                )
+                response = funding_msg + "\n" + response
+                # Don't set execute_data when user needs funding
+                state.execute_data = None
+                logger.info(
+                    f"[MoneyMarketWorkflow] User needs funding - not setting execute_data"
+                )
+            elif selected_rate:
+                # Only build execute_data if user has funds
                 state.execute_data = self._build_deposit_execute_data(
                     protocol=selected_protocol,
                     asset=state.data.get("asset", "USDC"),
@@ -317,7 +333,7 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                     rate_data=selected_rate,
                 )
             
-            return self._format_protocol_selected(selected_protocol, state.data, language), state
+            return response, state
         
         # Check if user wants to deposit amount
         amount = self._extract_amount(text)
@@ -333,13 +349,19 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 rates[0] if rates else None,
             )
             
-            if selected_rate:
+            # Only build execute_data if user has sufficient funds
+            if not user_context.needs_funding_recommendation and selected_rate:
                 state.execute_data = self._build_deposit_execute_data(
                     protocol=selected_protocol,
                     asset=state.data.get("asset", "USDC"),
                     chain=state.data.get("chain", "base"),
                     rate_data=selected_rate,
                     amount=amount,
+                )
+            else:
+                state.execute_data = None
+                logger.info(
+                    f"[MoneyMarketWorkflow] User needs funding - not setting execute_data for amount"
                 )
             
             # Call _handle_execute directly to check balance before showing "Ready"
@@ -377,17 +399,21 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         # Check user balance before allowing execution
         if user_context.needs_funding_recommendation:
             logger.info(
-                f"[MoneyMarketWorkflow] Blocking execution - insufficient funds: "
+                f"[MoneyMarketWorkflow] Insufficient funds - showing funding recommendation: "
                 f"portfolio_state={user_context.portfolio_state}, "
                 f"balance=${user_context.total_balance_usd:.2f}"
             )
-            response = self._build_insufficient_balance_message(
-                asset=asset,
-                amount=amount,
-                user_balance=user_context.total_balance_usd,
-                language=language,
-            )
-            state.error = "insufficient_balance"
+            
+            # Build response with funding recommendation + quote info
+            funding_msg = self._get_funding_recommendation(asset, language)
+            quote_info = self._format_deposit_quote_info(state.data, language)
+            response = funding_msg + "\n" + quote_info
+            
+            # Don't set execute_data - user needs to fund first
+            state.execute_data = None
+            # Stay in EXECUTE step to allow retry after funding
+            state.step = WorkflowStep.EXECUTE.value
+            
             return response, state
         
         # The actual deposit is handled by lending_workflow or frontend
@@ -448,6 +474,89 @@ Você não tem {asset} suficiente na sua carteira.
 • Diga: **"comprar {asset}"**
 • Ou transfira {asset} de outra carteira
 """,
+        }
+        return messages.get(language, messages["en"])
+    
+    def _get_funding_recommendation(self, asset: str, language: str) -> str:
+        """Build funding recommendation message (like swap_workflow)."""
+        messages = {
+            "en": f"""💡 **Heads up:** Your portfolio appears to have limited funds.
+
+To complete this deposit, you'll need {asset} in your wallet.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase USDC with card/Apple Pay/Google Pay
+• 📥 Or transfer {asset} from another wallet
+
+Here's the deposit quote you requested:""",
+            "es": f"""💡 **Aviso:** Tu portafolio parece tener fondos limitados.
+
+Para completar este depósito, necesitas {asset} en tu billetera.
+
+**Comienza:**
+• 💳 Di **"comprar cripto"** para comprar USDC con tarjeta
+• 📥 O transfiere {asset} desde otra billetera
+
+Aquí está la cotización del depósito:""",
+            "pt": f"""💡 **Aviso:** Seu portfólio parece ter fundos limitados.
+
+Para completar este depósito, você precisa de {asset} na sua carteira.
+
+**Comece:**
+• 💳 Diga **"comprar cripto"** para comprar USDC com cartão
+• 📥 Ou transfira {asset} de outra carteira
+
+Aqui está a cotação do depósito:""",
+            "zh": f"""💡 **提示：** 您的投资组合资金似乎有限。
+
+要完成此存款，您需要在钱包中有 {asset}。
+
+**开始：**
+• 💳 说 **"买加密货币"** 用卡购买 USDC
+• 📥 或从其他钱包转入 {asset}
+
+这是您请求的存款报价：""",
+        }
+        return messages.get(language, messages["en"])
+    
+    def _format_deposit_quote_info(self, data: dict, language: str) -> str:
+        """Format deposit quote information for display."""
+        protocol = data.get("selected_protocol", "").title()
+        asset = data.get("asset", "USDC")
+        amount = data.get("amount", "")
+        rates = data.get("rates", [])
+        
+        # Find rate for selected protocol
+        selected_rate = next(
+            (r for r in rates if r.get("protocol", "").lower() == protocol.lower()),
+            rates[0] if rates else {},
+        )
+        apy = selected_rate.get("supply_apy", 0)
+        
+        amount_str = f"{amount} {asset}" if amount else asset
+        
+        messages = {
+            "en": f"""📊 **Deposit Quote**
+
+• **Protocol:** {protocol}
+• **Asset:** {amount_str}
+• **APY:** {apy:.2f}%
+
+Once you have funds, say **"deposit {amount or '100'} {asset}"** to continue.""",
+            "es": f"""📊 **Cotización de Depósito**
+
+• **Protocolo:** {protocol}
+• **Activo:** {amount_str}
+• **APY:** {apy:.2f}%
+
+Una vez que tengas fondos, di **"depositar {amount or '100'} {asset}"** para continuar.""",
+            "pt": f"""📊 **Cotação de Depósito**
+
+• **Protocolo:** {protocol}
+• **Ativo:** {amount_str}
+• **APY:** {apy:.2f}%
+
+Quando tiver fundos, diga **"depositar {amount or '100'} {asset}"** para continuar.""",
         }
         return messages.get(language, messages["en"])
     
