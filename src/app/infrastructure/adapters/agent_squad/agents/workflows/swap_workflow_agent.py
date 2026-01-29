@@ -874,10 +874,10 @@ You don't have enough {from_token} in your wallet to complete this swap.
 
 ---
 
-**💳 Get {from_token} to complete this swap:**
+**💳 Get crypto to complete this swap:**
 
-1. **Buy with card/Apple Pay/Google Pay:**
-   Say: **"buy {from_token}"** or **"buy 100 USDC"**
+1. **Buy USDC with card/Apple Pay/Google Pay:**
+   Say: **"buy crypto"** or **"buy 100"**
 
 2. **Transfer from another wallet:**
    Send {from_token} to your Anvil wallet address
@@ -894,8 +894,8 @@ Once you have {from_token} in your wallet, come back and try:
 
 No tienes suficiente {from_token} en tu billetera para completar este swap.
 
-**💳 Obtén {from_token}:**
-• Di: **"comprar {from_token}"** o **"comprar 100 USDC"**
+**💳 Obtén cripto:**
+• Di: **"comprar cripto"** para comprar USDC con tarjeta
 • O transfiere {from_token} desde otra billetera
 """,
             "pt": f"""❌ **Não é possível executar o swap**
@@ -905,8 +905,8 @@ No tienes suficiente {from_token} en tu billetera para completar este swap.
 
 Você não tem {from_token} suficiente na sua carteira para completar este swap.
 
-**💳 Obtenha {from_token}:**
-• Diga: **"comprar {from_token}"** ou **"comprar 100 USDC"**
+**💳 Obtenha cripto:**
+• Diga: **"comprar cripto"** para comprar USDC com cartão
 • Ou transfira {from_token} de outra carteira
 """,
         }
@@ -1414,18 +1414,19 @@ Hyperliquid L1 上的高速执行（20,000+ TPS）。
         
         # Check if user has enough balance
         if portfolio_state == "empty" or balance < 1:
+            # Note: Only USDC is available for purchase via card
             msgs = {
-                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You'll need to buy {from_token} first:\n• Say `buy {from_token}` to purchase with card",
-                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ Necesitas comprar {from_token} primero:\n• Di `buy {from_token}` para comprar con tarjeta",
-                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você precisa comprar {from_token} primeiro:\n• Diga `buy {from_token}` para comprar com cartão",
-                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您需要先购买 {from_token}：\n• 说 `buy {from_token}` 用卡购买",
+                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You'll need {from_token} first:\n• Say `buy crypto` to purchase USDC with card\n• Or transfer {from_token} from another wallet",
+                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ Necesitas {from_token} primero:\n• Di `comprar cripto` para comprar USDC\n• O transfiere {from_token} desde otra billetera",
+                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você precisa de {from_token} primeiro:\n• Diga `comprar cripto` para comprar USDC\n• Ou transfira {from_token} de outra carteira",
+                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您需要先获取 {from_token}：\n• 说 `买加密货币` 购买 USDC\n• 或从其他钱包转入 {from_token}",
             }
         elif balance < swap_amount:
             msgs = {
-                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Swap amount (${swap_amount:,.2f}) exceeds your balance.\n💡 Consider a smaller amount or buy more {from_token}.",
-                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n⚠️ El monto del swap (${swap_amount:,.2f}) excede tu saldo.\n💡 Considera un monto menor o compra más {from_token}.",
-                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n⚠️ O valor do swap (${swap_amount:,.2f}) excede seu saldo.\n💡 Considere um valor menor ou compre mais {from_token}.",
-                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n⚠️ 兑换金额 (${swap_amount:,.2f}) 超过您的余额。\n💡 考虑较小的金额或购买更多 {from_token}。",
+                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Swap amount (${swap_amount:,.2f}) exceeds your balance.\n💡 Consider a smaller amount or say `buy crypto` to get more USDC.",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n⚠️ El monto del swap (${swap_amount:,.2f}) excede tu saldo.\n💡 Considera un monto menor o di `comprar cripto` para obtener más USDC.",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n⚠️ O valor do swap (${swap_amount:,.2f}) excede seu saldo.\n💡 Considere um valor menor ou diga `comprar cripto` para obter mais USDC.",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n⚠️ 兑换金额 (${swap_amount:,.2f}) 超过您的余额。\n💡 考虑较小的金额或说 `买加密货币` 获取更多 USDC。",
             }
         else:
             msgs = {

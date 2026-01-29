@@ -617,6 +617,7 @@ Aqui está a cotação de depósito que você solicitou:
     ) -> str:
         """Build message when user has insufficient balance to execute deposit."""
         messages = {
+            # Note: Only USDC is available for purchase via card
             "en": f"""❌ **Unable to execute deposit**
 
 **Deposit requested:** {amount} {asset}
@@ -626,12 +627,12 @@ You don't have enough {asset} in your wallet to complete this deposit.
 
 ---
 
-**💳 Get {asset} to start earning yield:**
+**💳 Get crypto to start earning yield:**
 
-1. **Buy with card/Apple Pay/Google Pay:**
-   Say: **"buy {asset}"** or **"buy 100 {asset}"**
+1. **Buy USDC with card/Apple Pay/Google Pay:**
+   Say: **"buy crypto"** or **"buy 100"**
 
-2. **Transfer from another wallet:**
+2. **Transfer {asset} from another wallet:**
    Send {asset} to your Anvil wallet address
 
 ---
@@ -646,8 +647,8 @@ Once you have {asset} in your wallet, come back and try:
 
 No tienes suficiente {asset} en tu billetera.
 
-**💳 Obtén {asset}:**
-• Di: **"comprar {asset}"**
+**💳 Obtén cripto:**
+• Di: **"comprar cripto"** para comprar USDC con tarjeta
 • O transfiere {asset} desde otra billetera
 """,
             "pt": f"""❌ **Não é possível executar o depósito**
@@ -657,8 +658,8 @@ No tienes suficiente {asset} en tu billetera.
 
 Você não tem {asset} suficiente na sua carteira.
 
-**💳 Obtenha {asset}:**
-• Diga: **"comprar {asset}"**
+**💳 Obtenha cripto:**
+• Diga: **"comprar cripto"** para comprar USDC com cartão
 • Ou transfira {asset} de outra carteira
 """,
         }
@@ -1290,11 +1291,12 @@ Quanto **{asset}** você gostaria de depositar?
         portfolio_state = user_context.portfolio_state
         
         if portfolio_state == "empty" or balance < 1:
+            # Note: Only USDC is available for purchase, so always suggest "buy crypto" or "buy USDC"
             msgs = {
-                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You'll need to get {asset} first:\n• Say `buy {asset}` to purchase with card\n• Or transfer {asset} from another wallet",
-                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ Necesitas obtener {asset} primero:\n• Di `buy {asset}` para comprar con tarjeta\n• O transfiere {asset} desde otra billetera",
-                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você precisa obter {asset} primeiro:\n• Diga `buy {asset}` para comprar com cartão\n• Ou transfira {asset} de outra carteira",
-                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您需要先获取 {asset}：\n• 说 `buy {asset}` 用卡购买\n• 或从其他钱包转入 {asset}",
+                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You'll need to get {asset} first:\n• Say `buy crypto` to purchase USDC with card\n• Or transfer {asset} from another wallet",
+                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ Necesitas obtener {asset} primero:\n• Di `comprar cripto` para comprar USDC con tarjeta\n• O transfiere {asset} desde otra billetera",
+                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você precisa obter {asset} primeiro:\n• Diga `comprar cripto` para comprar USDC com cartão\n• Ou transfira {asset} de outra carteira",
+                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您需要先获取 {asset}：\n• 说 `买加密货币` 用卡购买 USDC\n• 或从其他钱包转入 {asset}",
             }
         elif balance < 100:
             msgs = {
