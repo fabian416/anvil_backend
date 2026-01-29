@@ -973,6 +973,7 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 3. TRANSACTION HISTORY (authenticated - REAL data):
    - "my transactions", "transaction history", "recent activity" → "transaction_history" agent
    - "show transactions", "past swaps", "activity summary" → "transaction_history" agent
+   - "my activity", "show activity", "what have I done" → "transaction_history" agent
    
 4. PORTFOLIO (authenticated - REAL data):
    - "my portfolio", "my balance", "my holdings" → "portfolio" agent (returns REAL data)
@@ -1091,6 +1092,7 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "show my wallet address" → {{"tasks":[{{"agent_type":"wallet","task_description":"Display user's wallet addresses","depends_on":[]}}]}}
 "my transactions" → {{"tasks":[{{"agent_type":"transaction_history","task_description":"Show user's transaction history","depends_on":[]}}]}}
 "recent activity" → {{"tasks":[{{"agent_type":"transaction_history","task_description":"Show recent transaction activity","depends_on":[]}}]}}
+"my activity" → {{"tasks":[{{"agent_type":"transaction_history","task_description":"Show user's activity and transactions","depends_on":[]}}]}}
 "my portfolio" → {{"tasks":[{{"agent_type":"portfolio","task_description":"Get user's real portfolio data","depends_on":[]}}]}}
 "my balance" → {{"tasks":[{{"agent_type":"portfolio","task_description":"Get user's wallet balance","depends_on":[]}}]}}
 "swap 1 ETH to USDC" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 1 ETH to USDC","depends_on":[]}}]}}

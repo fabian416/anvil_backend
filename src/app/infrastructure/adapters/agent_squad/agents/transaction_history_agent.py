@@ -205,15 +205,27 @@ If the user asks about something not in their data, explain what data is availab
         tx_data = user_context.get("transactions", {})
         
         if not tx_data:
-            return """**Your Activity Feed is Ready! 📋**
+            # Get user balance if available to provide context-aware message
+            portfolio_summary = user_context.get("portfolio_summary", {})
+            total_balance = float(portfolio_summary.get("total_value_usd", 0) or 0)
+            
+            if total_balance < 1:
+                # Empty balance - recommend buying first
+                return """Your balance: $0.00
 
-No transactions yet - let's change that! Here's what you can do:
+• 💳 **Buy crypto** - Say "buy crypto" to purchase USDC with card/Apple Pay/Google Pay
+• 📥 **Receive crypto** - Transfer tokens from another wallet (ask "my wallet address" for your address)"""
+            else:
+                # Has balance but no transactions yet
+                return f"""Your balance: ~${total_balance:,.2f}
 
-• **Buy crypto** - \"buy 100 USD of ETH\" to start building your portfolio
-• **Earn yield** - \"deposit 100 USDC\" to grow your assets
-• **Swap tokens** - \"swap ETH to USDC\" once you have crypto
+No transaction history yet - you're ready to start! Try:
 
-Your transactions will appear here automatically once you start using Anvil! 🚀"""
+• 🔄 **Swap tokens** - Say "swap USDC to ETH" to trade
+• 💰 **Earn yield** - Say "deposit 100 USDC" to start earning
+• 📤 **Send tokens** - Say "send 10 USDC to 0x..." to transfer
+
+Your transactions will appear here automatically! 🚀"""
         
         # Handle TransactionSummary dataclass or dict
         if hasattr(tx_data, "total_count"):
