@@ -318,7 +318,11 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Validate recipient address and perform safety checks."""
+        """Validate recipient address and perform safety checks.
+        
+        If user has insufficient funds, shows a helpful recommendation to buy crypto
+        but still provides transfer information so they know what to expect.
+        """
         
         language = user_context.language
         
@@ -353,6 +357,20 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         # Store network info
         state.data["network"] = validation["network"]
         
+        # Check user balance and prepare recommendation if insufficient
+        funding_recommendation = ""
+        if user_context.needs_funding_recommendation:
+            token = state.data.get("token", "ETH")
+            logger.info(
+                f"[TransferWorkflow] User has insufficient funds: "
+                f"portfolio_state={user_context.portfolio_state}, "
+                f"balance=${user_context.total_balance_usd:.2f}"
+            )
+            funding_recommendation = self._get_funding_recommendation(
+                token=token,
+                language=language,
+            )
+        
         # Perform safety analysis on recipient
         safety_analysis = await self._analyze_recipient_safety(
             recipient=recipient,
@@ -375,23 +393,89 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             state.error = "safety_blocked"
             return response, state
         
-        state.step = WorkflowStep.CONFIRM.value
+        # Only move to confirm step if user has sufficient funds
+        # If user needs funding, stay in informational mode
+        if not user_context.needs_funding_recommendation:
+            state.step = WorkflowStep.CONFIRM.value
+            
+            # Build execute_data only if user has funds
+            state.execute_data = self._build_transfer_execute_data(
+                token=state.data.get("token", "ETH"),
+                amount=state.data.get("amount", "0"),
+                recipient=recipient,
+                chain=state.data.get("chain", "base"),
+            )
+        else:
+            # User needs to fund first - stay in parse_request
+            # Don't advance to confirm so frontend won't expect action
+            state.step = WorkflowStep.PARSE_REQUEST.value
+            state.execute_data = None  # No execute_data when user has no funds
+            logger.info(
+                f"[TransferWorkflow] Not advancing to confirm - user needs funding first"
+            )
         
-        # Build execute_data
-        state.execute_data = self._build_transfer_execute_data(
-            token=state.data.get("token", "ETH"),
-            amount=state.data.get("amount", "0"),
-            recipient=recipient,
-            chain=state.data.get("chain", "base"),
-        )
-        
-        # Format confirmation response
+        # Format confirmation response with user balance section
         response = self._format_transfer_review(
             state.data,
             language,
+            user_context=user_context,
         )
         
+        # Prepend funding recommendation if user has insufficient funds
+        if funding_recommendation:
+            response = funding_recommendation + "\n" + response
+        
         return response, state
+    
+    def _get_funding_recommendation(self, token: str, language: str) -> str:
+        """
+        Get a helpful recommendation for users with insufficient funds.
+        
+        This is shown before the transfer details to guide users on how to fund their wallet.
+        """
+        recommendations = {
+            "en": f"""💡 **Heads up:** Your portfolio appears to have limited funds.
+
+To complete this transfer, you'll need **{token}** in your wallet.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase USDC with card/Apple Pay/Google Pay
+• 📥 Or transfer {token} from another wallet
+
+Here's the transfer details you requested:
+""",
+            "es": f"""💡 **Aviso:** Tu portafolio parece tener fondos limitados.
+
+Para completar esta transferencia, necesitarás **{token}** en tu billetera.
+
+**Comienza:**
+• 💳 Di **"comprar cripto"** para comprar USDC con tarjeta/Apple Pay/Google Pay
+• 📥 O transfiere {token} desde otra billetera
+
+Aquí están los detalles de la transferencia que solicitaste:
+""",
+            "pt": f"""💡 **Atenção:** Seu portfólio parece ter fundos limitados.
+
+Para completar esta transferência, você precisará de **{token}** em sua carteira.
+
+**Comece:**
+• 💳 Diga **"comprar cripto"** para comprar USDC com cartão/Apple Pay/Google Pay
+• 📥 Ou transfira {token} de outra carteira
+
+Aqui estão os detalhes da transferência que você solicitou:
+""",
+            "zh": f"""💡 **提示:** 您的投资组合似乎资金有限。
+
+要完成此转账，您需要在钱包中有 **{token}**。
+
+**开始：**
+• 💳 说 **"买加密货币"** 用卡/Apple Pay/Google Pay 购买 USDC
+• 📥 或从另一个钱包转入 {token}
+
+以下是您请求的转账详情：
+""",
+        }
+        return recommendations.get(language, recommendations["en"])
     
     async def _handle_confirm(
         self,
@@ -439,7 +523,7 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             )
             
             # Show updated review
-            response = self._format_transfer_review(state.data, language)
+            response = self._format_transfer_review(state.data, language, user_context=user_context)
             return response, state
         
         # Check if user is providing a missing recipient
@@ -923,8 +1007,9 @@ Por favor cole um endereço de carteira válido.""",
         self,
         data: dict[str, Any],
         language: str,
+        user_context: UserContext | None = None,
     ) -> str:
-        """Format transfer review for confirmation with safety info."""
+        """Format transfer review for confirmation with safety info and user balance."""
         
         token = data.get("token", "ETH")
         amount = data.get("amount", "0")
@@ -941,6 +1026,14 @@ Por favor cole um endereço de carteira válido.""",
         # Build safety section
         safety_section = self._format_safety_section(safety, language)
         
+        # Build user balance section
+        user_balance_section = self._build_transfer_user_balance_section(
+            user_context=user_context,
+            token=token,
+            amount=amount,
+            language=language,
+        )
+        
         msgs = {
             "en": f"""🔍 **Review Your Transfer**
 
@@ -950,6 +1043,8 @@ Por favor cole um endereço de carteira válido.""",
 📍 **To:** `{display_addr}`
 🌐 **Network:** {network.title()}
 ⚡ **Est. Fee:** ~$0.01-0.10 (Base L2)
+
+{user_balance_section}
 
 {safety_section}
 
@@ -968,6 +1063,8 @@ Por favor cole um endereço de carteira válido.""",
 🌐 **Red:** {network.title()}
 ⚡ **Tarifa Est.:** ~$0.01-0.10 (Base L2)
 
+{user_balance_section}
+
 {safety_section}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -985,14 +1082,15 @@ Por favor cole um endereço de carteira válido.""",
 🌐 **Rede:** {network.title()}
 ⚡ **Taxa Est.:** ~$0.01-0.10 (Base L2)
 
+{user_balance_section}
+
 {safety_section}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ⚠️ **AVISO:**
 • Uma vez confirmado, esta transação NÃO PODE ser revertida
-• Verifique o endereço de destino
-• Certifique-se de confiar no destinatário""",
+• Verifique o endereço de destino""",
             
             "zh": f"""🔍 **审核您的转账**
 
@@ -1003,13 +1101,58 @@ Por favor cole um endereço de carteira válido.""",
 🌐 **网络：** {network.title()}
 ⚡ **预计费用：** ~$1-3（变化）
 
+{user_balance_section}
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ⚠️ **警告：**
 • 一旦确认，此交易无法撤销
-• 仔细核对目标地址
-• 确保您信任收款人""",
+• 仔细核对目标地址""",
         }
+        
+        return msgs.get(language, msgs["en"])
+    
+    def _build_transfer_user_balance_section(
+        self,
+        user_context: UserContext | None,
+        token: str,
+        amount: str,
+        language: str,
+    ) -> str:
+        """Build user balance context section for transfer."""
+        if not user_context or not user_context.is_authenticated:
+            return ""
+        
+        balance = user_context.total_balance_usd
+        portfolio_state = user_context.portfolio_state
+        
+        try:
+            transfer_amount = float(amount)
+        except (ValueError, TypeError):
+            transfer_amount = 0
+        
+        # Check if user has enough balance
+        if portfolio_state == "empty" or balance < 1:
+            msgs = {
+                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You'll need {token} first:\n• Say `buy crypto` to purchase USDC with card\n• Or transfer {token} from another wallet",
+                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ Necesitas {token} primero:\n• Di `comprar cripto` para comprar USDC\n• O transfiere {token} desde otra billetera",
+                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você precisa de {token} primeiro:\n• Diga `comprar cripto` para comprar USDC\n• Ou transfira {token} de outra carteira",
+                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您需要先获取 {token}：\n• 说 `买加密货币` 购买 USDC\n• 或从其他钱包转入 {token}",
+            }
+        elif balance < transfer_amount:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Transfer amount exceeds your balance.\n💡 Consider a smaller amount or say `buy crypto` to get more funds.",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n⚠️ El monto de la transferencia excede tu saldo.\n💡 Considera un monto menor o di `comprar cripto` para obtener más fondos.",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n⚠️ O valor da transferência excede seu saldo.\n💡 Considere um valor menor ou diga `comprar cripto` para obter mais fundos.",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n⚠️ 转账金额超过您的余额。\n💡 考虑较小的金额或说 `买加密货币` 获取更多资金。",
+            }
+        else:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f} ✅",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f} ✅",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f} ✅",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f} ✅",
+            }
         
         return msgs.get(language, msgs["en"])
     
