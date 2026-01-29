@@ -4,17 +4,27 @@ Transfer Workflow Agent - Multi-Step Token Transfer Operations.
 Handles the complete token transfer workflow for authenticated users:
 1. Parse request: Extract token, amount, and recipient from user message
 2. Validate recipient: Verify address format and detect network
-3. Confirm: Show transfer details and wait for user confirmation
-4. Execute: Generate execute_data for frontend execution
+3. Safety check: Analyze recipient wallet safety (EOA vs Contract, first-time, etc.)
+4. Confirm: Show transfer details with safety info and wait for user confirmation
+5. Execute: Generate execute_data for frontend execution
 
 Integration:
 - Address validation for EVM and Solana
 - Network detection from address format
+- Wallet safety analysis (contract detection, interaction history)
 - Privy SDK for execution
+
+Safety Features:
+- EOA vs Smart Contract detection
+- First-time recipient warning
+- Known address detection (exchanges, protocols)
+- Safety score (0-100)
 
 Example Conversation:
     User: "send 100 USDC to 0x742d..."
-    Agent: "📤 Sending 100 USDC to 0x742d...1234. Confirm?"
+    Agent: "📤 Sending 100 USDC to 0x742d...1234
+           🔒 Safety: 75/100 (Low Risk) - First-time recipient
+           Confirm?"
     User: "yes"
     Agent: "✅ Ready to send!" + execute_data for frontend modal
 """
@@ -22,6 +32,7 @@ Example Conversation:
 import logging
 import re
 from typing import Any, TYPE_CHECKING
+from dataclasses import dataclass, field
 
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.message_content import MessageContent
@@ -36,8 +47,65 @@ from .base_workflow_agent import (
 
 if TYPE_CHECKING:
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+    from app.infrastructure.adapters.external.web3_client import Web3Client
 
 logger = logging.getLogger(__name__)
+
+
+# ========================================
+# Safety Check Data Structures
+# ========================================
+
+@dataclass
+class SafetyCheck:
+    """Result of a single safety check."""
+    name: str
+    status: str  # "pass", "warn", "fail"
+    emoji: str
+    details: str | None = None
+
+
+@dataclass
+class RecipientSafetyAnalysis:
+    """Complete safety analysis for a recipient address."""
+    address: str
+    safety_score: int  # 0-100
+    risk_level: str  # "low", "medium", "high", "critical"
+    address_type: str  # "eoa", "contract", "unknown"
+    is_first_time: bool
+    checks: list[SafetyCheck] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    blockers: list[str] = field(default_factory=list)
+    
+    @property
+    def risk_emoji(self) -> str:
+        """Get emoji for risk level."""
+        return {
+            "low": "🟢",
+            "medium": "🟡",
+            "high": "🟠",
+            "critical": "🔴",
+        }.get(self.risk_level, "⚪")
+    
+    @property
+    def is_safe(self) -> bool:
+        """Check if transfer should be allowed."""
+        return len(self.blockers) == 0
+
+
+# Known contract labels (exchanges, protocols, etc.)
+KNOWN_CONTRACTS = {
+    # Exchanges (Base chain)
+    "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": {"name": "Uniswap Universal Router", "category": "exchange", "safe": True},
+    "0x2626664c2603336e57b271c5c0b26f421741e481": {"name": "Uniswap V3 Router", "category": "exchange", "safe": True},
+    "0x6131b5fae19ea4f9d964eac0408e4408b66337b5": {"name": "Hyperliquid Bridge", "category": "bridge", "safe": True},
+    # Coinbase
+    "0xcdac0d6c6c59727a65f871236188350531885c43": {"name": "Coinbase Commerce", "category": "exchange", "safe": True},
+    # Add more known addresses as needed
+}
+
+# Known scam/risky addresses (would be updated via external service in production)
+KNOWN_RISKY_ADDRESSES: set[str] = set()  # TODO: Integrate with external scam database
 
 
 # Supported tokens for transfer
@@ -74,28 +142,39 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
     Steps:
     1. parse_request: Extract token, amount, recipient
     2. validate: Validate address format and detect network
-    3. confirm: Show transfer details, wait for user confirmation
-    4. execute: Generate execute_data for frontend
+    3. safety_check: Analyze recipient wallet safety
+    4. confirm: Show transfer details with safety info, wait for confirmation
+    5. execute: Generate execute_data for frontend
     
     Features:
     - Natural language parameter extraction
     - Multi-chain address validation
     - Network detection from address format
+    - Wallet safety analysis (EOA vs Contract, first-time detection)
     - User modification support
     - Multi-language support
+    
+    Safety Features:
+    - EOA vs Smart Contract detection
+    - First-time recipient warning
+    - Known address labeling (exchanges, protocols)
+    - Safety score (0-100) with risk level
     """
     
     def __init__(
         self,
         llm_client: "LLMClientGateway | None" = None,
+        web3_client: "Web3Client | None" = None,
     ):
         """
         Initialize transfer workflow agent.
         
         Args:
             llm_client: LLM client for parameter extraction
+            web3_client: Web3 client for blockchain queries (safety checks)
         """
         super().__init__(llm_client=llm_client)
+        self._web3_client = web3_client
     
     @property
     def agent_type(self) -> AgentType:
@@ -235,7 +314,7 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Validate recipient address."""
+        """Validate recipient address and perform safety checks."""
         
         language = user_context.language
         recipient = state.data.get("recipient", "")
@@ -251,6 +330,29 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         
         # Store network info
         state.data["network"] = validation["network"]
+        
+        # Perform safety analysis on recipient
+        safety_analysis = await self._analyze_recipient_safety(
+            recipient=recipient,
+            user_context=user_context,
+        )
+        
+        # Store safety analysis in state
+        state.data["safety_analysis"] = {
+            "score": safety_analysis.safety_score,
+            "risk_level": safety_analysis.risk_level,
+            "address_type": safety_analysis.address_type,
+            "is_first_time": safety_analysis.is_first_time,
+            "warnings": safety_analysis.warnings,
+            "blockers": safety_analysis.blockers,
+        }
+        
+        # Check for blockers (critical safety issues)
+        if not safety_analysis.is_safe:
+            response = self._format_blocked_transfer(safety_analysis, language)
+            state.error = "safety_blocked"
+            return response, state
+        
         state.step = WorkflowStep.CONFIRM.value
         
         # Build execute_data
@@ -796,18 +898,22 @@ Por favor cole um endereço de carteira válido.""",
         data: dict[str, Any],
         language: str,
     ) -> str:
-        """Format transfer review for confirmation."""
+        """Format transfer review for confirmation with safety info."""
         
         token = data.get("token", "ETH")
         amount = data.get("amount", "0")
         recipient = data.get("recipient", "")
         network = data.get("network", "ethereum")
+        safety = data.get("safety_analysis", {})
         
         token_info = SUPPORTED_TOKENS.get(token.lower(), {"emoji": "💎"})
         emoji = token_info.get("emoji", "💎")
         
         # Truncate address for display
         display_addr = f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 14 else recipient
+        
+        # Build safety section
+        safety_section = self._format_safety_section(safety, language)
         
         msgs = {
             "en": f"""🔍 **Review Your Transfer**
@@ -817,14 +923,15 @@ Por favor cole um endereço de carteira válido.""",
 📤 **Sending:** {amount} {token} {emoji}
 📍 **To:** `{display_addr}`
 🌐 **Network:** {network.title()}
-⚡ **Est. Fee:** ~$1-3 (varies)
+⚡ **Est. Fee:** ~$0.01-0.10 (Base L2)
+
+{safety_section}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ **WARNING:**
+⚠️ **REMINDER:**
 • Once confirmed, this transaction CANNOT be reversed
-• Double-check the destination address
-• Make sure you trust the recipient""",
+• Double-check the destination address""",
             
             "es": f"""🔍 **Revisa Tu Transferencia**
 
@@ -833,14 +940,15 @@ Por favor cole um endereço de carteira válido.""",
 📤 **Enviando:** {amount} {token} {emoji}
 📍 **A:** `{display_addr}`
 🌐 **Red:** {network.title()}
-⚡ **Tarifa Est.:** ~$1-3 (varía)
+⚡ **Tarifa Est.:** ~$0.01-0.10 (Base L2)
+
+{safety_section}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ **ADVERTENCIA:**
+⚠️ **RECORDATORIO:**
 • Una vez confirmado, esta transacción NO SE PUEDE REVERTIR
-• Verifica la dirección de destino
-• Asegúrate de confiar en el destinatario""",
+• Verifica la dirección de destino""",
             
             "pt": f"""🔍 **Revise Sua Transferência**
 
@@ -849,7 +957,9 @@ Por favor cole um endereço de carteira válido.""",
 📤 **Enviando:** {amount} {token} {emoji}
 📍 **Para:** `{display_addr}`
 🌐 **Rede:** {network.title()}
-⚡ **Taxa Est.:** ~$1-3 (varia)
+⚡ **Taxa Est.:** ~$0.01-0.10 (Base L2)
+
+{safety_section}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1023,6 +1133,317 @@ Por favor confirme a transação na sua carteira.""",
             "recipient": recipient,
             "slippage": 0.5,
         }
+    
+    # ========================================
+    # Safety Check Methods
+    # ========================================
+    
+    async def _analyze_recipient_safety(
+        self,
+        recipient: str,
+        user_context: UserContext,
+    ) -> RecipientSafetyAnalysis:
+        """
+        Analyze recipient wallet safety.
+        
+        Checks:
+        1. EOA vs Smart Contract detection
+        2. Known address labels (exchanges, protocols)
+        3. First-time recipient detection
+        4. Known risky addresses
+        
+        Returns:
+            RecipientSafetyAnalysis with score, risk level, and warnings
+        """
+        recipient_lower = recipient.lower()
+        checks: list[SafetyCheck] = []
+        warnings: list[str] = []
+        blockers: list[str] = []
+        
+        # Initialize defaults
+        address_type = "unknown"
+        is_contract = False
+        is_first_time = True  # Default to true for safety
+        
+        # Check 1: Known addresses (exchanges, protocols, scams)
+        known_info = KNOWN_CONTRACTS.get(recipient_lower)
+        if known_info:
+            label_name = known_info.get("name", "Known Address")
+            label_category = known_info.get("category", "unknown")
+            is_safe = known_info.get("safe", False)
+            
+            if is_safe:
+                checks.append(SafetyCheck(
+                    name="Known Address",
+                    status="pass",
+                    emoji="✅",
+                    details=f"{label_name} ({label_category})",
+                ))
+            else:
+                checks.append(SafetyCheck(
+                    name="Known Address",
+                    status="warn",
+                    emoji="⚠️",
+                    details=f"{label_name} - Use caution",
+                ))
+                warnings.append(f"Known risky address: {label_name}")
+        
+        # Check 2: Known risky/scam addresses
+        if recipient_lower in KNOWN_RISKY_ADDRESSES:
+            checks.append(SafetyCheck(
+                name="Scam Check",
+                status="fail",
+                emoji="🚫",
+                details="Address flagged as risky",
+            ))
+            blockers.append("This address has been flagged as potentially risky")
+        else:
+            checks.append(SafetyCheck(
+                name="Scam Check",
+                status="pass",
+                emoji="✅",
+                details="Not in blocklist",
+            ))
+        
+        # Check 3: EOA vs Contract detection (using web3 client)
+        if self._web3_client:
+            try:
+                is_contract = await self._web3_client.is_contract(recipient)
+                address_type = "contract" if is_contract else "eoa"
+                
+                if is_contract:
+                    # Contract - add warning but not blocker
+                    if known_info:
+                        # Known contract is safer
+                        checks.append(SafetyCheck(
+                            name="Address Type",
+                            status="pass",
+                            emoji="📄",
+                            details=f"Smart Contract ({known_info.get('name', 'Known')})",
+                        ))
+                    else:
+                        # Unknown contract - warn
+                        checks.append(SafetyCheck(
+                            name="Address Type",
+                            status="warn",
+                            emoji="📄",
+                            details="Smart Contract (Unknown)",
+                        ))
+                        warnings.append("Sending to an unknown smart contract")
+                else:
+                    # EOA - regular wallet
+                    checks.append(SafetyCheck(
+                        name="Address Type",
+                        status="pass",
+                        emoji="👤",
+                        details="External Wallet (EOA)",
+                    ))
+            except Exception as e:
+                logger.warning(f"[TransferWorkflow] Failed to check contract status: {e}")
+                checks.append(SafetyCheck(
+                    name="Address Type",
+                    status="warn",
+                    emoji="❓",
+                    details="Unable to verify",
+                ))
+        else:
+            # No web3 client - skip contract check
+            checks.append(SafetyCheck(
+                name="Address Type",
+                status="warn",
+                emoji="❓",
+                details="Verification unavailable",
+            ))
+        
+        # Check 4: First-time recipient (check user's transaction history)
+        # For now, we consider all addresses as first-time since we don't have
+        # access to user's transaction history in this context
+        # TODO: Integrate with TransactionHistoryAgent or database
+        if is_first_time:
+            checks.append(SafetyCheck(
+                name="Interaction History",
+                status="warn",
+                emoji="🆕",
+                details="First-time recipient",
+            ))
+            warnings.append("You haven't sent to this address before")
+        else:
+            checks.append(SafetyCheck(
+                name="Interaction History",
+                status="pass",
+                emoji="✅",
+                details="Previously used",
+            ))
+        
+        # Calculate safety score (0-100)
+        safety_score = self._calculate_safety_score(
+            is_contract=is_contract,
+            is_known=known_info is not None,
+            is_known_safe=known_info.get("safe", False) if known_info else False,
+            is_first_time=is_first_time,
+            has_blockers=len(blockers) > 0,
+        )
+        
+        # Determine risk level
+        if safety_score >= 80:
+            risk_level = "low"
+        elif safety_score >= 60:
+            risk_level = "medium"
+        elif safety_score >= 40:
+            risk_level = "high"
+        else:
+            risk_level = "critical"
+        
+        return RecipientSafetyAnalysis(
+            address=recipient,
+            safety_score=safety_score,
+            risk_level=risk_level,
+            address_type=address_type,
+            is_first_time=is_first_time,
+            checks=checks,
+            warnings=warnings,
+            blockers=blockers,
+        )
+    
+    def _calculate_safety_score(
+        self,
+        is_contract: bool,
+        is_known: bool,
+        is_known_safe: bool,
+        is_first_time: bool,
+        has_blockers: bool,
+    ) -> int:
+        """
+        Calculate safety score (0-100) based on checks.
+        
+        Scoring:
+        - Base score: 70
+        - Known safe address: +20
+        - Known address (not explicitly safe): +10
+        - EOA (not contract): +5
+        - Unknown contract: -15
+        - First-time recipient: -10
+        - Has blockers: -50
+        """
+        score = 70  # Base score
+        
+        if has_blockers:
+            return max(0, score - 50)
+        
+        if is_known_safe:
+            score += 20
+        elif is_known:
+            score += 10
+        
+        if not is_contract:
+            score += 5
+        elif not is_known:
+            # Unknown contract
+            score -= 15
+        
+        if is_first_time:
+            score -= 10
+        
+        return max(0, min(100, score))
+    
+    def _format_safety_section(
+        self,
+        safety: dict[str, Any],
+        language: str,
+    ) -> str:
+        """Format safety analysis section for display."""
+        if not safety:
+            return ""
+        
+        score = safety.get("score", 0)
+        risk_level = safety.get("risk_level", "unknown")
+        address_type = safety.get("address_type", "unknown")
+        warnings = safety.get("warnings", [])
+        
+        # Risk emoji and label
+        risk_config = {
+            "low": ("🟢", "Low Risk"),
+            "medium": ("🟡", "Medium Risk"),
+            "high": ("🟠", "High Risk"),
+            "critical": ("🔴", "Critical Risk"),
+        }
+        risk_emoji, risk_label = risk_config.get(risk_level, ("⚪", "Unknown"))
+        
+        # Address type label
+        type_labels = {
+            "eoa": "👤 External Wallet",
+            "contract": "📄 Smart Contract",
+            "unknown": "❓ Unknown",
+        }
+        type_label = type_labels.get(address_type, "❓ Unknown")
+        
+        # Build section
+        section = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔒 **Safety Analysis**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{risk_emoji} **Safety Score:** {score}/100 ({risk_label})
+{type_label}
+"""
+        
+        # Add warnings if any
+        if warnings:
+            section += "\n**⚠️ Warnings:**\n"
+            for warning in warnings:
+                section += f"• {warning}\n"
+        
+        return section.strip()
+    
+    def _format_blocked_transfer(
+        self,
+        safety: RecipientSafetyAnalysis,
+        language: str,
+    ) -> str:
+        """Format message when transfer is blocked due to safety issues."""
+        display_addr = f"{safety.address[:8]}...{safety.address[-6:]}"
+        blockers_text = "\n".join(f"• {b}" for b in safety.blockers)
+        
+        msgs = {
+            "en": f"""🚫 **Transfer Blocked - Safety Issue**
+
+The transfer to `{display_addr}` has been blocked for your protection.
+
+**Issues detected:**
+{blockers_text}
+
+**What you can do:**
+• Double-check the recipient address
+• Contact support if you believe this is an error
+• Use a different recipient address
+
+Safety is our priority. We block transfers to known risky addresses.""",
+            
+            "es": f"""🚫 **Transferencia Bloqueada - Problema de Seguridad**
+
+La transferencia a `{display_addr}` ha sido bloqueada para tu protección.
+
+**Problemas detectados:**
+{blockers_text}
+
+**Qué puedes hacer:**
+• Verifica la dirección del destinatario
+• Contacta soporte si crees que es un error
+• Usa una dirección diferente""",
+            
+            "pt": f"""🚫 **Transferência Bloqueada - Problema de Segurança**
+
+A transferência para `{display_addr}` foi bloqueada para sua proteção.
+
+**Problemas detectados:**
+{blockers_text}
+
+**O que você pode fazer:**
+• Verifique o endereço do destinatário
+• Contate o suporte se acredita ser um erro
+• Use um endereço diferente""",
+        }
+        
+        return msgs.get(language, msgs["en"])
     
     # ========================================
     # Helpers

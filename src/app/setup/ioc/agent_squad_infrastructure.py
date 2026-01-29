@@ -832,6 +832,7 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_transfer_workflow_agent(
         self,
         llm_client: LLMClientGateway,
+        web3_client: Web3ClientProtocol | None,
     ) -> TransferWorkflowAgent:
         """
         Provide Transfer Workflow Agent for authenticated users.
@@ -839,15 +840,21 @@ class AgentSquadInfrastructureProvider(Provider):
         This agent handles multi-step token transfer operations:
         1. Parse transfer request (token, amount, recipient)
         2. Validate recipient address format
-        3. Show transfer review and wait for confirmation
-        4. Generate execute_data for frontend
+        3. Analyze recipient safety (EOA vs Contract, first-time, etc.)
+        4. Show transfer review with safety info and wait for confirmation
+        5. Generate execute_data for frontend
         
         Features:
         - Multi-chain address validation (EVM, Solana)
         - Network detection from address format
+        - Wallet safety analysis (contract detection, known addresses)
+        - Safety score and risk level
         - User modification support
         """
-        return TransferWorkflowAgent(llm_client=llm_client)
+        return TransferWorkflowAgent(
+            llm_client=llm_client,
+            web3_client=web3_client,
+        )
 
     @provide
     def provide_buy_workflow_agent(
