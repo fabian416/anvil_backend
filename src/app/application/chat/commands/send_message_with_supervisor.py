@@ -249,6 +249,7 @@ class SendMessageWithSupervisor:
                     "citation_text": "Supervisor LLM for workflow planning and agent routing",
                     "fetched_at": datetime.now(UTC).isoformat(),
                     "provider": "Vertex AI",
+                    "relevance_score": 1.0,
                     "metadata": {
                         "role": "supervisor",
                         "planning_type": "llm",
@@ -272,6 +273,7 @@ class SendMessageWithSupervisor:
                     "citation_text": "Direct routing LLM",
                     "fetched_at": datetime.now(UTC).isoformat(),
                     "provider": "Anvil",
+                    "relevance_score": 1.0,
                     "metadata": {
                         "role": "supervisor",
                         "planning_type": "direct_routing",
