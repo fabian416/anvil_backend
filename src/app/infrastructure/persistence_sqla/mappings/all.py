@@ -50,6 +50,7 @@ from app.infrastructure.persistence_sqla.mappings.policy import map_policy_table
 from app.infrastructure.persistence_sqla.mappings.guest import map_guest_tables
 from app.infrastructure.persistence_sqla.mappings.chat_unified import map_unified_chat_tables
 from app.infrastructure.persistence_sqla.mappings.moonpay import map_moonpay_customer_tokens_table
+from app.infrastructure.persistence_sqla.mappings.distillation import map_distillation_tables
 
 
 def map_tables() -> None:
@@ -88,3 +89,5 @@ def map_tables() -> None:
     map_unified_chat_tables()
     # MoonPay Customer Tokens
     map_moonpay_customer_tokens_table()
+    # Distillation System
+    map_distillation_tables()

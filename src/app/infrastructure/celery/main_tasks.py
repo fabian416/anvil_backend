@@ -19,6 +19,7 @@ from app.setup.ioc.application import ApplicationProvider
 from app.setup.ioc.infrastructure import infrastructure_provider
 from app.setup.ioc.presentation import PresentationProvider
 from app.setup.ioc.settings import SettingsProvider
+from app.setup.ioc.graph import GraphProvider
 from app.setup.app_factory import create_async_ioc_container
 from app.setup.config.settings import load_settings
 from app.application.maintenance.tasks import (
@@ -36,6 +37,7 @@ async def _run_task(coro_factory):
             infrastructure_provider(),
             PresentationProvider(),
             SettingsProvider(),
+            GraphProvider(),
         ),
         settings=settings,
     )

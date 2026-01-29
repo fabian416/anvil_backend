@@ -199,3 +199,10 @@ distillation_telemetry_hourly = Table(
     
     Column("created_at", TIMESTAMP(timezone=True), default=datetime.utcnow),
 )
+
+
+def map_distillation_tables() -> None:
+    """Register distillation system tables with SQLAlchemy."""
+    # Tables are already defined above and registered with mapper_registry.metadata
+    # This function exists to match the pattern used by other mappings
+    pass
