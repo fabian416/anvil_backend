@@ -367,6 +367,8 @@ class AgentSquadInfrastructureProvider(Provider):
         """
         Provide Etherscan client for address labels and interaction history.
         
+        Uses Etherscan API V2 - single key works for 60+ EVM chains.
+        
         Used by TransferWorkflowAgent for:
         - Address label lookup (exchanges, DeFi protocols)
         - Contract verification status
@@ -377,9 +379,10 @@ class AgentSquadInfrastructureProvider(Provider):
         import logging
         logger = logging.getLogger(__name__)
         
-        # Try multiple env var names
+        # Try multiple env var names (from .secrets.toml or environment)
         api_key = (
             os.getenv("ETHERSCAN_API_KEY") or
+            os.getenv("ETHERSCAN__API_KEY") or  # TOML nested format
             os.getenv("BASESCAN_API_KEY") or
             os.getenv("EXPLORER_API_KEY", "")
         )
@@ -388,10 +391,13 @@ class AgentSquadInfrastructureProvider(Provider):
             logger.info("ℹ️ ETHERSCAN_API_KEY not set - address labels via Etherscan disabled (local labels still work)")
             return None
         
+        logger.info("✅ Etherscan API V2 client initialized (supports 60+ EVM chains)")
+        
         from app.infrastructure.adapters.external.etherscan_client import EtherscanClient
         return EtherscanClient(
             api_key=api_key,
-            network="base",  # Default to Base chain
+            network="base",  # Default to Base chain (chainid=8453)
+            use_v2_api=True,  # Use unified V2 endpoint
         )
     
     @provide(scope=Scope.APP)  # APP scope - single instance shared across requests
