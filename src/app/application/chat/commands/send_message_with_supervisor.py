@@ -226,6 +226,12 @@ class SendMessageWithSupervisor:
                 else:
                     sources.append({"raw": str(source)})
             
+            # Debug: Log sources count
+            logger.info(
+                f"📊 Sources collected: {len(sources)} sources",
+                extra={"source_names": [s.get('source_name', 'unknown') for s in sources]}
+            )
+            
             # Extract execute_data and workflow_state from workflow agent responses
             # Workflow agents (like swap_workflow) store these in their response metadata
             execute_data = None
