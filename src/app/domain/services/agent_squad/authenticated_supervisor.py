@@ -1003,6 +1003,14 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
    - "what APY can I get", "yield farming options" → "defi_yield" + "risk_analyzer"
    - Use defi_yield when user wants RATE INFO without deposit intent
 
+9b. HEALTH FACTOR / LENDING POSITION MONITORING (Aave positions):
+   - "what's my health factor", "check my health factor", "health factor" → "lending_borrowing" agent
+   - "my lending position", "my Aave position", "am I at risk of liquidation" → "lending_borrowing" agent
+   - "liquidation risk", "collateral health", "borrow limit" → "lending_borrowing" agent
+   - The lending_borrowing agent checks REAL Aave positions and health factors
+   - Examples: "what's my health factor", "check my lending position", "am I safe from liquidation"
+   - NOTE: This is for MONITORING existing positions, not for CREATING new deposits (use lending_workflow for deposits)
+
 10. TRANSFER/SEND EXECUTION (CRITICAL - Multi-step workflow):
     - "send X ETH to 0x...", "transfer X USDC to wallet" (with specific amounts) → "transfer_workflow" agent ONLY
     - The transfer_workflow agent handles the COMPLETE multi-step transfer process autonomously
@@ -1115,6 +1123,14 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "donde depositar" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Recommend best deposit protocol (Spanish)","depends_on":[]}}]}}
 "comparar taxas de USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across protocols (Portuguese)","depends_on":[]}}]}}
 "melhores taxas" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Find best rates (Portuguese)","depends_on":[]}}]}}
+"what's my health factor" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user health factor on Aave","depends_on":[]}}]}}
+"check my health factor" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user health factor on Aave","depends_on":[]}}]}}
+"my health factor" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user health factor on Aave","depends_on":[]}}]}}
+"health factor" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user health factor on Aave","depends_on":[]}}]}}
+"my lending position" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user lending positions on Aave","depends_on":[]}}]}}
+"am I at risk of liquidation" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check liquidation risk for user positions","depends_on":[]}}]}}
+"liquidation risk" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user liquidation risk on Aave","depends_on":[]}}]}}
+"my Aave position" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user Aave lending position","depends_on":[]}}]}}
 "what type of swaps can I do" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot for meme tokens only, USDC pairs, NOT ETH/BTC/SOL","depends_on":[]}}]}}
 "what swaps can I make" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot meme tokens only","depends_on":[]}}]}}
 "what tokens can I swap" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain supported swap tokens: meme tokens on Hyperliquid Spot (PURR, TRUMP, PEPE, etc.) paired with USDC","depends_on":[]}}]}}
