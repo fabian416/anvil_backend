@@ -48,6 +48,7 @@ from .base_workflow_agent import (
 if TYPE_CHECKING:
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
     from app.infrastructure.adapters.external.web3_client import Web3Client
+    from app.infrastructure.adapters.external.etherscan_client import EtherscanClient
 
 logger = logging.getLogger(__name__)
 
@@ -165,16 +166,19 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         self,
         llm_client: "LLMClientGateway | None" = None,
         web3_client: "Web3Client | None" = None,
+        etherscan_client: "EtherscanClient | None" = None,
     ):
         """
         Initialize transfer workflow agent.
         
         Args:
             llm_client: LLM client for parameter extraction
-            web3_client: Web3 client for blockchain queries (safety checks)
+            web3_client: Web3 client for blockchain queries (contract detection)
+            etherscan_client: Etherscan client for address labels and history
         """
         super().__init__(llm_client=llm_client)
         self._web3_client = web3_client
+        self._etherscan_client = etherscan_client
     
     @property
     def agent_type(self) -> AgentType:
@@ -1144,13 +1148,14 @@ Por favor confirme a transação na sua carteira.""",
         user_context: UserContext,
     ) -> RecipientSafetyAnalysis:
         """
-        Analyze recipient wallet safety.
+        Analyze recipient wallet safety (Phase 2 - Enhanced).
         
         Checks:
-        1. EOA vs Smart Contract detection
-        2. Known address labels (exchanges, protocols)
-        3. First-time recipient detection
-        4. Known risky addresses
+        1. EOA vs Smart Contract detection (web3)
+        2. Known address labels - local + Etherscan API
+        3. First-time recipient detection via Etherscan interaction history
+        4. Known risky addresses (local blocklist)
+        5. Contract verification status (Etherscan)
         
         Returns:
             RecipientSafetyAnalysis with score, risk level, and warnings
@@ -1164,15 +1169,23 @@ Por favor confirme a transação na sua carteira.""",
         address_type = "unknown"
         is_contract = False
         is_first_time = True  # Default to true for safety
+        is_known = False
+        is_known_safe = False
+        is_verified_contract = False
+        etherscan_label: str | None = None
+        previous_interactions = 0
         
-        # Check 1: Known addresses (exchanges, protocols, scams)
+        # ========================================
+        # Check 1: Known addresses (local database)
+        # ========================================
         known_info = KNOWN_CONTRACTS.get(recipient_lower)
         if known_info:
+            is_known = True
             label_name = known_info.get("name", "Known Address")
             label_category = known_info.get("category", "unknown")
-            is_safe = known_info.get("safe", False)
+            is_known_safe = known_info.get("safe", False)
             
-            if is_safe:
+            if is_known_safe:
                 checks.append(SafetyCheck(
                     name="Known Address",
                     status="pass",
@@ -1188,7 +1201,47 @@ Por favor confirme a transação na sua carteira.""",
                 ))
                 warnings.append(f"Known risky address: {label_name}")
         
-        # Check 2: Known risky/scam addresses
+        # ========================================
+        # Check 2: Etherscan API label lookup (Phase 2)
+        # ========================================
+        if self._etherscan_client and not known_info:
+            try:
+                label_info = await self._etherscan_client.get_address_label(recipient)
+                
+                if label_info and label_info.label:
+                    etherscan_label = label_info.label
+                    is_known = True
+                    is_verified_contract = label_info.is_verified
+                    
+                    # Check for risky categories
+                    if label_info.is_risky:
+                        checks.append(SafetyCheck(
+                            name="Address Label",
+                            status="fail",
+                            emoji="🚫",
+                            details=f"{etherscan_label} (Flagged)",
+                        ))
+                        blockers.append(f"Address flagged as: {label_info.category}")
+                    else:
+                        is_known_safe = label_info.address_type.value in ("exchange", "defi", "dex")
+                        checks.append(SafetyCheck(
+                            name="Address Label",
+                            status="pass",
+                            emoji="🏷️",
+                            details=f"{etherscan_label} ({label_info.category or 'verified'})",
+                        ))
+                        
+                        # Use Etherscan type as address type
+                        if label_info.address_type.value != "unknown":
+                            address_type = label_info.address_type.value
+                            if address_type in ("contract", "defi", "dex", "token", "nft", "bridge"):
+                                is_contract = True
+            except Exception as e:
+                logger.warning(f"[TransferWorkflow] Etherscan label lookup failed: {e}")
+        
+        # ========================================
+        # Check 3: Known risky/scam addresses (local blocklist)
+        # ========================================
         if recipient_lower in KNOWN_RISKY_ADDRESSES:
             checks.append(SafetyCheck(
                 name="Scam Check",
@@ -1205,31 +1258,33 @@ Por favor confirme a transação na sua carteira.""",
                 details="Not in blocklist",
             ))
         
-        # Check 3: EOA vs Contract detection (using web3 client)
-        if self._web3_client:
+        # ========================================
+        # Check 4: EOA vs Contract detection (web3)
+        # ========================================
+        if self._web3_client and address_type == "unknown":
             try:
                 is_contract = await self._web3_client.is_contract(recipient)
                 address_type = "contract" if is_contract else "eoa"
                 
                 if is_contract:
-                    # Contract - add warning but not blocker
-                    if known_info:
-                        # Known contract is safer
+                    # Contract - check if known or verified
+                    if is_known or is_verified_contract:
+                        contract_detail = etherscan_label or known_info.get("name", "Known") if known_info else "Verified"
                         checks.append(SafetyCheck(
                             name="Address Type",
                             status="pass",
                             emoji="📄",
-                            details=f"Smart Contract ({known_info.get('name', 'Known')})",
+                            details=f"Smart Contract ({contract_detail})",
                         ))
                     else:
-                        # Unknown contract - warn
+                        # Unknown, unverified contract - warn
                         checks.append(SafetyCheck(
                             name="Address Type",
                             status="warn",
                             emoji="📄",
-                            details="Smart Contract (Unknown)",
+                            details="Smart Contract (Unverified)",
                         ))
-                        warnings.append("Sending to an unknown smart contract")
+                        warnings.append("Sending to an unverified smart contract")
                 else:
                     # EOA - regular wallet
                     checks.append(SafetyCheck(
@@ -1246,6 +1301,15 @@ Por favor confirme a transação na sua carteira.""",
                     emoji="❓",
                     details="Unable to verify",
                 ))
+        elif address_type != "unknown":
+            # Already determined from Etherscan
+            type_label = address_type.upper() if address_type == "eoa" else address_type.title()
+            checks.append(SafetyCheck(
+                name="Address Type",
+                status="pass",
+                emoji="📄" if is_contract else "👤",
+                details=f"{type_label} ({etherscan_label or 'Identified'})",
+            ))
         else:
             # No web3 client - skip contract check
             checks.append(SafetyCheck(
@@ -1255,11 +1319,51 @@ Por favor confirme a transação na sua carteira.""",
                 details="Verification unavailable",
             ))
         
-        # Check 4: First-time recipient (check user's transaction history)
-        # For now, we consider all addresses as first-time since we don't have
-        # access to user's transaction history in this context
-        # TODO: Integrate with TransactionHistoryAgent or database
-        if is_first_time:
+        # ========================================
+        # Check 5: Interaction history (Etherscan - Phase 2)
+        # ========================================
+        user_wallet = user_context.wallet_address if user_context else None
+        
+        if self._etherscan_client and user_wallet:
+            try:
+                interactions = await self._etherscan_client.get_recent_interactions(
+                    from_address=user_wallet,
+                    to_address=recipient,
+                    limit=5,
+                )
+                
+                previous_interactions = len(interactions)
+                is_first_time = previous_interactions == 0
+                
+                if not is_first_time:
+                    # Has previous interactions - safer
+                    checks.append(SafetyCheck(
+                        name="Interaction History",
+                        status="pass",
+                        emoji="✅",
+                        details=f"Previously sent ({previous_interactions}x)",
+                    ))
+                else:
+                    # First time - warn
+                    checks.append(SafetyCheck(
+                        name="Interaction History",
+                        status="warn",
+                        emoji="🆕",
+                        details="First-time recipient",
+                    ))
+                    warnings.append("You haven't sent to this address before")
+            except Exception as e:
+                logger.warning(f"[TransferWorkflow] Interaction history check failed: {e}")
+                # Fall back to first-time assumption
+                checks.append(SafetyCheck(
+                    name="Interaction History",
+                    status="warn",
+                    emoji="🆕",
+                    details="First-time recipient (assumed)",
+                ))
+                warnings.append("You haven't sent to this address before")
+        else:
+            # No Etherscan client or no wallet - default to first-time warning
             checks.append(SafetyCheck(
                 name="Interaction History",
                 status="warn",
@@ -1267,21 +1371,18 @@ Por favor confirme a transação na sua carteira.""",
                 details="First-time recipient",
             ))
             warnings.append("You haven't sent to this address before")
-        else:
-            checks.append(SafetyCheck(
-                name="Interaction History",
-                status="pass",
-                emoji="✅",
-                details="Previously used",
-            ))
         
-        # Calculate safety score (0-100)
+        # ========================================
+        # Calculate safety score
+        # ========================================
         safety_score = self._calculate_safety_score(
             is_contract=is_contract,
-            is_known=known_info is not None,
-            is_known_safe=known_info.get("safe", False) if known_info else False,
+            is_known=is_known,
+            is_known_safe=is_known_safe,
             is_first_time=is_first_time,
             has_blockers=len(blockers) > 0,
+            is_verified=is_verified_contract,
+            previous_interactions=previous_interactions,
         )
         
         # Determine risk level
@@ -1312,16 +1413,21 @@ Por favor confirme a transação na sua carteira.""",
         is_known_safe: bool,
         is_first_time: bool,
         has_blockers: bool,
+        is_verified: bool = False,
+        previous_interactions: int = 0,
     ) -> int:
         """
-        Calculate safety score (0-100) based on checks.
+        Calculate safety score (0-100) based on checks (Phase 2 enhanced).
         
         Scoring:
         - Base score: 70
         - Known safe address: +20
         - Known address (not explicitly safe): +10
+        - Verified contract: +10
         - EOA (not contract): +5
+        - Previous interactions: +5 to +15 (based on count)
         - Unknown contract: -15
+        - Unverified contract: -5
         - First-time recipient: -10
         - Has blockers: -50
         """
@@ -1330,18 +1436,37 @@ Por favor confirme a transação na sua carteira.""",
         if has_blockers:
             return max(0, score - 50)
         
+        # Known address bonuses
         if is_known_safe:
             score += 20
         elif is_known:
             score += 10
         
+        # Contract type scoring
         if not is_contract:
+            # EOA is generally safer for personal transfers
             score += 5
-        elif not is_known:
-            # Unknown contract
-            score -= 15
+        else:
+            if is_verified:
+                # Verified contract is safer
+                score += 10
+            elif not is_known:
+                # Unknown, unverified contract is risky
+                score -= 15
+            else:
+                # Known but unverified
+                score -= 5
         
-        if is_first_time:
+        # Interaction history (Phase 2)
+        if previous_interactions > 0:
+            # Previous interactions increase trust
+            if previous_interactions >= 5:
+                score += 15  # Frequent recipient
+            elif previous_interactions >= 2:
+                score += 10  # Multiple interactions
+            else:
+                score += 5   # At least one previous interaction
+        elif is_first_time:
             score -= 10
         
         return max(0, min(100, score))

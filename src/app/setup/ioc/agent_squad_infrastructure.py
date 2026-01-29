@@ -362,6 +362,38 @@ class AgentSquadInfrastructureProvider(Provider):
             chain=Chain.ETHEREUM,  # Default to Ethereum for gas prices
         )
     
+    @provide(scope=Scope.APP)
+    def provide_etherscan_client(self, settings: AgentSquadSettings) -> Any:
+        """
+        Provide Etherscan client for address labels and interaction history.
+        
+        Used by TransferWorkflowAgent for:
+        - Address label lookup (exchanges, DeFi protocols)
+        - Contract verification status
+        - Interaction history (previous transfers to recipient)
+        
+        Returns None if ETHERSCAN_API_KEY is not set.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Try multiple env var names
+        api_key = (
+            os.getenv("ETHERSCAN_API_KEY") or
+            os.getenv("BASESCAN_API_KEY") or
+            os.getenv("EXPLORER_API_KEY", "")
+        )
+        
+        if not api_key:
+            logger.info("ℹ️ ETHERSCAN_API_KEY not set - address labels via Etherscan disabled (local labels still work)")
+            return None
+        
+        from app.infrastructure.adapters.external.etherscan_client import EtherscanClient
+        return EtherscanClient(
+            api_key=api_key,
+            network="base",  # Default to Base chain
+        )
+    
     @provide(scope=Scope.APP)  # APP scope - single instance shared across requests
     def provide_defillama_client(
         self, 
@@ -833,14 +865,19 @@ class AgentSquadInfrastructureProvider(Provider):
         self,
         llm_client: LLMClientGateway,
         web3_client: Web3ClientProtocol | None,
+        etherscan_client: Any,  # From provide_etherscan_client
     ) -> TransferWorkflowAgent:
         """
-        Provide Transfer Workflow Agent for authenticated users.
+        Provide Transfer Workflow Agent for authenticated users (Phase 2 enhanced).
         
         This agent handles multi-step token transfer operations:
         1. Parse transfer request (token, amount, recipient)
         2. Validate recipient address format
-        3. Analyze recipient safety (EOA vs Contract, first-time, etc.)
+        3. Analyze recipient safety:
+           - EOA vs Contract detection (web3)
+           - Address labels (Etherscan API)
+           - Interaction history (Etherscan API)
+           - Contract verification status
         4. Show transfer review with safety info and wait for confirmation
         5. Generate execute_data for frontend
         
@@ -848,12 +885,15 @@ class AgentSquadInfrastructureProvider(Provider):
         - Multi-chain address validation (EVM, Solana)
         - Network detection from address format
         - Wallet safety analysis (contract detection, known addresses)
+        - Etherscan label lookup (exchanges, DeFi protocols)
+        - Interaction history check (first-time recipient detection)
         - Safety score and risk level
         - User modification support
         """
         return TransferWorkflowAgent(
             llm_client=llm_client,
             web3_client=web3_client,
+            etherscan_client=etherscan_client,
         )
 
     @provide
