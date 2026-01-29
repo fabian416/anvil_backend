@@ -141,7 +141,10 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         if step not in (WorkflowStep.PARSE_REQUEST.value, WorkflowStep.CANCELLED.value, WorkflowStep.COMPLETED.value):
             restart_keywords = [
                 "compare rates", "money market", "best rates", "yield comparison",
+                "aave rates", "compound rates", "morpho rates",  # Protocol-specific rate queries
+                "what are", "what's the", "show me rates", "lending rates",
                 "comparar tasas", "mercado de dinero", "mejores tasas",
+                "tasas de aave", "tasas de compound",  # Spanish protocol queries
             ]
             is_restart_request = any(text_lower.startswith(kw) or f" {kw}" in f" {text_lower}" for kw in restart_keywords)
             

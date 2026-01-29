@@ -277,23 +277,15 @@ Analyze and respond using the portfolio data provided above."""
         return None
     
     def _build_portfolio_context(self, user_context: dict[str, Any]) -> str:
-        """Build portfolio context string from user data."""
+        """Build portfolio context string from user data.
+        
+        Same format as wallet agent: balance-based message with suggestions.
+        Do NOT show wallet address here (use wallet agent for that).
+        """
         lines = []
         
         portfolio = user_context.get("portfolio", {})
         portfolio_summary = user_context.get("portfolio_summary", {})
-        primary_wallet = user_context.get("primary_wallet")
-        
-        # Get wallet address - show FULL address (not truncated)
-        wallet_address = None
-        if primary_wallet:
-            wallet_address = primary_wallet.get("address", "")
-        if not wallet_address:
-            wallet_address = user_context.get("wallet_address", "")
-        
-        if wallet_address:
-            # Show FULL wallet address - users need to see their complete address
-            lines.append(f"**Your Wallet:** `{wallet_address}`")
         
         # Get total balance
         total_value = 0
@@ -305,21 +297,20 @@ Analyze and respond using the portfolio data provided above."""
             else:
                 total_value = portfolio.get("total_value_usd", 0) or 0
         
-        # Empty portfolio - suggest buying
+        # Empty portfolio - same format as wallet: recommend buy/receive
         if not portfolio or total_value == 0:
-            lines.append(f"\n**Total Balance:** $0.00")
+            lines.append("**Total Balance:** $0.00")
             lines.append("")
-            lines.append("**🚀 Get Started with Anvil:**")
+            lines.append("**🚀 Get Started:**")
             lines.append("")
-            lines.append("Your wallet is ready! Here's how to begin:")
+            lines.append("Your portfolio is empty. Add funds to get started:")
             lines.append("")
             lines.append("• 💳 **Buy crypto** - Say \"buy crypto\" to purchase USDC with card/Apple Pay/Google Pay")
-            lines.append("• 📥 **Receive crypto** - Transfer tokens from another wallet to your address above")
+            lines.append("• 📥 **Receive crypto** - Transfer tokens from another wallet (ask \"my wallet address\" for your address)")
             lines.append("")
-            lines.append("Once you have funds, you'll unlock:")
-            lines.append("• 🔄 **Swap tokens** - Trade between different cryptocurrencies")
-            lines.append("• 💰 **Earn yield** - Deposit into DeFi protocols and earn interest")
-            lines.append("• 📊 **Track portfolio** - See your holdings and performance")
+            lines.append("Once you have funds you can:")
+            lines.append("• 🔄 **Swap** - Trade between cryptocurrencies")
+            lines.append("• 💰 **Earn yield** - Deposit into DeFi protocols")
             return "\n".join(lines)
         
         # Handle PortfolioSummary dataclass or dict
@@ -356,11 +347,11 @@ Analyze and respond using the portfolio data provided above."""
                 value_usd = holding.get("value_usd", 0)
                 lines.append(f"- {symbol}: {amount:,.4f} (${value_usd:,.2f})")
         
-        # Add suggestions based on holdings
+        # Suggestions based on balance - same format as wallet (swap/lend if has money)
         lines.append("")
         lines.append("**💡 What you can do:**")
         
-        # Check if user has stablecoins (USDC, USDT, DAI) for lending suggestions
+        # Check if user has stablecoins for lending
         stablecoin_symbols = {"USDC", "USDT", "DAI"}
         has_stablecoins = any(
             h.get("symbol", "").upper() in stablecoin_symbols 
@@ -368,43 +359,36 @@ Analyze and respond using the portfolio data provided above."""
         )
         
         if has_stablecoins:
-            lines.append("• 💰 **Earn yield** - Say \"deposit USDC\" to earn interest on your stablecoins")
-            lines.append("• 📊 **Compare rates** - Say \"compare USDC rates\" to find the best APY")
-        
-        # Always suggest swap for users with holdings
-        lines.append("• 🔄 **Swap tokens** - Say \"swap\" to trade between cryptocurrencies")
-        
-        # Suggest buying more if balance is low
+            lines.append("• 💰 **Earn yield** - Say \"deposit USDC\" or \"compare USDC rates\" to earn interest")
+        lines.append("• 🔄 **Swap** - Say \"swap\" to trade between cryptocurrencies")
         if total_value < 100:
-            lines.append("• 💳 **Buy more** - Say \"buy crypto\" to add funds with card/Apple Pay")
+            lines.append("• 💳 **Buy more** - Say \"buy crypto\" to add funds")
         
         return "\n".join(lines)
     
     def _get_authenticated_system_prompt(self) -> str:
-        """Get system prompt for authenticated users with real data."""
+        """Get system prompt for authenticated users with real data.
+        
+        Same format as wallet agent: use the EXACT balance and suggestions from context.
+        """
         return """You are the Portfolio Optimizer for Anvil.
 
-**IMPORTANT RULES:**
-1. Use ONLY the portfolio data provided in the context
-2. NEVER make up holdings or values
-3. Keep responses CONCISE (5-10 lines for empty portfolio, more detail only if they have holdings)
+**CRITICAL - USE THE CONTEXT EXACTLY:**
+1. Use ONLY the portfolio data provided in the context - do not invent numbers or suggestions
+2. For EMPTY portfolio: Use the EXACT suggestions from context (buy crypto, receive crypto) - same format as wallet agent. Do NOT say "buy 100 USD of ETH" - say "buy crypto" to purchase USDC
+3. For portfolio WITH holdings: Use the EXACT suggestions from context (swap, earn yield, buy more if low balance)
+4. Do NOT show wallet address - that is for the wallet agent. Just balance + suggestions
+5. Keep responses CONCISE - mirror the structure from the context (balance, then bullet suggestions)
 
-**IF PORTFOLIO IS EMPTY ("ready to grow"):**
-Keep it SHORT! Just say:
-- "Your portfolio is empty - no holdings yet"
-- Suggest ONE action: "Try 'buy 100 USD of ETH' to get started"
-- That's it! No long analysis of empty data.
-
-**IF PORTFOLIO HAS HOLDINGS:**
-Then provide detailed analysis:
-- Total value and allocation breakdown
-- Top holdings
-- Diversification assessment
-- Rebalancing suggestions if needed
+**RESPONSE FORMAT:**
+- Start with balance (e.g. "Your balance: $0.00" or "Portfolio value: $X")
+- Then include the suggestion bullets from the context exactly as written
+- No long explanations, no "buy 100 USD of ETH" - use "buy crypto" and "receive crypto" for empty; "swap" and "earn yield" for has money
 
 **DO NOT:**
-- Give long explanations when portfolio is empty
-- Explain what you "can't do" - just say what IS there
+- Show wallet address
+- Say "buy 100 USD of ETH" or similar - use "buy crypto"
+- Make up suggestions - use only what is in the context
 - Add unnecessary disclaimers"""
     
     def _get_system_prompt(self) -> str:

@@ -284,12 +284,60 @@ class BaseWorkflowAgent(AgentGateway, ABC):
                 f"has_execute_data={new_state.execute_data is not None}"
             )
             
+            # Build sources based on data fetched in the workflow
+            from datetime import datetime, UTC
+            from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+                create_api_source,
+            )
+            
+            sources = []
+            fetched_at = datetime.now(UTC)
+            
+            # Add sources based on workflow type and data sources used
+            workflow_lower = self.workflow_name.lower()
+            
+            if "swap" in workflow_lower:
+                sources.append(create_api_source(
+                    source_name="Hyperliquid/LiFi",
+                    citation_text="Swap quote from Hyperliquid Spot or LiFi aggregator",
+                    fetched_at=fetched_at,
+                    metadata={"workflow": self.workflow_name, "data_type": "swap_quote"},
+                ))
+            elif "lending" in workflow_lower:
+                sources.append(create_api_source(
+                    source_name="Morpho Protocol",
+                    citation_text="Lending rates from Morpho vaults",
+                    fetched_at=fetched_at,
+                    metadata={"workflow": self.workflow_name, "data_type": "lending_rates"},
+                ))
+            elif "money_market" in workflow_lower or "moneymarket" in workflow_lower:
+                sources.append(create_api_source(
+                    source_name="DeFi Protocols",
+                    citation_text="Rates from Morpho, Aave, and Compound protocols",
+                    fetched_at=fetched_at,
+                    metadata={"workflow": self.workflow_name, "data_type": "money_market_rates"},
+                ))
+            elif "buy" in workflow_lower:
+                sources.append(create_api_source(
+                    source_name="MoonPay/Coinbase",
+                    citation_text="On-ramp quote from payment providers",
+                    fetched_at=fetched_at,
+                    metadata={"workflow": self.workflow_name, "data_type": "buy_quote"},
+                ))
+            elif "transfer" in workflow_lower:
+                sources.append(create_api_source(
+                    source_name="Anvil",
+                    citation_text="Transfer execution via Anvil",
+                    fetched_at=fetched_at,
+                    metadata={"workflow": self.workflow_name, "data_type": "transfer"},
+                ))
+            
             return AgentResponse(
                 content=response_content,
                 agent_type=self.agent_type,
                 tools_used=[self.workflow_name],
                 metadata=metadata,
-                sources=[],  # Will be populated from sources list
+                sources=sources,
             )
             
         except Exception as e:
