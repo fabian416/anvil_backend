@@ -621,10 +621,11 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         # CRITICAL: Skip this check if user is starting a FRESH workflow!
         # If user says "Swap X to Y" while in buy flow, we should NOT continue the buy flow.
         if is_fresh:
-            # User is starting a fresh workflow - don't check for parameter-awaiting workflows
-            # This ensures "Swap PURR to USDC" is not misinterpreted as a buy parameter
-            logger.info(f"🆕 Fresh workflow '{fresh_workflow_type}' - skipping parameter-awaiting check")
-            return False, None  # Start fresh workflow
+            # User is starting a fresh workflow - route directly to that workflow agent
+            # This ensures "Supply 1000 USDC to Morpho" goes to lending_workflow, not transfer_workflow
+            workflow_name = f"{fresh_workflow_type}_workflow"
+            logger.info(f"🆕 Fresh workflow detected - routing to {workflow_name}")
+            return True, workflow_name  # Route to the detected workflow
         
         if conversation_context.conversation_history:
             # Look at last assistant message to see if it's awaiting parameters
@@ -784,9 +785,20 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 "buy_workflow": AgentType.BUY_WORKFLOW,
                 "transfer_workflow": AgentType.TRANSFER_WORKFLOW,
                 "money_market_workflow": AgentType.MONEY_MARKET_WORKFLOW,
+                # Cashout maps to buy workflow for now (same fiat on/off ramp logic)
+                "cashout_workflow": AgentType.BUY_WORKFLOW,
             }
             
-            agent_type = workflow_to_agent.get(workflow_name, AgentType.SWAP_WORKFLOW)
+            agent_type = workflow_to_agent.get(workflow_name)
+            if not agent_type:
+                # Unknown workflow - let LLM decide
+                logger.warning(f"⚠️ Unknown workflow '{workflow_name}', falling back to LLM planning")
+                return await super().create_workflow_plan(
+                    conversation_id=conversation_id,
+                    message=message,
+                    conversation_context=conversation_context,
+                    available_agents=available_agents,
+                )
             
             logger.info(f"🔄 Continuing workflow {workflow_name} with agent {agent_type.value}")
             
