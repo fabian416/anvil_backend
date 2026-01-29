@@ -100,6 +100,7 @@ def create_mcp_source(
     citation_text: Optional[str] = None,
     fetched_at: Optional[datetime] = None,
     metadata: Optional[dict] = None,
+    relevance_score: float = 1.0,
 ) -> SourceInfo:
     """
     Create MCP server source information.
@@ -111,6 +112,7 @@ def create_mcp_source(
         citation_text: Human-readable citation
         fetched_at: Timestamp when data was fetched
         metadata: Additional metadata
+        relevance_score: Relevance score (default 1.0)
         
     Returns:
         SourceInfo for MCP server source
@@ -125,6 +127,7 @@ def create_mcp_source(
         citation_text=citation_text or f"Data from {mcp_server_name} MCP Server",
         fetched_at=fetched_at or datetime.now(UTC),
         provider=f"{mcp_server_name} MCP Server",
+        relevance_score=relevance_score,
         metadata=metadata or {},
     )
 
@@ -137,6 +140,7 @@ def create_blockchain_source(
     citation_text: Optional[str] = None,
     fetched_at: Optional[datetime] = None,
     metadata: Optional[dict] = None,
+    relevance_score: float = 1.0,
 ) -> SourceInfo:
     """
     Create blockchain source information.
@@ -149,6 +153,7 @@ def create_blockchain_source(
         citation_text: Human-readable citation
         fetched_at: Timestamp when data was fetched
         metadata: Additional metadata
+        relevance_score: Relevance score (default 1.0)
         
     Returns:
         SourceInfo for blockchain source
@@ -177,6 +182,7 @@ def create_blockchain_source(
         citation_text=citation_text or f"On-chain data from {chain}",
         fetched_at=fetched_at or datetime.now(UTC),
         provider=f"{chain} RPC",
+        relevance_score=relevance_score,
         metadata=metadata or {},
     )
 
@@ -187,6 +193,7 @@ def create_database_source(
     data_points_used: Optional[int] = None,
     fetched_at: Optional[datetime] = None,
     metadata: Optional[dict] = None,
+    relevance_score: float = 1.0,
 ) -> SourceInfo:
     """
     Create database source information.
@@ -197,6 +204,7 @@ def create_database_source(
         data_points_used: Number of data points
         fetched_at: Timestamp when data was fetched
         metadata: Additional metadata
+        relevance_score: Relevance score (default 1.0)
         
     Returns:
         SourceInfo for database source
@@ -208,5 +216,6 @@ def create_database_source(
         fetched_at=fetched_at or datetime.now(UTC),
         provider="Anvil Backend",
         data_points_used=data_points_used,
+        relevance_score=relevance_score,
         metadata=metadata or {},
     )
