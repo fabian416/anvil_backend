@@ -269,7 +269,7 @@ class SendMessageWithSupervisor:
                 supervisor_source = {
                     "source_type": "system",
                     "source_name": "Supervisor Router",
-                    "citation_text": "Direct routing based on intent detection (no LLM)",
+                    "citation_text": "Direct routing LLM",
                     "fetched_at": datetime.now(UTC).isoformat(),
                     "provider": "Anvil",
                     "metadata": {
@@ -281,7 +281,7 @@ class SendMessageWithSupervisor:
                 }
                 supervisor_timing = {
                     "agent_type": "supervisor",
-                    "task_description": f"Direct routing: {len(workflow_plan.tasks)} agent(s) (no LLM)",
+                    "task_description": f"Direct routing: {len(workflow_plan.tasks)} agent(s)",
                     "execution_time_ms": planning_time_ms,
                     "status": "completed",
                     "provider": "Anvil",
