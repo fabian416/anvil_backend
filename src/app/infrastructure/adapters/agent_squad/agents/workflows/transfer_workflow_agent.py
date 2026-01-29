@@ -170,21 +170,46 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         """Parse transfer request from user message."""
         
         language = user_context.language
-        text = message.value.lower()
+        text = message.value.lower().strip()
+        original_text = message.value
+        
+        # Check if we already have some params from previous turn and user is just providing missing info
+        existing_token = state.data.get("token", "").upper()
+        existing_amount = state.data.get("amount")
+        existing_recipient = state.data.get("recipient")
+        
+        # If we already have token and amount, and user provides just an address, treat as recipient
+        if existing_token and existing_amount and not existing_recipient:
+            potential_address = self._extract_address(original_text)
+            if potential_address:
+                logger.info(f"[TransferWorkflow] User provided recipient address: {potential_address[:10]}...")
+                state.data["recipient"] = potential_address
+                state.step = WorkflowStep.FETCH_DATA.value
+                return await self._handle_validate(message, state, user_context)
+        
+        # If we have token but no amount, and user provides just a number, treat as amount
+        if existing_token and not existing_amount:
+            clean_input = text.replace("$", "").replace(",", "").strip()
+            if clean_input.replace(".", "").isdigit():
+                logger.info(f"[TransferWorkflow] User provided amount: {clean_input}")
+                state.data["amount"] = clean_input
+                # Now ask for recipient
+                return self._ask_for_recipient(state.data, language), state
         
         # Try to extract parameters from message
-        params = await self._extract_transfer_params(text, message.value)
+        params = await self._extract_transfer_params(text, original_text)
         
-        token = params.get("token")
-        amount = params.get("amount")
-        recipient = params.get("recipient")
+        # Merge with existing state
+        token = params.get("token") or existing_token
+        amount = params.get("amount") or existing_amount
+        recipient = params.get("recipient") or existing_recipient
         
         # If we have all parameters, proceed to validate
         if token and amount and recipient:
             state.data["token"] = token.upper()
             state.data["amount"] = amount
             state.data["recipient"] = recipient
-            state.data["chain"] = params.get("chain", "base")
+            state.data["chain"] = params.get("chain", state.data.get("chain", "base"))
             state.step = WorkflowStep.FETCH_DATA.value
             return await self._handle_validate(message, state, user_context)
         
@@ -192,12 +217,13 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         if token and amount and not recipient:
             state.data["token"] = token.upper()
             state.data["amount"] = amount
-            state.data["chain"] = params.get("chain", "base")
+            state.data["chain"] = params.get("chain", state.data.get("chain", "base"))
             return self._ask_for_recipient(state.data, language), state
         
         # If we have token but no amount, ask for amount
         if token and not amount:
             state.data["token"] = token.upper()
+            state.data["chain"] = params.get("chain", state.data.get("chain", "base"))
             return self._ask_for_amount(state.data, language), state
         
         # No token detected - ask user to specify
@@ -415,14 +441,24 @@ Você não tem {token} suficiente na sua carteira.
         # Try LLM extraction first
         if self._llm:
             try:
-                llm_params = await self._llm_extract_params(
-                    text,
+                llm_params = await self._extract_params_with_llm(
+                    message=text,
                     param_schema={
-                        "token": "Token symbol to transfer (ETH, USDC, DAI, etc.)",
-                        "amount": "Amount to transfer (numeric value)",
-                        "recipient": "Recipient wallet address (0x... or Solana format)",
-                        "chain": "Blockchain network (base, ethereum, etc.)",
+                        "token": "string (Token symbol to transfer: ETH, USDC, DAI, etc.)",
+                        "amount": "number (Amount to transfer)",
+                        "recipient": "string (Recipient wallet address 0x... or Solana format)",
+                        "chain": "string (Blockchain network: base, ethereum, etc.)",
                     },
+                    examples=[
+                        {
+                            "input": "send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                            "output": '{"token": "USDC", "amount": "100", "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", "chain": "base"}'
+                        },
+                        {
+                            "input": "transfer 0.5 ETH to 0xABC123...",
+                            "output": '{"token": "ETH", "amount": "0.5", "recipient": "0xABC123...", "chain": "base"}'
+                        },
+                    ],
                 )
                 if llm_params:
                     params.update(llm_params)

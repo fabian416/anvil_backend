@@ -931,13 +931,23 @@ Quando tiver fundos, diga **"depositar {amount or '100'} {asset}"** para continu
         # Try LLM extraction first
         if self._llm:
             try:
-                llm_params = await self._llm_extract_params(
-                    text,
+                llm_params = await self._extract_params_with_llm(
+                    message=text,
                     param_schema={
-                        "asset": "Token symbol to compare rates for (USDC, ETH, DAI, etc.)",
-                        "type": "Comparison type: supply or borrow",
-                        "chain": "Blockchain network (base, ethereum, etc.)",
+                        "asset": "string (Token symbol: USDC, ETH, DAI, etc.)",
+                        "type": "string (Comparison type: supply or borrow)",
+                        "chain": "string (Blockchain network: base, ethereum, etc.)",
                     },
+                    examples=[
+                        {
+                            "input": "compare USDC rates",
+                            "output": '{"asset": "USDC", "type": "supply", "chain": "base"}'
+                        },
+                        {
+                            "input": "best ETH borrow rates",
+                            "output": '{"asset": "ETH", "type": "borrow", "chain": "base"}'
+                        },
+                    ],
                 )
                 if llm_params:
                     params.update(llm_params)
