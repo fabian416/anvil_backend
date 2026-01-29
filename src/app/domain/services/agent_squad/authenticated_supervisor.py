@@ -660,11 +660,45 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                         )
                         
                         if is_awaiting:
-                            logger.info(
-                                f"🔄 Parameter-awaiting workflow from metadata: {normalized_name} "
-                                f"(step={step}, has_data={bool(data)})"
+                            # CRITICAL: Only continue workflow if user's message looks like a parameter
+                            # Don't continue if user is asking something completely different
+                            user_msg_lower = message.lower().strip()
+                            
+                            # Check if user message is a valid workflow continuation:
+                            # - Numeric value (amount)
+                            # - Confirmation words
+                            # - Token/crypto names
+                            # - Very short responses (1-2 words, likely selection)
+                            is_parameter_like = (
+                                # Numeric (with or without decimals, optional $ prefix)
+                                re.match(r'^[\$]?\d+\.?\d*$', user_msg_lower) or
+                                # Confirmation words
+                                user_msg_lower in ("yes", "no", "confirm", "cancel", "sí", "sim", "não", "cancelar") or
+                                # Token symbols (short uppercase words)
+                                re.match(r'^[a-z]{2,6}$', user_msg_lower) or
+                                # Menu selection (1, 2, 3, etc. or "option 1")
+                                re.match(r'^(option\s*)?\d$', user_msg_lower) or
+                                # "all" for depositing entire balance
+                                user_msg_lower == "all"
                             )
-                            return True, normalized_name
+                            
+                            # Check if user is asking a different question (not a parameter)
+                            is_different_intent = any(phrase in user_msg_lower for phrase in [
+                                "list", "show", "what", "how", "tell", "my", "portfolio",
+                                "holdings", "balance", "price", "help", "?",
+                            ])
+                            
+                            if is_parameter_like and not is_different_intent:
+                                logger.info(
+                                    f"🔄 Parameter-awaiting workflow from metadata: {normalized_name} "
+                                    f"(step={step}, has_data={bool(data)}, msg='{user_msg_lower[:20]}')"
+                                )
+                                return True, normalized_name
+                            else:
+                                logger.info(
+                                    f"🔍 Workflow {normalized_name} awaiting input, but user message "
+                                    f"'{user_msg_lower[:30]}' looks like a different intent - not continuing"
+                                )
                     
                     # Only check the most recent assistant message
                     break
