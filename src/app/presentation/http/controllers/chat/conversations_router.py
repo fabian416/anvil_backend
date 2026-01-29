@@ -578,7 +578,7 @@ def create_conversations_router() -> APIRouter:
     @router.post(
         "/{conversation_id}/messages",
         response_model=ChatResponse,
-        status_code=status.HTTP_201_CREATED,
+        status_code=status.HTTP_200_OK,
         summary="Send Message",
         description="""
         Send a message to a conversation.
