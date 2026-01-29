@@ -100,15 +100,38 @@ class WalletAgent:
         # Build context string with user's wallet data
         wallet_context = self._build_wallet_context(user_context)
         
+        # Get portfolio balance for context-aware suggestions
+        portfolio_summary = user_context.get("portfolio_summary", {})
+        total_balance = float(portfolio_summary.get("total_value_usd", 0) or 0)
+        
+        # Build suggestions based on balance
+        if total_balance == 0:
+            suggestions = """
+**🚀 Get Started:**
+Your wallet is ready! Add funds to start using Anvil:
+• 💳 Say **"buy crypto"** to purchase USDC with card/Apple Pay
+• 📥 Transfer crypto from another wallet to the address above"""
+        else:
+            suggestions = f"""
+**💰 Balance:** ${total_balance:,.2f}
+
+**💡 What you can do:**
+• 🔄 **Swap** - Trade between different cryptocurrencies
+• 💰 **Earn yield** - Deposit to DeFi protocols
+• 📊 **Portfolio** - Say "my portfolio" for detailed holdings"""
+        
         # Build enhanced prompt with actual wallet data
         enhanced_message = f"""User Query: {message.value}
 
 **USER'S WALLET DATA (REAL DATA - USE THIS):**
 {wallet_context}
 
+**BALANCE & SUGGESTIONS (include in response):**
+{suggestions}
+
 Respond to the user's query using ONLY the wallet data provided above.
-Do NOT make up wallet addresses or balances.
-If the user asks about something not in their data, explain what data is available."""
+CRITICAL: Show the FULL wallet address - never truncate it!
+Include the balance and suggestions at the end."""
         
         messages = [
             {"role": "system", "content": self._get_system_prompt()},
@@ -230,19 +253,14 @@ Once your wallet is ready, you'll be able to:
                          wallet.get("address") == primary_wallet.get("address"))
             
             address = wallet.get("address", "Unknown")
-            # Format address for display
-            if len(address) > 20:
-                display_addr = f"{address[:10]}...{address[-6:]}"
-            else:
-                display_addr = address
             
             primary_marker = " (PRIMARY)" if is_primary else ""
             provider = wallet.get("provider")
             chain = wallet.get("chain_type")
             
             lines.append(f"**Wallet {i}{primary_marker}:**")
-            lines.append(f"  - Address: `{display_addr}`")
-            lines.append(f"  - Full Address: `{address}`")
+            # ALWAYS show the FULL address - users need the complete address
+            lines.append(f"  - Address: `{address}`")
             # Only show provider and chain if they have valid values
             if provider and provider.lower() not in ("unknown", "none", ""):
                 lines.append(f"  - Provider: {provider}")
@@ -292,19 +310,26 @@ Would you like me to help you with something else, or are you ready to sign in?"
 **YOUR ROLE:**
 Show the user's connected wallet addresses. Keep it simple and concise.
 
+**CRITICAL - SHOW FULL ADDRESS:**
+ALWAYS show the COMPLETE wallet address (e.g., `0x742d35Cc6634C0532925a3b844Bc454e4438f44e`)
+NEVER truncate or shorten addresses (do NOT use `0x742d...f44e` format)
+Users NEED the full address to receive funds!
+
 **IMPORTANT RULES:**
 1. ONLY show wallet addresses from the provided context
-2. DO NOT mention balances - that's handled by the Portfolio agent
-3. DO NOT suggest using external tools like Etherscan
-4. Keep responses SHORT (3-5 lines max)
-5. If asked about balances, just show the wallet and say "For balances, ask 'my portfolio'"
+2. Show the FULL address - never truncate!
+3. DO NOT mention balances - that's handled by the Portfolio agent
+4. DO NOT suggest using external tools like Etherscan
+5. Keep responses SHORT (3-5 lines max)
+6. If asked about balances, just show the wallet and say "For balances, ask 'my portfolio'"
 
 **RESPONSE FORMAT:**
 Show wallet info in this format:
-- **Your Wallet:** `{address}`
+- **Your Wallet:** `0xFULL_ADDRESS_HERE`
 - That's it! No extra commentary needed.
 
 **DO NOT:**
+- Truncate wallet addresses
 - Mention balance information
 - Suggest external block explorers
 - Give long explanations
