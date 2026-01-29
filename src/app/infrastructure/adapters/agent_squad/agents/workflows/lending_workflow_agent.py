@@ -397,7 +397,11 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Fetch vault data from Morpho/Aave."""
+        """Fetch vault data from Morpho/Aave.
+        
+        Like swap workflow, checks user balance and shows funding recommendation
+        if user has insufficient funds before showing the vault quote.
+        """
         
         language = user_context.language
         asset = state.data.get("asset", "USDC")
@@ -407,6 +411,17 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         wallet_address = user_context.wallet_address
         
         logger.info(f"[LendingWorkflow] Fetching vaults for {asset} on {chain}, preference={protocol_preference}")
+        
+        # Check user balance and prepare recommendation if insufficient
+        # This matches swap workflow behavior - show quote but warn about funding
+        funding_recommendation = ""
+        if user_context.needs_funding_recommendation:
+            logger.info(
+                f"[LendingWorkflow] User has insufficient funds: "
+                f"portfolio_state={user_context.portfolio_state}, "
+                f"balance=${user_context.total_balance_usd:.2f}"
+            )
+            funding_recommendation = self._get_funding_recommendation(asset, language)
         
         vault_data = None
         
@@ -448,6 +463,10 @@ Por favor digite um número válido para seu depósito de **{asset}**:
             amount=amount,
             language=language,
         )
+        
+        # Prepend funding recommendation if user has insufficient funds
+        if funding_recommendation:
+            response = funding_recommendation + "\n" + response
         
         return response, state
     
@@ -527,6 +546,57 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         state.step = WorkflowStep.COMPLETED.value
         
         return self._format_execution_pending(state.data, language), state
+    
+    def _get_funding_recommendation(self, asset: str, language: str) -> str:
+        """
+        Get a helpful recommendation for users with insufficient funds.
+        
+        This is shown before the vault quote to guide users on how to fund their wallet.
+        Matches the swap workflow behavior.
+        """
+        recommendations = {
+            "en": f"""💡 **Heads up:** Your portfolio appears to have limited funds.
+
+To complete this deposit, you'll need **{asset}** in your wallet.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase with card/Apple Pay/Google Pay
+• 📥 Or transfer {asset} from another wallet
+
+Here's the deposit quote you requested:
+""",
+            "es": f"""💡 **Aviso:** Tu portafolio parece tener fondos limitados.
+
+Para completar este depósito, necesitarás **{asset}** en tu billetera.
+
+**Comienza:**
+• 💳 Di **"comprar cripto"** para comprar con tarjeta
+• 📥 O transfiere {asset} desde otra billetera
+
+Aquí está la cotización de depósito que solicitaste:
+""",
+            "pt": f"""💡 **Atenção:** Seu portfólio parece ter fundos limitados.
+
+Para completar este depósito, você precisará de **{asset}** na sua carteira.
+
+**Comece:**
+• 💳 Diga **"comprar cripto"** para comprar com cartão
+• 📥 Ou transfira {asset} de outra carteira
+
+Aqui está a cotação de depósito que você solicitou:
+""",
+            "zh": f"""💡 **注意：** 您的投资组合资金似乎有限。
+
+要完成此存款，您的钱包中需要 **{asset}**。
+
+**开始：**
+• 💳 说 **"买加密货币"** 用卡购买
+• 📥 或从其他钱包转入 {asset}
+
+以下是您请求的存款报价：
+""",
+        }
+        return recommendations.get(language, recommendations["en"])
     
     def _build_insufficient_balance_message(
         self,
