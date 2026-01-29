@@ -71,22 +71,47 @@ class TransactionInfo:
 
 class EtherscanClient:
     """
-    Etherscan API client for address labels and transaction history.
+    Etherscan API V2 client for address labels and transaction history.
+    
+    Uses Etherscan API V2 unified endpoint that supports 60+ EVM chains
+    with a single API key by specifying the chain ID.
     
     Supports multiple networks:
-    - Ethereum Mainnet
-    - Base
-    - Arbitrum
-    - Optimism
-    - Polygon
+    - Ethereum Mainnet (chainid=1)
+    - Base (chainid=8453)
+    - Arbitrum (chainid=42161)
+    - Optimism (chainid=10)
+    - Polygon (chainid=137)
     
     Usage:
-        client = EtherscanClient(api_key="your-key")
+        client = EtherscanClient(api_key="your-key", network="base")
         label = await client.get_address_label("0x...")
         print(f"Address: {label.name_tag} ({label.address_type})")
+    
+    API V2 Documentation: https://docs.etherscan.io/etherscan-v2
     """
     
-    # Network-specific base URLs
+    # Etherscan API V2 unified endpoint
+    API_V2_BASE_URL = "https://api.etherscan.io/v2/api"
+    
+    # Chain IDs for API V2
+    CHAIN_IDS = {
+        "ethereum": 1,
+        "base": 8453,
+        "arbitrum": 42161,
+        "optimism": 10,
+        "polygon": 137,
+        "polygon_zkevm": 1101,
+        "avalanche": 43114,
+        "bsc": 56,
+        "fantom": 250,
+        "linea": 59144,
+        "scroll": 534352,
+        "zksync": 324,
+        "blast": 81457,
+    }
+    
+    # Legacy network-specific URLs (fallback)
     BASE_URLS = {
         "ethereum": "https://api.etherscan.io/api",
         "base": "https://api.basescan.org/api",
@@ -131,6 +156,7 @@ class EtherscanClient:
         api_key: str | None = None,
         network: str = "base",
         timeout: float = 10.0,
+        use_v2_api: bool = True,
     ):
         """
         Initialize Etherscan client.
@@ -139,12 +165,28 @@ class EtherscanClient:
             api_key: Etherscan API key (or set ETHERSCAN_API_KEY env var)
             network: Network to query (ethereum, base, arbitrum, etc.)
             timeout: Request timeout in seconds
+            use_v2_api: Use Etherscan API V2 (unified endpoint with chain ID)
         """
         self._api_key = api_key or os.getenv("ETHERSCAN_API_KEY", "")
         self._network = network
-        self._base_url = self.BASE_URLS.get(network, self.BASE_URLS["ethereum"])
+        self._chain_id = self.CHAIN_IDS.get(network, 8453)  # Default to Base
+        self._use_v2_api = use_v2_api
+        
+        # Use V2 API or legacy network-specific URL
+        if use_v2_api:
+            self._base_url = self.API_V2_BASE_URL
+        else:
+            self._base_url = self.BASE_URLS.get(network, self.BASE_URLS["ethereum"])
+        
         self._client = httpx.AsyncClient(timeout=timeout)
         self._cache: dict[str, AddressLabel] = {}  # Simple in-memory cache
+    
+    def _build_params(self, params: dict) -> dict:
+        """Build request params, adding chainid for V2 API."""
+        if self._use_v2_api:
+            params["chainid"] = self._chain_id
+        params["apikey"] = self._api_key
+        return params
     
     async def close(self):
         """Close HTTP client."""
@@ -222,7 +264,7 @@ class EtherscanClient:
             return -1  # Unknown without API key
         
         try:
-            params = {
+            params = self._build_params({
                 "module": "account",
                 "action": "txlist",
                 "address": address,
@@ -231,8 +273,7 @@ class EtherscanClient:
                 "page": 1,
                 "offset": 1,  # Just get count, not full list
                 "sort": "desc",
-                "apikey": self._api_key,
-            }
+            })
             
             response = await self._client.get(self._base_url, params=params)
             response.raise_for_status()
@@ -270,7 +311,7 @@ class EtherscanClient:
             return []
         
         try:
-            params = {
+            params = self._build_params({
                 "module": "account",
                 "action": "txlist",
                 "address": from_address,
@@ -279,8 +320,7 @@ class EtherscanClient:
                 "page": 1,
                 "offset": 100,  # Get last 100 txs
                 "sort": "desc",
-                "apikey": self._api_key,
-            }
+            })
             
             response = await self._client.get(self._base_url, params=params)
             response.raise_for_status()
@@ -331,12 +371,11 @@ class EtherscanClient:
             return False
         
         try:
-            params = {
+            params = self._build_params({
                 "module": "contract",
                 "action": "getabi",
                 "address": address,
-                "apikey": self._api_key,
-            }
+            })
             
             response = await self._client.get(self._base_url, params=params)
             response.raise_for_status()
@@ -391,12 +430,11 @@ class EtherscanClient:
         
         # Check if it's a verified contract
         try:
-            params = {
+            params = self._build_params({
                 "module": "contract",
                 "action": "getsourcecode",
                 "address": address,
-                "apikey": self._api_key,
-            }
+            })
             
             response = await self._client.get(self._base_url, params=params)
             response.raise_for_status()
