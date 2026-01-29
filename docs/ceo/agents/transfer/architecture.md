@@ -15,6 +15,7 @@ This document defines the **Hexagonal Architecture** implementation for the **Tr
 
 - **Multi-Step Workflow**: Parse → Validate → Safety Check → Confirm → Execute
 - **Safety Analysis**: EOA detection, Etherscan labels, interaction history
+- **Balance Awareness**: Checks user balance before allowing execution (like swap_workflow)
 - **Multi-Language Support**: English, Spanish, Portuguese, Chinese
 - **Address Validation**: EVM (Ethereum, Base, Polygon) and Solana
 - **Known Address Database**: Exchanges, DeFi protocols, risky addresses
@@ -241,7 +242,7 @@ async def _handle_parse_request(
     state.data["recipient"] = recipient
 ```
 
-#### 2. Validate Handler (with Safety Analysis)
+#### 2. Validate Handler (with Safety Analysis + Balance Check)
 
 ```python
 async def _handle_validate(
@@ -250,13 +251,25 @@ async def _handle_validate(
     state: WorkflowState,
     user_context: UserContext,
 ) -> tuple[str, WorkflowState]:
-    """Validate recipient address and perform safety checks."""
+    """Validate recipient address and perform safety checks.
+    
+    If user has insufficient funds, shows a helpful recommendation to buy crypto
+    but still provides transfer information so they know what to expect.
+    """
     
     # Validate address format
     validation = self._validate_address(recipient)
     
     if not validation["valid"]:
         return self._format_invalid_address(recipient, language), state
+    
+    # Check user balance and prepare recommendation if insufficient
+    funding_recommendation = ""
+    if user_context.needs_funding_recommendation:
+        funding_recommendation = self._get_funding_recommendation(
+            token=token,
+            language=language,
+        )
     
     # Perform safety analysis
     safety_analysis = await self._analyze_recipient_safety(
@@ -275,9 +288,23 @@ async def _handle_validate(
     if not safety_analysis.is_safe:
         return self._format_blocked_transfer(safety_analysis, language), state
     
-    # Build execute_data and confirm
-    state.execute_data = self._build_transfer_execute_data(...)
-    return self._format_transfer_review(state.data, language), state
+    # Only move to confirm step if user has sufficient funds
+    if not user_context.needs_funding_recommendation:
+        state.step = WorkflowStep.CONFIRM.value
+        state.execute_data = self._build_transfer_execute_data(...)
+    else:
+        # User needs to fund first - stay in informational mode
+        state.step = WorkflowStep.PARSE_REQUEST.value
+        state.execute_data = None  # No execute_data when user has no funds
+    
+    # Format response with user balance section
+    response = self._format_transfer_review(state.data, language, user_context=user_context)
+    
+    # Prepend funding recommendation if user has insufficient funds
+    if funding_recommendation:
+        response = funding_recommendation + "\n" + response
+    
+    return response, state
 ```
 
 #### 3. Safety Analysis Method
@@ -593,6 +620,74 @@ async def test_complete_transfer_flow():
 
 ---
 
+## Balance Awareness (Like swap_workflow)
+
+The transfer workflow checks user balance before allowing execution:
+
+### `_get_funding_recommendation()`
+
+```python
+def _get_funding_recommendation(self, token: str, language: str) -> str:
+    """
+    Get a helpful recommendation for users with insufficient funds.
+    
+    This is shown before the transfer details to guide users on how to fund their wallet.
+    """
+    recommendations = {
+        "en": f"""💡 **Heads up:** Your portfolio appears to have limited funds.
+
+To complete this transfer, you'll need **{token}** in your wallet.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase USDC with card/Apple Pay/Google Pay
+• 📥 Or transfer {token} from another wallet
+
+Here's the transfer details you requested:
+""",
+        # ... es, pt, zh translations
+    }
+    return recommendations.get(language, recommendations["en"])
+```
+
+### `_build_transfer_user_balance_section()`
+
+```python
+def _build_transfer_user_balance_section(
+    self,
+    user_context: UserContext | None,
+    token: str,
+    amount: str,
+    language: str,
+) -> str:
+    """Build user balance context section for transfer."""
+    if not user_context or not user_context.is_authenticated:
+        return ""
+    
+    balance = user_context.total_balance_usd
+    portfolio_state = user_context.portfolio_state
+    
+    # Check if user has enough balance
+    if portfolio_state == "empty" or balance < 1:
+        # Show $0 balance with suggestions
+        return "💰 **Your Balance:** $0.00\n\n⚠️ You'll need {token} first..."
+    elif balance < transfer_amount:
+        # Show warning about insufficient balance
+        return f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Transfer amount exceeds..."
+    else:
+        # Show balance with checkmark
+        return f"💰 **Your Balance:** ~${balance:,.2f} ✅"
+```
+
+### Behavior Summary
+
+| User State | Step Advancement | execute_data | Message |
+|------------|------------------|--------------|---------|
+| Sufficient funds | → CONFIRM | ✅ Yes | Review with balance ✅ |
+| Empty portfolio | Stay PARSE_REQUEST | ❌ No | Funding recommendation + review |
+| Balance < amount | Stay PARSE_REQUEST | ❌ No | Warning + review |
+
+---
+
 ## Summary
 
 The Transfer Workflow implements:
@@ -600,9 +695,10 @@ The Transfer Workflow implements:
 1. **Hexagonal Architecture**: Clean separation of layers
 2. **Multi-Step Workflow**: Structured state machine
 3. **Safety Analysis**: Multi-layer security checks
-4. **External Integrations**: Web3 RPC + Etherscan API V2
-5. **Multi-Language Support**: 4 languages
-6. **Dependency Injection**: Dishka framework
-7. **Error Handling**: Graceful recovery
+4. **Balance Awareness**: Checks balance like swap_workflow
+5. **External Integrations**: Web3 RPC + Etherscan API V2
+6. **Multi-Language Support**: 4 languages
+7. **Dependency Injection**: Dishka framework
+8. **Error Handling**: Graceful recovery
 
 All implementations follow established codebase patterns and integrate with existing infrastructure.

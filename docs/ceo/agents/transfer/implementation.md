@@ -53,13 +53,16 @@ src/app/
 |--------|-------------|
 | `process_step()` | Route to appropriate step handler |
 | `_handle_parse_request()` | Extract parameters from message |
-| `_handle_validate()` | Validate address + safety analysis |
+| `_handle_validate()` | Validate address + safety analysis + balance check |
 | `_handle_confirm()` | Wait for user confirmation |
-| `_handle_execute()` | Generate execute_data |
+| `_handle_execute()` | Generate execute_data (with balance validation) |
 | `_analyze_recipient_safety()` | Perform all safety checks |
 | `_calculate_safety_score()` | Calculate 0-100 score |
-| `_format_transfer_review()` | Format confirmation message |
+| `_format_transfer_review()` | Format confirmation message with balance |
 | `_format_safety_section()` | Format safety display |
+| `_get_funding_recommendation()` | Multi-language funding suggestions |
+| `_build_transfer_user_balance_section()` | Balance display in review |
+| `_build_insufficient_balance_message()` | Error message for insufficient funds |
 
 ### 2. Web3 Client
 
@@ -409,6 +412,41 @@ if address in self._cache:
 
 ---
 
+## Balance Awareness
+
+The transfer workflow checks user balance like swap_workflow:
+
+### Key Methods
+
+| Method | Purpose |
+|--------|---------|
+| `_get_funding_recommendation()` | Multi-language funding suggestions when balance is low |
+| `_build_transfer_user_balance_section()` | Shows balance in review message |
+| `_build_insufficient_balance_message()` | Error when trying to execute without funds |
+
+### Behavior
+
+| User State | execute_data | Step |
+|------------|--------------|------|
+| Has funds | ✅ Yes | → CONFIRM |
+| No funds | ❌ No | Stay PARSE_REQUEST |
+| Balance < amount | ❌ No | Stay PARSE_REQUEST |
+
+### Integration with UserContext
+
+```python
+# Check if user needs funding
+if user_context.needs_funding_recommendation:
+    # Don't advance to confirm
+    state.step = WorkflowStep.PARSE_REQUEST.value
+    state.execute_data = None
+    
+    # Show helpful message
+    funding_recommendation = self._get_funding_recommendation(token, language)
+```
+
+---
+
 ## Changelog
 
 | Date | Change |
@@ -417,3 +455,4 @@ if address in self._cache:
 | 2026-01-29 | Phase 2: Etherscan API V2 integration |
 | 2026-01-29 | Fix: Address input handling |
 | 2026-01-29 | Fix: Supervisor wallet address recognition |
+| 2026-01-29 | feat: Balance checking like swap_workflow |

@@ -15,6 +15,7 @@ This directory contains comprehensive documentation for the **Transfer Workflow*
 - **Etherscan address labels** (exchanges, DeFi protocols)
 - **Interaction history** (first-time recipient detection)
 - **Safety score and risk levels**
+- **User balance awareness** (like swap_workflow)
 - **Multi-language support** (en, es, pt, zh)
 
 ---
@@ -133,6 +134,20 @@ PARSE_REQUEST → FETCH_DATA → CONFIRM → EXECUTE → COMPLETED
 | 40-59 | High | 🟠 | Review carefully |
 | 0-39 | Critical | 🔴 | Consider cancelling |
 
+### 5. Balance Awareness (Like swap_workflow)
+
+The transfer workflow checks user balance and provides helpful guidance:
+
+| User State | Behavior |
+|------------|----------|
+| Has sufficient funds | Shows review + execute_data for frontend |
+| Empty portfolio ($0) | Shows funding recommendation + review (no execute_data) |
+| Balance < transfer amount | Shows warning in review (no execute_data) |
+
+**Key Methods**:
+- `_get_funding_recommendation()` - Multi-language funding suggestions
+- `_build_transfer_user_balance_section()` - Balance display in review
+
 ---
 
 ## Architecture Principles
@@ -218,7 +233,9 @@ API_KEY = "your-key-here"
 
 ---
 
-## Example Conversation
+## Example Conversations
+
+### User With Sufficient Balance
 
 ```
 User: "send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
@@ -231,6 +248,8 @@ Agent:
 📍 **To:** `0x742d35...f44e`
 🌐 **Network:** Base
 ⚡ **Est. Fee:** ~$0.01-0.10 (Base L2)
+
+💰 **Your Balance:** ~$500.00 ✅
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔒 **Safety Analysis**
@@ -251,6 +270,39 @@ Agent:
 User: "yes"
 
 Agent: ✅ Transfer ready! [execute_data provided to frontend]
+```
+
+### User With Insufficient Balance
+
+```
+User: "send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+
+Agent: 
+💡 **Heads up:** Your portfolio appears to have limited funds.
+
+To complete this transfer, you'll need **USDC** in your wallet.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase USDC with card/Apple Pay/Google Pay
+• 📥 Or transfer USDC from another wallet
+
+Here's the transfer details you requested:
+
+🔍 **Review Your Transfer**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📤 **Sending:** 100 USDC 💵
+📍 **To:** `0x742d35...f44e`
+🌐 **Network:** Base
+⚡ **Est. Fee:** ~$0.01-0.10 (Base L2)
+
+💰 **Your Balance:** $0.00
+
+⚠️ You'll need USDC first:
+• Say `buy crypto` to purchase USDC with card
+• Or transfer USDC from another wallet
+
+[No execute_data - user needs to fund wallet first]
 ```
 
 ---
@@ -289,6 +341,7 @@ Agent: ✅ Transfer ready! [execute_data provided to frontend]
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-01-29 | Initial complete specification |
+| 1.1 | 2026-01-29 | Added balance checking like swap_workflow |
 
 ---
 

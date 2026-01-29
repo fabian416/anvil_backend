@@ -3,7 +3,7 @@
 > **Project:** Anvil DeFi Chat - Token Transfer with Safety Analysis
 > **Methodology:** MIT Systems Thinking + Stanford Design Thinking + First Principles Analysis
 > **Agents:** @backend-engineer + @prompt-engineer + @code-review-waltz
-> **Status:** ✅ Phase 1+2 Complete - Phase 3 Pending
+> **Status:** ✅ Phase 1+2 Complete + Balance Awareness - Phase 3 Pending
 > **Date:** 2026-01-29
 
 ---
@@ -144,6 +144,16 @@ Quick start guide and navigation hub:
 | Interaction history | ✅ | etherscan_client.py |
 | API V2 support | ✅ | etherscan_client.py |
 
+### Balance Awareness (✅ Complete)
+
+| Feature | Status | File |
+|---------|--------|------|
+| Funding recommendation | ✅ | transfer_workflow_agent.py |
+| User balance section | ✅ | transfer_workflow_agent.py |
+| No execute_data when no funds | ✅ | transfer_workflow_agent.py |
+| Insufficient balance message | ✅ | transfer_workflow_agent.py |
+| Multi-language support | ✅ | transfer_workflow_agent.py |
+
 ### Phase 3: Compliance (⏳ Future)
 
 | Feature | Status | Notes |
@@ -227,6 +237,7 @@ Quick start guide and navigation hub:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-01-29 | Initial complete specification |
+| 1.1 | 2026-01-29 | Added balance checking like swap_workflow |
 
 ---
 
