@@ -281,23 +281,45 @@ Analyze and respond using the portfolio data provided above."""
         lines = []
         
         portfolio = user_context.get("portfolio", {})
+        portfolio_summary = user_context.get("portfolio_summary", {})
         primary_wallet = user_context.get("primary_wallet")
         
+        # Get wallet address - show FULL address (not truncated)
+        wallet_address = None
         if primary_wallet:
-            address = primary_wallet.get("address", "")
-            if address:
-                display_addr = f"{address[:10]}...{address[-6:]}" if len(address) > 20 else address
-                lines.append(f"**Connected Wallet:** `{display_addr}`")
+            wallet_address = primary_wallet.get("address", "")
+        if not wallet_address:
+            wallet_address = user_context.get("wallet_address", "")
         
-        if not portfolio:
-            lines.append("\n**Portfolio Status:** Your portfolio is ready to grow! 🌱")
+        if wallet_address:
+            # Show FULL wallet address - users need to see their complete address
+            lines.append(f"**Your Wallet:** `{wallet_address}`")
+        
+        # Get total balance
+        total_value = 0
+        if portfolio_summary:
+            total_value = float(portfolio_summary.get("total_value_usd", 0) or 0)
+        elif portfolio:
+            if hasattr(portfolio, "total_value_usd"):
+                total_value = portfolio.total_value_usd or 0
+            else:
+                total_value = portfolio.get("total_value_usd", 0) or 0
+        
+        # Empty portfolio - suggest buying
+        if not portfolio or total_value == 0:
+            lines.append(f"\n**Total Balance:** $0.00")
             lines.append("")
-            lines.append("**Get started with Anvil:**")
-            lines.append("• **Buy crypto** - Type \"buy 100 USD of ETH\" to start building your portfolio")
-            lines.append("• **Earn yield** - Say \"best yield for USDC\" to find earning opportunities")
-            lines.append("• **Swap tokens** - Try \"swap ETH to USDC\" once you have crypto")
+            lines.append("**🚀 Get Started with Anvil:**")
             lines.append("")
-            lines.append("Once you make your first purchase, I'll track your portfolio automatically! 📊")
+            lines.append("Your wallet is ready! Here's how to begin:")
+            lines.append("")
+            lines.append("• 💳 **Buy crypto** - Say \"buy crypto\" to purchase USDC with card/Apple Pay/Google Pay")
+            lines.append("• 📥 **Receive crypto** - Transfer tokens from another wallet to your address above")
+            lines.append("")
+            lines.append("Once you have funds, you'll unlock:")
+            lines.append("• 🔄 **Swap tokens** - Trade between different cryptocurrencies")
+            lines.append("• 💰 **Earn yield** - Deposit into DeFi protocols and earn interest")
+            lines.append("• 📊 **Track portfolio** - See your holdings and performance")
             return "\n".join(lines)
         
         # Handle PortfolioSummary dataclass or dict
@@ -333,6 +355,28 @@ Analyze and respond using the portfolio data provided above."""
                 amount = holding.get("amount", 0)
                 value_usd = holding.get("value_usd", 0)
                 lines.append(f"- {symbol}: {amount:,.4f} (${value_usd:,.2f})")
+        
+        # Add suggestions based on holdings
+        lines.append("")
+        lines.append("**💡 What you can do:**")
+        
+        # Check if user has stablecoins (USDC, USDT, DAI) for lending suggestions
+        stablecoin_symbols = {"USDC", "USDT", "DAI"}
+        has_stablecoins = any(
+            h.get("symbol", "").upper() in stablecoin_symbols 
+            for h in top_holdings
+        )
+        
+        if has_stablecoins:
+            lines.append("• 💰 **Earn yield** - Say \"deposit USDC\" to earn interest on your stablecoins")
+            lines.append("• 📊 **Compare rates** - Say \"compare USDC rates\" to find the best APY")
+        
+        # Always suggest swap for users with holdings
+        lines.append("• 🔄 **Swap tokens** - Say \"swap\" to trade between cryptocurrencies")
+        
+        # Suggest buying more if balance is low
+        if total_value < 100:
+            lines.append("• 💳 **Buy more** - Say \"buy crypto\" to add funds with card/Apple Pay")
         
         return "\n".join(lines)
     
