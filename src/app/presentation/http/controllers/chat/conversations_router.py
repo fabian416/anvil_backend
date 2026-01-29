@@ -1656,6 +1656,33 @@ Response Guidelines:
             "remaining_daily": rate_result.remaining_daily,
         }
         
+        # Normalize enrichment to always include agent_timings and sources
+        # This ensures consistent response structure for frontend
+        if enrichment is None:
+            enrichment = {}
+        
+        # Ensure agent_timings is always present
+        if "agent_timings" not in enrichment:
+            enrichment["agent_timings"] = [{
+                "agent_type": handler_name or "handler",
+                "task_description": f"Handle {intent_result.intent.value} intent",
+                "execution_time_ms": 0,  # Not tracked in legacy flow
+                "status": "completed",
+            }]
+        
+        # Ensure sources is always present
+        if "sources" not in enrichment:
+            enrichment["sources"] = []
+        
+        # Build agent_message with sources included (match supervisor format)
+        agent_message_response = {
+            "id": str(assistant_message.id),
+            "role": assistant_message.role.value,
+            "content": assistant_message.content,
+            "created_at": assistant_message.created_at.isoformat(),
+            "sources": enrichment.get("sources", []),
+        }
+        
         return ChatResponse(
             conversation_id=str(conversation_id),
             message_id=str(assistant_message.id),
@@ -1665,12 +1692,7 @@ Response Guidelines:
                 "content": user_message.content,
                 "created_at": user_message.created_at.isoformat(),
             },
-            agent_message={
-                "id": str(assistant_message.id),
-                "role": assistant_message.role.value,
-                "content": assistant_message.content,
-                "created_at": assistant_message.created_at.isoformat(),
-            },
+            agent_message=agent_message_response,
             routing=routing,
             enrichment=enrichment,
             registration_required=registration_required,
