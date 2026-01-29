@@ -603,8 +603,17 @@ Hyperliquid Spot só suporta swaps **com USDC**.
         market_data = await self._fetch_market_enrichment(from_token, to_token, chain)
         state.data["market_data"] = market_data
         
-        # Move to confirm step
-        state.step = WorkflowStep.CONFIRM.value
+        # Only move to confirm step if user has sufficient funds
+        # If user needs funding, stay in informational mode
+        if not user_context.needs_funding_recommendation:
+            state.step = WorkflowStep.CONFIRM.value
+        else:
+            # User needs to fund first - stay in parse_request
+            # Don't advance to confirm so frontend won't expect action
+            state.step = WorkflowStep.PARSE_REQUEST.value
+            logger.info(
+                f"[SwapWorkflow] Not advancing to confirm - user needs funding first"
+            )
         
         # Format quote response with enhanced market data
         response = self._format_quote_response(state.data, user_context.language)

@@ -447,14 +447,24 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         
         # Store vault data
         state.data["vault"] = vault_data
-        state.step = WorkflowStep.CONFIRM.value
         
-        # Build execute_data for frontend
-        state.execute_data = self._build_deposit_execute_data(
-            vault_data=vault_data,
-            amount=amount,
-            chain=chain,
-        )
+        # Only build execute_data if user has sufficient funds
+        # If user needs funding, don't include execute_data (no action card in frontend)
+        if not user_context.needs_funding_recommendation:
+            state.step = WorkflowStep.CONFIRM.value
+            state.execute_data = self._build_deposit_execute_data(
+                vault_data=vault_data,
+                amount=amount,
+                chain=chain,
+            )
+        else:
+            # User needs to fund first - stay in informational mode
+            # Don't set execute_data so frontend won't show action card
+            state.step = WorkflowStep.PARSE_REQUEST.value  # Allow user to buy crypto first
+            state.execute_data = None
+            logger.info(
+                f"[LendingWorkflow] Not setting execute_data - user needs funding first"
+            )
         
         # Format quote response
         response = self._format_vault_quote(
