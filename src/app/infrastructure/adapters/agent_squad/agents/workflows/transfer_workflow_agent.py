@@ -321,14 +321,32 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         """Validate recipient address and perform safety checks."""
         
         language = user_context.language
-        recipient = state.data.get("recipient", "")
+        
+        # First, check if we're receiving the address from user input
+        # This happens when user provides address after we asked for it
+        user_input = message.value.strip()
+        recipient = state.data.get("recipient")
+        
+        # If no recipient in state, try to extract from user message
+        if not recipient:
+            # Check if user message looks like an address
+            potential_address = self._extract_address(user_input)
+            if potential_address:
+                recipient = potential_address
+                state.data["recipient"] = recipient
+                logger.info(f"[TransferWorkflow] Extracted recipient from user input: {recipient[:10]}...")
+            else:
+                # User input doesn't contain a valid address
+                logger.info(f"[TransferWorkflow] No valid address in user input: {user_input[:30]}...")
+                response = self._format_invalid_address(user_input or "empty", language)
+                return response, state
         
         # Validate address format
         validation = self._validate_address(recipient)
         
         if not validation["valid"]:
             # Invalid address
-            response = self._format_invalid_address(recipient, language)
+            response = self._format_invalid_address(recipient or "empty", language)
             state.data["recipient"] = None  # Clear invalid address
             return response, state
         
@@ -848,8 +866,12 @@ Para onde devo enviar?
         
         return msgs.get(language, msgs["en"])
     
-    def _format_invalid_address(self, address: str, language: str) -> str:
+    def _format_invalid_address(self, address: str | None, language: str) -> str:
         """Format invalid address error message."""
+        
+        # Handle None or empty address
+        if not address:
+            address = "empty"
         
         truncated = f"{address[:10]}..." if len(address) > 10 else address
         

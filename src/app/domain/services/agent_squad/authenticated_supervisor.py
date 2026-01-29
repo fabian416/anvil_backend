@@ -663,11 +663,13 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                             # CRITICAL: Only continue workflow if user's message looks like a parameter
                             # Don't continue if user is asking something completely different
                             user_msg_lower = message.lower().strip()
+                            user_msg_original = message.strip()
                             
                             # Check if user message is a valid workflow continuation:
                             # - Numeric value (amount)
                             # - Confirmation words
                             # - Token/crypto names
+                            # - Wallet addresses (EVM or Solana)
                             # - Very short responses (1-2 words, likely selection)
                             is_parameter_like = (
                                 # Numeric (with or without decimals, optional $ prefix)
@@ -679,7 +681,11 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                                 # Menu selection (1, 2, 3, etc. or "option 1")
                                 re.match(r'^(option\s*)?\d$', user_msg_lower) or
                                 # "all" for depositing entire balance
-                                user_msg_lower == "all"
+                                user_msg_lower == "all" or
+                                # EVM wallet addresses (0x followed by 40 hex chars)
+                                re.match(r'^0x[a-fA-F0-9]{40}$', user_msg_original) or
+                                # Solana wallet addresses (32-44 alphanumeric base58)
+                                re.match(r'^[1-9A-HJ-NP-Za-km-z]{32,44}$', user_msg_original)
                             )
                             
                             # Check if user is asking a different question (not a parameter)
