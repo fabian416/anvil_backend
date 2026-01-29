@@ -183,6 +183,9 @@ class SendMessageWithSupervisor:
         ]
         
         try:
+            # Track supervisor planning time
+            planning_start = time.time()
+            
             # Create workflow plan
             logger.info(
                 f"🔄 Creating workflow plan for authenticated user",
@@ -200,21 +203,26 @@ class SendMessageWithSupervisor:
                 available_agents=available_agents,
             )
             
+            planning_time_ms = int((time.time() - planning_start) * 1000)
+            
             logger.info(
-                f"📋 Workflow planned: {len(workflow_plan.tasks)} tasks",
+                f"📋 Workflow planned: {len(workflow_plan.tasks)} tasks in {planning_time_ms}ms",
                 extra={
                     "tasks": [t.agent_type.value for t in workflow_plan.tasks],
+                    "planning_time_ms": planning_time_ms,
                 }
             )
             
             # Execute workflow - CRITICAL: pass message explicitly to prevent context pollution
             # Do NOT rely on conversation_history[-1] as it may contain previous messages
+            execution_start = time.time()
             response_content, sources_raw, agent_timings = await self._supervisor.execute_workflow(
                 conversation_id=ConversationId(conversation_id),
                 workflow_plan=workflow_plan,
                 conversation_context=agent_context,
                 original_message=message,  # Explicitly pass current user message
             )
+            execution_time_ms = int((time.time() - execution_start) * 1000)
             
             # Process sources
             sources = []
@@ -226,9 +234,36 @@ class SendMessageWithSupervisor:
                 else:
                     sources.append({"raw": str(source)})
             
+            # Add supervisor planning as a source (LLM used for routing)
+            from datetime import datetime, UTC
+            supervisor_source = {
+                "source_type": "llm",
+                "source_name": "gemini-2.0-flash",  # Default supervisor model
+                "citation_text": "Supervisor LLM for workflow planning and routing",
+                "fetched_at": datetime.now(UTC).isoformat(),
+                "provider": "Vertex AI",
+                "metadata": {
+                    "role": "supervisor",
+                    "planning_time_ms": planning_time_ms,
+                    "tasks_planned": len(workflow_plan.tasks),
+                },
+            }
+            sources.insert(0, supervisor_source)  # Add at beginning
+            
+            # Add supervisor timing entry at the beginning of agent_timings
+            supervisor_timing = {
+                "agent_type": "supervisor",
+                "task_description": f"Plan workflow: {len(workflow_plan.tasks)} agent(s) | LLM: Vertex AI",
+                "execution_time_ms": planning_time_ms,
+                "status": "completed",
+                "provider": "Vertex AI",
+                "tools_used": ["workflow_planning"],
+            }
+            agent_timings.insert(0, supervisor_timing)  # Add at beginning
+            
             # Debug: Log sources count
             logger.info(
-                f"📊 Sources collected: {len(sources)} sources",
+                f"📊 Sources collected: {len(sources)} sources (including supervisor)",
                 extra={"source_names": [s.get('source_name', 'unknown') for s in sources]}
             )
             
