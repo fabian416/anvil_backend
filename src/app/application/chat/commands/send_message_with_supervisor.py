@@ -236,30 +236,60 @@ class SendMessageWithSupervisor:
             
             # Add supervisor planning as a source (LLM used for routing)
             from datetime import datetime, UTC
-            supervisor_source = {
-                "source_type": "llm",
-                "source_name": "gemini-2.0-flash",  # Default supervisor model
-                "citation_text": "Supervisor LLM for workflow planning and routing",
-                "fetched_at": datetime.now(UTC).isoformat(),
-                "provider": "Vertex AI",
-                "metadata": {
-                    "role": "supervisor",
-                    "planning_time_ms": planning_time_ms,
-                    "tasks_planned": len(workflow_plan.tasks),
-                },
-            }
-            sources.insert(0, supervisor_source)  # Add at beginning
             
-            # Add supervisor timing entry at the beginning of agent_timings
-            supervisor_timing = {
-                "agent_type": "supervisor",
-                "task_description": f"Plan workflow: {len(workflow_plan.tasks)} agent(s) | LLM: Vertex AI",
-                "execution_time_ms": planning_time_ms,
-                "status": "completed",
-                "provider": "Vertex AI",
-                "tools_used": ["workflow_planning"],
-            }
-            agent_timings.insert(0, supervisor_timing)  # Add at beginning
+            # Determine if LLM was used for planning or if it was direct routing
+            # Direct routing (0ms) happens for workflow continuations and fresh workflow starts
+            used_llm_planning = planning_time_ms > 100  # LLM calls typically take >100ms
+            
+            if used_llm_planning:
+                # Full LLM planning was used
+                supervisor_source = {
+                    "source_type": "llm",
+                    "source_name": "gemini-2.0-flash",
+                    "citation_text": "Supervisor LLM for workflow planning and agent routing",
+                    "fetched_at": datetime.now(UTC).isoformat(),
+                    "provider": "Vertex AI",
+                    "metadata": {
+                        "role": "supervisor",
+                        "planning_type": "llm",
+                        "planning_time_ms": planning_time_ms,
+                        "tasks_planned": len(workflow_plan.tasks),
+                    },
+                }
+                supervisor_timing = {
+                    "agent_type": "supervisor",
+                    "task_description": f"LLM Planning: {len(workflow_plan.tasks)} agent(s) | Model: gemini-2.0-flash",
+                    "execution_time_ms": planning_time_ms,
+                    "status": "completed",
+                    "provider": "Vertex AI",
+                    "tools_used": ["llm_workflow_planning"],
+                }
+            else:
+                # Direct routing (keyword-based, no LLM call)
+                supervisor_source = {
+                    "source_type": "system",
+                    "source_name": "Supervisor Router",
+                    "citation_text": "Direct routing based on intent detection (no LLM)",
+                    "fetched_at": datetime.now(UTC).isoformat(),
+                    "provider": "Anvil",
+                    "metadata": {
+                        "role": "supervisor",
+                        "planning_type": "direct_routing",
+                        "planning_time_ms": planning_time_ms,
+                        "tasks_planned": len(workflow_plan.tasks),
+                    },
+                }
+                supervisor_timing = {
+                    "agent_type": "supervisor",
+                    "task_description": f"Direct routing: {len(workflow_plan.tasks)} agent(s) (no LLM)",
+                    "execution_time_ms": planning_time_ms,
+                    "status": "completed",
+                    "provider": "Anvil",
+                    "tools_used": ["intent_routing"],
+                }
+            
+            sources.insert(0, supervisor_source)
+            agent_timings.insert(0, supervisor_timing)
             
             # Debug: Log sources count
             logger.info(
