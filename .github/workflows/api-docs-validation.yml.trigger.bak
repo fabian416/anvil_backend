@@ -1,0 +1,13 @@
+  pull_request:
+    paths:
+      - 'docs/frontend/**'
+      - 'src/app/presentation/http/controllers/**'
+      - 'scripts/api_audit/**'
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - 'docs/frontend/**'
+      - 'src/app/presentation/http/controllers/**'
+
