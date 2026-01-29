@@ -52,3 +52,4 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Start Celery Worker (general, all queues)
 CMD ["celery", "-A", "app.infrastructure.celery.app.celery_app", "worker", "--loglevel=INFO", "-n", "worker@%h"]
+[builder 9/9
