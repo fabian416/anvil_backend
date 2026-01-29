@@ -360,6 +360,16 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         If user has insufficient funds, shows helpful message to buy crypto.
         """
         language = user_context.language
+        text = message.value.strip()
+        
+        # Check if user is providing an amount (e.g., "10", "100", "$50")
+        # This handles the case where workflow asked for amount after protocol selection
+        if not state.data.get("amount"):
+            extracted_amount = self._extract_amount(text.lower())
+            if extracted_amount:
+                state.data["amount"] = extracted_amount
+                logger.info(f"[MoneyMarketWorkflow] Extracted amount from message: {extracted_amount}")
+        
         # Use 'or' to handle both missing keys AND None values
         asset = (state.data.get("asset") or "USDC").upper()
         amount = state.data.get("amount") or "0"
