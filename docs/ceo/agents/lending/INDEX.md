@@ -3,14 +3,14 @@
 > **Project:** Anvil DeFi Chat - Lending Integration with Morpho & Aave
 > **Methodology:** MIT Systems Thinking + Stanford Design Thinking + First Principles Analysis
 > **Agents:** @backend-engineer + @prompt-engineer + @code-review-waltz + @smart-agent-router
-> **Status:** ✅ Specification Complete - Ready for Implementation Review
-> **Date:** 2026-01-27
+> **Status:** ✅ Specification Complete - LENDING_BORROWING Agent Added
+> **Date:** 2026-01-29
 
 ---
 
 ## 📚 Document Overview
 
-This specification suite contains **13 comprehensive documents** totaling **8,243+ lines** covering the complete lending workflow implementation for Morpho (port 8088) and Aave (port 8085) integration.
+This specification suite contains **14 comprehensive documents** totaling **8,500+ lines** covering the complete lending workflow implementation for Morpho (port 8088) and Aave (port 8085) integration.
 
 ### Quick Navigation
 
@@ -18,9 +18,39 @@ This specification suite contains **13 comprehensive documents** totaling **8,24
 |----------|-----------|---------|
 | **Architecture** | architecture.md, implementation_plan.md, database_schema.md | System design and implementation roadmap |
 | **Agent Design** | agent_prompts.md, knowledge_base.md, shortcuts_update.md | AI agent configuration and knowledge |
+| **Enterprise Agent** | LENDING_BORROWING_AGENT.md | Aave health factor monitoring agent |
 | **Quality Assurance** | code_review_checklist.md, risk_analysis.md, integration_patterns.md | Review guidelines and best practices |
 | **Coordination** | agent_coordination.md, workflow_diagrams.md, context_awareness.md | Multi-agent orchestration |
 | **Overview** | README.md, INDEX.md (this file) | Navigation and getting started |
+
+---
+
+## 🏦 Enterprise Agent: LENDING_BORROWING
+
+### [LENDING_BORROWING_AGENT.md](./LENDING_BORROWING_AGENT.md) - Aave Health Factor Agent
+**Lines:** ~350 | **Priority:** High | **NEW**
+
+Enterprise-tier agent for advanced lending position monitoring:
+
+**Key Features:**
+- Real-time Aave V3 health factor monitoring
+- Collateral breakdown with asset values
+- Borrow rate comparison across protocols (Aave, Compound, Spark)
+- Liquidation risk assessment
+- Leverage strategy guidance
+
+**Distinction from LENDING_WORKFLOW:**
+| Feature | LENDING_WORKFLOW | LENDING_BORROWING |
+|---------|------------------|-------------------|
+| Type | Multi-step workflow | Single-step query |
+| Primary Protocol | Morpho | Aave V3 |
+| Purpose | Deposit tokens | Health monitoring |
+| Health Factor | Secondary | Primary feature |
+
+**Supervisor Routing:**
+- "what's my health factor" → LENDING_BORROWING
+- "check my Aave position" → LENDING_BORROWING
+- "deposit USDC" → LENDING_WORKFLOW
 
 ---
 
