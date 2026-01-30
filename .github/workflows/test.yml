@@ -154,6 +154,60 @@ jobs:
       run: |
         pytest tests/presentation/websocket/ -v --tb=short
 
+  celery-tests:
+    runs-on: ubuntu-latest
+    name: Celery Task Tests
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install dependencies
+      run: |
+        uv pip install -e '.[dev,test]' --system
+    
+    - name: Run Celery task tests
+      run: |
+        pytest tests/integration/celery/ -v --tb=short
+
+  auth-tests:
+    runs-on: ubuntu-latest
+    name: Auth Integration Tests
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install dependencies
+      run: |
+        uv pip install -e '.[dev,test]' --system
+    
+    - name: Run Privy login tests
+      run: |
+        pytest tests/integration/auth/test_privy_login.py -v --tb=short
+    
+    - name: Run login flow tests
+      run: |
+        pytest tests/integration/auth/test_login_flow.py -v --tb=short
+
   type-check:
     runs-on: ubuntu-latest
     name: Type Checking
@@ -180,3 +234,5 @@ jobs:
         mypy src/app/infrastructure/agno/
         mypy src/app/infrastructure/mcp/
         mypy src/app/presentation/http/websocket/
+        mypy src/app/infrastructure/celery/tasks/ --ignore-missing-imports
+        mypy src/app/infrastructure/adapters/privy/ --ignore-missing-imports
