@@ -62,7 +62,7 @@ async def _run_task(coro_factory):
 async def fetch_privy_wallet_balance(
     http_client: httpx.AsyncClient,
     wallet_id: str,
-    chain_id: int,
+    chain: str,
     asset: str,
     privy_app_id: str,
     privy_app_secret: str,
@@ -75,7 +75,7 @@ async def fetch_privy_wallet_balance(
     Args:
         http_client: HTTP client for requests
         wallet_id: Privy wallet ID
-        chain_id: Chain ID (e.g., 1 for Ethereum, 8453 for Base)
+        chain: Chain name (e.g., "ethereum", "base", "arbitrum")
         asset: Asset to check (e.g., "usdc", "eth")
         privy_app_id: Privy App ID
         privy_app_secret: Privy App Secret
@@ -97,7 +97,7 @@ async def fetch_privy_wallet_balance(
     
     url = f"https://api.privy.io/v1/wallets/{wallet_id}/balance"
     params = {
-        "chain_id": chain_id,
+        "chain": chain,
         "asset": asset,
     }
     
@@ -229,29 +229,38 @@ def sync_wallet_balances():
                     user_id = wallet_row[1]
                     privy_wallet_id = wallet_row[2]
                     wallet_address = wallet_row[3]
-                    default_chain = str(wallet_row[4]) if wallet_row[4] else "base"
+                    # Get chain value - handle enum or string
+                    chain_raw = wallet_row[4]
+                    if chain_raw:
+                        # If it's an enum, get its value; otherwise convert to string
+                        default_chain = chain_raw.value if hasattr(chain_raw, 'value') else str(chain_raw)
+                    else:
+                        default_chain = "base"
                     
                     processed_count += 1
                     
                     try:
-                        # Get chain ID for Privy API
-                        chain_id = CHAIN_ID_MAP.get(default_chain, 8453)  # Default to Base
-                        
                         # Fetch balance from Privy (USDC)
                         balance_data = await fetch_privy_wallet_balance(
                             http_client=http_client,
                             wallet_id=privy_wallet_id,
-                            chain_id=chain_id,
+                            chain=default_chain,  # Use chain name directly
                             asset="usdc",
                             privy_app_id=privy_settings.app_id,
                             privy_app_secret=privy_settings.app_secret,
                         )
                         
                         if balance_data:
-                            # Extract balance value
-                            # Privy returns: {"balance": "1000000", "decimals": 6}
-                            raw_balance = balance_data.get("balance", "0")
-                            decimals = balance_data.get("decimals", 6)
+                            # Extract balance value from Privy response
+                            # Privy returns: {"balances": [{"raw_value": "0", "raw_value_decimals": 6, ...}]}
+                            balances = balance_data.get("balances", [])
+                            if balances:
+                                first_balance = balances[0]
+                                raw_balance = first_balance.get("raw_value", "0")
+                                decimals = first_balance.get("raw_value_decimals", 6)
+                            else:
+                                raw_balance = "0"
+                                decimals = 6
                             
                             # Convert to USD value
                             balance_usd = Decimal(raw_balance) / Decimal(10 ** decimals)
@@ -391,21 +400,27 @@ def sync_single_wallet_balance(wallet_id: int, chain: str = "base"):
             
             privy_wallet_id = wallet_row[0]
             wallet_address = wallet_row[1]
-            chain_id = CHAIN_ID_MAP.get(chain, 8453)
             
             async with httpx.AsyncClient() as http_client:
                 balance_data = await fetch_privy_wallet_balance(
                     http_client=http_client,
                     wallet_id=privy_wallet_id,
-                    chain_id=chain_id,
+                    chain=chain,  # Use chain name directly
                     asset="usdc",
                     privy_app_id=privy_settings.app_id,
                     privy_app_secret=privy_settings.app_secret,
                 )
                 
                 if balance_data:
-                    raw_balance = balance_data.get("balance", "0")
-                    decimals = balance_data.get("decimals", 6)
+                    # Extract balance value from Privy response
+                    balances = balance_data.get("balances", [])
+                    if balances:
+                        first_balance = balances[0]
+                        raw_balance = first_balance.get("raw_value", "0")
+                        decimals = first_balance.get("raw_value_decimals", 6)
+                    else:
+                        raw_balance = "0"
+                        decimals = 6
                     balance_usd = Decimal(raw_balance) / Decimal(10 ** decimals)
                     
                     if chain_addresses_table is not None:
