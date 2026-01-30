@@ -63,6 +63,9 @@ def map_wallet_tables() -> None:
         imported_at = mapped_column(DateTime(timezone=True), nullable=True, default=None)
         last_privy_sync_at = mapped_column(DateTime(timezone=True), nullable=True, default=None)
         
+        # Balance check tracking (for Celery background sync)
+        last_balance_checked_at = mapped_column(DateTime(timezone=True), nullable=True, default=None, index=True)
+        
         # Timestamps
         created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
         updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))

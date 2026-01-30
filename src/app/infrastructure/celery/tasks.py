@@ -109,6 +109,11 @@ from app.infrastructure.celery.tasks.user_context_tasks import (
     create_missing_user_contexts,
     user_context_analytics,
 )
+# Import Privy balance sync tasks
+from app.infrastructure.celery.tasks.privy_balance_tasks import (
+    sync_wallet_balances,
+    sync_single_wallet_balance,
+)
 # Import lending tasks
 from app.application.lending.tasks import (
     MonitorHealthFactorsTask,

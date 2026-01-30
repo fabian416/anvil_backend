@@ -28,6 +28,7 @@ def create_celery() -> Celery:
             "app.infrastructure.celery.compat_tasks",
             "app.infrastructure.celery.tasks.transaction_confirmation_tasks",
             "app.infrastructure.celery.tasks.money_market_tasks",
+            "app.infrastructure.celery.tasks.privy_balance_tasks",
         ],
     )
     app.conf.task_serializer = "json"
@@ -104,6 +105,10 @@ def create_celery() -> Celery:
         "monitor_lending_health_factors": {"queue": "risk"},
         "refresh_lending_positions": {"queue": "maintenance"},
         "check_user_lending_health": {"queue": "risk"},
+        
+        # Privy wallet balance sync
+        "privy.sync_wallet_balances": {"queue": "maintenance"},
+        "privy.sync_single_wallet_balance": {"queue": "maintenance"},
     }
     
     # Configuración de colas con prioridades
@@ -178,11 +183,19 @@ def create_celery() -> Celery:
             "schedule": crontab(minute=30),  # Every hour at :30
             "options": {"queue": "maintenance"},
         },
+        # Privy Wallet Balance Sync (every 30 seconds)
+        # Syncs wallet balances from Privy API for portfolio tracking
+        # Processes max 10 wallets per run, skips if checked within 3 minutes
+        "privy-sync-wallet-balances": {
+            "task": "privy.sync_wallet_balances",
+            "schedule": 30.0,  # Every 30 seconds
+            "options": {"queue": "maintenance"},
+        },
     }
 
     # Disable the task if transaction confirmation is disabled
     if not tx_conf.enabled:
-        # Keep money market and lending tasks even if transaction confirmation is disabled
+        # Keep money market, lending, and privy tasks even if transaction confirmation is disabled
         app.conf.beat_schedule = {
             "money-market-warm-cache": app.conf.beat_schedule.get("money-market-warm-cache"),
             "money-market-check-alerts": app.conf.beat_schedule.get("money-market-check-alerts"),
@@ -190,6 +203,7 @@ def create_celery() -> Celery:
             "money-market-cleanup-cache": app.conf.beat_schedule.get("money-market-cleanup-cache"),
             "monitor-lending-health-factors": app.conf.beat_schedule.get("monitor-lending-health-factors"),
             "refresh-lending-positions": app.conf.beat_schedule.get("refresh-lending-positions"),
+            "privy-sync-wallet-balances": app.conf.beat_schedule.get("privy-sync-wallet-balances"),
         }
 
     return app
