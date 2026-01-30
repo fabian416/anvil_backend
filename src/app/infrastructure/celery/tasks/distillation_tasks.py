@@ -7,11 +7,13 @@ from celery.schedules import crontab
 from app.infrastructure.celery.app import celery_app
 from app.setup.config.settings import load_settings
 from app.setup.app_factory import create_async_ioc_container
-from app.setup.ioc.provider_registry import get_providers
 
 
 async def _run_task(coro_factory):
     """Helper to run async tasks with DI container."""
+    # Lazy import to avoid loading heavy dependencies at module import time
+    from app.setup.ioc.provider_registry import get_providers
+    
     settings = load_settings()
     container = create_async_ioc_container(
         providers=get_providers(),

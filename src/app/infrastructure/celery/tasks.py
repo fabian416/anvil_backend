@@ -3,7 +3,6 @@ from dishka import Scope
 from celery.schedules import crontab
 
 from app.infrastructure.celery.app import celery_app
-from app.setup.ioc.provider_registry import get_providers
 from app.setup.ioc.application import ApplicationProvider
 from app.setup.ioc.infrastructure import infrastructure_provider
 from app.setup.ioc.presentation import PresentationProvider
