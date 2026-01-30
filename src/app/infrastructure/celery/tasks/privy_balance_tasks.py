@@ -152,6 +152,7 @@ def sync_wallet_balances():
         from sqlalchemy import select, update, and_, or_
         from sqlalchemy.ext.asyncio import AsyncSession
         from app.infrastructure.persistence_sqla.registry import mapping_registry
+        from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
         from app.infrastructure.adapters.types import MainAsyncSession
         from app.setup.config.privy import PrivySettings
         
@@ -171,6 +172,9 @@ def sync_wallet_balances():
             if not privy_settings.app_id or not privy_settings.app_secret:
                 logger.warning("Privy credentials not configured, skipping balance sync")
                 return
+            
+            # Ensure wallet table mappings are loaded
+            map_wallet_tables()
             
             # Get table references
             wallets_table = mapping_registry.metadata.tables.get("wallets")
@@ -345,6 +349,7 @@ def sync_single_wallet_balance(wallet_id: int, chain: str = "base"):
         from sqlalchemy import select, update, and_
         from sqlalchemy.ext.asyncio import AsyncSession
         from app.infrastructure.persistence_sqla.registry import mapping_registry
+        from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
         from app.infrastructure.adapters.types import MainAsyncSession
         from app.setup.config.privy import PrivySettings
         
@@ -358,6 +363,9 @@ def sync_single_wallet_balance(wallet_id: int, chain: str = "base"):
             if not privy_settings.app_id or not privy_settings.app_secret:
                 logger.warning("Privy credentials not configured")
                 return
+            
+            # Ensure wallet table mappings are loaded
+            map_wallet_tables()
             
             wallets_table = mapping_registry.metadata.tables.get("wallets")
             chain_addresses_table = mapping_registry.metadata.tables.get("chain_addresses")
