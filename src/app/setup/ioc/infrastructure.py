@@ -206,6 +206,7 @@ from app.presentation.http.auth.adapters.session_transport_jwt_header import (
 from app.setup.config.agent_squad import AgentSquadConfig, load_agent_squad_config
 from app.setup.config.privy import PrivySettings
 from app.setup.config.settings import AppSettings
+from app.infrastructure.adapters.privy.privy_api_client import PrivyApiClient
 
 
 class InfrastructureProvider(Provider):
@@ -552,6 +553,28 @@ class InfrastructureProvider(Provider):
         The PrivyClient handles connection pooling internally.
         """
         return PrivyClient(settings)
+
+    @provide(scope=Scope.APP)
+    def get_privy_api_client(self, settings: PrivySettings) -> PrivyApiClient:
+        """
+        Provide Privy API client for fetching user/wallet data.
+
+        Used by PrivyLogin to fetch wallet IDs for balance tracking.
+        APP-scoped because it creates HTTP connections per request.
+        """
+        return PrivyApiClient(settings)
+
+    @provide(scope=Scope.REQUEST)
+    def get_optional_privy_api_client(
+        self, client: PrivyApiClient
+    ) -> PrivyApiClient | None:
+        """
+        Provide Optional[PrivyApiClient] for backwards compatibility.
+
+        PrivyLogin declares this as optional to maintain backwards
+        compatibility with existing code that doesn't use Privy API.
+        """
+        return client
 
     @provide(scope=Scope.APP)
     def get_wallet_provider(self, client: PrivyClient) -> EmbeddedWalletProviderPort:

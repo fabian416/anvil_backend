@@ -2,7 +2,8 @@
 Privy Login interactor - handles authentication via Privy tokens.
 
 Also handles automatic wallet synchronization to the wallets table
-when a user logs in with a wallet address.
+when a user logs in with a wallet address. Fetches wallet IDs from
+Privy API to enable balance tracking via Celery background tasks.
 """
 
 import logging
@@ -37,6 +38,7 @@ from app.infrastructure.exceptions.gateway import DataMapperError
 from app.setup.config.admin import AdminSettings
 from app.application.chat.services.user_context_service import UserContextService
 from app.domain.ports.chat_repository import ChatUserRepository
+from app.infrastructure.adapters.privy.privy_api_client import PrivyApiClient
 
 log = logging.getLogger(__name__)
 
@@ -89,6 +91,8 @@ class PrivyLogin:
         session_recorder: SessionRecorder,
         admin_settings: AdminSettings,
         wallet_repository: WalletRepository,
+        # Privy API client for fetching wallet IDs
+        privy_api_client: PrivyApiClient | None = None,
         # Context-aware agents dependencies (optional for backwards compat)
         user_context_service: UserContextService | None = None,
         chat_user_repository: ChatUserRepository | None = None,
@@ -100,6 +104,7 @@ class PrivyLogin:
         self._session_recorder = session_recorder
         self._admin_settings = admin_settings
         self._wallet_repository = wallet_repository
+        self._privy_api_client = privy_api_client
         # Context-aware agents
         self._user_context_service = user_context_service
         self._chat_user_repository = chat_user_repository
@@ -414,6 +419,9 @@ class PrivyLogin:
 
         This ensures the wallet exists in the wallets table for portfolio
         tracking and other features that depend on wallet records.
+        
+        Also fetches the Privy wallet ID from the Privy API to enable
+        balance tracking via Celery background tasks.
         """
         try:
             # Determine chain type from address format
@@ -427,18 +435,46 @@ class PrivyLogin:
             elif wallet_address.startswith("m") or wallet_address.startswith("n") or wallet_address.startswith("2"):
                 chain_type = "bitcoin_testnet"
 
+            # Fetch Privy wallet ID from Privy API
+            privy_wallet_id: str | None = None
+            if self._privy_api_client and user.privy_user_id:
+                try:
+                    privy_wallet_id = await self._privy_api_client.get_wallet_id_for_address(
+                        privy_user_id=user.privy_user_id.value,
+                        wallet_address=wallet_address,
+                    )
+                    if privy_wallet_id:
+                        log.info(
+                            "Fetched Privy wallet ID: user=%s, wallet_id=%s",
+                            user.id_.value,
+                            privy_wallet_id,
+                        )
+                    else:
+                        log.warning(
+                            "Could not find Privy wallet ID for address %s",
+                            wallet_address[:10] + "...",
+                        )
+                except Exception as e:
+                    # Log but don't fail - wallet sync can still work without Privy ID
+                    log.warning(
+                        "Failed to fetch Privy wallet ID for user %s: %s",
+                        user.id_.value,
+                        e,
+                    )
+
             await self._wallet_repository.upsert(
                 user_id=user.id_,
                 address=wallet_address,
                 provider=WalletProvider.PRIVY,
-                privy_wallet_id=None,  # Will be updated when wallet is synced from Privy
+                privy_wallet_id=privy_wallet_id,
                 chain_type=chain_type,
             )
             log.info(
-                "Synced wallet to DB: user=%s, address=%s, chain=%s",
+                "Synced wallet to DB: user=%s, address=%s, chain=%s, privy_wallet_id=%s",
                 user.id_.value,
                 wallet_address[:10] + "...",
                 chain_type,
+                privy_wallet_id or "None",
             )
         except DataMapperError as e:
             # Log but don't fail login if wallet sync fails
