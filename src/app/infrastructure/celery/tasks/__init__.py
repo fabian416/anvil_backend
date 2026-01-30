@@ -14,6 +14,11 @@ from app.infrastructure.celery.tasks.projects_tasks import (
     check_knowledge_base_health,
 )
 
+from app.infrastructure.celery.tasks.privy_balance_tasks import (
+    sync_wallet_balances,
+    sync_single_wallet_balance,
+)
+
 __all__ = [
     # Distillation tasks
     "aggregate_distillation_telemetry",
@@ -25,4 +30,8 @@ __all__ = [
     "evaluate_auto_assignment_rules",
     "aggregate_project_analytics",
     "check_knowledge_base_health",
+    
+    # Privy balance tasks
+    "sync_wallet_balances",
+    "sync_single_wallet_balance",
 ]
