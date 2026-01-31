@@ -1,9 +1,83 @@
 {
-	{$CADDY_GLOBAL_OPTIONS}
+    {$CADDY_GLOBAL_OPTIONS}
 }
 
 {$CADDY_EXTRA_CONFIG}
 
 {$DOMAIN} {
-	reverse_proxy fastapi:8080
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Flower (Celery Monitoring) - with basic auth
+    handle /flower/* {
+        uri strip_prefix /flower
+        reverse_proxy flower:5555
+    }
+
+    # MCP Servers - route based on path
+    handle /mcp/1inch/* {
+        uri strip_prefix /mcp/1inch
+        reverse_proxy mcp-1inch:8081
+    }
+
+    handle /mcp/defillama/* {
+        uri strip_prefix /mcp/defillama
+        reverse_proxy mcp-defillama:8082
+    }
+
+    handle /mcp/thegraph/* {
+        uri strip_prefix /mcp/thegraph
+        reverse_proxy mcp-thegraph:8083
+    }
+
+    handle /mcp/coingecko/* {
+        uri strip_prefix /mcp/coingecko
+        reverse_proxy mcp-coingecko:8084
+    }
+
+    handle /mcp/aave/* {
+        uri strip_prefix /mcp/aave
+        reverse_proxy mcp-aave:8085
+    }
+
+    handle /mcp/portfolio/* {
+        uri strip_prefix /mcp/portfolio
+        reverse_proxy mcp-portfolio:8086
+    }
+
+    handle /mcp/perplexity/* {
+        uri strip_prefix /mcp/perplexity
+        reverse_proxy mcp-perplexity:8087
+    }
+
+    handle /mcp/morpho/* {
+        uri strip_prefix /mcp/morpho
+        reverse_proxy mcp-morpho:8088
+    }
+
+    handle /mcp/curve/* {
+        uri strip_prefix /mcp/curve
+        reverse_proxy mcp-curve:8089
+    }
+
+    handle /mcp/hyperliquid/* {
+        uri strip_prefix /mcp/hyperliquid
+        reverse_proxy mcp-hyperliquid:8090
+    }
+
+    handle /mcp/layerzero/* {
+        uri strip_prefix /mcp/layerzero
+        reverse_proxy mcp-layerzero:8091
+    }
+
+    # FastAPI - catch all remaining traffic
+    handle {
+        reverse_proxy fastapi:8080
+    }
 }

@@ -10,13 +10,16 @@ docker-compose -f docker-compose.yaml up -d
 
 ```bash
 # All services running?
-docker-compose ps | grep Up | wc -l  # Should show 27
+docker-compose ps | grep Up | wc -l  # Should show 28 (including Caddy)
 
-# Health check
+# Health check (local)
 curl http://localhost:8080/health
 
+# Health check (production via Caddy)
+curl https://anvil.zk-access.xyz/health
+
 # Database working?
-psql -h localhost -U anvil -d anvil_db -c "SELECT 1"
+psql -h localhost -U postgres -d anvil_db -c "SELECT 1"
 
 # Redis working?
 redis-cli -h localhost ping
@@ -27,11 +30,15 @@ redis-cli -h localhost ping
 | Command | Purpose |
 |---------|---------|
 | `docker-compose ps` | All services status |
-| `curl http://localhost:5555` | Flower monitoring dashboard |
+| `curl http://localhost:5555` | Flower monitoring dashboard (local) |
+| `curl https://anvil.zk-access.xyz/flower/` | Flower via Caddy (production) |
 | `docker stats` | Resource usage |
 | `docker-compose logs -f fastapi` | API logs |
+| `docker-compose logs -f caddy` | Caddy reverse proxy logs |
 
 ## 📍 Access Services
+
+### Local (Development)
 
 | Service | URL |
 |---------|-----|
@@ -40,6 +47,21 @@ redis-cli -h localhost ping
 | Flower | http://localhost:5555 |
 | PostgreSQL | localhost:5432 |
 | Redis | localhost:6379 |
+| MCP Aave | http://localhost:8085/health |
+
+### Production (via Caddy)
+
+| Service | URL |
+|---------|-----|
+| API | https://anvil.zk-access.xyz |
+| Docs | https://anvil.zk-access.xyz/docs |
+| Health | https://anvil.zk-access.xyz/health |
+| Guest Chat | https://anvil.zk-access.xyz/api/v1/guest/chat |
+| Flower | https://anvil.zk-access.xyz/flower/ |
+| MCP Aave | https://anvil.zk-access.xyz/mcp/aave/health |
+| MCP DeFiLlama | https://anvil.zk-access.xyz/mcp/defillama/health |
+| MCP CoinGecko | https://anvil.zk-access.xyz/mcp/coingecko/health |
+| All MCPs | https://anvil.zk-access.xyz/mcp/{service}/health |
 
 ## 🔧 Common Troubleshooting
 

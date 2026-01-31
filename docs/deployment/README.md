@@ -5,12 +5,19 @@
 ### Infrastructure & Docker
 
 - **[INFRASTRUCTURE.md](./INFRASTRUCTURE.md)** - Complete Docker infrastructure guide
-  - 27-service architecture overview
+  - 28-service architecture overview (including Caddy)
   - Quick start (one command to run everything)
   - Service details and access points
   - Operational guide and monitoring
   - Troubleshooting and emergency procedures
   - Production deployment checklist
+
+- **[CADDY_SETUP.md](./CADDY_SETUP.md)** - Reverse proxy & HTTPS setup
+  - Automatic HTTPS with Let's Encrypt
+  - MCP server routing (/mcp/*)
+  - Flower monitoring routing (/flower/*)
+  - Security headers configuration
+  - Production domain setup
 
 - **[docker/README.md](./docker/README.md)** - Docker services documentation index
   - Complete service inventory with details
@@ -36,7 +43,7 @@
 
 ## 🚀 Quick Start
 
-**Start all 27 services with one command:**
+**Start all 28 services with one command:**
 
 ```bash
 cd /home/lucholeonel/CODE-werify/freelance/anvil_backend
@@ -47,7 +54,8 @@ docker-compose -f docker-compose.yaml up -d
 
 ```bash
 docker-compose ps
-curl http://localhost:8080/health
+curl http://localhost:8080/health  # Local
+curl https://anvil.zk-access.xyz/health  # Production
 ```
 
 That's it! ✅

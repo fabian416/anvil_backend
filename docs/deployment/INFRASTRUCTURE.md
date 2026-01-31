@@ -73,13 +73,16 @@ curl http://localhost:8080/health
 │  ├─ Hyperliquid (8090) - Perpetuals Exchange             │
 │  └─ LayerZero (8091) - Cross-chain Messaging             │
 │                                                           │
+│  � Reverse Proxy (1)                                    │
+│  └─ Caddy - HTTPS & Routing (80, 443)                    │
+│                                                           │
 │  📊 Monitoring (1)                                       │
 │  └─ Flower (5555) - Celery Dashboard                     │
 │                                                           │
 │  🛠️ Utilities (1)                                         │
 │  └─ TX Confirmation - Blockchain Confirmation           │
 │                                                           │
-│  TOTAL: 27 SERVICES                                       │
+│  TOTAL: 28 SERVICES                                       │
 │                                                           │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -90,6 +93,11 @@ curl http://localhost:8080/health
 Application Layer:
   FastAPI → PostgreSQL ✓
   FastAPI → Redis ✓
+  
+Proxy Layer:
+  Caddy → FastAPI (API routes) ✓
+  Caddy → Flower (/flower/*) ✓
+  Caddy → MCP Servers (/mcp/*) ✓
   
 Task Layer:
   Celery Beat → Redis ✓
@@ -542,12 +550,50 @@ ls k8s/
 
 ### Recommendations
 
+**Reverse Proxy**: Caddy (automatic HTTPS, configured) ✅  
 **Database**: Use managed PostgreSQL (AWS RDS, Cloud SQL)  
 **Cache**: Use managed Redis (ElastiCache, Memorystore)  
-**Containers**: Kubernetes or similar orchestrator  
+**Containers**: Docker Compose (current) or Kubernetes  
 **Monitoring**: Prometheus + Grafana  
 **Logging**: ELK Stack or Cloud Logging  
 **Secrets**: Use secrets manager (Vault, Secrets Manager)  
+
+---
+
+## Production Architecture (Current Setup)
+
+### HTTPS & Routing with Caddy
+
+```
+Internet (HTTPS:443)
+    ↓
+Caddy (automatic SSL)
+    ├─ /health, /api/v1/* → FastAPI:8080
+    ├─ /flower/* → Flower:5555
+    └─ /mcp/{service}/* → MCP Servers (8081-8091)
+         ├─ /mcp/1inch/* → 8081
+         ├─ /mcp/defillama/* → 8082
+         ├─ /mcp/thegraph/* → 8083
+         ├─ /mcp/coingecko/* → 8084
+         ├─ /mcp/aave/* → 8085
+         ├─ /mcp/portfolio/* → 8086
+         ├─ /mcp/perplexity/* → 8087
+         ├─ /mcp/morpho/* → 8088
+         ├─ /mcp/curve/* → 8089
+         ├─ /mcp/hyperliquid/* → 8090
+         └─ /mcp/layerzero/* → 8091
+```
+
+**Caddyfile Location**: `docker/Caddyfile`
+
+### Public Endpoints (via Caddy)
+
+| URL Pattern | Destination | Purpose |
+|-------------|-------------|---------|
+| `https://{domain}/health` | FastAPI:8080 | Health check |
+| `https://{domain}/api/v1/*` | FastAPI:8080 | API routes |
+| `https://{domain}/flower/*` | Flower:5555 | Celery monitoring |
+| `https://{domain}/mcp/{service}/*` | MCP:808x | MCP services |
 
 ---
 
