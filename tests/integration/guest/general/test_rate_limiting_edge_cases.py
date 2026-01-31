@@ -80,29 +80,6 @@ class TestRateLimitErrorHandling:
             for response in responses:
                 assert response.status_code == status.HTTP_200_OK
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_rate_limit_429_error_format",
-                user_input="query",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_rate_limit_429_error_format,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_rate_limit_headers_present(self, client: AsyncClient, llm_validator):
         """
@@ -178,27 +155,3 @@ class TestRateLimitErrorHandling:
         # Verify response data is correct
         data = response.json()
         assert "agent_message" in data
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_rate_limit_headers_present",
-                user_input="check rate limit headers",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_rate_limit_headers_present,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-        assert data["agent_message"]["content"]

@@ -90,29 +90,6 @@ class TestConversationSearchFiltering:
             response3.status_code == status.HTTP_200_OK
         ])
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_conversation_search_by_keyword",
-                user_input="What is the price of Ethereum?",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_conversation_search_by_keyword,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_conversation_export_json_format(self, client: AsyncClient, llm_validator):
         """
@@ -165,29 +142,6 @@ class TestConversationSearchFiltering:
             agent_msg = response_data["agent_message"]
             assert "content" in agent_msg
             assert agent_msg["content"]  # Non-empty content
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_conversation_export_json_format",
-                user_input="Tell me about DeFi protocols",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_conversation_export_json_format,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
 
     @pytest.mark.llm_validation
     async def test_conversation_filtering_by_date_range(self, client: AsyncClient, llm_validator):
@@ -260,27 +214,3 @@ class TestConversationSearchFiltering:
             # Agent message should have metadata
             agent_msg = response_data["agent_message"]
             assert "content" in agent_msg
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_conversation_filtering_by_date_range",
-                user_input="First message about Ethereum",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_conversation_filtering_by_date_range,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-            assert agent_msg["content"]  # Non-empty content

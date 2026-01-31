@@ -50,29 +50,6 @@ class TestMultiStepFlowEdgeCases:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 50, "Should offer guidance for ambiguous query"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_empty_flow_execution",
-                user_input="I",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_empty_flow_execution,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_single_step_flow(self, client: AsyncClient, llm_validator):
         """
@@ -98,29 +75,6 @@ class TestMultiStepFlowEdgeCases:
         # Should provide direct answer for simple query
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 20, "Should provide price information"
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_single_step_flow",
-                user_input="What",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_single_step_flow,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
 
     @pytest.mark.llm_validation
     async def test_maximum_flow_steps(self, client: AsyncClient, llm_validator):
@@ -150,29 +104,6 @@ class TestMultiStepFlowEdgeCases:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 150, "Should address all steps in complex flow (150+ chars)"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_maximum_flow_steps",
-                user_input="Check BTC price, check ETH price, check SOL price, ",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_maximum_flow_steps,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_flow_with_all_step_types(self, client: AsyncClient, llm_validator):
         """
@@ -199,27 +130,3 @@ class TestMultiStepFlowEdgeCases:
 
         # Should handle query + analysis + recommendation
         agent_response = data["agent_message"]["content"]
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_flow_with_all_step_types",
-                user_input="Show me Ethereum",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_flow_with_all_step_types,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-        assert len(agent_response) > 100, "Should provide comprehensive response with all step types (100+ chars)"

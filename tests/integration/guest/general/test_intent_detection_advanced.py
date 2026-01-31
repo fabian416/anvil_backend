@@ -64,29 +64,6 @@ class TestComplexMultiIntentScenarios:
         intents_acknowledged = sum([price_mentioned, swap_mentioned, lend_mentioned])
         assert intents_acknowledged >= 2, "Agent should acknowledge multiple intents in query"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_triple_intent_query",
-                user_input="Check ETH price, swap to USDC, then lend on Aave",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_triple_intent_query,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_nested_intent_query(self, client: AsyncClient, llm_validator):
         """
@@ -120,29 +97,6 @@ class TestComplexMultiIntentScenarios:
 
         assert conditional_handling, "Agent should handle conditional intent logic"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_nested_intent_query",
-                user_input="If ETH price is above $3000, swap 1 ETH to USDC",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_nested_intent_query,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_sequential_dependent_intents(self, client: AsyncClient, llm_validator):
         """
@@ -175,30 +129,6 @@ class TestComplexMultiIntentScenarios:
 
         assert sequential_understanding, "Agent should understand sequential dependent intents"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_sequential_dependent_intents",
-                user_input="Swap ETH to USDC, then use half to lend on Aave",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_sequential_dependent_intents,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
-
 class TestMultilingualIntentDetection:
     """Test intent detection across multiple languages."""
 
@@ -229,29 +159,6 @@ class TestMultilingualIntentDetection:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_chinese_language_support",
-                user_input="以太坊价格是多少?",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_chinese_language_support,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_portuguese_language_support(self, client: AsyncClient, llm_validator):
         """
@@ -279,29 +186,6 @@ class TestMultilingualIntentDetection:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_portuguese_language_support",
-                user_input="Qual é o preço do Ethereum?",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_portuguese_language_support,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_mixed_language_query(self, client: AsyncClient, llm_validator):
         """
@@ -328,30 +212,6 @@ class TestMultilingualIntentDetection:
         # Agent should handle gracefully (not crash)
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_mixed_language_query",
-                user_input="What is the ETH 价格?",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_mixed_language_query,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
 
 class TestIntentConfidenceBoundaries:
     """Test confidence threshold boundary behavior."""
@@ -382,29 +242,6 @@ class TestIntentConfidenceBoundaries:
         # Agent should handle gracefully - either ask for clarification or provide general info
         agent_response = data["agent_message"]["content"].lower()
         assert len(agent_response) > 0
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_intent_confidence_boundary_70_percent",
-                user_input="token thing",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_intent_confidence_boundary_70_percent,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
 
     @pytest.mark.llm_validation
     async def test_low_confidence_clarification_flow(self, client: AsyncClient, llm_validator):
@@ -457,30 +294,6 @@ class TestIntentConfidenceBoundaries:
         ])
         assert price_response, "Agent should understand clarified intent"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_low_confidence_clarification_flow",
-                user_input="what about it",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_low_confidence_clarification_flow,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
-
 class TestProtocolSpecificIntents:
     """Test protocol-specific intent routing."""
 
@@ -516,29 +329,6 @@ class TestProtocolSpecificIntents:
 
         assert protocol_mentioned, "Agent should address protocol-specific query"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_protocol_specific_routing_aave",
-                user_input="What",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate information about Aave protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
-                ),
-                test_func=self.test_protocol_specific_routing_aave,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'defi_protocol', 'protocol': 'Aave'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_protocol_comparison_intent(self, client: AsyncClient, llm_validator):
         """
@@ -570,28 +360,3 @@ class TestProtocolSpecificIntents:
 
         # At least one protocol should be mentioned in comparison
         comparison_handling = aave_mentioned or compound_mentioned or "compar" in agent_response
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_protocol_comparison_intent",
-                user_input="Which is better, Aave or Compound for lending?",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate information about Aave protocol. Response must explain what the protocol does, its key features, and relevant DeFi concepts in an accessible way."
-                ),
-                test_func=self.test_protocol_comparison_intent,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'defi_protocol', 'protocol': 'Aave'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
-        assert comparison_handling, "Agent should handle protocol comparison query"

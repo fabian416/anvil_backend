@@ -21,7 +21,17 @@ from app.infrastructure.adapters.agent_squad.agents.hunter_ai_agent import Hunte
 def mock_llm_client():
     """Mock LLM client gateway."""
     client = AsyncMock()
-    client.generate = AsyncMock()
+    # Mock both generate and chat methods
+    client.generate = AsyncMock(return_value={
+        "content": "Mocked response",
+        "tokens_used": 100,
+        "model": "gemini-2.0-flash",
+    })
+    client.chat = AsyncMock(return_value={
+        "content": "Mocked response",
+        "tokens_used": 100,
+        "model": "gemini-2.0-flash",
+    })
     return client
 
 
@@ -61,16 +71,17 @@ class TestAgentExecution:
         message = MessageContent("Hello! How can you help me?")
         context = ConversationContext()
 
-        # Mock LLM response with realistic latency
-        async def mock_generate_response(*args, **kwargs):
+        # Mock LLM response with realistic latency - return dict, not MagicMock
+        # The agent uses .chat() method, not .generate()
+        async def mock_chat_response(*args, **kwargs):
             await asyncio.sleep(0.015)  # 15ms simulated latency
-            return MagicMock(
-                content="I can help you with DeFi, trading, and more!",
-                tokens_used=150,
-                model="gemini-2.0-flash",
-            )
+            return {
+                "content": "I can help you with DeFi, trading, and more!",
+                "tokens_used": 150,
+                "model": "gemini-2.0-flash",
+            }
 
-        mock_llm_client.generate.side_effect = mock_generate_response
+        mock_llm_client.chat.side_effect = mock_chat_response
 
         response = await agent.execute(conversation_id, message, context)
 
@@ -108,16 +119,16 @@ class TestAgentExecution:
         message = MessageContent("What's the market sentiment for Bitcoin?")
         context = ConversationContext()
 
-        # Mock LLM response
-        async def mock_generate_response(*args, **kwargs):
+        # Mock LLM response - return dict, the agent uses .chat() method
+        async def mock_chat_response(*args, **kwargs):
             await asyncio.sleep(0.015)
-            return MagicMock(
-                content="Bitcoin sentiment is 75/100 (Bullish). Key drivers: ETF inflows, institutional adoption.",
-                tokens_used=300,
-                model="gemini-2.0-flash",
-            )
+            return {
+                "content": "Bitcoin sentiment is 75/100 (Bullish). Key drivers: ETF inflows, institutional adoption.",
+                "tokens_used": 300,
+                "model": "gemini-2.0-flash",
+            }
 
-        mock_llm_client.generate.side_effect = mock_generate_response
+        mock_llm_client.chat.side_effect = mock_chat_response
 
         response = await agent.execute(conversation_id, message, context)
 
@@ -134,8 +145,8 @@ class TestAgentExecution:
         message = MessageContent("Test message")
         context = ConversationContext()
 
-        # Mock LLM error
-        mock_llm_client.generate.side_effect = Exception("API error")
+        # Mock LLM error - agent uses .chat() method
+        mock_llm_client.chat.side_effect = Exception("API error")
 
         with pytest.raises(Exception) as exc_info:
             await agent.execute(conversation_id, message, context)

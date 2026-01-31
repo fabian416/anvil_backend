@@ -32,24 +32,6 @@ class TestAgnoMasterSwitch:
         # No agents should be initialized
         assert len(router.agents) == 0
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agno_disabled_globally",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_agno_enabled_by_default(self, mock_mcp_manager_http):
@@ -68,25 +50,6 @@ class TestAgnoMasterSwitch:
         assert AgentType.ANALYTICS in router.agents
         assert AgentType.PORTFOLIO in router.agents
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agno_enabled_by_default",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-
 class TestTradingAgentFlags:
     """Test Trading agent feature flags."""
     
@@ -102,24 +65,6 @@ class TestTradingAgentFlags:
         
         assert AgentType.TRADING in router.agents
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_agent_enabled_by_default",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_agent_can_be_disabled(self, mock_mcp_manager_http):
@@ -134,25 +79,6 @@ class TestTradingAgentFlags:
         
         assert AgentType.TRADING not in router.agents
         assert len(router.agents) == 4  # Other 4 agents still enabled
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_agent_can_be_disabled",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
 
 class TestLendingAgentFlags:
     """Test Lending agent feature flags."""
@@ -169,24 +95,6 @@ class TestLendingAgentFlags:
         
         assert AgentType.LENDING in router.agents
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lending_agent_enabled_by_default",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_lending_agent_can_be_disabled(self, mock_mcp_manager_http):
@@ -201,25 +109,6 @@ class TestLendingAgentFlags:
         
         assert AgentType.LENDING not in router.agents
         assert len(router.agents) == 4
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lending_agent_can_be_disabled",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
 
 class TestAnalyticsAgentFlags:
     """Test Analytics agent feature flags."""
@@ -236,24 +125,6 @@ class TestAnalyticsAgentFlags:
         
         assert AgentType.ANALYTICS in router.agents
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_analytics_agent_enabled_by_default",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_analytics_agent_can_be_disabled(self, mock_mcp_manager_http):
@@ -268,25 +139,6 @@ class TestAnalyticsAgentFlags:
         
         assert AgentType.ANALYTICS not in router.agents
         assert len(router.agents) == 4
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_analytics_agent_can_be_disabled",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
 
 class TestPortfolioAgentFlags:
     """Test Portfolio agent feature flags."""
@@ -303,24 +155,6 @@ class TestPortfolioAgentFlags:
         
         assert AgentType.PORTFOLIO in router.agents
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_portfolio_agent_enabled_by_default",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_portfolio_agent_can_be_disabled(self, mock_mcp_manager_http):
@@ -335,25 +169,6 @@ class TestPortfolioAgentFlags:
         
         assert AgentType.PORTFOLIO not in router.agents
         assert len(router.agents) == 4
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_portfolio_agent_can_be_disabled",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
 
 class TestPerpetualAgentFlags:
     """Test Perpetual agent feature flags."""
@@ -370,24 +185,6 @@ class TestPerpetualAgentFlags:
 
         assert AgentType.PERPETUAL in router.agents
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_perpetual_agent_enabled_by_default",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_perpetual_agent_can_be_disabled(self, mock_mcp_manager_http):
@@ -402,25 +199,6 @@ class TestPerpetualAgentFlags:
 
         assert AgentType.PERPETUAL not in router.agents
         assert len(router.agents) == 4
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_perpetual_agent_can_be_disabled",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
 
 class TestFallbackBehavior:
     """Test fallback behavior when agents are disabled."""
@@ -452,24 +230,6 @@ class TestFallbackBehavior:
         result = await router.route("Swap ETH for USDC")
         assert result is not None
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_fallback_to_analytics_enabled",
-                user_input="Fallback response",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_fallback_disabled_raises_error(self, mock_mcp_manager_http):
@@ -493,24 +253,6 @@ class TestFallbackBehavior:
         assert "trading agent is disabled" in str(exc_info.value)
         assert "trading_enabled=true" in str(exc_info.value)
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_fallback_disabled_raises_error",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_no_agents_enabled_raises_error(self, mock_mcp_manager_http):
@@ -538,25 +280,6 @@ class TestFallbackBehavior:
             await router.route("Any query")
         
         assert "All agents are disabled" in str(exc_info.value)
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_no_agents_enabled_raises_error",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
 
 class TestSelectiveAgentEnablement:
     """Test selective enablement scenarios."""
@@ -586,24 +309,6 @@ class TestSelectiveAgentEnablement:
         assert AgentType.PORTFOLIO in router.agents
         assert len(router.agents) == 2
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_read_only_mode",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_analytics_only_mode(self, mock_mcp_manager_http):
@@ -624,25 +329,6 @@ class TestSelectiveAgentEnablement:
         
         assert len(router.agents) == 1
         assert AgentType.ANALYTICS in router.agents
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_analytics_only_mode",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
 
 class TestConfigurationDefaults:
     """Test configuration default values."""
@@ -696,44 +382,3 @@ class TestIntentClassification:
         # Should still classify as trading
         assert agent_type == AgentType.TRADING
         assert confidence > 0
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_intent_classification_still_works",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-
-# Test Summary
-"""
-Total Tests: 22+
-
-Coverage:
-  ✅ Master Agno switch (enabled/disabled)
-  ✅ Individual agent flags (5 agents: trading, lending, perpetual, analytics, portfolio)
-  ✅ Fallback behavior (enabled/disabled)
-  ✅ Selective agent enablement scenarios
-  ✅ Configuration defaults
-  ✅ Error messages
-  ✅ Intent classification with disabled agents
-
-Use Cases Tested:
-  ✅ Read-only mode (no execution agents)
-  ✅ Analytics-only mode (market data)
-  ✅ Conservative mode (no trading/lending/perpetual)
-  ✅ Fallback to analytics
-  ✅ Error when no agents available
-  ✅ Perpetual agent enable/disable
-"""

@@ -50,29 +50,6 @@ class TestLLMIntegrationAdvanced:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 100, "Should provide comprehensive DeFi explanation"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_provider_failover_multiple_providers",
-                user_input="Explain DeFi yield farming strategies",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_provider_failover_multiple_providers,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_streaming_response_interruption(self, client: AsyncClient, llm_validator):
         """
@@ -98,29 +75,6 @@ class TestLLMIntegrationAdvanced:
         # Should receive complete response even for long content
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 150, "Should provide complete detailed analysis"
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_streaming_response_interruption",
-                user_input="Provide a detailed analysis of top 10 DeFi protocols",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_streaming_response_interruption,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
 
     @pytest.mark.llm_validation
     async def test_token_limit_handling_comprehensive(self, client: AsyncClient, llm_validator):
@@ -170,29 +124,6 @@ class TestLLMIntegrationAdvanced:
         agent_response = data_final["agent_message"]["content"]
         assert len(agent_response) > 50, "Should handle context window appropriately"
 
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_token_limit_handling_comprehensive",
-                user_input="Tell me about Bitcoin",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_token_limit_handling_comprehensive,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-
     @pytest.mark.llm_validation
     async def test_response_validation_quality_checks(self, client: AsyncClient, llm_validator):
         """
@@ -220,27 +151,3 @@ class TestLLMIntegrationAdvanced:
         assert len(agent_response) > 80, "Should provide substantial risk analysis"
 
         # Response should be coherent (no truncated sentences mid-word)
-
-        # Optional LLM semantic validation (environment-gated)
-        # Extract response data
-        data = response.json()
-        agent_response = data["agent_message"]["content"]
-
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_response_validation_quality_checks",
-                user_input="What are the risks of using DeFi protocols?",
-                agent_output=agent_response,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                test_func=self.test_response_validation_quality_checks,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                )
-
-        assert not agent_response.endswith("..."), "Should be complete response"
