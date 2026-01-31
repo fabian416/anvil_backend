@@ -17,10 +17,11 @@ from tests.helpers.error_validator import validate_error_response
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestRiskPrediction:
     """Integration tests for risk prediction."""
 
-    def test_predict_protocol_risk(self, client):
+    async def test_predict_protocol_risk(self, client):
         """
         WHEN user requests risk prediction
         THEN system SHALL return prediction
@@ -30,7 +31,7 @@ class TestRiskPrediction:
 
         protocol_id = str(uuid4())
 
-        response = client.get(
+        response = await client.get(
             f"/api/v1/user/ml/prediction/{protocol_id}",
             headers=headers,
         )
@@ -42,7 +43,7 @@ class TestRiskPrediction:
             data = response.json()
             assert "predicted_risk_score" in data or "protocol_id" in data
 
-    def test_predict_risk_nonexistent_protocol(self, client):
+    async def test_predict_risk_nonexistent_protocol(self, client):
         """
         WHEN protocol doesn't exist
         THEN system SHALL return 404
@@ -52,30 +53,31 @@ class TestRiskPrediction:
 
         nonexistent_id = str(uuid4())
 
-        response = client.get(
+        response = await client.get(
             f"/api/v1/user/ml/prediction/{nonexistent_id}",
             headers=headers,
         )
 
         assert response.status_code in (200, 401, 404, 500, 503)
 
-    def test_predict_risk_without_auth(self, client):
+    async def test_predict_risk_without_auth(self, client):
         """
         WHEN unauthenticated user requests prediction
         THEN system SHALL return 401
         """
         protocol_id = str(uuid4())
 
-        response = client.get(f"/api/v1/user/ml/prediction/{protocol_id}")
+        response = await client.get(f"/api/v1/user/ml/prediction/{protocol_id}")
 
         assert response.status_code in (401, 403, 422)
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestBatchRiskPrediction:
     """Integration tests for batch risk prediction."""
 
-    def test_batch_predict_risks(self, client):
+    async def test_batch_predict_risks(self, client):
         """
         WHEN user requests batch prediction
         THEN system SHALL return predictions
@@ -87,7 +89,7 @@ class TestBatchRiskPrediction:
             "protocol_ids": [str(uuid4()), str(uuid4())],
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/user/ml/prediction/batch",
             json=batch_request,
             headers=headers,
@@ -99,7 +101,7 @@ class TestBatchRiskPrediction:
             data = response.json()
             assert "predictions" in data or "total" in data
 
-    def test_batch_prediction_without_auth(self, client):
+    async def test_batch_prediction_without_auth(self, client):
         """
         WHEN unauthenticated user requests batch
         THEN system SHALL return 401
@@ -108,16 +110,17 @@ class TestBatchRiskPrediction:
             "protocol_ids": [str(uuid4())],
         }
 
-        response = client.post("/api/v1/user/ml/prediction/batch", json=batch_request)
+        response = await client.post("/api/v1/user/ml/prediction/batch", json=batch_request)
 
         assert response.status_code in (401, 403, 422)
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestAnomalyDetection:
     """Integration tests for anomaly detection."""
 
-    def test_detect_anomalies(self, client):
+    async def test_detect_anomalies(self, client):
         """
         WHEN user requests anomaly detection
         THEN system SHALL return anomaly data
@@ -127,7 +130,7 @@ class TestAnomalyDetection:
 
         protocol_id = str(uuid4())
 
-        response = client.get(
+        response = await client.get(
             f"/api/v1/user/ml/prediction/{protocol_id}/anomalies",
             params={"lookback_days": 7},
             headers=headers,
@@ -135,7 +138,7 @@ class TestAnomalyDetection:
 
         assert response.status_code in (200, 401, 404, 500, 503)
 
-    def test_anomaly_detection_invalid_lookback(self, client):
+    async def test_anomaly_detection_invalid_lookback(self, client):
         """
         WHEN lookback_days is invalid
         THEN system SHALL return validation error
@@ -145,7 +148,7 @@ class TestAnomalyDetection:
 
         protocol_id = str(uuid4())
 
-        response = client.get(
+        response = await client.get(
             f"/api/v1/user/ml/prediction/{protocol_id}/anomalies",
             params={"lookback_days": 100},  # Exceeds max of 90
             headers=headers,
@@ -155,10 +158,11 @@ class TestAnomalyDetection:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestRiskForecast:
     """Integration tests for risk forecasting."""
 
-    def test_forecast_risk(self, client):
+    async def test_forecast_risk(self, client):
         """
         WHEN user requests risk forecast
         THEN system SHALL return forecast
@@ -168,7 +172,7 @@ class TestRiskForecast:
 
         protocol_id = str(uuid4())
 
-        response = client.get(
+        response = await client.get(
             f"/api/v1/user/ml/prediction/{protocol_id}/forecast",
             params={"forecast_days": 7},
             headers=headers,
@@ -176,7 +180,7 @@ class TestRiskForecast:
 
         assert response.status_code in (200, 401, 404, 500, 503)
 
-    def test_forecast_invalid_days(self, client):
+    async def test_forecast_invalid_days(self, client):
         """
         WHEN forecast_days is invalid
         THEN system SHALL return validation error
@@ -186,7 +190,7 @@ class TestRiskForecast:
 
         protocol_id = str(uuid4())
 
-        response = client.get(
+        response = await client.get(
             f"/api/v1/user/ml/prediction/{protocol_id}/forecast",
             params={"forecast_days": 50},  # Exceeds max of 30
             headers=headers,
@@ -196,6 +200,7 @@ class TestRiskForecast:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestMLErrorResponses:
     """Integration tests for ML error responses."""
 

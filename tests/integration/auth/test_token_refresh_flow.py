@@ -12,10 +12,11 @@ import pytest
 
 @pytest.mark.integration
 @pytest.mark.auth
+@pytest.mark.asyncio
 class TestTokenRefreshFlow:
     """Integration tests for token refresh."""
 
-    def test_valid_refresh_token_returns_new_access_token(self, client):
+    async def test_valid_refresh_token_returns_new_access_token(self, client):
         """
         WHEN user provides valid refresh token
         THEN system SHALL return new access token
@@ -25,7 +26,7 @@ class TestTokenRefreshFlow:
             "refresh_token": "valid-refresh-token",
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/refresh-token",
             json=refresh_data
         )
@@ -37,7 +38,7 @@ class TestTokenRefreshFlow:
         else:
             assert response.status_code in (400, 401)
 
-    def test_refresh_with_invalid_token_returns_error(self, client):
+    async def test_refresh_with_invalid_token_returns_error(self, client):
         """
         WHEN user provides invalid refresh token
         THEN system SHALL return 401 error
@@ -46,14 +47,14 @@ class TestTokenRefreshFlow:
             "refresh_token": "invalid-refresh-token-12345",
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/refresh-token",
             json=refresh_data
         )
 
         assert response.status_code in (400, 401)
 
-    def test_refresh_with_expired_token_returns_error(self, client):
+    async def test_refresh_with_expired_token_returns_error(self, client):
         """
         WHEN user provides expired refresh token
         THEN system SHALL return error
@@ -62,26 +63,26 @@ class TestTokenRefreshFlow:
             "refresh_token": "expired-refresh-token",
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/refresh-token",
             json=refresh_data
         )
 
         assert response.status_code in (400, 401)
 
-    def test_refresh_without_token_returns_validation_error(self, client):
+    async def test_refresh_without_token_returns_validation_error(self, client):
         """
         WHEN user doesn't provide refresh token
         THEN system SHALL return validation error
         """
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/refresh-token",
             json={}
         )
 
         assert response.status_code == 422
 
-    def test_refresh_with_access_token_fails(self, client):
+    async def test_refresh_with_access_token_fails(self, client):
         """
         WHEN user provides access token instead of refresh token
         THEN system SHALL return error
@@ -90,7 +91,7 @@ class TestTokenRefreshFlow:
             "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access.token",
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/refresh-token",
             json=refresh_data
         )
@@ -100,10 +101,11 @@ class TestTokenRefreshFlow:
 
 @pytest.mark.integration
 @pytest.mark.auth
+@pytest.mark.asyncio
 class TestTokenRefreshSessionManagement:
     """Integration tests for token refresh session management."""
 
-    def test_refresh_maintains_user_context(self, client):
+    async def test_refresh_maintains_user_context(self, client):
         """
         WHEN token is refreshed
         THEN user context SHALL be preserved
@@ -111,7 +113,7 @@ class TestTokenRefreshSessionManagement:
         # This test requires a valid session
         pass
 
-    def test_old_access_token_still_valid_after_refresh(self, client):
+    async def test_old_access_token_still_valid_after_refresh(self, client):
         """
         WHEN new access token is generated
         THEN old token MAY still be valid until expiry
@@ -122,10 +124,11 @@ class TestTokenRefreshSessionManagement:
 
 @pytest.mark.integration
 @pytest.mark.auth
+@pytest.mark.asyncio
 class TestTokenRefreshErrorResponses:
     """Integration tests for token refresh error responses."""
 
-    def test_refresh_error_has_standardized_format(self, client):
+    async def test_refresh_error_has_standardized_format(self, client):
         """
         WHEN token refresh fails
         THEN error response SHALL have proper format
@@ -134,7 +137,7 @@ class TestTokenRefreshErrorResponses:
             "refresh_token": "invalid-token",
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/refresh-token",
             json=refresh_data
         )
