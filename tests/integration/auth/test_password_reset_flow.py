@@ -196,11 +196,11 @@ class TestPasswordResetSecurityBehavior:
         }
 
         # Both requests should fail (token invalid/used)
-        response1 = client.post(
+        response1 = await client.post(
             "/api/v1/account/password-reset/confirm",
             json=reset_data
         )
-        response2 = client.post(
+        response2 = await client.post(
             "/api/v1/account/password-reset/confirm",
             json=reset_data
         )

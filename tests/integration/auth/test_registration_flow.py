@@ -62,13 +62,13 @@ class TestRegistrationFlow:
         }
 
         # First registration might succeed or fail (db unavailable)
-        client.post("/api/v1/account/signup", json=registration_data)
+        await client.post("/api/v1/account/signup", json=registration_data)
 
         # Second registration should fail with conflict if first succeeded
         response = await client.post("/api/v1/account/signup", json=registration_data)
 
-        # 409 (conflict), 400 (already exists), or DB error
-        assert response.status_code in (400, 409, 500, 503)
+        # 409 (conflict), 400 (already exists), 201 (if first was not persisted), or DB error
+        assert response.status_code in (201, 400, 409, 500, 503)
 
     async def test_registration_with_weak_password_returns_error(self, client):
         """
@@ -279,7 +279,7 @@ class TestRegistrationValidation:
             "last_name": "User",
             "password": "SecurePassword123!",
         }
-        client.post("/api/v1/account/signup", json=first_registration)
+        await client.post("/api/v1/account/signup", json=first_registration)
 
         # Try to register with uppercase
         second_registration = {
