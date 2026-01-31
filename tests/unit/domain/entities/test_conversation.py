@@ -104,8 +104,10 @@ class TestConversation:
     
     def test_conversation_defaults_timestamps_if_not_provided(self):
         """Test conversation sets default timestamps."""
+        from datetime import timezone
+        
         # Arrange
-        before = datetime.utcnow()
+        before = datetime.now(timezone.utc)
         
         # Act
         conversation = Conversation(
@@ -114,11 +116,19 @@ class TestConversation:
         )
         
         # After
-        after = datetime.utcnow()
+        after = datetime.now(timezone.utc)
         
-        # Assert
-        assert before <= conversation.created_at <= after
-        assert before <= conversation.updated_at <= after
+        # Assert - compare timezone-aware datetimes
+        # If entity returns naive datetime, make it aware for comparison
+        created_at = conversation.created_at
+        updated_at = conversation.updated_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        if updated_at.tzinfo is None:
+            updated_at = updated_at.replace(tzinfo=timezone.utc)
+        
+        assert before <= created_at <= after
+        assert before <= updated_at <= after
     
     def test_conversation_accepts_zero_user_id(self):
         """Test conversation accepts edge case user ID."""

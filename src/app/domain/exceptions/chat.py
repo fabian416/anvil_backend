@@ -214,7 +214,6 @@ class MessageNotFoundError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
             details=details,
-            override_message="Message not found",
         )
 
 
@@ -234,7 +233,6 @@ class ConversationLimitExceededError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_RATE_LIMIT,
             details=details,
-            override_message="Maximum conversation limit reached",
         )
 
 
@@ -257,7 +255,6 @@ class CacheError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_SERVICE_OVERLOADED,
             details=details,
-            override_message="Cache operation failed",
         )
 
 
@@ -280,7 +277,6 @@ class PerformanceBudgetViolation(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_RATE_LIMIT,
             details=details,
-            override_message=f"Performance budget violated: {metric}",
         )
 
 
@@ -300,7 +296,6 @@ class AgentRoutingError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_UNAVAILABLE,
             details=details,
-            override_message="Unable to route request to an appropriate agent",
         )
 
 
@@ -320,7 +315,6 @@ class AgentTimeoutError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_ERROR,
             details=details,
-            override_message="Agent response timed out",
         )
 
 
@@ -343,7 +337,6 @@ class AgentContextLimitError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_MESSAGE_TOO_LONG,
             details=details,
-            override_message="Conversation context exceeds agent's token limit",
         )
 
 
@@ -364,7 +357,6 @@ class InvalidMessageRoleError(ApplicationError):
             ErrorCode.CHAT_MESSAGE_EMPTY,
             details=details,
             field="role",
-            override_message="Invalid message role",
         )
 
 
@@ -384,7 +376,6 @@ class DuplicateConversationError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_ACCESS_DENIED,
             details=details,
-            override_message="A conversation with this title already exists",
         )
 
 
@@ -404,7 +395,6 @@ class ConversationUpdateError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_ERROR,
             details=details,
-            override_message="Failed to update conversation",
         )
 
 
@@ -421,7 +411,6 @@ class StreamingNotSupportedError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_UNAVAILABLE,
             details=details,
-            override_message="Streaming is not supported for this agent",
         )
 
 
@@ -442,7 +431,6 @@ class AttachmentNotAllowedError(ApplicationError):
             ErrorCode.CHAT_MESSAGE_EMPTY,
             details=details,
             field="attachment",
-            override_message="This file type is not allowed",
         )
 
 
@@ -463,7 +451,6 @@ class AttachmentTooLargeError(ApplicationError):
             ErrorCode.CHAT_MESSAGE_TOO_LONG,
             details=details,
             field="attachment",
-            override_message="Attachment exceeds maximum size limit",
         )
 
 
@@ -488,7 +475,6 @@ class TemplateNotFoundError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
             details=details,
-            override_message="Conversation template not found",
         )
 
 
@@ -508,7 +494,6 @@ class TemplateValidationError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_MESSAGE_EMPTY,
             details=details,
-            override_message="Template validation failed",
         )
 
 
@@ -531,7 +516,6 @@ class TemplateExecutionError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_ERROR,
             details=details,
-            override_message="Template execution failed",
         )
 
 
@@ -553,7 +537,6 @@ class PreferencesNotFoundError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
             details=details,
-            override_message="User chat preferences not found",
         )
 
 
@@ -577,7 +560,6 @@ class InvalidPreferenceError(ApplicationError):
             ErrorCode.CHAT_MESSAGE_EMPTY,
             details=details,
             field=preference_name,
-            override_message="Invalid preference value",
         )
 
 
@@ -602,7 +584,6 @@ class IntentDetectionError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_ERROR,
             details=details,
-            override_message="Failed to detect user intent",
         )
 
 
@@ -627,7 +608,6 @@ class VotingFailedError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_ERROR,
             details=details,
-            override_message="Multi-agent voting failed",
         )
 
 
@@ -647,7 +627,6 @@ class DebateTimeoutError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_ERROR,
             details=details,
-            override_message="Agent debate timed out",
         )
 
 
@@ -667,7 +646,6 @@ class NoConsensusError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_ERROR,
             details=details,
-            override_message="Agents could not reach consensus",
         )
 
 
@@ -687,7 +665,6 @@ class AllAgentsUnavailableError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_UNAVAILABLE,
             details=details,
-            override_message="All fallback agents unavailable",
         )
 
 
@@ -707,7 +684,6 @@ class CustomAgentValidationError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_MESSAGE_EMPTY,
             details=details,
-            override_message="Custom agent configuration is invalid",
         )
 
 
@@ -727,7 +703,6 @@ class CustomAgentNotFoundError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
             details=details,
-            override_message="Custom agent not found",
         )
 
 
@@ -755,7 +730,6 @@ class ExportGenerationError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_AGENT_ERROR,
             details=details,
-            override_message=f"Export generation failed: {reason}" if reason else "Export generation failed",
         )
 
 
@@ -778,7 +752,6 @@ class ComplianceViolationError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_ACCESS_DENIED,
             details=details,
-            override_message=f"Compliance violation: {violation_reason}" if violation_reason else "Compliance requirements violated",
         )
 
 
@@ -795,7 +768,6 @@ class ExportNotFoundError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_CONVERSATION_NOT_FOUND,
             details=details,
-            override_message="Export not found",
         )
 
 
@@ -815,5 +787,4 @@ class ExportExpiredError(ApplicationError):
         super().__init__(
             ErrorCode.CHAT_ACCESS_DENIED,
             details=details,
-            override_message="Export has expired",
         )
