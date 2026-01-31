@@ -152,6 +152,12 @@ class TestInitDatabase:
         
         mock_engine = AsyncMock()
         mock_conn = AsyncMock()
+        mock_result = AsyncMock()
+        mock_result.scalar.return_value = 5  # Simulate existing tables count
+        mock_conn.execute.return_value = mock_result
+        
+        # Setup async context managers for both connect() and begin()
+        mock_engine.connect.return_value.__aenter__.return_value = mock_conn
         mock_engine.begin.return_value.__aenter__.return_value = mock_conn
         
         with patch('app.setup.app_factory.map_tables'):
@@ -160,15 +166,15 @@ class TestInitDatabase:
             except:
                 pass  # Ignore errors from entity imports
             
-            # Engine.begin should be called
-            mock_engine.begin.assert_called()
+            # Engine.connect should be called (for checking existing tables)
+            mock_engine.connect.assert_called()
     
     async def test_init_database_handles_errors(self):
         """Test init_database handles initialization errors."""
         from app.setup.app_factory import init_database
         
         mock_engine = AsyncMock()
-        mock_engine.begin.side_effect = Exception("Database error")
+        mock_engine.connect.side_effect = Exception("Database error")
         
         # Should raise the error
         with pytest.raises(Exception):
