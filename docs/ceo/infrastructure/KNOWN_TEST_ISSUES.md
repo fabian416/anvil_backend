@@ -1,8 +1,9 @@
 # Known Test Collection Issues
 
 > **Last Updated:** January 30, 2026
-> **Status:** 17 files with collection errors (not blocking CI)
+> **Status:** 🔄 **MANUAL RECONSTRUCTION IN PROGRESS** - 2/17 files fixed, 15 remaining
 > **Impact:** CI remains at 100% - pytest continues on collection errors
+> **Progress Tracking:** See [MANUAL_RECONSTRUCTION_PROGRESS.md](./MANUAL_RECONSTRUCTION_PROGRESS.md)
 
 ---
 
