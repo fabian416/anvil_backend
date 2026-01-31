@@ -16,7 +16,7 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 
 ## Progress Tracker
 
-### ✅ Completed Files (13/17)
+### ✅ Completed Files (14/17)
 
 | File | Tests | Status | Time | Notes |
 |------|-------|--------|------|-------|
@@ -33,17 +33,17 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 | **test_shortcuts_edge_cases.py** | 46 | ✅ Complete | 20 min | Complete file rewrite, removed 15 orphaned blocks, fixed indentation |
 | **test_common_informational_queries.py** | 24 | ✅ Complete | 25 min | Complete file rewrite, removed 24 orphaned blocks |
 | **test_redis_metrics_collector.py** | 18 | ✅ Complete | 20 min | Complete file rewrite, removed 18 orphaned blocks |
+| **test_knowledge_injection_api.py** | 44 | ✅ Complete | 30 min | Complete file rewrite, removed 26 orphaned blocks |
 
-### 🔄 In Progress (4/17)
+### 🔄 In Progress (3/17)
 
 | File | Orphaned Blocks | Estimated Time | Priority | Issue Type |
 |------|-----------------|----------------|----------|------------|
 | test_agent_squad_ultra_hunter_full.py | ~19 | 2 hours | P1 High | Indentation |
 | test_multilanguage_comprehensive.py | ~42 | 3 hours | P1 High | Indentation |
-| test_knowledge_injection_api.py | ~26 | 2 hours | P1 High | Indentation |
 | test_unified_chat_with_test_data.py | ~39 | 2.5 hours | P1 High | Indentation |
 
-**Total Estimated Time Remaining**: ~6.5 hours
+**Total Estimated Time Remaining**: ~4.5 hours
 
 ---
 
@@ -110,10 +110,10 @@ async def test_something(
 ## Metrics
 
 ### Current Status
-- **Files Fixed**: 13/17 (76.5%)
-- **Tests Recovered**: 199 tests
-- **Collection Errors**: 4 remaining (down from 17)
-- **Time Invested**: ~2 hours (automated attempts) + 5.5 hours (manual fixes)
+- **Files Fixed**: 14/17 (82.4%)
+- **Tests Recovered**: 243 tests
+- **Collection Errors**: 3 remaining (down from 17)
+- **Time Invested**: ~2 hours (automated attempts) + 6 hours (manual fixes)
 
 ### Projected Completion
 - **Remaining Time**: ~21 hours
