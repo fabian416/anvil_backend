@@ -15,8 +15,14 @@ from dataclasses import dataclass
 from app.infrastructure.adapters.agent_squad.agents.workflows.swap_workflow_agent import (
     SwapWorkflowAgent,
     HYPERLIQUID_SPOT_TOKENS,
-    MAJOR_TOKENS_REQUIRE_DEX,
 )
+
+# Define locally since this constant was removed from the source
+# These are major tokens that require DEX routing (1inch/LiFi) instead of Hyperliquid
+MAJOR_TOKENS_REQUIRE_DEX = {
+    "ETH", "BTC", "SOL", "WBTC", "WETH", "LINK", "UNI", "AAVE",
+    "MATIC", "ARB", "OP", "AVAX", "DOT", "ATOM", "LTC", "XRP",
+}
 from app.infrastructure.adapters.agent_squad.agents.workflows.base_workflow_agent import (
     WorkflowState,
     WorkflowStep,

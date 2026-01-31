@@ -16,7 +16,7 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 
 ## Progress Tracker
 
-### ✅ Completed Files (8/17)
+### ✅ Completed Files (9/17)
 
 | File | Tests | Status | Time | Notes |
 |------|-------|--------|------|-------|
@@ -28,8 +28,9 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 | **test_agents.py** | 19 | ✅ Already Working | 0 min | Was not broken, already collects 19 tests |
 | **test_multi_intent_end_to_end.py** | 8 | ✅ Complete | 15 min | Complete file rewrite, removed 5 orphaned blocks |
 | **test_hunter_chat_integration.py** | 17 | ✅ Complete | 20 min | Complete file rewrite, removed 11 orphaned blocks |
+| **test_swap_workflow_hyperliquid.py** | 17 | ✅ Complete | 5 min | Fixed import error (MAJOR_TOKENS_REQUIRE_DEX defined locally) |
 
-### 🔄 In Progress (9/17)
+### 🔄 In Progress (8/17)
 
 | File | Orphaned Blocks | Estimated Time | Priority | Issue Type |
 |------|-----------------|----------------|----------|------------|
@@ -41,11 +42,8 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 | test_shortcuts_edge_cases.py | ~13 | 1.5 hours | P2 Medium | Indentation |
 | test_common_informational_queries.py | ~24 | 1.5 hours | P2 Medium | Indentation |
 | test_redis_metrics_collector.py | ~18 | 2 hours | P2 Medium | Indentation |
-| test_swap_workflow_hyperliquid.py | N/A | 30 min | P3 Low | Import Error |
 
-**Total Estimated Time Remaining**: ~13 hours
-
-**Note**: `test_swap_workflow_hyperliquid.py` has an import error (missing `MAJOR_TOKENS_REQUIRE_DEX`), not indentation issues.
+**Total Estimated Time Remaining**: ~12.5 hours
 
 ---
 
@@ -112,10 +110,10 @@ async def test_something(
 ## Metrics
 
 ### Current Status
-- **Files Fixed**: 8/17 (47.1%)
-- **Tests Recovered**: 85 tests (test_interruption_flows.py: 9, test_buy_intent.py: 2, test_unified_chat_critical_paths.py: 13, test_low_coverage_intents.py: 14, test_user_chat_messages.py: 3, test_agents.py: 19, test_multi_intent_end_to_end.py: 8, test_hunter_chat_integration.py: 17)
-- **Collection Errors**: 9 remaining (down from 17)
-- **Time Invested**: ~2 hours (automated attempts) + 3 hours (manual fixes)
+- **Files Fixed**: 9/17 (52.9%)
+- **Tests Recovered**: 102 tests (test_interruption_flows.py: 9, test_buy_intent.py: 2, test_unified_chat_critical_paths.py: 13, test_low_coverage_intents.py: 14, test_user_chat_messages.py: 3, test_agents.py: 19, test_multi_intent_end_to_end.py: 8, test_hunter_chat_integration.py: 17, test_swap_workflow_hyperliquid.py: 17)
+- **Collection Errors**: 8 remaining (down from 17)
+- **Time Invested**: ~2 hours (automated attempts) + 3.5 hours (manual fixes)
 
 ### Projected Completion
 - **Remaining Time**: ~21 hours

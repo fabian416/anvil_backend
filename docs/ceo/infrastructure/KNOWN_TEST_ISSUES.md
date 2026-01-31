@@ -1,7 +1,7 @@
 # Known Test Collection Issues
 
 > **Last Updated:** January 28, 2026
-> **Status:** 🔄 **MANUAL RECONSTRUCTION IN PROGRESS** - 8/17 files fixed, 9 remaining
+> **Status:** 🔄 **MANUAL RECONSTRUCTION IN PROGRESS** - 9/17 files fixed, 8 remaining
 > **Impact:** CI remains at 100% - pytest continues on collection errors
 > **Progress Tracking:** See [MANUAL_RECONSTRUCTION_PROGRESS.md](./MANUAL_RECONSTRUCTION_PROGRESS.md)
 
@@ -13,8 +13,8 @@
 
 ### Current Impact
 - ✅ **CI Status:** 6/6 jobs passing (100%)
-- ✅ **Tests Collecting:** 4,858+ tests (85 tests recovered)
-- ⚠️ **Collection Errors:** 9 files (pytest skips automatically)
+- ✅ **Tests Collecting:** 4,858+ tests (102 tests recovered)
+- ⚠️ **Collection Errors:** 8 files (pytest skips automatically)
 - ✅ **Critical Paths:** All critical tests (WebSocket, MCP, Auth, Celery) passing
 
 ---
