@@ -109,11 +109,11 @@ async def test_something(
 ## Metrics
 
 ### Current Status
-- **Files Fixed**: 18/18 (100%) ✅
-- **Tests Recovered**: 393 tests
+- **Files Fixed**: 19/19 (100%) ✅
+- **Tests Recovered**: 398+ tests
 - **Collection Errors**: 0 remaining (down from 17+) 🎉
 - **Time Invested**: ~2 hours (automated attempts) + 9 hours (manual fixes)
-- **Total Tests in guest/general/**: 624 tests - All collecting successfully!
+- **Total Integration Tests**: 3,160 tests - All collecting successfully!
 
 ### Projected Completion
 - **Remaining Time**: ~21 hours
