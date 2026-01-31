@@ -40,38 +40,20 @@ class TestCrossChainComprehensive:
         )
         return user, token
 
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_user",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-    """Get authentication headers."""
-    _, token = test_user
-    return {"Authorization": f"Bearer {token}"}
+        """Get authentication headers."""
+        _, token = test_user
+        return {"Authorization": f"Bearer {token}"}
 
     @pytest_asyncio.fixture
     async def conversation_id(self, authenticated_client: AsyncClient, auth_headers):
-    """Create a test conversation."""
-    response = await authenticated_client.post(
-        "/api/v1/conversations",
-        headers=auth_headers,
-        json={"language": "en"},
-    )
+        """Create a test conversation."""
+        response = await authenticated_client.post(
+            "/api/v1/conversations",
+            headers=auth_headers,
+            json={"language": "en"},
+        )
         assert response.status_code == 201
         return response.json()["id"]
 
@@ -84,46 +66,28 @@ class TestCrossChainComprehensive:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_001_ethereum_to_base_swap",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test Ethereum to Base USDC swap with bridge routing.
+        """
+        Test Ethereum to Base USDC swap with bridge routing.
 
-    P2 Requirement: Ethereum → Base swaps
+        P2 Requirement: Ethereum → Base swaps
 
-    Validates:
-    - Cross-chain swap routing detection
-    - Bridge protocol selection (Axelar, LayerZero, native)
-    - Gas cost estimation on both chains
-    - Time estimation (5min - 7 days)
-    - Slippage protection
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "Swap 500 USDC from Ethereum to Base",
-            "language": "en",
-        },
-    )
+        Validates:
+        - Cross-chain swap routing detection
+        - Bridge protocol selection (Axelar, LayerZero, native)
+        - Gas cost estimation on both chains
+        - Time estimation (5min - 7 days)
+        - Slippage protection
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "Swap 500 USDC from Ethereum to Base",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -157,43 +121,25 @@ class TestCrossChainComprehensive:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_002_multi_chain_balance_check",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test multi-chain balance checking across Ethereum, Arbitrum, and Base.
+        """
+        Test multi-chain balance checking across Ethereum, Arbitrum, and Base.
 
-    Validates:
-    - Multi-chain RPC integration
-    - Balance aggregation across chains
-    - Chain-specific token addresses
-    - Total portfolio calculation
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "Show my USDC balance on Ethereum, Arbitrum, and Base",
-            "language": "en",
-        },
-    )
+        Validates:
+        - Multi-chain RPC integration
+        - Balance aggregation across chains
+        - Chain-specific token addresses
+        - Total portfolio calculation
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "Show my USDC balance on Ethereum, Arbitrum, and Base",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -222,43 +168,25 @@ class TestCrossChainComprehensive:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_003_l2_to_l2_direct_bridge",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test L2 to L2 direct bridging (Arbitrum to Optimism).
+        """
+        Test L2 to L2 direct bridging (Arbitrum to Optimism).
 
-    Validates:
-    - L2-L2 direct bridging support
-    - Route optimization (L2-L2 vs L1 intermediate)
-    - Bridge protocol selection (Hop, Connext, Across)
-    - Cost/time tradeoffs
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "Bridge 1000 USDC from Arbitrum to Optimism using fastest route",
-            "language": "en",
-        },
-    )
+        Validates:
+        - L2-L2 direct bridging support
+        - Route optimization (L2-L2 vs L1 intermediate)
+        - Bridge protocol selection (Hop, Connext, Across)
+        - Cost/time tradeoffs
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "Bridge 1000 USDC from Arbitrum to Optimism using fastest route",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -286,44 +214,26 @@ class TestCrossChainComprehensive:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_004_gas_cost_estimation",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
-            ),
-            additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test cross-chain gas cost estimation before bridging.
+        """
+        Test cross-chain gas cost estimation before bridging.
 
-    Validates:
-    - Gas estimation on source chain
-    - Bridge fee calculation
-    - Destination chain gas estimation
-    - Total cost breakdown in USD
-    - Fee comparison across bridges
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "How much will it cost to bridge 5000 USDC from Ethereum to Polygon?",
-            "language": "en",
-        },
-    )
+        Validates:
+        - Gas estimation on source chain
+        - Bridge fee calculation
+        - Destination chain gas estimation
+        - Total cost breakdown in USD
+        - Fee comparison across bridges
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "How much will it cost to bridge 5000 USDC from Ethereum to Polygon?",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -351,44 +261,26 @@ class TestCrossChainComprehensive:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_005_bridge_security_check",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test bridge security risk assessment.
+        """
+        Test bridge security risk assessment.
 
-    Validates:
-    - Bridge security scoring
-    - Recent exploit detection
-    - Audit status checking
-    - Risk-based recommendations
-    - Alternative safer routes
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "Is it safe to bridge large amounts from Ethereum to BSC? Any recent exploits?",
-            "language": "en",
-        },
-    )
+        Validates:
+        - Bridge security scoring
+        - Recent exploit detection
+        - Audit status checking
+        - Risk-based recommendations
+        - Alternative safer routes
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "Is it safe to bridge large amounts from Ethereum to BSC? Any recent exploits?",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -415,43 +307,25 @@ class TestCrossChainComprehensive:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_006_insufficient_gas_error",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test cross-chain bridge error handling for insufficient gas.
+        """
+        Test cross-chain bridge error handling for insufficient gas.
 
-    Validates:
-    - Pre-flight gas validation
-    - Clear error messaging
-    - Actionable recommendations (buy gas tokens)
-    - Multi-chain gas requirements
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "Bridge 1000 USDC from Polygon to Ethereum",
-            "language": "en",
-        },
-    )
+        Validates:
+        - Pre-flight gas validation
+        - Clear error messaging
+        - Actionable recommendations (buy gas tokens)
+        - Multi-chain gas requirements
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "Bridge 1000 USDC from Polygon to Ethereum",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -479,43 +353,25 @@ class TestCrossChainComprehensive:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_007_fast_bridge_time_priority",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test fast bridge route selection with time priority.
+        """
+        Test fast bridge route selection with time priority.
 
-    Validates:
-    - Time-priority route selection
-    - Bridge speed comparison
-    - Cost vs speed tradeoffs
-    - Realistic time estimates (5min - 7 days)
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "I need to bridge 500 USDC from Ethereum to Arbitrum ASAP, what's the fastest option?",
-            "language": "en",
-        },
-    )
+        Validates:
+        - Time-priority route selection
+        - Bridge speed comparison
+        - Cost vs speed tradeoffs
+        - Realistic time estimates (5min - 7 days)
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "I need to bridge 500 USDC from Ethereum to Arbitrum ASAP, what's the fastest option?",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -552,38 +408,20 @@ class TestCrossChainEdgeCases:
         )
         return user, token
 
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_user",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-
     @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
-    """Get authentication headers."""
-    _, token = test_user
-    return {"Authorization": f"Bearer {token}"}
+        """Get authentication headers."""
+        _, token = test_user
+        return {"Authorization": f"Bearer {token}"}
 
     @pytest_asyncio.fixture
     async def conversation_id(self, authenticated_client: AsyncClient, auth_headers):
-    """Create a test conversation."""
-    response = await authenticated_client.post(
-        "/api/v1/conversations",
-        headers=auth_headers,
-        json={"language": "en"},
-    )
+        """Create a test conversation."""
+        response = await authenticated_client.post(
+            "/api/v1/conversations",
+            headers=auth_headers,
+            json={"language": "en"},
+        )
         assert response.status_code == 201
         return response.json()["id"]
 
@@ -592,39 +430,21 @@ class TestCrossChainEdgeCases:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_edge_001_unsupported_chain",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test handling of unsupported blockchain.
+        """
+        Test handling of unsupported blockchain.
 
-    Validates graceful handling of unsupported chains.
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "Bridge USDC from Ethereum to Solana",
-            "language": "en",
-        },
-    )
+        Validates graceful handling of unsupported chains.
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "Bridge USDC from Ethereum to Solana",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -641,39 +461,21 @@ class TestCrossChainEdgeCases:
         self,
         authenticated_client: AsyncClient,
         auth_headers: dict,
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_cross_chain_edge_002_same_chain_transfer",
-            user_input="query",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-    conversation_id: str,
+        conversation_id: str,
     ):
-    """
-    Test detection when user mistakenly tries to "bridge" on same chain.
+        """
+        Test detection when user mistakenly tries to "bridge" on same chain.
 
-    Validates that system clarifies no bridge needed for same-chain transfers.
-    """
-    response = await authenticated_client.post(
-        f"/api/v1/conversations/{conversation_id}/messages",
-        headers=auth_headers,
-        json={
-            "content": "Bridge USDC from Ethereum to Ethereum",
-            "language": "en",
-        },
-    )
+        Validates that system clarifies no bridge needed for same-chain transfers.
+        """
+        response = await authenticated_client.post(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=auth_headers,
+            json={
+                "content": "Bridge USDC from Ethereum to Ethereum",
+                "language": "en",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
