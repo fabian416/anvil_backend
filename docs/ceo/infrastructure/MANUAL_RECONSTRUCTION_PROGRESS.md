@@ -16,24 +16,24 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 
 ## Progress Tracker
 
-### ✅ Completed Files (2/17)
+### ✅ Completed Files (3/17)
 
 | File | Tests | Status | Time | Notes |
 |------|-------|--------|------|-------|
 | **test_interruption_flows.py** | 9 | ✅ Complete | 45 min | Successfully collecting, all orphaned blocks removed, indentation fixed |
 | **test_buy_intent.py** | 2 | ✅ Complete | 15 min | Removed 1 orphaned block, fixed function signature |
+| **test_unified_chat_critical_paths.py** | 13 | ✅ Complete | 30 min | Removed 5 orphaned blocks, complete file rewrite |
 
-### 🔄 In Progress (15/17)
+### 🔄 In Progress (14/17)
 
 | File | Orphaned Blocks | Estimated Time | Priority |
 |------|-----------------|----------------|----------|
-| test_agent_squad_ultra_hunter_full.py | ~18 | 2 hours | P1 High |
+| test_agent_squad_ultra_hunter_full.py | ~19 | 2 hours | P1 High |
 | test_multilanguage_comprehensive.py | ~42 | 3 hours | P1 High |
 | test_knowledge_injection_api.py | ~26 | 2 hours | P1 High |
 | test_unified_chat_with_test_data.py | ~39 | 2.5 hours | P1 High |
 | test_low_coverage_intents.py | ~14 | 1.5 hours | P2 Medium |
-| test_cross_chain_comprehensive.py | ~9 | 1 hour | P2 Medium |
-| test_unified_chat_critical_paths.py | ~4 | 1 hour | P2 Medium |
+| test_cross_chain_comprehensive.py | ~10 | 1 hour | P2 Medium |
 | test_shortcuts_edge_cases.py | ~13 | 1.5 hours | P2 Medium |
 | test_common_informational_queries.py | ~15 | 1.5 hours | P2 Medium |
 | test_hunter_chat_integration.py | ~12 | 1.5 hours | P2 Medium |
@@ -43,7 +43,7 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 | test_agents.py | ~5 | 1 hour | P2 Medium |
 | test_swap_workflow_hyperliquid.py | ~3 | 45 min | P3 Low |
 
-**Total Estimated Time Remaining**: ~20 hours
+**Total Estimated Time Remaining**: ~19 hours
 
 ---
 
@@ -110,10 +110,10 @@ async def test_something(
 ## Metrics
 
 ### Current Status
-- **Files Fixed**: 2/17 (11.8%)
-- **Tests Recovered**: 11 tests (test_interruption_flows.py: 9, test_buy_intent.py: 2)
-- **Collection Errors**: 15 remaining (down from 17)
-- **Time Invested**: ~2 hours (automated attempts) + 1 hour (manual fixes)
+- **Files Fixed**: 3/17 (17.6%)
+- **Tests Recovered**: 24 tests (test_interruption_flows.py: 9, test_buy_intent.py: 2, test_unified_chat_critical_paths.py: 13)
+- **Collection Errors**: 14 remaining (down from 17)
+- **Time Invested**: ~2 hours (automated attempts) + 1.5 hours (manual fixes)
 
 ### Projected Completion
 - **Remaining Time**: ~21 hours
