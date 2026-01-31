@@ -1,11 +1,11 @@
 """
 Tests for MoneyMarketAlert entity.
 
-Tests entity creation, APY change validation, and rich domain properties.
+Tests entity creation, validation, and properties.
 """
 
 import pytest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import uuid4
 
@@ -16,753 +16,171 @@ from app.domain.entities.money_market.alert import MoneyMarketAlert
 class TestMoneyMarketAlert:
     """Test suite for MoneyMarketAlert entity."""
 
-    def test_valid_entity_creation(self):
-        """Should create valid entity with correct attributes."""
-        # Arrange
+    @pytest.fixture
+    def valid_alert_data(self):
+        """Return valid alert data for testing."""
         now = datetime.now(timezone.utc)
-        entity_id = uuid4()
-        user_id = uuid4()
-        alert_id = uuid4()
+        return {
+            "id": uuid4(),
+            "user_id": uuid4(),
+            "alert_type": "rate_increase",
+            "protocol": "aave_v3",
+            "asset": "USDC",
+            "chain": "ethereum",
+            "previous_apy": Decimal("5.00"),
+            "new_apy": Decimal("6.00"),
+            "apy_change_percent": Decimal("20.00"),  # (6-5)/5 * 100 = 20%
+            "severity": "info",
+            "message": "USDC supply rate increased by 20%",
+            "is_read": False,
+            "notification_sent": False,
+            "sent_at": None,
+            "created_at": now,
+        }
 
-        # Act
-        entity = MoneyMarketAlert(
-            id=entity_id,
-            alert_id=alert_id,
-            user_id=user_id,
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+    def test_valid_entity_creation(self, valid_alert_data):
+        """Should create valid entity with correct attributes."""
+        entity = MoneyMarketAlert(**valid_alert_data)
 
-        # Assert
-        assert entity.id == entity_id
-        assert entity.alert_id == alert_id
-        assert entity.user_id == user_id
-        assert entity.protocol_id == "aave_v3"
+        assert entity.id == valid_alert_data["id"]
+        assert entity.user_id == valid_alert_data["user_id"]
+        assert entity.protocol == "aave_v3"
         assert entity.asset == "USDC"
         assert entity.chain == "ethereum"
-        assert entity.alert_type == "SUPPLY_RATE_INCREASE"
-        assert entity.old_apy == Decimal("5.00")
+        assert entity.alert_type == "rate_increase"
+        assert entity.previous_apy == Decimal("5.00")
         assert entity.new_apy == Decimal("6.00")
-        assert entity.apy_change_percent == Decimal("1.00")
-        assert entity.threshold_percent == Decimal("0.50")
         assert entity.notification_sent is False
-        assert entity.notification_sent_at is None
-        assert entity.created_at == now
 
-    def test_valid_entity_with_notification_sent(self):
+    def test_valid_entity_with_notification_sent(self, valid_alert_data):
         """Should create valid entity with notification sent."""
-        # Arrange
         now = datetime.now(timezone.utc)
-        sent_at = now - timedelta(minutes=5)
+        valid_alert_data["notification_sent"] = True
+        valid_alert_data["sent_at"] = now
 
-        # Act
-        entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="compound_v3",
-            asset="USDT",
-            chain="polygon",
-            alert_type="BORROW_RATE_DECREASE",
-            old_apy=Decimal("4.50"),
-            new_apy=Decimal("3.50"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.75"),
-            notification_sent=True,
-            notification_sent_at=sent_at,
-            created_at=now - timedelta(minutes=5),
-        )
+        entity = MoneyMarketAlert(**valid_alert_data)
 
-        # Assert
         assert entity.notification_sent is True
-        assert entity.notification_sent_at == sent_at
+        assert entity.sent_at == now
 
-    def test_validation_invalid_protocol(self):
+    def test_validation_invalid_protocol(self, valid_alert_data):
         """Should raise error for invalid protocol."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+        valid_alert_data["protocol"] = "invalid_protocol"
 
-        # Act & Assert
-        with pytest.raises(ValueError, match="Invalid protocol_id"):
-            MoneyMarketAlert(
-                id=uuid4(),
-                alert_id=uuid4(),
-                user_id=uuid4(),
-                protocol_id="invalid_protocol",  # Invalid
-                asset="USDC",
-                chain="ethereum",
-                alert_type="SUPPLY_RATE_INCREASE",
-                old_apy=Decimal("5.00"),
-                new_apy=Decimal("6.00"),
-                apy_change_percent=Decimal("1.00"),
-                threshold_percent=Decimal("0.50"),
-                notification_sent=False,
-                notification_sent_at=None,
-                created_at=now,
-            )
+        with pytest.raises(ValueError, match="Invalid protocol"):
+            MoneyMarketAlert(**valid_alert_data)
 
-    def test_validation_invalid_alert_type(self):
-        """Should raise error for invalid alert type."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+    def test_validation_invalid_alert_type(self, valid_alert_data):
+        """Should raise error for invalid alert_type."""
+        valid_alert_data["alert_type"] = "invalid_type"
 
-        # Act & Assert
         with pytest.raises(ValueError, match="Invalid alert_type"):
-            MoneyMarketAlert(
-                id=uuid4(),
-                alert_id=uuid4(),
-                user_id=uuid4(),
-                protocol_id="aave_v3",
-                asset="USDC",
-                chain="ethereum",
-                alert_type="INVALID_TYPE",  # Invalid
-                old_apy=Decimal("5.00"),
-                new_apy=Decimal("6.00"),
-                apy_change_percent=Decimal("1.00"),
-                threshold_percent=Decimal("0.50"),
-                notification_sent=False,
-                notification_sent_at=None,
-                created_at=now,
-            )
+            MoneyMarketAlert(**valid_alert_data)
 
-    def test_validation_negative_old_apy(self):
-        """Should raise error for negative old APY."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+    def test_validation_negative_apy(self, valid_alert_data):
+        """Should raise error for negative APY values."""
+        valid_alert_data["previous_apy"] = Decimal("-1.00")
 
-        # Act & Assert
-        with pytest.raises(ValueError, match="Invalid old_apy"):
-            MoneyMarketAlert(
-                id=uuid4(),
-                alert_id=uuid4(),
-                user_id=uuid4(),
-                protocol_id="aave_v3",
-                asset="USDC",
-                chain="ethereum",
-                alert_type="SUPPLY_RATE_INCREASE",
-                old_apy=Decimal("-1.00"),  # Negative
-                new_apy=Decimal("6.00"),
-                apy_change_percent=Decimal("7.00"),
-                threshold_percent=Decimal("0.50"),
-                notification_sent=False,
-                notification_sent_at=None,
-                created_at=now,
-            )
+        with pytest.raises(ValueError, match="Invalid previous_apy"):
+            MoneyMarketAlert(**valid_alert_data)
 
-    def test_validation_negative_new_apy(self):
-        """Should raise error for negative new APY."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+    def test_validation_empty_asset(self, valid_alert_data):
+        """Should raise error for empty asset."""
+        valid_alert_data["asset"] = ""
 
-        # Act & Assert
-        with pytest.raises(ValueError, match="Invalid new_apy"):
-            MoneyMarketAlert(
-                id=uuid4(),
-                alert_id=uuid4(),
-                user_id=uuid4(),
-                protocol_id="aave_v3",
-                asset="USDC",
-                chain="ethereum",
-                alert_type="SUPPLY_RATE_INCREASE",
-                old_apy=Decimal("5.00"),
-                new_apy=Decimal("-1.00"),  # Negative
-                apy_change_percent=Decimal("6.00"),
-                threshold_percent=Decimal("0.50"),
-                notification_sent=False,
-                notification_sent_at=None,
-                created_at=now,
-            )
-
-    def test_validation_apy_change_mismatch(self):
-        """Should raise error when APY change doesn't match calculation."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        # Act & Assert (old=5%, new=6%, actual change=1%, but provided=2%)
-        with pytest.raises(ValueError, match="apy_change_percent .* does not match"):
-            MoneyMarketAlert(
-                id=uuid4(),
-                alert_id=uuid4(),
-                user_id=uuid4(),
-                protocol_id="aave_v3",
-                asset="USDC",
-                chain="ethereum",
-                alert_type="SUPPLY_RATE_INCREASE",
-                old_apy=Decimal("5.00"),
-                new_apy=Decimal("6.00"),
-                apy_change_percent=Decimal("2.00"),  # Incorrect (should be 1.00)
-                threshold_percent=Decimal("0.50"),
-                notification_sent=False,
-                notification_sent_at=None,
-                created_at=now,
-            )
-
-    def test_validation_threshold_too_low(self):
-        """Should raise error for threshold < 0.01%."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        # Act & Assert
-        with pytest.raises(ValueError, match="threshold_percent must be between 0.01% and 10%"):
-            MoneyMarketAlert(
-                id=uuid4(),
-                alert_id=uuid4(),
-                user_id=uuid4(),
-                protocol_id="aave_v3",
-                asset="USDC",
-                chain="ethereum",
-                alert_type="SUPPLY_RATE_INCREASE",
-                old_apy=Decimal("5.00"),
-                new_apy=Decimal("6.00"),
-                apy_change_percent=Decimal("1.00"),
-                threshold_percent=Decimal("0.005"),  # Too low
-                notification_sent=False,
-                notification_sent_at=None,
-                created_at=now,
-            )
-
-    def test_validation_threshold_too_high(self):
-        """Should raise error for threshold > 10%."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        # Act & Assert
-        with pytest.raises(ValueError, match="threshold_percent must be between 0.01% and 10%"):
-            MoneyMarketAlert(
-                id=uuid4(),
-                alert_id=uuid4(),
-                user_id=uuid4(),
-                protocol_id="aave_v3",
-                asset="USDC",
-                chain="ethereum",
-                alert_type="SUPPLY_RATE_INCREASE",
-                old_apy=Decimal("5.00"),
-                new_apy=Decimal("6.00"),
-                apy_change_percent=Decimal("1.00"),
-                threshold_percent=Decimal("15.00"),  # Too high
-                notification_sent=False,
-                notification_sent_at=None,
-                created_at=now,
-            )
-
-    def test_validation_empty_asset(self):
-        """Should raise error for empty asset symbol."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        # Act & Assert
         with pytest.raises(ValueError, match="Asset symbol cannot be empty"):
-            MoneyMarketAlert(
-                id=uuid4(),
-                alert_id=uuid4(),
-                user_id=uuid4(),
-                protocol_id="aave_v3",
-                asset="",  # Empty
-                chain="ethereum",
-                alert_type="SUPPLY_RATE_INCREASE",
-                old_apy=Decimal("5.00"),
-                new_apy=Decimal("6.00"),
-                apy_change_percent=Decimal("1.00"),
-                threshold_percent=Decimal("0.50"),
-                notification_sent=False,
-                notification_sent_at=None,
-                created_at=now,
-            )
+            MoneyMarketAlert(**valid_alert_data)
 
-    def test_is_rate_increase_property(self):
-        """Should identify rate increase alerts."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+    def test_validation_asset_lowercase(self, valid_alert_data):
+        """Should raise error for lowercase asset."""
+        valid_alert_data["asset"] = "usdc"
 
-        increase_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+        with pytest.raises(ValueError, match="Asset symbol must be uppercase"):
+            MoneyMarketAlert(**valid_alert_data)
 
-        decrease_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_DECREASE",
-            old_apy=Decimal("6.00"),
-            new_apy=Decimal("5.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+    def test_is_rate_increase_property(self, valid_alert_data):
+        """Should correctly identify rate increase alerts."""
+        valid_alert_data["alert_type"] = "rate_increase"
+        entity = MoneyMarketAlert(**valid_alert_data)
 
-        # Act & Assert
-        assert increase_entity.is_rate_increase
-        assert not decrease_entity.is_rate_increase
+        assert entity.is_rate_increase is True
+        assert entity.is_rate_decrease is False
 
-    def test_is_rate_decrease_property(self):
-        """Should identify rate decrease alerts."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+    def test_is_rate_decrease_property(self, valid_alert_data):
+        """Should correctly identify rate decrease alerts."""
+        valid_alert_data["alert_type"] = "rate_decrease"
+        # Adjust APY for decrease: previous > new
+        valid_alert_data["previous_apy"] = Decimal("6.00")
+        valid_alert_data["new_apy"] = Decimal("5.00")
+        valid_alert_data["apy_change_percent"] = Decimal("-16.6667")  # (5-6)/6 * 100
+        entity = MoneyMarketAlert(**valid_alert_data)
 
-        increase_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+        assert entity.is_rate_decrease is True
+        assert entity.is_rate_increase is False
 
-        decrease_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="BORROW_RATE_DECREASE",
-            old_apy=Decimal("6.00"),
-            new_apy=Decimal("5.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+    def test_apy_increased_property(self, valid_alert_data):
+        """Should correctly identify APY increase."""
+        entity = MoneyMarketAlert(**valid_alert_data)
 
-        # Act & Assert
-        assert not increase_entity.is_rate_decrease
-        assert decrease_entity.is_rate_decrease
+        assert entity.apy_increased is True
+        assert entity.apy_decreased is False
 
-    def test_is_supply_alert_property(self):
-        """Should identify supply alerts."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+    def test_is_significant_property(self, valid_alert_data):
+        """Should correctly identify significant changes (>1%)."""
+        entity = MoneyMarketAlert(**valid_alert_data)
 
-        supply_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+        assert entity.is_significant is True
 
-        borrow_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="BORROW_RATE_DECREASE",
-            old_apy=Decimal("6.00"),
-            new_apy=Decimal("5.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+    def test_is_stablecoin_property(self, valid_alert_data):
+        """Should correctly identify stablecoin assets."""
+        entity = MoneyMarketAlert(**valid_alert_data)
+        assert entity.is_stablecoin is True
 
-        # Act & Assert
-        assert supply_entity.is_supply_alert
-        assert not borrow_entity.is_supply_alert
+        valid_alert_data["id"] = uuid4()
+        valid_alert_data["asset"] = "WETH"
+        entity2 = MoneyMarketAlert(**valid_alert_data)
+        assert entity2.is_stablecoin is False
 
-    def test_is_borrow_alert_property(self):
-        """Should identify borrow alerts."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+    def test_is_aave_property(self, valid_alert_data):
+        """Should correctly identify Aave protocol."""
+        entity = MoneyMarketAlert(**valid_alert_data)
+        assert entity.is_aave is True
+        assert entity.is_compound is False
 
-        supply_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+    def test_is_compound_property(self, valid_alert_data):
+        """Should correctly identify Compound protocol."""
+        valid_alert_data["protocol"] = "compound_v3"
+        entity = MoneyMarketAlert(**valid_alert_data)
+        assert entity.is_compound is True
+        assert entity.is_aave is False
 
-        borrow_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="BORROW_RATE_DECREASE",
-            old_apy=Decimal("6.00"),
-            new_apy=Decimal("5.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+    def test_severity_info(self, valid_alert_data):
+        """Should correctly identify info severity."""
+        entity = MoneyMarketAlert(**valid_alert_data)
+        assert entity.is_info is True
+        assert entity.is_warning is False
 
-        # Act & Assert
-        assert not supply_entity.is_borrow_alert
-        assert borrow_entity.is_borrow_alert
+    def test_severity_warning(self, valid_alert_data):
+        """Should correctly identify warning severity."""
+        valid_alert_data["severity"] = "warning"
+        entity = MoneyMarketAlert(**valid_alert_data)
+        assert entity.is_warning is True
+        assert entity.is_info is False
 
-    def test_is_pending_notification_property(self):
-        """Should identify pending notifications."""
-        # Arrange
-        now = datetime.now(timezone.utc)
+    def test_notification_sent_requires_timestamp(self, valid_alert_data):
+        """Should raise error if notification_sent is True but sent_at is None."""
+        valid_alert_data["notification_sent"] = True
+        valid_alert_data["sent_at"] = None
 
-        pending_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
+        with pytest.raises(ValueError, match="notification_sent is True but sent_at is None"):
+            MoneyMarketAlert(**valid_alert_data)
 
-        sent_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=True,
-            notification_sent_at=now - timedelta(minutes=5),
-            created_at=now - timedelta(minutes=5),
-        )
+    def test_formatted_change_property(self, valid_alert_data):
+        """Should format change with correct sign."""
+        entity = MoneyMarketAlert(**valid_alert_data)
+        assert entity.formatted_change == "+20.00%"
 
-        # Act & Assert
-        assert pending_entity.is_pending_notification
-        assert not sent_entity.is_pending_notification
-
-    def test_severity_level_property(self):
-        """Should map APY change to severity level."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        low_change = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("5.30"),
-            apy_change_percent=Decimal("0.30"),  # Low
-            threshold_percent=Decimal("0.25"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        medium_change = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),  # Medium
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        high_change = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("8.00"),
-            apy_change_percent=Decimal("3.00"),  # High
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        critical_change = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("11.00"),
-            apy_change_percent=Decimal("6.00"),  # Critical
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        # Act & Assert
-        assert low_change.severity_level == "LOW"
-        assert medium_change.severity_level == "MEDIUM"
-        assert high_change.severity_level == "HIGH"
-        assert critical_change.severity_level == "CRITICAL"
-
-    def test_is_significant_change_property(self):
-        """Should identify significant changes (>= 1%)."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        small_change = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("5.50"),
-            apy_change_percent=Decimal("0.50"),  # Not significant
-            threshold_percent=Decimal("0.25"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        significant_change = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.50"),
-            apy_change_percent=Decimal("1.50"),  # Significant
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        # Act & Assert
-        assert not small_change.is_significant_change
-        assert significant_change.is_significant_change
-
-    def test_notification_delay_property(self):
-        """Should calculate notification delay when sent."""
-        # Arrange
-        created = datetime(2025, 1, 28, 10, 0, 0, tzinfo=timezone.utc)
-        sent = datetime(2025, 1, 28, 10, 5, 0, tzinfo=timezone.utc)
-
-        entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=True,
-            notification_sent_at=sent,
-            created_at=created,
-        )
-
-        # Act
-        delay = entity.notification_delay
-
-        # Assert
-        assert delay is not None
-        assert delay.total_seconds() == 300  # 5 minutes
-
-    def test_notification_delay_when_not_sent(self):
-        """Should return None when notification not sent."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        # Act & Assert
-        assert entity.notification_delay is None
-
-    def test_protocol_display_name_property(self):
-        """Should return display name for protocol."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        aave_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        compound_entity = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="compound_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        # Act & Assert
-        assert aave_entity.protocol_display_name == "Aave v3"
-        assert compound_entity.protocol_display_name == "Compound v3"
-
-    def test_alert_message_property(self):
-        """Should generate human-readable alert message."""
-        # Arrange
-        now = datetime.now(timezone.utc)
-
-        supply_increase = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="aave_v3",
-            asset="USDC",
-            chain="ethereum",
-            alert_type="SUPPLY_RATE_INCREASE",
-            old_apy=Decimal("5.00"),
-            new_apy=Decimal("6.00"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        borrow_decrease = MoneyMarketAlert(
-            id=uuid4(),
-            alert_id=uuid4(),
-            user_id=uuid4(),
-            protocol_id="compound_v3",
-            asset="USDT",
-            chain="polygon",
-            alert_type="BORROW_RATE_DECREASE",
-            old_apy=Decimal("4.50"),
-            new_apy=Decimal("3.50"),
-            apy_change_percent=Decimal("1.00"),
-            threshold_percent=Decimal("0.50"),
-            notification_sent=False,
-            notification_sent_at=None,
-            created_at=now,
-        )
-
-        # Act & Assert
-        assert "Aave v3" in supply_increase.alert_message
-        assert "USDC" in supply_increase.alert_message
-        assert "ethereum" in supply_increase.alert_message
-        assert "supply rate increased" in supply_increase.alert_message.lower()
-        assert "5.00%" in supply_increase.alert_message
-        assert "6.00%" in supply_increase.alert_message
-
-        assert "Compound v3" in borrow_decrease.alert_message
-        assert "USDT" in borrow_decrease.alert_message
-        assert "polygon" in borrow_decrease.alert_message
-        assert "borrow rate decreased" in borrow_decrease.alert_message.lower()
-        assert "4.50%" in borrow_decrease.alert_message
-        assert "3.50%" in borrow_decrease.alert_message
+    def test_apy_change_absolute_property(self, valid_alert_data):
+        """Should calculate absolute APY change."""
+        entity = MoneyMarketAlert(**valid_alert_data)
+        assert entity.apy_change_absolute == Decimal("1.00")
