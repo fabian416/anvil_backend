@@ -16,7 +16,7 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 
 ## Progress Tracker
 
-### ✅ Completed Files (10/17)
+### ✅ Completed Files (11/17)
 
 | File | Tests | Status | Time | Notes |
 |------|-------|--------|------|-------|
@@ -30,8 +30,9 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 | **test_hunter_chat_integration.py** | 17 | ✅ Complete | 20 min | Complete file rewrite, removed 11 orphaned blocks |
 | **test_swap_workflow_hyperliquid.py** | 17 | ✅ Complete | 5 min | Fixed import error (MAJOR_TOKENS_REQUIRE_DEX defined locally) |
 | **test_cross_chain_comprehensive.py** | 9 | ✅ Complete | 15 min | Complete file rewrite, removed 10 orphaned blocks |
+| **test_shortcuts_edge_cases.py** | 46 | ✅ Complete | 20 min | Complete file rewrite, removed 15 orphaned blocks, fixed indentation |
 
-### 🔄 In Progress (7/17)
+### 🔄 In Progress (6/17)
 
 | File | Orphaned Blocks | Estimated Time | Priority | Issue Type |
 |------|-----------------|----------------|----------|------------|
@@ -39,11 +40,10 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 | test_multilanguage_comprehensive.py | ~42 | 3 hours | P1 High | Indentation |
 | test_knowledge_injection_api.py | ~26 | 2 hours | P1 High | Indentation |
 | test_unified_chat_with_test_data.py | ~39 | 2.5 hours | P1 High | Indentation |
-| test_shortcuts_edge_cases.py | ~13 | 1.5 hours | P2 Medium | Indentation |
 | test_common_informational_queries.py | ~24 | 1.5 hours | P2 Medium | Indentation |
 | test_redis_metrics_collector.py | ~18 | 2 hours | P2 Medium | Indentation |
 
-**Total Estimated Time Remaining**: ~11.5 hours
+**Total Estimated Time Remaining**: ~10 hours
 
 ---
 
@@ -110,10 +110,10 @@ async def test_something(
 ## Metrics
 
 ### Current Status
-- **Files Fixed**: 10/17 (58.8%)
-- **Tests Recovered**: 111 tests
-- **Collection Errors**: 7 remaining (down from 17)
-- **Time Invested**: ~2 hours (automated attempts) + 4 hours (manual fixes)
+- **Files Fixed**: 11/17 (64.7%)
+- **Tests Recovered**: 157 tests
+- **Collection Errors**: 6 remaining (down from 17)
+- **Time Invested**: ~2 hours (automated attempts) + 4.5 hours (manual fixes)
 
 ### Projected Completion
 - **Remaining Time**: ~21 hours
