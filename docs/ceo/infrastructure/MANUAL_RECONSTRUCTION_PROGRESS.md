@@ -16,7 +16,7 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 
 ## Progress Tracker
 
-### ✅ Completed Files (4/17)
+### ✅ Completed Files (6/17)
 
 | File | Tests | Status | Time | Notes |
 |------|-------|--------|------|-------|
@@ -24,26 +24,28 @@ After attempting multiple automated approaches (regex, sed, Python scripts, spec
 | **test_buy_intent.py** | 2 | ✅ Complete | 15 min | Removed 1 orphaned block, fixed function signature |
 | **test_unified_chat_critical_paths.py** | 13 | ✅ Complete | 30 min | Removed 5 orphaned blocks, complete file rewrite |
 | **test_low_coverage_intents.py** | 14 | ✅ Complete | 20 min | Removed 14 orphaned blocks, fixed indentation script |
+| **test_user_chat_messages.py** | 3 | ✅ Complete | 10 min | Complete file rewrite, removed llm_validator param |
+| **test_agents.py** | 19 | ✅ Already Working | 0 min | Was not broken, already collects 19 tests |
 
-### 🔄 In Progress (13/17)
+### 🔄 In Progress (11/17)
 
-| File | Orphaned Blocks | Estimated Time | Priority |
-|------|-----------------|----------------|----------|
-| test_agent_squad_ultra_hunter_full.py | ~19 | 2 hours | P1 High |
-| test_multilanguage_comprehensive.py | ~42 | 3 hours | P1 High |
-| test_knowledge_injection_api.py | ~26 | 2 hours | P1 High |
-| test_unified_chat_with_test_data.py | ~39 | 2.5 hours | P1 High |
-| test_cross_chain_comprehensive.py | ~10 | 1 hour | P2 Medium |
-| test_shortcuts_edge_cases.py | ~13 | 1.5 hours | P2 Medium |
-| test_common_informational_queries.py | ~24 | 1.5 hours | P2 Medium |
-| test_hunter_chat_integration.py | ~12 | 1.5 hours | P2 Medium |
-| test_multi_intent_end_to_end.py | ~10 | 1 hour | P2 Medium |
-| test_redis_metrics_collector.py | ~18 | 2 hours | P2 Medium |
-| test_user_chat_messages.py | ~8 | 1 hour | P2 Medium |
-| test_agents.py | ~5 | 1 hour | P2 Medium |
-| test_swap_workflow_hyperliquid.py | ~3 | 45 min | P3 Low |
+| File | Orphaned Blocks | Estimated Time | Priority | Issue Type |
+|------|-----------------|----------------|----------|------------|
+| test_agent_squad_ultra_hunter_full.py | ~19 | 2 hours | P1 High | Indentation |
+| test_multilanguage_comprehensive.py | ~42 | 3 hours | P1 High | Indentation |
+| test_knowledge_injection_api.py | ~26 | 2 hours | P1 High | Indentation |
+| test_unified_chat_with_test_data.py | ~39 | 2.5 hours | P1 High | Indentation |
+| test_cross_chain_comprehensive.py | ~10 | 1 hour | P2 Medium | Indentation |
+| test_shortcuts_edge_cases.py | ~13 | 1.5 hours | P2 Medium | Indentation |
+| test_common_informational_queries.py | ~24 | 1.5 hours | P2 Medium | Indentation |
+| test_hunter_chat_integration.py | ~12 | 1.5 hours | P2 Medium | Indentation |
+| test_multi_intent_end_to_end.py | ~5 | 1 hour | P2 Medium | Indentation |
+| test_redis_metrics_collector.py | ~18 | 2 hours | P2 Medium | Indentation |
+| test_swap_workflow_hyperliquid.py | N/A | 30 min | P3 Low | Import Error |
 
-**Total Estimated Time Remaining**: ~17.5 hours
+**Total Estimated Time Remaining**: ~15 hours
+
+**Note**: `test_swap_workflow_hyperliquid.py` has an import error (missing `MAJOR_TOKENS_REQUIRE_DEX`), not indentation issues.
 
 ---
 
@@ -110,10 +112,10 @@ async def test_something(
 ## Metrics
 
 ### Current Status
-- **Files Fixed**: 4/17 (23.5%)
-- **Tests Recovered**: 38 tests (test_interruption_flows.py: 9, test_buy_intent.py: 2, test_unified_chat_critical_paths.py: 13, test_low_coverage_intents.py: 14)
-- **Collection Errors**: 13 remaining (down from 17)
-- **Time Invested**: ~2 hours (automated attempts) + 2 hours (manual fixes)
+- **Files Fixed**: 6/17 (35.3%)
+- **Tests Recovered**: 60 tests (test_interruption_flows.py: 9, test_buy_intent.py: 2, test_unified_chat_critical_paths.py: 13, test_low_coverage_intents.py: 14, test_user_chat_messages.py: 3, test_agents.py: 19)
+- **Collection Errors**: 11 remaining (down from 17)
+- **Time Invested**: ~2 hours (automated attempts) + 2.5 hours (manual fixes)
 
 ### Projected Completion
 - **Remaining Time**: ~21 hours
