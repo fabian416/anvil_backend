@@ -219,7 +219,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             if protocol:
                 state.data["protocol"] = protocol  # Store protocol preference
             state.step = WorkflowStep.PARSE_REQUEST.value
-            return self._ask_for_amount(asset.upper(), user_context), state
+            return await self._ask_for_amount(asset.upper(), user_context), state
         
         # No asset detected - show interactive asset selection with APY rates and user context
         state.data["awaiting_asset_selection"] = True
@@ -259,7 +259,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             else:
                 # Have asset but no amount - ask for amount with user context
                 state.data["awaiting_amount"] = True
-                return self._ask_for_amount(params["asset"].upper(), user_context), state
+                return await self._ask_for_amount(params["asset"].upper(), user_context), state
         
         # Check if it's a number selection
         user_input = text.upper()
@@ -270,13 +270,13 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             if 0 <= index < len(asset_list):
                 state.data["asset"] = asset_list[index]
                 state.data["awaiting_amount"] = True
-                return self._ask_for_amount(asset_list[index], user_context), state
+                return await self._ask_for_amount(asset_list[index], user_context), state
         
         # Check if it's a valid asset symbol
         if user_input in [a.upper() for a in SUPPORTED_ASSETS.keys()] or user_input in asset_list:
             state.data["asset"] = user_input
             state.data["awaiting_amount"] = True
-            return self._ask_for_amount(user_input, user_context), state
+            return await self._ask_for_amount(user_input, user_context), state
         
         # Invalid selection - show menu again
         state.data["awaiting_asset_selection"] = True
@@ -354,9 +354,9 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
 Please enter a valid number for your **{asset}** deposit:
 
 💡 *Examples:*
-• `100` - deposit 100 {asset}
-• `1000` - deposit 1,000 {asset}
-• `all` - deposit your entire {asset} balance
+• `0.5` - deposit 0.5 {asset}
+• `10` - deposit 10 {asset}
+• `all` - deposit your entire balance
 
 💬 Enter the amount to continue""",
             
@@ -365,9 +365,9 @@ Please enter a valid number for your **{asset}** deposit:
 Por favor ingresa un número válido para tu depósito de **{asset}**:
 
 💡 *Ejemplos:*
-• `100` - depositar 100 {asset}
-• `1000` - depositar 1,000 {asset}
-• `all` - depositar todo tu saldo de {asset}
+• `0.5` - depositar 0.5 {asset}
+• `10` - depositar 10 {asset}
+• `all` - depositar todo tu saldo
 
 💬 Ingresa la cantidad para continuar""",
             
@@ -376,9 +376,9 @@ Por favor ingresa un número válido para tu depósito de **{asset}**:
 Por favor digite um número válido para seu depósito de **{asset}**:
 
 💡 *Exemplos:*
-• `100` - depositar 100 {asset}
-• `1000` - depositar 1,000 {asset}
-• `all` - depositar todo seu saldo de {asset}
+• `0.5` - depositar 0.5 {asset}
+• `10` - depositar 10 {asset}
+• `all` - depositar todo seu saldo
 
 💬 Digite a quantia para continuar""",
             
@@ -387,9 +387,9 @@ Por favor digite um número válido para seu depósito de **{asset}**:
 请输入有效的 **{asset}** 存款金额：
 
 💡 *示例：*
-• `100` - 存入 100 {asset}
-• `1000` - 存入 1,000 {asset}
-• `all` - 存入全部 {asset} 余额
+• `0.5` - 存入 0.5 {asset}
+• `10` - 存入 10 {asset}
+• `all` - 存入全部余额
 
 💬 输入金额以继续""",
         }
@@ -415,6 +415,30 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         chain = state.data.get("chain", "base")
         protocol_preference = state.data.get("protocol")  # User's protocol preference
         wallet_address = user_context.wallet_address
+        
+        # Handle "all" - convert to actual token amount using CoinGecko price
+        if str(amount).lower() == "all":
+            user_balance_usd = user_context.total_balance_usd
+            token_price_usd = await self._get_token_price_usd(asset)
+            
+            if user_balance_usd > 0 and token_price_usd > 0:
+                # Calculate token amount from USD balance (leave 10% for gas)
+                available_usd = user_balance_usd * 0.90
+                token_amount = available_usd / token_price_usd
+                
+                # Format without scientific notation
+                amount = self._format_token_amount(token_amount)
+                state.data["amount"] = amount
+                
+                logger.info(
+                    f"[LendingWorkflow] Converted 'all' to {amount} {asset} "
+                    f"(balance=${user_balance_usd:.2f}, price=${token_price_usd:.2f})"
+                )
+            else:
+                # User has no balance
+                amount = "0"
+                state.data["amount"] = amount
+                logger.info(f"[LendingWorkflow] User has no balance for 'all' conversion")
         
         logger.info(f"[LendingWorkflow] Fetching vaults for {asset} on {chain}, preference={protocol_preference}")
         
@@ -1282,8 +1306,8 @@ Deposite em vaults DeFi para ganhar renda passiva. Qual ativo você gostaria de 
         
         return msgs.get(language, msgs["en"])
     
-    def _ask_for_amount(self, asset: str, user_context: UserContext) -> str:
-        """Ask user for deposit amount with balance context."""
+    async def _ask_for_amount(self, asset: str, user_context: UserContext) -> str:
+        """Ask user for deposit amount with balance context and smart examples."""
         
         language = user_context.language
         asset_info = SUPPORTED_ASSETS.get(asset.lower(), {"emoji": "💰", "name": asset})
@@ -1292,6 +1316,13 @@ Deposite em vaults DeFi para ganhar renda passiva. Qual ativo você gostaria de 
         # Build user balance section
         balance_section = self._build_amount_balance_section(user_context, asset, language)
         
+        # Get token price for smart examples
+        token_price_usd = await self._get_token_price_usd(asset)
+        user_balance_usd = user_context.total_balance_usd
+        
+        # Calculate smart examples based on user's actual balance
+        examples_section = self._build_smart_examples(asset, user_balance_usd, token_price_usd, language)
+        
         msgs = {
             "en": f"""{emoji} **Deposit {asset}**
 
@@ -1299,10 +1330,7 @@ Deposite em vaults DeFi para ganhar renda passiva. Qual ativo você gostaria de 
 
 How much **{asset}** would you like to deposit?
 
-💡 *Examples:*
-• `100` (one hundred {asset})
-• `1000` (one thousand {asset})
-• `all` (deposit your entire {asset} balance)
+{examples_section}
 
 💬 Enter the amount to continue""",
             
@@ -1312,10 +1340,7 @@ How much **{asset}** would you like to deposit?
 
 ¿Cuánto **{asset}** te gustaría depositar?
 
-💡 *Ejemplos:*
-• `100` (cien {asset})
-• `1000` (mil {asset})
-• `all` (depositar todo tu saldo de {asset})
+{examples_section}
 
 💬 Ingresa la cantidad para continuar""",
             
@@ -1325,10 +1350,7 @@ How much **{asset}** would you like to deposit?
 
 Quanto **{asset}** você gostaria de depositar?
 
-💡 *Exemplos:*
-• `100` (cem {asset})
-• `1000` (mil {asset})
-• `all` (depositar todo seu saldo de {asset})
+{examples_section}
 
 💬 Digite a quantia para continuar""",
             
@@ -1338,15 +1360,135 @@ Quanto **{asset}** você gostaria de depositar?
 
 您想存入多少 **{asset}**？
 
-💡 *示例：*
-• `100` (一百 {asset})
-• `1000` (一千 {asset})
-• `all` (存入全部 {asset} 余额)
+{examples_section}
 
 💬 输入金额以继续""",
         }
         
         return msgs.get(language, msgs["en"])
+    
+    def _build_smart_examples(
+        self,
+        asset: str,
+        user_balance_usd: float,
+        token_price_usd: float,
+        language: str,
+    ) -> str:
+        """Build balance-appropriate examples for deposit amounts."""
+        
+        # Calculate how much of this token the user can afford
+        if token_price_usd > 0:
+            max_token_amount = user_balance_usd / token_price_usd
+        else:
+            max_token_amount = user_balance_usd  # Assume stablecoin
+        
+        # Format examples based on actual balance
+        if user_balance_usd < 1:
+            # Very low balance - just show "all" option
+            msgs = {
+                "en": f"💡 *Tip:* Even small deposits earn yield! Say `all` to deposit your entire balance.",
+                "es": f"💡 *Consejo:* ¡Incluso pequeños depósitos generan rendimiento! Di `all` para depositar todo tu saldo.",
+                "pt": f"💡 *Dica:* Mesmo pequenos depósitos geram rendimento! Diga `all` para depositar todo seu saldo.",
+                "zh": f"💡 *提示：* 即使小额存款也能赚取收益！说 `all` 存入您的全部余额。",
+            }
+        elif user_balance_usd < 10:
+            # Small balance - show realistic small amounts
+            small_amount = max_token_amount * 0.5  # 50% of max
+            
+            # Format based on asset type
+            if asset.upper() in ("USDC", "USDT", "DAI"):
+                example1 = f"{small_amount:.2f}"
+                example2 = f"{max_token_amount * 0.9:.2f}"
+            else:
+                # For crypto like ETH, use more decimals
+                example1 = self._format_token_amount(small_amount)
+                example2 = self._format_token_amount(max_token_amount * 0.9)
+            
+            msgs = {
+                "en": f"""💡 *Examples based on your balance:*
+• `{example1}` (~50% of your balance)
+• `{example2}` (~90% of your balance)
+• `all` (deposit your entire {asset} balance)""",
+                "es": f"""💡 *Ejemplos basados en tu saldo:*
+• `{example1}` (~50% de tu saldo)
+• `{example2}` (~90% de tu saldo)
+• `all` (depositar todo tu saldo de {asset})""",
+                "pt": f"""💡 *Exemplos baseados no seu saldo:*
+• `{example1}` (~50% do seu saldo)
+• `{example2}` (~90% do seu saldo)
+• `all` (depositar todo seu saldo de {asset})""",
+                "zh": f"""💡 *基于您余额的示例：*
+• `{example1}` (~50% 的余额)
+• `{example2}` (~90% 的余额)
+• `all` (存入全部 {asset} 余额)""",
+            }
+        else:
+            # Reasonable balance - show meaningful amounts
+            if asset.upper() in ("USDC", "USDT", "DAI"):
+                # Stablecoins - show round numbers
+                example1 = min(10, user_balance_usd * 0.3)
+                example2 = min(50, user_balance_usd * 0.5)
+                example3 = user_balance_usd * 0.9
+                
+                msgs = {
+                    "en": f"""💡 *Examples:*
+• `{example1:.0f}` (~${example1:.0f})
+• `{example2:.0f}` (~${example2:.0f})
+• `all` (deposit ~${example3:.0f} {asset})""",
+                    "es": f"""💡 *Ejemplos:*
+• `{example1:.0f}` (~${example1:.0f})
+• `{example2:.0f}` (~${example2:.0f})
+• `all` (depositar ~${example3:.0f} {asset})""",
+                    "pt": f"""💡 *Exemplos:*
+• `{example1:.0f}` (~${example1:.0f})
+• `{example2:.0f}` (~${example2:.0f})
+• `all` (depositar ~${example3:.0f} {asset})""",
+                    "zh": f"""💡 *示例：*
+• `{example1:.0f}` (~${example1:.0f})
+• `{example2:.0f}` (~${example2:.0f})
+• `all` (存入 ~${example3:.0f} {asset})""",
+                }
+            else:
+                # Crypto tokens - calculate token amounts
+                example1 = self._format_token_amount(max_token_amount * 0.3)
+                example2 = self._format_token_amount(max_token_amount * 0.5)
+                example3 = self._format_token_amount(max_token_amount * 0.9)
+                
+                msgs = {
+                    "en": f"""💡 *Examples based on your balance:*
+• `{example1}` (~30% of your balance)
+• `{example2}` (~50% of your balance)
+• `all` (deposit ~{example3} {asset})""",
+                    "es": f"""💡 *Ejemplos basados en tu saldo:*
+• `{example1}` (~30% de tu saldo)
+• `{example2}` (~50% de tu saldo)
+• `all` (depositar ~{example3} {asset})""",
+                    "pt": f"""💡 *Exemplos baseados no seu saldo:*
+• `{example1}` (~30% do seu saldo)
+• `{example2}` (~50% do seu saldo)
+• `all` (depositar ~{example3} {asset})""",
+                    "zh": f"""💡 *基于您余额的示例：*
+• `{example1}` (~30% 的余额)
+• `{example2}` (~50% 的余额)
+• `all` (存入 ~{example3} {asset})""",
+                }
+        
+        return msgs.get(language, msgs["en"])
+    
+    def _format_token_amount(self, amount: float) -> str:
+        """Format token amount for display, avoiding scientific notation."""
+        if amount == 0:
+            return "0"
+        elif amount < 0.0001:
+            return f"{amount:.8f}".rstrip('0').rstrip('.')
+        elif amount < 0.01:
+            return f"{amount:.6f}".rstrip('0').rstrip('.')
+        elif amount < 1:
+            return f"{amount:.4f}".rstrip('0').rstrip('.')
+        elif amount < 100:
+            return f"{amount:.2f}".rstrip('0').rstrip('.')
+        else:
+            return f"{amount:.0f}"
     
     def _build_amount_balance_section(
         self,
