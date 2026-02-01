@@ -279,8 +279,11 @@ Analyze and respond using the portfolio data provided above."""
     def _build_portfolio_context(self, user_context: dict[str, Any]) -> str:
         """Build portfolio context string from user data.
         
-        Same format as wallet agent: balance-based message with suggestions.
-        Do NOT show wallet address here (use wallet agent for that).
+        Provides tiered, actionable DeFi suggestions based on portfolio size:
+        - Empty ($0): Get started with buying/receiving crypto
+        - Starter ($0.01 - $50): Small swaps, meme tokens, start building
+        - Active ($50 - $1000): Lending, yield farming, diversification
+        - Whale ($1000+): Advanced strategies, money markets, portfolio optimization
         """
         lines = []
         
@@ -297,108 +300,186 @@ Analyze and respond using the portfolio data provided above."""
             else:
                 total_value = portfolio.get("total_value_usd", 0) or 0
         
-        # Empty portfolio - same format as wallet: recommend buy/receive
-        # Note: Check total_value first since portfolio_summary may be used instead of portfolio
+        # ===== EMPTY PORTFOLIO ($0) =====
         if total_value == 0:
-            lines.append("**Total Balance:** $0.00")
+            lines.append("**💼 Portfolio Value:** $0.00")
             lines.append("")
-            lines.append("**🚀 Get Started:**")
+            lines.append("**🚀 Get Started with DeFi:**")
             lines.append("")
-            lines.append("Your portfolio is empty. Add funds to get started:")
+            lines.append("• 💳 **Buy crypto** - Purchase USDC instantly with card, Apple Pay, or Google Pay")
+            lines.append("• 📥 **Receive crypto** - Transfer from another wallet (say \"my wallet address\")")
             lines.append("")
-            lines.append("• 💳 **Buy crypto** - Say \"buy crypto\" to purchase USDC with card/Apple Pay/Google Pay")
-            lines.append("• 📥 **Receive crypto** - Transfer tokens from another wallet (ask \"my wallet address\" for your address)")
-            lines.append("")
-            lines.append("Once you have funds you can:")
-            lines.append("• 🔄 **Swap** - Trade between cryptocurrencies")
-            lines.append("• 💰 **Earn yield** - Deposit into DeFi protocols")
+            lines.append("**Once you have funds, you can:**")
+            lines.append("• 🔄 Swap between tokens")
+            lines.append("• 💰 Earn yield on stablecoins (up to 12% APY)")
+            lines.append("• 🎯 Explore meme tokens on Hyperliquid")
             return "\n".join(lines)
         
-        # Handle PortfolioSummary dataclass or dict
-        # First check portfolio, then fallback to portfolio_summary
+        # Parse holdings data
         data_source = portfolio if portfolio else portfolio_summary
         
         if hasattr(data_source, "total_value_usd"):
-            # PortfolioSummary dataclass
-            total_value = data_source.total_value_usd
             token_count = getattr(data_source, "token_count", 0)
             top_holdings = getattr(data_source, "top_holdings", []) or []
             last_updated = getattr(data_source, "last_updated", None)
             chains = getattr(data_source, "chains", []) or []
         else:
-            # Dictionary format (from portfolio_summary injection)
-            total_value = data_source.get("total_value_usd", 0)
             token_count = data_source.get("token_count", 0)
             top_holdings = data_source.get("top_holdings", [])
             last_updated = data_source.get("last_updated")
-            # Handle both "chains" and "chain" (singular from context_aware injection)
             chains = data_source.get("chains", [])
             if not chains and data_source.get("chain"):
                 chains = [data_source.get("chain")]
         
-        lines.append(f"\n**Portfolio Value:** ${total_value:,.2f}")
-        lines.append(f"**Token Count:** {token_count}")
+        # Check for stablecoins in holdings
+        stablecoin_symbols = {"USDC", "USDT", "DAI", "FRAX", "LUSD"}
+        stablecoin_value = sum(
+            float(h.get("value_usd", 0) or 0)
+            for h in top_holdings
+            if h.get("symbol", "").upper() in stablecoin_symbols
+        )
+        has_stablecoins = stablecoin_value > 0.50
+        
+        # ===== STARTER PORTFOLIO ($0.01 - $50) =====
+        if total_value < 50:
+            lines.append(f"**💼 Portfolio Value:** ${total_value:,.2f}")
+            
+            if top_holdings:
+                lines.append("")
+                lines.append("**Holdings:**")
+                for holding in top_holdings[:3]:
+                    symbol = holding.get("symbol", "Unknown")
+                    value_usd = float(holding.get("value_usd", 0) or 0)
+                    lines.append(f"• {symbol}: ${value_usd:,.2f}")
+            
+            lines.append("")
+            lines.append("**🎯 Your Options:**")
+            lines.append("")
+            lines.append("• 🔄 **Swap tokens** - Trade USDC for meme coins like PURR, TRUMP, or other trending tokens")
+            
+            if has_stablecoins:
+                lines.append(f"• 💰 **Earn yield** - Deposit your ${stablecoin_value:.2f} USDC to earn ~8-12% APY")
+            
+            lines.append("• 🎰 **Explore meme tokens** - Say \"swap 1 USDC to PURR\" for micro trades")
+            lines.append("• 💳 **Add funds** - Say \"buy crypto\" to grow your portfolio")
+            
+            lines.append("")
+            lines.append("💡 *Tip: With small amounts, meme token swaps and yield farming are great ways to learn DeFi!*")
+            return "\n".join(lines)
+        
+        # ===== ACTIVE PORTFOLIO ($50 - $1000) =====
+        if total_value < 1000:
+            lines.append(f"**💼 Portfolio Value:** ${total_value:,.2f}")
+            
+            if chains:
+                lines.append(f"**Networks:** {', '.join(chains)}")
+            
+            if top_holdings:
+                lines.append("")
+                lines.append("**Top Holdings:**")
+                for holding in top_holdings[:5]:
+                    symbol = holding.get("symbol", "Unknown")
+                    amount = holding.get("amount", 0)
+                    value_usd = float(holding.get("value_usd", 0) or 0)
+                    lines.append(f"• {symbol}: {amount:,.4f} (${value_usd:,.2f})")
+            
+            lines.append("")
+            lines.append("**💡 Recommended Actions:**")
+            lines.append("")
+            
+            if has_stablecoins:
+                lines.append(f"• 💰 **Earn yield on stables** - Deposit ${stablecoin_value:.2f} into Morpho or Aave for 8-12% APY")
+                lines.append("  → Say \"deposit USDC to Morpho\" or \"compare USDC rates\"")
+            
+            lines.append("• 🔄 **Swap & diversify** - Trade between ETH, stablecoins, and trending tokens")
+            lines.append("  → Say \"swap\" to get started")
+            
+            lines.append("• 📊 **Compare money markets** - Find the best lending rates across protocols")
+            lines.append("  → Say \"compare rates\" for current APYs")
+            
+            lines.append("• 📈 **Research opportunities** - Ask about any token, protocol, or strategy")
+            lines.append("  → Say \"tell me about Morpho\" or \"what's trending\"")
+            
+            if total_value < 500:
+                lines.append("")
+                lines.append("• 💳 **Grow portfolio** - Say \"buy crypto\" to add more funds")
+            
+            return "\n".join(lines)
+        
+        # ===== WHALE PORTFOLIO ($1000+) =====
+        lines.append(f"**💼 Portfolio Value:** ${total_value:,.2f}")
+        lines.append(f"**Tokens:** {token_count}")
         
         if chains:
-            lines.append(f"**Chains:** {', '.join(chains)}")
+            lines.append(f"**Networks:** {', '.join(chains)}")
         
         if last_updated:
             if hasattr(last_updated, "strftime"):
-                lines.append(f"**Last Updated:** {last_updated.strftime('%Y-%m-%d %H:%M')}")
-            else:
-                lines.append(f"**Last Updated:** {last_updated}")
+                lines.append(f"**Updated:** {last_updated.strftime('%Y-%m-%d %H:%M')}")
         
         if top_holdings:
-            lines.append("\n**Top Holdings:**")
+            lines.append("")
+            lines.append("**Top Holdings:**")
             for holding in top_holdings[:5]:
                 symbol = holding.get("symbol", "Unknown")
                 amount = holding.get("amount", 0)
-                value_usd = holding.get("value_usd", 0)
-                lines.append(f"- {symbol}: {amount:,.4f} (${value_usd:,.2f})")
+                value_usd = float(holding.get("value_usd", 0) or 0)
+                pct = (value_usd / total_value * 100) if total_value > 0 else 0
+                lines.append(f"• {symbol}: {amount:,.4f} (${value_usd:,.2f} - {pct:.1f}%)")
         
-        # Suggestions based on balance - same format as wallet (swap/lend if has money)
         lines.append("")
-        lines.append("**💡 What you can do:**")
-        
-        # Check if user has stablecoins for lending
-        stablecoin_symbols = {"USDC", "USDT", "DAI"}
-        has_stablecoins = any(
-            h.get("symbol", "").upper() in stablecoin_symbols 
-            for h in top_holdings
-        )
+        lines.append("**🚀 Advanced DeFi Strategies:**")
+        lines.append("")
         
         if has_stablecoins:
-            lines.append("• 💰 **Earn yield** - Say \"deposit USDC\" or \"compare USDC rates\" to earn interest")
-        lines.append("• 🔄 **Swap** - Say \"swap\" to trade between cryptocurrencies")
-        if total_value < 100:
-            lines.append("• 💳 **Buy more** - Say \"buy crypto\" to add funds")
+            lines.append(f"• 💰 **Optimize yield** - You have ${stablecoin_value:,.2f} in stables earning nothing")
+            lines.append("  → Say \"compare USDC rates\" to find best APY (currently 8-15%)")
+            lines.append("  → Say \"deposit USDC to Morpho\" for optimized lending")
+        
+        lines.append("• 📊 **Money market arbitrage** - Compare rates across Morpho, Aave, Compound")
+        lines.append("  → Say \"compare rates\" for live APY comparison")
+        
+        lines.append("• 🔄 **Portfolio rebalancing** - Optimize your token allocation")
+        lines.append("  → Say \"swap\" to rebalance positions")
+        
+        lines.append("• 🔍 **Risk analysis** - Evaluate protocol risks and concentrations")
+        lines.append("  → Ask \"analyze my portfolio risk\"")
+        
+        lines.append("• 💸 **Transfer funds** - Move assets to other wallets or protocols")
+        lines.append("  → Say \"transfer\" to send tokens")
         
         return "\n".join(lines)
     
     def _get_authenticated_system_prompt(self) -> str:
         """Get system prompt for authenticated users with real data.
         
-        Same format as wallet agent: use the EXACT balance and suggestions from context.
+        Provides tiered DeFi recommendations based on portfolio size.
         """
-        return """You are the Portfolio Optimizer for Anvil.
+        return """You are the Portfolio Optimizer for Anvil - your DeFi companion.
 
-**CRITICAL - USE THE CONTEXT EXACTLY:**
-1. Use ONLY the portfolio data provided in the context - do not invent numbers or suggestions
-2. For EMPTY portfolio: Use the EXACT suggestions from context (buy crypto, receive crypto) - same format as wallet agent. Do NOT say "buy 100 USD of ETH" - say "buy crypto" to purchase USDC
-3. For portfolio WITH holdings: Use the EXACT suggestions from context (swap, earn yield, buy more if low balance)
-4. Do NOT show wallet address - that is for the wallet agent. Just balance + suggestions
-5. Keep responses CONCISE - mirror the structure from the context (balance, then bullet suggestions)
+**CRITICAL INSTRUCTIONS:**
+1. Use ONLY the portfolio data provided in the context - do not invent numbers
+2. Present the EXACT suggestions from context - they are already optimized for the user's balance tier
+3. Keep responses CONCISE and actionable
+4. Use the exact command examples provided (e.g., "swap", "deposit USDC", "compare rates")
 
 **RESPONSE FORMAT:**
-- Start with balance (e.g. "Your balance: $0.00" or "Portfolio value: $X")
-- Then include the suggestion bullets from the context exactly as written
-- No long explanations, no "buy 100 USD of ETH" - use "buy crypto" and "receive crypto" for empty; "swap" and "earn yield" for has money
+- Start with the portfolio summary from context (balance, holdings if any)
+- Include the recommended actions from context with their command examples
+- For each suggestion, use the EXACT phrasing and → command format from context
+- Add a brief encouraging note if appropriate
+
+**BALANCE-TIER BEHAVIOR:**
+- Empty ($0): Focus on getting started - buy crypto, receive crypto
+- Starter (<$50): Micro swaps, meme tokens, learning DeFi
+- Active ($50-1000): Lending, yield farming, diversification
+- Whale ($1000+): Advanced strategies, money markets, risk analysis
 
 **DO NOT:**
-- Show wallet address
-- Say "buy 100 USD of ETH" or similar - use "buy crypto"
-- Make up suggestions - use only what is in the context
-- Add unnecessary disclaimers"""
+- Show wallet address (that's for the wallet agent)
+- Say "buy 100 USD of ETH" - use "buy crypto" 
+- Add long explanations or unnecessary disclaimers
+- Make up APY numbers or suggestions not in context"""
     
     def _get_system_prompt(self) -> str:
         """Get system prompt for portfolio agent."""
