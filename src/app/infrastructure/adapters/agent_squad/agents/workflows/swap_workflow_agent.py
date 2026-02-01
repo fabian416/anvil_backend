@@ -1034,16 +1034,33 @@ Aqui está a cotação do swap:
                 f"[SwapWorkflow] Blocking execution - insufficient funds: "
                 f"requested={amount} {from_token}, balance=${user_balance:.2f}"
             )
-            response = self._build_insufficient_balance_message(
-                from_token=from_token,
-                to_token=to_token,
-                amount=amount,
-                user_balance=user_balance,
-                language=user_context.language,
-            )
-            # Don't complete the workflow - user needs to fund first
-            state.error = "insufficient_balance"
-            return response, state
+            # Calculate recommended amount (90% of balance to leave room for gas)
+            recommended_amount = max(0, user_balance * 0.90)
+            
+            # Auto-update state with recommended amount and re-fetch quote
+            if recommended_amount >= 0.01:
+                state.data["amount"] = f"{recommended_amount:.2f}"
+                state.step = WorkflowStep.FETCH_DATA.value
+                # Show message that we're adjusting to available balance
+                response = self._get_auto_adjust_message(
+                    original_amount=amount,
+                    recommended_amount=f"{recommended_amount:.2f}",
+                    from_token=from_token,
+                    to_token=to_token,
+                    user_balance=user_balance,
+                    language=user_context.language,
+                )
+                # Fetch new quote with adjusted amount
+                new_quote_response, state = await self._handle_fetch_quote(message, state, user_context)
+                return f"{response}\n\n{new_quote_response}", state
+            else:
+                # User has no usable balance - show buy crypto message
+                response = self._get_zero_balance_message(
+                    from_token=from_token,
+                    language=user_context.language,
+                )
+                state.error = "insufficient_balance"
+                return response, state
         
         # Get quote data for execute_data
         output_amount = state.data.get("output_amount", "0")
@@ -2038,6 +2055,82 @@ Você gostaria de:
 2️⃣ **重新开始** 新的交换（说"新"或提供新的交换详情）
 
 💡 或者直接告诉我您想交换什么，例如："交换 50 USDC 到 PURR\"""",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    def _get_auto_adjust_message(
+        self,
+        original_amount: str,
+        recommended_amount: str,
+        from_token: str,
+        to_token: str,
+        user_balance: float,
+        language: str,
+    ) -> str:
+        """Message when auto-adjusting to available balance."""
+        msgs = {
+            "en": f"""⚠️ **Adjusting to your available balance**
+
+You requested **{original_amount} {from_token}** but only have ~**${user_balance:.2f}** available.
+
+I've adjusted the swap to **{recommended_amount} {from_token}** → **{to_token}**""",
+            "es": f"""⚠️ **Ajustando a tu saldo disponible**
+
+Solicitaste **{original_amount} {from_token}** pero solo tienes ~**${user_balance:.2f}** disponibles.
+
+He ajustado el intercambio a **{recommended_amount} {from_token}** → **{to_token}**""",
+            "pt": f"""⚠️ **Ajustando ao seu saldo disponível**
+
+Você solicitou **{original_amount} {from_token}** mas só tem ~**${user_balance:.2f}** disponíveis.
+
+Ajustei a troca para **{recommended_amount} {from_token}** → **{to_token}**""",
+            "zh": f"""⚠️ **调整到您的可用余额**
+
+您请求 **{original_amount} {from_token}** 但只有 ~**${user_balance:.2f}** 可用。
+
+我已将交换调整为 **{recommended_amount} {from_token}** → **{to_token}**""",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    def _get_zero_balance_message(self, from_token: str, language: str) -> str:
+        """Message when user has zero usable balance."""
+        msgs = {
+            "en": f"""💳 **You need {from_token} to swap**
+
+Your wallet doesn't have enough {from_token} for this swap.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase with card/Apple Pay/Google Pay
+• 📥 Or transfer {from_token} from another wallet
+
+Once you have funds, come back and try your swap again!""",
+            "es": f"""💳 **Necesitas {from_token} para intercambiar**
+
+Tu billetera no tiene suficiente {from_token} para este intercambio.
+
+**Para empezar:**
+• 💳 Di **"comprar crypto"** para comprar con tarjeta/Apple Pay/Google Pay
+• 📥 O transfiere {from_token} desde otra billetera
+
+¡Una vez que tengas fondos, vuelve e intenta tu intercambio de nuevo!""",
+            "pt": f"""💳 **Você precisa de {from_token} para trocar**
+
+Sua carteira não tem {from_token} suficiente para esta troca.
+
+**Para começar:**
+• 💳 Diga **"comprar crypto"** para comprar com cartão/Apple Pay/Google Pay
+• 📥 Ou transfira {from_token} de outra carteira
+
+Quando tiver fundos, volte e tente sua troca novamente!""",
+            "zh": f"""💳 **您需要 {from_token} 来交换**
+
+您的钱包没有足够的 {from_token} 进行此交换。
+
+**开始:**
+• 💳 说 **"购买加密货币"** 用卡/Apple Pay/Google Pay 购买
+• 📥 或从另一个钱包转入 {from_token}
+
+一旦您有资金，回来再试您的交换！""",
         }
         return msgs.get(language, msgs["en"])
     

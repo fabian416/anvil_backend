@@ -35,12 +35,12 @@ supervisor
 completed
 
 swap_workflow
-2.35s
+1.53s
 completed
 
-1 USDC
+10 USDC
 A
-🔄 Swap 1 USDC
+🔄 Swap 10 USDC
 
 What is Hyperliquid Spot?
 
@@ -50,11 +50,15 @@ High-speed execution (20,000+ TPS) on Hyperliquid L1.
 
 Real-time order book pricing - no slippage surprises.
 
-💰 Your Balance: ~$3.00 ✅
+💰 Your Balance: ~$3.00
+
+⚠️ Swap amount ($10.00) exceeds your balance.
+
+💡 Consider a smaller amount or say `buy crypto` to get more USDC.
 
 Select a meme token to receive:
 
-1. PURR • $0.065408
+1. PURR • $0.065142
 
 2. TRUMP • $4.130000
 
@@ -66,9 +70,9 @@ Select a meme token to receive:
 
 6. JEFF • $0.000000
 
-7. WAGMI • $0.001603
+7. WAGMI • $0.001602
 
-8. GMEOW • $0.000878
+8. GMEOW • $0.000872
 
 9. CAPPY
 
@@ -98,24 +102,38 @@ Agent Execution Details
 2 agents
 
 supervisor
-11.97s
+3.38s
 completed
 
 swap_workflow
-6.37s
+1.84s
 completed
 
 1
 A
+💡 Insufficient balance for this swap
+
+Requested: 10.00 USDC
+
+Available: ~$3.00
+
+Options:
+
+• ✅ Swap a smaller amount: "swap 2.70 USDC"
+
+• 💳 Or buy more crypto: "buy crypto"
+
+Here's the quote for your requested amount:
+
 📊 Swap Quote
 
-1 USDC → 15.274171 PURR
+10 USDC → 152.462266 PURR
 
 💰 USDC Price: $1.00 (📉 -0.0% 24h)
 
-💵 Value: ~$1.00 USD
+💵 Value: ~$10.00 USD
 
-• Price Impact: 0.66%
+• Price Impact: 0.69%
 
 • Network: BASE
 
@@ -147,28 +165,54 @@ Agent Execution Details
 2 agents
 
 supervisor
-0ms
+8ms
 completed
 
 swap_workflow
-604ms
+820ms
 completed
 
-yes
+swap
 A
-✅ Ready to Execute!
+💡 Insufficient balance for this swap
 
-Swap Details:
+Requested: 10.00 USDC
 
-• From: 1 USDC
+Available: ~$3.00
 
-• To: ~15.274171 PURR
+Options:
+
+• ✅ Swap a smaller amount: "swap 2.70 USDC"
+
+• 💳 Or buy more crypto: "buy crypto"
+
+Here's the quote for your requested amount:
+
+📊 Swap Quote
+
+10 USDC → 152.49249 PURR
+
+💰 USDC Price: $1.00 (📉 -0.0% 24h)
+
+💵 Value: ~$10.00 USD
+
+• Price Impact: 0.67%
 
 • Network: BASE
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Aggregator: HYPERLIQUID
 
-👉 Click Execute below to sign the transaction with your wallet.
+⛽ Est. Gas: ~$0.0000
+
+💡 Base L2 has consistently low fees (~$0.01)
+
+---
+
+✅ Say "yes" or "confirm" to execute this swap
+
+✏️ Or say "swap [amount] USDC to PURR" to change the amount
+
+❌ Say "cancel" to cancel
 
 Sources
 2 sources
@@ -188,42 +232,43 @@ supervisor
 completed
 
 swap_workflow
-2.01s
+3.86s
 completed
 
-swap
+yes
 A
-🔄 Continue or New Swap?
+💡 Insufficient balance for this swap
 
-I see you have a previous swap:
+Requested: 10.00 USDC
 
-1 USDC → PURR
+Available: ~$3.00
 
-Would you like to:
+Options:
 
-1️⃣ Continue with this swap (say "yes" or "continue")
+• ✅ Swap a smaller amount: "swap 2.70 USDC"
 
-2️⃣ Start fresh with a new swap (say "new" or provide new swap details)
+• 💳 Or buy more crypto: "buy crypto"
 
-💡 Or just tell me what you want to swap, e.g., "swap 50 USDC to PURR"
+Here's the quote for your requested amount:
 
-Sources
-2 sources
+📊 Swap Quote
 
-llm
-gemini-2.0-flash
-100%
+10 USDC → 152.543666 PURR
 
-api
-Hyperliquid/LiFi
-100%
-Agent Execution Details
-2 agents
+• Price Impact: 0.63%
 
-supervisor
-3.67s
-completed
+• Network: BASE
 
-swap_workflow
-0ms
-completed
+• Aggregator: HYPERLIQUID
+
+⛽ Est. Gas: ~$0.0060
+
+💡 Base L2 has consistently low fees (~$0.01)
+
+---
+
+✅ Say "yes" or "confirm" to execute this swap
+
+✏️ Or say "swap [amount] USDC to PURR" to change the amount
+
+❌ Say "cancel" to cancel
