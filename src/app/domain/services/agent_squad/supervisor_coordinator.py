@@ -953,6 +953,10 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
     
     def _is_simple_multi_intent(self, message: str) -> bool:
         """
+        Detect simple multi-intent patterns that can use faster LLM model.
+        """
+        import re
+        message_lower = message.lower()
         
         # Pattern: greeting + price
         greeting_price_pattern = r"(hi|hello|hey|hola|how are you).*(price|cost|worth).*(btc|eth|usdc|bitcoin|ethereum)"
