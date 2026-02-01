@@ -21,7 +21,6 @@ Test Classes:
 import pytest
 
 # Skip - requires AuthenticatedClient/AuthHelper fixtures
-pytestmark = pytest.mark.skip(reason="AuthenticatedClient fixture issues")
 import pytest_asyncio
 from httpx import AsyncClient
 from uuid import uuid4
@@ -29,6 +28,7 @@ from uuid import uuid4
 from tests.helpers.auth_helper import AuthHelper
 
 pytestmark = [
+    pytest.mark.skip(reason="AuthenticatedClient fixture issues"),
     pytest.mark.asyncio,
     pytest.mark.integration,
     pytest.mark.multilanguage,
