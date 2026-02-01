@@ -55,8 +55,9 @@ def make_app(
     return app
 
 
-# Create app instance for uvicorn
-app = make_app()
+# NOTE: Do NOT create app at module level with `app = make_app()`
+# uvicorn with --factory flag will call make_app() itself.
+# Creating app at module level causes double initialization and slow startup.
 
 
 if __name__ == "__main__":

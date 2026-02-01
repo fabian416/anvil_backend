@@ -34,7 +34,7 @@ dotenv:
 	@$(PYTHON) $(TOML_CONFIG_MANAGER) ${APP_ENV}
 
 start:
-	. env/bin/activate && PYTHONPATH=src ./env/bin/python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload
+	. env/bin/activate && PYTHONPATH=src ./env/bin/python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload --reload-dir src
 
 # Development environment - Start FastAPI + MCP Servers + Celery + Beat + Flower
 # Use CELERY_DEV_MODE=full for specialized workers (slower startup)
