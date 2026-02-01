@@ -1009,9 +1009,15 @@ def sync_single_wallet_etherscan(
         from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
         from app.infrastructure.adapters.types import MainAsyncSession
 
+        # Capture parameters from outer scope
+        _wallet_address = wallet_address
+        _chain = chain
+        _contract_address = contract_address
+        _decimals = decimals
+
         logger.info(
-            f"On-demand Etherscan check: {wallet_address[:10]}... "
-            f"on {chain}"
+            f"On-demand Etherscan check: {_wallet_address[:10]}... "
+            f"on {_chain}"
         )
 
         # Load API key
@@ -1030,12 +1036,12 @@ def sync_single_wallet_etherscan(
             "ethereum": 1, "base": 8453, "arbitrum": 42161,
             "polygon": 137, "optimism": 10,
         }
-        chain_id = chain_id_map.get(chain)
+        chain_id = chain_id_map.get(_chain)
         if chain_id is None:
-            return {"status": "error", "reason": f"unsupported_chain:{chain}"}
+            return {"status": "error", "reason": f"unsupported_chain:{_chain}"}
 
         # Default to USDC if no contract specified
-        if contract_address is None:
+        if _contract_address is None:
             usdc_defaults = {
                 "ethereum": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
                 "base": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
@@ -1043,8 +1049,8 @@ def sync_single_wallet_etherscan(
                 "polygon": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
                 "optimism": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
             }
-            contract_address = usdc_defaults.get(chain)
-            if not contract_address:
+            _contract_address = usdc_defaults.get(_chain)
+            if not _contract_address:
                 return {"status": "error", "reason": "no_usdc_contract_for_chain"}
 
         async with EtherscanClient(
@@ -1052,8 +1058,8 @@ def sync_single_wallet_etherscan(
             max_retries=3,
         ) as client:
             balance_data = await client.get_token_balance(
-                address=wallet_address,
-                contract_address=contract_address,
+                address=_wallet_address,
+                contract_address=_contract_address,
                 chain_id=chain_id,
             )
 
@@ -1065,7 +1071,7 @@ def sync_single_wallet_etherscan(
                 }
 
             raw_balance = balance_data.get("balance_raw", "0")
-            balance_human = _convert_balance(raw_balance, decimals)
+            balance_human = _convert_balance(raw_balance, _decimals)
 
             # Update DB if wallet exists
             try:
@@ -1080,7 +1086,7 @@ def sync_single_wallet_etherscan(
                 if wallets_table is not None:
                     wallet_stmt = (
                         select(wallets_table.c.id)
-                        .where(wallets_table.c.address == wallet_address)
+                        .where(wallets_table.c.address == _wallet_address)
                     )
                     wallet_result = await session.execute(wallet_stmt)
                     wallet_row = wallet_result.fetchone()
@@ -1092,7 +1098,7 @@ def sync_single_wallet_etherscan(
                             .where(
                                 and_(
                                     chain_addresses_table.c.wallet_id == db_wallet_id,
-                                    chain_addresses_table.c.chain == chain,
+                                    chain_addresses_table.c.chain == _chain,
                                 )
                             )
                         )
@@ -1113,8 +1119,8 @@ def sync_single_wallet_etherscan(
                             await session.execute(
                                 insert(chain_addresses_table).values(
                                     wallet_id=db_wallet_id,
-                                    chain=chain,
-                                    address=wallet_address,
+                                    chain=_chain,
+                                    address=_wallet_address,
                                     is_active=True,
                                     balance_usd=balance_human,
                                     last_balance_update=datetime.now(UTC),
@@ -1129,24 +1135,24 @@ def sync_single_wallet_etherscan(
                         )
                         await session.commit()
                         logger.info(
-                            f"Updated DB: wallet {wallet_address[:10]}... "
-                            f"= ${balance_human:.6f} on {chain}"
+                            f"Updated DB: wallet {_wallet_address[:10]}... "
+                            f"= ${balance_human:.6f} on {_chain}"
                         )
 
             except Exception as e:
                 logger.warning(
-                    f"DB update failed for {wallet_address[:10]}...: {e}. "
+                    f"DB update failed for {_wallet_address[:10]}...: {e}. "
                     f"Balance still returned in response."
                 )
 
             return {
                 "status": "success",
-                "wallet_address": wallet_address,
-                "chain": chain,
-                "contract_address": contract_address,
+                "wallet_address": _wallet_address,
+                "chain": _chain,
+                "contract_address": _contract_address,
                 "balance_raw": raw_balance,
                 "balance_human": str(balance_human),
-                "decimals": decimals,
+                "decimals": _decimals,
                 "api_metrics": client.metrics,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
