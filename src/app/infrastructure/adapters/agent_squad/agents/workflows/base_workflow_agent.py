@@ -352,23 +352,18 @@ class BaseWorkflowAgent(AgentGateway, ABC):
             # Signal to supervisor that this workflow should be cancelled
             # and the request should be re-routed to the correct workflow
             logger.info(
-                f"[{self.workflow_name}] Cancelling - user wants {detected_workflow} instead"
-            )
-            
-            # Return a redirect response with cancelled state
-            redirect_msg = self._get_workflow_redirect_message(
-                detected_workflow, 
-                user_context.language
+                f"[{self.workflow_name}] Redirecting to {detected_workflow} - user intent changed"
             )
             
             # Create cancelled state with redirect signal
+            # The content is empty - supervisor will replace with redirect workflow response
             cancelled_state = WorkflowState()
             cancelled_state.step = WorkflowStep.CANCELLED.value
             cancelled_state.cancelled = True
             cancelled_state.data["redirect_to"] = detected_workflow
             
             return AgentResponse(
-                content=redirect_msg,
+                content="",  # Empty - will be replaced by redirect workflow
                 agent_type=self.agent_type,
                 sources=[],
                 tools_used=["workflow_redirect"],

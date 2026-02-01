@@ -546,9 +546,11 @@ class SupervisorCoordinator:
                             original_message=original_message,
                         )
                         if redirect_plan:
-                            # Execute the redirect workflow
+                            # Execute the redirect workflow and add tasks to main plan
                             for redirect_task in redirect_plan.tasks:
                                 await execute_single_task(redirect_task)
+                                # Add redirect task to workflow_plan so its result is used
+                                workflow_plan.tasks.append(redirect_task)
             else:
                 # Multiple tasks ready - execute in parallel
                 logger.info(f"⚡ Executing {len(ready_tasks)} tasks in parallel: {[t.agent_type.value for t in ready_tasks]}")
