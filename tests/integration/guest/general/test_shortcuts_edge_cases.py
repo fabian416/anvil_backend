@@ -404,11 +404,13 @@ async def test_unclear_request_guest(client: AsyncClient):
 
 # ============================================================================
 # AUTHENTICATED USER EDGE CASES
+# NOTE: Skipped - legacy /api/v1/user/chat/conversations endpoint removed
 # ============================================================================
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
+@pytest.mark.skip(reason="Legacy user chat endpoint removed - use unified chat")
 async def test_case_sensitivity_user(client: AsyncClient, user_conversation_id: str):
     """
     Test case sensitivity for authenticated users.
@@ -428,6 +430,7 @@ async def test_case_sensitivity_user(client: AsyncClient, user_conversation_id: 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
+@pytest.mark.skip(reason="Legacy user chat endpoint removed")
 async def test_whitespace_tolerance_user(client: AsyncClient, user_conversation_id: str):
     """
     Test whitespace handling for authenticated users.
@@ -446,6 +449,7 @@ async def test_whitespace_tolerance_user(client: AsyncClient, user_conversation_
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
+@pytest.mark.skip(reason="Legacy user chat endpoint removed")
 async def test_emojis_user(client: AsyncClient, user_conversation_id: str):
     """
     Test emoji handling for authenticated users.

@@ -15,6 +15,9 @@ Test Cases:
 """
 
 import pytest
+
+# Skip - legacy /api/v1/user/chat/conversations endpoint removed
+pytestmark = pytest.mark.skip(reason="Legacy user chat endpoint removed")
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from uuid import UUID, uuid4
