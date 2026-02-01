@@ -37,7 +37,7 @@ supervisor
 completed
 
 lending_workflow
-756ms
+1.08s
 completed
 
 1
@@ -54,7 +54,11 @@ A
 
 📆 Yearly Earnings: ~0.00 ETH
 
-💰 Your Balance: ~$3.00 ✅
+💰 Your Balance: ~$3.00
+
+⚠️ Deposit value (~$2,302.42 for 1.0 ETH) exceeds your balance.
+
+💡 When you confirm, I'll adjust to your available balance.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -84,22 +88,46 @@ supervisor
 completed
 
 lending_workflow
-1.05s
+1.41s
 completed
 
 yes
 A
-✅ Deposit Ready to Execute
+⚠️ Adjusting to your available balance
 
-🔄 Depositing: 1 ETH
+You requested 1 ETH but only have ~$3.00 available.
 
-🏦 Protocol: Morpho
+I'm adjusting your deposit to 2.70 ETH (90% of your balance, keeping some for gas).
 
-⛓️ Network: Base
+Here's the updated quote:
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Deposit Quote
 
-Click Confirm to execute the deposit.
+9Summits WETH Core 1.1
+
+💰 Deposit Amount: 2.70 ETH
+
+📈 Current APY: 0.04%
+
+💵 Monthly Earnings: ~0.00 ETH
+
+📆 Yearly Earnings: ~0.00 ETH
+
+💰 Your Balance: ~$3.00
+
+⚠️ Deposit value (~$6,216.53 for 2.7 ETH) exceeds your balance.
+
+💡 When you confirm, I'll adjust to your available balance.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready to deposit 2.70 ETH?
+
+• Say "yes" or "confirm" to execute
+
+• Say "deposit [amount] ETH" to change amount
+
+• Say "cancel" to abort
 
 Sources
 2 sources
@@ -119,7 +147,5 @@ supervisor
 completed
 
 lending_workflow
-0ms
+182ms
 completed
-
-

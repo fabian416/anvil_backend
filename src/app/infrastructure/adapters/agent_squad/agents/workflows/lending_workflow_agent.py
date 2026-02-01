@@ -551,18 +551,40 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                 f"[LendingWorkflow] Blocking execution - insufficient funds: "
                 f"requested={amount} {asset}, balance=${user_balance:.2f}"
             )
-            # Calculate recommended amount (90% of balance to leave room for gas)
-            recommended_amount = max(0, user_balance * 0.90)
+            # Calculate recommended USD amount (90% of balance to leave room for gas)
+            recommended_usd = max(0, user_balance * 0.90)
             
-            # Auto-update state with recommended amount and re-fetch quote
-            if recommended_amount >= 0.01:
-                state.data["amount"] = f"{recommended_amount:.2f}"
+            # Convert USD to token amount using the token price
+            # For stablecoins, 1:1 with USD
+            # For non-stablecoins, divide USD by token price
+            if asset.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
+                recommended_token_amount = recommended_usd
+            else:
+                # Convert USD to token amount: $2.70 / $2302 per ETH = 0.00117 ETH
+                recommended_token_amount = recommended_usd / token_price_usd if token_price_usd > 0 else 0
+            
+            logger.info(
+                f"[LendingWorkflow] Auto-adjusting: ${recommended_usd:.2f} USD = "
+                f"{recommended_token_amount:.6f} {asset} (at ${token_price_usd:.2f}/{asset})"
+            )
+            
+            # Auto-update state with recommended token amount and re-fetch quote
+            # Use appropriate decimal places based on token type
+            if recommended_token_amount >= 0.000001:  # Minimum viable amount
+                if asset.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
+                    formatted_amount = f"{recommended_token_amount:.2f}"
+                else:
+                    # For ETH/WBTC use more decimal places
+                    formatted_amount = f"{recommended_token_amount:.6f}".rstrip('0').rstrip('.')
+                
+                state.data["amount"] = formatted_amount
                 state.step = WorkflowStep.FETCH_DATA.value
                 # Show message that we're adjusting to available balance
                 response = self._get_auto_adjust_message(
                     original_amount=amount,
-                    recommended_amount=f"{recommended_amount:.2f}",
+                    recommended_amount=formatted_amount,
                     asset=asset,
+                    recommended_usd=recommended_usd,
                     user_balance=user_balance,
                     language=language,
                 )
@@ -1774,16 +1796,26 @@ Por favor confirme a transação na sua carteira.""",
         original_amount: str,
         recommended_amount: str,
         asset: str,
+        recommended_usd: float,
         user_balance: float,
         language: str,
     ) -> str:
-        """Message when auto-adjusting to available balance."""
+        """Message when auto-adjusting to available balance.
+        
+        Args:
+            original_amount: Original requested amount (e.g., "1")
+            recommended_amount: Adjusted token amount (e.g., "0.00117")
+            asset: Token symbol (e.g., "ETH")
+            recommended_usd: USD value of recommendation (e.g., 2.70)
+            user_balance: User's total USD balance
+            language: User language
+        """
         msgs = {
             "en": f"""⚠️ **Adjusting to your available balance**
 
 You requested **{original_amount} {asset}** but only have ~**${user_balance:.2f}** available.
 
-I'm adjusting your deposit to **{recommended_amount} {asset}** (90% of your balance, keeping some for gas).
+I'm adjusting your deposit to **{recommended_amount} {asset}** (~${recommended_usd:.2f}, keeping some for gas).
 
 Here's the updated quote:""",
             
@@ -1791,7 +1823,7 @@ Here's the updated quote:""",
 
 Solicitaste **{original_amount} {asset}** pero solo tienes ~**${user_balance:.2f}** disponibles.
 
-Estoy ajustando tu depósito a **{recommended_amount} {asset}** (90% de tu saldo, reservando algo para gas).
+Estoy ajustando tu depósito a **{recommended_amount} {asset}** (~${recommended_usd:.2f}, reservando algo para gas).
 
 Aquí está la cotización actualizada:""",
             
@@ -1799,7 +1831,7 @@ Aquí está la cotización actualizada:""",
 
 Você solicitou **{original_amount} {asset}** mas só tem ~**${user_balance:.2f}** disponíveis.
 
-Estou ajustando seu depósito para **{recommended_amount} {asset}** (90% do seu saldo, reservando para gas).
+Estou ajustando seu depósito para **{recommended_amount} {asset}** (~${recommended_usd:.2f}, reservando para gas).
 
 Aqui está a cotação atualizada:""",
             
@@ -1807,7 +1839,7 @@ Aqui está a cotação atualizada:""",
 
 您请求 **{original_amount} {asset}** 但只有 ~**${user_balance:.2f}** 可用。
 
-我正在将您的存款调整为 **{recommended_amount} {asset}**（您余额的90%，保留一些作为gas费）。
+我正在将您的存款调整为 **{recommended_amount} {asset}**（~${recommended_usd:.2f}，保留一些作为gas费）。
 
 以下是更新的报价：""",
         }
