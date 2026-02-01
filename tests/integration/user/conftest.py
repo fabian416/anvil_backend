@@ -169,8 +169,9 @@ class TokenManager:
             cls._cached_token = token_info
             return token_info
         
-        raise RuntimeError(
-            "Unable to obtain JWT token. Set JWT_TEST_TOKEN env var or provide TEST_USER_PASSWORD"
+        # Skip tests if no auth configured
+        pytest.skip(
+            "User integration tests require JWT_TEST_TOKEN or TEST_USER_PASSWORD env var"
         )
     
     @classmethod

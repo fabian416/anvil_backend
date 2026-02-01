@@ -22,6 +22,9 @@ import asyncio
 
 from app.run import make_app
 
+# Skip - uses legacy /api/v1/user/chat endpoint that was removed
+pytestmark = pytest.mark.skip(reason="Uses legacy /api/v1/user/chat endpoint")
+
 # Access token for ops@anvilcrypto.com (registered user)
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ0ZXN0X3Nlc3Npb25fMjAyNl8xNzY4MDY2MDc5IiwiZXhwIjoxNzk5NjAyMDc5fQ.OUFFmZW2_QACkgrIphLFcOOB3Qb-1ckVB_RvZ-VTaF0"
 

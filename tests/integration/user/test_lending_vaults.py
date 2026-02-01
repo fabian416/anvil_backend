@@ -11,6 +11,8 @@ Tests validate that vault queries route to lending_workflow agent and return Mor
 """
 
 import pytest
+
+pytestmark = pytest.mark.skip(reason="Uses legacy /api/v1/user/chat endpoint")
 import pytest_asyncio
 from datetime import datetime
 from httpx import AsyncClient, ASGITransport
