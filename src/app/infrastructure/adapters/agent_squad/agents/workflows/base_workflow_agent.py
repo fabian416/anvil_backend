@@ -280,11 +280,14 @@ class BaseWorkflowAgent(AgentGateway, ABC):
             return False, None
         
         # Check if message matches a DIFFERENT workflow
-        current_workflow = self.workflow_name.lower()
+        # Normalize workflow names by removing underscores for comparison
+        current_workflow = self.workflow_name.lower().replace("_", "")
         
         for workflow_type, keywords in workflow_keywords.items():
             # Skip if it's the current workflow
-            if workflow_type in current_workflow or current_workflow in workflow_type:
+            # Normalize both for comparison (remove underscores)
+            workflow_type_normalized = workflow_type.replace("_", "")
+            if workflow_type_normalized in current_workflow or current_workflow in workflow_type_normalized:
                 continue
                 
             for keyword in keywords:
