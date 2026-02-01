@@ -16,6 +16,26 @@ Supported: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 more meme tokens
 
 Note: All swaps use USDC pairs. Major tokens (ETH, BTC, SOL) are NOT supported.
 
+Sources
+2 sources
+
+system
+Supervisor Router
+100%
+
+api
+Hyperliquid/LiFi
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+0ms
+completed
+
+swap_workflow
+2.03s
+completed
 
 1 USDC
 A
@@ -33,9 +53,9 @@ Real-time order book pricing - no slippage surprises.
 
 Select a meme token to receive:
 
-1. PURR • $0.066264
+1. PURR • $0.065406
 
-2. TRUMP • $4.160000
+2. TRUMP • $4.140000
 
 3. PEPE • $0.000004
 
@@ -45,9 +65,9 @@ Select a meme token to receive:
 
 6. JEFF • $0.000000
 
-7. WAGMI • $0.001606
+7. WAGMI • $0.001605
 
-8. GMEOW • $0.000882
+8. GMEOW • $0.000878
 
 9. CAPPY
 
@@ -63,24 +83,44 @@ Reply with:
 
 💡 All swaps via Hyperliquid Spot (0.02% fee, zero gas)
 
+Sources
+2 sources
+
+llm
+gemini-2.0-flash
+100%
+
+api
+Hyperliquid/LiFi
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+13.91s
+completed
+
+swap_workflow
+13.33s
+completed
 
 PURR
 A
 📊 Swap Quote
 
-1 USDC → 15.130653 PURR
+1 USDC → 15.283276 PURR
 
-💰 USDC Price: $1.00 (📉 -0.0% 24h)
+💰 USDC Price: $1.00 (📈 +0.0% 24h)
 
 💵 Value: ~$1.00 USD
 
-• Price Impact: 0.67%
+• Price Impact: 0.58%
 
 • Network: BASE
 
 • Aggregator: HYPERLIQUID
 
-⛽ Est. Gas: ~$0.0047
+⛽ Est. Gas: ~$0.0046
 
 💡 Base L2 has consistently low fees (~$0.01)
 
@@ -92,6 +132,26 @@ A
 
 ❌ Say "cancel" to cancel
 
+Sources
+2 sources
+
+system
+Supervisor Router
+100%
+
+api
+Hyperliquid/LiFi
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+0ms
+completed
+
+swap_workflow
+718ms
+completed
 
 yes
 A
@@ -101,7 +161,7 @@ Swap Details:
 
 • From: 1 USDC
 
-• To: ~15.130653 PURR
+• To: ~15.283276 PURR
 
 • Network: BASE
 
@@ -109,40 +169,11 @@ Swap Details:
 
 👉 Click Execute below to sign the transaction with your wallet.
 
-
-swap
-A
-📊 Swap Quote
-
-1 USDC → 15.334366 PURR
-
-💰 USDC Price: $1.00 (📈 +0.0% 24h)
-
-💵 Value: ~$1.00 USD
-
-• Price Impact: 0.32%
-
-• Network: BASE
-
-• Aggregator: HYPERLIQUID
-
-⛽ Est. Gas: ~$0.0047
-
-💡 Base L2 has consistently low fees (~$0.01)
-
----
-
-✅ Say "yes" or "confirm" to execute this swap
-
-✏️ Or say "swap [amount] USDC to PURR" to change the amount
-
-❌ Say "cancel" to cancel
-
 Sources
 2 sources
 
-llm
-gemini-2.0-flash
+system
+Supervisor Router
 100%
 
 api
@@ -152,32 +183,7 @@ Agent Execution Details
 2 agents
 
 supervisor
-14.27s
-completed
-
-swap_workflow
-6.96s
-completed
-
-cancel
-A
-❌ Swap cancelled. Let me know if you want to try again!
-
-Sources
-2 sources
-
-llm
-gemini-2.0-flash
-100%
-
-api
-Hyperliquid/LiFi
-100%
-Agent Execution Details
-2 agents
-
-supervisor
-2.77s
+0ms
 completed
 
 swap_workflow
@@ -188,13 +194,13 @@ swap
 A
 📊 Swap Quote
 
-1 USDC → 15.237166 PURR
+1 USDC → 15.283276 PURR
 
 💰 USDC Price: $1.00 (📈 +0.0% 24h)
 
 💵 Value: ~$1.00 USD
 
-• Price Impact: 0.93%
+• Price Impact: 0.52%
 
 • Network: BASE
 
@@ -226,11 +232,11 @@ Agent Execution Details
 2 agents
 
 supervisor
-7.16s
+12.08s
 completed
 
 swap_workflow
-11.48s
+12.21s
 completed
 
 

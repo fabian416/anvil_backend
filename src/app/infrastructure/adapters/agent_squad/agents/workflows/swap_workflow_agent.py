@@ -208,18 +208,90 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         
         logger.info(f"[SwapWorkflow] Processing step={step}, message={message.value[:50]}...")
         
-        # Check if user wants to start a NEW swap flow (restart detection)
-        # This resets state when user says "swap", "exchange", etc.
-        # while already in an ongoing flow (FETCH_DATA, CONFIRM, or EXECUTE step)
-        if step not in (WorkflowStep.PARSE_REQUEST.value, WorkflowStep.CANCELLED.value, WorkflowStep.COMPLETED.value):
-            restart_keywords = [
-                "swap", "exchange", "trade", "cambiar", "trocar", "intercambiar",
+        # Check if user wants to continue or start new after EXECUTE/COMPLETED
+        # If user just says "swap" without full params after an executed swap,
+        # ask if they want to repeat the last swap or start fresh
+        if step in (WorkflowStep.EXECUTE.value, WorkflowStep.COMPLETED.value):
+            # Check if user is saying just "swap" without specific params
+            simple_swap_keywords = ["swap", "exchange", "trade", "cambiar", "trocar", "intercambiar"]
+            is_simple_swap = text_lower in simple_swap_keywords or text_lower in [
                 "i want to swap", "quiero cambiar", "quiero intercambiar",
+                "swap again", "another swap", "repeat", "again",
+                "repetir", "de nuevo", "otra vez",
             ]
-            is_restart_request = any(text_lower.startswith(kw) or f" {kw}" in f" {text_lower}" for kw in restart_keywords)
             
-            if is_restart_request:
-                logger.info(f"[SwapWorkflow] Restart detected - user starting new swap flow, resetting state")
+            # Check if user wants to continue with last swap
+            continue_keywords = ["yes", "si", "sí", "sim", "continue", "continuar", "repeat", "repetir", "again", "de nuevo"]
+            wants_continue = text_lower in continue_keywords
+            
+            # Check if user wants to start fresh
+            fresh_keywords = ["new", "nuevo", "nova", "fresh", "start over", "empezar de nuevo", "começar de novo", "different", "diferente"]
+            wants_fresh = any(kw in text_lower for kw in fresh_keywords)
+            
+            if wants_continue and state.data.get("from_token") and state.data.get("to_token"):
+                # User wants to repeat last swap - go directly to fetch quote
+                logger.info(f"[SwapWorkflow] User wants to continue with last swap")
+                state.step = WorkflowStep.FETCH_DATA.value
+                state.confirmed = False
+                state.execute_data = None
+                return await self._handle_fetch_quote(message, state, user_context)
+            
+            elif wants_fresh:
+                # User explicitly wants a new swap
+                logger.info(f"[SwapWorkflow] User wants to start fresh swap")
+                state = WorkflowState()
+                state.step = WorkflowStep.PARSE_REQUEST.value
+                return await self._handle_parse_request(message, state, user_context)
+            
+            elif is_simple_swap and state.data.get("from_token") and state.data.get("to_token"):
+                # User said "swap" without params after a completed swap - ask what they want
+                logger.info(f"[SwapWorkflow] User said 'swap' after execute - asking if continue or new")
+                state.data["awaiting_continue_choice"] = True
+                return self._get_continue_or_new_prompt(state, language), state
+        
+        # Check if user is responding to continue/new prompt
+        if state.data.get("awaiting_continue_choice"):
+            continue_keywords = ["yes", "si", "sí", "sim", "continue", "continuar", "1", "repeat", "repetir", "last", "anterior"]
+            fresh_keywords = ["no", "new", "nuevo", "nova", "2", "fresh", "different", "diferente", "start"]
+            
+            if any(kw in text_lower for kw in continue_keywords):
+                # Continue with last swap
+                state.data.pop("awaiting_continue_choice", None)
+                state.step = WorkflowStep.FETCH_DATA.value
+                state.confirmed = False
+                state.execute_data = None
+                logger.info(f"[SwapWorkflow] User chose to continue with last swap")
+                return await self._handle_fetch_quote(message, state, user_context)
+            elif any(kw in text_lower for kw in fresh_keywords):
+                # Start fresh
+                state.data.pop("awaiting_continue_choice", None)
+                state = WorkflowState()
+                state.step = WorkflowStep.PARSE_REQUEST.value
+                logger.info(f"[SwapWorkflow] User chose to start new swap")
+                return await self._handle_parse_request(message, state, user_context)
+            else:
+                # Check if user provided new swap params directly
+                new_params = await self._extract_swap_params(message.value)
+                if new_params.get("from_token") and new_params.get("to_token"):
+                    # User provided new swap details - start fresh with these
+                    state.data.pop("awaiting_continue_choice", None)
+                    state = WorkflowState()
+                    state.step = WorkflowStep.PARSE_REQUEST.value
+                    return await self._handle_parse_request(message, state, user_context)
+                # Re-prompt
+                return self._get_continue_or_new_prompt(state, language), state
+        
+        # Check if user wants to start a NEW swap flow (restart detection)
+        # This resets state when user says "swap 100 USDC to ETH", etc.
+        # while already in an ongoing flow (FETCH_DATA, CONFIRM step)
+        if step in (WorkflowStep.FETCH_DATA.value, WorkflowStep.CONFIRM.value):
+            # Only restart if user provides specific swap params (not just "swap")
+            new_params = await self._extract_swap_params(message.value)
+            has_specific_params = new_params.get("from_token") and new_params.get("to_token") and new_params.get("amount")
+            
+            if has_specific_params:
+                # User provided complete new swap params - start fresh
+                logger.info(f"[SwapWorkflow] New swap params detected - starting fresh swap")
                 state = WorkflowState()
                 state.step = WorkflowStep.PARSE_REQUEST.value
                 return await self._handle_parse_request(message, state, user_context)
@@ -1915,6 +1987,56 @@ Por favor insira:
             "es": "❌ Intercambio cancelado. ¡Avísame si quieres intentarlo de nuevo!",
             "pt": "❌ Troca cancelada. Me avise se quiser tentar novamente!",
             "zh": "❌ 交换已取消。如果您想重试，请告诉我！",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    def _get_continue_or_new_prompt(self, state: WorkflowState, language: str) -> str:
+        """Prompt asking if user wants to continue last swap or start new."""
+        from_token = state.data.get("from_token", "?")
+        to_token = state.data.get("to_token", "?")
+        amount = state.data.get("amount", "?")
+        
+        msgs = {
+            "en": f"""🔄 **Continue or New Swap?**
+
+I see you have a previous swap:
+**{amount} {from_token} → {to_token}**
+
+Would you like to:
+1️⃣ **Continue** with this swap (say "yes" or "continue")
+2️⃣ **Start fresh** with a new swap (say "new" or provide new swap details)
+
+💡 Or just tell me what you want to swap, e.g., "swap 50 USDC to PURR\"""",
+            "es": f"""🔄 **¿Continuar o Nuevo Intercambio?**
+
+Veo que tienes un intercambio anterior:
+**{amount} {from_token} → {to_token}**
+
+¿Te gustaría:
+1️⃣ **Continuar** con este intercambio (di "sí" o "continuar")
+2️⃣ **Empezar de nuevo** con un nuevo intercambio (di "nuevo" o proporciona nuevos detalles)
+
+💡 O simplemente dime qué quieres intercambiar, ej: "cambiar 50 USDC a PURR\"""",
+            "pt": f"""🔄 **Continuar ou Nova Troca?**
+
+Vejo que você tem uma troca anterior:
+**{amount} {from_token} → {to_token}**
+
+Você gostaria de:
+1️⃣ **Continuar** com esta troca (diga "sim" ou "continuar")
+2️⃣ **Começar de novo** com uma nova troca (diga "novo" ou forneça novos detalhes)
+
+💡 Ou apenas me diga o que você quer trocar, ex: "trocar 50 USDC para PURR\"""",
+            "zh": f"""🔄 **继续还是新交换？**
+
+我看到您有一个之前的交换：
+**{amount} {from_token} → {to_token}**
+
+您想要：
+1️⃣ **继续** 这个交换（说"是"或"继续"）
+2️⃣ **重新开始** 新的交换（说"新"或提供新的交换详情）
+
+💡 或者直接告诉我您想交换什么，例如："交换 50 USDC 到 PURR\"""",
         }
         return msgs.get(language, msgs["en"])
     
