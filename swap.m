@@ -35,7 +35,7 @@ supervisor
 completed
 
 swap_workflow
-1.87s
+1.68s
 completed
 
 1 USDC
@@ -54,7 +54,7 @@ Real-time order book pricing - no slippage surprises.
 
 Select a meme token to receive:
 
-1. PURR • $0.065722
+1. PURR • $0.066129
 
 2. TRUMP • $4.140000
 
@@ -66,9 +66,9 @@ Select a meme token to receive:
 
 6. JEFF • $0.000000
 
-7. WAGMI • $0.001590
+7. WAGMI • $0.001586
 
-8. GMEOW • $0.000872
+8. GMEOW • $0.000869
 
 9. CAPPY
 
@@ -98,30 +98,30 @@ Agent Execution Details
 2 agents
 
 supervisor
-14.21s
+7.64s
 completed
 
 swap_workflow
-2.75s
+3.65s
 completed
 
 1
 A
 📊 Swap Quote
 
-1 USDC → 15.081137 PURR
+1 USDC → 15.278139 PURR
 
-💰 USDC Price: $1.00 (📉 -0.0% 24h)
+💰 USDC Price: $1.00 (📈 +0.0% 24h)
 
 💵 Value: ~$1.00 USD
 
-• Price Impact: 0.18%
+• Price Impact: 0.69%
 
 • Network: BASE
 
 • Aggregator: HYPERLIQUID
 
-⛽ Est. Gas: ~$0.0047
+⛽ Est. Gas: ~$0.0000
 
 💡 Base L2 has consistently low fees (~$0.01)
 
@@ -151,7 +151,7 @@ supervisor
 completed
 
 swap_workflow
-771ms
+917ms
 completed
 
 yes
@@ -162,7 +162,7 @@ Swap Details:
 
 • From: 1 USDC
 
-• To: ~15.081137 PURR
+• To: ~15.278139 PURR
 
 • Network: BASE
 
@@ -184,66 +184,30 @@ Agent Execution Details
 2 agents
 
 supervisor
-13ms
+0ms
 completed
 
 swap_workflow
-2.89s
+1.54s
 completed
 
 Supply 1000 USDC to Morpho
 A
-❌ Swap not supported: USDC → MORPHO
-
-Anvil uses Hyperliquid Spot for swaps, which only supports meme tokens paired with USDC.
-
-Tokens like MORPHO are not available for swaps.
-
----
-
-✅ What you CAN do on Anvil:
-
-Meme Token Swaps (via Hyperliquid Spot):
-
-• `swap 100 USDC to PURR`
-
-• `swap 50 USDC to TRUMP`
-
-• `swap 1000 USDC to PEPE`
-
-Supported meme tokens: PURR, TRUMP, PEPE, MOG, HFUN, JEFF, WAGMI, and 40+ more
-
----
-
-💡 For major tokens (MORPHO), you can:
-
-• Check prices: "what's the price of ETH?"
-
-• Track portfolio: "show my portfolio"
-
-• Buy crypto: "buy ETH" (fiat on-ramp via MoonPay)
-
-• Use external DEXs: Uniswap, 1inch, or other DEX aggregators
-
 Sources
-2 sources
+1 source
 
 llm
 gemini-2.0-flash
-100%
-
-api
-Hyperliquid/LiFi
 100%
 Agent Execution Details
 2 agents
 
 supervisor
-3.25s
+10.77s
 completed
 
 swap_workflow
-1.74s
+0ms
 completed
 
 

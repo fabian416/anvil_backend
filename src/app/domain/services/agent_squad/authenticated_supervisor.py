@@ -581,19 +581,23 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         is_fresh, fresh_workflow_type = self._detect_fresh_workflow_start(message)
         has_pending, pending_workflow_name, _ = self._has_pending_workflow(conversation_context)
         
-        if is_fresh and has_pending:
-            # User is starting a NEW workflow while having a pending one
-            # Normalize pending workflow name for comparison
-            pending_type = (pending_workflow_name or "").lower().replace("workflow", "").replace("_", "").strip()
-            
-            # If fresh workflow is DIFFERENT from pending workflow, cancel the pending one
-            if fresh_workflow_type != pending_type:
-                logger.info(f"🔄 Fresh workflow '{fresh_workflow_type}' cancels pending '{pending_workflow_name}'")
-                return False, None  # Not a continuation - start fresh
-            # If same workflow type (e.g., "buy crypto" while in buy flow), also reset
+        # If user is starting a fresh workflow, route directly to it
+        # This bypasses LLM planning for reliable routing
+        if is_fresh:
+            workflow_name = f"{fresh_workflow_type}_workflow"
+            if has_pending:
+                # Normalize pending workflow name for comparison
+                pending_type = (pending_workflow_name or "").lower().replace("workflow", "").replace("_", "").strip()
+                
+                if fresh_workflow_type != pending_type:
+                    logger.info(f"🔄 Fresh workflow '{fresh_workflow_type}' cancels pending '{pending_workflow_name}' - routing directly")
+                else:
+                    logger.info(f"🔄 Restarting same workflow type '{fresh_workflow_type}' - routing directly")
             else:
-                logger.info(f"🔄 Restarting same workflow type '{fresh_workflow_type}'")
-                return False, None  # Not a continuation - restart fresh
+                logger.info(f"🆕 Fresh workflow detected - routing to {workflow_name}")
+            
+            # Route directly to the detected workflow (bypasses LLM)
+            return True, workflow_name
         
         # Confirmation phrases in multiple languages
         confirmation_phrases = {
@@ -615,17 +619,6 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             message_lower.startswith(phrase + " ") or message_lower.endswith(" " + phrase)
             for phrase in confirmation_phrases
         )
-
-        # NEW: Check for parameter-awaiting workflows (before early return)
-        # This handles cases where user provides parameters like "USDC", "1", "2", etc.
-        # CRITICAL: Skip this check if user is starting a FRESH workflow!
-        # If user says "Swap X to Y" while in buy flow, we should NOT continue the buy flow.
-        if is_fresh:
-            # User is starting a fresh workflow - route directly to that workflow agent
-            # This ensures "Supply 1000 USDC to Morpho" goes to lending_workflow, not transfer_workflow
-            workflow_name = f"{fresh_workflow_type}_workflow"
-            logger.info(f"🆕 Fresh workflow detected - routing to {workflow_name}")
-            return True, workflow_name  # Route to the detected workflow
         
         if conversation_context.conversation_history:
             # FIRST: Check the most recent assistant message's metadata for workflow_name
