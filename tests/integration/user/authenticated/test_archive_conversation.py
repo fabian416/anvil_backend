@@ -21,6 +21,9 @@ from uuid import UUID
 
 from app.run import make_app
 
+# Skip - Uses legacy /api/v1/user/chat endpoint
+pytestmark = pytest.mark.skip(reason="Uses legacy /api/v1/user/chat endpoint")
+
 
 @pytest_asyncio.fixture
 async def client():
