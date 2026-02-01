@@ -543,17 +543,36 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         chain = state.data.get("chain") or "base"
         vault_data = state.data.get("vault", {})
         
+        user_balance = user_context.total_balance_usd
+        
+        # Get real token price for non-stablecoins
+        token_price_usd = await self._get_token_price_usd(asset)
+        
+        # Handle "all" - convert to actual token amount (should have been done in fetch_data, but handle here too)
+        if str(amount).lower() == "all":
+            if user_balance > 0 and token_price_usd > 0:
+                # Calculate token amount from USD balance (leave 10% for gas)
+                available_usd = user_balance * 0.90
+                token_amount = available_usd / token_price_usd
+                amount = self._format_token_amount(token_amount)
+                state.data["amount"] = amount
+                logger.info(
+                    f"[LendingWorkflow] Execute: Converted 'all' to {amount} {asset} "
+                    f"(balance=${user_balance:.2f}, price=${token_price_usd:.2f})"
+                )
+            else:
+                # User has no balance
+                response = self._get_zero_balance_message(asset=asset, language=language)
+                state.error = "insufficient_balance"
+                return response, state
+        
         # Smart balance check: compare requested amount against user balance
         try:
             amount_float = float(str(amount).replace(",", ""))
         except (ValueError, TypeError):
             amount_float = 0
         
-        user_balance = user_context.total_balance_usd
         has_sufficient_funds = True
-        
-        # Get real token price for non-stablecoins
-        token_price_usd = await self._get_token_price_usd(asset)
         
         if asset.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
             # Stablecoin: direct USD comparison with 10% buffer for gas
