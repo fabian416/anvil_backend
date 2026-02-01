@@ -100,13 +100,13 @@ class TestUserRole:
         # Assert
         assert result is True
     
-    def test_admin_is_not_changeable(self):
-        """Test ADMIN role cannot be changed."""
+    def test_admin_is_changeable(self):
+        """Test ADMIN role can be changed (only SUPER_ADMIN is not changeable)."""
         # Act
         result = UserRole.ADMIN.is_changeable
         
         # Assert
-        assert result is False
+        assert result is True
     
     def test_moderator_is_changeable(self):
         """Test MODERATOR role can be changed."""

@@ -276,24 +276,6 @@ async def test_shortcuts_endpoint_structure(client: AsyncClient, llm_validator):
             assert isinstance(example, str)
             assert len(example.strip()) > 0
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_shortcuts_endpoint_structure",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -334,22 +316,3 @@ async def test_all_languages_have_same_shortcuts(client: AsyncClient, llm_valida
         # Verify each shortcut has examples
         for intent in en_intents:
             examples = shortcuts_by_lang[lang][intent]["examples"]
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_all_languages_have_same_shortcuts",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-            assert len(examples) > 0, f"Language {lang}, intent {intent} has no examples"

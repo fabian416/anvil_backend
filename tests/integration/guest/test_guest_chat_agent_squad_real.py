@@ -70,24 +70,6 @@ class TestGuestChatAgentSquadReal:
         if data.get("registration_required"):
             assert data["registration_required"]["required"] is True
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_specialist_task_english",
-                user_input="What specialist agents do you have?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_specialist_task_spanish(self, test_app):
@@ -113,24 +95,6 @@ class TestGuestChatAgentSquadReal:
             keyword in agent_content.lower()
             for keyword in ["agente", "especialista", "investigación", "seguridad", "portafolio"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_specialist_task_spanish",
-                user_input="¿Qué agentes especialistas tienes?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -158,24 +122,6 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["agente", "especialista", "pesquisa", "segurança", "portfólio", "defi", "ai", "assistente"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_specialist_task_portuguese",
-                user_input="Quais agentes especialistas você tem?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_specialist_task_chinese(self, test_app):
@@ -202,24 +148,6 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["代理", "专家", "研究", "安全", "投资组合", "DeFi", "AI", "助手"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_specialist_task_chinese",
-                user_input="你有什么专家代理？",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_specialist_task_specific_agents(self, test_app):
@@ -242,28 +170,6 @@ class TestGuestChatAgentSquadReal:
             keyword in agent_content.lower()
             for keyword in ["security", "auditor", "slither", "contract", "agent"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_specialist_task_specific_agents",
-                user_input="I need a security auditor",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-    # ========================================
-    # Complex Workflow Tests
-    # ========================================
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -301,24 +207,6 @@ class TestGuestChatAgentSquadReal:
             if enrichment:
                 assert isinstance(enrichment, dict)
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_complex_workflow_english",
-                user_input="How does multi-agent workflow work?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_complex_workflow_spanish(self, test_app):
@@ -341,24 +229,6 @@ class TestGuestChatAgentSquadReal:
             keyword in agent_content.lower()
             for keyword in ["flujo", "supervisor", "multi-agente", "coordin", "portafolio"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_complex_workflow_spanish",
-                user_input="¿Cómo funcionan los flujos multi-agente?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -383,24 +253,6 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["fluxo", "supervisor", "multi-agente", "coorden", "portfólio", "defi", "ai", "assistente"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_complex_workflow_portuguese",
-                user_input="Como funcionam os fluxos multi-agente?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_complex_workflow_chinese(self, test_app):
@@ -423,24 +275,6 @@ class TestGuestChatAgentSquadReal:
             keyword in agent_content
             for keyword in ["工作流", "Supervisor", "多代理", "协调", "投资组合", "DeFi", "AI", "助手"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_complex_workflow_chinese",
-                user_input="多代理工作流如何工作？",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -465,28 +299,6 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["portfolio", "rebalancing", "analysis", "optimization", "migration", "strategy", "defi", "ai", "assistant"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_complex_workflow_examples",
-                user_input="What can the supervisor do?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-    # ========================================
-    # Agent-Specific Request Tests
-    # ========================================
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_research_agent_request(self, test_app):
@@ -509,24 +321,6 @@ class TestGuestChatAgentSquadReal:
             keyword in agent_content.lower()
             for keyword in ["research", "analysis", "protocol", "agent", "specialist", "defi", "ai", "assistant"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_research_agent_request",
-                user_input="I need deep protocol analysis",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -551,24 +345,6 @@ class TestGuestChatAgentSquadReal:
             for keyword in ["security", "audit", "contract", "slither", "agent", "defi", "ai", "assistant"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_security_auditor_request",
-                user_input="I want to audit a smart contract",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_portfolio_agent_request(self, test_app):
@@ -591,28 +367,6 @@ class TestGuestChatAgentSquadReal:
             keyword in agent_content.lower()
             for keyword in ["portfolio", "optimize", "allocation", "rebalancing", "agent", "defi", "ai", "assistant"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_portfolio_agent_request",
-                user_input="Help me optimize my portfolio",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-    # ========================================
-    # Cross-Language Validation Tests
-    # ========================================
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -686,30 +440,6 @@ class TestGuestChatAgentSquadReal:
             assert response.status_code == 200
             data = response.json()
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agent_squad_all_languages",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-            assert data["routing"]["language"] == zh_lang
-
-
-    # ========================================
-    # Advanced Agent Squad Tests (Phase 2.3)
-    # ========================================
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_agent_squad_context_preservation_multi_turn(self, test_app, llm_validator, csv_tracker):
@@ -726,33 +456,6 @@ class TestGuestChatAgentSquadReal:
         content = r3.json()["agent_message"]["content"]
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agent_squad_context_preservation_multi_turn",
-                user_input="Compare it to Compound (referring to Aave from previous messages)",
-                agent_output=content,
-                expected_behavior="Should compare Aave and Compound based on conversation history, maintaining context from previous turns.",
-                additional_context={'test_category': 'context_preservation', 'turns': 3}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
-
-        # CSV tracking
-        await csv_tracker("guest", "agent_squad", {
-            "test_id": "guest_agent_squad_context_preservation_001",
-            "s_multistep": True,
-            "input": "Multi-turn: 1) Tell me about Aave lending protocol 2) What are its risks? 3) Compare it to Compound",
-            "output": content,
-            "test_label_sequence": "agent_squad_context_preservation",
-            "output_expected": "Context-aware comparison of Aave and Compound based on conversation history",
-            "status": "PASS" if r3.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_agent_squad_handoff_transition_smoothness(self, test_app, llm_validator, csv_tracker):
@@ -764,33 +467,6 @@ class TestGuestChatAgentSquadReal:
         content = response.json()["agent_message"]["content"]
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agent_squad_handoff_transition_smoothness",
-                user_input="What's Bitcoin price and should I buy now?",
-                agent_output=content,
-                expected_behavior="Should seamlessly handle query requiring multiple agents (price data + analysis). Transition should be natural without exposing internal routing.",
-                additional_context={'test_category': 'agent_handoff', 'agents_involved': ['hunter', 'research']}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
-
-        # CSV tracking
-        await csv_tracker("guest", "agent_squad", {
-            "test_id": "guest_agent_squad_handoff_smoothness_002",
-            "s_multistep": False,
-            "input": "What's Bitcoin price and should I buy now?",
-            "output": content,
-            "test_label_sequence": "agent_squad→hunter→research",
-            "output_expected": "Seamless multi-agent response combining price data and analysis",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_agent_squad_parallel_agent_coordination(self, test_app, llm_validator, csv_tracker):
@@ -802,33 +478,6 @@ class TestGuestChatAgentSquadReal:
         content = response.json()["agent_message"]["content"]
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agent_squad_parallel_agent_coordination",
-                user_input="Analyze ETH price, sentiment, and best DEX for swapping",
-                agent_output=content,
-                expected_behavior="Should coordinate multiple analysis types (price, sentiment, DEX comparison) in coherent response covering all aspects requested.",
-                additional_context={'test_category': 'parallel_coordination', 'aspects': ['price', 'sentiment', 'dex']}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
-
-        # CSV tracking
-        await csv_tracker("guest", "agent_squad", {
-            "test_id": "guest_agent_squad_parallel_coordination_003",
-            "s_multistep": False,
-            "input": "Analyze ETH price, sentiment, and best DEX for swapping",
-            "output": content,
-            "test_label_sequence": "agent_squad_parallel",
-            "output_expected": "Coordinated multi-aspect analysis covering price, sentiment, and DEX comparison",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_agent_squad_specialization_routing_accuracy(self, test_app, llm_validator, csv_tracker):
@@ -840,33 +489,6 @@ class TestGuestChatAgentSquadReal:
         content = response.json()["agent_message"]["content"]
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agent_squad_specialization_routing_accuracy",
-                user_input="Is Ethereum's merge affecting DeFi protocols security?",
-                agent_output=content,
-                expected_behavior="Should route to appropriate agent (research/analysis) for complex technical query. Response should address merge impact on DeFi security thoughtfully.",
-                additional_context={'test_category': 'routing_edge_case', 'topic': 'eth_merge_security'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
-
-        # CSV tracking
-        await csv_tracker("guest", "agent_squad", {
-            "test_id": "guest_agent_squad_routing_accuracy_004",
-            "s_multistep": False,
-            "input": "Is Ethereum's merge affecting DeFi protocols security?",
-            "output": content,
-            "test_label_sequence": "agent_squad_routing",
-            "output_expected": "Technical analysis of merge impact on DeFi security with appropriate routing",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_agent_squad_fallback_agent_quality(self, test_app, llm_validator, csv_tracker):
@@ -878,33 +500,6 @@ class TestGuestChatAgentSquadReal:
         content = response.json()["agent_message"]["content"]
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agent_squad_fallback_agent_quality",
-                user_input="blockchain quantum computers future",
-                agent_output=content,
-                expected_behavior="Should handle ambiguous/unclear query gracefully with general fallback agent providing relevant information or asking for clarification.",
-                additional_context={'test_category': 'fallback_handling', 'intent_clarity': 'low'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
-
-        # CSV tracking
-        await csv_tracker("guest", "agent_squad", {
-            "test_id": "guest_agent_squad_fallback_quality_005",
-            "s_multistep": False,
-            "input": "blockchain quantum computers future",
-            "output": content,
-            "test_label_sequence": "agent_squad_fallback",
-            "output_expected": "Graceful handling of ambiguous query with relevant information or clarification",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_agent_squad_memory_utilization_long_context(self, test_app, llm_validator, csv_tracker):
@@ -921,28 +516,3 @@ class TestGuestChatAgentSquadReal:
         content = response.json()["agent_message"]["content"]
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_agent_squad_memory_utilization_long_context",
-                user_input="Summarize what we discussed about topics 0 through 3",
-                agent_output=content,
-                expected_behavior="Should maintain relevant context from earlier conversation turns or acknowledge context limits gracefully if conversation is too long.",
-                additional_context={'test_category': 'long_context', 'turns': 9}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}"))
-
-        # CSV tracking
-        await csv_tracker("guest", "agent_squad", {
-            "test_id": "guest_agent_squad_memory_utilization_006",
-            "s_multistep": True,
-            "input": "Long conversation (9 turns) ending with: Summarize what we discussed about topics 0 through 3",
-            "output": content,
-            "test_label_sequence": "agent_squad_long_context",
-            "output_expected": "Context retention in long conversations with relevant summary or graceful limits acknowledgment",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })

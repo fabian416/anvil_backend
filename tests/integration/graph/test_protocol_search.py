@@ -15,10 +15,11 @@ from tests.helpers.error_validator import validate_error_response
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestHybridSearch:
     """Integration tests for hybrid search."""
 
-    def test_hybrid_search_returns_results(self, client):
+    async def test_hybrid_search_returns_results(self, client):
         """
         WHEN user performs hybrid search
         THEN system SHALL return relevant protocols
@@ -33,7 +34,7 @@ class TestHybridSearch:
             "include_dependencies": True,
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/user/graph/search/hybrid",
             json=search_request,
             headers=headers,
@@ -45,7 +46,7 @@ class TestHybridSearch:
             data = response.json()
             assert "results" in data or "query" in data
 
-    def test_hybrid_search_empty_query_error(self, client):
+    async def test_hybrid_search_empty_query_error(self, client):
         """
         WHEN query is empty
         THEN system SHALL return SEARCH_001 error
@@ -58,7 +59,7 @@ class TestHybridSearch:
             "limit": 10,
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/user/graph/search/hybrid",
             json=search_request,
             headers=headers,
@@ -67,7 +68,7 @@ class TestHybridSearch:
         # Should return 400 for empty query
         assert response.status_code in (400, 401, 422, 500, 503)
 
-    def test_hybrid_search_without_auth(self, client):
+    async def test_hybrid_search_without_auth(self, client):
         """
         WHEN unauthenticated user searches
         THEN system SHALL return 401
@@ -77,11 +78,11 @@ class TestHybridSearch:
             "limit": 10,
         }
 
-        response = client.post("/api/v1/user/graph/search/hybrid", json=search_request)
+        response = await client.post("/api/v1/user/graph/search/hybrid", json=search_request)
 
         assert response.status_code in (401, 403, 422)
 
-    def test_hybrid_search_with_similarity_threshold(self, client):
+    async def test_hybrid_search_with_similarity_threshold(self, client):
         """
         WHEN similarity threshold is specified
         THEN system SHALL filter results accordingly
@@ -95,7 +96,7 @@ class TestHybridSearch:
             "similarity_threshold": 0.8,  # High threshold
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/user/graph/search/hybrid",
             json=search_request,
             headers=headers,
@@ -105,10 +106,11 @@ class TestHybridSearch:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestSimilarProtocols:
     """Integration tests for finding similar protocols."""
 
-    def test_find_similar_protocols(self, client):
+    async def test_find_similar_protocols(self, client):
         """
         WHEN user finds similar protocols
         THEN system SHALL return similar protocols
@@ -121,7 +123,7 @@ class TestSimilarProtocols:
             "limit": 10,
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/user/graph/search/similar",
             json=similar_request,
             headers=headers,
@@ -130,7 +132,7 @@ class TestSimilarProtocols:
         # Could succeed or return 404 for nonexistent protocol
         assert response.status_code in (200, 401, 404, 500, 503)
 
-    def test_similar_nonexistent_protocol(self, client):
+    async def test_similar_nonexistent_protocol(self, client):
         """
         WHEN protocol doesn't exist
         THEN system SHALL return 404
@@ -143,7 +145,7 @@ class TestSimilarProtocols:
             "limit": 10,
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/user/graph/search/similar",
             json=similar_request,
             headers=headers,
@@ -154,10 +156,11 @@ class TestSimilarProtocols:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestContextualSearch:
     """Integration tests for contextual search."""
 
-    def test_contextual_search_with_preferences(self, client):
+    async def test_contextual_search_with_preferences(self, client):
         """
         WHEN user searches with preferences
         THEN system SHALL filter by preferences
@@ -174,7 +177,7 @@ class TestContextualSearch:
             "limit": 5,
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/user/graph/search/contextual",
             json=contextual_request,
             headers=headers,
@@ -182,7 +185,7 @@ class TestContextualSearch:
 
         assert response.status_code in (200, 401, 500, 503)
 
-    def test_contextual_search_empty_query(self, client):
+    async def test_contextual_search_empty_query(self, client):
         """
         WHEN query is empty
         THEN system SHALL return error
@@ -195,7 +198,7 @@ class TestContextualSearch:
             "limit": 5,
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/user/graph/search/contextual",
             json=contextual_request,
             headers=headers,
@@ -205,6 +208,7 @@ class TestContextualSearch:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestSearchErrorResponses:
     """Integration tests for search error responses."""
 

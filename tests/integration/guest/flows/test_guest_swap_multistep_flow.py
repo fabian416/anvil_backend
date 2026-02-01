@@ -128,64 +128,6 @@ class TestGuestSwapMultiStepFlow:
 
         # PHASE 3: LLM validation with multi-step conversation history
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_complete_swap_flow_btc_to_eth",
-                user_input="confirm",  # Final user input
-                agent_output=step5_content,  # Final agent output
-                expected_behavior=(
-                    "Multi-step swap flow validation: "
-                    "1) User initiates swap with 'swap' → Agent asks for FROM token "
-                    "2) User selects BTC → Agent asks for TO token "
-                    "3) User selects ETH → Agent asks for amount "
-                    "4) User enters 0.01 → Agent shows quote with rate, fees, and confirmation prompt "
-                    "5) User confirms → Agent executes swap and prompts for signup. "
-                    "Response must maintain context across all 5 steps, show proper progression, "
-                    "include confirmation emoji (✅), and direct user to sign up for execution."
-                ),
-                test_func=self.test_complete_swap_flow_btc_to_eth,  # PHASE 3: Custom prompt generation
-                conversation_history=conversation_history,  # PHASE 3: Multi-step context
-                additional_context={
-                    "test_category": "flows",
-                    "flow_type": "swap_multistep",
-                    "flow_steps": 5,
-                    "from_token": "BTC",
-                    "to_token": "ETH",
-                    "amount": "0.01",
-                },
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern: {validation.reasoning}")
-
-        # CSV tracking with enhanced fields
-        await csv_tracker("guest", "flows", {
-            "test_id": "guest_swap_multistep_flow_btc_to_eth_001",
-            "s_multistep": True,  # Multi-step flow
-            "input": "5-step flow: swap → BTC → ETH → 0.01 → confirm",
-            "output": step5_content,
-            "test_label_sequence": "flows_swap_multistep",
-            "output_expected": "Complete swap flow with context continuity and signup prompt",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            # Standard 11 fields
-            "quality": validation.scoring.overall_score if validation and validation.scoring else None,
-            "qa_status": validation.verdict.value if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-            # Enhanced 12 fields (PHASE 3)
-            "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-            "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-            "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-            "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-            "test_category": validation.metadata.test_category if validation and validation.metadata else "flows",
-            "test_type": validation.metadata.test_type if validation and validation.metadata else "multi_step",
-            "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else json.dumps(["swap_flow"]),
-            "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-            "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-            "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-            "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-            "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     async def test_complete_swap_flow_usdc_to_sol(self, client):
         """Test complete swap flow with different tokens: USDC → SOL."""

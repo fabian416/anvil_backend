@@ -13,10 +13,11 @@ from tests.helpers.auth_helper import AuthHelper
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestWebSocketConnection:
     """Integration tests for WebSocket connection."""
 
-    def test_websocket_connect_with_valid_token(self, client):
+    async def test_websocket_connect_with_valid_token(self, client):
         """
         WHEN user connects with valid token
         THEN connection SHALL be established
@@ -50,6 +51,7 @@ class TestWebSocketConnection:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestWebSocketMessaging:
     """Integration tests for WebSocket messaging."""
 
@@ -84,6 +86,7 @@ class TestWebSocketMessaging:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestWebSocketStreaming:
     """Integration tests for WebSocket streaming."""
 
@@ -118,6 +121,7 @@ class TestWebSocketStreaming:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestWebSocketErrorHandling:
     """Integration tests for WebSocket error handling."""
 
@@ -153,6 +157,7 @@ class TestWebSocketErrorHandling:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestWebSocketReconnection:
     """Integration tests for WebSocket reconnection."""
 

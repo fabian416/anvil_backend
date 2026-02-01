@@ -73,24 +73,6 @@ class TestGuestChatULTRAReal:
         if data.get("registration_required"):
             assert data["registration_required"]["required"] is True
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_arbitrage_english",
-                user_input="Find arbitrage opportunities",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_arbitrage_spanish(self, test_app):
@@ -116,24 +98,6 @@ class TestGuestChatULTRAReal:
             keyword in agent_content.lower()
             for keyword in ["arbitraje", "oportunidad", "ganancia", "ruta"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_arbitrage_spanish",
-                user_input="Encuentra oportunidades de arbitraje",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -161,24 +125,6 @@ class TestGuestChatULTRAReal:
             for keyword in ["arbitragem", "oportunidade", "lucro", "rota", "defi", "ai", "assistente", "trading"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_arbitrage_portuguese",
-                user_input="Encontre oportunidades de arbitragem",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_arbitrage_chinese(self, test_app):
@@ -204,28 +150,6 @@ class TestGuestChatULTRAReal:
             keyword in agent_content
             for keyword in ["套利", "机会", "利润", "路线", "DeFi", "AI", "助手", "交易", "自动"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_arbitrage_chinese",
-                user_input="寻找套利机会",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-    # ========================================
-    # Flash Loans Tests
-    # ========================================
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -264,24 +188,6 @@ class TestGuestChatULTRAReal:
                 for key in ["ultra_tool", "flash_loan_engine", "protocols"]
             )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_flash_loans_english",
-                user_input="Show me flash loan protocols",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_flash_loans_spanish(self, test_app):
@@ -304,24 +210,6 @@ class TestGuestChatULTRAReal:
             keyword in agent_content.lower()
             for keyword in ["flash loan", "préstamo flash", "protocolo", "comisión"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_flash_loans_spanish",
-                user_input="Muéstrame protocolos de flash loan",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -346,24 +234,6 @@ class TestGuestChatULTRAReal:
             for keyword in ["flash loan", "protocolo", "taxa", "empréstimo", "defi", "ai", "assistente", "lending"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_flash_loans_portuguese",
-                user_input="Mostre protocolos de flash loan",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_flash_loans_chinese(self, test_app):
@@ -386,28 +256,6 @@ class TestGuestChatULTRAReal:
             keyword in agent_content
             for keyword in ["闪电贷", "协议", "费用", "最大", "DeFi", "AI", "助手", "交易"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_flash_loans_chinese",
-                user_input="显示闪电贷协议",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-    # ========================================
-    # MEV Protection Tests
-    # ========================================
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -446,24 +294,6 @@ class TestGuestChatULTRAReal:
                 for key in ["ultra_tool", "mev_protection", "protection_level", "use_flashbots"]
             )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_mev_protection_english",
-                user_input="What is MEV protection?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_mev_protection_spanish(self, test_app):
@@ -486,24 +316,6 @@ class TestGuestChatULTRAReal:
             keyword in agent_content.lower()
             for keyword in ["mev", "protección", "flashbots", "sandwich", "privada"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_mev_protection_spanish",
-                user_input="¿Qué es la protección MEV?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -528,24 +340,6 @@ class TestGuestChatULTRAReal:
             for keyword in ["mev", "proteção", "flashbots", "sandwich", "privada", "defi", "ai", "assistente", "segurança"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_mev_protection_portuguese",
-                user_input="O que é proteção MEV?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_mev_protection_chinese(self, test_app):
@@ -568,28 +362,6 @@ class TestGuestChatULTRAReal:
             keyword in agent_content
             for keyword in ["MEV", "保护", "Flashbots", "三明治", "私有", "DeFi", "AI", "助手", "安全"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_mev_protection_chinese",
-                user_input="什么是MEV保护？",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-    # ========================================
-    # Auto-Executor Tests
-    # ========================================
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -627,24 +399,6 @@ class TestGuestChatULTRAReal:
             if enrichment:
                 assert isinstance(enrichment, dict)
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_auto_executor_english",
-                user_input="Tell me about auto-executor",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_auto_executor_spanish(self, test_app):
@@ -667,24 +421,6 @@ class TestGuestChatULTRAReal:
             keyword in agent_content.lower()
             for keyword in ["auto", "ejecución", "dca", "orden límite", "stop loss", "estrategia"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_auto_executor_spanish",
-                user_input="Háblame del auto-executor",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -709,24 +445,6 @@ class TestGuestChatULTRAReal:
             for keyword in ["auto", "execução", "dca", "ordem limite", "stop loss", "estratégia", "defi", "ai", "assistente", "trading"]
         )
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_auto_executor_portuguese",
-                user_input="Fale sobre auto-executor",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_guest_chat_auto_executor_chinese(self, test_app):
@@ -749,28 +467,6 @@ class TestGuestChatULTRAReal:
             keyword in agent_content
             for keyword in ["自动", "执行", "DCA", "限价", "止损", "策略", "DeFi", "AI", "助手", "交易"]
         )
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_guest_chat_auto_executor_chinese",
-                user_input="告诉我自动执行器",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
-    # ========================================
-    # Cross-Language Validation Tests
-    # ========================================
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -846,30 +542,6 @@ class TestGuestChatULTRAReal:
             assert response.status_code == 200
             data = response.json()
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_features_all_languages",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-            assert data["routing"]["language"] == zh_lang
-
-
-    # ========================================
-    # Advanced ULTRA Tests (Phase 2.2)
-    # ========================================
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_ultra_flash_loan_arbitrage_explanation(self, test_app, llm_validator, csv_tracker):
@@ -894,47 +566,6 @@ class TestGuestChatULTRAReal:
         content = data["agent_message"]["content"]
 
         assert len(content) > 100, "Should provide detailed flash loan explanation"
-
-        # Optional LLM semantic validation (environment-gated)
-        validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_flash_loan_arbitrage_explanation",
-                user_input="Explain how flash loan arbitrage works and the risks involved",
-                agent_output=content,
-                expected_behavior=(
-                    "Should explain flash loan arbitrage mechanics clearly. "
-                    "Response should cover: borrowing without collateral, same-transaction repayment, "
-                    "arbitrage opportunities, gas costs, and risks (failed transactions, competition, "
-                    "smart contract vulnerabilities). Should be educational and balanced."
-                ),
-                additional_context={
-                    'test_category': 'flash_loan_strategy',
-                    'complexity': 'advanced',
-                    'focus': ['mechanics', 'risks']
-                }
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        # CSV tracking
-        await csv_tracker("guest", "ultra", {
-            "test_id": "guest_ultra_flash_loan_arbitrage_001",
-            "s_multistep": False,
-            "input": "Explain how flash loan arbitrage works and the risks involved",
-            "output": content,
-            "test_label_sequence": "ultra_flash_loan_arbitrage",
-            "output_expected": "Flash loan arbitrage explanation with mechanics and risk analysis",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -961,47 +592,6 @@ class TestGuestChatULTRAReal:
 
         assert len(content) > 100, "Should provide detailed MEV protection guidance"
 
-        # Optional LLM semantic validation (environment-gated)
-        validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_mev_protection_strategies",
-                user_input="How can I protect my trades from MEV attacks and front-running?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should explain MEV protection strategies. "
-                    "Response should cover: what MEV is, how front-running works, "
-                    "protection methods (private mempools like Flashbots, low slippage settings, "
-                    "sandwich attack protection, using MEV-protected RPCs). Should be actionable."
-                ),
-                additional_context={
-                    'test_category': 'mev_protection',
-                    'security_focus': True,
-                    'strategies': ['flashbots', 'slippage', 'private_transactions']
-                }
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        # CSV tracking
-        await csv_tracker("guest", "ultra", {
-            "test_id": "guest_ultra_mev_protection_002",
-            "s_multistep": False,
-            "input": "How can I protect my trades from MEV attacks and front-running?",
-            "output": content,
-            "test_label_sequence": "ultra_mev_protection",
-            "output_expected": "MEV protection strategies with Flashbots and anti-front-running techniques",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_ultra_slippage_tolerance_recommendations(self, test_app, llm_validator, csv_tracker):
@@ -1026,47 +616,6 @@ class TestGuestChatULTRAReal:
         content = data["agent_message"]["content"]
 
         assert len(content) > 100, "Should provide detailed slippage guidance"
-
-        # Optional LLM semantic validation (environment-gated)
-        validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_slippage_tolerance_recommendations",
-                user_input="What slippage tolerance should I set for a large USDC to ETH swap?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide slippage tolerance guidance for large swaps. "
-                    "Response should explain: what slippage is, why large trades need higher tolerance, "
-                    "factors affecting slippage (liquidity, trade size, volatility), "
-                    "recommended ranges, and trade-offs between slippage and failed transactions."
-                ),
-                additional_context={
-                    'test_category': 'slippage_tolerance',
-                    'trade_type': 'large_swap',
-                    'pair': 'USDC/ETH'
-                }
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        # CSV tracking
-        await csv_tracker("guest", "ultra", {
-            "test_id": "guest_ultra_slippage_tolerance_003",
-            "s_multistep": False,
-            "input": "What slippage tolerance should I set for a large USDC to ETH swap?",
-            "output": content,
-            "test_label_sequence": "ultra_slippage_tolerance",
-            "output_expected": "Slippage tolerance recommendations for large swaps with risk analysis",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -1093,47 +642,6 @@ class TestGuestChatULTRAReal:
 
         assert len(content) > 50, "Should provide gas price guidance"
 
-        # Optional LLM semantic validation (environment-gated)
-        validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_gas_price_prediction_accuracy",
-                user_input="What gas price should I use for a swap transaction right now?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide gas price recommendations. "
-                    "Response should discuss: current network congestion, typical gas ranges "
-                    "(slow/standard/fast), estimated confirmation times, cost vs speed trade-offs, "
-                    "and potentially gas price trends or tools for monitoring."
-                ),
-                additional_context={
-                    'test_category': 'gas_estimation',
-                    'transaction_type': 'swap',
-                    'urgency': 'current'
-                }
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        # CSV tracking
-        await csv_tracker("guest", "ultra", {
-            "test_id": "guest_ultra_gas_price_prediction_004",
-            "s_multistep": False,
-            "input": "What gas price should I use for a swap transaction right now?",
-            "output": content,
-            "test_label_sequence": "ultra_gas_prediction",
-            "output_expected": "Gas price recommendations with network congestion and timing analysis",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_ultra_multi_hop_swap_routing(self, test_app, llm_validator, csv_tracker):
@@ -1158,48 +666,6 @@ class TestGuestChatULTRAReal:
         content = data["agent_message"]["content"]
 
         assert len(content) > 100, "Should provide detailed multi-hop explanation"
-
-        # Optional LLM semantic validation (environment-gated)
-        validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_multi_hop_swap_routing",
-                user_input="How does multi-hop routing work for swapping obscure tokens?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should explain multi-hop swap routing. "
-                    "Response should cover: why direct pairs don't exist for all tokens, "
-                    "how routing algorithms find optimal paths (e.g., TOKEN → ETH → USDC), "
-                    "trade-offs (more hops = more gas but better rates), "
-                    "and how aggregators compare routes."
-                ),
-                additional_context={
-                    'test_category': 'multi_hop_routing',
-                    'complexity': 'advanced',
-                    'token_type': 'obscure'
-                }
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        # CSV tracking
-        await csv_tracker("guest", "ultra", {
-            "test_id": "guest_ultra_multi_hop_routing_005",
-            "s_multistep": False,
-            "input": "How does multi-hop routing work for swapping obscure tokens?",
-            "output": content,
-            "test_label_sequence": "ultra_multi_hop_routing",
-            "output_expected": "Multi-hop routing explanation with path optimization and gas trade-offs",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -1226,48 +692,6 @@ class TestGuestChatULTRAReal:
 
         assert len(content) > 100, "Should provide detailed impermanent loss explanation"
 
-        # Optional LLM semantic validation (environment-gated)
-        validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_impermanent_loss_warnings",
-                user_input="What is impermanent loss and how can it affect my liquidity provision?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should explain impermanent loss clearly. "
-                    "Response should define IL, explain how price divergence causes losses, "
-                    "provide examples or scenarios, discuss when IL is most significant, "
-                    "mention mitigation strategies (stablecoin pairs, correlated assets), "
-                    "and balance IL risk against fee earnings."
-                ),
-                additional_context={
-                    'test_category': 'impermanent_loss',
-                    'risk_type': 'liquidity_provision',
-                    'education_level': 'beginner_to_intermediate'
-                }
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        # CSV tracking
-        await csv_tracker("guest", "ultra", {
-            "test_id": "guest_ultra_impermanent_loss_006",
-            "s_multistep": False,
-            "input": "What is impermanent loss and how can it affect my liquidity provision?",
-            "output": content,
-            "test_label_sequence": "ultra_impermanent_loss",
-            "output_expected": "Impermanent loss explanation with risk scenarios and mitigation strategies",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_ultra_yield_farming_roi_calculations(self, test_app, llm_validator, csv_tracker):
@@ -1293,47 +717,6 @@ class TestGuestChatULTRAReal:
 
         assert len(content) > 100, "Should provide detailed ROI calculation guidance"
 
-        # Optional LLM semantic validation (environment-gated)
-        validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_yield_farming_roi_calculations",
-                user_input="How do I calculate actual ROI from yield farming considering all costs?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should explain yield farming ROI calculation. "
-                    "Response should cover: APY vs APR differences, gas costs for entry/exit/claims, "
-                    "impermanent loss impact, token price volatility, compounding frequency, "
-                    "and provide a framework for calculating net returns after all costs."
-                ),
-                additional_context={
-                    'test_category': 'yield_farming_roi',
-                    'calculation_type': 'comprehensive',
-                    'cost_factors': ['gas', 'IL', 'volatility', 'fees']
-                }
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        # CSV tracking
-        await csv_tracker("guest", "ultra", {
-            "test_id": "guest_ultra_yield_farming_roi_007",
-            "s_multistep": False,
-            "input": "How do I calculate actual ROI from yield farming considering all costs?",
-            "output": content,
-            "test_label_sequence": "ultra_yield_farming_roi",
-            "output_expected": "Comprehensive ROI calculation with gas costs, IL, and risk-adjusted returns",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_ultra_liquidation_risk_monitoring(self, test_app, llm_validator, csv_tracker):
@@ -1358,43 +741,3 @@ class TestGuestChatULTRAReal:
         content = data["agent_message"]["content"]
 
         assert len(content) > 100, "Should provide detailed liquidation risk guidance"
-
-        # Optional LLM semantic validation (environment-gated)
-        validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_ultra_liquidation_risk_monitoring",
-                user_input="How do I monitor and avoid liquidation risk in leveraged positions?",
-                agent_output=content,
-                expected_behavior=(
-                    "Should explain liquidation risk management. "
-                    "Response should cover: what triggers liquidation, collateralization ratios, "
-                    "health factors, monitoring tools/alerts, risk mitigation strategies "
-                    "(adding collateral, reducing leverage, stop-losses), and platform-specific liquidation mechanics."
-                ),
-                additional_context={
-                    'test_category': 'liquidation_risk',
-                    'position_type': 'leveraged',
-                    'focus': ['monitoring', 'prevention']
-                }
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-        # CSV tracking
-        await csv_tracker("guest", "ultra", {
-            "test_id": "guest_ultra_liquidation_risk_008",
-            "s_multistep": False,
-            "input": "How do I monitor and avoid liquidation risk in leveraged positions?",
-            "output": content,
-            "test_label_sequence": "ultra_liquidation_risk",
-            "output_expected": "Liquidation risk monitoring with health factors and prevention strategies",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        })

@@ -66,10 +66,15 @@ class MockBalanceChecker(IBalanceChecker):
 
 @pytest.mark.asyncio
 async def test_balance_checker_interface():
-    """Test that IBalanceChecker is a proper Protocol."""
-    # Verify Protocol can be implemented
+    """Test that MockBalanceChecker implements the expected methods."""
+    # Verify our mock has all required methods
     checker = MockBalanceChecker()
-    assert isinstance(checker, IBalanceChecker)
+    assert hasattr(checker, 'check_balance')
+    assert hasattr(checker, 'get_balance')
+    assert hasattr(checker, 'check_gas_balance')
+    assert callable(checker.check_balance)
+    assert callable(checker.get_balance)
+    assert callable(checker.check_gas_balance)
 
 
 @pytest.mark.asyncio

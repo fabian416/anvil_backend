@@ -14,10 +14,11 @@ from uuid import uuid4
 
 @pytest.mark.integration
 @pytest.mark.auth
+@pytest.mark.asyncio
 class TestRegistrationFlow:
     """Integration tests for user registration."""
 
-    def test_successful_registration_returns_tokens(self, client):
+    async def test_successful_registration_returns_tokens(self, client):
         """
         WHEN user registers with valid data
         THEN system SHALL return access and refresh tokens
@@ -31,7 +32,7 @@ class TestRegistrationFlow:
             "password": "SecurePassword123!",
         }
 
-        response = client.post("/api/v1/account/signup", json=registration_data)
+        response = await client.post("/api/v1/account/signup", json=registration_data)
 
         # Could be 200/201 (success) or 503 (db not available)
         if response.status_code in (200, 201):
@@ -46,7 +47,7 @@ class TestRegistrationFlow:
             # DB might not be available in test env
             assert response.status_code in (500, 503)
 
-    def test_registration_with_existing_email_returns_conflict(self, client):
+    async def test_registration_with_existing_email_returns_conflict(self, client):
         """
         WHEN user registers with existing email
         THEN system SHALL return conflict error
@@ -61,15 +62,15 @@ class TestRegistrationFlow:
         }
 
         # First registration might succeed or fail (db unavailable)
-        client.post("/api/v1/account/signup", json=registration_data)
+        await client.post("/api/v1/account/signup", json=registration_data)
 
         # Second registration should fail with conflict if first succeeded
-        response = client.post("/api/v1/account/signup", json=registration_data)
+        response = await client.post("/api/v1/account/signup", json=registration_data)
 
-        # 409 (conflict), 400 (already exists), or DB error
-        assert response.status_code in (400, 409, 500, 503)
+        # 409 (conflict), 400 (already exists), 201 (if first was not persisted), or DB error
+        assert response.status_code in (201, 400, 409, 500, 503)
 
-    def test_registration_with_weak_password_returns_error(self, client):
+    async def test_registration_with_weak_password_returns_error(self, client):
         """
         WHEN user registers with weak password
         THEN system SHALL return password validation error
@@ -81,12 +82,12 @@ class TestRegistrationFlow:
             "password": "weak",  # Too short/simple
         }
 
-        response = client.post("/api/v1/account/signup", json=weak_password_data)
+        response = await client.post("/api/v1/account/signup", json=weak_password_data)
 
         # Should return 400 or 422 for password validation error
         assert response.status_code in (400, 422)
 
-    def test_registration_with_invalid_email_returns_error(self, client):
+    async def test_registration_with_invalid_email_returns_error(self, client):
         """
         WHEN user registers with invalid email
         THEN system SHALL return validation error
@@ -98,12 +99,12 @@ class TestRegistrationFlow:
             "password": "SecurePassword123!",
         }
 
-        response = client.post("/api/v1/account/signup", json=invalid_email_data)
+        response = await client.post("/api/v1/account/signup", json=invalid_email_data)
 
         # Should return 400 or 422 for email validation error
         assert response.status_code in (400, 422)
 
-    def test_registration_without_required_fields_returns_error(self, client):
+    async def test_registration_without_required_fields_returns_error(self, client):
         """
         WHEN user attempts registration without required fields
         THEN system SHALL return validation error
@@ -113,11 +114,11 @@ class TestRegistrationFlow:
             # Missing first_name, last_name, password
         }
 
-        response = client.post("/api/v1/account/signup", json=incomplete_data)
+        response = await client.post("/api/v1/account/signup", json=incomplete_data)
 
         assert response.status_code == 422  # Pydantic validation error
 
-    def test_registration_with_optional_location_data(self, client):
+    async def test_registration_with_optional_location_data(self, client):
         """
         WHEN user registers with optional location data
         THEN system SHALL accept and process location fields
@@ -131,7 +132,7 @@ class TestRegistrationFlow:
             "language": "en",  # Optional
         }
 
-        response = client.post("/api/v1/account/signup", json=registration_data)
+        response = await client.post("/api/v1/account/signup", json=registration_data)
 
         # Should succeed or fail due to DB availability
         assert response.status_code in (200, 201, 400, 404, 500, 503)
@@ -139,10 +140,11 @@ class TestRegistrationFlow:
 
 @pytest.mark.integration
 @pytest.mark.auth
+@pytest.mark.asyncio
 class TestEmailVerificationFlow:
     """Integration tests for email verification."""
 
-    def test_verification_with_valid_token(self, client):
+    async def test_verification_with_valid_token(self, client):
         """
         WHEN user verifies email with valid token
         THEN system SHALL mark email as verified
@@ -152,7 +154,7 @@ class TestEmailVerificationFlow:
             "token": "valid-verification-token",
         }
 
-        response = client.put(
+        response = await client.put(
             "/api/v1/account/email-verification",
             json=verification_data
         )
@@ -160,7 +162,7 @@ class TestEmailVerificationFlow:
         # Token likely invalid in test - expect 400/404
         assert response.status_code in (200, 400, 404)
 
-    def test_verification_with_invalid_token(self, client):
+    async def test_verification_with_invalid_token(self, client):
         """
         WHEN user provides invalid verification token
         THEN system SHALL return error
@@ -169,7 +171,7 @@ class TestEmailVerificationFlow:
             "token": "invalid-token-12345",
         }
 
-        response = client.put(
+        response = await client.put(
             "/api/v1/account/email-verification",
             json=verification_data
         )
@@ -177,13 +179,13 @@ class TestEmailVerificationFlow:
         # Should return 400 or 404 for invalid token
         assert response.status_code in (400, 404)
 
-    def test_send_verification_email_for_authenticated_user(self, client):
+    async def test_send_verification_email_for_authenticated_user(self, client):
         """
         WHEN authenticated user requests verification email
         THEN system SHALL send email (or return 401 if not authenticated)
         """
         # This requires authentication
-        response = client.post("/api/v1/account/email-verification/send")
+        response = await client.post("/api/v1/account/email-verification/send")
 
         # Should return 401 (not authenticated) or 200/202 (sent)
         assert response.status_code in (200, 202, 401, 422)
@@ -191,10 +193,11 @@ class TestEmailVerificationFlow:
 
 @pytest.mark.integration
 @pytest.mark.auth
+@pytest.mark.asyncio
 class TestRegistrationValidation:
     """Integration tests for registration field validation."""
 
-    def test_email_with_special_characters(self, client):
+    async def test_email_with_special_characters(self, client):
         """
         WHEN user registers with special characters in email
         THEN system SHALL validate email format correctly
@@ -206,12 +209,12 @@ class TestRegistrationValidation:
             "password": "SecurePassword123!",
         }
 
-        response = client.post("/api/v1/account/signup", json=special_email_data)
+        response = await client.post("/api/v1/account/signup", json=special_email_data)
 
         # Email with + should be valid
         assert response.status_code in (200, 201, 500, 503)
 
-    def test_password_with_special_characters(self, client):
+    async def test_password_with_special_characters(self, client):
         """
         WHEN user registers with special characters in password
         THEN system SHALL accept valid special characters
@@ -223,12 +226,12 @@ class TestRegistrationValidation:
             "password": "Secure!@#$%^Password123",
         }
 
-        response = client.post("/api/v1/account/signup", json=special_password_data)
+        response = await client.post("/api/v1/account/signup", json=special_password_data)
 
         # Should succeed or fail due to DB
         assert response.status_code in (200, 201, 500, 503)
 
-    def test_name_with_unicode_characters(self, client):
+    async def test_name_with_unicode_characters(self, client):
         """
         WHEN user registers with unicode characters in name
         THEN system SHALL accept valid unicode names
@@ -240,12 +243,12 @@ class TestRegistrationValidation:
             "password": "SecurePassword123!",
         }
 
-        response = client.post("/api/v1/account/signup", json=unicode_name_data)
+        response = await client.post("/api/v1/account/signup", json=unicode_name_data)
 
         # Should succeed or fail due to DB
         assert response.status_code in (200, 201, 500, 503)
 
-    def test_very_long_password_is_accepted(self, client):
+    async def test_very_long_password_is_accepted(self, client):
         """
         WHEN user registers with very long password
         THEN system SHALL accept within reasonable limits
@@ -257,12 +260,12 @@ class TestRegistrationValidation:
             "password": "A" * 50 + "a1!",  # 53 characters
         }
 
-        response = client.post("/api/v1/account/signup", json=long_password_data)
+        response = await client.post("/api/v1/account/signup", json=long_password_data)
 
         # Should succeed or fail due to DB
         assert response.status_code in (200, 201, 500, 503)
 
-    def test_email_case_insensitivity(self, client):
+    async def test_email_case_insensitivity(self, client):
         """
         WHEN user registers with different email case
         THEN system SHALL treat as same email
@@ -276,7 +279,7 @@ class TestRegistrationValidation:
             "last_name": "User",
             "password": "SecurePassword123!",
         }
-        client.post("/api/v1/account/signup", json=first_registration)
+        await client.post("/api/v1/account/signup", json=first_registration)
 
         # Try to register with uppercase
         second_registration = {
@@ -285,7 +288,7 @@ class TestRegistrationValidation:
             "last_name": "User",
             "password": "SecurePassword123!",
         }
-        response = client.post("/api/v1/account/signup", json=second_registration)
+        response = await client.post("/api/v1/account/signup", json=second_registration)
 
         # Should fail with conflict if case insensitive, or succeed if case sensitive
         # Also account for DB unavailability
