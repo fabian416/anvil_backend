@@ -846,7 +846,7 @@ class AgentSquadInfrastructureProvider(Provider):
         llm_client: LLMClientGateway,
         morpho_gateway: MorphoGateway,
         aave_gateway: AaveGateway,
-        coingecko_client: CoinGeckoClient,
+        coingecko_client: CoinGeckoClient | None,
     ) -> LendingWorkflowAgent:
         """
         Provide Lending Workflow Agent for authenticated users.
