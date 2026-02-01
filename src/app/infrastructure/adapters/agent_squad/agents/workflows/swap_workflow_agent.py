@@ -247,6 +247,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                 # User said "swap" without params after a completed swap - ask what they want
                 logger.info(f"[SwapWorkflow] User said 'swap' after execute - asking if continue or new")
                 state.data["awaiting_continue_choice"] = True
+                state.execute_data = None  # Don't show execute until user confirms
                 return self._get_continue_or_new_prompt(state, language), state
         
         # Check if user is responding to continue/new prompt

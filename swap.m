@@ -1,3 +1,4 @@
+O
 swap
 A
 🔄 Hyperliquid Spot Swaps
@@ -34,7 +35,7 @@ supervisor
 completed
 
 swap_workflow
-2.03s
+2.35s
 completed
 
 1 USDC
@@ -53,9 +54,9 @@ Real-time order book pricing - no slippage surprises.
 
 Select a meme token to receive:
 
-1. PURR • $0.065406
+1. PURR • $0.065408
 
-2. TRUMP • $4.140000
+2. TRUMP • $4.130000
 
 3. PEPE • $0.000004
 
@@ -65,7 +66,7 @@ Select a meme token to receive:
 
 6. JEFF • $0.000000
 
-7. WAGMI • $0.001605
+7. WAGMI • $0.001603
 
 8. GMEOW • $0.000878
 
@@ -97,24 +98,24 @@ Agent Execution Details
 2 agents
 
 supervisor
-13.91s
+11.97s
 completed
 
 swap_workflow
-13.33s
+6.37s
 completed
 
-PURR
+1
 A
 📊 Swap Quote
 
-1 USDC → 15.283276 PURR
+1 USDC → 15.274171 PURR
 
-💰 USDC Price: $1.00 (📈 +0.0% 24h)
+💰 USDC Price: $1.00 (📉 -0.0% 24h)
 
 💵 Value: ~$1.00 USD
 
-• Price Impact: 0.58%
+• Price Impact: 0.66%
 
 • Network: BASE
 
@@ -150,7 +151,7 @@ supervisor
 completed
 
 swap_workflow
-718ms
+604ms
 completed
 
 yes
@@ -161,7 +162,7 @@ Swap Details:
 
 • From: 1 USDC
 
-• To: ~15.283276 PURR
+• To: ~15.274171 PURR
 
 • Network: BASE
 
@@ -187,36 +188,24 @@ supervisor
 completed
 
 swap_workflow
-0ms
+2.01s
 completed
 
 swap
 A
-📊 Swap Quote
+🔄 Continue or New Swap?
 
-1 USDC → 15.283276 PURR
+I see you have a previous swap:
 
-💰 USDC Price: $1.00 (📈 +0.0% 24h)
+1 USDC → PURR
 
-💵 Value: ~$1.00 USD
+Would you like to:
 
-• Price Impact: 0.52%
+1️⃣ Continue with this swap (say "yes" or "continue")
 
-• Network: BASE
+2️⃣ Start fresh with a new swap (say "new" or provide new swap details)
 
-• Aggregator: HYPERLIQUID
-
-⛽ Est. Gas: ~$0.0046
-
-💡 Base L2 has consistently low fees (~$0.01)
-
----
-
-✅ Say "yes" or "confirm" to execute this swap
-
-✏️ Or say "swap [amount] USDC to PURR" to change the amount
-
-❌ Say "cancel" to cancel
+💡 Or just tell me what you want to swap, e.g., "swap 50 USDC to PURR"
 
 Sources
 2 sources
@@ -232,11 +221,9 @@ Agent Execution Details
 2 agents
 
 supervisor
-12.08s
+3.67s
 completed
 
 swap_workflow
-12.21s
+0ms
 completed
-
-
