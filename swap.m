@@ -35,12 +35,12 @@ supervisor
 completed
 
 swap_workflow
-1.53s
+1.87s
 completed
 
-10 USDC
+1 USDC
 A
-🔄 Swap 10 USDC
+🔄 Swap 1 USDC
 
 What is Hyperliquid Spot?
 
@@ -50,17 +50,13 @@ High-speed execution (20,000+ TPS) on Hyperliquid L1.
 
 Real-time order book pricing - no slippage surprises.
 
-💰 Your Balance: ~$3.00
-
-⚠️ Swap amount ($10.00) exceeds your balance.
-
-💡 Consider a smaller amount or say `buy crypto` to get more USDC.
+💰 Your Balance: ~$3.00 ✅
 
 Select a meme token to receive:
 
-1. PURR • $0.065142
+1. PURR • $0.065722
 
-2. TRUMP • $4.130000
+2. TRUMP • $4.140000
 
 3. PEPE • $0.000004
 
@@ -70,7 +66,7 @@ Select a meme token to receive:
 
 6. JEFF • $0.000000
 
-7. WAGMI • $0.001602
+7. WAGMI • $0.001590
 
 8. GMEOW • $0.000872
 
@@ -102,107 +98,30 @@ Agent Execution Details
 2 agents
 
 supervisor
-3.38s
+14.21s
 completed
 
 swap_workflow
-1.84s
+2.75s
 completed
 
 1
 A
-💡 Insufficient balance for this swap
-
-Requested: 10.00 USDC
-
-Available: ~$3.00
-
-Options:
-
-• ✅ Swap a smaller amount: "swap 2.70 USDC"
-
-• 💳 Or buy more crypto: "buy crypto"
-
-Here's the quote for your requested amount:
-
 📊 Swap Quote
 
-10 USDC → 152.462266 PURR
+1 USDC → 15.081137 PURR
 
 💰 USDC Price: $1.00 (📉 -0.0% 24h)
 
-💵 Value: ~$10.00 USD
+💵 Value: ~$1.00 USD
 
-• Price Impact: 0.69%
+• Price Impact: 0.18%
 
 • Network: BASE
 
 • Aggregator: HYPERLIQUID
 
-⛽ Est. Gas: ~$0.0046
-
-💡 Base L2 has consistently low fees (~$0.01)
-
----
-
-✅ Say "yes" or "confirm" to execute this swap
-
-✏️ Or say "swap [amount] USDC to PURR" to change the amount
-
-❌ Say "cancel" to cancel
-
-Sources
-2 sources
-
-system
-Supervisor Router
-100%
-
-api
-Hyperliquid/LiFi
-100%
-Agent Execution Details
-2 agents
-
-supervisor
-8ms
-completed
-
-swap_workflow
-820ms
-completed
-
-swap
-A
-💡 Insufficient balance for this swap
-
-Requested: 10.00 USDC
-
-Available: ~$3.00
-
-Options:
-
-• ✅ Swap a smaller amount: "swap 2.70 USDC"
-
-• 💳 Or buy more crypto: "buy crypto"
-
-Here's the quote for your requested amount:
-
-📊 Swap Quote
-
-10 USDC → 152.49249 PURR
-
-💰 USDC Price: $1.00 (📉 -0.0% 24h)
-
-💵 Value: ~$10.00 USD
-
-• Price Impact: 0.67%
-
-• Network: BASE
-
-• Aggregator: HYPERLIQUID
-
-⛽ Est. Gas: ~$0.0000
+⛽ Est. Gas: ~$0.0047
 
 💡 Base L2 has consistently low fees (~$0.01)
 
@@ -232,43 +151,99 @@ supervisor
 completed
 
 swap_workflow
-3.86s
+771ms
 completed
 
 yes
 A
-💡 Insufficient balance for this swap
+✅ Ready to Execute!
 
-Requested: 10.00 USDC
+Swap Details:
 
-Available: ~$3.00
+• From: 1 USDC
 
-Options:
-
-• ✅ Swap a smaller amount: "swap 2.70 USDC"
-
-• 💳 Or buy more crypto: "buy crypto"
-
-Here's the quote for your requested amount:
-
-📊 Swap Quote
-
-10 USDC → 152.543666 PURR
-
-• Price Impact: 0.63%
+• To: ~15.081137 PURR
 
 • Network: BASE
 
-• Aggregator: HYPERLIQUID
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⛽ Est. Gas: ~$0.0060
+👉 Click Execute below to sign the transaction with your wallet.
 
-💡 Base L2 has consistently low fees (~$0.01)
+Sources
+2 sources
+
+system
+Supervisor Router
+100%
+
+api
+Hyperliquid/LiFi
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+13ms
+completed
+
+swap_workflow
+2.89s
+completed
+
+Supply 1000 USDC to Morpho
+A
+❌ Swap not supported: USDC → MORPHO
+
+Anvil uses Hyperliquid Spot for swaps, which only supports meme tokens paired with USDC.
+
+Tokens like MORPHO are not available for swaps.
 
 ---
 
-✅ Say "yes" or "confirm" to execute this swap
+✅ What you CAN do on Anvil:
 
-✏️ Or say "swap [amount] USDC to PURR" to change the amount
+Meme Token Swaps (via Hyperliquid Spot):
 
-❌ Say "cancel" to cancel
+• `swap 100 USDC to PURR`
+
+• `swap 50 USDC to TRUMP`
+
+• `swap 1000 USDC to PEPE`
+
+Supported meme tokens: PURR, TRUMP, PEPE, MOG, HFUN, JEFF, WAGMI, and 40+ more
+
+---
+
+💡 For major tokens (MORPHO), you can:
+
+• Check prices: "what's the price of ETH?"
+
+• Track portfolio: "show my portfolio"
+
+• Buy crypto: "buy ETH" (fiat on-ramp via MoonPay)
+
+• Use external DEXs: Uniswap, 1inch, or other DEX aggregators
+
+Sources
+2 sources
+
+llm
+gemini-2.0-flash
+100%
+
+api
+Hyperliquid/LiFi
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+3.25s
+completed
+
+swap_workflow
+1.74s
+completed
+
+

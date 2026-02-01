@@ -475,6 +475,17 @@ class SupervisorCoordinator:
                 task.status = TaskStatus.COMPLETED
                 logger.info(f"✅ Task completed: {task.agent_type.value} ({execution_time_ms}ms)")
                 
+                # Check for workflow redirect signal (user switched to different workflow)
+                if hasattr(result, 'metadata') and isinstance(result.metadata, dict):
+                    redirect_to = result.metadata.get('redirect_to')
+                    if redirect_to and result.metadata.get('workflow_cancelled'):
+                        logger.info(
+                            f"🔄 Workflow redirect detected: {task.agent_type.value} → {redirect_to}"
+                        )
+                        # Mark this task as needing redirect (handled in aggregation)
+                        task.needs_redirect = True
+                        task.redirect_to = redirect_to
+                
             except Exception as e:
                 task.error = str(e)
                 task.status = TaskStatus.FAILED
@@ -522,10 +533,35 @@ class SupervisorCoordinator:
             if len(ready_tasks) == 1:
                 # Single task - execute directly
                 await execute_single_task(ready_tasks[0])
+                
+                # Check for workflow redirect after single task
+                task = ready_tasks[0]
+                if hasattr(task, 'needs_redirect') and task.needs_redirect:
+                    redirect_to = getattr(task, 'redirect_to', None)
+                    if redirect_to:
+                        logger.info(f"🔄 Re-routing to {redirect_to} workflow")
+                        # Create new plan for the correct workflow
+                        redirect_plan = await self._create_redirect_plan(
+                            redirect_to=redirect_to,
+                            original_message=original_message,
+                        )
+                        if redirect_plan:
+                            # Execute the redirect workflow
+                            for redirect_task in redirect_plan.tasks:
+                                await execute_single_task(redirect_task)
             else:
                 # Multiple tasks ready - execute in parallel
                 logger.info(f"⚡ Executing {len(ready_tasks)} tasks in parallel: {[t.agent_type.value for t in ready_tasks]}")
                 await asyncio.gather(*[execute_single_task(task) for task in ready_tasks])
+        
+        # Check for any redirects and filter out cancelled workflow tasks
+        redirect_tasks = [t for t in workflow_plan.tasks if hasattr(t, 'needs_redirect') and t.needs_redirect]
+        if redirect_tasks:
+            # Filter out cancelled workflow from final aggregation
+            workflow_plan.tasks = [
+                t for t in workflow_plan.tasks 
+                if not (hasattr(t, 'needs_redirect') and t.needs_redirect)
+            ]
         
         # Aggregate results
         final_response = await self._aggregate_results(workflow_plan)
@@ -866,6 +902,57 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
         """
         import re
         message_lower = message.lower()
+    
+    async def _create_redirect_plan(
+        self,
+        redirect_to: str,
+        original_message: str,
+    ) -> "WorkflowPlan | None":
+        """
+        Create a workflow plan for a redirect target.
+        
+        When a workflow detects that the user's message is intended for a
+        different workflow, this creates a plan to execute that workflow.
+        
+        Args:
+            redirect_to: Target workflow name (e.g., "lending_workflow")
+            original_message: Original user message to process
+            
+        Returns:
+            WorkflowPlan for the redirect target, or None if unknown
+        """
+        from app.domain.enums.agent_type import AgentType
+        
+        # Map workflow names to agent types
+        workflow_to_agent = {
+            "swap_workflow": AgentType.SWAP_WORKFLOW,
+            "lending_workflow": AgentType.LENDING_WORKFLOW,
+            "buy_workflow": AgentType.BUY_WORKFLOW,
+            "transfer_workflow": AgentType.TRANSFER_WORKFLOW,
+            "money_market_workflow": AgentType.MONEY_MARKET_WORKFLOW,
+        }
+        
+        agent_type = workflow_to_agent.get(redirect_to)
+        if not agent_type:
+            logger.warning(f"Unknown redirect target: {redirect_to}")
+            return None
+        
+        logger.info(f"🔄 Creating redirect plan for {redirect_to} (agent: {agent_type.value})")
+        
+        task = AgentTask(
+            agent_type=agent_type,
+            task_description=f"Process redirected request: {original_message[:100]}",
+            depends_on=[],
+        )
+        
+        return WorkflowPlan(
+            tasks=[task],
+            execution_order=[0],
+            estimated_time_seconds=10,
+        )
+    
+    def _is_simple_multi_intent(self, message: str) -> bool:
+        """
         
         # Pattern: greeting + price
         greeting_price_pattern = r"(hi|hello|hey|hola|how are you).*(price|cost|worth).*(btc|eth|usdc|bitcoin|ethereum)"

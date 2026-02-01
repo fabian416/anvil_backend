@@ -229,6 +229,97 @@ class BaseWorkflowAgent(AgentGateway, ABC):
         """
         pass
     
+    def _detect_different_workflow_intent(
+        self,
+        message: str,
+    ) -> tuple[bool, str | None]:
+        """
+        Detect if user message is intended for a DIFFERENT workflow.
+        
+        This allows workflows to recognize when user is switching to a different
+        operation and gracefully hand off. Generic detection based on keywords.
+        
+        Returns:
+            Tuple of (is_different_workflow, detected_workflow_type or None)
+        """
+        message_lower = message.lower().strip()
+        
+        # Map keywords to workflow types
+        workflow_keywords = {
+            "swap_workflow": [
+                "swap", "exchange", "trade", "convert",
+                "cambiar", "intercambiar", "trocar",
+            ],
+            "lending_workflow": [
+                "lend", "deposit", "supply", "earn yield", "earn interest",
+                "deposit to", "supply to", "lend to",
+                "depositar", "prestar", "emprestar",
+                "morpho", "aave", "compound",  # Protocol names
+            ],
+            "buy_workflow": [
+                "buy crypto", "buy usdc", "buy token", "purchase",
+                "comprar cripto", "comprar", "quero comprar",
+                "on-ramp", "onramp", "fiat",
+            ],
+            "transfer_workflow": [
+                "send", "transfer", "send to", "transfer to",
+                "enviar", "transferir",
+            ],
+            "money_market_workflow": [
+                "compare rates", "money market", "best rates", "yield comparison",
+                "comparar tasas", "comparar taxas",
+            ],
+        }
+        
+        # Don't detect different workflow for confirmation/cancellation messages
+        skip_keywords = [
+            "yes", "no", "confirm", "cancel", "ok", "okay",
+            "sí", "si", "não", "não", "cancelar", "confirmar",
+        ]
+        if message_lower in skip_keywords or len(message_lower) < 3:
+            return False, None
+        
+        # Check if message matches a DIFFERENT workflow
+        current_workflow = self.workflow_name.lower()
+        
+        for workflow_type, keywords in workflow_keywords.items():
+            # Skip if it's the current workflow
+            if workflow_type in current_workflow or current_workflow in workflow_type:
+                continue
+                
+            for keyword in keywords:
+                if message_lower.startswith(keyword) or f" {keyword}" in f" {message_lower}":
+                    logger.info(
+                        f"[{self.workflow_name}] Detected different workflow intent: "
+                        f"{workflow_type} (keyword: {keyword})"
+                    )
+                    return True, workflow_type
+        
+        return False, None
+    
+    def _get_workflow_redirect_message(
+        self,
+        detected_workflow: str,
+        language: str = "en",
+    ) -> str:
+        """Get message when redirecting to a different workflow."""
+        workflow_names = {
+            "swap_workflow": {"en": "swap", "es": "intercambio", "pt": "troca"},
+            "lending_workflow": {"en": "deposit/lending", "es": "depósito", "pt": "depósito"},
+            "buy_workflow": {"en": "buy crypto", "es": "comprar cripto", "pt": "comprar cripto"},
+            "transfer_workflow": {"en": "transfer", "es": "transferencia", "pt": "transferência"},
+            "money_market_workflow": {"en": "rate comparison", "es": "comparación de tasas", "pt": "comparação de taxas"},
+        }
+        
+        workflow_display = workflow_names.get(detected_workflow, {}).get(language, detected_workflow)
+        
+        msgs = {
+            "en": f"🔄 Switching to **{workflow_display}** operation...",
+            "es": f"🔄 Cambiando a operación de **{workflow_display}**...",
+            "pt": f"🔄 Mudando para operação de **{workflow_display}**...",
+        }
+        return msgs.get(language, msgs["en"])
+    
     async def execute(
         self,
         conversation_id: "ConversationId",
@@ -239,21 +330,58 @@ class BaseWorkflowAgent(AgentGateway, ABC):
         Execute workflow agent.
         
         This method:
-        1. Loads or initializes workflow state
-        2. Extracts user context (wallet, language)
-        3. Delegates to process_step()
-        4. Returns AgentResponse with state and execute_data
+        1. Checks if message is for a different workflow (and signals redirect)
+        2. Loads or initializes workflow state
+        3. Extracts user context (wallet, language)
+        4. Delegates to process_step()
+        5. Returns AgentResponse with state and execute_data
         
         Args:
             conversation_id: Conversation identifier
             message: User message
             conversation_context: Conversation history and metadata
         """
+        # Get user context first (needed for language)
+        user_context = self._extract_user_context(conversation_context)
+        
+        # Check if message is intended for a DIFFERENT workflow
+        # This handles cases like user saying "deposit to morpho" while in swap flow
+        is_different, detected_workflow = self._detect_different_workflow_intent(message.value)
+        
+        if is_different and detected_workflow:
+            # Signal to supervisor that this workflow should be cancelled
+            # and the request should be re-routed to the correct workflow
+            logger.info(
+                f"[{self.workflow_name}] Cancelling - user wants {detected_workflow} instead"
+            )
+            
+            # Return a redirect response with cancelled state
+            redirect_msg = self._get_workflow_redirect_message(
+                detected_workflow, 
+                user_context.language
+            )
+            
+            # Create cancelled state with redirect signal
+            cancelled_state = WorkflowState()
+            cancelled_state.step = WorkflowStep.CANCELLED.value
+            cancelled_state.cancelled = True
+            cancelled_state.data["redirect_to"] = detected_workflow
+            
+            return AgentResponse(
+                content=redirect_msg,
+                agent_type=self.agent_type,
+                sources=[],
+                metadata={
+                    "workflow_name": self.workflow_name,
+                    "workflow_state": cancelled_state.to_dict(),
+                    "current_step": WorkflowStep.CANCELLED.value,
+                    "redirect_to": detected_workflow,
+                    "workflow_cancelled": True,
+                },
+            )
+        
         # Load state from conversation context or initialize
         state = self._load_state(conversation_context) or WorkflowState()
-        
-        # Get user context (wallet, preferences)
-        user_context = self._extract_user_context(conversation_context)
         
         logger.info(
             f"[{self.workflow_name}] Processing step={state.step}, "
