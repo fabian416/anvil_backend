@@ -1,6 +1,6 @@
 {
-  "version": "2.0.0",
-  "description": "Comprehensive Unified Agent System for Claude Code with 108 specialized agents across 16 categories",
+  "version": "2.1.0",
+  "description": "Comprehensive Unified Agent System for Claude Code with 108 specialized agents across 16 categories, updated with project-specific technologies",
   "agents": [
     {
       "name": "computer-vision-specialist",
@@ -35,12 +35,21 @@
     {
       "name": "nlp-llm-integration-expert",
       "file": ".claude/agents/ai/nlp-llm-integration-expert.md",
-      "description": "Nlp Llm Integration Expert specialist",
+      "description": "LLM integration specialist focused on multi-agent orchestration, knowledge graphs, and production AI systems. Expert in: - Multi-agent orchestration with agent-squad and agno runtime - Microsoft GraphRAG for knowledge graph construction and RAG - Vertex AI (Gemini 2.0) integration with fallback to DeepInfra (Llama 3.1) - Perplexity AI for research-backed queries - OpenAI-compatible API patterns for provider switching - Agent coordination and workflow management. Use when: - Building multi-agent AI systems with agent-squad/agno - Implementing knowledge graphs with GraphRAG - Integrating Vertex AI, DeepInfra, or Perplexity AI - Creating fallback and provider switching mechanisms - Designing agent orchestration workflows - Building RAG systems with knowledge graphs",
       "category": "ai",
       "proactive": false,
       "triggers": [
         "nlp llm integration expert",
         "nlp-llm-integration-expert",
+        "agent-squad",
+        "agno",
+        "graphrag",
+        "vertex ai",
+        "gemini",
+        "deepinfra",
+        "perplexity",
+        "multi-agent",
+        "knowledge graph",
         "integration",
         "expert"
       ],
@@ -77,13 +86,17 @@
     {
       "name": "prompt-engineer",
       "file": ".claude/agents/ai-analysis/prompt-engineer.md",
-      "description": "AI prompt optimization and LLM integration specialist focused on designing effective prompts, optimizing model performance, and implementing best practices for AI-powered applications.",
+      "description": "AI prompt optimization and LLM integration specialist focused on designing effective prompts, optimizing model performance, and implementing best practices for AI-powered applications. Expert in: - Multi-agent system prompt design for agent-squad and agno - Knowledge graph integration with GraphRAG prompts - Vertex AI (Gemini) and DeepInfra (Llama) prompt optimization - Perplexity AI research query optimization - Prompt engineering for RAG systems - Agent coordination and workflow prompts. Use when: - Optimizing prompts for multi-agent orchestration - Designing prompts for knowledge graph RAG systems - Improving LLM performance across providers (Vertex AI, DeepInfra, Perplexity) - Creating effective agent communication prompts - Building prompt templates for production AI systems",
       "category": "ai-analysis",
       "proactive": false,
       "triggers": [
         "prompt engineer",
         "prompt-engineer",
         "prompt",
+        "agent-squad",
+        "graphrag",
+        "vertex ai",
+        "gemini",
         "engineer"
       ],
       "dependencies": []
@@ -148,13 +161,17 @@
     {
       "name": "fastapi-expert",
       "file": ".claude/agents/backend/fastapi-expert.md",
-      "description": "FastAPI specialist focused on high-performance Python APIs with automatic documentation and modern async patterns. Expert in FastAPI's ecosystem, Pydantic models, dependency injection, and production-ready service architecture. Use when: - Building high-performance async Python APIs with FastAPI - Type-safe API development with automatic OpenAPI documentation - Modern Python development with async/await patterns - Dependency injection and middleware architecture - Database integration with SQLAlchemy and async patterns",
+      "description": "FastAPI specialist focused on high-performance Python APIs with automatic documentation and modern async patterns. Expert in FastAPI's ecosystem, Pydantic models, dependency injection (Dishka), Hexagonal Architecture, and production-ready service architecture. Specializes in: - FastAPI with Hexagonal Architecture (Clean Architecture) patterns - Dishka dependency injection container for framework-agnostic DI - SQLAlchemy 2.0+ async patterns with PostgreSQL - Celery background task processing with Redis - fastapi-error-map for contextual error handling - Pydantic 2.x validation and serialization - uvicorn with uvloop for high-performance ASGI server. Use when: - Building high-performance async Python APIs with FastAPI - Implementing Hexagonal Architecture with strict layer separation - Type-safe API development with automatic OpenAPI documentation - Dependency injection with Dishka container - Database integration with SQLAlchemy async patterns - Background job processing with Celery - Error handling with fastapi-error-map",
       "category": "backend",
       "proactive": false,
       "triggers": [
         "fastapi expert",
         "fastapi-expert",
         "fastapi",
+        "dishka",
+        "hexagonal architecture",
+        "clean architecture",
+        "celery",
         "expert"
       ],
       "dependencies": []
@@ -272,12 +289,16 @@
     {
       "name": "python-hyx-resilience",
       "file": ".claude/agents/backend/python-hyx-resilience.md",
-      "description": "Elite Python Professional specializing in advanced resilience engineering with Hyx. Expert in async programming, fault-tolerant systems, and Pythonic design patterns. Combines resilience patterns with modern Python idioms, performance optimization, and comprehensive testing strategies. Enhanced with deep Python specialization. Use when: - Implementing fault-tolerant Python systems with async patterns - Building resilient microservices with Hyx and complementary libraries - Optimizing Python performance with async/await and proper resource management - Creating production-ready Python applications with comprehensive error handling - Designing scalable Python architectures with resilience patterns",
+      "description": "Elite Python Professional specializing in advanced resilience engineering with Hyx and Tenacity. Expert in async programming, fault-tolerant systems, and Pythonic design patterns. Specializes in: - Hyx resilience patterns for async Python systems - Tenacity for enterprise retry mechanisms - FastAPI resilience patterns with async/await - Celery task resilience and error handling - Circuit breakers, retries, timeouts, and bulkheads - Graceful degradation and error recovery. Use when: - Implementing fault-tolerant Python systems with async patterns - Building resilient FastAPI services with Hyx/Tenacity - Optimizing Python performance with async/await and proper resource management - Creating production-ready Python applications with comprehensive error handling - Designing scalable Python architectures with resilience patterns - Celery task resilience and retry strategies",
       "category": "backend",
       "proactive": true,
       "triggers": [
         "python hyx resilience",
         "python-hyx-resilience",
+        "hyx",
+        "tenacity",
+        "fastapi resilience",
+        "celery resilience",
         "python",
         "resilience"
       ],
@@ -388,13 +409,17 @@
     {
       "name": "payment-integration-agent",
       "file": ".claude/agents/business/payment-integration-agent.md",
-      "description": "Payment Integration Agent specialist",
+      "description": "Payment integration specialist focused on Stripe subscriptions, webhooks, and payment processing. Expert in: - Stripe API integration for subscriptions and one-time payments - Stripe webhook handling and event processing - Subscription lifecycle management - Payment method management - Invoice and billing automation - Stripe Checkout and Payment Intents. Use when: - Integrating Stripe payment processing - Building subscription systems - Handling Stripe webhooks and events - Managing customer subscriptions - Processing payments and refunds - Implementing billing automation",
       "category": "business",
       "proactive": false,
       "triggers": [
         "payment integration agent",
         "payment-integration-agent",
+        "stripe",
+        "subscription",
         "payment",
+        "webhook",
+        "billing",
         "integration",
         "agent"
       ],
@@ -575,12 +600,17 @@
     {
       "name": "database-architect",
       "file": ".claude/agents/database/database-architect.md",
-      "description": "Database specialist focused on schema design, query optimization, performance tuning, and database architecture. Expert in SQL, NoSQL, data modeling, and database scaling strategies. Use when: - Database schema design and optimization - Query performance tuning and indexing - Database scaling and sharding strategies - Data migration and ETL processes - Database security and backup strategies",
+      "description": "Database specialist focused on schema design, query optimization, performance tuning, and database architecture. Expert in: - PostgreSQL 16+ for primary data storage with SQLAlchemy 2.0+ - Redis 7+ for caching, sessions, and Celery message broker - Alembic for database migrations and schema management - Async database patterns with SQLAlchemy async - Database connection pooling and performance optimization - Query optimization and indexing strategies. Use when: - PostgreSQL schema design and optimization with SQLAlchemy - Redis caching and session management - Alembic migration strategies - Query performance tuning and indexing - Database scaling and connection pooling - Data migration and ETL processes - Database security and backup strategies",
       "category": "data",
       "proactive": false,
       "triggers": [
         "database architect",
         "database-architect",
+        "postgresql",
+        "postgres",
+        "redis",
+        "alembic",
+        "sqlalchemy",
         "database",
         "architect"
       ],
@@ -701,13 +731,25 @@
     {
       "name": "react-expert",
       "file": ".claude/agents/frontend/react-expert.md",
-      "description": "React specialist focused on modern component architecture, state management, performance optimization, and React ecosystem. Expert in hooks, context, and advanced React patterns. Use when: - Building React applications or components - State management with Redux, Zustand, or Context - React performance optimization - Modern React patterns and hooks - React testing with Jest and Testing Library",
+      "description": "React specialist focused on modern component architecture, state management, performance optimization, and React ecosystem. Expert in: - React 18/19 with TypeScript and Vite build system - TanStack Query (React Query) for server state management - Zustand for client state management - React Router v6/v7 for navigation - React Hook Form with Zod validation - Radix UI and shadcn/ui component libraries - Framer Motion for animations - i18next for internationalization - Vitest and Playwright for testing. Use when: - Building React applications with Vite and TypeScript - Server state management with TanStack Query - Client state with Zustand - Form handling with React Hook Form and Zod - Component libraries with Radix UI/shadcn/ui - Routing with React Router - Testing with Vitest and Playwright E2E",
       "category": "frontend",
       "proactive": false,
       "triggers": [
         "react expert",
         "react-expert",
         "react",
+        "tanstack query",
+        "react query",
+        "zustand",
+        "vite",
+        "react router",
+        "react hook form",
+        "zod",
+        "radix ui",
+        "shadcn",
+        "framer motion",
+        "vitest",
+        "playwright",
         "expert"
       ],
       "dependencies": []
@@ -977,12 +1019,16 @@
     {
       "name": "knowledge-graph-manager",
       "file": ".claude/agents/orchestration/knowledge-graph-manager.md",
-      "description": "Advanced centralized knowledge graph and context management system that maintains a dynamic, comprehensive understanding of project ecosystem. Combines lst97 patterns with our Basic Memory MCP integration for intelligent context distribution, agent activity tracking, and collaborative workflow coordination. Use when: - Managing complex multi-agent project contexts - Coordinating information flow between specialized agents - Tracking agent activities and collaborative progress - Providing tailored context briefings for agent workflows - Maintaining centralized project knowledge and decision history",
+      "description": "Advanced centralized knowledge graph and context management system that maintains a dynamic, comprehensive understanding of project ecosystem. Combines Microsoft GraphRAG with multi-agent orchestration (agent-squad, agno) and Basic Memory MCP integration for intelligent context distribution, agent activity tracking, and collaborative workflow coordination. Expert in: - Microsoft GraphRAG for knowledge graph construction and RAG - Multi-agent knowledge sharing and coordination - Context distribution across agent workflows - Project knowledge persistence and retrieval. Use when: - Managing complex multi-agent project contexts with GraphRAG - Coordinating information flow between specialized agents - Tracking agent activities and collaborative progress - Providing tailored context briefings for agent workflows - Maintaining centralized project knowledge and decision history - Building RAG systems with knowledge graphs",
       "category": "orchestration",
       "proactive": true,
       "triggers": [
         "knowledge graph manager",
         "knowledge-graph-manager",
+        "graphrag",
+        "knowledge graph",
+        "rag",
+        "agent-squad",
         "knowledge",
         "graph",
         "manager"
@@ -1736,9 +1782,20 @@
   },
   "metadata": {
     "created": "2024-01-15",
-    "last_updated": "2025-08-07",
+    "last_updated": "2025-01-15",
     "total_agents": 107,
+    "project_context": {
+      "backend_stack": "Python 3.12, FastAPI, Dishka DI, Hexagonal Architecture, SQLAlchemy 2.0+, PostgreSQL 16+, Redis 7+, Celery, Alembic",
+      "frontend_stack": "React 18/19, TypeScript, Vite, TanStack Query, Zustand, React Router, React Hook Form, Zod, Radix UI, shadcn/ui, Framer Motion, Vitest, Playwright",
+      "ai_stack": "agent-squad, agno, GraphRAG, Vertex AI (Gemini 2.0), DeepInfra (Llama 3.1), Perplexity AI",
+      "integrations": "Stripe, AWS S3, Mailgun, Privy (Web3 auth)"
+    },
     "version_history": [
+      {
+        "version": "2.1.0",
+        "date": "2025-01-15",
+        "changes": "Updated agents with project-specific technologies: FastAPI with Dishka/Hexagonal Architecture, React with TanStack Query/Zustand/Vite, multi-agent orchestration (agent-squad/agno/GraphRAG), Vertex AI/DeepInfra/Perplexity integration, Stripe payments, PostgreSQL/Redis patterns"
+      },
       {
         "version": "2.0.0",
         "date": "2025-08-07",
