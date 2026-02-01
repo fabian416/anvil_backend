@@ -1553,10 +1553,23 @@ Gostaria de depositar algum destes em seu lugar?""",
         """Format ready-to-execute message."""
         
         asset = data.get("asset", "USDC")
-        amount = data.get("amount", "0")
+        amount_raw = data.get("amount", "0")
         vault = data.get("vault", {})
         protocol = vault.get("protocol", "morpho")
         protocol_name = "Morpho" if protocol == "morpho" else "Aave V3"
+        
+        # Format amount to avoid scientific notation (e.g., 1e-05 -> 0.00001)
+        try:
+            amount_float = float(amount_raw)
+            # Use appropriate precision based on value
+            if amount_float < 0.0001:
+                amount = f"{amount_float:.8f}".rstrip('0').rstrip('.')
+            elif amount_float < 1:
+                amount = f"{amount_float:.6f}".rstrip('0').rstrip('.')
+            else:
+                amount = f"{amount_float:.4f}".rstrip('0').rstrip('.')
+        except (ValueError, TypeError):
+            amount = str(amount_raw)
         
         msgs = {
             "en": f"""✅ **Deposit Ready to Execute**

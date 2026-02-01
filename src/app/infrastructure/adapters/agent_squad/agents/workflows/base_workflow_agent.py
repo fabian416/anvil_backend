@@ -721,6 +721,7 @@ Return JSON with extracted parameters. Use null for missing values.
         optional_fields = [
             "provider", "from_token", "to_token", "amount",
             "protocol", "vault_address", "asset_address", "asset_symbol",
+            "pool_address", "referral_code",  # Aave fields
             "recipient", "slippage", "to_chain",
             # Additional Morpho/Aave fields
             "vault_name", "vault_apy", "vault_tvl",
@@ -738,5 +739,14 @@ Return JSON with extracted parameters. Use null for missing values.
         for field in optional_fields:
             if field in kwargs and kwargs[field] is not None:
                 execute_data[field] = kwargs[field]
+        
+        # Ensure amount is in decimal format (not scientific notation like 1e-05)
+        if "amount" in execute_data and execute_data["amount"]:
+            try:
+                amount_float = float(execute_data["amount"])
+                # Format with enough precision, strip trailing zeros
+                execute_data["amount"] = f"{amount_float:.10f}".rstrip('0').rstrip('.')
+            except (ValueError, TypeError):
+                pass  # Keep original value if conversion fails
         
         return execute_data
