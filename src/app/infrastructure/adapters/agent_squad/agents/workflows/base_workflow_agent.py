@@ -371,6 +371,7 @@ class BaseWorkflowAgent(AgentGateway, ABC):
                 content=redirect_msg,
                 agent_type=self.agent_type,
                 sources=[],
+                tools_used=["workflow_redirect"],
                 metadata={
                     "workflow_name": self.workflow_name,
                     "workflow_state": cancelled_state.to_dict(),
