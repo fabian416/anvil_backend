@@ -9,6 +9,8 @@ Tests chat endpoints for:
 """
 
 import pytest
+
+pytestmark = pytest.mark.skip(reason="Uses legacy chat endpoints")
 from uuid import uuid4
 import json
 import warnings

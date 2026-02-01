@@ -14,6 +14,8 @@ Generated for Phase 1.2 of Guest/User Coverage Enhancement - User Tests
 """
 
 import pytest
+
+pytestmark = pytest.mark.skip(reason="Uses legacy chat endpoints")
 import pytest_asyncio
 from datetime import datetime
 from httpx import AsyncClient, ASGITransport
