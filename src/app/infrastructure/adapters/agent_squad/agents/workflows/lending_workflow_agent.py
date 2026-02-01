@@ -1409,6 +1409,14 @@ Quanto **{asset}** você gostaria de depositar?
         except (ValueError, TypeError):
             amount_float = 0
         
+        # Format amount to avoid scientific notation (e.g., 1e-06 -> 0.000001)
+        if amount_float < 0.0001:
+            amount_formatted = f"{amount_float:.8f}".rstrip('0').rstrip('.')
+        elif amount_float < 1:
+            amount_formatted = f"{amount_float:.6f}".rstrip('0').rstrip('.')
+        else:
+            amount_formatted = f"{amount_float:.4f}".rstrip('0').rstrip('.')
+        
         apy = vault_data.get("apy", 0)
         yearly_earnings = amount_float * (apy / 100)
         monthly_earnings = yearly_earnings / 12
@@ -1430,18 +1438,18 @@ Quanto **{asset}** você gostaria de depositar?
             language=language,
         )
         
-        # Build confirmation prompt
-        confirm_section = self._get_confirmation_prompt(amount, asset, language)
+        # Build confirmation prompt (use formatted amount)
+        confirm_section = self._get_confirmation_prompt(amount_formatted, asset, language)
         
         msgs = {
             "en": f"""📊 **Deposit Quote**
 
 **{vault_name}**
 
-💰 **Deposit Amount:** {amount} {asset}
+💰 **Deposit Amount:** {amount_formatted} {asset}
 📈 **Current APY:** {apy:.2f}%
-💵 **Monthly Earnings:** ~{monthly_earnings:.2f} {asset}
-📆 **Yearly Earnings:** ~{yearly_earnings:.2f} {asset}
+💵 **Monthly Earnings:** ~{monthly_earnings:.6f} {asset}
+📆 **Yearly Earnings:** ~{yearly_earnings:.6f} {asset}
 
 {user_balance_section}
 
@@ -1451,10 +1459,10 @@ Quanto **{asset}** você gostaria de depositar?
 
 **{vault_name}**
 
-💰 **Cantidad a Depositar:** {amount} {asset}
+💰 **Cantidad a Depositar:** {amount_formatted} {asset}
 📈 **APY Actual:** {apy:.2f}%
-💵 **Ganancias Mensuales:** ~{monthly_earnings:.2f} {asset}
-📆 **Ganancias Anuales:** ~{yearly_earnings:.2f} {asset}
+💵 **Ganancias Mensuales:** ~{monthly_earnings:.6f} {asset}
+📆 **Ganancias Anuales:** ~{yearly_earnings:.6f} {asset}
 
 {user_balance_section}
 
@@ -1464,10 +1472,10 @@ Quanto **{asset}** você gostaria de depositar?
 
 **{vault_name}**
 
-💰 **Valor do Depósito:** {amount} {asset}
+💰 **Valor do Depósito:** {amount_formatted} {asset}
 📈 **APY Atual:** {apy:.2f}%
-💵 **Ganhos Mensais:** ~{monthly_earnings:.2f} {asset}
-📆 **Ganhos Anuais:** ~{yearly_earnings:.2f} {asset}
+💵 **Ganhos Mensais:** ~{monthly_earnings:.6f} {asset}
+📆 **Ganhos Anuais:** ~{yearly_earnings:.6f} {asset}
 
 {user_balance_section}
 
@@ -1477,10 +1485,10 @@ Quanto **{asset}** você gostaria de depositar?
 
 **{vault_name}**
 
-💰 **存款金额：** {amount} {asset}
+💰 **存款金额：** {amount_formatted} {asset}
 📈 **当前 APY：** {apy:.2f}%
-💵 **月收益：** ~{monthly_earnings:.2f} {asset}
-📆 **年收益：** ~{yearly_earnings:.2f} {asset}
+💵 **月收益：** ~{monthly_earnings:.6f} {asset}
+📆 **年收益：** ~{yearly_earnings:.6f} {asset}
 
 {user_balance_section}
 
@@ -1571,46 +1579,58 @@ Gostaria de depositar algum destes em seu lugar?""",
         except (ValueError, TypeError):
             amount = str(amount_raw)
         
+        # Get vault APY for display
+        apy = vault.get("apy", 0)
+        vault_name = vault.get("name", f"{protocol_name} Vault")
+        
         msgs = {
-            "en": f"""✅ **Deposit Ready to Execute**
+            "en": f"""✅ **Ready to Execute!**
 
-🔄 **Depositing:** {amount} {asset}
-🏦 **Protocol:** {protocol_name}
-⛓️ **Network:** Base
+**Deposit Details:**
+• Amount: {amount} {asset}
+• Vault: {vault_name}
+• APY: {apy:.2f}%
+• Network: Base
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Click **Confirm** to execute the deposit.""",
+👉 Click **Execute** below to sign the transaction with your wallet.""",
             
-            "es": f"""✅ **Depósito Listo para Ejecutar**
+            "es": f"""✅ **¡Listo para Ejecutar!**
 
-🔄 **Depositando:** {amount} {asset}
-🏦 **Protocolo:** {protocol_name}
-⛓️ **Red:** Base
+**Detalles del Depósito:**
+• Cantidad: {amount} {asset}
+• Vault: {vault_name}
+• APY: {apy:.2f}%
+• Red: Base
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Haz clic en **Confirmar** para ejecutar el depósito.""",
+👉 Haz clic en **Ejecutar** abajo para firmar la transacción con tu billetera.""",
             
-            "pt": f"""✅ **Depósito Pronto para Executar**
+            "pt": f"""✅ **Pronto para Executar!**
 
-🔄 **Depositando:** {amount} {asset}
-🏦 **Protocolo:** {protocol_name}
-⛓️ **Rede:** Base
+**Detalhes do Depósito:**
+• Quantidade: {amount} {asset}
+• Vault: {vault_name}
+• APY: {apy:.2f}%
+• Rede: Base
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Clique em **Confirmar** para executar o depósito.""",
+👉 Clique em **Executar** abaixo para assinar a transação com sua carteira.""",
             
-            "zh": f"""✅ **存款准备执行**
+            "zh": f"""✅ **准备执行！**
 
-🔄 **存入：** {amount} {asset}
-🏦 **协议：** {protocol_name}
-⛓️ **网络：** Base
+**存款详情：**
+• 金额：{amount} {asset}
+• 金库：{vault_name}
+• APY：{apy:.2f}%
+• 网络：Base
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-点击 **确认** 执行存款。""",
+👉 点击下方 **执行** 使用您的钱包签署交易。""",
         }
         
         return msgs.get(language, msgs["en"])
