@@ -1208,13 +1208,25 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
         if self._context_aware:
             if conversation_context.user_metadata is None:
                 conversation_context.user_metadata = {}
+            
+            total_balance = float(self._context_aware.total_balance_usd or 0)
+            
+            # For workflow agents (use direct properties)
             conversation_context.user_metadata["portfolio_state"] = self._context_aware.portfolio_state
-            conversation_context.user_metadata["total_balance_usd"] = float(self._context_aware.total_balance_usd or 0)
+            conversation_context.user_metadata["total_balance_usd"] = total_balance
             conversation_context.user_metadata["has_connected_wallet"] = self._context_aware.has_connected_wallet
+            
+            # For non-workflow agents (wallet, portfolio, transaction_history)
+            # These agents expect portfolio_summary dict with total_value_usd key
+            conversation_context.user_metadata["portfolio_summary"] = {
+                "total_value_usd": total_balance,
+                "token_count": self._context_aware.token_count or 0,
+                "chain": self._context_aware.primary_chain,
+            }
             
             logger.debug(
                 f"Injected context_aware into workflow: portfolio={self._context_aware.portfolio_state}, "
-                f"balance=${float(self._context_aware.total_balance_usd or 0):.2f}"
+                f"balance=${total_balance:.2f}"
             )
         
         # Execute using parent implementation with original_message

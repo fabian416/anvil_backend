@@ -215,9 +215,10 @@ class WalletBalanceDbAdapter(WalletBalancePort):
             logger.warning("chat_users table not found")
             return None
         
-        # Resolve chat_user_id to legacy user_id
+        # Resolve chat_user_id to legacy user_id via identifier column
+        # chat_users.identifier contains the legacy user ID for authenticated users
         stmt = (
-            select(chat_users_table.c.user_id)
+            select(chat_users_table.c.identifier, chat_users_table.c.user_type)
             .where(chat_users_table.c.id == chat_user_id)
         )
         
@@ -225,10 +226,23 @@ class WalletBalanceDbAdapter(WalletBalancePort):
         row = result.fetchone()
         
         if not row or row[0] is None:
-            logger.debug(f"No legacy user_id found for chat_user_id={chat_user_id}")
+            logger.debug(f"No identifier found for chat_user_id={chat_user_id}")
             return None
         
-        legacy_user_id = row[0]
+        identifier = row[0]
+        user_type = row[1]
+        
+        # Only authenticated users have legacy user IDs
+        if user_type != "authenticated":
+            logger.debug(f"chat_user_id={chat_user_id} is not authenticated (type={user_type})")
+            return None
+        
+        # identifier is the legacy user ID as string
+        try:
+            legacy_user_id = int(identifier)
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid identifier '{identifier}' for chat_user_id={chat_user_id}")
+            return None
         
         # Get balance using legacy user_id
         aggregate = await self.get_user_balance(legacy_user_id)

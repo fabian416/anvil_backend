@@ -97,13 +97,24 @@ def update_user_context():
             # Create wallet balance adapter for accurate portfolio_state
             wallet_balance_adapter = WalletBalanceDbAdapter(session)
             
-            # Create service with wallet balance adapter
+            # Try to get PortfolioService for real-time balance fetching
+            # This is optional - if not available, falls back to DB balance only
+            portfolio_service = None
+            try:
+                from app.application.portfolio.portfolio_service import PortfolioService
+                portfolio_service = await container.get(PortfolioService)
+                logger.debug("PortfolioService available for real-time balance fetching")
+            except Exception as ps_err:
+                logger.debug(f"PortfolioService not available (optional): {ps_err}")
+            
+            # Create service with wallet balance adapter and portfolio service
             service = UserContextService(
                 context_repository=context_repo,
                 chat_message_repository=message_repo,
                 chat_conversation_repository=conversation_repo,
                 wallet_repository=None,  # Deprecated
                 wallet_balance_adapter=wallet_balance_adapter,  # For accurate balance
+                portfolio_service=portfolio_service,  # For real-time on-chain balance
             )
             
             # ============================================

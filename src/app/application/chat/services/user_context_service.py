@@ -108,6 +108,8 @@ class UserContextService:
         wallet_repository: Any | None = None,
         # Wallet balance adapter (for accurate portfolio_state)
         wallet_balance_adapter: Any | None = None,
+        # Portfolio service for real-time balance fetching
+        portfolio_service: Any | None = None,
     ):
         """
         Initialize service with repositories.
@@ -118,12 +120,14 @@ class UserContextService:
             chat_conversation_repository: Optional - For aggregating session stats
             wallet_repository: Optional - For aggregating wallet/balance stats
             wallet_balance_adapter: Optional - WalletBalancePort for balance aggregation
+            portfolio_service: Optional - PortfolioService for real-time on-chain balance
         """
         self._context_repo = context_repository
         self._chat_message_repo = chat_message_repository
         self._chat_conversation_repo = chat_conversation_repository
         self._wallet_repo = wallet_repository
         self._wallet_balance_adapter = wallet_balance_adapter
+        self._portfolio_service = portfolio_service
     
     # ═══════════════════════════════════════════════════════════════
     # CONTEXT RETRIEVAL
@@ -463,6 +467,7 @@ class UserContextService:
         
         Uses WalletBalancePort if available for accurate balance data,
         otherwise falls back to basic wallet repository queries.
+        If database balance is zero, tries to fetch real-time on-chain balance.
         """
         stats = WalletStats()
         
@@ -497,6 +502,26 @@ class UserContextService:
                     stats.token_count = sum(
                         w.token_count for w in aggregate.wallets
                     ) if aggregate.wallets else 0
+                    
+                    # If DB balance is zero but user has a wallet, try real-time fetch
+                    if (
+                        stats.has_wallet
+                        and float(stats.total_balance_usd) == 0
+                        and stats.primary_address
+                        and self._portfolio_service
+                    ):
+                        realtime_stats = await self._fetch_realtime_balance(
+                            wallet_address=stats.primary_address,
+                            primary_chain=stats.primary_chain,
+                        )
+                        if realtime_stats.total_balance_usd > 0:
+                            stats.total_balance_usd = realtime_stats.total_balance_usd
+                            stats.token_count = realtime_stats.token_count
+                            stats.primary_chain = realtime_stats.primary_chain or stats.primary_chain
+                            logger.info(
+                                f"Updated balance from real-time fetch for {chat_user_id}: "
+                                f"${float(stats.total_balance_usd):,.2f}"
+                            )
                     
                     logger.debug(
                         f"Aggregated wallet balance for {chat_user_id}: "
@@ -536,12 +561,89 @@ class UserContextService:
                 stats.provider = getattr(primary, 'provider', None)
                 stats.primary_chain = getattr(primary, 'chain_type', None)
                 
-                # No balance data from basic wallet repo
-                stats.total_balance_usd = Decimal("0.00")
-                stats.token_count = 0
+                # Try to fetch real-time balance if portfolio service available
+                if stats.primary_address and self._portfolio_service:
+                    realtime_stats = await self._fetch_realtime_balance(
+                        wallet_address=stats.primary_address,
+                        primary_chain=stats.primary_chain,
+                    )
+                    stats.total_balance_usd = realtime_stats.total_balance_usd
+                    stats.token_count = realtime_stats.token_count
+                    if realtime_stats.primary_chain:
+                        stats.primary_chain = realtime_stats.primary_chain
+                else:
+                    # No balance data from basic wallet repo
+                    stats.total_balance_usd = Decimal("0.00")
+                    stats.token_count = 0
                 
         except Exception as e:
             logger.warning(f"Failed to aggregate wallet stats: {e}")
+        
+        return stats
+    
+    async def _fetch_realtime_balance(
+        self,
+        wallet_address: str,
+        primary_chain: str | None = None,
+    ) -> WalletStats:
+        """
+        Fetch real-time on-chain balance using PortfolioService.
+        
+        This is called as a fallback when database balance is zero
+        but user has a connected wallet (e.g., new user, stale data).
+        
+        Args:
+            wallet_address: User's wallet address
+            primary_chain: Primary chain to check (default: base)
+            
+        Returns:
+            WalletStats with real-time balance data
+        """
+        stats = WalletStats()
+        stats.primary_address = wallet_address
+        
+        if not self._portfolio_service:
+            return stats
+        
+        try:
+            from app.domain.enums.chain_type import ChainType
+            
+            # Map chain string to ChainType
+            chain_map = {
+                "ethereum": ChainType.ETHEREUM,
+                "base": ChainType.BASE,
+                "arbitrum": ChainType.ARBITRUM,
+                "polygon": ChainType.POLYGON,
+                "optimism": ChainType.OPTIMISM,
+            }
+            chain_type = chain_map.get(
+                (primary_chain or "base").lower(),
+                ChainType.BASE
+            )
+            
+            logger.info(
+                f"Fetching real-time balance for {wallet_address[:10]}... "
+                f"on {chain_type.value}"
+            )
+            
+            portfolio = await self._portfolio_service.get_portfolio_by_address(
+                address=wallet_address,
+                chain=chain_type,
+            )
+            
+            if portfolio:
+                stats.total_balance_usd = Decimal(str(portfolio.total_usd))
+                stats.token_count = len(portfolio.tokens) if portfolio.tokens else 0
+                stats.primary_chain = portfolio.chain
+                stats.has_wallet = True
+                
+                logger.info(
+                    f"Real-time balance fetched: ${portfolio.total_usd:.2f} "
+                    f"({stats.token_count} tokens) on {portfolio.chain}"
+                )
+            
+        except Exception as e:
+            logger.warning(f"Real-time balance fetch failed: {e}")
         
         return stats
     

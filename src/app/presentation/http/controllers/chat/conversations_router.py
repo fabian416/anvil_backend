@@ -101,13 +101,17 @@ class ExecuteActionData(BaseModel):
     to_token: str | None = Field(default=None, description="Destination token symbol (for swap)")
     amount: str | None = Field(default=None, description="Amount to execute (human readable)")
     
-    @field_validator("amount", mode="before")
+    @field_validator("amount", "quote_amount", "exchange_rate", "network_fee_usd", 
+                     "min_amount_out", "price_impact", "gas_estimate",
+                     "from_token_price_usd", "to_token_price_usd", 
+                     "from_token_24h_change", "value_usd", mode="before")
     @classmethod
-    def coerce_amount_to_str(cls, v):
-        """Coerce amount to string (workflows may return int/float)."""
+    def coerce_to_str(cls, v):
+        """Coerce numeric values to string (workflows may return int/float)."""
         if v is not None:
             return str(v)
         return v
+    
     protocol: str | None = Field(default=None, description="Protocol name (for deposit/withdraw)")
     vault_address: str | None = Field(default=None, description="Vault address (for Morpho deposits)")
     asset_address: str | None = Field(default=None, description="Underlying asset address (for Morpho deposits)")
@@ -126,9 +130,24 @@ class ExecuteActionData(BaseModel):
     # Quote preview fields (for display before execution)
     quote_id: str | None = Field(default=None, description="Quote identifier")
     quote_amount: str | None = Field(default=None, description="Estimated output amount")
+    min_amount_out: str | None = Field(default=None, description="Minimum output amount with slippage")
     exchange_rate: str | None = Field(default=None, description="Exchange rate for the swap")
     network_fee_usd: str | None = Field(default=None, description="Estimated network fee in USD")
     expires_at: str | None = Field(default=None, description="Quote expiration timestamp")
+    
+    # Price impact and gas fields
+    price_impact: str | None = Field(default=None, description="Price impact percentage")
+    gas_estimate: str | None = Field(default=None, description="Estimated gas units")
+    
+    # Token address fields
+    from_token_address: str | None = Field(default=None, description="Source token contract address")
+    to_token_address: str | None = Field(default=None, description="Destination token contract address")
+    
+    # Market data fields
+    from_token_price_usd: str | None = Field(default=None, description="Source token price in USD")
+    to_token_price_usd: str | None = Field(default=None, description="Destination token price in USD")
+    from_token_24h_change: str | None = Field(default=None, description="Source token 24h price change %")
+    value_usd: str | None = Field(default=None, description="Total transaction value in USD")
 
 
 class ChatResponse(BaseModel):
@@ -733,6 +752,34 @@ def create_conversations_router() -> APIRouter:
                                 f"Loaded context-aware data: portfolio={context_aware.portfolio_state}, "
                                 f"activity={context_aware.activity_level}, type={context_aware.user_type}"
                             )
+                            
+                            # If context_aware shows zero balance but user has wallet,
+                            # try to fetch real-time portfolio data as fallback
+                            # This handles cases where Celery task hasn't synced balance yet
+                            if (
+                                wallet_address
+                                and float(context_aware.total_balance_usd or 0) == 0
+                                and hasattr(handler_service, '_portfolio_service')
+                                and handler_service._portfolio_service
+                            ):
+                                try:
+                                    from app.domain.enums.chain_type import ChainType
+                                    from decimal import Decimal
+                                    
+                                    logger.info(f"Context-aware shows $0, fetching real-time balance for {wallet_address[:10]}...")
+                                    portfolio = await handler_service._portfolio_service.get_portfolio_by_address(
+                                        address=wallet_address,
+                                        chain=ChainType.BASE,
+                                    )
+                                    
+                                    if portfolio and portfolio.total_usd > 0:
+                                        # Update context_aware with real-time balance
+                                        context_aware.total_balance_usd = Decimal(str(portfolio.total_usd))
+                                        context_aware.token_count = len(portfolio.tokens) if portfolio.tokens else 0
+                                        context_aware.primary_chain = portfolio.chain
+                                        logger.info(f"Updated context with real-time balance: ${portfolio.total_usd:.2f}")
+                                except Exception as portfolio_err:
+                                    logger.debug(f"Real-time portfolio fetch failed (non-critical): {portfolio_err}")
                     except Exception as ctx_err:
                         logger.warning(f"Failed to load context-aware data: {ctx_err}")
                 

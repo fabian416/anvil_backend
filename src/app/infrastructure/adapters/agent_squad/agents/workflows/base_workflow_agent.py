@@ -430,11 +430,21 @@ We encountered an issue processing your request. Please try again.
                 user_context.is_authenticated = metadata.get("is_authenticated", False)
             
             # Extract portfolio/balance context for workflow agents
-            # This comes from the context_aware data set by supervisor
+            # The supervisor injects balance data in multiple formats:
+            # 1. portfolio_summary.total_value_usd (for non-workflow agents)
+            # 2. total_balance_usd (direct from context_aware)
+            
+            # Try portfolio_summary first (used by some agents)
             if metadata.get("portfolio_summary"):
                 portfolio = metadata.get("portfolio_summary", {})
                 user_context.total_balance_usd = float(portfolio.get("total_value_usd", 0) or 0)
                 user_context.has_connected_wallet = bool(user_context.wallet_address)
+            
+            # Also try direct total_balance_usd (set by authenticated supervisor)
+            # This takes precedence if available
+            if metadata.get("total_balance_usd") is not None:
+                user_context.total_balance_usd = float(metadata.get("total_balance_usd", 0) or 0)
+                user_context.has_connected_wallet = metadata.get("has_connected_wallet", bool(user_context.wallet_address))
             
             # Portfolio state from context_aware classification
             if metadata.get("portfolio_state"):
@@ -588,6 +598,14 @@ Return JSON with extracted parameters. Use null for missing values.
             # Additional Morpho/Aave fields
             "vault_name", "vault_apy", "vault_tvl",
             "supply_apy", "available_liquidity_usd",
+            # Swap quote fields
+            "quote_amount", "price_impact", "gas_estimate",
+            "exchange_rate", "network_fee_usd", "min_amount_out",
+            # Token address fields
+            "from_token_address", "to_token_address",
+            # Price data
+            "from_token_price_usd", "to_token_price_usd",
+            "from_token_24h_change", "value_usd",
         ]
         
         for field in optional_fields:

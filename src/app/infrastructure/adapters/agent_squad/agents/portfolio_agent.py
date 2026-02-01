@@ -298,7 +298,8 @@ Analyze and respond using the portfolio data provided above."""
                 total_value = portfolio.get("total_value_usd", 0) or 0
         
         # Empty portfolio - same format as wallet: recommend buy/receive
-        if not portfolio or total_value == 0:
+        # Note: Check total_value first since portfolio_summary may be used instead of portfolio
+        if total_value == 0:
             lines.append("**Total Balance:** $0.00")
             lines.append("")
             lines.append("**🚀 Get Started:**")
@@ -314,18 +315,26 @@ Analyze and respond using the portfolio data provided above."""
             return "\n".join(lines)
         
         # Handle PortfolioSummary dataclass or dict
-        if hasattr(portfolio, "total_value_usd"):
-            total_value = portfolio.total_value_usd
-            token_count = portfolio.token_count
-            top_holdings = portfolio.top_holdings or []
-            last_updated = portfolio.last_updated
-            chains = portfolio.chains or []
+        # First check portfolio, then fallback to portfolio_summary
+        data_source = portfolio if portfolio else portfolio_summary
+        
+        if hasattr(data_source, "total_value_usd"):
+            # PortfolioSummary dataclass
+            total_value = data_source.total_value_usd
+            token_count = getattr(data_source, "token_count", 0)
+            top_holdings = getattr(data_source, "top_holdings", []) or []
+            last_updated = getattr(data_source, "last_updated", None)
+            chains = getattr(data_source, "chains", []) or []
         else:
-            total_value = portfolio.get("total_value_usd", 0)
-            token_count = portfolio.get("token_count", 0)
-            top_holdings = portfolio.get("top_holdings", [])
-            last_updated = portfolio.get("last_updated")
-            chains = portfolio.get("chains", [])
+            # Dictionary format (from portfolio_summary injection)
+            total_value = data_source.get("total_value_usd", 0)
+            token_count = data_source.get("token_count", 0)
+            top_holdings = data_source.get("top_holdings", [])
+            last_updated = data_source.get("last_updated")
+            # Handle both "chains" and "chain" (singular from context_aware injection)
+            chains = data_source.get("chains", [])
+            if not chains and data_source.get("chain"):
+                chains = [data_source.get("chain")]
         
         lines.append(f"\n**Portfolio Value:** ${total_value:,.2f}")
         lines.append(f"**Token Count:** {token_count}")

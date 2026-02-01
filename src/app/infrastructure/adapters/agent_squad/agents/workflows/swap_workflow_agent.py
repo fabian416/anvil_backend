@@ -561,16 +561,39 @@ Hyperliquid Spot só suporta swaps **com USDC**.
             f"on {chain}" + (f" → {to_chain}" if is_cross_chain else "")
         )
         
-        # Check user balance and prepare recommendation if insufficient
+        # Smart balance check: compare requested amount against user balance
+        # For stablecoins (USDC, USDT, DAI), amount is roughly equal to USD value
+        # For other tokens, we still allow the swap if user has some balance
         funding_recommendation = ""
-        if user_context.needs_funding_recommendation:
+        has_sufficient_funds = True
+        amount_float = self._parse_amount_float(amount)
+        user_balance = user_context.total_balance_usd
+        
+        # Determine if user has enough for this specific swap
+        if from_token.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
+            # Stablecoin: direct USD comparison
+            # Add 10% buffer for gas fees
+            required_amount = amount_float * 1.10
+            has_sufficient_funds = user_balance >= required_amount
+        elif user_balance < 0.01:
+            # User has essentially zero balance
+            has_sufficient_funds = False
+        else:
+            # Non-stablecoin: allow if user has any meaningful balance
+            # We can't easily compare ETH amount to USD balance without price data
+            has_sufficient_funds = True
+        
+        if not has_sufficient_funds:
             logger.info(
                 f"[SwapWorkflow] User has insufficient funds: "
-                f"portfolio_state={user_context.portfolio_state}, "
-                f"balance=${user_context.total_balance_usd:.2f}"
+                f"requested={amount} {from_token} (~${amount_float:.2f}), "
+                f"balance=${user_balance:.2f}"
             )
-            funding_recommendation = self._get_funding_recommendation(
+            # Provide smart recommendation
+            funding_recommendation = self._get_smart_funding_recommendation(
                 from_token=from_token,
+                requested_amount=amount_float,
+                user_balance=user_balance,
                 language=user_context.language,
             )
         
@@ -605,7 +628,7 @@ Hyperliquid Spot só suporta swaps **com USDC**.
         
         # Only move to confirm step if user has sufficient funds
         # If user needs funding, stay in informational mode
-        if not user_context.needs_funding_recommendation:
+        if has_sufficient_funds:
             state.step = WorkflowStep.CONFIRM.value
         else:
             # User needs to fund first - stay in parse_request
@@ -662,6 +685,104 @@ Para completar este swap, você precisará de **{from_token}** em sua carteira.
 Aqui está a cotação do swap que você solicitou:
 """,
         }
+        return recommendations.get(language, recommendations["en"])
+    
+    def _parse_amount_float(self, amount: str) -> float:
+        """Parse amount string to float, handling edge cases."""
+        try:
+            # Remove common formatting characters
+            clean = str(amount).replace(",", "").replace("$", "").strip()
+            return float(clean)
+        except (ValueError, TypeError):
+            return 0.0
+    
+    def _get_smart_funding_recommendation(
+        self,
+        from_token: str,
+        requested_amount: float,
+        user_balance: float,
+        language: str,
+    ) -> str:
+        """
+        Get smart funding recommendation based on the gap between requested and available.
+        
+        Suggests:
+        1. If user has some balance: adjust amount to available balance
+        2. If user has zero: recommend buying crypto
+        """
+        if user_balance > 0.01:
+            # User has some balance - suggest adjusting amount
+            available = user_balance * 0.90  # Leave 10% for gas
+            recommendations = {
+                "en": f"""💡 **Insufficient balance for this swap**
+
+**Requested:** {requested_amount:.2f} {from_token}
+**Available:** ~${user_balance:.2f}
+
+**Options:**
+• ✅ Swap a smaller amount: **"swap {available:.2f} {from_token}"**
+• 💳 Or buy more crypto: **"buy crypto"**
+
+Here's the quote for your requested amount:
+""",
+                "es": f"""💡 **Saldo insuficiente para este swap**
+
+**Solicitado:** {requested_amount:.2f} {from_token}
+**Disponible:** ~${user_balance:.2f}
+
+**Opciones:**
+• ✅ Intercambia una cantidad menor: **"swap {available:.2f} {from_token}"**
+• 💳 O compra más cripto: **"comprar cripto"**
+
+Aquí está la cotización para la cantidad solicitada:
+""",
+                "pt": f"""💡 **Saldo insuficiente para este swap**
+
+**Solicitado:** {requested_amount:.2f} {from_token}
+**Disponível:** ~${user_balance:.2f}
+
+**Opções:**
+• ✅ Troque uma quantidade menor: **"swap {available:.2f} {from_token}"**
+• 💳 Ou compre mais cripto: **"comprar cripto"**
+
+Aqui está a cotação para a quantidade solicitada:
+""",
+            }
+        else:
+            # User has no balance - recommend buying
+            recommendations = {
+                "en": f"""💡 **Your wallet needs funds**
+
+To complete this swap, you'll need **{from_token}** in your wallet.
+
+**Get started:**
+• 💳 Say **"buy crypto"** to purchase with card/Apple Pay/Google Pay
+• 📥 Or transfer {from_token} from another wallet
+
+Here's the swap quote you requested:
+""",
+                "es": f"""💡 **Tu billetera necesita fondos**
+
+Para completar este swap, necesitarás **{from_token}** en tu billetera.
+
+**Comienza:**
+• 💳 Di **"comprar cripto"** para comprar con tarjeta
+• 📥 O transfiere {from_token} desde otra billetera
+
+Aquí está la cotización del swap:
+""",
+                "pt": f"""💡 **Sua carteira precisa de fundos**
+
+Para completar este swap, você precisará de **{from_token}** em sua carteira.
+
+**Comece:**
+• 💳 Diga **"comprar cripto"** para comprar com cartão
+• 📥 Ou transfira {from_token} de outra carteira
+
+Aqui está a cotação do swap:
+""",
+            }
+        
         return recommendations.get(language, recommendations["en"])
     
     async def _fetch_market_enrichment(
@@ -815,25 +936,84 @@ Aqui está a cotação do swap que você solicitou:
         to_chain = state.data.get("to_chain")
         aggregator = state.data.get("aggregator") or "hyperliquid"
         
-        # Check user balance before allowing execution
-        if user_context.needs_funding_recommendation:
+        # Smart balance check: compare requested amount against user balance
+        amount_float = self._parse_amount_float(amount)
+        user_balance = user_context.total_balance_usd
+        has_sufficient_funds = True
+        
+        if from_token.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
+            # Stablecoin: direct USD comparison with 10% buffer for gas
+            required_amount = amount_float * 1.10
+            has_sufficient_funds = user_balance >= required_amount
+        elif user_balance < 0.01:
+            # User has essentially zero balance
+            has_sufficient_funds = False
+        # For non-stablecoins, allow if user has any balance
+        
+        if not has_sufficient_funds:
             logger.info(
                 f"[SwapWorkflow] Blocking execution - insufficient funds: "
-                f"portfolio_state={user_context.portfolio_state}, "
-                f"balance=${user_context.total_balance_usd:.2f}"
+                f"requested={amount} {from_token}, balance=${user_balance:.2f}"
             )
             response = self._build_insufficient_balance_message(
                 from_token=from_token,
                 to_token=to_token,
                 amount=amount,
-                user_balance=user_context.total_balance_usd,
+                user_balance=user_balance,
                 language=user_context.language,
             )
             # Don't complete the workflow - user needs to fund first
             state.error = "insufficient_balance"
             return response, state
         
-        # Build execute_data for frontend
+        # Get quote data for execute_data
+        output_amount = state.data.get("output_amount", "0")
+        price_impact = state.data.get("price_impact", 0)
+        gas_estimate = state.data.get("gas_estimate")
+        quote_data = state.data.get("quote", {})
+        market_data = state.data.get("market_data", {})
+        
+        # Calculate exchange rate (as string for Pydantic validation)
+        try:
+            amount_float = float(amount)
+            output_float = float(output_amount)
+            exchange_rate = str(output_float / amount_float) if amount_float > 0 else "0"
+        except (ValueError, TypeError):
+            exchange_rate = "0"
+        
+        # Get market enrichment data
+        from_token_price = market_data.get("from_token_price")
+        from_token_24h_change = market_data.get("from_token_24h_change")
+        gas_usd = market_data.get("gas_usd_estimate")
+        
+        # Convert gas_usd to string for Pydantic validation
+        network_fee_usd_str = str(gas_usd) if gas_usd is not None else None
+        
+        # Calculate USD value (as string)
+        try:
+            value_usd = str(float(amount) * from_token_price) if from_token_price else None
+        except (ValueError, TypeError):
+            value_usd = None
+        
+        # Calculate minimum output with slippage
+        slippage_pct = 1.0  # 1% default slippage
+        try:
+            min_amount_out = float(output_amount) * (1 - slippage_pct / 100)
+            min_amount_out_str = f"{min_amount_out:.6f}".rstrip('0').rstrip('.')
+        except (ValueError, TypeError):
+            min_amount_out_str = None
+        
+        # Resolve token addresses
+        from_token_address = self._resolve_token_address(from_token, chain)
+        to_token_address = self._resolve_token_address(to_token, chain)
+        
+        # Convert numeric fields to strings for Pydantic validation
+        from_token_price_str = str(from_token_price) if from_token_price is not None else None
+        from_token_24h_change_str = str(from_token_24h_change) if from_token_24h_change is not None else None
+        price_impact_str = str(price_impact) if price_impact is not None else None
+        gas_estimate_str = str(gas_estimate) if gas_estimate is not None else None
+        
+        # Build execute_data for frontend with all available data
         execute_data = self._build_execute_data(
             action_type="swap",
             provider=aggregator,
@@ -841,8 +1021,21 @@ Aqui está a cotação do swap que você solicitou:
             from_token=from_token,
             to_token=to_token,
             amount=amount,
-            slippage=1.0,  # Default 1% slippage
+            quote_amount=output_amount,  # The expected output amount from quote
+            min_amount_out=min_amount_out_str,  # Minimum output with slippage applied
+            price_impact=price_impact_str,
+            gas_estimate=gas_estimate_str,
+            network_fee_usd=network_fee_usd_str,
+            exchange_rate=exchange_rate,
+            slippage=slippage_pct,
             to_chain=to_chain,
+            # Token addresses
+            from_token_address=from_token_address if from_token_address.startswith("0x") else None,
+            to_token_address=to_token_address if to_token_address.startswith("0x") else None,
+            # Price data
+            from_token_price_usd=from_token_price_str,
+            from_token_24h_change=from_token_24h_change_str,
+            value_usd=value_usd,
         )
         
         # Store execute_data in state
@@ -863,53 +1056,82 @@ Aqui está a cotação do swap que você solicitou:
     ) -> str:
         """
         Build message when user has insufficient balance to execute swap.
+        Suggests adjusting amount if user has some balance.
         """
-        messages = {
-            "en": f"""❌ **Unable to execute swap**
+        amount_float = self._parse_amount_float(amount)
+        available = user_balance * 0.90  # Leave 10% for gas
+        
+        if user_balance > 0.01:
+            # User has some balance - suggest adjusting
+            messages = {
+                "en": f"""⚠️ **Insufficient balance for this swap**
 
 **Swap requested:** {amount} {from_token} → {to_token}
-**Your current balance:** ${user_balance:.2f}
+**Your balance:** ${user_balance:.2f}
 
-You don't have enough {from_token} in your wallet to complete this swap.
-
----
-
-**💳 Get crypto to complete this swap:**
-
-1. **Buy USDC with card/Apple Pay/Google Pay:**
-   Say: **"buy crypto"** or **"buy 100"**
-
-2. **Transfer from another wallet:**
-   Send {from_token} to your Anvil wallet address
-
----
-
-Once you have {from_token} in your wallet, come back and try:
-**"swap {amount} {from_token} to {to_token}"**
+**Options:**
+• ✅ **Swap what you have:** Say **"swap {available:.2f} {from_token} to {to_token}"**
+• 💳 **Buy more crypto:** Say **"buy crypto"** or **"buy {amount_float:.0f}"**
+• 📥 **Transfer from another wallet:** Send {from_token} to your Anvil wallet
 """,
-            "es": f"""❌ **No se puede ejecutar el swap**
+                "es": f"""⚠️ **Saldo insuficiente para este swap**
 
 **Swap solicitado:** {amount} {from_token} → {to_token}
-**Tu saldo actual:** ${user_balance:.2f}
+**Tu saldo:** ${user_balance:.2f}
 
-No tienes suficiente {from_token} en tu billetera para completar este swap.
-
-**💳 Obtén cripto:**
-• Di: **"comprar cripto"** para comprar USDC con tarjeta
-• O transfiere {from_token} desde otra billetera
+**Opciones:**
+• ✅ **Intercambia lo que tienes:** Di **"swap {available:.2f} {from_token} a {to_token}"**
+• 💳 **Compra más cripto:** Di **"comprar cripto"**
+• 📥 **Transfiere desde otra billetera**
 """,
-            "pt": f"""❌ **Não é possível executar o swap**
+                "pt": f"""⚠️ **Saldo insuficiente para este swap**
 
 **Swap solicitado:** {amount} {from_token} → {to_token}
-**Seu saldo atual:** ${user_balance:.2f}
+**Seu saldo:** ${user_balance:.2f}
 
-Você não tem {from_token} suficiente na sua carteira para completar este swap.
-
-**💳 Obtenha cripto:**
-• Diga: **"comprar cripto"** para comprar USDC com cartão
-• Ou transfira {from_token} de outra carteira
+**Opções:**
+• ✅ **Troque o que você tem:** Diga **"swap {available:.2f} {from_token} para {to_token}"**
+• 💳 **Compre mais cripto:** Diga **"comprar cripto"**
+• 📥 **Transfira de outra carteira**
 """,
-        }
+            }
+        else:
+            # User has no balance
+            messages = {
+                "en": f"""❌ **Unable to execute swap**
+
+**Swap requested:** {amount} {from_token} → {to_token}
+**Your balance:** $0.00
+
+You need {from_token} in your wallet to complete this swap.
+
+**Get started:**
+• 💳 **Buy crypto:** Say **"buy crypto"** or **"buy {amount_float:.0f}"**
+• 📥 **Transfer from another wallet:** Send {from_token} to your Anvil wallet
+""",
+                "es": f"""❌ **No se puede ejecutar el swap**
+
+**Swap solicitado:** {amount} {from_token} → {to_token}
+**Tu saldo:** $0.00
+
+Necesitas {from_token} en tu billetera.
+
+**Comienza:**
+• 💳 **Compra cripto:** Di **"comprar cripto"**
+• 📥 **Transfiere desde otra billetera**
+""",
+                "pt": f"""❌ **Não é possível executar o swap**
+
+**Swap solicitado:** {amount} {from_token} → {to_token}
+**Seu saldo:** $0.00
+
+Você precisa de {from_token} na sua carteira.
+
+**Comece:**
+• 💳 **Compre cripto:** Diga **"comprar cripto"**
+• 📥 **Transfira de outra carteira**
+""",
+            }
         return messages.get(language, messages["en"])
     
     async def _extract_swap_params(self, message: str) -> dict[str, Any]:
@@ -1630,7 +1852,12 @@ Por favor insira:
 • Price Impact: {impact:.2f}%
 • Network: {chain.upper()}
 • Aggregator: {aggregator.upper()}
-{gas_info}""",
+{gas_info}
+
+---
+✅ Say **"yes"** or **"confirm"** to execute this swap
+✏️ Or say **"swap [amount] {from_token} to {to_token}"** to change the amount
+❌ Say **"cancel"** to cancel""",
 
             "es": f"""📊 **Cotización de Swap**
 
@@ -1640,7 +1867,12 @@ Por favor insira:
 • Impacto en precio: {impact:.2f}%
 • Red: {chain.upper()}
 • Agregador: {aggregator.upper()}
-{gas_info}""",
+{gas_info}
+
+---
+✅ Di **"sí"** o **"confirmar"** para ejecutar este swap
+✏️ O di **"swap [cantidad] {from_token} a {to_token}"** para cambiar la cantidad
+❌ Di **"cancelar"** para cancelar""",
 
             "pt": f"""📊 **Cotação de Swap**
 
@@ -1650,7 +1882,12 @@ Por favor insira:
 • Impacto no preço: {impact:.2f}%
 • Rede: {chain.upper()}
 • Agregador: {aggregator.upper()}
-{gas_info}""",
+{gas_info}
+
+---
+✅ Diga **"sim"** ou **"confirmar"** para executar este swap
+✏️ Ou diga **"swap [quantidade] {from_token} para {to_token}"** para mudar a quantidade
+❌ Diga **"cancelar"** para cancelar""",
         }
         
         return msgs.get(language, msgs["en"])
