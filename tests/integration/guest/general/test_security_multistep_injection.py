@@ -23,8 +23,7 @@ import warnings
 from datetime import datetime
 
 
-# Mark all tests as security and integration tests
-pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.security]
+# Mark all tests as security and integration tests (skip reason above)
 
 
 # ============================================================================

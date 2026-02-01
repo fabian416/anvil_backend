@@ -25,7 +25,7 @@ from datetime import datetime
 
 
 # Mark all tests as security and integration tests
-pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.security]
+# (pytestmark defined above)
 
 
 # ============================================================================

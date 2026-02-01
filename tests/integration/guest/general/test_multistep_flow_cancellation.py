@@ -25,7 +25,7 @@ from datetime import datetime
 
 
 # Mark all tests as integration and multi-step tests
-pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multistep]
+# (pytestmark defined above)
 
 
 # ============================================================================
