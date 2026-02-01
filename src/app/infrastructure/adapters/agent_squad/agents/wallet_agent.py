@@ -101,12 +101,23 @@ class WalletAgent:
         wallet_context = self._build_wallet_context(user_context)
         
         # Get portfolio balance for context-aware suggestions
-        portfolio_summary = user_context.get("portfolio_summary", {})
-        total_balance = float(portfolio_summary.get("total_value_usd", 0) or 0)
+        # Try multiple sources for balance data
+        total_balance = 0.0
         
-        # Build suggestions based on balance
+        # First try direct total_balance_usd (set by authenticated supervisor)
+        if user_context.get("total_balance_usd") is not None:
+            total_balance = float(user_context.get("total_balance_usd", 0) or 0)
+        
+        # Fallback to portfolio_summary
         if total_balance == 0:
-            suggestions = """
+            portfolio_summary = user_context.get("portfolio_summary", {})
+            total_balance = float(portfolio_summary.get("total_value_usd", 0) or 0)
+        
+        # Build suggestions based on balance - ALWAYS show balance
+        if total_balance < 1:
+            suggestions = f"""
+**💰 Balance:** ${total_balance:.2f}
+
 **🚀 Get Started:**
 Your wallet is ready! Add funds to start using Anvil:
 • 💳 Say **"buy crypto"** to purchase USDC with card/Apple Pay
@@ -308,7 +319,7 @@ Would you like me to help you with something else, or are you ready to sign in?"
         return """You are the Wallet Agent, Anvil's wallet management specialist.
 
 **YOUR ROLE:**
-Show the user's connected wallet addresses. Keep it simple and concise.
+Show the user's connected wallet address AND their current balance. Keep it simple and concise.
 
 **CRITICAL - SHOW FULL ADDRESS:**
 ALWAYS show the COMPLETE wallet address (e.g., `0x742d35Cc6634C0532925a3b844Bc454e4438f44e`)
@@ -318,19 +329,18 @@ Users NEED the full address to receive funds!
 **IMPORTANT RULES:**
 1. ONLY show wallet addresses from the provided context
 2. Show the FULL address - never truncate!
-3. DO NOT mention balances - that's handled by the Portfolio agent
+3. ALWAYS show the balance if provided in the context
 4. DO NOT suggest using external tools like Etherscan
-5. Keep responses SHORT (3-5 lines max)
-6. If asked about balances, just show the wallet and say "For balances, ask 'my portfolio'"
+5. Keep responses SHORT (5-7 lines max)
+6. Include the suggestions provided in the context
 
 **RESPONSE FORMAT:**
 Show wallet info in this format:
 - **Your Wallet:** `0xFULL_ADDRESS_HERE`
-- That's it! No extra commentary needed.
+- **Balance:** $X.XX (if provided)
+- Include any suggestions from context
 
 **DO NOT:**
 - Truncate wallet addresses
-- Mention balance information
 - Suggest external block explorers
-- Give long explanations
-- Add unnecessary "next steps" """
+- Give long explanations"""
