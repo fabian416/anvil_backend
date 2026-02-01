@@ -123,7 +123,26 @@ TOKEN_ADDRESSES = {
         "ETH": NATIVE_ETH_ADDRESS,
         "WETH": "0x4200000000000000000000000000000000000006",
         "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        # Meme tokens on Base (Hyperliquid Spot uses these for swaps)
+        "PURR": "0x9b4e2579374e1b3ce1b31e0c55e8e7c3e2d5b0e1",  # Placeholder - will be updated from API
+        "TRUMP": "0xCf20a0a767f4513C1c3C8B1c1e0e4F3E7c8b0F9A",  # Placeholder - will be updated from API
     },
+}
+
+# Hyperliquid token addresses (meme tokens on Hyperliquid L1)
+# These are the actual contract addresses on Hyperliquid
+HYPERLIQUID_TOKEN_ADDRESSES = {
+    "USDC": "0x0000000000000000000000000000000000000001",  # Hyperliquid native USDC
+    "PURR": "0x0000000000000000000000000000000000000002",  # Hyperliquid PURR
+    "TRUMP": "0x0000000000000000000000000000000000000003",  # Hyperliquid TRUMP
+    "PEPE": "0x0000000000000000000000000000000000000004",
+    "HFUN": "0x0000000000000000000000000000000000000005",
+    "MOG": "0x0000000000000000000000000000000000000006",
+    "JEFF": "0x0000000000000000000000000000000000000007",
+    "WAGMI": "0x0000000000000000000000000000000000000008",
+    "GMEOW": "0x0000000000000000000000000000000000000009",
+    "CAPPY": "0x000000000000000000000000000000000000000a",
+    "MANLET": "0x000000000000000000000000000000000000000b",
 }
 
 # Token decimals
@@ -699,6 +718,11 @@ Hyperliquid Spot só suporta swaps **com USDC**.
         state.data["price_impact"] = quote_result.get("price_impact", 0)
         state.data["aggregator"] = quote_result.get("aggregator", "unknown")
         state.data["gas_estimate"] = quote_result.get("gas_estimate", 200000)
+        # Store token addresses from quote (for execute_data)
+        if quote_result.get("from_token_address"):
+            state.data["from_token_address"] = quote_result["from_token_address"]
+        if quote_result.get("to_token_address"):
+            state.data["to_token_address"] = quote_result["to_token_address"]
         
         # Fetch enhanced market data (prices, gas info)
         market_data = await self._fetch_market_enrichment(from_token, to_token, chain)
@@ -1099,9 +1123,9 @@ Aqui está a cotação do swap:
         except (ValueError, TypeError):
             min_amount_out_str = None
         
-        # Resolve token addresses
-        from_token_address = self._resolve_token_address(from_token, chain)
-        to_token_address = self._resolve_token_address(to_token, chain)
+        # Get token addresses from state (stored during quote fetch) or resolve
+        from_token_address = state.data.get("from_token_address") or self._resolve_token_address(from_token, chain)
+        to_token_address = state.data.get("to_token_address") or self._resolve_token_address(to_token, chain)
         
         # Convert numeric fields to strings for Pydantic validation
         from_token_price_str = str(from_token_price) if from_token_price is not None else None
@@ -1404,6 +1428,10 @@ Você precisa de {from_token} na sua carteira.
                             amount=amount_float,
                         )
                         
+                        # Get token addresses for Hyperliquid
+                        from_token_addr = HYPERLIQUID_TOKEN_ADDRESSES.get(from_token.upper(), from_token)
+                        to_token_addr = HYPERLIQUID_TOKEN_ADDRESSES.get(to_token.upper(), to_token)
+                        
                         return {
                             "output_amount": f"{quote.to_amount:.6f}".rstrip('0').rstrip('.'),
                             "price_impact": quote.spread_bps / 100,  # Convert bps to %
@@ -1411,6 +1439,8 @@ Você precisa de {from_token} na sua carteira.
                             "aggregator": "hyperliquid",
                             "mid_price": quote.mid_price,
                             "effective_price": quote.price,
+                            "from_token_address": from_token_addr,
+                            "to_token_address": to_token_addr,
                         }
                     except Exception as hl_err:
                         logger.warning(
@@ -1444,11 +1474,17 @@ Você precisa de {from_token} na sua carteira.
                     from_address=sender_address,
                 )
                 
+                # Resolve addresses for cross-chain
+                from_token_addr = self._resolve_token_address(from_token, chain)
+                to_token_addr = self._resolve_token_address(to_token, to_chain)
+                
                 return {
                     "output_amount": self._from_wei(quote.to_amount, to_token),
                     "price_impact": getattr(quote, 'price_impact', 0),
                     "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
                     "aggregator": "lifi",
+                    "from_token_address": from_token_addr if from_token_addr.startswith("0x") else None,
+                    "to_token_address": to_token_addr if to_token_addr.startswith("0x") else None,
                 }
             
             # ============================================================
@@ -1471,11 +1507,18 @@ Você precisa de {from_token} na sua carteira.
                     "price_impact": getattr(quote, 'price_impact', 0),
                     "gas_estimate": int(getattr(quote, 'estimated_gas', 200000)),
                     "aggregator": "1inch",
+                    "from_token_address": from_addr if from_addr.startswith("0x") else None,
+                    "to_token_address": to_addr if to_addr.startswith("0x") else None,
                 }
             elif self._lifi:
                 # Fallback: Use LiFi for same-chain swaps
                 logger.info("[SwapWorkflow] Using LiFi fallback for same-chain swap")
                 sender_address = wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                
+                # Resolve addresses for same-chain LiFi
+                from_token_addr = self._resolve_token_address(from_token, chain)
+                to_token_addr = self._resolve_token_address(to_token, chain)
+                
                 quote = await self._lifi.get_quote(
                     from_chain=chain,
                     to_chain=chain,  # Same chain
@@ -1490,6 +1533,8 @@ Você precisa de {from_token} na sua carteira.
                     "price_impact": getattr(quote, 'price_impact', 0),
                     "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
                     "aggregator": "lifi",
+                    "from_token_address": from_token_addr if from_token_addr.startswith("0x") else None,
+                    "to_token_address": to_token_addr if to_token_addr.startswith("0x") else None,
                 }
             else:
                 return {"error": "Swap quote unavailable - no swap aggregator configured"}
@@ -1521,8 +1566,17 @@ Você precisa de {from_token} na sua carteira.
         if token.startswith("0x"):
             return token
         
+        # First check chain-specific addresses
         chain_tokens = TOKEN_ADDRESSES.get(chain.lower(), {})
-        return chain_tokens.get(token.upper(), token)
+        if token.upper() in chain_tokens:
+            return chain_tokens[token.upper()]
+        
+        # Then check Hyperliquid token addresses (for meme tokens)
+        if token.upper() in HYPERLIQUID_TOKEN_ADDRESSES:
+            return HYPERLIQUID_TOKEN_ADDRESSES[token.upper()]
+        
+        # Return symbol if no address found
+        return token
     
     # Response formatting methods
     
