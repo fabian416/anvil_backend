@@ -399,8 +399,10 @@ Por favor digite um número válido para seu depósito de **{asset}**:
     ) -> tuple[str, WorkflowState]:
         """Fetch vault data from Morpho/Aave.
         
-        Like swap workflow, checks user balance and shows funding recommendation
-        if user has insufficient funds before showing the vault quote.
+        Like swap workflow:
+        - Always show quote regardless of balance
+        - Add confirmation prompt with yes/no instructions
+        - Don't set execute_data here (only in _handle_execute after confirmation)
         """
         
         language = user_context.language
@@ -412,16 +414,8 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         
         logger.info(f"[LendingWorkflow] Fetching vaults for {asset} on {chain}, preference={protocol_preference}")
         
-        # Check user balance and prepare recommendation if insufficient
-        # This matches swap workflow behavior - show quote but warn about funding
-        funding_recommendation = ""
-        if user_context.needs_funding_recommendation:
-            logger.info(
-                f"[LendingWorkflow] User has insufficient funds: "
-                f"portfolio_state={user_context.portfolio_state}, "
-                f"balance=${user_context.total_balance_usd:.2f}"
-            )
-            funding_recommendation = self._get_funding_recommendation(asset, language)
+        # Clear any previous execute_data when fetching new quote
+        state.execute_data = None
         
         vault_data = None
         
@@ -448,35 +442,17 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         # Store vault data
         state.data["vault"] = vault_data
         
-        # Only build execute_data if user has sufficient funds
-        # If user needs funding, don't include execute_data (no action card in frontend)
-        if not user_context.needs_funding_recommendation:
-            state.step = WorkflowStep.CONFIRM.value
-            state.execute_data = self._build_deposit_execute_data(
-                vault_data=vault_data,
-                amount=amount,
-                chain=chain,
-            )
-        else:
-            # User needs to fund first - stay in informational mode
-            # Don't set execute_data so frontend won't show action card
-            state.step = WorkflowStep.PARSE_REQUEST.value  # Allow user to buy crypto first
-            state.execute_data = None
-            logger.info(
-                f"[LendingWorkflow] Not setting execute_data - user needs funding first"
-            )
+        # Move to CONFIRM step - execute_data will be built after user confirms
+        state.step = WorkflowStep.CONFIRM.value
         
-        # Format quote response
+        # Format quote response with confirmation prompt
         response = self._format_vault_quote(
             vault_data=vault_data,
             asset=asset,
             amount=amount,
+            user_context=user_context,
             language=language,
         )
-        
-        # Prepend funding recommendation if user has insufficient funds
-        if funding_recommendation:
-            response = funding_recommendation + "\n" + response
         
         return response, state
     
@@ -527,35 +503,95 @@ Por favor digite um número válido para seu depósito de **{asset}**:
     ) -> tuple[str, WorkflowState]:
         """Handle execute step - transaction is done by frontend.
         
-        IMPORTANT: Checks user balance before allowing execution.
-        If user has insufficient funds, shows helpful message to buy crypto.
+        IMPORTANT: Smart balance checking like swap workflow:
+        - For stablecoins: compare requested amount against user balance
+        - If insufficient: auto-adjust to 90% of available balance and re-fetch quote
+        - If zero balance: show buy crypto message
         """
         language = user_context.language
         # Use 'or' to handle both missing keys AND None values
         asset = (state.data.get("asset") or "USDC").upper()
         amount = state.data.get("amount") or "0"
+        chain = state.data.get("chain") or "base"
+        vault_data = state.data.get("vault", {})
         
-        # Check user balance before allowing execution
-        if user_context.needs_funding_recommendation:
+        # Smart balance check: compare requested amount against user balance
+        try:
+            amount_float = float(str(amount).replace(",", ""))
+        except (ValueError, TypeError):
+            amount_float = 0
+        
+        user_balance = user_context.total_balance_usd
+        has_sufficient_funds = True
+        
+        # Stablecoin: direct USD comparison with 10% buffer for gas
+        if asset.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
+            required_amount = amount_float * 1.10
+            has_sufficient_funds = user_balance >= required_amount
+        elif user_balance < 0.01:
+            # User has essentially zero balance
+            has_sufficient_funds = False
+        # For non-stablecoins (ETH, WBTC), allow if user has any balance
+        
+        if not has_sufficient_funds:
             logger.info(
                 f"[LendingWorkflow] Blocking execution - insufficient funds: "
-                f"portfolio_state={user_context.portfolio_state}, "
-                f"balance=${user_context.total_balance_usd:.2f}"
+                f"requested={amount} {asset}, balance=${user_balance:.2f}"
             )
-            response = self._build_insufficient_balance_message(
-                asset=asset,
-                amount=amount,
-                user_balance=user_context.total_balance_usd,
-                language=language,
-            )
-            state.error = "insufficient_balance"
-            return response, state
+            # Calculate recommended amount (90% of balance to leave room for gas)
+            recommended_amount = max(0, user_balance * 0.90)
+            
+            # Auto-update state with recommended amount and re-fetch quote
+            if recommended_amount >= 0.01:
+                state.data["amount"] = f"{recommended_amount:.2f}"
+                state.step = WorkflowStep.FETCH_DATA.value
+                # Show message that we're adjusting to available balance
+                response = self._get_auto_adjust_message(
+                    original_amount=amount,
+                    recommended_amount=f"{recommended_amount:.2f}",
+                    asset=asset,
+                    user_balance=user_balance,
+                    language=language,
+                )
+                # Fetch new quote with adjusted amount
+                new_quote_response, state = await self._handle_fetch_data(message, state, user_context)
+                return f"{response}\n\n{new_quote_response}", state
+            else:
+                # User has no usable balance - show buy crypto message
+                response = self._get_zero_balance_message(
+                    asset=asset,
+                    language=language,
+                )
+                state.error = "insufficient_balance"
+                return response, state
         
-        # The actual transaction is handled by the frontend using execute_data
-        # This step just confirms the workflow is ready
+        # Build execute_data with all numeric fields as strings (for Pydantic validation)
+        apy = vault_data.get("apy", 0)
+        tvl = vault_data.get("tvl", 0)
+        
+        execute_data = self._build_execute_data(
+            action_type="deposit",
+            provider=vault_data.get("provider", "morpho"),
+            chain=chain,
+            amount=str(amount),
+            # Vault-specific fields
+            asset_symbol=asset,
+            asset_address=vault_data.get("asset_address"),
+            vault_address=vault_data.get("address") if vault_data.get("protocol") == "morpho" else None,
+            pool_address=vault_data.get("address") if vault_data.get("protocol") != "morpho" else None,
+            supply_apy=str(apy) if apy else None,
+            available_liquidity_usd=str(tvl) if tvl else None,
+            referral_code="0",
+            slippage=0.5,
+        )
+        
+        # Store execute_data in state
+        state.execute_data = execute_data
         state.step = WorkflowStep.COMPLETED.value
         
-        return self._format_execution_pending(state.data, language), state
+        # Format ready-to-execute response
+        response = self._format_ready_to_execute(state.data, language)
+        return response, state
     
     def _get_funding_recommendation(self, asset: str, language: str) -> str:
         """
@@ -1320,9 +1356,16 @@ Quanto **{asset}** você gostaria de depositar?
         vault_data: dict[str, Any],
         asset: str,
         amount: str | int | float,
+        user_context: UserContext,
         language: str,
     ) -> str:
-        """Format vault quote for display."""
+        """Format vault quote for display with confirmation prompts.
+        
+        Like swap workflow:
+        - Shows user balance
+        - Warns if insufficient funds
+        - Includes confirmation instructions
+        """
         
         try:
             # Handle amount as string, int, or float
@@ -1339,6 +1382,17 @@ Quanto **{asset}** você gostaria de depositar?
         protocol_name = "Morpho" if protocol == "morpho" else "Aave V3"
         vault_name = vault_data.get("name", f"{protocol_name} Vault")
         
+        # Build user balance section
+        user_balance_section = self._build_quote_balance_section(
+            user_context=user_context,
+            asset=asset,
+            deposit_amount=amount_float,
+            language=language,
+        )
+        
+        # Build confirmation prompt
+        confirm_section = self._get_confirmation_prompt(amount, asset, language)
+        
         msgs = {
             "en": f"""📊 **Deposit Quote**
 
@@ -1347,7 +1401,11 @@ Quanto **{asset}** você gostaria de depositar?
 💰 **Deposit Amount:** {amount} {asset}
 📈 **Current APY:** {apy:.2f}%
 💵 **Monthly Earnings:** ~{monthly_earnings:.2f} {asset}
-📆 **Yearly Earnings:** ~{yearly_earnings:.2f} {asset}""",
+📆 **Yearly Earnings:** ~{yearly_earnings:.2f} {asset}
+
+{user_balance_section}
+
+{confirm_section}""",
             
             "es": f"""📊 **Cotización de Depósito**
 
@@ -1356,7 +1414,11 @@ Quanto **{asset}** você gostaria de depositar?
 💰 **Cantidad a Depositar:** {amount} {asset}
 📈 **APY Actual:** {apy:.2f}%
 💵 **Ganancias Mensuales:** ~{monthly_earnings:.2f} {asset}
-📆 **Ganancias Anuales:** ~{yearly_earnings:.2f} {asset}""",
+📆 **Ganancias Anuales:** ~{yearly_earnings:.2f} {asset}
+
+{user_balance_section}
+
+{confirm_section}""",
             
             "pt": f"""📊 **Cotação de Depósito**
 
@@ -1365,7 +1427,11 @@ Quanto **{asset}** você gostaria de depositar?
 💰 **Valor do Depósito:** {amount} {asset}
 📈 **APY Atual:** {apy:.2f}%
 💵 **Ganhos Mensais:** ~{monthly_earnings:.2f} {asset}
-📆 **Ganhos Anuais:** ~{yearly_earnings:.2f} {asset}""",
+📆 **Ganhos Anuais:** ~{yearly_earnings:.2f} {asset}
+
+{user_balance_section}
+
+{confirm_section}""",
             
             "zh": f"""📊 **存款报价**
 
@@ -1374,7 +1440,11 @@ Quanto **{asset}** você gostaria de depositar?
 💰 **存款金额：** {amount} {asset}
 📈 **当前 APY：** {apy:.2f}%
 💵 **月收益：** ~{monthly_earnings:.2f} {asset}
-📆 **年收益：** ~{yearly_earnings:.2f} {asset}""",
+📆 **年收益：** ~{yearly_earnings:.2f} {asset}
+
+{user_balance_section}
+
+{confirm_section}""",
         }
         
         return msgs.get(language, msgs["en"])
@@ -1589,6 +1659,196 @@ Por favor confirme a transação na sua carteira.""",
     # ========================================
     # Helpers
     # ========================================
+    
+    def _build_quote_balance_section(
+        self,
+        user_context: UserContext,
+        asset: str,
+        deposit_amount: float,
+        language: str,
+    ) -> str:
+        """Build user balance context section for deposit quote."""
+        if not user_context.is_authenticated:
+            return ""
+        
+        balance = user_context.total_balance_usd
+        portfolio_state = user_context.portfolio_state
+        
+        # Check if user has enough balance
+        if portfolio_state == "empty" or balance < 1:
+            msgs = {
+                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You don't have funds to complete this deposit.\n💡 Say `buy crypto` to get USDC first.",
+                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ No tienes fondos para completar este depósito.\n💡 Di `comprar cripto` para obtener USDC primero.",
+                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você não tem fundos para completar este depósito.\n💡 Diga `comprar cripto` para obter USDC primeiro.",
+                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您没有资金完成此存款。\n💡 先说 `买加密货币` 获取 USDC。",
+            }
+        elif balance < deposit_amount:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Deposit amount (${deposit_amount:,.2f}) exceeds your balance.\n💡 When you confirm, I'll adjust to your available balance.",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n⚠️ El monto del depósito (${deposit_amount:,.2f}) excede tu saldo.\n💡 Cuando confirmes, ajustaré a tu saldo disponible.",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n⚠️ O valor do depósito (${deposit_amount:,.2f}) excede seu saldo.\n💡 Quando você confirmar, ajustarei ao seu saldo disponível.",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n⚠️ 存款金额 (${deposit_amount:,.2f}) 超过您的余额。\n💡 当您确认时，我会调整到您的可用余额。",
+            }
+        else:
+            msgs = {
+                "en": f"💰 **Your Balance:** ~${balance:,.2f} ✅",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f} ✅",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f} ✅",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f} ✅",
+            }
+        
+        return msgs.get(language, msgs["en"])
+    
+    def _get_confirmation_prompt(
+        self,
+        amount: str | int | float,
+        asset: str,
+        language: str,
+    ) -> str:
+        """Get confirmation prompt for deposit quote."""
+        msgs = {
+            "en": f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to deposit {amount} {asset}?**
+
+• Say **"yes"** or **"confirm"** to execute
+• Say **"deposit [amount] {asset}"** to change amount
+• Say **"cancel"** to abort""",
+            
+            "es": f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**¿Listo para depositar {amount} {asset}?**
+
+• Di **"sí"** o **"confirmar"** para ejecutar
+• Di **"depositar [cantidad] {asset}"** para cambiar
+• Di **"cancelar"** para abortar""",
+            
+            "pt": f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Pronto para depositar {amount} {asset}?**
+
+• Diga **"sim"** ou **"confirmar"** para executar
+• Diga **"depositar [valor] {asset}"** para alterar
+• Diga **"cancelar"** para abortar""",
+            
+            "zh": f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**准备存入 {amount} {asset}？**
+
+• 说 **"是"** 或 **"确认"** 执行
+• 说 **"存入 [金额] {asset}"** 更改金额
+• 说 **"取消"** 中止""",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    def _get_auto_adjust_message(
+        self,
+        original_amount: str,
+        recommended_amount: str,
+        asset: str,
+        user_balance: float,
+        language: str,
+    ) -> str:
+        """Message when auto-adjusting to available balance."""
+        msgs = {
+            "en": f"""⚠️ **Adjusting to your available balance**
+
+You requested **{original_amount} {asset}** but only have ~**${user_balance:.2f}** available.
+
+I'm adjusting your deposit to **{recommended_amount} {asset}** (90% of your balance, keeping some for gas).
+
+Here's the updated quote:""",
+            
+            "es": f"""⚠️ **Ajustando a tu saldo disponible**
+
+Solicitaste **{original_amount} {asset}** pero solo tienes ~**${user_balance:.2f}** disponibles.
+
+Estoy ajustando tu depósito a **{recommended_amount} {asset}** (90% de tu saldo, reservando algo para gas).
+
+Aquí está la cotización actualizada:""",
+            
+            "pt": f"""⚠️ **Ajustando ao seu saldo disponível**
+
+Você solicitou **{original_amount} {asset}** mas só tem ~**${user_balance:.2f}** disponíveis.
+
+Estou ajustando seu depósito para **{recommended_amount} {asset}** (90% do seu saldo, reservando para gas).
+
+Aqui está a cotação atualizada:""",
+            
+            "zh": f"""⚠️ **调整到您的可用余额**
+
+您请求 **{original_amount} {asset}** 但只有 ~**${user_balance:.2f}** 可用。
+
+我正在将您的存款调整为 **{recommended_amount} {asset}**（您余额的90%，保留一些作为gas费）。
+
+以下是更新的报价：""",
+        }
+        return msgs.get(language, msgs["en"])
+    
+    def _get_zero_balance_message(self, asset: str, language: str) -> str:
+        """Message when user has zero usable balance."""
+        msgs = {
+            "en": f"""❌ **Unable to deposit - No funds available**
+
+Your wallet balance is too low to complete this deposit.
+
+**💳 Get crypto to start earning yield:**
+
+1. **Buy USDC with card/Apple Pay/Google Pay:**
+   Say: **"buy crypto"** or **"buy 100"**
+
+2. **Transfer {asset} from another wallet:**
+   Say: **"my wallet address"** to get your address
+
+Once you have funds, come back and try:
+**"deposit [amount] {asset}"**""",
+            
+            "es": f"""❌ **No se puede depositar - Sin fondos disponibles**
+
+Tu saldo es muy bajo para completar este depósito.
+
+**💳 Obtén cripto para comenzar a ganar rendimiento:**
+
+1. **Compra USDC con tarjeta:**
+   Di: **"comprar cripto"** o **"comprar 100"**
+
+2. **Transfiere {asset} desde otra billetera:**
+   Di: **"mi dirección de wallet"**
+
+Una vez que tengas fondos, vuelve e intenta:
+**"depositar [cantidad] {asset}"**""",
+            
+            "pt": f"""❌ **Não é possível depositar - Sem fundos disponíveis**
+
+Seu saldo é muito baixo para completar este depósito.
+
+**💳 Obtenha cripto para começar a ganhar rendimento:**
+
+1. **Compre USDC com cartão:**
+   Diga: **"comprar cripto"** ou **"comprar 100"**
+
+2. **Transfira {asset} de outra carteira:**
+   Diga: **"meu endereço de carteira"**
+
+Quando tiver fundos, volte e tente:
+**"depositar [valor] {asset}"**""",
+            
+            "zh": f"""❌ **无法存款 - 没有可用资金**
+
+您的钱包余额太低，无法完成此存款。
+
+**💳 获取加密货币开始赚取收益：**
+
+1. **用卡购买 USDC：**
+   说：**"买加密货币"** 或 **"买 100"**
+
+2. **从其他钱包转入 {asset}：**
+   说：**"我的钱包地址"** 获取您的地址
+
+有了资金后，回来尝试：
+**"存入 [金额] {asset}"**""",
+        }
+        return msgs.get(language, msgs["en"])
     
     def _is_confirmation(self, text: str) -> bool:
         """Check if text is a confirmation."""
