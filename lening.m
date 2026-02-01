@@ -1,3 +1,4 @@
+O
 Deposit ETH to earn yield
 A
 Ξ Deposit ETH
@@ -32,27 +33,15 @@ Agent Execution Details
 2 agents
 
 supervisor
-12ms
+0ms
 completed
 
 lending_workflow
-774ms
+756ms
 completed
 
 1
 A
-💡 Heads up: Your portfolio appears to have limited funds.
-
-To complete this deposit, you'll need ETH in your wallet.
-
-Get started:
-
-• 💳 Say "buy crypto" to purchase with card/Apple Pay/Google Pay
-
-• 📥 Or transfer ETH from another wallet
-
-Here's the deposit quote you requested:
-
 📊 Deposit Quote
 
 9Summits WETH Core 1.1
@@ -64,6 +53,18 @@ Here's the deposit quote you requested:
 💵 Monthly Earnings: ~0.00 ETH
 
 📆 Yearly Earnings: ~0.00 ETH
+
+💰 Your Balance: ~$3.00 ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready to deposit 1 ETH?
+
+• Say "yes" or "confirm" to execute
+
+• Say "deposit [amount] ETH" to change amount
+
+• Say "cancel" to abort
 
 Sources
 2 sources
@@ -83,5 +84,42 @@ supervisor
 completed
 
 lending_workflow
-2.31s
+1.05s
 completed
+
+yes
+A
+✅ Deposit Ready to Execute
+
+🔄 Depositing: 1 ETH
+
+🏦 Protocol: Morpho
+
+⛓️ Network: Base
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click Confirm to execute the deposit.
+
+Sources
+2 sources
+
+system
+Supervisor Router
+100%
+
+api
+Morpho Protocol
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+0ms
+completed
+
+lending_workflow
+0ms
+completed
+
+

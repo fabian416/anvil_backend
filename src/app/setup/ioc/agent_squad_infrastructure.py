@@ -846,6 +846,7 @@ class AgentSquadInfrastructureProvider(Provider):
         llm_client: LLMClientGateway,
         morpho_gateway: MorphoGateway,
         aave_gateway: AaveGateway,
+        coingecko_client: CoinGeckoClient,
     ) -> LendingWorkflowAgent:
         """
         Provide Lending Workflow Agent for authenticated users.
@@ -859,11 +860,13 @@ class AgentSquadInfrastructureProvider(Provider):
         Integrations:
         - Morpho: MetaMorpho vaults on Base
         - Aave: Aave V3 markets as fallback
+        - CoinGecko: Real-time token prices for balance checking
         """
         return LendingWorkflowAgent(
             llm_client=llm_client,
             morpho_gateway=morpho_gateway,
             aave_gateway=aave_gateway,
+            coingecko_client=coingecko_client,
         )
 
     @provide

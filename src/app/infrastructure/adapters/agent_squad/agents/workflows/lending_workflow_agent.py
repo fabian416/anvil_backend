@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from app.domain.ports.morpho_gateway import MorphoGateway
     from app.domain.ports.aave_gateway import AaveGateway
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+    from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         llm_client: "LLMClientGateway | None" = None,
         morpho_gateway: "MorphoGateway | None" = None,
         aave_gateway: "AaveGateway | None" = None,
+        coingecko_client: "CoinGeckoClient | None" = None,
     ):
         """
         Initialize lending workflow agent.
@@ -103,10 +105,12 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             llm_client: LLM client for parameter extraction
             morpho_gateway: Morpho gateway for vault data
             aave_gateway: Aave gateway for fallback markets
+            coingecko_client: CoinGecko client for token price lookups
         """
         super().__init__(llm_client=llm_client)
         self._morpho = morpho_gateway
         self._aave = aave_gateway
+        self._coingecko = coingecko_client
     
     @property
     def agent_type(self) -> AgentType:
@@ -445,8 +449,8 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         # Move to CONFIRM step - execute_data will be built after user confirms
         state.step = WorkflowStep.CONFIRM.value
         
-        # Format quote response with confirmation prompt
-        response = self._format_vault_quote(
+        # Format quote response with confirmation prompt (async for price lookup)
+        response = await self._format_vault_quote(
             vault_data=vault_data,
             asset=asset,
             amount=amount,
@@ -524,14 +528,23 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         user_balance = user_context.total_balance_usd
         has_sufficient_funds = True
         
-        # Stablecoin: direct USD comparison with 10% buffer for gas
+        # Get real token price for non-stablecoins
+        token_price_usd = await self._get_token_price_usd(asset)
+        
         if asset.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
-            required_amount = amount_float * 1.10
-            has_sufficient_funds = user_balance >= required_amount
-        elif user_balance < 0.01:
-            # User has essentially zero balance
-            has_sufficient_funds = False
-        # For non-stablecoins (ETH, WBTC), allow if user has any balance
+            # Stablecoin: direct USD comparison with 10% buffer for gas
+            required_amount_usd = amount_float * 1.10
+        else:
+            # Non-stablecoin: use real price from CoinGecko
+            required_amount_usd = amount_float * token_price_usd * 1.10  # 10% buffer for gas
+        
+        has_sufficient_funds = user_balance >= required_amount_usd
+        
+        logger.info(
+            f"[LendingWorkflow] Balance check: requested={amount} {asset} "
+            f"(price=${token_price_usd:.2f}, total~${required_amount_usd:.2f}), "
+            f"balance=${user_balance:.2f}, sufficient={has_sufficient_funds}"
+        )
         
         if not has_sufficient_funds:
             logger.info(
@@ -1351,7 +1364,7 @@ Quanto **{asset}** você gostaria de depositar?
         
         return msgs.get(language, msgs["en"])
     
-    def _format_vault_quote(
+    async def _format_vault_quote(
         self,
         vault_data: dict[str, Any],
         asset: str,
@@ -1363,7 +1376,7 @@ Quanto **{asset}** você gostaria de depositar?
         
         Like swap workflow:
         - Shows user balance
-        - Warns if insufficient funds
+        - Warns if insufficient funds (using real token prices)
         - Includes confirmation instructions
         """
         
@@ -1382,11 +1395,16 @@ Quanto **{asset}** você gostaria de depositar?
         protocol_name = "Morpho" if protocol == "morpho" else "Aave V3"
         vault_name = vault_data.get("name", f"{protocol_name} Vault")
         
-        # Build user balance section
+        # Get real token price and calculate USD value of deposit
+        token_price_usd = await self._get_token_price_usd(asset)
+        deposit_value_usd = amount_float * token_price_usd
+        
+        # Build user balance section with USD comparison
         user_balance_section = self._build_quote_balance_section(
             user_context=user_context,
             asset=asset,
             deposit_amount=amount_float,
+            deposit_value_usd=deposit_value_usd,
             language=language,
         )
         
@@ -1665,16 +1683,25 @@ Por favor confirme a transação na sua carteira.""",
         user_context: UserContext,
         asset: str,
         deposit_amount: float,
+        deposit_value_usd: float,
         language: str,
     ) -> str:
-        """Build user balance context section for deposit quote."""
+        """Build user balance context section for deposit quote.
+        
+        Args:
+            user_context: User context with balance info
+            asset: Token symbol (ETH, USDC, etc.)
+            deposit_amount: Raw deposit amount (e.g., 1 ETH)
+            deposit_value_usd: USD value of deposit (e.g., $3500 for 1 ETH)
+            language: User language
+        """
         if not user_context.is_authenticated:
             return ""
         
         balance = user_context.total_balance_usd
         portfolio_state = user_context.portfolio_state
         
-        # Check if user has enough balance
+        # Compare USD balance against USD value of deposit
         if portfolio_state == "empty" or balance < 1:
             msgs = {
                 "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You don't have funds to complete this deposit.\n💡 Say `buy crypto` to get USDC first.",
@@ -1682,12 +1709,13 @@ Por favor confirme a transação na sua carteira.""",
                 "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você não tem fundos para completar este depósito.\n💡 Diga `comprar cripto` para obter USDC primeiro.",
                 "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您没有资金完成此存款。\n💡 先说 `买加密货币` 获取 USDC。",
             }
-        elif balance < deposit_amount:
+        elif balance < deposit_value_usd:
+            # User doesn't have enough - show warning with USD values
             msgs = {
-                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Deposit amount (${deposit_amount:,.2f}) exceeds your balance.\n💡 When you confirm, I'll adjust to your available balance.",
-                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n⚠️ El monto del depósito (${deposit_amount:,.2f}) excede tu saldo.\n💡 Cuando confirmes, ajustaré a tu saldo disponible.",
-                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n⚠️ O valor do depósito (${deposit_amount:,.2f}) excede seu saldo.\n💡 Quando você confirmar, ajustarei ao seu saldo disponível.",
-                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n⚠️ 存款金额 (${deposit_amount:,.2f}) 超过您的余额。\n💡 当您确认时，我会调整到您的可用余额。",
+                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Deposit value (~${deposit_value_usd:,.2f} for {deposit_amount} {asset}) exceeds your balance.\n💡 When you confirm, I'll adjust to your available balance.",
+                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n⚠️ El valor del depósito (~${deposit_value_usd:,.2f} por {deposit_amount} {asset}) excede tu saldo.\n💡 Cuando confirmes, ajustaré a tu saldo disponible.",
+                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n⚠️ O valor do depósito (~${deposit_value_usd:,.2f} por {deposit_amount} {asset}) excede seu saldo.\n💡 Quando você confirmar, ajustarei ao seu saldo disponível.",
+                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n⚠️ 存款价值 (~${deposit_value_usd:,.2f} 对于 {deposit_amount} {asset}) 超过您的余额。\n💡 当您确认时，我会调整到您的可用余额。",
             }
         else:
             msgs = {
@@ -1849,6 +1877,60 @@ Quando tiver fundos, volte e tente:
 **"存入 [金额] {asset}"**""",
         }
         return msgs.get(language, msgs["en"])
+    
+    async def _get_token_price_usd(self, asset: str) -> float:
+        """
+        Get real-time token price in USD from CoinGecko.
+        
+        Falls back to hardcoded estimates if CoinGecko unavailable.
+        """
+        # Stablecoins are always $1
+        if asset.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
+            return 1.0
+        
+        # Map asset symbols to CoinGecko IDs
+        ASSET_TO_COINGECKO = {
+            "ETH": "ethereum",
+            "WETH": "ethereum",
+            "WBTC": "bitcoin",
+            "BTC": "bitcoin",
+            "MATIC": "matic-network",
+            "AVAX": "avalanche-2",
+            "SOL": "solana",
+            "ARB": "arbitrum",
+            "OP": "optimism",
+            "LINK": "chainlink",
+        }
+        
+        # Fallback prices if CoinGecko fails
+        FALLBACK_PRICES = {
+            "ETH": 3500,
+            "WETH": 3500,
+            "WBTC": 95000,
+            "BTC": 95000,
+            "MATIC": 0.50,
+            "AVAX": 35,
+            "SOL": 180,
+            "ARB": 1.0,
+            "OP": 2.0,
+            "LINK": 15,
+        }
+        
+        coingecko_id = ASSET_TO_COINGECKO.get(asset.upper())
+        
+        if coingecko_id and self._coingecko:
+            try:
+                price_data = await self._coingecko.get_price(coingecko_id)
+                if price_data and hasattr(price_data, "usd") and price_data.usd:
+                    logger.info(f"[LendingWorkflow] Got real price for {asset}: ${price_data.usd:.2f}")
+                    return float(price_data.usd)
+            except Exception as e:
+                logger.warning(f"[LendingWorkflow] Failed to fetch {asset} price from CoinGecko: {e}")
+        
+        # Fallback to hardcoded estimate
+        fallback_price = FALLBACK_PRICES.get(asset.upper(), 1.0)
+        logger.info(f"[LendingWorkflow] Using fallback price for {asset}: ${fallback_price:.2f}")
+        return fallback_price
     
     def _is_confirmation(self, text: str) -> bool:
         """Check if text is a confirmation."""
