@@ -547,6 +547,11 @@ Hyperliquid Spot só suporta swaps **com USDC**.
         If user has insufficient funds, shows a helpful recommendation to buy crypto
         but still provides swap information so they know what to expect.
         """
+        # Clear execute_data when fetching a new quote (user hasn't confirmed yet)
+        state.execute_data = None
+        state.confirmed = False
+        state.cancelled = False
+        
         # Use 'or' to handle both missing keys AND None values
         from_token = state.data.get("from_token") or "ETH"
         to_token = state.data.get("to_token") or "USDC"
@@ -889,9 +894,10 @@ Aqui está a cotação do swap:
             return await self._handle_execute(message, state, user_context)
         
         elif intent == "cancel":
-            # User cancelled
+            # User cancelled - clear execute_data to prevent execution
             state.cancelled = True
             state.step = WorkflowStep.CANCELLED.value
+            state.execute_data = None  # Clear execute_data on cancel
             response = self._get_cancel_response(user_context.language)
             return response, state
         

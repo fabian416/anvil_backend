@@ -1,176 +1,236 @@
-# Swap Flow - CRITICAL BUG FIXED ✅
+swap
+A
+🔄 Hyperliquid Spot Swaps
 
-## ROOT CAUSE FOUND (2026-01-10 23:55 UTC)
+What meme token would you like to swap?
 
-### The Real Bug: Metadata Not Being Saved/Retrieved
+Examples:
 
-**Problem**: Multi-step swap flow state was NEVER persisting because:
-1. ❌ `create_message()` was NOT saving metadata to database
-2. ❌ `_row_to_message()` was NOT extracting metadata from database rows
+• `swap 100 USDC to PURR`
 
-**Result**: Every message started fresh with no continuation state, breaking the entire flow.
+• `swap 50 USDC to TRUMP`
 
-## Fixes Applied
+• `swap 1000 PEPE to USDC`
 
-### Fix #1: Save metadata to database
-**File**: `src/app/infrastructure/adapters/guest_repository_sqla.py:329`
+Supported: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 more meme tokens
 
-```python
-# BEFORE (metadata not saved)
-.values(
-    id=message.id,
-    conversation_id=message.conversation_id,
-    role=message.role.value,
-    content=message.content,
-    intent=message.intent,
-    handler=message.handler,
-    confidence=message.confidence,
-    language=message.language,
-    is_restricted_action=message.is_restricted_action,
-    created_at=message.created_at,
-)
+Note: All swaps use USDC pairs. Major tokens (ETH, BTC, SOL) are NOT supported.
 
-# AFTER (metadata saved)
-.values(
-    id=message.id,
-    conversation_id=message.conversation_id,
-    role=message.role.value,
-    content=message.content,
-    intent=message.intent,
-    handler=message.handler,
-    confidence=message.confidence,
-    language=message.language,
-    is_restricted_action=message.is_restricted_action,
-    metadata=message.metadata or {},  # ← ADDED
-    created_at=message.created_at,
-)
-```
 
-### Fix #2: Retrieve metadata from database
-**File**: `src/app/infrastructure/adapters/guest_repository_sqla.py:477`
+1 USDC
+A
+🔄 Swap 1 USDC
 
-```python
-# BEFORE (metadata not extracted)
-return GuestMessage(
-    id=row["id"],
-    conversation_id=row["conversation_id"],
-    role=GuestMessageRole(row["role"]),
-    content=row["content"],
-    intent=row.get("intent"),
-    handler=row.get("handler"),
-    confidence=row.get("confidence"),
-    language=row.get("language", "en"),
-    is_restricted_action=row.get("is_restricted_action", False),
-    created_at=row["created_at"],
-)
+What is Hyperliquid Spot?
 
-# AFTER (metadata extracted)
-return GuestMessage(
-    id=row["id"],
-    conversation_id=row["conversation_id"],
-    role=GuestMessageRole(row["role"]),
-    content=row["content"],
-    intent=row.get("intent"),
-    handler=row.get("handler"),
-    confidence=row.get("confidence"),
-    language=row.get("language", "en"),
-    is_restricted_action=row.get("is_restricted_action", False),
-    metadata=row.get("metadata", {}),  # ← ADDED
-    created_at=row["created_at"],
-)
-```
+Trade meme tokens with zero gas fees and 0.02% trading fee.
 
-### Fix #3: Get most recent message correctly
-**File**: `send_guest_message.py:488`
+High-speed execution (20,000+ TPS) on Hyperliquid L1.
 
-```python
-# Get recent messages and find MOST RECENT assistant message
-messages = await self._guest_repo.get_messages(conversation_id, limit=10)
-for msg in reversed(messages):
-    if msg.role.value == "assistant":
-        last_assistant_message = msg
-        break
-```
+Real-time order book pricing - no slippage surprises.
 
-### Fix #4: Override intent when continuing
-**File**: `send_guest_message.py:195-216`
+💰 Your Balance: ~$3.00 ✅
 
-```python
-# Check for continuation BEFORE intent detection
-if continuation_step:
-    if "swap" in continuation_step:
-        intent = ChatIntent.SWAP_MOONPAY
-        handler = "moonpay_swap"
-        confidence = 1.0
-else:
-    # No continuation, detect intent normally
-    intent, confidence, handler = await self._detect_intent_with_context(...)
-```
+Select a meme token to receive:
 
-## Expected Flow (Now Actually Works)
+1. PURR • $0.066264
 
-```
-User: swap
-Bot: 🔄 Start Swap
-     Which token do you want to swap FROM?
-     [Saves: pending_action="swap_awaiting_from_token", swap_info={}]
+2. TRUMP • $4.160000
 
-User: BTC
-Bot: 🔄 Swap BTC
-     Which token do you want to receive?
-     [Retrieves previous state, saves: pending_action="swap_awaiting_to_token", swap_info={from_token: "btc"}]
+3. PEPE • $0.000004
 
-User: ETH
-Bot: 🔄 Swap BTC → ETH
-     How much BTC do you want to swap?
-     [Retrieves previous state, saves: pending_action="swap_awaiting_amount", swap_info={from_token: "btc", to_token: "eth"}]
+4. HFUN
 
-User: 0.01
-Bot: 🌙 MoonPay Swap Quote
-     0.01 BTC = 0.2764 ETH
-     Confirm?
-     [Retrieves previous state, saves: pending_action="swap_awaiting_confirmation", swap_info={...amount: "0.01"}]
+5. MOG • $0.000000
 
-User: confirm
-Bot: ✅ Swap Confirmed!
-     Sign up to complete → /signup
-     [Retrieves previous state, clears: pending_action=null]
-```
+6. JEFF • $0.000000
 
-## All Bugs Fixed
+7. WAGMI • $0.001606
 
-1. ✅ Metadata now SAVES to database
-2. ✅ Metadata now RETRIEVES from database
-3. ✅ Most recent message retrieved correctly
-4. ✅ Continuation intent overrides detection
-5. ✅ State persists across ALL messages
-6. ✅ Complete multi-step flow works end-to-end
+8. GMEOW • $0.000882
 
-## Files Modified
+9. CAPPY
 
-1. `src/app/infrastructure/adapters/guest_repository_sqla.py`
-   - Line 329: Added `metadata` to insert values
-   - Line 477: Added `metadata` to row extraction
+10. MANLET
 
-2. `src/app/application/guest/commands/send_guest_message.py`
-   - Line 488: Fixed recent message retrieval
-   - Line 195: Added continuation intent override
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## Server Status
+Reply with:
 
-🟢 **LIVE** - Server restarted at 2026-01-10 23:55 UTC
-Port: 8080
-Endpoint: `POST /api/v1/guest/chat`
+• A number (1-10) to select
 
-## Test Now
+• Or type the token name (e.g., PURR)
 
-The complete flow should work:
-```bash
-1. POST {"content": "swap"}
-2. POST {"content": "BTC"}
-3. POST {"content": "ETH"}
-4. POST {"content": "0.01"}
-5. POST {"content": "confirm"}
-```
+💡 All swaps via Hyperliquid Spot (0.02% fee, zero gas)
 
-All steps will now persist state correctly! 🎉
+
+PURR
+A
+📊 Swap Quote
+
+1 USDC → 15.130653 PURR
+
+💰 USDC Price: $1.00 (📉 -0.0% 24h)
+
+💵 Value: ~$1.00 USD
+
+• Price Impact: 0.67%
+
+• Network: BASE
+
+• Aggregator: HYPERLIQUID
+
+⛽ Est. Gas: ~$0.0047
+
+💡 Base L2 has consistently low fees (~$0.01)
+
+---
+
+✅ Say "yes" or "confirm" to execute this swap
+
+✏️ Or say "swap [amount] USDC to PURR" to change the amount
+
+❌ Say "cancel" to cancel
+
+
+yes
+A
+✅ Ready to Execute!
+
+Swap Details:
+
+• From: 1 USDC
+
+• To: ~15.130653 PURR
+
+• Network: BASE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👉 Click Execute below to sign the transaction with your wallet.
+
+
+swap
+A
+📊 Swap Quote
+
+1 USDC → 15.334366 PURR
+
+💰 USDC Price: $1.00 (📈 +0.0% 24h)
+
+💵 Value: ~$1.00 USD
+
+• Price Impact: 0.32%
+
+• Network: BASE
+
+• Aggregator: HYPERLIQUID
+
+⛽ Est. Gas: ~$0.0047
+
+💡 Base L2 has consistently low fees (~$0.01)
+
+---
+
+✅ Say "yes" or "confirm" to execute this swap
+
+✏️ Or say "swap [amount] USDC to PURR" to change the amount
+
+❌ Say "cancel" to cancel
+
+Sources
+2 sources
+
+llm
+gemini-2.0-flash
+100%
+
+api
+Hyperliquid/LiFi
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+14.27s
+completed
+
+swap_workflow
+6.96s
+completed
+
+cancel
+A
+❌ Swap cancelled. Let me know if you want to try again!
+
+Sources
+2 sources
+
+llm
+gemini-2.0-flash
+100%
+
+api
+Hyperliquid/LiFi
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+2.77s
+completed
+
+swap_workflow
+0ms
+completed
+
+swap
+A
+📊 Swap Quote
+
+1 USDC → 15.237166 PURR
+
+💰 USDC Price: $1.00 (📈 +0.0% 24h)
+
+💵 Value: ~$1.00 USD
+
+• Price Impact: 0.93%
+
+• Network: BASE
+
+• Aggregator: HYPERLIQUID
+
+⛽ Est. Gas: ~$0.0046
+
+💡 Base L2 has consistently low fees (~$0.01)
+
+---
+
+✅ Say "yes" or "confirm" to execute this swap
+
+✏️ Or say "swap [amount] USDC to PURR" to change the amount
+
+❌ Say "cancel" to cancel
+
+Sources
+2 sources
+
+llm
+gemini-2.0-flash
+100%
+
+api
+Hyperliquid/LiFi
+100%
+Agent Execution Details
+2 agents
+
+supervisor
+7.16s
+completed
+
+swap_workflow
+11.48s
+completed
+
+
