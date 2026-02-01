@@ -29,6 +29,7 @@ def create_celery() -> Celery:
             "app.infrastructure.celery.tasks.transaction_confirmation_tasks",
             "app.infrastructure.celery.tasks.money_market_tasks",
             "app.infrastructure.celery.tasks.privy_balance_tasks",
+            "app.infrastructure.celery.tasks.etherscan_balance_tasks",
         ],
     )
     app.conf.task_serializer = "json"
@@ -109,6 +110,11 @@ def create_celery() -> Celery:
         # Privy wallet balance sync
         "privy.sync_wallet_balances": {"queue": "maintenance"},
         "privy.sync_single_wallet_balance": {"queue": "maintenance"},
+
+        # Etherscan balance sync (on-chain verification)
+        "etherscan.sync_balances": {"queue": "maintenance"},
+        "etherscan.sync_single_wallet": {"queue": "maintenance"},
+        "etherscan.verify_test_wallet": {"queue": "maintenance"},
     }
     
     # Configuración de colas con prioridades
@@ -191,11 +197,20 @@ def create_celery() -> Celery:
             "schedule": 30.0,  # Every 30 seconds
             "options": {"queue": "maintenance"},
         },
+        # Etherscan On-Chain Balance Sync (every 5 minutes)
+        # Direct ERC-20 balance verification via Etherscan V2 API
+        # Processes max 20 wallets per run with priority queue
+        # Rate budget: ~4 calls/min out of 69/min max (free tier)
+        "etherscan-sync-balances": {
+            "task": "etherscan.sync_balances",
+            "schedule": 300.0,  # Every 5 minutes
+            "options": {"queue": "maintenance"},
+        },
     }
 
     # Disable the task if transaction confirmation is disabled
     if not tx_conf.enabled:
-        # Keep money market, lending, and privy tasks even if transaction confirmation is disabled
+        # Keep money market, lending, privy, and etherscan tasks even if transaction confirmation is disabled
         app.conf.beat_schedule = {
             "money-market-warm-cache": app.conf.beat_schedule.get("money-market-warm-cache"),
             "money-market-check-alerts": app.conf.beat_schedule.get("money-market-check-alerts"),
@@ -204,6 +219,7 @@ def create_celery() -> Celery:
             "monitor-lending-health-factors": app.conf.beat_schedule.get("monitor-lending-health-factors"),
             "refresh-lending-positions": app.conf.beat_schedule.get("refresh-lending-positions"),
             "privy-sync-wallet-balances": app.conf.beat_schedule.get("privy-sync-wallet-balances"),
+            "etherscan-sync-balances": app.conf.beat_schedule.get("etherscan-sync-balances"),
         }
 
     return app

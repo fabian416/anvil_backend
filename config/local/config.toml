@@ -479,3 +479,7 @@ preserve_technical_terms = true  # Preserve DeFi protocols, tokens, technical te
 [moonpay]
 MOONPAY_API_KEY = "pk_test_zJtsRVDetOru63X98XExqNoRHaFDco"
 MOONPAY_ENVIRONMENT = "sandbox"
+# Etherscan API V2 Configuration
+[etherscan]
+# Most settings use defaults from EtherscanSettings class
+# Only override if needed for local development

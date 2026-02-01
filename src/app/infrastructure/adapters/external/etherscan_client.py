@@ -360,32 +360,122 @@ class EtherscanClient:
     async def is_contract_verified(self, address: str) -> bool:
         """
         Check if a contract is verified on Etherscan.
-        
+
         Args:
             address: Contract address
-            
+
         Returns:
             True if verified
         """
         if not self._api_key:
             return False
-        
+
         try:
             params = self._build_params({
                 "module": "contract",
                 "action": "getabi",
                 "address": address,
             })
-            
+
             response = await self._client.get(self._base_url, params=params)
             response.raise_for_status()
             data = response.json()
-            
+
             # Status "1" means ABI found = verified
             return data.get("status") == "1"
         except Exception as e:
             logger.warning(f"Failed to check verification for {address[:10]}...: {e}")
             return False
+
+    async def get_token_balance(
+        self,
+        wallet_address: str,
+        contract_address: str,
+        decimals: int = 6,
+    ) -> tuple[int, float] | None:
+        """
+        Get ERC-20 token balance for a wallet address.
+
+        Uses Etherscan API V2:
+        GET /v2/api?chainid={chain_id}&module=account&action=tokenbalance
+            &contractaddress={contract}&address={wallet}&tag=latest&apikey={key}
+
+        Args:
+            wallet_address: Wallet address to check
+            contract_address: Token contract address (e.g., USDT, USDC)
+            decimals: Token decimals (default 6 for USDT/USDC)
+
+        Returns:
+            Tuple of (raw_balance, formatted_balance) or None on error
+            - raw_balance: Balance in smallest unit (e.g., 3000000 for 3 USDT)
+            - formatted_balance: Human-readable balance (e.g., 3.0 USDT)
+
+        Example:
+            >>> client = EtherscanClient(network="ethereum")
+            >>> raw, formatted = await client.get_token_balance(
+            ...     wallet_address="0x48659e3469Ff2c6bb80e711Ed136F6aE03c2794B",
+            ...     contract_address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            ...     decimals=6,
+            ... )
+            >>> print(f"Balance: {formatted} USDT ({raw} raw)")
+            Balance: 3.0 USDT (3000000 raw)
+        """
+        if not self._api_key:
+            logger.warning("Etherscan API key not configured")
+            return None
+
+        try:
+            params = self._build_params({
+                "module": "account",
+                "action": "tokenbalance",
+                "contractaddress": contract_address,
+                "address": wallet_address,
+                "tag": "latest",
+            })
+
+            response = await self._client.get(self._base_url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("status") == "1" and data.get("result"):
+                raw_balance = int(data["result"])
+                formatted_balance = raw_balance / (10 ** decimals)
+
+                logger.debug(
+                    f"Token balance for {wallet_address[:10]}...: "
+                    f"{formatted_balance} ({raw_balance} raw)"
+                )
+
+                return (raw_balance, formatted_balance)
+            elif data.get("status") == "0":
+                # Status "0" can mean error or zero balance
+                message = data.get("message", "")
+                if "balance" in message.lower() or "result" in message.lower():
+                    # Likely zero balance
+                    logger.debug(f"Zero token balance for {wallet_address[:10]}...")
+                    return (0, 0.0)
+                else:
+                    logger.warning(
+                        f"Etherscan API error for {wallet_address[:10]}...: {message}"
+                    )
+                    return None
+            else:
+                logger.warning(f"Unexpected Etherscan response: {data}")
+                return None
+
+        except httpx.TimeoutException:
+            logger.warning(
+                f"Etherscan API timeout for wallet {wallet_address[:10]}..."
+            )
+            return None
+        except ValueError as e:
+            logger.error(f"Invalid balance value: {e}")
+            return None
+        except Exception as e:
+            logger.error(
+                f"Etherscan API error for wallet {wallet_address[:10]}...: {e}"
+            )
+            return None
     
     def _check_known_addresses(self, address: str) -> AddressLabel | None:
         """Check if address is in known addresses list."""
