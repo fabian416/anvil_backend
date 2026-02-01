@@ -6,6 +6,25 @@ On-chain ERC-20 token balance verification via Etherscan V2 API. This system run
 
 **Relationship to Privy sync**: Privy sync (every 30s) gives fast reads from Privy's cached state. Etherscan sync (every 5m) provides ground-truth on-chain verification. Both update the same `chain_addresses.balance_usd` column.
 
+## 🚨 CRITICAL: Chain Selection Logic
+
+**Ethereum (chainid=1) - DEPOSIT BALANCES (CRITICAL)**
+- USDC deposits are ONLY allowed on Ethereum mainnet
+- Every wallet is ALWAYS checked for Ethereum USDC balance first
+- This is the primary balance that determines deposit capacity
+- Contract: `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` (USDC on Ethereum)
+
+**Base (chainid=8453) - OPERATIONAL BALANCES**
+- Used for swaps, lending, and other DeFi operations
+- Checked as secondary/operational balance
+- Only checked if wallet's default chain is not Ethereum
+- Contract: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
+
+**Multi-Chain Check Strategy:**
+For each wallet, the system checks:
+1. ✅ **ALWAYS**: Ethereum USDC (deposits) - chainid=1
+2. ✅ **OPTIONAL**: Wallet's operational chain if different (e.g., Base for swaps/lending)
+
 ## Architecture
 
 ```
@@ -13,17 +32,23 @@ On-chain ERC-20 token balance verification via Etherscan V2 API. This system run
                                     (5 calls/sec free tier)
                                            ^
                                            |
-+-----------------+     +---------------+  |  +-----------------+
-|  Celery Beat    |---->|  Celery       |--+->|  PostgreSQL     |
-|  (every 5 min)  |     |  Worker       |     |  - wallets      |
-+-----------------+     +-------+-------+     |  - chain_        |
-                                |             |    addresses     |
-                        +-------v-------+     +-----------------+
+                            +-------------++--------------+
+                            |                            |
+                        chainid=1                   chainid=8453
+                     (Ethereum USDC)               (Base USDC)
+                       DEPOSITS ✅                 OPERATIONS ✅
+                            |                            |
++-----------------+     +---+------------+  +------------+--+
+|  Celery Beat    |---->|  Celery        |  |  PostgreSQL  |
+|  (every 5 min)  |     |  Worker        |--+->- wallets   |
++-----------------+     +-------+--------+     | - chain_   |
+                                |              |   addresses|
+                        +-------v-------+      +------------+
                         | Priority Queue|
-                        | 1. High-value |
-                        | 2. Regular    |
-                        | 3. Never-     |
-                        |    checked    |
+                        | 1. High-value |      Each wallet checked:
+                        | 2. Regular    |      • Ethereum (always)
+                        | 3. Never-     |      • Operational chain
+                        |    checked    |        (if != Ethereum)
                         +---------------+
 ```
 
@@ -44,11 +69,12 @@ On-chain ERC-20 token balance verification via Etherscan V2 API. This system run
 2. Wallets not checked in 5+ minutes -- oldest first
 
 **Per wallet:**
-1. Fetch USDC balance from Etherscan V2 (`module=account&action=tokenbalance`)
-2. Convert raw balance using token decimals
-3. Compare with previous balance for anomaly detection
-4. Upsert into `chain_addresses` table
-5. Update `wallets.last_balance_checked_at`
+1. **CRITICAL**: Fetch Ethereum USDC balance (chainid=1) - deposits only
+2. **OPTIONAL**: Fetch operational chain USDC balance (e.g., Base chainid=8453) - swaps/lending
+3. Convert raw balance using token decimals (6 for USDC)
+4. Compare with previous balance for anomaly detection
+5. Upsert into `chain_addresses` table (separate row per chain)
+6. Update `wallets.last_balance_checked_at` (once per wallet)
 
 ### 2. `etherscan.sync_single_wallet` (On-Demand)
 

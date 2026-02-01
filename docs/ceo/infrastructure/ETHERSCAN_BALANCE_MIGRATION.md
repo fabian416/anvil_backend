@@ -15,6 +15,39 @@ Successfully migrated balance checking from Privy-only to a dual-system approach
 
 ---
 
+## 🚨 CRITICAL: Chain Selection Logic
+
+**Why This Matters**:
+- Deposits are ONLY allowed on Ethereum mainnet USDC
+- Swaps, lending, and operations happen on Base
+- Balance checking must prioritize the critical deposit chain
+
+### Implementation Strategy
+
+**Primary Balance Check (ALWAYS):**
+- **Chain**: Ethereum mainnet (chainid=1)
+- **Token**: USDC `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48`
+- **Purpose**: Track deposit capacity (CRITICAL for business operations)
+- **Frequency**: Every 5 minutes for all wallets
+
+**Secondary Balance Check (OPTIONAL):**
+- **Chain**: Wallet's operational chain (typically Base chainid=8453)
+- **Token**: USDC on that chain
+- **Purpose**: Track operational balances for swaps/lending
+- **Frequency**: Every 5 minutes, only if different from Ethereum
+
+### Multi-Chain Check Per Wallet
+
+For each wallet in the system:
+
+1. ✅ **ALWAYS** check Ethereum USDC (deposits) → `chain_addresses` row for "ethereum"
+2. ✅ **IF APPLICABLE** check operational chain USDC → `chain_addresses` row for "base" (or other)
+3. ✅ Update `wallets.last_balance_checked_at` once per wallet
+
+This ensures critical deposit balances are always current while also tracking operational balances where applicable.
+
+---
+
 ## 🎯 Requirements Met
 
 ### Original Request
@@ -103,16 +136,28 @@ Successfully migrated balance checking from Privy-only to a dual-system approach
 1. **Celery Beat** triggers `sync_etherscan_balances` every 5 minutes
 2. **Task** queries database for 20 wallets (priority: never-checked > oldest)
 3. **For each wallet**:
-   - Call Etherscan API: `get_token_balance(address, USDC_contract)`
+
+   **CRITICAL Step 1: Ethereum Deposit Balance (chainid=1)**
+   - Call Etherscan API: `get_token_balance(address, USDC_ethereum_contract, chainid=1)`
    - Convert from raw units (6 decimals for USDC) to USD value
-   - **Anomaly Detection**: Compare with previous balance
+   - **Anomaly Detection**: Compare with previous Ethereum balance
      - Wallet drain (non-zero → zero): CRITICAL alert
      - Large % change (>50% AND >$1000): HIGH alert
      - Large $ change (>$1000): MEDIUM alert
-   - Update `chain_addresses.balance_usd`
-   - Update `chain_addresses.last_balance_checked_at`
-4. **Batch commit** all updates in single transaction
-5. **Metrics** logged for monitoring dashboard
+   - Update `chain_addresses.balance_usd` for ethereum row
+   - Update `chain_addresses.last_balance_checked_at` for ethereum row
+
+   **OPTIONAL Step 2: Operational Chain Balance (e.g., Base chainid=8453)**
+   - IF wallet's default chain != ethereum:
+     - Call Etherscan API: `get_token_balance(address, USDC_base_contract, chainid=8453)`
+     - Convert from raw units (6 decimals for USDC) to USD value
+     - **Anomaly Detection**: Compare with previous operational balance
+     - Update `chain_addresses.balance_usd` for base row
+     - Update `chain_addresses.last_balance_checked_at` for base row
+
+4. **Update wallet check timestamp**: `wallets.last_balance_checked_at` (once per wallet)
+5. **Batch commit** all updates in single transaction
+6. **Metrics** logged for monitoring dashboard
 
 ---
 

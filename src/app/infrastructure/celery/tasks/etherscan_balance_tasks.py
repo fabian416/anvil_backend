@@ -654,144 +654,281 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                     wallet_address = wallet_row[2]
                     chain_raw = wallet_row[3]
 
+                    # Get wallet's operational chain (default: base)
+                    operational_chain = "base"
                     if chain_raw:
-                        chain_name = (
+                        operational_chain = (
                             chain_raw.value
                             if hasattr(chain_raw, "value")
                             else str(chain_raw)
                         )
-                    else:
-                        chain_name = "base"
-
-                    chain_id = chain_id_map.get(chain_name)
-                    if chain_id is None:
-                        logger.debug(
-                            f"Unsupported chain '{chain_name}' for wallet {wallet_id}"
-                        )
-                        continue
 
                     processed += 1
 
+                    # ============================================================
+                    # CRITICAL: ALWAYS check Ethereum USDC first (deposits only)
+                    # ============================================================
+                    # Deposits are ONLY allowed on Ethereum mainnet USDC
+                    # This is the primary balance that matters for deposits
                     try:
-                        # Get USDC balance for this chain
-                        token_info = usdc_contracts.get(chain_name)
-                        if not token_info:
-                            logger.debug(
-                                f"No USDC contract for chain {chain_name}"
-                            )
-                            continue
+                        deposit_chain = "ethereum"
+                        deposit_chain_id = chain_id_map["ethereum"]  # chain 1
+                        deposit_contract, deposit_decimals = usdc_contracts["ethereum"]
 
-                        contract_address, decimals = token_info
+                        logger.debug(
+                            f"Checking CRITICAL deposit balance for wallet {wallet_id} "
+                            f"on Ethereum (chain 1) USDC"
+                        )
 
-                        balance_data = await client.get_token_balance(
+                        deposit_balance_data = await client.get_token_balance(
                             address=wallet_address,
-                            contract_address=contract_address,
-                            chain_id=chain_id,
+                            contract_address=deposit_contract,
+                            chain_id=deposit_chain_id,
                         )
 
-                        if balance_data is None:
-                            errors += 1
-                            continue
+                        if deposit_balance_data is not None:
+                            raw_balance = deposit_balance_data.get("balance_raw", "0")
+                            balance_usd = _convert_balance(raw_balance, deposit_decimals)
 
-                        raw_balance = balance_data.get("balance_raw", "0")
-                        balance_usd = _convert_balance(raw_balance, decimals)
-
-                        # Get previous balance for anomaly detection
-                        previous_balance = Decimal("0")
-                        if chain_addresses_table is not None:
-                            prev_stmt = (
-                                select(chain_addresses_table.c.balance_usd)
-                                .where(
-                                    and_(
-                                        chain_addresses_table.c.wallet_id == wallet_id,
-                                        chain_addresses_table.c.chain == chain_name,
-                                    )
-                                )
-                            )
-                            prev_result = await session.execute(prev_stmt)
-                            prev_row = prev_result.fetchone()
-                            if prev_row and prev_row[0] is not None:
-                                previous_balance = Decimal(str(prev_row[0]))
-
-                        # Anomaly detection
-                        anomaly = _detect_anomaly(
-                            previous_balance=previous_balance,
-                            new_balance=balance_usd,
-                            pct_threshold=anomaly_pct,
-                            absolute_threshold=anomaly_abs,
-                        )
-                        if anomaly:
-                            anomaly["wallet_id"] = wallet_id
-                            anomaly["user_id"] = user_id
-                            anomaly["wallet_address"] = wallet_address
-                            anomaly["chain"] = chain_name
-                            anomalies_detected.append(anomaly)
-                            logger.warning(
-                                f"ANOMALY detected for wallet {wallet_id} "
-                                f"({wallet_address[:10]}...): "
-                                f"{anomaly['type']} - "
-                                f"${anomaly['previous_balance_usd']:.2f} -> "
-                                f"${anomaly['new_balance_usd']:.2f} "
-                                f"({anomaly['pct_change']:.1f}% {anomaly['direction']})"
-                            )
-
-                        # Update chain_addresses table
-                        if chain_addresses_table is not None:
-                            check_stmt = (
-                                select(chain_addresses_table.c.id)
-                                .where(
-                                    and_(
-                                        chain_addresses_table.c.wallet_id == wallet_id,
-                                        chain_addresses_table.c.chain == chain_name,
-                                    )
-                                )
-                            )
-                            check_result = await session.execute(check_stmt)
-                            existing = check_result.fetchone()
-
-                            if existing:
-                                update_stmt = (
-                                    update(chain_addresses_table)
+                            # Get previous balance for anomaly detection
+                            previous_balance = Decimal("0")
+                            if chain_addresses_table is not None:
+                                prev_stmt = (
+                                    select(chain_addresses_table.c.balance_usd)
                                     .where(
-                                        chain_addresses_table.c.id == existing[0]
+                                        and_(
+                                            chain_addresses_table.c.wallet_id == wallet_id,
+                                            chain_addresses_table.c.chain == deposit_chain,
+                                        )
                                     )
-                                    .values(
+                                )
+                                prev_result = await session.execute(prev_stmt)
+                                prev_row = prev_result.fetchone()
+                                if prev_row and prev_row[0] is not None:
+                                    previous_balance = Decimal(str(prev_row[0]))
+
+                            # Anomaly detection
+                            anomaly = _detect_anomaly(
+                                previous_balance=previous_balance,
+                                new_balance=balance_usd,
+                                pct_threshold=anomaly_pct,
+                                absolute_threshold=anomaly_abs,
+                            )
+                            if anomaly:
+                                anomaly["wallet_id"] = wallet_id
+                                anomaly["user_id"] = user_id
+                                anomaly["wallet_address"] = wallet_address
+                                anomaly["chain"] = deposit_chain
+                                anomalies_detected.append(anomaly)
+                                logger.warning(
+                                    f"ANOMALY detected for wallet {wallet_id} "
+                                    f"({wallet_address[:10]}...) on ETHEREUM (DEPOSITS): "
+                                    f"{anomaly['type']} - "
+                                    f"${anomaly['previous_balance_usd']:.2f} -> "
+                                    f"${anomaly['new_balance_usd']:.2f} "
+                                    f"({anomaly['pct_change']:.1f}% {anomaly['direction']})"
+                                )
+
+                            # Update chain_addresses table for Ethereum
+                            if chain_addresses_table is not None:
+                                check_stmt = (
+                                    select(chain_addresses_table.c.id)
+                                    .where(
+                                        and_(
+                                            chain_addresses_table.c.wallet_id == wallet_id,
+                                            chain_addresses_table.c.chain == deposit_chain,
+                                        )
+                                    )
+                                )
+                                check_result = await session.execute(check_stmt)
+                                existing = check_result.fetchone()
+
+                                if existing:
+                                    update_stmt = (
+                                        update(chain_addresses_table)
+                                        .where(
+                                            chain_addresses_table.c.id == existing[0]
+                                        )
+                                        .values(
+                                            balance_usd=balance_usd,
+                                            last_balance_update=datetime.now(UTC),
+                                        )
+                                    )
+                                    await session.execute(update_stmt)
+                                else:
+                                    from sqlalchemy import insert
+
+                                    insert_stmt = insert(chain_addresses_table).values(
+                                        wallet_id=wallet_id,
+                                        chain=deposit_chain,
+                                        address=wallet_address,
+                                        is_active=True,
                                         balance_usd=balance_usd,
                                         last_balance_update=datetime.now(UTC),
                                     )
-                                )
-                                await session.execute(update_stmt)
-                            else:
-                                from sqlalchemy import insert
+                                    await session.execute(insert_stmt)
 
-                                insert_stmt = insert(chain_addresses_table).values(
-                                    wallet_id=wallet_id,
-                                    chain=chain_name,
-                                    address=wallet_address,
-                                    is_active=True,
-                                    balance_usd=balance_usd,
-                                    last_balance_update=datetime.now(UTC),
-                                )
-                                await session.execute(insert_stmt)
+                            updated += 1
+                            logger.debug(
+                                f"✅ CRITICAL: Ethereum deposit balance for wallet {wallet_id}: "
+                                f"${balance_usd:.2f} USDC (chainid=1)"
+                            )
+                        else:
+                            errors += 1
+                            logger.error(
+                                f"Failed to fetch Ethereum deposit balance for wallet {wallet_id}"
+                            )
 
-                        # Update wallet check timestamp
+                    except Exception as e:
+                        errors += 1
+                        logger.error(
+                            f"Failed to sync Ethereum deposit balance for wallet {wallet_id}: {e}"
+                        )
+
+                    # ============================================================
+                    # OPTIONAL: Check operational chain (Base for swaps/lending)
+                    # ============================================================
+                    # This is for operational balances on Base (swaps, lending, etc.)
+                    # Only check if different from Ethereum
+                    if operational_chain != "ethereum":
+                        try:
+                            op_chain_id = chain_id_map.get(operational_chain)
+                            if op_chain_id is None:
+                                logger.debug(
+                                    f"Unsupported operational chain '{operational_chain}' "
+                                    f"for wallet {wallet_id}"
+                                )
+                                continue
+
+                            token_info = usdc_contracts.get(operational_chain)
+                            if not token_info:
+                                logger.debug(
+                                    f"No USDC contract for operational chain {operational_chain}"
+                                )
+                                continue
+
+                            contract_address, decimals = token_info
+
+                            logger.debug(
+                                f"Checking operational balance for wallet {wallet_id} "
+                                f"on {operational_chain} (chain {op_chain_id})"
+                            )
+
+                            balance_data = await client.get_token_balance(
+                                address=wallet_address,
+                                contract_address=contract_address,
+                                chain_id=op_chain_id,
+                            )
+
+                            if balance_data is None:
+                                errors += 1
+                                continue
+
+                            raw_balance = balance_data.get("balance_raw", "0")
+                            balance_usd = _convert_balance(raw_balance, decimals)
+
+                            # Get previous balance for anomaly detection
+                            previous_balance = Decimal("0")
+                            if chain_addresses_table is not None:
+                                prev_stmt = (
+                                    select(chain_addresses_table.c.balance_usd)
+                                    .where(
+                                        and_(
+                                            chain_addresses_table.c.wallet_id == wallet_id,
+                                            chain_addresses_table.c.chain == operational_chain,
+                                        )
+                                    )
+                                )
+                                prev_result = await session.execute(prev_stmt)
+                                prev_row = prev_result.fetchone()
+                                if prev_row and prev_row[0] is not None:
+                                    previous_balance = Decimal(str(prev_row[0]))
+
+                            # Anomaly detection
+                            anomaly = _detect_anomaly(
+                                previous_balance=previous_balance,
+                                new_balance=balance_usd,
+                                pct_threshold=anomaly_pct,
+                                absolute_threshold=anomaly_abs,
+                            )
+                            if anomaly:
+                                anomaly["wallet_id"] = wallet_id
+                                anomaly["user_id"] = user_id
+                                anomaly["wallet_address"] = wallet_address
+                                anomaly["chain"] = operational_chain
+                                anomalies_detected.append(anomaly)
+                                logger.warning(
+                                    f"ANOMALY detected for wallet {wallet_id} "
+                                    f"({wallet_address[:10]}...) on {operational_chain.upper()} (OPERATIONS): "
+                                    f"{anomaly['type']} - "
+                                    f"${anomaly['previous_balance_usd']:.2f} -> "
+                                    f"${anomaly['new_balance_usd']:.2f} "
+                                    f"({anomaly['pct_change']:.1f}% {anomaly['direction']})"
+                                )
+
+                            # Update chain_addresses table for operational chain
+                            if chain_addresses_table is not None:
+                                check_stmt = (
+                                    select(chain_addresses_table.c.id)
+                                    .where(
+                                        and_(
+                                            chain_addresses_table.c.wallet_id == wallet_id,
+                                            chain_addresses_table.c.chain == operational_chain,
+                                        )
+                                    )
+                                )
+                                check_result = await session.execute(check_stmt)
+                                existing = check_result.fetchone()
+
+                                if existing:
+                                    update_stmt = (
+                                        update(chain_addresses_table)
+                                        .where(
+                                            chain_addresses_table.c.id == existing[0]
+                                        )
+                                        .values(
+                                            balance_usd=balance_usd,
+                                            last_balance_update=datetime.now(UTC),
+                                        )
+                                    )
+                                    await session.execute(update_stmt)
+                                else:
+                                    from sqlalchemy import insert
+
+                                    insert_stmt = insert(chain_addresses_table).values(
+                                        wallet_id=wallet_id,
+                                        chain=operational_chain,
+                                        address=wallet_address,
+                                        is_active=True,
+                                        balance_usd=balance_usd,
+                                        last_balance_update=datetime.now(UTC),
+                                    )
+                                    await session.execute(insert_stmt)
+
+                            updated += 1
+                            logger.debug(
+                                f"Operational balance for wallet {wallet_id}: "
+                                f"${balance_usd:.2f} USDC on {operational_chain}"
+                            )
+
+                        except Exception as e:
+                            errors += 1
+                            logger.error(
+                                f"Failed to sync operational balance for wallet {wallet_id} "
+                                f"on {operational_chain}: {e}"
+                            )
+
+                    # Update wallet check timestamp (once per wallet, after all chains)
+                    try:
                         update_wallet_stmt = (
                             update(wallets_table)
                             .where(wallets_table.c.id == wallet_id)
                             .values(last_balance_checked_at=datetime.now(UTC))
                         )
                         await session.execute(update_wallet_stmt)
-                        updated += 1
-
-                        logger.debug(
-                            f"Etherscan balance for wallet {wallet_id}: "
-                            f"${balance_usd:.2f} USDC on {chain_name}"
-                        )
-
                     except Exception as e:
-                        errors += 1
                         logger.error(
-                            f"Failed to sync wallet {wallet_id} via Etherscan: {e}"
+                            f"Failed to update check timestamp for wallet {wallet_id}: {e}"
                         )
 
             # Commit all changes in a single transaction
