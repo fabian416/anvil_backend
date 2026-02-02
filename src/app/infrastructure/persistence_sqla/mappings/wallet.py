@@ -91,6 +91,7 @@ def map_wallet_tables() -> None:
         
         # Balance
         balance_usd = mapped_column(Numeric(20, 2), default=0.00)
+        eth_balance = mapped_column(Numeric(30, 18), nullable=True, default=0)  # Native token (ETH) for gas
         last_balance_update = mapped_column(DateTime(timezone=True), nullable=True)
         
         # Timestamps

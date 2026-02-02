@@ -282,3 +282,93 @@ class WalletBalanceDbAdapter(WalletBalancePort):
         total = result.scalar()
         
         return Decimal(str(total)) if total else Decimal("0")
+    
+    async def get_eth_balances_for_gas(
+        self,
+        wallet_address: str,
+    ) -> dict[str, Decimal]:
+        """
+        Get native ETH balances across all chains for a wallet.
+        
+        Used by swap workflow to determine which chain has enough gas.
+        
+        Returns:
+            Dict mapping chain name to ETH balance (e.g., {"ethereum": 0.00288, "base": 0})
+        """
+        wallets_table = mapping_registry.metadata.tables.get("wallets")
+        chain_addresses_table = mapping_registry.metadata.tables.get("chain_addresses")
+        
+        if wallets_table is None or chain_addresses_table is None:
+            logger.warning("Required tables not found for ETH balance lookup")
+            return {}
+        
+        # Find wallet by address (case-insensitive)
+        wallet_stmt = (
+            select(wallets_table.c.id)
+            .where(func.lower(wallets_table.c.address) == wallet_address.lower())
+            .limit(1)
+        )
+        
+        result = await self._session.execute(wallet_stmt)
+        wallet_row = result.fetchone()
+        
+        if not wallet_row:
+            logger.debug(f"Wallet not found for address: {wallet_address}")
+            return {}
+        
+        wallet_id = wallet_row[0]
+        
+        # Get ETH balances for each chain
+        chain_stmt = (
+            select(
+                chain_addresses_table.c.chain,
+                chain_addresses_table.c.eth_balance,
+            )
+            .where(chain_addresses_table.c.wallet_id == wallet_id)
+            .where(chain_addresses_table.c.is_active == True)
+        )
+        
+        chain_result = await self._session.execute(chain_stmt)
+        chain_rows = chain_result.fetchall()
+        
+        eth_balances: dict[str, Decimal] = {}
+        for chain_row in chain_rows:
+            chain_name = str(chain_row[0]) if chain_row[0] else "unknown"
+            eth_balance = Decimal(str(chain_row[1])) if chain_row[1] else Decimal("0")
+            eth_balances[chain_name] = eth_balance
+        
+        logger.debug(f"ETH balances for {wallet_address}: {eth_balances}")
+        return eth_balances
+    
+    async def find_best_chain_for_gas(
+        self,
+        wallet_address: str,
+        supported_chains: list[str],
+        min_eth_required: Decimal = Decimal("0.0002"),
+    ) -> str | None:
+        """
+        Find the best chain for gas fees from supported chains.
+        
+        Args:
+            wallet_address: User's wallet address
+            supported_chains: List of chain names to consider (e.g., ["base", "ethereum", "arbitrum"])
+            min_eth_required: Minimum ETH required for gas (default ~$0.40)
+        
+        Returns:
+            Chain name with sufficient ETH, or None if no chain has enough
+        """
+        eth_balances = await self.get_eth_balances_for_gas(wallet_address)
+        
+        # Find first chain with enough ETH
+        for chain in supported_chains:
+            eth_balance = eth_balances.get(chain, Decimal("0"))
+            if eth_balance >= min_eth_required:
+                logger.info(
+                    f"Best chain for gas: {chain} ({eth_balance:.6f} ETH >= {min_eth_required} required)"
+                )
+                return chain
+        
+        logger.warning(
+            f"No chain has sufficient ETH for gas. Balances: {eth_balances}, Required: {min_eth_required}"
+        )
+        return None

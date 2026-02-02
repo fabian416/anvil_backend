@@ -689,6 +689,17 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                         if deposit_balance_data is not None:
                             raw_balance = deposit_balance_data.get("balance_raw", "0")
                             balance_usd = _convert_balance(raw_balance, deposit_decimals)
+                            
+                            # Also fetch native ETH balance for gas fee checks
+                            eth_balance_data = await client.get_eth_balance(
+                                address=wallet_address,
+                                chain_id=deposit_chain_id,
+                            )
+                            eth_balance = Decimal("0")
+                            if eth_balance_data is not None:
+                                eth_balance = _convert_balance(
+                                    eth_balance_data.get("balance_raw", "0"), 18
+                                )
 
                             # Get previous balance for anomaly detection
                             previous_balance = Decimal("0")
@@ -751,6 +762,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                                         )
                                         .values(
                                             balance_usd=balance_usd,
+                                            eth_balance=eth_balance,
                                             last_balance_update=datetime.now(UTC),
                                         )
                                     )
@@ -764,6 +776,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                                         address=wallet_address,
                                         is_active=True,
                                         balance_usd=balance_usd,
+                                        eth_balance=eth_balance,
                                         last_balance_update=datetime.now(UTC),
                                     )
                                     await session.execute(insert_stmt)
@@ -771,7 +784,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                             updated += 1
                             logger.debug(
                                 f"✅ CRITICAL: Ethereum deposit balance for wallet {wallet_id}: "
-                                f"${balance_usd:.2f} USDC (chainid=1)"
+                                f"${balance_usd:.2f} USDC, {eth_balance:.6f} ETH (chainid=1)"
                             )
                         else:
                             errors += 1
@@ -826,6 +839,17 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 
                             raw_balance = balance_data.get("balance_raw", "0")
                             balance_usd = _convert_balance(raw_balance, decimals)
+                            
+                            # Also fetch native ETH balance for gas fee checks
+                            op_eth_balance_data = await client.get_eth_balance(
+                                address=wallet_address,
+                                chain_id=op_chain_id,
+                            )
+                            op_eth_balance = Decimal("0")
+                            if op_eth_balance_data is not None:
+                                op_eth_balance = _convert_balance(
+                                    op_eth_balance_data.get("balance_raw", "0"), 18
+                                )
 
                             # Get previous balance for anomaly detection
                             previous_balance = Decimal("0")
@@ -888,6 +912,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                                         )
                                         .values(
                                             balance_usd=balance_usd,
+                                            eth_balance=op_eth_balance,
                                             last_balance_update=datetime.now(UTC),
                                         )
                                     )
@@ -901,6 +926,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                                         address=wallet_address,
                                         is_active=True,
                                         balance_usd=balance_usd,
+                                        eth_balance=op_eth_balance,
                                         last_balance_update=datetime.now(UTC),
                                     )
                                     await session.execute(insert_stmt)
@@ -908,7 +934,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                             updated += 1
                             logger.debug(
                                 f"Operational balance for wallet {wallet_id}: "
-                                f"${balance_usd:.2f} USDC on {operational_chain}"
+                                f"${balance_usd:.2f} USDC, {op_eth_balance:.6f} ETH on {operational_chain}"
                             )
 
                         except Exception as e:
