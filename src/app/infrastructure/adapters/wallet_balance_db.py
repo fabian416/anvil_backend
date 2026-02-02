@@ -281,11 +281,17 @@ class WalletBalanceDbAdapter(WalletBalancePort):
     ) -> UserWalletAggregate | None:
         """Get aggregated balance via chat_user_id."""
         # Use table reflection to get actual DB schema (mapping may be outdated)
-        from sqlalchemy import MetaData, Table
-        metadata = MetaData()
+        from sqlalchemy import MetaData, Table, text
         
+        # For async session, we need to use run_sync for table reflection
         try:
-            chat_users_table = Table("chat_users", metadata, autoload_with=self._session.get_bind())
+            def reflect_table(connection):
+                metadata = MetaData()
+                return Table("chat_users", metadata, autoload_with=connection)
+            
+            chat_users_table = await self._session.run_sync(
+                lambda sync_session: reflect_table(sync_session.get_bind())
+            )
         except Exception as e:
             logger.warning(f"Failed to reflect chat_users table: {e}")
             return None
