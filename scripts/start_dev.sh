@@ -141,6 +141,12 @@ if command -v lsof >/dev/null 2>&1; then
     lsof -ti :8080 | xargs kill -9 2>/dev/null || true
 fi
 
+# Clear Python bytecode cache to ensure fresh code is loaded
+echo -e "${CYAN}🧹 Limpiando Python bytecode cache...${NC}"
+find "$PROJECT_DIR/src" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find "$PROJECT_DIR/src" -name "*.pyc" -delete 2>/dev/null || true
+export PYTHONDONTWRITEBYTECODE=1
+
 # Kill any process using ports 8081-8091 (MCP servers)
 for port in {8081..8091}; do
     lsof -ti :$port | xargs kill -9 2>/dev/null || true
@@ -296,7 +302,7 @@ fi
 for worker_config in "${CELERY_WORKERS[@]}"; do
     IFS=':' read -r name queue concurrency max_tasks <<< "$worker_config"
     
-    PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
         --loglevel=INFO \
         -Q "$queue" \
         -n "${name}@%h" \
