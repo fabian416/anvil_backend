@@ -6,7 +6,9 @@ Complements the existing Privy balance sync with direct on-chain balance verific
 
 Design Decisions:
 - Etherscan V2 uses a single API key for 60+ EVM chains (chainid parameter)
-- Free tier: 5 calls/sec, 100,000 calls/day
+- Free tier: 3 calls/sec (NOT 5!), 100,000 calls/day
+- Free tier does NOT support: Base (8453), OP Mainnet (10), BNB, Avalanche
+- Supported on Free tier: Ethereum (1), Arbitrum (42161), Polygon (137)
 - Batched processing with priority queue (high-value wallets first)
 - Exponential backoff on rate limits (429) and transient failures
 - Idempotent updates (last_etherscan_checked_at prevents duplicates)
@@ -71,11 +73,29 @@ class EtherscanClient:
             )
     """
 
+    # Chains supported on Etherscan V2 Free Tier
+    # Base (8453), OP Mainnet (10), BNB (56), Avalanche (43114) are PAID ONLY
+    FREE_TIER_CHAINS = {
+        1,       # Ethereum Mainnet
+        11155111, # Sepolia Testnet
+        17000,   # Holesky Testnet
+        42161,   # Arbitrum One
+        42170,   # Arbitrum Nova
+        421614,  # Arbitrum Sepolia
+        137,     # Polygon Mainnet
+        80002,   # Polygon Amoy
+        59144,   # Linea Mainnet
+        81457,   # Blast Mainnet
+        100,     # Gnosis
+        5000,    # Mantle
+        534352,  # Scroll
+    }
+    
     def __init__(
         self,
         api_key: str,
         base_url: str = "https://api.etherscan.io/v2/api",
-        max_calls_per_second: int = 5,
+        max_calls_per_second: int = 3,  # Free tier is 3/sec, NOT 5
         request_timeout: float = 15.0,
         max_retries: int = 3,
         retry_backoff_base: float = 2.0,
@@ -111,6 +131,10 @@ class EtherscanClient:
         if self._http_client:
             await self._http_client.aclose()
             self._http_client = None
+
+    def is_chain_supported_free_tier(self, chain_id: int) -> bool:
+        """Check if a chain is supported on Etherscan V2 Free Tier."""
+        return chain_id in self.FREE_TIER_CHAINS
 
     async def _enforce_rate_limit(self):
         """Token bucket rate limiter: max N calls per second."""
@@ -624,21 +648,22 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
             logger.info(f"Processing {len(wallets)} wallets via Etherscan")
 
             # Chain ID mapping
+            # NOTE: Only chains supported on Etherscan V2 Free tier
+            # Base (8453) and Optimism (10) require PAID tier
             chain_id_map = {
                 "ethereum": 1,
-                "base": 8453,
                 "arbitrum": 42161,
                 "polygon": 137,
-                "optimism": 10,
+                # "base": 8453,  # PAID TIER ONLY
+                # "optimism": 10,  # PAID TIER ONLY
             }
 
-            # Default token to check: USDC per chain
+            # Default token to check: USDC per chain (FREE TIER ONLY)
             usdc_contracts = {
                 "ethereum": ("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", 6),
-                "base": ("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", 6),
                 "arbitrum": ("0xaf88d065e77c8cC2239327C5EDb3A432268e5831", 6),
                 "polygon": ("0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", 6),
-                "optimism": ("0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", 6),
+                # Base and Optimism removed - PAID TIER ONLY
             }
 
             # USDT contracts for verification
@@ -647,13 +672,12 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                 "arbitrum": ("0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", 6),
             }
             
-            # WETH contracts (Wrapped Ether)
+            # WETH contracts (Wrapped Ether) - FREE TIER ONLY
             weth_contracts = {
                 "ethereum": ("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 18),
-                "base": ("0x4200000000000000000000000000000000000006", 18),
                 "arbitrum": ("0x82aF49447D8a07e3bd95BD0d56f35241523fBab1", 18),
                 "polygon": ("0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", 18),
-                "optimism": ("0x4200000000000000000000000000000000000006", 18),
+                # Base and Optimism removed - PAID TIER ONLY
             }
             
             # All tokens to sync per chain
@@ -831,7 +855,8 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                     # ============================================================
                     # We need balances on all chains that LiFi can bridge from
                     # so the swap workflow can select the best chain for gas
-                    lifi_source_chains = ["base", "arbitrum"]  # ethereum already synced above
+                    # NOTE: Base (8453) removed - NOT supported on Etherscan Free tier
+                    lifi_source_chains = ["arbitrum"]  # ethereum already synced above; base=paid only
                     
                     for lifi_chain in lifi_source_chains:
                         try:
@@ -1090,24 +1115,23 @@ def sync_all_tokens_etherscan(
             return {"status": "error", "reason": "no_api_key"}
         
         # Chain and token configuration
+        # NOTE: Base (8453) and OP (10) are NOT supported on Free tier
+        # Only sync chains available on Free tier to avoid API errors
         chain_id_map = {
             "ethereum": 1,
-            "base": 8453,
             "arbitrum": 42161,
+            # "base": 8453,  # PAID TIER ONLY - not supported on free tier
         }
         
         # Tokens to sync: (symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin)
+        # NOTE: Base chain removed - NOT supported on Etherscan Free tier
         tokens_config = {
             "ethereum": [
                 ("ETH", "Ether", None, 18, True, True, False),
                 ("USDC", "USD Coin", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", 6, False, False, True),
                 ("WETH", "Wrapped Ether", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 18, False, False, False),
             ],
-            "base": [
-                ("ETH", "Ether", None, 18, True, True, False),
-                ("USDC", "USD Coin", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", 6, False, False, True),
-                ("WETH", "Wrapped Ether", "0x4200000000000000000000000000000000000006", 18, False, False, False),
-            ],
+            # "base" removed - PAID TIER ONLY on Etherscan V2
             "arbitrum": [
                 ("ETH", "Ether", None, 18, True, True, False),
                 ("USDC", "USD Coin", "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", 6, False, False, True),
@@ -1330,9 +1354,12 @@ def sync_single_wallet_etherscan(
         if not etherscan_api_key:
             return {"status": "error", "reason": "no_api_key"}
 
+        # NOTE: Only FREE TIER chains supported
+        # Base (8453) and Optimism (10) require PAID tier
         chain_id_map = {
-            "ethereum": 1, "base": 8453, "arbitrum": 42161,
-            "polygon": 137, "optimism": 10,
+            "ethereum": 1, "arbitrum": 42161, "polygon": 137,
+            # "base": 8453,  # PAID TIER ONLY
+            # "optimism": 10,  # PAID TIER ONLY
         }
         chain_id = chain_id_map.get(_chain)
         if chain_id is None:
