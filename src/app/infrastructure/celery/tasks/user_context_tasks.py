@@ -128,15 +128,23 @@ def update_user_context():
             # ============================================
             logger.info("📝 Step 1: Creating missing user contexts...")
             
-            chat_users_table = mapping_registry.metadata.tables.get("chat_users")
-            context_table = mapping_registry.metadata.tables.get("user_context_aware")
+            # Use reflected tables to get actual DB schema (mapping may be outdated)
+            from sqlalchemy import MetaData, Table
+            metadata = MetaData()
+            try:
+                chat_users_table = Table("chat_users", metadata, autoload_with=session.get_bind())
+                context_table = Table("user_context_aware", metadata, autoload_with=session.get_bind())
+            except Exception as e:
+                logger.warning(f"  Could not reflect tables: {e}")
+                chat_users_table = None
+                context_table = None
             
             if chat_users_table is not None and context_table is not None:
                 # Query authenticated users without context
+                # Note: chat_users table structure varies - use only id column
                 stmt = (
                     select(
                         chat_users_table.c.id,
-                        chat_users_table.c.user_id,  # legacy user_id
                     )
                     .select_from(chat_users_table)
                     .outerjoin(
@@ -159,11 +167,11 @@ def update_user_context():
                     logger.info(f"  Found {len(missing_users)} users without context")
                     
                     for row in missing_users:
-                        chat_user_id, legacy_user_id = row[0], row[1]
+                        chat_user_id = row[0]
                         try:
                             await service.create_for_new_user(
                                 chat_user_id=chat_user_id,
-                                legacy_user_id=legacy_user_id,
+                                legacy_user_id=None,  # No longer tracked in chat_users
                             )
                             created_count += 1
                             logger.debug(f"  Created context for {chat_user_id}")
