@@ -543,7 +543,12 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
             try:
                 from app.setup.config.loader import load_full_config, get_current_env
                 raw = load_full_config(env=get_current_env())
-                etherscan_api_key = raw.get("etherscan", {}).get("api_key", "")
+                etherscan_cfg = raw.get("etherscan", {})
+                # Check both uppercase and lowercase keys (TOML preserves case)
+                etherscan_api_key = (
+                    etherscan_cfg.get("api_key", "") 
+                    or etherscan_cfg.get("API_KEY", "")
+                )
             except Exception:
                 pass
 
@@ -1301,7 +1306,12 @@ def sync_single_wallet_etherscan(
         try:
             from app.setup.config.loader import load_full_config, get_current_env
             raw = load_full_config(env=get_current_env())
-            etherscan_api_key = raw.get("etherscan", {}).get("api_key", "")
+            etherscan_cfg = raw.get("etherscan", {})
+            # Check both uppercase and lowercase keys (TOML preserves case)
+            etherscan_api_key = (
+                etherscan_cfg.get("api_key", "") 
+                or etherscan_cfg.get("API_KEY", "")
+            )
         except Exception:
             pass
 
@@ -1470,7 +1480,12 @@ def verify_test_wallet() -> dict[str, Any]:
         try:
             from app.setup.config.loader import load_full_config, get_current_env
             raw = load_full_config(env=get_current_env())
-            etherscan_api_key = raw.get("etherscan", {}).get("api_key", "")
+            etherscan_cfg = raw.get("etherscan", {})
+            # Check both uppercase and lowercase keys (TOML preserves case)
+            etherscan_api_key = (
+                etherscan_cfg.get("api_key", "") 
+                or etherscan_cfg.get("API_KEY", "")
+            )
         except Exception:
             pass
 
