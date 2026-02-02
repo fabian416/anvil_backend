@@ -649,6 +649,130 @@ Response:
 
 ---
 
+## ⚠️ CRITICAL: Gas Check Before Deposit
+
+### The Problem
+
+When depositing USDC to Hyperliquid, the user needs to:
+1. **Approve** the bridge contract to spend USDC (requires gas in ETH)
+2. **Deposit** USDC to the bridge contract (requires gas in ETH)
+
+If the user has USDC but **no native ETH on Arbitrum**, they will see:
+```
+"Add funds on Arbitrum One to complete transaction"
+```
+
+### Required Pre-Checks
+
+**Before showing the Execute button**, the frontend MUST check:
+
+```typescript
+// Check gas availability BEFORE executing deposit step
+async function checkGasAvailability(
+  wallet: any, 
+  bridgeConfig: { chain_id: number }
+): Promise<{ hasGas: boolean; ethBalance: bigint; required: bigint }> {
+  const provider = await wallet.getEthereumProvider();
+  
+  // Switch to Arbitrum (or source chain)
+  await wallet.switchChain(bridgeConfig.chain_id);
+  
+  // Get native ETH balance
+  const ethBalance = await provider.request({
+    method: 'eth_getBalance',
+    params: [wallet.address, 'latest'],
+  });
+  
+  // Minimum required: ~0.001 ETH for approve + deposit
+  const MINIMUM_ETH_FOR_GAS = BigInt("1000000000000000"); // 0.001 ETH
+  
+  return {
+    hasGas: BigInt(ethBalance) >= MINIMUM_ETH_FOR_GAS,
+    ethBalance: BigInt(ethBalance),
+    required: MINIMUM_ETH_FOR_GAS,
+  };
+}
+```
+
+### Updated Execute Flow
+
+```typescript
+export function SwapExecuteButton({ execute, conversationId, onSuccess, onError }: Props) {
+  const [gasCheck, setGasCheck] = useState<{ hasGas: boolean; ethBalance: bigint } | null>(null);
+  const [isCheckingGas, setIsCheckingGas] = useState(false);
+  
+  // Check gas when multi-step with deposit
+  useEffect(() => {
+    if (execute.execution_mode === 'multi_step' && execute.requires_deposit) {
+      checkGas();
+    }
+  }, [execute]);
+  
+  const checkGas = async () => {
+    setIsCheckingGas(true);
+    try {
+      const result = await checkGasAvailability(wallet, execute.bridge_config);
+      setGasCheck(result);
+    } finally {
+      setIsCheckingGas(false);
+    }
+  };
+  
+  // Show error if no gas
+  if (gasCheck && !gasCheck.hasGas) {
+    return (
+      <div className="p-4 bg-yellow-900/30 border border-yellow-600 rounded-lg">
+        <h4 className="font-semibold text-yellow-400 mb-2">
+          ⚠️ Insufficient Gas on Arbitrum
+        </h4>
+        <p className="text-sm text-gray-300 mb-3">
+          You need a small amount of ETH on Arbitrum to pay for gas fees.
+          The deposit transaction requires approximately $0.10-0.50 in ETH.
+        </p>
+        <div className="text-xs text-gray-400">
+          Current ETH balance: {formatEther(gasCheck.ethBalance)} ETH
+        </div>
+        <div className="text-xs text-gray-400">
+          Required: ~0.001 ETH (minimum)
+        </div>
+        <div className="mt-3">
+          <a 
+            href="https://bridge.arbitrum.io/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 underline text-sm"
+          >
+            Bridge ETH to Arbitrum →
+          </a>
+        </div>
+      </div>
+    );
+  }
+  
+  // ... rest of button logic
+}
+```
+
+### Error Messages
+
+| Error | Meaning | Solution |
+|-------|---------|----------|
+| "Add funds on Arbitrum One to complete transaction" | No ETH for gas | Bridge ETH to Arbitrum first |
+| "Insufficient allowance" | Approval not yet confirmed | Wait for approval tx or retry |
+| "Insufficient balance" | Not enough USDC | User needs more USDC |
+
+### Gas Cost Estimates
+
+| Operation | Estimated Gas | Cost (~$3000 ETH) |
+|-----------|---------------|-------------------|
+| USDC Approve | ~46,000 gas | ~$0.05 |
+| Bridge Deposit | ~80,000 gas | ~$0.10 |
+| **Total** | ~126,000 gas | **~$0.15** |
+
+Note: Arbitrum gas costs are very low. $0.50 in ETH is more than enough for multiple transactions.
+
+---
+
 ## Testing Checklist
 
 - [ ] Verify `execution_mode: "multi_step"` is detected correctly
