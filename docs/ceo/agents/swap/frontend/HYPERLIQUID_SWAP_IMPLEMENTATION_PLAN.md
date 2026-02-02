@@ -42,7 +42,7 @@ When the frontend receives `execute.execution_mode === "multi_step"`:
 
 User's Privy Wallet on Base:
   - USDC: User's funds to swap
-  - ETH: For gas (funded by Anvil)
+  - ETH: For gas fees
                     │
                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -81,7 +81,7 @@ User now has PURR in Hyperliquid Spot account
 
 **User's Privy Wallet Setup:**
 - ✅ User has USDC in Privy wallet
-- ✅ User has ETH in Privy wallet (Anvil funds this for gas)
+- ✅ User has ETH in Privy wallet for gas
 - ✅ Both are on **Base** chain
 
 **Previous flow (Arbitrum Bridge) - PROBLEM:**
@@ -91,10 +91,10 @@ User now has PURR in Hyperliquid Spot account
 - ❌ 1-2 minute confirmation time
 
 **New flow (LiFi Bridge) - SOLUTION:**
-- ✅ Gas paid on **Base** using ETH already in user's Privy wallet!
+- ✅ Gas paid on **Base** using ETH in user's Privy wallet
 - ✅ Single transaction via LiFi
 - ✅ ~30 second confirmation via Relay bridge
-- ✅ No need to bridge ETH to Arbitrum first
+- ✅ No need to have ETH on Arbitrum
 
 ---
 
