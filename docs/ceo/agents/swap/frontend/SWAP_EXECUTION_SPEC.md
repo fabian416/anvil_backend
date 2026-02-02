@@ -90,44 +90,196 @@ const isEVMSwap = (execute: ExecutePayload): boolean => {
 
 ## Execution Flow
 
-### 1. Hyperliquid Swaps
+### 1. Hyperliquid Swaps (Multi-Step)
 
-**Important:** Hyperliquid is NOT an EVM DEX. It uses a centralized order book on Hyperliquid L1. 
-- No ERC-20 approvals needed
-- No gas fees (Hyperliquid covers gas)
-- No `balanceOf` calls on token addresses
-- Uses Hyperliquid SDK directly
+**Important:** Hyperliquid is NOT an EVM DEX. It uses a centralized order book on Hyperliquid L1.
+
+**Key Changes (NEW):**
+- Backend now returns `execution_mode: "multi_step"` with `steps[]` array
+- Frontend must execute steps in order: Deposit → Transfer → Swap
+- Skip completed steps based on `hyperliquid_balances`
+
+#### Multi-Step Execute Payload
 
 ```typescript
-import { HyperliquidClient } from "@hyperliquid/sdk";
+interface HyperliquidExecutePayload extends ExecutePayload {
+  execution_mode: "multi_step";
+  
+  // Step execution
+  steps: HyperliquidStep[];
+  current_step: number;
+  total_steps: number;
+  
+  // Balance info (to determine which steps needed)
+  hyperliquid_balances: {
+    perps_usdc: number;   // USDC in Perps account
+    spot_usdc: number;    // USDC in Spot account
+    spot_from_token: number;  // From token in Spot
+  };
+  
+  // Step requirements
+  requires_deposit: boolean;   // Need to bridge from Arbitrum?
+  requires_transfer: boolean;  // Need to transfer Perps → Spot?
+  
+  // Bridge config
+  bridge_config: {
+    bridge: string;      // "0x2Df1c51E09aECF9cacB7bc98cB1742757f163dF7"
+    usdc: string;        // "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+    chain_id: number;    // 42161 (Arbitrum)
+  };
+}
 
-async function executeHyperliquidSwap(
-  execute: ExecutePayload,
-  hyperliquidClient: HyperliquidClient
+interface HyperliquidStep {
+  step: number;
+  action: "deposit" | "transfer_to_spot" | "spot_swap";
+  status: "pending" | "in_progress" | "completed" | "error";
+  description: string;
+  amount: string;
+  token: string;
+  estimated_time: string;
+  
+  // Deposit step fields
+  chain?: string;
+  chain_id?: number;
+  bridge_contract?: string;
+  usdc_contract?: string;
+  
+  // Swap step fields
+  from_token?: string;
+  to_token?: string;
+  expected_output?: string;
+  min_output?: string;
+}
+```
+
+#### Multi-Step Execution Logic
+
+```typescript
+import * as hl from "@nktkas/hyperliquid";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+
+async function executeHyperliquidMultiStep(
+  execute: HyperliquidExecutePayload,
+  wallet: any,
+  onStepUpdate: (stepId: number, status: string) => void
 ): Promise<SwapResult> {
   
-  // DO NOT call balanceOf - Hyperliquid manages balances internally
-  // DO NOT try to use from_token_address/to_token_address (they are null)
+  const hlService = new HyperliquidService();
+  await hlService.init(wallet);
   
+  for (const step of execute.steps) {
+    onStepUpdate(step.step, "in_progress");
+    
+    try {
+      switch (step.action) {
+        case "deposit":
+          // Step 1: Bridge USDC from Arbitrum to Hyperliquid
+          await executeDepositStep(step, wallet, execute.bridge_config);
+          // Wait for deposit to be confirmed on Hyperliquid (~1-2 min)
+          await waitForHyperliquidDeposit(wallet.address, parseFloat(step.amount));
+          break;
+          
+        case "transfer_to_spot":
+          // Step 2: Transfer from Perps to Spot account
+          await hlService.transferToSpot(step.token, parseFloat(step.amount));
+          break;
+          
+        case "spot_swap":
+          // Step 3: Execute spot swap
+          const isBuy = step.from_token === "USDC";
+          return await hlService.executeSpotSwap(
+            step.from_token!,
+            step.to_token!,
+            parseFloat(step.amount),
+            isBuy
+          );
+      }
+      
+      onStepUpdate(step.step, "completed");
+    } catch (error) {
+      onStepUpdate(step.step, "error");
+      throw error;
+    }
+  }
+  
+  throw new Error("No swap step found");
+}
+
+async function executeDepositStep(
+  step: HyperliquidStep,
+  wallet: any,
+  bridgeConfig: { bridge: string; usdc: string; chain_id: number }
+): Promise<string> {
+  const provider = await wallet.getEthereumProvider();
+  
+  // Switch to Arbitrum
+  await wallet.switchChain(bridgeConfig.chain_id);
+  
+  const amountWei = parseUnits(step.amount, 6); // USDC = 6 decimals
+  
+  // 1. Approve USDC to bridge
+  const approveTx = await provider.request({
+    method: "eth_sendTransaction",
+    params: [{
+      from: wallet.address,
+      to: bridgeConfig.usdc,
+      data: encodeFunctionData({
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [bridgeConfig.bridge, amountWei],
+      }),
+    }],
+  });
+  await waitForTransaction(provider, approveTx);
+  
+  // 2. Deposit to Hyperliquid bridge
+  const depositTx = await provider.request({
+    method: "eth_sendTransaction",
+    params: [{
+      from: wallet.address,
+      to: bridgeConfig.bridge,
+      data: encodeFunctionData({
+        abi: HYPERLIQUID_BRIDGE_ABI,
+        functionName: "sendUSDC",
+        args: [amountWei, wallet.address],
+      }),
+    }],
+  });
+  
+  return depositTx;
+}
+```
+
+#### Simple Swap (If Already on Hyperliquid)
+
+If `requires_deposit` and `requires_transfer` are both `false`, there's only one step:
+
+```typescript
+async function executeHyperliquidSwap(
+  execute: ExecutePayload,
+  hlClient: HyperliquidClient
+): Promise<SwapResult> {
+  
+  // Check if multi-step
+  if (execute.execution_mode === "multi_step") {
+    return await executeHyperliquidMultiStep(execute, wallet, onStepUpdate);
+  }
+  
+  // Simple swap - user already has funds on Hyperliquid Spot
   const isBuying = execute.from_token === "USDC";
   
   if (isBuying) {
-    // Buying meme token with USDC
-    // Use sz (size) for the amount of token to receive
-    const result = await hyperliquidClient.spotMarketOrder({
-      coin: execute.to_token,  // e.g., "PURR"
+    return await hlClient.spotMarketOrder({
+      coin: execute.to_token,
       isBuy: true,
-      sz: parseFloat(execute.quote_amount),  // Amount of PURR to receive
+      sz: parseFloat(execute.quote_amount),
     });
-    return result;
   } else {
-    // Selling meme token for USDC
-    const result = await hyperliquidClient.spotMarketOrder({
-      coin: execute.from_token,  // e.g., "PURR"
+    return await hlClient.spotMarketOrder({
+      coin: execute.from_token,
       isBuy: false,
-      sz: parseFloat(execute.amount),  // Amount of PURR to sell
+      sz: parseFloat(execute.amount),
     });
-    return result;
   }
 }
 ```
@@ -383,13 +535,67 @@ export function SwapExecuteButton({ execute, onSuccess, onError }: SwapExecuteBu
 
 ---
 
+## Step Progress UI Component
+
+```typescript
+// components/HyperliquidSwapProgress.tsx
+
+interface StepProgressProps {
+  steps: HyperliquidStep[];
+  currentStep: number;
+}
+
+export function HyperliquidSwapProgress({ steps, currentStep }: StepProgressProps) {
+  return (
+    <div className="swap-progress">
+      {steps.map((step) => (
+        <div 
+          key={step.step}
+          className={`step ${step.status}`}
+        >
+          <div className="step-indicator">
+            {step.status === "completed" && "✅"}
+            {step.status === "in_progress" && "⏳"}
+            {step.status === "pending" && "⏸️"}
+            {step.status === "error" && "❌"}
+          </div>
+          <div className="step-content">
+            <div className="step-title">
+              Step {step.step}: {getActionLabel(step.action)}
+            </div>
+            <div className="step-description">{step.description}</div>
+            <div className="step-time">~{step.estimated_time}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function getActionLabel(action: string): string {
+  switch (action) {
+    case "deposit": return "Bridge to Hyperliquid";
+    case "transfer_to_spot": return "Transfer to Spot";
+    case "spot_swap": return "Execute Swap";
+    default: return action;
+  }
+}
+```
+
+---
+
 ## Summary
 
 | Scenario | Token Addresses | Balance Check | Execution |
 |----------|-----------------|---------------|-----------|
-| Hyperliquid (USDC → PURR) | `null` | Skip | Hyperliquid SDK |
-| Hyperliquid (PURR → USDC) | `null` | Skip | Hyperliquid SDK |
+| Hyperliquid (needs deposit) | `null` | Skip | 3-step: Bridge → Transfer → Swap |
+| Hyperliquid (has balance) | `null` | Skip | 1-step: Swap only |
 | 1inch (USDC → ETH) | Valid ERC-20 | `balanceOf()` | Privy + EVM tx |
 | LiFi cross-chain | Valid ERC-20 | `balanceOf()` | Privy + EVM tx |
 
-**Key Rule:** Always check `provider` or token addresses before calling any EVM contract methods.
+**Key Rules:**
+1. Always check `provider` or `execution_mode` before calling any EVM contract methods
+2. For `execution_mode: "multi_step"`, iterate through `steps[]` array
+3. Never call `balanceOf()` when token addresses are `null`
+4. Hyperliquid deposits require ~1-2 minutes confirmation time
+5. Transfer and Swap on Hyperliquid are instant (zero gas)

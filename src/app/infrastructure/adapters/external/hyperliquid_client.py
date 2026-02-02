@@ -465,6 +465,136 @@ class HyperliquidClient:
         return True
     
     # ========================================
+    # BALANCE METHODS (Perps + Spot)
+    # ========================================
+    
+    async def get_perps_balance(self, address: str) -> dict[str, float]:
+        """
+        Get user's Perps (perpetuals) account balance on Hyperliquid.
+        
+        This is where funds land after bridging from Arbitrum/Base.
+        User must transfer from Perps → Spot to do spot swaps.
+        
+        Args:
+            address: User's Ethereum address (0x...)
+            
+        Returns:
+            Dictionary of token symbol → balance
+            Example: {"USDC": 100.5, "USDT": 50.0}
+            
+        Example:
+            >>> balances = await client.get_perps_balance("0x123...")
+            >>> print(f"USDC on Perps: {balances.get('USDC', 0)}")
+        """
+        try:
+            response = await self._client.post(
+                "/info",
+                json={
+                    "type": "clearinghouseState",
+                    "user": address,
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            balances: dict[str, float] = {}
+            
+            # Parse margin summary for USDC balance
+            margin_summary = data.get("marginSummary", {})
+            account_value = float(margin_summary.get("accountValue", 0))
+            
+            # The main balance in perps is typically USDC
+            if account_value > 0:
+                balances["USDC"] = account_value
+            
+            # Also check withdrawable balance
+            withdrawable = data.get("withdrawable", "0")
+            if float(withdrawable) > 0:
+                # Use withdrawable as the actual available USDC
+                balances["USDC"] = float(withdrawable)
+            
+            return balances
+            
+        except Exception as e:
+            # Return empty balances on error (user may not have Hyperliquid account)
+            return {}
+    
+    async def get_spot_balance(self, address: str) -> dict[str, float]:
+        """
+        Get user's Spot account balance on Hyperliquid.
+        
+        This is where funds must be to execute spot swaps (meme tokens).
+        User must transfer from Perps → Spot before swapping.
+        
+        Args:
+            address: User's Ethereum address (0x...)
+            
+        Returns:
+            Dictionary of token symbol → balance
+            Example: {"USDC": 50.0, "PURR": 10000.0}
+            
+        Example:
+            >>> balances = await client.get_spot_balance("0x123...")
+            >>> print(f"USDC on Spot: {balances.get('USDC', 0)}")
+            >>> print(f"PURR on Spot: {balances.get('PURR', 0)}")
+        """
+        try:
+            response = await self._client.post(
+                "/info",
+                json={
+                    "type": "spotClearinghouseState",
+                    "user": address,
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            balances: dict[str, float] = {}
+            
+            # Parse spot balances
+            for balance_data in data.get("balances", []):
+                coin = balance_data.get("coin", "")
+                # "hold" is locked, "total" is total including hold
+                total = float(balance_data.get("total", 0))
+                
+                if total > 0 and coin:
+                    balances[coin] = total
+            
+            return balances
+            
+        except Exception as e:
+            # Return empty balances on error (user may not have Hyperliquid account)
+            return {}
+    
+    async def get_all_balances(self, address: str) -> dict[str, dict[str, float]]:
+        """
+        Get user's complete Hyperliquid balances (both Perps and Spot).
+        
+        Args:
+            address: User's Ethereum address (0x...)
+            
+        Returns:
+            Dictionary with "perps" and "spot" sub-dictionaries
+            Example: {
+                "perps": {"USDC": 100.0},
+                "spot": {"USDC": 50.0, "PURR": 10000.0}
+            }
+            
+        Example:
+            >>> all_balances = await client.get_all_balances("0x123...")
+            >>> perps_usdc = all_balances["perps"].get("USDC", 0)
+            >>> spot_usdc = all_balances["spot"].get("USDC", 0)
+            >>> total_usdc = perps_usdc + spot_usdc
+        """
+        perps_balance = await self.get_perps_balance(address)
+        spot_balance = await self.get_spot_balance(address)
+        
+        return {
+            "perps": perps_balance,
+            "spot": spot_balance,
+        }
+    
+    # ========================================
     # SPOT TRADING METHODS
     # ========================================
     

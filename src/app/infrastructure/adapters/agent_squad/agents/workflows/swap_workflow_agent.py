@@ -129,6 +129,29 @@ TOKEN_ADDRESSES = {
     },
 }
 
+# =============================================================================
+# HYPERLIQUID BRIDGE CONTRACTS
+# =============================================================================
+# Users must bridge USDC to Hyperliquid before swapping meme tokens.
+# The bridge deposits to Hyperliquid Perps account, then user transfers to Spot.
+# Flow: EVM USDC → Bridge → Hyperliquid Perps → Transfer → Hyperliquid Spot → Swap
+# =============================================================================
+
+HYPERLIQUID_BRIDGE_CONTRACTS = {
+    # Arbitrum is the primary supported chain for Hyperliquid deposits
+    "arbitrum": {
+        "bridge": "0x2Df1c51E09aECF9cacB7bc98cB1742757f163dF7",  # Hyperliquid deposit contract
+        "usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",    # Native USDC on Arbitrum
+        "chain_id": 42161,
+    },
+    # Base support (may require bridging to Arbitrum first)
+    "base": {
+        "bridge": None,  # No direct bridge - must go via Arbitrum
+        "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",   # Native USDC on Base
+        "chain_id": 8453,
+    },
+}
+
 # Hyperliquid token identifiers (meme tokens on Hyperliquid L1)
 # NOTE: Hyperliquid uses its own internal token system, NOT EVM contract addresses.
 # These tokens are traded via Hyperliquid's Spot API, not via on-chain ERC-20 transfers.
@@ -1033,6 +1056,11 @@ Aqui está a cotação do swap:
         """
         Step 4: Generate execute_data for frontend execution.
         
+        For Hyperliquid swaps, generates multi-step execute_data:
+        1. Deposit USDC to Hyperliquid (if needed)
+        2. Transfer from Perps to Spot (if needed)
+        3. Execute spot swap
+        
         IMPORTANT: Checks user balance before allowing execution.
         If user has insufficient funds, shows helpful message to buy crypto.
         """
@@ -1128,40 +1156,65 @@ Aqui está a cotação do swap:
         except (ValueError, TypeError):
             min_amount_out_str = None
         
-        # Get token addresses from state (stored during quote fetch) or resolve
-        from_token_address = state.data.get("from_token_address") or self._resolve_token_address(from_token, chain)
-        to_token_address = state.data.get("to_token_address") or self._resolve_token_address(to_token, chain)
-        
         # Convert numeric fields to strings for Pydantic validation
         from_token_price_str = str(from_token_price) if from_token_price is not None else None
         from_token_24h_change_str = str(from_token_24h_change) if from_token_24h_change is not None else None
         price_impact_str = str(price_impact) if price_impact is not None else None
         gas_estimate_str = str(gas_estimate) if gas_estimate is not None else None
         
-        # Build execute_data for frontend with all available data
-        execute_data = self._build_execute_data(
-            action_type="swap",
-            provider=aggregator,
-            chain=chain,
-            from_token=from_token,
-            to_token=to_token,
-            amount=amount,
-            quote_amount=output_amount,  # The expected output amount from quote
-            min_amount_out=min_amount_out_str,  # Minimum output with slippage applied
-            price_impact=price_impact_str,
-            gas_estimate=gas_estimate_str,
-            network_fee_usd=network_fee_usd_str,
-            exchange_rate=exchange_rate,
-            slippage=slippage_pct,
-            to_chain=to_chain,
-            # Token addresses
-            from_token_address=from_token_address if from_token_address.startswith("0x") else None,
-            to_token_address=to_token_address if to_token_address.startswith("0x") else None,
-            # Price data
-            from_token_price_usd=from_token_price_str,
-            from_token_24h_change=from_token_24h_change_str,
-            value_usd=value_usd,
-        )
+        # ============================================================
+        # HYPERLIQUID MULTI-STEP EXECUTION
+        # ============================================================
+        # Hyperliquid swaps require a 3-step flow:
+        # 1. Deposit USDC to Hyperliquid (bridge from Arbitrum/Base)
+        # 2. Transfer from Perps to Spot account
+        # 3. Execute spot swap
+        # ============================================================
+        
+        is_hyperliquid = aggregator == "hyperliquid"
+        
+        if is_hyperliquid:
+            execute_data = await self._build_hyperliquid_execute_data(
+                from_token=from_token,
+                to_token=to_token,
+                amount=amount,
+                output_amount=output_amount,
+                min_amount_out=min_amount_out_str,
+                price_impact=price_impact_str,
+                exchange_rate=exchange_rate,
+                slippage=slippage_pct,
+                value_usd=value_usd,
+                user_context=user_context,
+            )
+        else:
+            # Standard EVM swap (1inch, LiFi)
+            # Get token addresses from state (stored during quote fetch) or resolve
+            from_token_address = state.data.get("from_token_address") or self._resolve_token_address(from_token, chain)
+            to_token_address = state.data.get("to_token_address") or self._resolve_token_address(to_token, chain)
+            
+            execute_data = self._build_execute_data(
+                action_type="swap",
+                provider=aggregator,
+                chain=chain,
+                from_token=from_token,
+                to_token=to_token,
+                amount=amount,
+                quote_amount=output_amount,  # The expected output amount from quote
+                min_amount_out=min_amount_out_str,  # Minimum output with slippage applied
+                price_impact=price_impact_str,
+                gas_estimate=gas_estimate_str,
+                network_fee_usd=network_fee_usd_str,
+                exchange_rate=exchange_rate,
+                slippage=slippage_pct,
+                to_chain=to_chain,
+                # Token addresses
+                from_token_address=from_token_address if from_token_address and from_token_address.startswith("0x") else None,
+                to_token_address=to_token_address if to_token_address and to_token_address.startswith("0x") else None,
+                # Price data
+                from_token_price_usd=from_token_price_str,
+                from_token_24h_change=from_token_24h_change_str,
+                value_usd=value_usd,
+            )
         
         # Store execute_data in state
         state.execute_data = execute_data
@@ -1170,6 +1223,170 @@ Aqui está a cotação do swap:
         # Format ready-to-execute response
         response = self._format_execute_response(state.data, user_context.language)
         return response, state
+    
+    async def _build_hyperliquid_execute_data(
+        self,
+        from_token: str,
+        to_token: str,
+        amount: str,
+        output_amount: str,
+        min_amount_out: str | None,
+        price_impact: str | None,
+        exchange_rate: str,
+        slippage: float,
+        value_usd: str | None,
+        user_context: UserContext,
+    ) -> dict[str, Any]:
+        """
+        Build multi-step execute_data for Hyperliquid swaps.
+        
+        Hyperliquid Flow:
+        1. Deposit: Bridge USDC from Arbitrum to Hyperliquid (if no balance)
+        2. Transfer: Move from Perps to Spot account (if balance in Perps)
+        3. Swap: Execute spot swap USDC → meme token
+        
+        Returns execute_data with steps[] array for frontend to process.
+        """
+        amount_float = self._parse_amount_float(amount)
+        
+        # Check Hyperliquid balances to determine which steps are needed
+        hl_perps_usdc = 0.0
+        hl_spot_usdc = 0.0
+        hl_spot_from_token = 0.0
+        
+        if self._hyperliquid and user_context.wallet_address:
+            try:
+                all_balances = await self._hyperliquid.get_all_balances(user_context.wallet_address)
+                hl_perps_usdc = all_balances.get("perps", {}).get("USDC", 0.0)
+                hl_spot_usdc = all_balances.get("spot", {}).get("USDC", 0.0)
+                hl_spot_from_token = all_balances.get("spot", {}).get(from_token.upper(), 0.0)
+                
+                logger.info(
+                    f"[SwapWorkflow] Hyperliquid balances for {user_context.wallet_address}: "
+                    f"Perps USDC={hl_perps_usdc}, Spot USDC={hl_spot_usdc}, "
+                    f"Spot {from_token}={hl_spot_from_token}"
+                )
+            except Exception as e:
+                logger.warning(f"[SwapWorkflow] Failed to get Hyperliquid balances: {e}")
+        
+        # Determine which steps are needed
+        # If swapping FROM USDC, check USDC balance
+        # If swapping FROM meme token (e.g., PURR → USDC), check meme token balance
+        is_selling_usdc = from_token.upper() == "USDC"
+        
+        if is_selling_usdc:
+            # User wants to swap USDC → meme token
+            available_on_spot = hl_spot_usdc
+            available_on_perps = hl_perps_usdc
+        else:
+            # User wants to swap meme token → USDC
+            available_on_spot = hl_spot_from_token
+            available_on_perps = 0  # Meme tokens are only on Spot
+        
+        # Build steps based on what's needed
+        steps = []
+        current_step = 1
+        
+        # Step 1: Deposit (if not enough on Hyperliquid)
+        total_on_hyperliquid = available_on_spot + available_on_perps
+        needs_deposit = total_on_hyperliquid < amount_float and is_selling_usdc
+        
+        if needs_deposit:
+            deposit_amount = amount_float - total_on_hyperliquid
+            bridge_config = HYPERLIQUID_BRIDGE_CONTRACTS.get("arbitrum", {})
+            
+            steps.append({
+                "step": 1,
+                "action": "deposit",
+                "status": "pending",
+                "description": f"Bridge {deposit_amount:.2f} USDC to Hyperliquid",
+                "chain": "arbitrum",
+                "chain_id": bridge_config.get("chain_id", 42161),
+                "amount": f"{deposit_amount:.2f}",
+                "token": "USDC",
+                "bridge_contract": bridge_config.get("bridge"),
+                "usdc_contract": bridge_config.get("usdc"),
+                "estimated_time": "1-2 minutes",
+            })
+            current_step = 1
+        
+        # Step 2: Transfer to Spot (if balance is in Perps)
+        needs_transfer = (
+            is_selling_usdc and 
+            available_on_spot < amount_float and 
+            (available_on_perps > 0 or needs_deposit)
+        )
+        
+        if needs_transfer:
+            transfer_amount = min(amount_float - available_on_spot, available_on_perps + (amount_float - total_on_hyperliquid if needs_deposit else 0))
+            steps.append({
+                "step": 2 if needs_deposit else 1,
+                "action": "transfer_to_spot",
+                "status": "pending",
+                "description": f"Transfer {transfer_amount:.2f} USDC from Perps to Spot",
+                "amount": f"{transfer_amount:.2f}",
+                "token": "USDC",
+                "estimated_time": "instant",
+            })
+            if not needs_deposit:
+                current_step = 1
+        
+        # Step 3: Execute Swap (always needed)
+        swap_step_num = len(steps) + 1
+        steps.append({
+            "step": swap_step_num,
+            "action": "spot_swap",
+            "status": "pending",
+            "description": f"Swap {amount} {from_token} → {output_amount} {to_token}",
+            "from_token": from_token,
+            "to_token": to_token,
+            "amount": amount,
+            "expected_output": output_amount,
+            "min_output": min_amount_out,
+            "estimated_time": "instant",
+        })
+        
+        # If no deposit/transfer needed, start at swap step
+        if not needs_deposit and not needs_transfer:
+            current_step = 1  # Swap is the only step
+        
+        # Build the complete execute_data
+        execute_data = {
+            "action_type": "swap",
+            "provider": "hyperliquid",
+            "execution_mode": "multi_step",
+            "chain": "hyperliquid",  # Special chain identifier
+            "from_token": from_token,
+            "to_token": to_token,
+            "amount": amount,
+            "quote_amount": output_amount,
+            "min_amount_out": min_amount_out,
+            "price_impact": price_impact,
+            "exchange_rate": exchange_rate,
+            "slippage": slippage,
+            "gas_estimate": "0",  # Zero gas on Hyperliquid
+            "network_fee_usd": "0",
+            "value_usd": value_usd,
+            # Token addresses are null for Hyperliquid (not EVM)
+            "from_token_address": None,
+            "to_token_address": None,
+            # Multi-step execution data
+            "steps": steps,
+            "current_step": current_step,
+            "total_steps": len(steps),
+            # Hyperliquid balance info
+            "hyperliquid_balances": {
+                "perps_usdc": hl_perps_usdc,
+                "spot_usdc": hl_spot_usdc,
+                "spot_from_token": hl_spot_from_token,
+            },
+            "requires_deposit": needs_deposit,
+            "requires_transfer": needs_transfer,
+            # Bridge info (for deposit step)
+            "bridge_config": HYPERLIQUID_BRIDGE_CONTRACTS.get("arbitrum", {}),
+        }
+        
+        return execute_data
     
     def _build_insufficient_balance_message(
         self,
