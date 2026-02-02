@@ -799,38 +799,33 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                         )
 
                     # ============================================================
-                    # OPTIONAL: Check operational chain (Base for swaps/lending)
+                    # Sync ALL LiFi-supported chains for gas fee selection
                     # ============================================================
-                    # This is for operational balances on Base (swaps, lending, etc.)
-                    # Only check if different from Ethereum
-                    if operational_chain != "ethereum":
+                    # We need balances on all chains that LiFi can bridge from
+                    # so the swap workflow can select the best chain for gas
+                    lifi_source_chains = ["base", "arbitrum"]  # ethereum already synced above
+                    
+                    for lifi_chain in lifi_source_chains:
                         try:
-                            op_chain_id = chain_id_map.get(operational_chain)
-                            if op_chain_id is None:
-                                logger.debug(
-                                    f"Unsupported operational chain '{operational_chain}' "
-                                    f"for wallet {wallet_id}"
-                                )
+                            lifi_chain_id = chain_id_map.get(lifi_chain)
+                            if lifi_chain_id is None:
                                 continue
 
-                            token_info = usdc_contracts.get(operational_chain)
+                            token_info = usdc_contracts.get(lifi_chain)
                             if not token_info:
-                                logger.debug(
-                                    f"No USDC contract for operational chain {operational_chain}"
-                                )
                                 continue
 
                             contract_address, decimals = token_info
 
                             logger.debug(
-                                f"Checking operational balance for wallet {wallet_id} "
-                                f"on {operational_chain} (chain {op_chain_id})"
+                                f"Checking LiFi source chain balance for wallet {wallet_id} "
+                                f"on {lifi_chain} (chain {lifi_chain_id})"
                             )
 
                             balance_data = await client.get_token_balance(
                                 address=wallet_address,
                                 contract_address=contract_address,
-                                chain_id=op_chain_id,
+                                chain_id=lifi_chain_id,
                             )
 
                             if balance_data is None:
@@ -843,7 +838,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                             # Also fetch native ETH balance for gas fee checks
                             op_eth_balance_data = await client.get_eth_balance(
                                 address=wallet_address,
-                                chain_id=op_chain_id,
+                                chain_id=lifi_chain_id,
                             )
                             op_eth_balance = Decimal("0")
                             if op_eth_balance_data is not None:
@@ -859,7 +854,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                                     .where(
                                         and_(
                                             chain_addresses_table.c.wallet_id == wallet_id,
-                                            chain_addresses_table.c.chain == operational_chain,
+                                            chain_addresses_table.c.chain == lifi_chain,
                                         )
                                     )
                                 )
@@ -879,25 +874,25 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                                 anomaly["wallet_id"] = wallet_id
                                 anomaly["user_id"] = user_id
                                 anomaly["wallet_address"] = wallet_address
-                                anomaly["chain"] = operational_chain
+                                anomaly["chain"] = lifi_chain
                                 anomalies_detected.append(anomaly)
                                 logger.warning(
                                     f"ANOMALY detected for wallet {wallet_id} "
-                                    f"({wallet_address[:10]}...) on {operational_chain.upper()} (OPERATIONS): "
+                                    f"({wallet_address[:10]}...) on {lifi_chain.upper()}: "
                                     f"{anomaly['type']} - "
                                     f"${anomaly['previous_balance_usd']:.2f} -> "
                                     f"${anomaly['new_balance_usd']:.2f} "
                                     f"({anomaly['pct_change']:.1f}% {anomaly['direction']})"
                                 )
 
-                            # Update chain_addresses table for operational chain
+                            # Update chain_addresses table for this chain
                             if chain_addresses_table is not None:
                                 check_stmt = (
                                     select(chain_addresses_table.c.id)
                                     .where(
                                         and_(
                                             chain_addresses_table.c.wallet_id == wallet_id,
-                                            chain_addresses_table.c.chain == operational_chain,
+                                            chain_addresses_table.c.chain == lifi_chain,
                                         )
                                     )
                                 )
@@ -922,7 +917,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 
                                     insert_stmt = insert(chain_addresses_table).values(
                                         wallet_id=wallet_id,
-                                        chain=operational_chain,
+                                        chain=lifi_chain,
                                         address=wallet_address,
                                         is_active=True,
                                         balance_usd=balance_usd,
@@ -933,15 +928,14 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 
                             updated += 1
                             logger.debug(
-                                f"Operational balance for wallet {wallet_id}: "
-                                f"${balance_usd:.2f} USDC, {op_eth_balance:.6f} ETH on {operational_chain}"
+                                f"LiFi source chain balance for wallet {wallet_id}: "
+                                f"${balance_usd:.2f} USDC, {op_eth_balance:.6f} ETH on {lifi_chain}"
                             )
 
                         except Exception as e:
                             errors += 1
                             logger.error(
-                                f"Failed to sync operational balance for wallet {wallet_id} "
-                                f"on {operational_chain}: {e}"
+                                f"Failed to sync {lifi_chain} balance for wallet {wallet_id}: {e}"
                             )
 
                     # Update wallet check timestamp (once per wallet, after all chains)
