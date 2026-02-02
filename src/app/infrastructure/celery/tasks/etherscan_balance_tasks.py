@@ -641,6 +641,29 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                 "ethereum": ("0xdAC17F958D2ee523a2206206994597C13D831ec7", 6),
                 "arbitrum": ("0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", 6),
             }
+            
+            # WETH contracts (Wrapped Ether)
+            weth_contracts = {
+                "ethereum": ("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 18),
+                "base": ("0x4200000000000000000000000000000000000006", 18),
+                "arbitrum": ("0x82aF49447D8a07e3bd95BD0d56f35241523fBab1", 18),
+                "polygon": ("0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", 18),
+                "optimism": ("0x4200000000000000000000000000000000000006", 18),
+            }
+            
+            # All tokens to sync per chain
+            # Format: {chain: [(symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin), ...]}
+            tokens_to_sync = {
+                chain: [
+                    # Native ETH (can pay gas)
+                    ("ETH", "Ether", None, 18, True, True, False),
+                    # USDC (stablecoin)
+                    ("USDC", "USD Coin", usdc_contracts.get(chain, (None, 6))[0], 6, False, False, True),
+                    # WETH (wrapped, cannot pay gas)
+                    ("WETH", "Wrapped Ether", weth_contracts.get(chain, (None, 18))[0], 18, False, False, False),
+                ]
+                for chain in chain_id_map.keys()
+            }
 
             async with EtherscanClient(
                 api_key=etherscan_api_key,
@@ -983,6 +1006,206 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
             logger.error(f"Etherscan balance sync failed: {e}", exc_info=True)
             raise
 
+    return asyncio.run(_run_task(runner))
+
+
+# ============================================================================
+# TASK 1b: SYNC ALL TOKENS TO token_balances TABLE
+# ============================================================================
+
+@celery_app.task(
+    name="etherscan.sync_all_tokens",
+    bind=True,
+    max_retries=2,
+    default_retry_delay=60,
+)
+def sync_all_tokens_etherscan(
+    self,
+    wallet_address: str | None = None,
+) -> dict[str, Any]:
+    """
+    Sync all tokens (ETH, WETH, USDC) to the token_balances table.
+    
+    This task syncs:
+    - Native ETH (can_pay_gas=True)
+    - WETH (can_pay_gas=False)
+    - USDC (is_stablecoin=True)
+    
+    Args:
+        wallet_address: Optional. If provided, sync only this wallet.
+                       Otherwise, sync all active wallets.
+    
+    Returns:
+        Summary of sync operation
+    """
+    async def runner(container):
+        from sqlalchemy import select, update, and_
+        from sqlalchemy.dialects.postgresql import insert
+        
+        session = await container.get(MainAsyncSession)
+        settings = await container.get(AppSettings)
+        
+        # Get Etherscan API key
+        etherscan_cfg = getattr(settings, "etherscan", None)
+        if etherscan_cfg is None:
+            etherscan_cfg = {}
+        
+        etherscan_api_key = etherscan_cfg.get("api_key") or os.environ.get("ETHERSCAN_API_KEY")
+        if not etherscan_api_key:
+            return {"status": "error", "reason": "no_api_key"}
+        
+        etherscan_base_url = etherscan_cfg.get("base_url", "https://api.etherscan.io/v2/api")
+        
+        # Chain and token configuration
+        chain_id_map = {
+            "ethereum": 1,
+            "base": 8453,
+            "arbitrum": 42161,
+        }
+        
+        # Tokens to sync: (symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin)
+        tokens_config = {
+            "ethereum": [
+                ("ETH", "Ether", None, 18, True, True, False),
+                ("USDC", "USD Coin", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", 6, False, False, True),
+                ("WETH", "Wrapped Ether", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 18, False, False, False),
+            ],
+            "base": [
+                ("ETH", "Ether", None, 18, True, True, False),
+                ("USDC", "USD Coin", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", 6, False, False, True),
+                ("WETH", "Wrapped Ether", "0x4200000000000000000000000000000000000006", 18, False, False, False),
+            ],
+            "arbitrum": [
+                ("ETH", "Ether", None, 18, True, True, False),
+                ("USDC", "USD Coin", "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", 6, False, False, True),
+                ("WETH", "Wrapped Ether", "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1", 18, False, False, False),
+            ],
+        }
+        
+        # Get table references
+        wallets_table = mapping_registry.metadata.tables.get("wallets")
+        token_balances_table = mapping_registry.metadata.tables.get("token_balances")
+        
+        if wallets_table is None or token_balances_table is None:
+            return {"status": "error", "reason": "tables_not_found"}
+        
+        # Get wallets to sync
+        if wallet_address:
+            wallet_stmt = (
+                select(wallets_table.c.id, wallets_table.c.address)
+                .where(wallets_table.c.address.ilike(wallet_address))
+                .where(wallets_table.c.status == 1)
+            )
+        else:
+            wallet_stmt = (
+                select(wallets_table.c.id, wallets_table.c.address)
+                .where(wallets_table.c.status == 1)
+                .limit(50)  # Process in batches
+            )
+        
+        result = await session.execute(wallet_stmt)
+        wallets = result.fetchall()
+        
+        if not wallets:
+            return {"status": "no_wallets", "processed": 0}
+        
+        async with EtherscanClient(
+            api_key=etherscan_api_key,
+            base_url=etherscan_base_url,
+            max_retries=3,
+        ) as client:
+            processed = 0
+            tokens_synced = 0
+            errors = 0
+            
+            for wallet_row in wallets:
+                wallet_id = wallet_row[0]
+                wallet_addr = wallet_row[1]
+                processed += 1
+                
+                for chain_name, chain_id in chain_id_map.items():
+                    tokens = tokens_config.get(chain_name, [])
+                    
+                    for token_info in tokens:
+                        symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin = token_info
+                        
+                        try:
+                            # Fetch balance
+                            if is_native:
+                                balance_data = await client.get_eth_balance(
+                                    address=wallet_addr,
+                                    chain_id=chain_id,
+                                )
+                            else:
+                                balance_data = await client.get_token_balance(
+                                    address=wallet_addr,
+                                    contract_address=contract,
+                                    chain_id=chain_id,
+                                )
+                            
+                            if balance_data is None:
+                                continue
+                            
+                            raw_balance = balance_data.get("balance_raw", "0")
+                            balance_human = _convert_balance(raw_balance, decimals)
+                            
+                            # Estimate USD value (rough estimate for display)
+                            # ETH ~$2200, USDC ~$1
+                            if symbol == "ETH" or symbol == "WETH":
+                                price_usd = Decimal("2200")
+                            elif is_stablecoin:
+                                price_usd = Decimal("1")
+                            else:
+                                price_usd = Decimal("0")
+                            
+                            balance_usd = balance_human * price_usd
+                            
+                            # Upsert to token_balances
+                            upsert_stmt = insert(token_balances_table).values(
+                                wallet_id=wallet_id,
+                                chain=chain_name,
+                                chain_id=chain_id,
+                                token_symbol=symbol,
+                                token_name=name,
+                                token_address=contract,
+                                token_decimals=decimals,
+                                balance_raw=raw_balance,
+                                balance_human=balance_human,
+                                balance_usd=balance_usd,
+                                price_usd=price_usd,
+                                is_native=is_native,
+                                can_pay_gas=can_pay_gas,
+                                is_stablecoin=is_stablecoin,
+                                last_balance_update=datetime.now(UTC),
+                            ).on_conflict_do_update(
+                                constraint="unique_wallet_chain_token",
+                                set_={
+                                    "balance_raw": raw_balance,
+                                    "balance_human": balance_human,
+                                    "balance_usd": balance_usd,
+                                    "price_usd": price_usd,
+                                    "last_balance_update": datetime.now(UTC),
+                                }
+                            )
+                            await session.execute(upsert_stmt)
+                            tokens_synced += 1
+                            
+                        except Exception as e:
+                            errors += 1
+                            logger.warning(
+                                f"Failed to sync {symbol} on {chain_name} for wallet {wallet_id}: {e}"
+                            )
+            
+            await session.commit()
+            
+            return {
+                "status": "complete",
+                "wallets_processed": processed,
+                "tokens_synced": tokens_synced,
+                "errors": errors,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+    
     return asyncio.run(_run_task(runner))
 
 
