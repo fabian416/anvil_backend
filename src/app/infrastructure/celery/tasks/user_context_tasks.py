@@ -78,7 +78,13 @@ def update_user_context():
         from app.infrastructure.persistence_sqla.registry import mapping_registry
         from app.infrastructure.adapters.types import MainAsyncSession
         from app.infrastructure.adapters.wallet_balance_db import WalletBalanceDbAdapter
+        from app.infrastructure.persistence_sqla.mappings.user_context import map_user_context_aware_table
+        from app.infrastructure.persistence_sqla.mappings.chat import map_chat_tables
         from sqlalchemy import select, and_
+        
+        # Ensure tables are mapped before using them
+        map_chat_tables()
+        map_user_context_aware_table()
         
         start_time = datetime.now(UTC)
         logger.info(f"🔄 Starting user context task at {start_time.isoformat()}")

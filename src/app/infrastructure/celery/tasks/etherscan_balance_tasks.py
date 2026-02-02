@@ -1058,21 +1058,33 @@ def sync_all_tokens_etherscan(
         session = await container.get(MainAsyncSession)
         settings = await container.get(AppSettings)
         
-        # Get Etherscan API key
-        etherscan_cfg = getattr(settings, "etherscan", None)
+        # Get Etherscan API key - try multiple sources
+        etherscan_api_key = ""
+        etherscan_base_url = "https://api.etherscan.io/v2/api"
         
-        # Handle both object and dict access
-        if etherscan_cfg is None:
-            etherscan_api_key = os.environ.get("ETHERSCAN_API_KEY")
-            etherscan_base_url = "https://api.etherscan.io/v2/api"
-        elif hasattr(etherscan_cfg, "api_key"):
-            # Object-based config
-            etherscan_api_key = etherscan_cfg.api_key or os.environ.get("ETHERSCAN_API_KEY")
-            etherscan_base_url = getattr(etherscan_cfg, "base_url", "https://api.etherscan.io/v2/api")
-        else:
-            # Dict-based config
-            etherscan_api_key = etherscan_cfg.get("api_key") or os.environ.get("ETHERSCAN_API_KEY")
-            etherscan_base_url = etherscan_cfg.get("base_url", "https://api.etherscan.io/v2/api")
+        # Method 1: Try from AppSettings
+        etherscan_cfg = getattr(settings, "etherscan", None)
+        if etherscan_cfg is not None:
+            if hasattr(etherscan_cfg, "api_key"):
+                etherscan_api_key = etherscan_cfg.api_key or ""
+            elif hasattr(etherscan_cfg, "API_KEY"):
+                etherscan_api_key = etherscan_cfg.API_KEY or ""
+            elif isinstance(etherscan_cfg, dict):
+                etherscan_api_key = etherscan_cfg.get("api_key") or etherscan_cfg.get("API_KEY") or ""
+        
+        # Method 2: Try direct config load
+        if not etherscan_api_key:
+            try:
+                from app.setup.config.loader import load_full_config, get_current_env
+                raw = load_full_config(env=get_current_env())
+                etherscan_dict = raw.get("etherscan", {})
+                etherscan_api_key = etherscan_dict.get("api_key") or etherscan_dict.get("API_KEY") or ""
+            except Exception:
+                pass
+        
+        # Method 3: Try environment variable
+        if not etherscan_api_key:
+            etherscan_api_key = os.environ.get("ETHERSCAN_API_KEY", "")
         
         if not etherscan_api_key:
             return {"status": "error", "reason": "no_api_key"}
