@@ -759,7 +759,7 @@ class ChatMessageRepositorySqla(ChatMessageRepository):
                 )
             ).where(
                 and_(
-                    conversations_table.c.chat_user_id == chat_user_id,
+                    conversations_table.c.user_id == chat_user_id,  # Fixed: column is user_id, not chat_user_id
                     messages_table.c.role == "assistant",
                     # Check for execute_data in metadata (JSONB)
                     messages_table.c.metadata.op('?')('execute_data'),
