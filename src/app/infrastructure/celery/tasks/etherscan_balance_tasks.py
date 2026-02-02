@@ -1039,22 +1039,38 @@ def sync_all_tokens_etherscan(
         Summary of sync operation
     """
     async def runner(container):
+        import os
         from sqlalchemy import select, update, and_
         from sqlalchemy.dialects.postgresql import insert
+        from app.infrastructure.adapters.types import MainAsyncSession
+        from app.setup.config.settings import AppSettings
+        from app.infrastructure.persistence_sqla.registry import mapping_registry
+        from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
+        
+        # Ensure wallet tables are mapped
+        map_wallet_tables()
         
         session = await container.get(MainAsyncSession)
         settings = await container.get(AppSettings)
         
         # Get Etherscan API key
         etherscan_cfg = getattr(settings, "etherscan", None)
-        if etherscan_cfg is None:
-            etherscan_cfg = {}
         
-        etherscan_api_key = etherscan_cfg.get("api_key") or os.environ.get("ETHERSCAN_API_KEY")
+        # Handle both object and dict access
+        if etherscan_cfg is None:
+            etherscan_api_key = os.environ.get("ETHERSCAN_API_KEY")
+            etherscan_base_url = "https://api.etherscan.io/v2/api"
+        elif hasattr(etherscan_cfg, "api_key"):
+            # Object-based config
+            etherscan_api_key = etherscan_cfg.api_key or os.environ.get("ETHERSCAN_API_KEY")
+            etherscan_base_url = getattr(etherscan_cfg, "base_url", "https://api.etherscan.io/v2/api")
+        else:
+            # Dict-based config
+            etherscan_api_key = etherscan_cfg.get("api_key") or os.environ.get("ETHERSCAN_API_KEY")
+            etherscan_base_url = etherscan_cfg.get("base_url", "https://api.etherscan.io/v2/api")
+        
         if not etherscan_api_key:
             return {"status": "error", "reason": "no_api_key"}
-        
-        etherscan_base_url = etherscan_cfg.get("base_url", "https://api.etherscan.io/v2/api")
         
         # Chain and token configuration
         chain_id_map = {

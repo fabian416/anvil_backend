@@ -206,11 +206,27 @@ def create_celery() -> Celery:
             "schedule": 300.0,  # Every 5 minutes
             "options": {"queue": "maintenance"},
         },
+        # Token Balances Sync (every 10 minutes)
+        # Syncs ETH, WETH, USDC balances to token_balances table
+        # Used for accurate portfolio value and gas chain selection
+        "sync-all-tokens-etherscan": {
+            "task": "etherscan.sync_all_tokens",
+            "schedule": 600.0,  # Every 10 minutes
+            "options": {"queue": "maintenance"},
+        },
+        # User Context Awareness (every 10 minutes)
+        # Updates user context for context-aware agent responses
+        # Reads from token_balances for accurate portfolio_state classification
+        "update-user-context": {
+            "task": "update_user_context",
+            "schedule": crontab(minute="*/10"),  # Every 10 minutes
+            "options": {"queue": "maintenance"},
+        },
     }
 
     # Disable the task if transaction confirmation is disabled
     if not tx_conf.enabled:
-        # Keep money market, lending, privy, and etherscan tasks even if transaction confirmation is disabled
+        # Keep money market, lending, privy, etherscan, and context tasks even if transaction confirmation is disabled
         app.conf.beat_schedule = {
             "money-market-warm-cache": app.conf.beat_schedule.get("money-market-warm-cache"),
             "money-market-check-alerts": app.conf.beat_schedule.get("money-market-check-alerts"),
@@ -220,6 +236,8 @@ def create_celery() -> Celery:
             "refresh-lending-positions": app.conf.beat_schedule.get("refresh-lending-positions"),
             "privy-sync-wallet-balances": app.conf.beat_schedule.get("privy-sync-wallet-balances"),
             "etherscan-sync-balances": app.conf.beat_schedule.get("etherscan-sync-balances"),
+            "sync-all-tokens-etherscan": app.conf.beat_schedule.get("sync-all-tokens-etherscan"),
+            "update-user-context": app.conf.beat_schedule.get("update-user-context"),
         }
 
     return app
