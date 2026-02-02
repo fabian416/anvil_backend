@@ -40,7 +40,9 @@ When the frontend receives `execute.execution_mode === "multi_step"`:
 │                    HYPERLIQUID SWAP FLOW (LiFi Integration)                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-User has USDC on Base (in Privy wallet)
+User's Privy Wallet on Base:
+  - USDC: User's funds to swap
+  - ETH: For gas (funded by Anvil)
                     │
                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -77,16 +79,22 @@ User now has PURR in Hyperliquid Spot account
 
 ### Key Improvement: LiFi Bridge
 
-**Previous flow (Arbitrum Bridge):**
-- ❌ User needed ETH on Arbitrum for gas
+**User's Privy Wallet Setup:**
+- ✅ User has USDC in Privy wallet
+- ✅ User has ETH in Privy wallet (Anvil funds this for gas)
+- ✅ Both are on **Base** chain
+
+**Previous flow (Arbitrum Bridge) - PROBLEM:**
+- ❌ Required ETH on Arbitrum for gas
+- ❌ User's ETH is on Base, not Arbitrum!
 - ❌ Two EVM transactions (approve + deposit)
 - ❌ 1-2 minute confirmation time
 
-**New flow (LiFi Bridge):**
-- ✅ Gas paid on source chain (Base) - no ETH on Arbitrum needed!
+**New flow (LiFi Bridge) - SOLUTION:**
+- ✅ Gas paid on **Base** using ETH already in user's Privy wallet!
 - ✅ Single transaction via LiFi
 - ✅ ~30 second confirmation via Relay bridge
-- ✅ LiFi handles routing and optimization
+- ✅ No need to bridge ETH to Arbitrum first
 
 ---
 
