@@ -114,6 +114,10 @@ from app.infrastructure.celery.tasks.privy_balance_tasks import (
     sync_wallet_balances,
     sync_single_wallet_balance,
 )
+# Import Etherscan token balance sync tasks
+from app.infrastructure.celery.tasks.etherscan_balance_tasks import (
+    sync_all_tokens_etherscan,
+)
 # Import lending tasks
 from app.application.lending.tasks import (
     MonitorHealthFactorsTask,

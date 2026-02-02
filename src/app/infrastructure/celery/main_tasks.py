@@ -343,6 +343,20 @@ celery_app.conf.beat_schedule = {
     },
     
     # =========================
+    # Token Balance Sync (Portfolio Accuracy)
+    # =========================
+    "sync-all-tokens-etherscan": {
+        "task": "etherscan.sync_all_tokens",
+        "schedule": 30.0,  # Every 30 seconds (only syncs tokens not updated in 3 min)
+        "options": {"queue": "maintenance"},
+    },
+    "update-user-context": {
+        "task": "update_user_context",
+        "schedule": 30.0,  # Every 30 seconds
+        "options": {"queue": "maintenance"},
+    },
+    
+    # =========================
     # LLM Orchestration Tasks
     # =========================
     "recalculate-llm-rankings": {

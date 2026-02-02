@@ -206,20 +206,21 @@ def create_celery() -> Celery:
             "schedule": 300.0,  # Every 5 minutes
             "options": {"queue": "maintenance"},
         },
-        # Token Balances Sync (every 10 minutes)
+        # Token Balances Sync (every 30 seconds)
         # Syncs ETH, WETH, USDC balances to token_balances table
         # Used for accurate portfolio value and gas chain selection
+        # Only syncs tokens not updated in last 3 minutes
         "sync-all-tokens-etherscan": {
             "task": "etherscan.sync_all_tokens",
-            "schedule": 600.0,  # Every 10 minutes
+            "schedule": 30.0,  # Every 30 seconds
             "options": {"queue": "maintenance"},
         },
-        # User Context Awareness (every 10 minutes)
+        # User Context Awareness (every 30 seconds)
         # Updates user context for context-aware agent responses
         # Reads from token_balances for accurate portfolio_state classification
         "update-user-context": {
             "task": "update_user_context",
-            "schedule": crontab(minute="*/10"),  # Every 10 minutes
+            "schedule": 30.0,  # Every 30 seconds
             "options": {"queue": "maintenance"},
         },
     }

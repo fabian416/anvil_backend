@@ -1146,6 +1146,23 @@ def sync_all_tokens_etherscan(
                         symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin = token_info
                         
                         try:
+                            # Check if token was updated in last 3 minutes - skip if so
+                            from datetime import datetime, timedelta, UTC
+                            three_min_ago = datetime.now(UTC) - timedelta(minutes=3)
+                            
+                            check_stmt = (
+                                select(token_balances_table.c.last_balance_update)
+                                .where(token_balances_table.c.wallet_id == wallet_id)
+                                .where(token_balances_table.c.chain == chain_name)
+                                .where(token_balances_table.c.token_symbol == symbol)
+                            )
+                            check_result = await session.execute(check_stmt)
+                            existing = check_result.fetchone()
+                            
+                            if existing and existing[0] and existing[0] > three_min_ago:
+                                # Skip - recently updated
+                                continue
+                            
                             # Fetch balance
                             if is_native:
                                 balance_data = await client.get_eth_balance(
