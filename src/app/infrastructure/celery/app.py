@@ -135,8 +135,9 @@ def create_celery() -> Celery:
     tx_interval = tx_conf.interval_seconds if tx_conf.enabled else 0
 
     app.conf.beat_schedule = {
-        # Transaction Confirmation Worker - runs every N seconds
-        # Confirms pending blockchain transactions and updates DB status
+        # =========================
+        # Transaction Confirmation
+        # =========================
         "confirm-pending-transactions": {
             "task": "confirm_pending_transactions",
             "schedule": float(tx_interval) if tx_interval > 0 else 30.0,
@@ -147,99 +148,200 @@ def create_celery() -> Celery:
             },
             "options": {"queue": "transactions"},
         },
-        # Money Market - Cache Warming (every 60 seconds)
-        # Pre-fetches popular asset/chain combinations to ensure cache never expires
+        
+        # =========================
+        # Money Market Tasks
+        # =========================
         "money-market-warm-cache": {
             "task": "money_market.warm_cache",
-            "schedule": 60.0,  # Every 60 seconds (sync with cache TTL)
+            "schedule": 60.0,  # Every 60 seconds
             "options": {"queue": "money_market"},
         },
-        # Money Market - Rate Alerts (every 5 minutes)
-        # Checks alert conditions and sends notifications
         "money-market-check-alerts": {
             "task": "money_market.check_alerts",
             "schedule": 300.0,  # Every 5 minutes
             "options": {"queue": "money_market"},
         },
-        # Money Market - Analytics Aggregation (every hour)
-        # Aggregates comparison logs for analytics dashboard
         "money-market-aggregate-analytics": {
             "task": "money_market.aggregate_analytics",
             "schedule": crontab(minute=0),  # Every hour at :00
             "options": {"queue": "money_market"},
         },
-        # Money Market - Cache Cleanup (daily at 3 AM)
-        # Removes expired cache entries and old logs
         "money-market-cleanup-cache": {
             "task": "money_market.cleanup_cache",
-            "schedule": crontab(hour=3, minute=0),  # Daily at 3:00 AM UTC
+            "schedule": crontab(hour=3, minute=0),  # Daily at 3:00 AM
             "options": {"queue": "maintenance"},
         },
-        # Lending - Health Factor Monitoring (every 15 minutes)
-        # Monitors all active lending positions and checks health factors
+        
+        # =========================
+        # Lending Tasks
+        # =========================
         "monitor-lending-health-factors": {
             "task": "monitor_lending_health_factors",
             "schedule": crontab(minute="*/15"),  # Every 15 minutes
             "options": {"queue": "risk"},
         },
-        # Lending - Position Refresh (every hour at :30)
-        # Refreshes lending positions from protocols to keep database in sync
         "refresh-lending-positions": {
             "task": "refresh_lending_positions",
             "schedule": crontab(minute=30),  # Every hour at :30
             "options": {"queue": "maintenance"},
         },
-        # Privy Wallet Balance Sync (every 30 seconds)
-        # Syncs wallet balances from Privy API for portfolio tracking
-        # Processes max 10 wallets per run, skips if checked within 3 minutes
+        
+        # =========================
+        # Wallet Balance Sync
+        # =========================
         "privy-sync-wallet-balances": {
             "task": "privy.sync_wallet_balances",
             "schedule": 30.0,  # Every 30 seconds
             "options": {"queue": "maintenance"},
         },
-        # Etherscan On-Chain Balance Sync (every 5 minutes)
-        # Direct ERC-20 balance verification via Etherscan V2 API
-        # Processes max 20 wallets per run with priority queue
-        # Rate budget: ~4 calls/min out of 69/min max (free tier)
         "etherscan-sync-balances": {
             "task": "etherscan.sync_balances",
             "schedule": 300.0,  # Every 5 minutes
             "options": {"queue": "maintenance"},
         },
-        # Token Balances Sync (every 30 seconds)
-        # Syncs ETH, WETH, USDC balances to token_balances table
-        # Used for accurate portfolio value and gas chain selection
-        # Only syncs tokens not updated in last 3 minutes
         "sync-all-tokens-etherscan": {
             "task": "etherscan.sync_all_tokens",
-            "schedule": 30.0,  # Every 30 seconds
+            "schedule": 30.0,  # Every 30 seconds (3-min freshness filter)
             "options": {"queue": "maintenance"},
         },
-        # User Context Awareness (every 30 seconds)
-        # Updates user context for context-aware agent responses
-        # Reads from token_balances for accurate portfolio_state classification
+        
+        # =========================
+        # User Context & Portfolio
+        # =========================
         "update-user-context": {
             "task": "update_user_context",
             "schedule": 30.0,  # Every 30 seconds
             "options": {"queue": "maintenance"},
         },
+        "user-context-analytics": {
+            "task": "user_context_analytics",
+            "schedule": crontab(hour=6, minute=0),  # Daily at 6 AM
+            "options": {"queue": "maintenance"},
+        },
+        
+        # =========================
+        # Maintenance Tasks
+        # =========================
+        "cleanup-expired-sessions": {
+            "task": "cleanup_expired_sessions",
+            "schedule": crontab(hour=0, minute=0),  # Daily at midnight
+            "options": {"queue": "maintenance"},
+        },
+        "cleanup-expired-password-resets": {
+            "task": "cleanup_expired_password_resets",
+            "schedule": crontab(minute=0),  # Every hour
+            "options": {"queue": "maintenance"},
+        },
+        "archive-guest-conversations": {
+            "task": "archive_guest_conversations",
+            "schedule": crontab(minute=0),  # Every hour at :00
+            "options": {"queue": "maintenance"},
+        },
+        
+        # =========================
+        # Agent Tasks
+        # =========================
+        "update-agent-stats": {
+            "task": "update_agent_stats",
+            "schedule": crontab(minute="*/5"),  # Every 5 minutes
+            "options": {"queue": "agents"},
+        },
+        
+        # =========================
+        # Distillation Tasks
+        # =========================
+        "aggregate-distillation-telemetry": {
+            "task": "aggregate_distillation_telemetry",
+            "schedule": crontab(minute=5),  # Every hour at :05
+            "options": {"queue": "distillation"},
+        },
+        "cleanup-expired-cache": {
+            "task": "cleanup_expired_cache",
+            "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
+            "options": {"queue": "distillation"},
+        },
+        
+        # =========================
+        # Projects Tasks
+        # =========================
+        "aggregate-project-analytics": {
+            "task": "aggregate_project_analytics",
+            "schedule": crontab(hour=4, minute=0),  # Daily at 4 AM
+            "options": {"queue": "projects"},
+        },
+        "check-knowledge-base-health": {
+            "task": "check_knowledge_base_health",
+            "schedule": crontab(hour=5, minute=0, day_of_week=0),  # Sunday 5 AM
+            "options": {"queue": "projects"},
+        },
+        
+        # =========================
+        # Graph Maintenance Tasks
+        # =========================
+        "populate-graph-protocols": {
+            "task": "populate_graph_protocols",
+            "schedule": crontab(hour=2, minute=0),  # Daily at 2 AM
+            "options": {"queue": "graph"},
+        },
+        "update-graph-metadata": {
+            "task": "update_graph_metadata",
+            "schedule": crontab(hour="*/6", minute=30),  # Every 6 hours
+            "options": {"queue": "graph"},
+        },
+        "validate-graph-integrity": {
+            "task": "validate_graph_integrity",
+            "schedule": crontab(hour=6, minute=0, day_of_week=1),  # Monday 6 AM
+            "options": {"queue": "graph"},
+        },
+        "generate-protocol-embeddings": {
+            "task": "generate_protocol_embeddings",
+            "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
+            "options": {"queue": "graph"},
+        },
+        
+        # =========================
+        # Risk Monitoring Tasks
+        # =========================
+        "check-user-risk-alerts": {
+            "task": "check_user_risk_alerts",
+            "schedule": crontab(minute="*/15"),  # Every 15 minutes
+            "options": {"queue": "risk"},
+        },
+        
+        # =========================
+        # LLM Orchestration Tasks
+        # =========================
+        "recalculate-llm-rankings": {
+            "task": "recalculate_llm_rankings",
+            "schedule": crontab(hour="*/1", minute=0),  # Every hour
+            "options": {"queue": "llm"},
+        },
+        "aggregate-llm-telemetry": {
+            "task": "aggregate_llm_telemetry",
+            "schedule": crontab(hour="*/1", minute=10),  # Every hour at :10
+            "options": {"queue": "llm"},
+        },
+        "llm-provider-health-checks": {
+            "task": "llm_provider_health_checks",
+            "schedule": crontab(minute="*/5"),  # Every 5 minutes
+            "options": {"queue": "llm"},
+        },
+        "reset-daily-budgets": {
+            "task": "reset_daily_budgets",
+            "schedule": crontab(hour=0, minute=0),  # Daily at midnight
+            "options": {"queue": "llm"},
+        },
+        "cleanup-old-llm-data": {
+            "task": "cleanup_old_llm_data",
+            "schedule": crontab(hour=4, minute=0, day_of_week=0),  # Sunday 4 AM
+            "options": {"queue": "llm"},
+        },
     }
 
-    # Disable the task if transaction confirmation is disabled
+    # If transaction confirmation is disabled, remove only that task
     if not tx_conf.enabled:
-        # Keep money market, lending, privy, etherscan, and context tasks even if transaction confirmation is disabled
-        app.conf.beat_schedule = {
-            "money-market-warm-cache": app.conf.beat_schedule.get("money-market-warm-cache"),
-            "money-market-check-alerts": app.conf.beat_schedule.get("money-market-check-alerts"),
-            "money-market-aggregate-analytics": app.conf.beat_schedule.get("money-market-aggregate-analytics"),
-            "money-market-cleanup-cache": app.conf.beat_schedule.get("money-market-cleanup-cache"),
-            "monitor-lending-health-factors": app.conf.beat_schedule.get("monitor-lending-health-factors"),
-            "refresh-lending-positions": app.conf.beat_schedule.get("refresh-lending-positions"),
-            "privy-sync-wallet-balances": app.conf.beat_schedule.get("privy-sync-wallet-balances"),
-            "etherscan-sync-balances": app.conf.beat_schedule.get("etherscan-sync-balances"),
-            "sync-all-tokens-etherscan": app.conf.beat_schedule.get("sync-all-tokens-etherscan"),
-            "update-user-context": app.conf.beat_schedule.get("update-user-context"),
-        }
+        app.conf.beat_schedule.pop("confirm-pending-transactions", None)
 
     return app
 

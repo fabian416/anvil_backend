@@ -283,18 +283,6 @@ def check_knowledge_base_health():
     asyncio.run(_run_task(runner))
 
 
-# ==================== Register Periodic Tasks ====================
-
-celery_app.conf.beat_schedule.update({
-    # Aggregate project analytics daily at 4 AM
-    "aggregate-project-analytics": {
-        "task": "aggregate_project_analytics",
-        "schedule": crontab(hour=4, minute=0),
-    },
-    
-    # Check knowledge base health weekly (Sunday at 5 AM)
-    "check-knowledge-base-health": {
-        "task": "check_knowledge_base_health",
-        "schedule": crontab(hour=5, minute=0, day_of_week=0),  # Sunday
-    },
-})
+# ==================== Periodic Tasks ====================
+# NOTE: Beat schedule is defined in app.py - the single source of truth
+# Do NOT define beat_schedule here to avoid conflicts

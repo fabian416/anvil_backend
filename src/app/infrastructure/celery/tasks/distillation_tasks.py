@@ -210,18 +210,6 @@ def cache_llm_response(
     asyncio.run(_run_task(runner))
 
 
-# ==================== Register Periodic Tasks ====================
-
-celery_app.conf.beat_schedule = {
-    # Aggregate telemetry every hour
-    "aggregate-distillation-telemetry": {
-        "task": "aggregate_distillation_telemetry",
-        "schedule": crontab(minute=5),  # Run at :05 of every hour
-    },
-    
-    # Clean up expired cache daily at 3 AM
-    "cleanup-expired-cache": {
-        "task": "cleanup_expired_cache",
-        "schedule": crontab(hour=3, minute=0),
-    },
-}
+# ==================== Periodic Tasks ====================
+# NOTE: Beat schedule is defined in app.py - the single source of truth
+# Do NOT define beat_schedule here to avoid conflicts

@@ -12,7 +12,6 @@ Sub-module tasks (distillation, projects, LLM ranking) are imported at the end
 to ensure all local tasks are registered first.
 """
 import asyncio
-from celery.schedules import crontab
 
 from app.infrastructure.celery.app import celery_app
 from app.setup.ioc.application import ApplicationProvider
@@ -257,134 +256,9 @@ from app.infrastructure.celery.tasks.llm_orchestration import (
 
 
 # ============================================================================
-# CONSOLIDATED BEAT SCHEDULE
-# All periodic tasks are defined here. This is the single source of truth
-# for task scheduling. Sub-modules should NOT define their own beat_schedule.
+# NOTE: Beat schedule is defined in app.py - the single source of truth
+# Do NOT define beat_schedule here to avoid conflicts
 # ============================================================================
-celery_app.conf.beat_schedule = {
-    # =========================
-    # Maintenance Tasks
-    # =========================
-    "cleanup-expired-sessions": {
-        "task": "cleanup_expired_sessions",
-        "schedule": crontab(hour=0, minute=0),  # Daily at midnight
-        "options": {"queue": "maintenance"},
-    },
-    "cleanup-expired-password-resets": {
-        "task": "cleanup_expired_password_resets",
-        "schedule": crontab(minute=0),  # Every hour
-        "options": {"queue": "maintenance"},
-    },
-    "update-agent-stats": {
-        "task": "update_agent_stats",
-        "schedule": crontab(minute="*/5"),  # Every 5 minutes
-        "options": {"queue": "agents"},
-    },
-    
-    # =========================
-    # Distillation Tasks
-    # =========================
-    "aggregate-distillation-telemetry": {
-        "task": "aggregate_distillation_telemetry",
-        "schedule": crontab(minute=5),  # Run at :05 of every hour
-        "options": {"queue": "distillation"},
-    },
-    "cleanup-expired-cache": {
-        "task": "cleanup_expired_cache",
-        "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
-        "options": {"queue": "distillation"},
-    },
-    
-    # =========================
-    # Projects Tasks
-    # =========================
-    "aggregate-project-analytics": {
-        "task": "aggregate_project_analytics",
-        "schedule": crontab(hour=4, minute=0),  # Daily at 4 AM
-        "options": {"queue": "projects"},
-    },
-    "check-knowledge-base-health": {
-        "task": "check_knowledge_base_health",
-        "schedule": crontab(hour=5, minute=0, day_of_week=0),  # Weekly Sunday 5 AM
-        "options": {"queue": "projects"},
-    },
-    
-    # =========================
-    # Graph Maintenance Tasks
-    # =========================
-    "populate-graph-protocols": {
-        "task": "populate_graph_protocols",
-        "schedule": crontab(hour=2, minute=0),  # Daily at 2 AM
-        "options": {"queue": "graph"},
-    },
-    "update-graph-metadata": {
-        "task": "update_graph_metadata",
-        "schedule": crontab(hour="*/6", minute=30),  # Every 6 hours
-        "options": {"queue": "graph"},
-    },
-    "validate-graph-integrity": {
-        "task": "validate_graph_integrity",
-        "schedule": crontab(hour=6, minute=0, day_of_week=1),  # Weekly Monday 6 AM
-        "options": {"queue": "graph"},
-    },
-    "generate-protocol-embeddings": {
-        "task": "generate_protocol_embeddings",
-        "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
-        "options": {"queue": "graph"},
-    },
-    
-    # =========================
-    # Risk Alert Monitoring
-    # =========================
-    "check-user-risk-alerts": {
-        "task": "check_user_risk_alerts",
-        "schedule": crontab(minute="*/15"),  # Every 15 minutes
-        "options": {"queue": "risk"},
-    },
-    
-    # =========================
-    # Token Balance Sync (Portfolio Accuracy)
-    # =========================
-    "sync-all-tokens-etherscan": {
-        "task": "etherscan.sync_all_tokens",
-        "schedule": 30.0,  # Every 30 seconds (only syncs tokens not updated in 3 min)
-        "options": {"queue": "maintenance"},
-    },
-    "update-user-context": {
-        "task": "update_user_context",
-        "schedule": 30.0,  # Every 30 seconds
-        "options": {"queue": "maintenance"},
-    },
-    
-    # =========================
-    # LLM Orchestration Tasks
-    # =========================
-    "recalculate-llm-rankings": {
-        "task": "recalculate_llm_rankings",
-        "schedule": crontab(hour="*/1", minute=0),  # Every hour
-        "options": {"queue": "llm"},
-    },
-    "aggregate-llm-telemetry": {
-        "task": "aggregate_llm_telemetry",
-        "schedule": crontab(hour="*/1", minute=10),  # Every hour at :10
-        "options": {"queue": "llm"},
-    },
-    "llm-provider-health-checks": {
-        "task": "llm_provider_health_checks",
-        "schedule": crontab(minute="*/5"),  # Every 5 minutes
-        "options": {"queue": "llm"},
-    },
-    "reset-daily-budgets": {
-        "task": "reset_daily_budgets",
-        "schedule": crontab(hour=0, minute=0),  # Daily at midnight
-        "options": {"queue": "llm"},
-    },
-    "cleanup-old-llm-data": {
-        "task": "cleanup_old_llm_data",
-        "schedule": crontab(hour=4, minute=0, day_of_week=0),  # Weekly Sunday 4 AM
-        "options": {"queue": "llm"},
-    },
-}
 
 
 # Export all tasks for discovery
