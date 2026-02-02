@@ -129,20 +129,25 @@ TOKEN_ADDRESSES = {
     },
 }
 
-# Hyperliquid token addresses (meme tokens on Hyperliquid L1)
-# These are the actual contract addresses on Hyperliquid
+# Hyperliquid token identifiers (meme tokens on Hyperliquid L1)
+# NOTE: Hyperliquid uses its own internal token system, NOT EVM contract addresses.
+# These tokens are traded via Hyperliquid's Spot API, not via on-chain ERC-20 transfers.
+# We use None/null for token addresses since balanceOf won't work on these.
+# The frontend should use Hyperliquid's API directly for these swaps.
 HYPERLIQUID_TOKEN_ADDRESSES = {
-    "USDC": "0x0000000000000000000000000000000000000001",  # Hyperliquid native USDC
-    "PURR": "0x0000000000000000000000000000000000000002",  # Hyperliquid PURR
-    "TRUMP": "0x0000000000000000000000000000000000000003",  # Hyperliquid TRUMP
-    "PEPE": "0x0000000000000000000000000000000000000004",
-    "HFUN": "0x0000000000000000000000000000000000000005",
-    "MOG": "0x0000000000000000000000000000000000000006",
-    "JEFF": "0x0000000000000000000000000000000000000007",
-    "WAGMI": "0x0000000000000000000000000000000000000008",
-    "GMEOW": "0x0000000000000000000000000000000000000009",
-    "CAPPY": "0x000000000000000000000000000000000000000a",
-    "MANLET": "0x000000000000000000000000000000000000000b",
+    # Hyperliquid native tokens - no EVM contract addresses
+    # The frontend should detect provider="hyperliquid" and use Hyperliquid SDK
+    "USDC": None,  # Hyperliquid native USDC (not ERC-20)
+    "PURR": None,  # Hyperliquid PURR
+    "TRUMP": None,  # Hyperliquid TRUMP
+    "PEPE": None,
+    "HFUN": None,
+    "MOG": None,
+    "JEFF": None,
+    "WAGMI": None,
+    "GMEOW": None,
+    "CAPPY": None,
+    "MANLET": None,
 }
 
 # Token decimals
@@ -1428,9 +1433,9 @@ Você precisa de {from_token} na sua carteira.
                             amount=amount_float,
                         )
                         
-                        # Get token addresses for Hyperliquid
-                        from_token_addr = HYPERLIQUID_TOKEN_ADDRESSES.get(from_token.upper(), from_token)
-                        to_token_addr = HYPERLIQUID_TOKEN_ADDRESSES.get(to_token.upper(), to_token)
+                        # Hyperliquid uses its own API, NOT EVM contract addresses
+                        # Don't provide fake addresses that will fail balanceOf calls
+                        # Frontend should detect provider="hyperliquid" and use Hyperliquid SDK
                         
                         return {
                             "output_amount": f"{quote.to_amount:.6f}".rstrip('0').rstrip('.'),
@@ -1439,8 +1444,9 @@ Você precisa de {from_token} na sua carteira.
                             "aggregator": "hyperliquid",
                             "mid_price": quote.mid_price,
                             "effective_price": quote.price,
-                            "from_token_address": from_token_addr,
-                            "to_token_address": to_token_addr,
+                            # NOTE: No token addresses for Hyperliquid - it's not EVM-based
+                            "from_token_address": None,
+                            "to_token_address": None,
                         }
                     except Exception as hl_err:
                         logger.warning(
