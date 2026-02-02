@@ -148,6 +148,22 @@ class ExecuteActionData(BaseModel):
     to_token_price_usd: str | None = Field(default=None, description="Destination token price in USD")
     from_token_24h_change: str | None = Field(default=None, description="Source token 24h price change %")
     value_usd: str | None = Field(default=None, description="Total transaction value in USD")
+    
+    # ========================================
+    # Multi-step execution fields (Hyperliquid)
+    # ========================================
+    execution_mode: str | None = Field(default=None, description="Execution mode: 'multi_step' for Hyperliquid")
+    steps: list[dict[str, Any]] | None = Field(default=None, description="Array of execution steps for multi-step swaps")
+    current_step: int | None = Field(default=None, description="Current step number (1-indexed)")
+    total_steps: int | None = Field(default=None, description="Total number of steps")
+    
+    # Hyperliquid balance info
+    hyperliquid_balances: dict[str, Any] | None = Field(default=None, description="User's Hyperliquid Perps/Spot balances")
+    requires_deposit: bool | None = Field(default=None, description="Whether user needs to deposit to Hyperliquid")
+    requires_transfer: bool | None = Field(default=None, description="Whether user needs to transfer from Perps to Spot")
+    
+    # Bridge configuration
+    bridge_config: dict[str, Any] | None = Field(default=None, description="Hyperliquid bridge contract addresses")
 
 
 class ChatResponse(BaseModel):
